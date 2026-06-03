@@ -56,6 +56,8 @@ class LogsController extends Controller
                     'dashboard_route' => route('dashboard'),
                     'email_logs' => route('email-logs.index'),
                     'email_retry' => route('email-logs.retry'),
+                    'email_delivery_details' => route('email-logs.delivery-details', ['uuid' => '__UUID__']),
+                    'test_email_send' => route('test-email-send.store'),
                     'inbound_webhooks' => route('inbound-webhooks.index'),
                     'message_logs' => route('messages.logs'),
                     'message_retry' => route('messages.retry'),
@@ -190,6 +192,7 @@ class LogsController extends Controller
         $permissions['log_view'] = userCheckPermission('log_view');
         $permissions['log_download'] = userCheckPermission('log_download');
         $permissions['log_path_view'] = userCheckPermission('log_path_view');
+        $permissions['email_test_send'] = userCheckPermission('email_test_send');
 
         return $permissions;
     }

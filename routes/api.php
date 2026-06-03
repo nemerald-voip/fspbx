@@ -65,6 +65,7 @@ use App\Http\Controllers\SwitchModuleController;
 use App\Http\Controllers\SwitchVariableController;
 use App\Http\Controllers\SystemController;
 use App\Http\Controllers\SystemSettingsController;
+use App\Http\Controllers\TestEmailController;
 use App\Http\Controllers\TokenController;
 use App\Http\Controllers\UserLogsController;
 use App\Http\Controllers\UsersController;
@@ -110,6 +111,8 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     // Email logs
     Route::resource('/email-logs', EmailLogsController::class);
     Route::post('/email-logs/retry', [EmailLogsController::class, 'retry'])->name('email-logs.retry');
+    Route::get('/email-logs/{uuid}/delivery-details', [EmailLogsController::class, 'deliveryDetails'])->name('email-logs.delivery-details');
+    Route::post('/test-email-send', [TestEmailController::class, 'store'])->name('test-email-send.store');
 
     // FreeSWITCH logs
     Route::get('/freeswitch-logs', [FreeswitchLogController::class, 'index'])->name('freeswitch-logs.index');

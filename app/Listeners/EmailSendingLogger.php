@@ -35,6 +35,10 @@ class EmailSendingLogger
                 $headers->addTextHeader('X-Email-Log-Id', $logId);
             }
 
+            if ($this->likelyUsesPostmark() && !$headers->has('X-PM-Metadata-email_log_uuid')) {
+                $headers->addTextHeader('X-PM-Metadata-email_log_uuid', $logId);
+            }
+
             EmailLog::updateOrCreate(
                 ['uuid' => $logId], // match on uuid
                 [
@@ -47,6 +51,8 @@ class EmailSendingLogger
                     'html_body'   => $email->getHtmlBody(),
                     'text_body'   => $email->getTextBody(),
                     'status'      => 'sending',
+                    'provider'    => $this->likelyUsesPostmark() ? 'postmark' : null,
+                    'provider_message_stream' => config('mail.mailers.postmark.message_stream_id'),
                     // 'attachments' => $attributes['attachments'] ?? null,
                 ]
             );
@@ -63,5 +69,22 @@ class EmailSendingLogger
                 return $email->toString();
             }, $recipients)
         );
+    }
+
+    private function likelyUsesPostmark(): bool
+    {
+        $defaultMailer = config('mail.default');
+        $mailer = config("mail.mailers.{$defaultMailer}", []);
+
+        if (($mailer['transport'] ?? null) === 'postmark') {
+            return true;
+        }
+
+        if (($mailer['transport'] ?? null) === 'failover') {
+            return collect($mailer['mailers'] ?? [])
+                ->contains(fn ($name) => (config("mail.mailers.{$name}.transport") === 'postmark'));
+        }
+
+        return str_contains((string) ($mailer['host'] ?? ''), 'postmarkapp.com');
     }
 }

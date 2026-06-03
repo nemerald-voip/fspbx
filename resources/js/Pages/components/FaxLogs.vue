@@ -29,15 +29,21 @@
                 />
             </div>
 
-            <div v-if="showDomainFilter" class="relative min-w-56 mb-2 shrink-0 sm:mr-4">
-                <select
-                    v-model="filterData.domain_uuid"
-                    class="block w-full rounded-md border-0 py-2 pl-3 pr-10 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600"
-                >
-                    <option v-for="domain in domainFilterOptions" :key="domain.value" :value="domain.value">
-                        {{ domain.label }}
-                    </option>
-                </select>
+            <div v-if="showDomainFilter" class="relative z-[1] min-w-72 -mt-0.5 mb-2 shrink-0 sm:mr-4">
+                <Vueform :key="domainFilterKey" :display-errors="false" size="sm">
+                    <SelectElement
+                        name="domain_uuid"
+                        :default="filterData.domain_uuid"
+                        :items="domainFilterOptions"
+                        :native="false"
+                        :search="true"
+                        input-type="search"
+                        autocomplete="off"
+                        :strict="false"
+                        :floating="false"
+                        @change="handleUpdateDomainFilter"
+                    />
+                </Vueform>
             </div>
 
             <div class="relative min-w-40 mb-2 shrink-0 sm:mr-4">
@@ -354,6 +360,7 @@ const selectAll = ref(false);
 const expandedRow = ref(null);
 const showDeleteConfirmationModal = ref(false);
 const confirmDeleteAction = ref(null);
+const domainFilterKey = ref(0);
 
 const data = ref({
     data: [],
@@ -433,10 +440,17 @@ const handleUpdateDateRange = (newDateRange) => {
     filterData.value.dateRange = newDateRange;
 };
 
+const handleUpdateDomainFilter = (newValue) => {
+    filterData.value.domain_uuid = typeof newValue === "object"
+        ? (newValue?.value ?? null)
+        : newValue;
+};
+
 const handleFiltersReset = () => {
     filterData.value.search = null;
     filterData.value.status = "all";
     filterData.value.domain_uuid = props.selectedDomainUuid;
+    domainFilterKey.value += 1;
     filterData.value.dateRange = [
         startLocal.clone().startOf("day").toISOString(),
         endLocal.clone().endOf("day").toISOString(),

@@ -21,13 +21,12 @@
                     @update:date-range="handleUpdateDateRange" />
             </div>
 
-            <div v-if="showDomainFilter" class="relative min-w-56 mb-2 shrink-0 sm:mr-4">
-                <select v-model="filterData.domain_uuid"
-                    class="block w-full rounded-md border-0 py-2 pl-3 pr-10 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600">
-                    <option v-for="domain in domainFilterOptions" :key="domain.value" :value="domain.value">
-                        {{ domain.label }}
-                    </option>
-                </select>
+            <div v-if="showDomainFilter" class="relative z-[1] min-w-72 -mt-0.5 mb-2 shrink-0 sm:mr-4">
+                <Vueform :key="domainFilterKey" :display-errors="false" size="sm">
+                    <SelectElement name="domain_uuid" :default="filterData.domain_uuid" :items="domainFilterOptions"
+                        :native="false" :search="true" input-type="search" autocomplete="off"
+                        :strict="false" :floating="false" @change="handleUpdateDomainFilter" />
+                </Vueform>
             </div>
 
             <div class="relative">
@@ -104,6 +103,21 @@
                                     </td>
 
                                     <td>
+                                        <div class="flex items-center justify-center gap-1">
+                                        <!-- DELIVERY DETAILS ICON -->
+                                        <div v-if="canShowDeliveryDetails(row)" class="relative group flex items-center justify-center cursor-pointer">
+                                            <DocumentMagnifyingGlassIcon @click.stop="handleDeliveryDetails(row)"
+                                                class="h-7 w-7 transition duration-300 ease-in-out p-1 text-gray-400 hover:bg-gray-200 hover:text-gray-600 rounded-full" />
+
+                                            <div
+                                                class="absolute bottom-full mb-1 hidden group-hover:block whitespace-nowrap bg-gray-800 text-white text-xs rounded py-1 px-2 z-10 shadow-lg">
+                                                Delivery Details
+                                                <div
+                                                    class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45">
+                                                </div>
+                                            </div>
+                                        </div>
+
                                     <!-- RETRY ICON -->
                                         <div class="relative group flex items-center justify-center cursor-pointer">
                                             <RestartIcon @click.stop="handleRetry(row.uuid)"
@@ -118,6 +132,7 @@
                                                     class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45">
                                                 </div>
                                             </div>
+                                        </div>
                                         </div>
                                     </td>
                                 </tr>
@@ -187,6 +202,66 @@
         :text="'This action will permanently delete the selected hotel room(s). Are you sure you want to proceed?'"
         :confirm-button-label="'Delete'" cancel-button-label="Cancel" />
 
+    <AddEditItemModal :show="showDeliveryDetailsModal" header="Delivery Details" :loading="deliveryDetailsLoading"
+        custom-class="sm:max-w-4xl" body-class="max-h-[70vh] overflow-y-auto" @close="showDeliveryDetailsModal = false">
+        <template #modal-body>
+            <div v-if="deliveryDetails?.available" class="space-y-4">
+                <div class="grid gap-3 text-sm sm:grid-cols-2">
+                    <div>
+                        <div class="text-xs font-medium uppercase tracking-wide text-gray-400">Provider</div>
+                        <div class="mt-1 text-gray-900">{{ deliveryDetails.provider }}</div>
+                    </div>
+                    <div>
+                        <div class="text-xs font-medium uppercase tracking-wide text-gray-400">Provider ID</div>
+                        <div class="mt-1 font-mono text-xs text-gray-700">{{ deliveryDetails.message_id }}</div>
+                    </div>
+                    <div>
+                        <div class="text-xs font-medium uppercase tracking-wide text-gray-400">Status</div>
+                        <div class="mt-1 text-gray-900">{{ deliveryDetails.status || 'Unknown' }}</div>
+                    </div>
+                    <div>
+                        <div class="text-xs font-medium uppercase tracking-wide text-gray-400">Message Stream</div>
+                        <div class="mt-1 text-gray-900">{{ deliveryDetails.message_stream || 'Default' }}</div>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="text-sm font-semibold text-gray-900">Events</h4>
+                    <div v-if="deliveryDetails.events?.length" class="mt-2 divide-y divide-gray-200 rounded-md border border-gray-200">
+                        <div v-for="(event, index) in deliveryDetails.events" :key="index" class="px-3 py-2 text-sm">
+                            <div class="flex flex-wrap items-center justify-between gap-2">
+                                <div class="flex items-center gap-2">
+                                    <span :class="['inline-flex h-2 w-2 rounded-full', eventTone(event)]"></span>
+                                    <div class="font-medium text-gray-900">{{ eventTypeLabel(event) }}</div>
+                                </div>
+                                <div class="text-xs text-gray-500">{{ eventTimestamp(event) }}</div>
+                            </div>
+                            <div v-if="event.Recipient" class="mt-1 text-xs text-gray-500">
+                                Recipient: {{ event.Recipient }}
+                            </div>
+                            <div v-if="eventDetailRows(event).length" class="mt-2 grid gap-2 sm:grid-cols-2">
+                                <div v-for="detail in eventDetailRows(event)" :key="detail.label"
+                                    :class="['rounded-md bg-gray-50 px-2 py-1.5', detail.wide ? 'sm:col-span-2' : '']">
+                                    <div class="text-[11px] font-medium uppercase tracking-wide text-gray-400">{{ detail.label }}</div>
+                                    <div class="mt-0.5 break-words text-xs text-gray-700">{{ detail.value }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <p v-else class="mt-2 text-sm text-gray-500">No provider events were returned.</p>
+                </div>
+
+                <details>
+                    <summary class="cursor-pointer text-sm font-medium text-gray-700">Raw provider response</summary>
+                    <pre class="mt-2 max-h-80 overflow-auto rounded-md bg-gray-900 p-3 text-xs text-gray-100">{{ prettyJson(deliveryDetails.raw) }}</pre>
+                </details>
+            </div>
+            <div v-else class="text-sm text-gray-600">
+                {{ deliveryDetails?.message || 'Delivery details are not available.' }}
+            </div>
+        </template>
+    </AddEditItemModal>
+
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
 </template>
@@ -195,7 +270,9 @@
 import { ref, computed, watch } from 'vue';
 import Notification from "./notifications/Notification.vue";
 import ConfirmationModal from "./modal/ConfirmationModal.vue";
+import AddEditItemModal from "./modal/AddEditItemModal.vue";
 import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
+import { DocumentMagnifyingGlassIcon } from "@heroicons/vue/24/outline";
 import { registerLicense } from '@syncfusion/ej2-base';
 import DatePicker from "@generalComponents/DatePicker.vue";
 import Paginator from "@generalComponents/Paginator.vue";
@@ -229,7 +306,10 @@ const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(null);
 const showDeleteConfirmationModal = ref(false);
+const showDeliveryDetailsModal = ref(false);
 const confirmDeleteAction = ref(null);
+const deliveryDetails = ref(null);
+const deliveryDetailsLoading = ref(false);
 const itemOptions = ref([])
 const isDataLoading = ref(false)
 const readOnly = ref(false)
@@ -245,6 +325,7 @@ const data = ref({
     links: [],
 });
 const expandedRow = ref(null)
+const domainFilterKey = ref(0)
 
 
 const startLocal = moment.utc(props.startPeriod).tz(props.timezone)
@@ -280,6 +361,10 @@ const domainLabel = (row) => {
     return row.domain?.domain_description || row.domain?.domain_name || '';
 };
 
+const canShowDeliveryDetails = (row) => {
+    return !!row.provider_message_id || ['sent', 'failed', 'permanent_failed'].includes(row.status);
+}
+
 // const emits = defineEmits(['edit-item', 'delete-item']);
 
 const fetchData = async (page = 1) => {
@@ -312,6 +397,12 @@ const toggleExpand = (uuid) => {
 
 const handleUpdateDateRange = (newDateRange) => {
     filterData.value.dateRange = newDateRange;
+}
+
+const handleUpdateDomainFilter = (newValue) => {
+    filterData.value.domain_uuid = typeof newValue === 'object'
+        ? (newValue?.value ?? null)
+        : newValue;
 }
 
 const renderRequestedPage = (url) => {
@@ -359,6 +450,7 @@ const handleSearchButtonClick = () => {
 const handleFiltersReset = () => {
     filterData.value.search = null;
     filterData.value.domain_uuid = props.selectedDomainUuid;
+    domainFilterKey.value += 1;
     // After resetting the filters, call handleSearchButtonClick to perform the search with the updated filters
     handleSearchButtonClick();
 }
@@ -427,6 +519,93 @@ const handleRetry = (uuid) => {
         }).finally(() => {
             fetchData(data.value.current_page || 1);
         });
+}
+
+const handleDeliveryDetails = (row) => {
+    showDeliveryDetailsModal.value = true;
+    deliveryDetails.value = null;
+    deliveryDetailsLoading.value = true;
+
+    axios.get(props.routes.email_delivery_details.replace('__UUID__', row.uuid))
+        .then((response) => {
+            deliveryDetails.value = response.data;
+        }).catch((error) => {
+            deliveryDetails.value = {
+                available: false,
+                message: error.response?.data?.messages?.error?.[0] || 'Unable to fetch delivery details.',
+            };
+        }).finally(() => {
+            deliveryDetailsLoading.value = false;
+        });
+}
+
+const prettyJson = (value) => {
+    if (!value) return '';
+    return JSON.stringify(value, null, 2);
+}
+
+const eventTypeLabel = (event) => {
+    const type = event.Type || event.RecordType || 'Event';
+    const labels = {
+        Delivered: 'Delivered',
+        Transient: 'Temporary delivery issue',
+        Opened: 'Opened',
+        LinkClicked: 'Link clicked',
+        Bounced: 'Bounced',
+        SubscriptionChanged: 'Subscription changed',
+        SpamComplaint: 'Spam complaint',
+    };
+
+    return labels[type] || type;
+}
+
+const eventTone = (event) => {
+    const type = event.Type || event.RecordType;
+
+    if (['Delivered', 'Opened', 'LinkClicked'].includes(type)) return 'bg-green-500';
+    if (['Transient'].includes(type)) return 'bg-amber-500';
+    if (['Bounced', 'SpamComplaint'].includes(type)) return 'bg-rose-500';
+
+    return 'bg-gray-400';
+}
+
+const eventTimestamp = (event) => {
+    const value = event.ReceivedAt || event.DeliveredAt || event.BouncedAt || event.OpenedAt || event.ClickedAt || '';
+    return value ? moment(value).format('MMM D, YYYY h:mm A') : '';
+}
+
+const eventDetailRows = (event) => {
+    const details = event.Details || {};
+    const rows = [];
+
+    const add = (label, value, wide = false) => {
+        if (value === null || value === undefined || value === '') return;
+        rows.push({ label, value: typeof value === 'object' ? JSON.stringify(value) : String(value), wide });
+    };
+
+    add('Delivery response', details.DeliveryMessage || details.Summary || event.Description, true);
+    add('Destination server', details.DestinationServer);
+    add('Destination IP', details.DestinationIP);
+    add('Bounce ID', details.BounceID);
+    add('Click URL', details.OriginalLink || details.Link);
+    add('User agent', details.UserAgent);
+    add('Geo location', [details.GeoLocation?.City, details.GeoLocation?.Region, details.GeoLocation?.Country].filter(Boolean).join(', '));
+
+    Object.entries(details).forEach(([key, value]) => {
+        const knownKeys = ['DeliveryMessage', 'Summary', 'DestinationServer', 'DestinationIP', 'BounceID', 'OriginalLink', 'Link', 'UserAgent', 'GeoLocation'];
+        if (!knownKeys.includes(key)) {
+            add(formatDetailLabel(key), value);
+        }
+    });
+
+    return rows;
+}
+
+const formatDetailLabel = (value) => {
+    return String(value)
+        .replace(/([a-z])([A-Z])/g, '$1 $2')
+        .replace(/_/g, ' ')
+        .replace(/\b\w/g, char => char.toUpperCase());
 }
 
 const hideNotification = () => {
