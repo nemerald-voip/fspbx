@@ -278,10 +278,10 @@ class CallBlockController extends Controller
                     }
 
                     $pattern = '%' . implode('%', str_split($digits)) . '%';
-                    $query->whereRaw(
-                        "regexp_replace(coalesce(call_block_country_code::text, '') || coalesce(call_block_number::text, ''), '\\D+', '', 'g') ilike ?",
-                        [$pattern]
-                    );
+                    $query->where(function ($query) use ($pattern) {
+                        $query->where('call_block_number', 'ilike', $pattern)
+                            ->orWhere('call_block_country_code', 'ilike', $pattern);
+                    });
                 }),
             ]);
     }
