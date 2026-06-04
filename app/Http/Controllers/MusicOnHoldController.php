@@ -6,7 +6,6 @@ use App\Http\Requests\StoreMusicOnHoldRequest;
 use App\Http\Requests\UpdateMusicOnHoldRequest;
 use App\Http\Requests\UploadMusicOnHoldFileRequest;
 use App\Models\MusicOnHold;
-use App\Models\Phrases;
 use App\Models\Recordings;
 use App\Services\MusicOnHoldService;
 use Illuminate\Http\JsonResponse;
@@ -375,21 +374,6 @@ class MusicOnHoldController extends Controller
 
         if (! empty($recordings)) {
             $groups[] = ['label' => 'Recordings', 'items' => $recordings];
-        }
-
-        $phrases = Phrases::query()
-            ->where('domain_uuid', session('domain_uuid'))
-            ->orderBy('phrase_name')
-            ->get(['phrase_uuid', 'phrase_name'])
-            ->map(fn (Phrases $phrase) => [
-                'label' => $phrase->phrase_name,
-                'value' => 'phrase:' . $phrase->phrase_uuid,
-            ])
-            ->values()
-            ->all();
-
-        if (! empty($phrases)) {
-            $groups[] = ['label' => 'Phrases', 'items' => $phrases];
         }
 
         foreach (getSoundsCollectionGrouped(session('domain_uuid')) as $group) {
