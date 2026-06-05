@@ -11,6 +11,7 @@ use App\Services\MusicOnHoldService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\QueryBuilder;
@@ -40,12 +41,14 @@ class MusicOnHoldController extends Controller
                 'upload' => route('music-on-hold.upload'),
                 'file_delete' => route('music-on-hold.files.delete'),
                 'reload' => route('music-on-hold.reload'),
+                'tenant_settings' => route('music-on-hold.tenant-settings'),
             ],
             'permissions' => [
                 'create' => userCheckPermission('music_on_hold_add'),
                 'update' => userCheckPermission('music_on_hold_edit'),
                 'destroy' => userCheckPermission('music_on_hold_delete'),
                 'reload' => userCheckPermission('music_on_hold_edit'),
+                'tenant_settings' => userCheckPermission('music_on_hold_edit'),
                 'view_all' => userCheckPermission('music_on_hold_all'),
                 'manage_domain' => false,
                 'view_path' => userCheckPermission('music_on_hold_path'),
@@ -99,15 +102,38 @@ class MusicOnHoldController extends Controller
         ], $result['success'] ? 200 : 409);
     }
 
+    public function tenantSettings(Request $request, MusicOnHoldService $service): JsonResponse
+    {
+        if (! userCheckPermission('music_on_hold_edit')) {
+            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+        }
+
+        $validated = $request->validate([
+            'mode' => ['required', Rule::in(['stream', 'beeps', 'silence'])],
+            'stream_uuid' => ['nullable', 'uuid', 'required_if:mode,stream'],
+        ]);
+
+        $service->applyTenantHoldMusic($validated);
+
+        return response()->json([
+            'messages' => ['success' => ['Tenant music on hold updated.']],
+        ]);
+    }
+
     public function getItemOptions(Request $request, MusicOnHoldService $service): JsonResponse
     {
         $itemUuid = $request->input('itemUuid', $request->input('item_uuid'));
+        $purpose = $request->input('purpose');
 
         if ($itemUuid && ! userCheckPermission('music_on_hold_edit')) {
             return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
         }
 
-        if (! $itemUuid && ! userCheckPermission('music_on_hold_add')) {
+        if (! $itemUuid && $purpose === 'tenant_settings' && ! userCheckPermission('music_on_hold_edit')) {
+            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+        }
+
+        if (! $itemUuid && $purpose !== 'tenant_settings' && ! userCheckPermission('music_on_hold_add')) {
             return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
         }
 
@@ -143,6 +169,8 @@ class MusicOnHoldController extends Controller
             'current_domain_name' => session('domain_name'),
             'sounds_path_prefix' => '$${sounds_dir}/music',
             'streams' => $this->streamOptions($request, $service),
+            'tenant_streams' => $service->tenantHoldMusicStreamOptions(),
+            'tenant_settings' => $service->tenantHoldMusicSettings(),
             'chime_options' => $this->chimeOptions(),
         ]);
     }
@@ -290,6 +318,10 @@ class MusicOnHoldController extends Controller
 
     private function canView(MusicOnHold $stream, MusicOnHoldService $service): bool
     {
+        if (userCheckPermission('music_on_hold_all')) {
+            return true;
+        }
+
         if ($stream->domain_uuid === null) {
             return true;
         }
@@ -326,7 +358,7 @@ class MusicOnHoldController extends Controller
 
     private function streamOptions(Request $request, MusicOnHoldService $service): array
     {
-        return QueryBuilder::for($this->manageableQuery($service))
+        return QueryBuilder::for($service->representativeQuery()->where('domain_uuid', session('domain_uuid')))
             ->defaultSort('music_on_hold_name')
             ->get()
             ->map(fn (MusicOnHold $stream) => [

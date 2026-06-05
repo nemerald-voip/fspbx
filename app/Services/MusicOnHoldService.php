@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\DialplanDetails;
+use App\Models\Dialplans;
 use App\Models\FusionCache;
 use App\Models\MusicOnHold;
 use Illuminate\Http\UploadedFile;
@@ -19,6 +21,8 @@ class MusicOnHoldService
     private const OUTPUT_RATES = ['8000', '16000'];
     private const KNOWN_RATES = ['8000', '16000', '32000', '48000'];
     private const VALID_EXTENSIONS = ['wav', 'mp3', 'ogg'];
+    private const BEEP_HOLD_MUSIC = 'tone_stream://%(100,190,380);%(100,5000,380);loops=-1';
+    private const SILENCE_HOLD_MUSIC = 'silence_stream://-1';
 
     public function save(array $validated, ?MusicOnHold $musicOnHold = null): MusicOnHold
     {
@@ -317,13 +321,69 @@ class MusicOnHoldService
                     $query->where('domain_uuid', session('domain_uuid'))
                         ->orWhereNull('domain_uuid');
                 });
-            })
-            ->when(userCheckPermission('music_on_hold_all'), function ($query) {
-                $query->where(function ($query) {
-                    $query->whereIn('domain_uuid', $this->accessibleDomainUuids())
-                        ->orWhereNull('domain_uuid');
-                });
             });
+    }
+
+    public function tenantHoldMusicStreamOptions(): array
+    {
+        return $this->representativeQuery()
+            ->where('domain_uuid', session('domain_uuid'))
+            ->orderBy('music_on_hold_name')
+            ->get()
+            ->map(fn (MusicOnHold $stream) => [
+                'label' => $stream->music_on_hold_name,
+                'value' => $stream->music_on_hold_uuid,
+            ])
+            ->values()
+            ->all();
+    }
+
+    public function tenantHoldMusicSettings(): array
+    {
+        $value = $this->currentTenantHoldMusicValue();
+
+        if ($value === self::BEEP_HOLD_MUSIC) {
+            return ['mode' => 'beeps', 'stream_uuid' => null];
+        }
+
+        if ($value === self::SILENCE_HOLD_MUSIC) {
+            return ['mode' => 'silence', 'stream_uuid' => null];
+        }
+
+        $streamName = $this->streamNameFromHoldMusicValue($value);
+
+        if ($streamName !== null) {
+            $stream = $this->representativeQuery()
+                ->where('domain_uuid', session('domain_uuid'))
+                ->where('music_on_hold_name', $streamName)
+                ->first();
+
+            if ($stream) {
+                return ['mode' => 'stream', 'stream_uuid' => $stream->music_on_hold_uuid];
+            }
+        }
+
+        return ['mode' => 'stream', 'stream_uuid' => null];
+    }
+
+    public function applyTenantHoldMusic(array $validated): void
+    {
+        $holdMusic = $this->tenantHoldMusicValue($validated);
+        $domainUuid = session('domain_uuid');
+        $domainName = session('domain_name');
+
+        DB::transaction(function () use ($domainUuid, $domainName, $holdMusic) {
+            $domainVariables = $this->firstOrCreateTenantDialplan('domain-variables', $domainUuid, $domainName, 'true', 10);
+            $this->replaceHoldMusicDetail($domainVariables, 'set', "hold_music={$holdMusic}", null, 10);
+            $this->replaceHoldMusicDetail($domainVariables, 'export', "hold_music={$holdMusic}", null, 20);
+            $this->refreshDialplanXml($domainVariables);
+
+            $userHoldMusic = $this->firstOrCreateTenantDialplan('user_hold_music', $domainUuid, $domainName, 'true', 20);
+            $this->replaceHoldMusicDetail($userHoldMusic, 'set', "hold_music={$holdMusic}", 'true', 10);
+            $this->refreshDialplanXml($userHoldMusic);
+        });
+
+        app(DialplanService::class)->clearDialplanCache($domainName);
     }
 
     public function refreshRuntime(): void
@@ -348,6 +408,158 @@ class MusicOnHoldService
             'success' => ! str_starts_with($message, '-ERR'),
             'message' => $message,
         ];
+    }
+
+    private function tenantHoldMusicValue(array $validated): string
+    {
+        return match ($validated['mode']) {
+            'stream' => $this->tenantStreamHoldMusicValue($validated['stream_uuid'] ?? null),
+            'beeps' => self::BEEP_HOLD_MUSIC,
+            'silence' => self::SILENCE_HOLD_MUSIC,
+        };
+    }
+
+    private function tenantStreamHoldMusicValue(?string $streamUuid): string
+    {
+        $stream = $this->representativeQuery()
+            ->where('domain_uuid', session('domain_uuid'))
+            ->whereKey($streamUuid)
+            ->firstOrFail();
+
+        return 'local_stream://${domain_name}/' . $stream->music_on_hold_name;
+    }
+
+    private function currentTenantHoldMusicValue(): ?string
+    {
+        $detail = DialplanDetails::query()
+            ->where('domain_uuid', session('domain_uuid'))
+            ->where('dialplan_detail_tag', 'action')
+            ->where('dialplan_detail_type', 'set')
+            ->where('dialplan_detail_data', 'like', 'hold_music=%')
+            ->whereHas('dialplan', function ($query) {
+                $query->where('dialplan_name', 'user_hold_music');
+            })
+            ->orderBy('dialplan_detail_order')
+            ->first();
+
+        if (! $detail) {
+            return null;
+        }
+
+        return $this->normalizeHoldMusicDetailData((string) $detail->getRawOriginal('dialplan_detail_data'));
+    }
+
+    private function normalizeHoldMusicDetailData(string $data): ?string
+    {
+        $value = trim($data);
+
+        while (str_starts_with($value, 'hold_music=')) {
+            $value = substr($value, strlen('hold_music='));
+        }
+
+        return $value !== '' ? $value : null;
+    }
+
+    private function streamNameFromHoldMusicValue(?string $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $prefix = 'local_stream://${domain_name}/';
+
+        if (! str_starts_with($value, $prefix)) {
+            return null;
+        }
+
+        $streamName = trim(substr($value, strlen($prefix)));
+
+        return $streamName !== '' ? $streamName : null;
+    }
+
+    private function firstOrCreateTenantDialplan(string $name, ?string $domainUuid, ?string $domainName, string $continue, int $order): Dialplans
+    {
+        $dialplan = Dialplans::query()
+            ->where('domain_uuid', $domainUuid)
+            ->where('dialplan_name', $name)
+            ->first();
+
+        if ($dialplan) {
+            return $dialplan;
+        }
+
+        $dialplan = new Dialplans();
+        $dialplan->forceFill([
+            'dialplan_uuid' => (string) Str::uuid(),
+            'domain_uuid' => $domainUuid,
+            'app_uuid' => (string) Str::uuid(),
+            'dialplan_name' => $name,
+            'dialplan_context' => $domainName,
+            'dialplan_continue' => $continue,
+            'dialplan_order' => $order,
+            'dialplan_enabled' => 'true',
+            'insert_date' => now(),
+            'insert_user' => session('user_uuid'),
+        ])->save();
+
+        return $dialplan;
+    }
+
+    private function replaceHoldMusicDetail(Dialplans $dialplan, string $type, string $data, ?string $inline, int $fallbackOrder): void
+    {
+        $existing = $dialplan->dialplan_details()
+            ->where('dialplan_detail_tag', 'action')
+            ->where('dialplan_detail_type', $type)
+            ->where('dialplan_detail_data', 'like', 'hold_music=%')
+            ->orderBy('dialplan_detail_order')
+            ->get();
+
+        $detail = $existing->shift() ?? new DialplanDetails();
+        $isNew = ! $detail->exists;
+
+        $detail->forceFill([
+            'dialplan_detail_uuid' => $detail->dialplan_detail_uuid ?: (string) Str::uuid(),
+            'domain_uuid' => $dialplan->domain_uuid,
+            'dialplan_uuid' => $dialplan->dialplan_uuid,
+            'dialplan_detail_tag' => 'action',
+            'dialplan_detail_type' => $type,
+            'dialplan_detail_data' => $data,
+            'dialplan_detail_break' => null,
+            'dialplan_detail_inline' => $inline,
+            'dialplan_detail_group' => $detail->dialplan_detail_group ?? 0,
+            'dialplan_detail_order' => $detail->dialplan_detail_order ?? $fallbackOrder,
+            'dialplan_detail_enabled' => 'true',
+            $isNew ? 'insert_date' : 'update_date' => now(),
+            $isNew ? 'insert_user' : 'update_user' => session('user_uuid'),
+        ])->save();
+
+        $existing->each->delete();
+    }
+
+    private function refreshDialplanXml(Dialplans $dialplan): void
+    {
+        $details = $dialplan->dialplan_details()
+            ->orderBy('dialplan_detail_group')
+            ->orderBy('dialplan_detail_order')
+            ->get()
+            ->map(fn (DialplanDetails $detail) => [
+                'dialplan_detail_tag' => $detail->getRawOriginal('dialplan_detail_tag'),
+                'dialplan_detail_type' => $detail->getRawOriginal('dialplan_detail_type'),
+                'dialplan_detail_data' => $detail->getRawOriginal('dialplan_detail_data'),
+                'dialplan_detail_break' => $detail->getRawOriginal('dialplan_detail_break'),
+                'dialplan_detail_inline' => $detail->getRawOriginal('dialplan_detail_inline'),
+                'dialplan_detail_group' => (int) $detail->getRawOriginal('dialplan_detail_group'),
+                'dialplan_detail_order' => (int) $detail->getRawOriginal('dialplan_detail_order'),
+                'dialplan_detail_enabled' => $detail->getRawOriginal('dialplan_detail_enabled') ?? 'true',
+            ])
+            ->values()
+            ->all();
+
+        $dialplan->forceFill([
+            'dialplan_xml' => app(DialplanService::class)->buildXml($dialplan, $details),
+            'update_date' => now(),
+            'update_user' => session('user_uuid'),
+        ])->save();
     }
 
     private function findOrCreateUploadStreams(array $validated): Collection
