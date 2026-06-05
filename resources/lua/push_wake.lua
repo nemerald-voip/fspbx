@@ -79,6 +79,24 @@ local caller_id_name = session:getVariable("caller_id_name") or "Unknown"
 local caller_id_number = session:getVariable("caller_id_number") or ""
 local call_uuid = session:getVariable("uuid") or ""
 
+-- DID-level caller-id prefix (set on the inbound route, e.g. "SUPPORT",
+-- "SALES"). When present, effective_caller_id_name currently delivers
+-- `PREFIX#<name>` in caller_id_name — we lift the prefix into its own
+-- payload field and strip it from caller_id_name so the iOS app can render
+-- it as a distinct badge instead of parsing the name string. Optional: when
+-- cnam_prefix is unset the payload's did_prefix is an empty string and
+-- clients degrade to the plain caller_id_name.
+local did_prefix = session:getVariable("cnam_prefix") or ""
+if did_prefix ~= "" then
+    -- Escape Lua pattern metacharacters in the prefix before string.match,
+    -- so prefixes containing `-`, `.`, `+`, etc. still match literally.
+    local escaped = did_prefix:gsub("(%W)", "%%%1")
+    local stripped = caller_id_name:match("^" .. escaped .. "#(.*)$")
+    if stripped and stripped ~= "" then
+        caller_id_name = stripped
+    end
+end
+
 if destination_number == "" or domain_name == "" then
     return
 end
@@ -110,6 +128,7 @@ local payload = json.encode({
         caller_id_name = caller_id_name,
         caller_id_number = caller_id_number,
         call_uuid = call_uuid,
+        did_prefix = did_prefix,
         did_e164 = destination_number,
     },
 })
