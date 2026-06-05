@@ -648,6 +648,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     // System Settings
     Route::put('system-settings/update', [SystemSettingsController::class, 'update'])->name('system-settings.update');
     Route::get('system-settings/payment_gateways', [SystemSettingsController::class, 'getPaymentGatewayData'])->name('system-settings.payment_gateways');
+    Route::post('/gateways/test', [PaymentGatewayController::class, 'test'])->name('gateway.test');
 
     // System
     Route::get('system/data', [SystemController::class, 'data'])->name('system.data');

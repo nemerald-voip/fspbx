@@ -11,6 +11,7 @@
         "php": "^8.1",
         "ext-simplexml": "*",
         "aws/aws-sdk-php": "~3.0",
+        "barryvdh/laravel-dompdf": "^3.1",
         "doctrine/dbal": "^3.4",
         "ezyang/htmlpurifier": "^4.19",
         "firebase/php-jwt": "^6.4",

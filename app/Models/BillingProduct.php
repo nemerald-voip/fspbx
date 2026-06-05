@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
+use App\Models\Traits\TraitUuid;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class BillingProduct extends Model
 {
+    use TraitUuid;
 
     protected $table = 'billing_products';
     protected $primaryKey = 'uuid';
@@ -14,6 +15,7 @@ class BillingProduct extends Model
     protected $keyType = 'string';
 
     protected $fillable = [
+        'uuid',
         'id',
         'provider',
         'provider_product_id',
@@ -34,6 +36,8 @@ class BillingProduct extends Model
         'shippable',
         'external_created_at',
         'external_updated_at',
+        'synced_at',
+        'last_sync_error',
     ];
 
     protected $casts = [
@@ -46,5 +50,11 @@ class BillingProduct extends Model
         'shippable'          => 'boolean',
         'external_created_at'=> 'datetime',
         'external_updated_at'=> 'datetime',
+        'synced_at'          => 'datetime',
     ];
+
+    public function prices()
+    {
+        return $this->hasMany(BillingPrice::class, 'product_uuid', 'uuid');
+    }
 }

@@ -27,13 +27,23 @@ class UpdatePaymentGatewayRequest extends FormRequest
             'uuid'                      => ['required', 'uuid'],
             'status'                    => ['required'],
             'sandbox'                   => ['nullable', 'string'],
-            'sandbox_secret_key'        => ['nullable', 'string'],
-            'sandbox_publishable_key'   => ['nullable', 'string'],
-            'live_mode_secret_key'      => ['nullable', 'string'],
-            'live_mode_publishable_key' => ['nullable', 'string'],
-            'webhook_secret'            => ['nullable', 'string'],
+            // Validate Stripe key prefixes only when a value is provided (blank = keep saved key).
+            'sandbox_secret_key'        => ['nullable', 'string', 'regex:/^(sk|rk)_test_[A-Za-z0-9]+$/'],
+            'sandbox_publishable_key'   => ['nullable', 'string', 'regex:/^pk_test_[A-Za-z0-9]+$/'],
+            'live_mode_secret_key'      => ['nullable', 'string', 'regex:/^(sk|rk)_live_[A-Za-z0-9]+$/'],
+            'live_mode_publishable_key' => ['nullable', 'string', 'regex:/^pk_live_[A-Za-z0-9]+$/'],
+            'webhook_secret'            => ['nullable', 'string', 'regex:/^whsec_[A-Za-z0-9]+$/'],
         ];
     }
 
-
+    public function messages(): array
+    {
+        return [
+            'sandbox_secret_key.regex'        => 'Sandbox secret key must start with sk_test_ (or rk_test_).',
+            'sandbox_publishable_key.regex'   => 'Sandbox publishable key must start with pk_test_.',
+            'live_mode_secret_key.regex'      => 'Live secret key must start with sk_live_ (or rk_live_).',
+            'live_mode_publishable_key.regex' => 'Live publishable key must start with pk_live_.',
+            'webhook_secret.regex'            => 'Webhook signing secret must start with whsec_.',
+        ];
+    }
 }

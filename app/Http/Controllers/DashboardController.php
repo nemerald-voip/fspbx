@@ -23,6 +23,8 @@ use App\Models\WhitelistedNumbers;
 use App\Services\CdrDataService;
 use Nwidart\Modules\Facades\Module;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Laravel\Horizon\Contracts\MasterSupervisorRepository;
 use App\Services\FreeswitchEslService;
 use Illuminate\Support\Facades\Auth;
@@ -216,6 +218,17 @@ class DashboardController extends Controller
 
         if (Module::has('ContactCenter') && Module::collections()->has('ContactCenter') && (userCheckPermission("contact_center_settings_edit") || userCheckPermission("contact_center_dashboard_view"))) {
             $counts['queues'] = CallCenterQueues::where('domain_uuid', $domain_uuid)->count();
+        }
+
+        if (
+            Module::has('Billing')
+            && Module::collections()->has('Billing')
+            && userCheckPermission('billing_view')
+        ) {
+            $counts['billing'] = DB::table('billing_quotes')
+                ->where('domain_uuid', $domain_uuid)
+                ->whereIn('status', ['draft', 'sent', 'viewed', 'accepted'])
+                ->count();
         }
 
         $eslService = new FreeswitchEslService();
@@ -519,6 +532,21 @@ class DashboardController extends Controller
             }
 
             $apps[] = $contact_center_app;
+        }
+
+        if (
+            Module::has('Billing')
+            && Module::collections()->has('Billing')
+            && userCheckPermission('billing_view')
+        ) {
+            $apps[] = [
+                'name' => 'Billing',
+                'href' => '/billing',
+                'icon' => 'SettingsApplications',
+                'slug' => 'billing',
+                'alt_href' => userCheckPermission('billing_settings_edit') ? '/billing/settings' : null,
+                'alt_link_label' => userCheckPermission('billing_settings_edit') ? 'Settings' : null,
+            ];
         }
 
 

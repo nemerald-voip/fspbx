@@ -1,6 +1,6 @@
 <template>
     <th :class="computedClass" :style="style" @click="handleSortClick">
-        <div class="flex items-center">
+        <div class="flex items-center" :class="justifyClass">
             <slot>{{ header }}</slot>
             <!-- Sorting icons -->
             <ChevronUpIcon v-if="isSorted && sortOrder === 'asc'" class="ml-2 h-5 w-5 text-indigo-500" />
@@ -45,6 +45,16 @@ const props = defineProps({
 const emit = defineEmits(['sort']);
 
 const isSorted = computed(() => props.field === props.sortedField);
+
+// Mirror the cell's text alignment onto the inner flex container so the header
+// label lines up with right/center-aligned body cells. Left-aligned headers keep
+// the default flex-start, so existing tables are unaffected.
+const justifyClass = computed(() => {
+    const cls = typeof props.class === 'string' ? props.class : Array.isArray(props.class) ? props.class.join(' ') : '';
+    if (cls.includes('text-right')) return 'justify-end';
+    if (cls.includes('text-center')) return 'justify-center';
+    return '';
+});
 
 const computedClass = computed(() => {
     let baseClass = props.class || ''; // Default class

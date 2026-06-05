@@ -52,6 +52,7 @@ class SystemSettingsController extends Controller
                     'payment_gateways' => route('system-settings.payment_gateways'),
                     'payment_gateway_update' => route('gateway.update'),
                     'payment_gateway_deactivate' => route('gateway.deactivate'),
+                    'payment_gateway_test' => route('gateway.test'),
                     'transcription_providers_route' => route('call-transcription.providers'),
                     'transcription_policy_route' => route('call-transcription.policy'),
                     'transcription_policy_store_route' => route('call-transcription.policy.store'),
