@@ -14,6 +14,7 @@ use App\Models\VoicemailDestinations;
 use App\Models\VoicemailGreetings;
 use App\Models\Voicemails;
 use App\Services\OpenAIService;
+use App\Services\Tts\TtsProviderRegistry;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Process;
@@ -699,6 +700,7 @@ class VoicemailController extends Controller
                 'voices' => $openAiService->getVoices(),
                 'default_voice' => isset($openAiService) && $openAiService ? $openAiService->getDefaultVoice() : null,
                 'speeds' => $openAiService->getSpeeds(),
+                'tts_voices_route' => route('tts.voices'),
                 'routes' => $routes,
                 'phone_call_instructions' => $phoneCallInstructions,
                 'phone_call_instructions_for_name' => $phoneCallInstructionsForName,
@@ -791,18 +793,21 @@ class VoicemailController extends Controller
         return $permissions;
     }
 
-    public function textToSpeech(Voicemails $voicemail, OpenAIService $openAIService, TextToSpeechRequest $request)
+    public function textToSpeech(Voicemails $voicemail, TtsProviderRegistry $registry, TextToSpeechRequest $request)
     {
         $this->authorizeVoicemailManagement($voicemail);
 
         $input = $request->input('input');
-        $model = $request->input('model');
-        $voice = $request->input('voice');
         $responseFormat = $request->input('response_format');
-        $speed = $request->input('speed');
 
         try {
-            $response = $openAIService->textToSpeech($model, $input, $voice, $responseFormat, $speed);
+            $provider = $registry->make($request->input('provider'));
+            $response = $provider->textToSpeech($input, [
+                'model'           => $request->input('model'),
+                'voice'           => $request->input('voice'),
+                'response_format' => $responseFormat,
+                'speed'           => $request->input('speed'),
+            ]);
 
             $domainName = session('domain_name');
 
@@ -845,18 +850,21 @@ class VoicemailController extends Controller
         }
     }
 
-    public function textToSpeechForName(Voicemails $voicemail, OpenAIService $openAIService, TextToSpeechRequest $request)
+    public function textToSpeechForName(Voicemails $voicemail, TtsProviderRegistry $registry, TextToSpeechRequest $request)
     {
         $this->authorizeVoicemailManagement($voicemail);
 
         $input = $request->input('input');
-        $model = $request->input('model');
-        $voice = $request->input('voice');
         $responseFormat = $request->input('response_format');
-        $speed = $request->input('speed');
 
         try {
-            $response = $openAIService->textToSpeech($model, $input, $voice, $responseFormat, $speed);
+            $provider = $registry->make($request->input('provider'));
+            $response = $provider->textToSpeech($input, [
+                'model'           => $request->input('model'),
+                'voice'           => $request->input('voice'),
+                'response_format' => $responseFormat,
+                'speed'           => $request->input('speed'),
+            ]);
 
             $domainName = session('domain_name');
 

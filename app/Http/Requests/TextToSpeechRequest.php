@@ -26,10 +26,11 @@ class TextToSpeechRequest extends FormRequest
     {
         return [
             'input' => 'required|string|max:1000',
+            'provider' => 'nullable|string|in:openai,elevenlabs',
             'model' => 'nullable|string',
-            'voice' => 'string',
+            'voice' => 'nullable|string',
             'response_format' => 'nullable|string',
-            'speed' => 'string',
+            'speed' => 'nullable|string',
         ];
     }
 
