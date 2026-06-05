@@ -37,7 +37,28 @@ local PUSH_WAKE_TIMEOUT_MS = 15000
 local PUSH_WAKE_POLL_MS = 500
 
 local json = require "resources.functions.lunajson"
+local Database = require "resources.functions.database"
 local api = freeswitch.API()
+
+-- Returns true if v_voicemails.voicemail_enabled='true' for this mailbox, or
+-- nil on lookup failure / no row (caller must default safely). Used by the
+-- goto_voicemail() fallback to avoid playing mod_voicemail's "not enabled"
+-- prompt to a caller whose target extension has deliberately opted out.
+local function voicemail_is_enabled(destination_number, domain_name)
+    local dbh = Database.new('system')
+    if not (dbh and dbh:connected()) then return nil end
+    local val = dbh:first_value([[
+        select v.voicemail_enabled
+        from v_voicemails v
+        join v_domains d using(domain_uuid)
+        where d.domain_name = :domain_name
+          and v.voicemail_id = :vmid
+        limit 1
+    ]], {domain_name = domain_name, vmid = destination_number})
+    dbh:release()
+    if val == nil or val == "" then return nil end
+    return val == "true"
+end
 
 local WEBHOOK_URL = api:executeString("global_getvar push_webhook_url")
 if not WEBHOOK_URL or WEBHOOK_URL == "" then
@@ -173,6 +194,20 @@ session:preAnswer()
 -- ring. Handling voicemail here keeps the wake window and the no-answer
 -- treatment in one place.
 local function goto_voicemail(reason)
+    -- Respect v_voicemails.voicemail_enabled. Without this check we'd hand
+    -- the call to mod_voicemail even when the user has switched voicemail
+    -- off; mod_voicemail then plays a "not enabled for this user" prompt
+    -- before hanging up, which exposes a voicemail flow the user
+    -- deliberately opted out of. Treat nil (DB error / no row) as enabled
+    -- so a transient lookup failure still records to voicemail rather
+    -- than silently dropping the caller.
+    local vm_enabled = voicemail_is_enabled(destination_number, domain_name)
+    if vm_enabled == false then
+        log("INFO", string.format("%s for %s — voicemail disabled, hanging up NO_ANSWER", reason, aor))
+        if session:ready() then session:hangup("NO_ANSWER") end
+        return
+    end
+
     log("INFO", string.format("%s for %s — going to voicemail", reason, aor))
     if not session:ready() then return end
     if session:getVariable("call_answered") ~= "true" then
