@@ -269,15 +269,15 @@
                                             container: 4,
                                         },
                                     }" :conditions="[
-    [
-        'holiday_type',
-        'in',
-        [
-            'single_date',
-            'date_range',
-        ],
-    ],
-]" />
+                                        [
+                                            'holiday_type',
+                                            'in',
+                                            [
+                                                'single_date',
+                                                'date_range',
+                                            ],
+                                        ],
+                                    ]" />
                                 <DateElement name="start_time" label="Start Time" :date="false" :time="true"
                                     :hour24="false" value-format="HH:mm" :columns="{
                                         default: {
@@ -874,15 +874,7 @@ const ukHolidays = [
         value: { mon: "1", wday: "", mday: "1", mweek: "" }
     },
     {
-        label: "Good Friday (Friday before Easter Sunday)",
-        value: { mon: "4", wday: "6", mday: "2-8", mweek: "" }
-    },
-    {
-        label: "Easter Monday (Monday after Easter Sunday)",
-        value: { mon: "4", wday: "2", mday: "1-7", mweek: "" }
-    },
-    {
-        label: "May Day (First Monday in May )",
+        label: "May Day (First Monday in May)",
         value: { mon: "5", wday: "2", mday: "1-7", mweek: "" }
     },
     {
@@ -912,7 +904,7 @@ const ukHolidays = [
     },
     {
         label: "St. Andrew's Day (November 30)",
-        value: { mon: "3", wday: "", mday: "17", mweek: "" }
+        value: { mon: "11", wday: "", mday: "30", mweek: "" }
     },
     {
         label: "Mother's Day (Second Sunday in May)",
