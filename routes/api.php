@@ -712,7 +712,10 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 // Integration endpoints for external services that authenticate with a
 // Sanctum personal access token. The api.token.auth middleware rejects
 // cookie/session requests so these routes are strictly machine-to-machine.
-Route::group(['middleware' => ['auth:sanctum', 'api.token.auth']], function () {
+// The 'integrations' throttle limiter caps these routes so a leaked token
+// can't be used as an enumeration oracle (404 vs 200) against the
+// extension/domain space.
+Route::group(['middleware' => ['auth:sanctum', 'api.token.auth', 'throttle:integrations']], function () {
     Route::get('/integrations/extensions/lookup', [ExtensionsController::class, 'lookupByNumber'])
         ->name('integrations.extensions.lookup');
 });

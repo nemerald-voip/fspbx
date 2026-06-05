@@ -2368,6 +2368,21 @@ public function store(StoreExtensionRequest $request)
             return response()->json(['success' => false, 'message' => 'Domain not found'], 404);
         }
 
+        // Enforce tenant scope. A personal access token with a non-null
+        // domain_uuid is a tenant token and may only resolve extensions in
+        // its own domain. A null domain_uuid is a global/admin token and may
+        // resolve any domain. This prevents cross-tenant info disclosure
+        // (any valid Sanctum token resolving any extension in any domain).
+        $token = $request->user()?->currentAccessToken();
+        $tokenDomain = $token && $token->domain_uuid ? (string) $token->domain_uuid : null;
+
+        if ($tokenDomain !== null && $tokenDomain !== (string) $domain->domain_uuid) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This token is not permitted to access that domain',
+            ], 403);
+        }
+
         $extension = Extensions::where('domain_uuid', $domain->domain_uuid)
             ->where('extension', $request->input('extension'))
             ->first();
