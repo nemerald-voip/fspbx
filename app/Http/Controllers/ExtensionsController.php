@@ -2350,4 +2350,50 @@ public function store(StoreExtensionRequest $request)
             ->where('domain_uuid', session('domain_uuid'))
             ->exists();
     }
+
+    /**
+     * Resolve an extension number + domain name to their fspbx UUIDs.
+     * Used by external machine-to-machine integrations that need to
+     * round-trip extension/domain UUIDs without manual entry.
+     */
+    public function lookupByNumber(Request $request)
+    {
+        $request->validate([
+            'extension' => 'required|string',
+            'domain' => 'required|string',
+        ]);
+
+        $domain = \App\Models\Domain::where('domain_name', $request->input('domain'))->first();
+        if (!$domain) {
+            return response()->json(['success' => false, 'message' => 'Domain not found'], 404);
+        }
+
+        // Enforce tenant scope. A personal access token with a non-null
+        // domain_uuid is a tenant token and may only resolve extensions in
+        // its own domain. A null domain_uuid is a global/admin token and may
+        // resolve any domain. This prevents cross-tenant info disclosure
+        // (any valid Sanctum token resolving any extension in any domain).
+        $token = $request->user()?->currentAccessToken();
+        $tokenDomain = $token && $token->domain_uuid ? (string) $token->domain_uuid : null;
+
+        if ($tokenDomain !== null && $tokenDomain !== (string) $domain->domain_uuid) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This token is not permitted to access that domain',
+            ], 403);
+        }
+
+        $extension = Extensions::where('domain_uuid', $domain->domain_uuid)
+            ->where('extension', $request->input('extension'))
+            ->first();
+        if (!$extension) {
+            return response()->json(['success' => false, 'message' => 'Extension not found'], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'extension_uuid' => $extension->extension_uuid,
+            'domain_uuid' => $domain->domain_uuid,
+        ]);
+    }
 }
