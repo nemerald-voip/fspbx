@@ -21,7 +21,10 @@
 --      while we wait for the phone to wake and re-register.
 --   6. Poll sofia_contact every PUSH_WAKE_POLL_MS for up to PUSH_WAKE_TIMEOUT_MS;
 --      return as soon as a contact appears (local_extension bridge will
---      succeed), or at timeout (falls through to forward_user_not_registered).
+--      succeed). At timeout, drop the caller into the extension's voicemail
+--      directly rather than falling through to local_extension — the leg is
+--      already preAnswered, so a fall-through would ring the extension a
+--      second time before reaching voicemail (a perceptible double-ring).
 --
 -- Configurable via FreeSWITCH global vars (set in vars.xml):
 --   ${push_webhook_url}    full URL of the Laravel /webhook/freeswitch endpoint
@@ -161,8 +164,29 @@ end
 if not session:ready() then return end
 session:preAnswer()
 
--- Poll for any contact reappearing — local_extension downstream will bridge
--- to whichever contacts mod_sofia has at that point.
+-- Drop the caller into the user's voicemail box. We do this directly rather
+-- than returning and letting the push_wake_hook extension's `continue="true"`
+-- fall through to local_extension: this script has already preAnswered the
+-- inbound leg, so a fall-through would have local_extension ring the
+-- extension a second time (the caller hears ringback again) before its own
+-- no-answer handling eventually reaches voicemail — a perceptible double
+-- ring. Handling voicemail here keeps the wake window and the no-answer
+-- treatment in one place.
+local function goto_voicemail(reason)
+    log("INFO", string.format("%s for %s — going to voicemail", reason, aor))
+    if not session:ready() then return end
+    if session:getVariable("call_answered") ~= "true" then
+        session:answer()
+    end
+    session:execute("set", "voicemail_authorized=true")
+    session:execute("voicemail", "default " .. domain_name .. " " .. destination_number)
+    if session:ready() then
+        session:hangup("NORMAL_CLEARING")
+    end
+end
+
+-- Poll for the woken app re-registering. As soon as a contact appears we
+-- return and local_extension downstream bridges to it.
 local deadline_attempts = math.floor(PUSH_WAKE_TIMEOUT_MS / PUSH_WAKE_POLL_MS)
 local attempt = 0
 while attempt < deadline_attempts do
@@ -176,4 +200,6 @@ while attempt < deadline_attempts do
     attempt = attempt + 1
 end
 
-log("NOTICE", string.format("timeout waiting for re-register on %s", aor))
+-- Wake window expired with no re-registration. Go straight to voicemail
+-- rather than falling through to local_extension (see goto_voicemail above).
+goto_voicemail("timeout waiting for re-register")
