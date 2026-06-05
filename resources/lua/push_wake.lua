@@ -28,7 +28,7 @@
 --
 -- Configurable via FreeSWITCH global vars (set in vars.xml):
 --   ${push_webhook_url}    full URL of the Laravel /webhook/freeswitch endpoint
---   ${push_webhook_secret} HMAC-SHA256 secret matching APP_FREESWITCH_WEBHOOK_SECRET
+--   ${push_webhook_secret} HMAC-SHA256 secret matching FREESWITCH_WEBHOOK_SECRET
 --
 -- Defaults below match the conventional install (Laravel on the same host).
 

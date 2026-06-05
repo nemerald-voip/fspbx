@@ -665,7 +665,7 @@ return [
              * We expect that every webhook call will be signed using a secret. This secret
              * is used to verify that the payload has not been tampered with.
              */
-            'signing_secret' => 'tH0FXyxfG6Kh36*VHYdE4G!gwfE3Pf',
+            'signing_secret' => env('FREESWITCH_WEBHOOK_SECRET', ''),
 
             /*
              * The name of the header containing the signature.
