@@ -835,6 +835,14 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'grandstream_time_zone',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "auto",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Grandstream time zone",
+            ],
+            [
+                'default_setting_category'      => 'provision',
                 'default_setting_subcategory'   => 'drop_self_extension_keys',
                 'default_setting_name'          => 'boolean',
                 'default_setting_value'         => "true",
