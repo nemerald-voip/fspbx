@@ -1697,6 +1697,7 @@ if (!function_exists('buildDestinationAction')) {
                 return match ($t) {
                     'line' => '15',
                     'speed_dial' => '13',
+                    'dtmf' => '11',
                     'blf', 'check_voicemail' => '16',
                     'park' => '16',
                     '' => '0',
@@ -1732,6 +1733,7 @@ if (!function_exists('buildDestinationAction')) {
                 return match ($t) {
                     'line' => '1',
                     'speed_dial' => 'f',
+                    'dtmf' => 'dtmf',
                     'park' => 'c',
                     'blf', 'check_voicemail' => 'bc',
                     '' => '3',
@@ -1764,6 +1766,7 @@ if (!function_exists('buildDestinationAction')) {
             if ($v === 'grandstream') {
                 return match ($t) {
                     'speed_dial'      => 'speed dial',
+                    'dtmf'            => 'dial dtmf',
                     'check_voicemail' => 'blf',
                     'park'            => 'monitored call park',
                     '' => 'none',
@@ -1908,7 +1911,7 @@ if (!function_exists('buildDestinationAction')) {
                         $row['device_key_label'] = $device_lines[$acct]['user_id'];
                     }
                 }
-            } elseif ($rawType === 'speed_dial') {
+            } elseif ($rawType === 'speed_dial' || $rawType === 'dtmf') {
                 $row['device_key_value'] = ($value !== null ? (string)$value : '');
                 $row['device_key_label'] = (strlen((string)$label) ? (string)$label : '');
             } elseif ($rawType === 'blf') {

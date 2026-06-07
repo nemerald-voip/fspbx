@@ -202,7 +202,10 @@ const keyTypes = [
     { value: "speed_dial", name: "Speed Dial" },
     { value: "check_voicemail", name: "Check Voicemail" },
     { value: "park", name: "Park & Retrieve" },
+    { value: "dtmf", name: "DTMF" },
 ];
+
+const keyTypesWithSelect = ["line", "check_voicemail", "blf", "speed_dial", "park"];
 
 const defaultValues = computed(() => ({
     name: props.options?.item?.name ?? null,
@@ -220,11 +223,19 @@ const filterKeysByArea = (keys = [], area = "main") => {
 };
 
 const normalizeKeysForForm = (keys = []) => {
-    const keyTypesWithSelect = ["line", "check_voicemail", "blf", "speed_dial", "park"];
-
     return keys.map((key) => {
         const keyType = key?.key_type ?? "";
         const keyValue = key?.key_value ?? null;
+        let label = null;
+
+        if (keyType === "blf" || keyType === "speed_dial") {
+            const match = props.options?.extensions?.find((extension) =>
+                String(extension.value ?? extension.extension) === String(keyValue)
+            );
+
+            label = match ? nameOnlyFromOption(match) : keyValue;
+        }
+
         const row = {
             ...key,
             key_uuid: key?.device_key_template_key_uuid,
@@ -232,7 +243,7 @@ const normalizeKeysForForm = (keys = []) => {
             key_value: keyValue,
             key_value_select: null,
             key_value_text: null,
-            _generated_label: null,
+            _generated_label: label ?? null,
         };
 
         if (!keyType || keyValue == null || keyValue === "") return row;
@@ -345,7 +356,7 @@ const submitForm = async (FormData, form) => {
         ...(data.keys ?? []).map((key) => ({ ...key, key_area: "main" })),
         ...(data.multi_purpose_keys ?? []).map((key) => ({ ...key, key_area: "multi_purpose" })),
         ...(data.expansion_keys ?? []).map((key) => ({ ...key, key_area: "expansion" })),
-    ];
+    ].map(normalizeKeyForSubmit);
 
     delete data.multi_purpose_keys;
     delete data.expansion_keys;
@@ -355,6 +366,18 @@ const submitForm = async (FormData, form) => {
     }
 
     return await form.$vueform.services.axios.put(props.options.routes.update_route, data);
+};
+
+const normalizeKeyForSubmit = (key) => {
+    const keyType = key?.key_type ?? "";
+    const usesSelect = keyTypesWithSelect.includes(keyType);
+
+    return {
+        ...key,
+        key_value: usesSelect
+            ? (key?.key_value_select ?? key?.key_value ?? null)
+            : (key?.key_value_text ?? key?.key_value ?? null),
+    };
 };
 
 function clearErrorsRecursive(el$) {

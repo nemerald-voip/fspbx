@@ -1564,6 +1564,7 @@ class ProvisioningController extends Controller
                     'line' => '15',
                     'blf' => '16',
                     'speed_dial' => '13',
+                    'dtmf' => '11',
                     '' => '0',
                     'park' => '16',
                     'check_voicemail' => '16',
@@ -1575,6 +1576,7 @@ class ProvisioningController extends Controller
                 $out['type'] = match ($t) {
                     'sharedline' => 'sharedline',
                     'speed_dial' => 'speed dial',
+                    'dtmf' => 'dial dtmf',
                     '' => 'none',
                     'park' => 'monitored call park',
                     'check_voicemail' => 'blf',

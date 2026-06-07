@@ -90,6 +90,35 @@ class StoreDeviceRequest extends FormRequest
             'device_lines.*.register_expires' => ['nullable'],
             'device_lines.*.shared_line' => ['nullable'],
             'device_lines.*.device_line_uuid' => ['nullable'],
+
+            'device_keys' => [
+                'nullable',
+                'array',
+            ],
+            'device_keys.*.key_index' => [
+                'required',
+                'integer',
+            ],
+            'device_keys.*.key_area' => [
+                'nullable',
+                'string',
+                Rule::in(['main', 'multi_purpose', 'expansion']),
+            ],
+            'device_keys.*.key_type' => [
+                'nullable',
+                'string',
+                'max:50',
+            ],
+            'device_keys.*.key_value' => [
+                'nullable',
+                'string',
+                'max:64',
+            ],
+            'device_keys.*.key_label' => [
+                'nullable',
+                'string',
+                'max:80',
+            ],
             
             'device_provisioning' => [
                 'boolean'
