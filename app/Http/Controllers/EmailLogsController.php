@@ -7,6 +7,7 @@ use App\Jobs\RetryLoggedEmail;
 use App\Models\EmailLog;
 use App\Models\Extensions;
 use App\Models\HotelRoom;
+use App\Services\EmailProviderDetailsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -50,6 +51,9 @@ class EmailLogsController extends Controller
                 'bcc',
                 'subject',
                 'status',
+                'provider',
+                'provider_message_id',
+                'provider_message_stream',
                 'created_at',
                 'sent_debug_info'
             ])
@@ -97,6 +101,31 @@ class EmailLogsController extends Controller
 
 
         return response()->json($data);
+    }
+
+    public function deliveryDetails(string $uuid, EmailProviderDetailsService $providerDetails)
+    {
+        if (! userCheckPermission('logs_list_view')) {
+            return response()->json([
+                'messages' => ['error' => ['Permission denied.']]
+            ], 403);
+        }
+
+        $log = EmailLog::query()
+            ->where('uuid', $uuid)
+            ->where(function ($query) {
+                $query->whereIn('domain_uuid', $this->allowedDomainUuids())
+                    ->orWhereNull('domain_uuid');
+            })
+            ->first();
+
+        if (! $log) {
+            return response()->json([
+                'messages' => ['error' => ['Email log not found.']]
+            ], 404);
+        }
+
+        return response()->json($providerDetails->getDetails($log));
     }
 
 
