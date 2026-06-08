@@ -221,7 +221,7 @@ class AccessControlController extends Controller
             DB::beginTransaction();
 
             $accessControls->each(function (AccessControl $accessControl) use ($service) {
-                $service->removeGatewayProviderIpsForListName((string) $accessControl->access_control_name);
+                $service->preserveProviderIpsForList($accessControl);
                 $accessControl->nodes()->delete();
                 $accessControl->delete();
             });
