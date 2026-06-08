@@ -90,8 +90,6 @@ class HandleInertiaRequests extends Middleware
         $permissions['ring_group_update'] = userCheckPermission('ring_group_edit');
         $permissions['ring_group_destroy'] = userCheckPermission('ring_group_delete');
 
-        $permissions['registrations_view_global'] = userCheckPermission('registration_all');
-
         $permissions['contact_create'] = userCheckPermission('contact_add');
         $permissions['contact_edit'] = userCheckPermission('contact_edit');
         $permissions['contact_delete'] = userCheckPermission('contact_delete');

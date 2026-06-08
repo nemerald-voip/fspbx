@@ -421,9 +421,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/call-routing-options', [CallRoutingOptionsController::class, 'getRoutingOptions'])->name('routing.options');
 
     // Registrations
-    Route::resource('registrations', RegistrationsController::class);
-    Route::post('/registrations/select-all', [RegistrationsController::class, 'selectAll'])->name('registrations.select.all');
-    Route::post('/registrations/action', [RegistrationsController::class, 'handleAction'])->name('registrations.action');
+    Route::get('registrations', [RegistrationsController::class, 'index'])->name('registrations.index');
 
     // Sansay Registrations
     Route::resource('sansay/registrations', SansayRegistrationsController::class)->names([
