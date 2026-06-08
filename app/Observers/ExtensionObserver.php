@@ -6,6 +6,7 @@ use App\Events\ExtensionDeleted;
 use App\Events\ExtensionUpdated;
 use App\Jobs\FireFollowMePresenceJob;
 use App\Jobs\SendSystemStatusNotificationToSlackJob;
+use App\Models\DeviceLines;
 use App\Models\Extensions;
 use Illuminate\Support\Arr;
 
@@ -57,6 +58,26 @@ class ExtensionObserver
      */
     public function updated(Extensions $extension)
     {
+        if ($extension->wasChanged('extension') || $extension->wasChanged('password')) {
+            $oldExtension = (string) $extension->getOriginal('extension');
+
+            $deviceLineData = [
+                'password' => $extension->password,
+            ];
+
+            if ($extension->wasChanged('extension')) {
+                $deviceLineData['auth_id'] = $extension->extension;
+                $deviceLineData['user_id'] = $extension->extension;
+            }
+
+            DeviceLines::where('domain_uuid', $extension->domain_uuid)
+                ->where('auth_id', $oldExtension)
+                ->where(function ($query) {
+                    $query->whereNull('external_line')
+                        ->orWhere('external_line', '!=', 't');
+                })
+                ->update($deviceLineData);
+        }
 
         // Get the attributes from the model
         $extensionAttributes = $extension->only(['extension_uuid', 'domain_uuid', 'extension', 'effective_caller_id_name']);
