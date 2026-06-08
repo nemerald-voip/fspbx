@@ -1,4 +1,4 @@
-{{-- version: 1.0.6 --}}
+{{-- version: 1.0.7 --}}
 
 @switch($flavor)
 
@@ -1594,6 +1594,10 @@
         @if (array_key_exists('grandstream_wallpaper_url', $settings))
             <item name="lcd.wallpaper.serverPath">{{ $settings['grandstream_wallpaper_url'] }}</item>
         @endif
+
+        <!-- # Screensaver. No, Yes,  OnIfNoVPKIsActive. -->
+		<!-- Pvalue P2918 -->
+		<item name="lcd.screensaver.enable">No</item>
         
         <!-- ############################################################################## -->
 		<!-- ##  Settings/Preferences / LED Control -->
