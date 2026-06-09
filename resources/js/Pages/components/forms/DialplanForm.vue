@@ -502,8 +502,20 @@ const isVisible = (element) => {
     return Boolean(element.offsetParent || element.getClientRects().length);
 };
 
+const shouldKeepEnterInField = (target) => {
+    if (!(target instanceof Element)) {
+        return false;
+    }
+
+    return Boolean(target.closest("textarea, [contenteditable='true'], .ace_editor, .ace_text-input"));
+};
+
 const handleEnterSubmit = (event) => {
     if (event.defaultPrevented || event.isComposing || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) {
+        return;
+    }
+
+    if (shouldKeepEnterInField(event.target)) {
         return;
     }
 
@@ -791,4 +803,4 @@ const handleError = (error, details, form$) => {
 
     form$.messageBag.append("Could not submit form");
 };
-</script>
+</script>h
