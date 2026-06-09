@@ -1266,6 +1266,10 @@ public function store(StoreExtensionRequest $request)
                 $data['effective_caller_id_number'] = $extension->extension;
             }
 
+            if (!userCheckPermission('extension_user_context')) {
+                unset($data['user_context']);
+            }
+
             // Build Forwarding destinations
             $forwardTypes = ['forward_all', 'forward_busy', 'forward_no_answer', 'forward_user_not_registered'];
             foreach ($forwardTypes as $type) {
@@ -2304,6 +2308,7 @@ public function store(StoreExtensionRequest $request)
         $permissions['extension_limit'] = userCheckPermission('extension_limit');
         $permissions['extension_max_registrations'] = userCheckPermission('extension_max_registrations');
         $permissions['extension_toll'] = userCheckPermission('extension_toll');
+        $permissions['extension_user_context'] = userCheckPermission('extension_user_context');
 
         $permissions['manage_external_caller_id_number'] = userCheckPermission('outbound_caller_id_number');
         $permissions['manage_external_caller_id_name'] = userCheckPermission('outbound_caller_id_name');

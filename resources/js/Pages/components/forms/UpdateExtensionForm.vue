@@ -1796,7 +1796,7 @@
                                                     sm: {
                                                         container: 6,
                                                     },
-                                                }" />
+                                                }" :conditions="[() => options.permissions.extension_user_context]" />
 
                                                 <TextElement name="accountcode" label="Account Code" :columns="{
                                                     sm: {
