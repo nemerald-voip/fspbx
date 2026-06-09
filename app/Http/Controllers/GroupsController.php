@@ -6,22 +6,22 @@ use Inertia\Inertia;
 use App\Models\Domain;
 use App\Models\Groups;
 use App\Models\GroupPermissions;
+use App\Models\UserGroup;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Schema;
 use App\Http\Requests\CreatePermissionGroupRequest;
 use App\Http\Requests\UpdatePermissionGroupRequest;
+use Spatie\QueryBuilder\AllowedFilter;
+use Spatie\QueryBuilder\QueryBuilder;
 
 class GroupsController extends Controller
 {
 
     public $model;
-    public $filters = [];
-    public $sortField;
-    public $sortOrder;
     protected $viewName = 'Groups';
-    protected $searchable = ['group_name', 'group_description'];
 
     public function __construct()
     {
@@ -43,9 +43,6 @@ class GroupsController extends Controller
         return Inertia::render(
             $this->viewName,
             [
-                'data' => function () {
-                    return $this->getData();
-                },
                 'pagination' => [
                     'per_page' => fspbx_pagination_per_page(),
                     'per_page_options' => fspbx_pagination_options(),
@@ -53,10 +50,22 @@ class GroupsController extends Controller
 
                 'routes' => [
                     'current_page' => route('groups.index'),
+                    'data_route' => route('groups.data'),
                     'item_options' => route('groups.item.options'),
                     'bulk_delete' => route('groups.bulk.delete'),
+                    'clone' => route('groups.clone'),
                     'select_all' => route('groups.select.all'),
-                ]
+                    'members_data' => route('groups.members.data', ['group' => '__group_uuid__']),
+                    'members_store' => route('groups.members.store', ['group' => '__group_uuid__']),
+                    'members_delete' => route('groups.members.delete', ['group' => '__group_uuid__']),
+                ],
+                'permissions' => [
+                    'create' => userCheckPermission('group_add'),
+                    'update' => userCheckPermission('group_edit'),
+                    'destroy' => userCheckPermission('group_delete'),
+                    'members' => userCheckPermission('group_member_view'),
+                    'domain_groups_view' => userCheckPermission('domain_groups_list_view'),
+                ],
             ]
         );
     }
@@ -80,10 +89,12 @@ class GroupsController extends Controller
             ],
             'routes' => [
                 'groups' => route('groups.index'),
-                'members' => '/core/groups/group_members.php?group_uuid=' . $group->group_uuid,
                 'data_route' => route('groups.permissions.data', ['group' => $group]),
                 'toggle' => route('groups.permissions.toggle', ['group' => $group]),
                 'reload' => route('groups.permissions.reload', ['group' => $group]),
+                'members_data' => route('groups.members.data', ['group' => '__group_uuid__']),
+                'members_store' => route('groups.members.store', ['group' => '__group_uuid__']),
+                'members_delete' => route('groups.members.delete', ['group' => '__group_uuid__']),
             ],
             'permissions' => [
                 'assign' => userCheckPermission('group_permission_add') || userCheckPermission('group_permission_edit'),
@@ -269,107 +280,178 @@ class GroupsController extends Controller
         return response()->json(['messages' => ['success' => ['Permissions reloaded.']]]);
     }
 
-    /**
-     *  Get data
-     */
-    public function getData($paginate = null)
+    public function membersData(Groups $group): JsonResponse
     {
-        $paginate ??= fspbx_pagination_per_page();
-
-        // Check if search parameter is present and not empty
-        if (!empty(request('filterData.search'))) {
-            $this->filters['search'] = request('filterData.search');
+        if (!userCheckPermission('group_member_view')) {
+            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
         }
 
-        // Add sorting criteria
-        $this->sortField = request()->get('sortField', 'group_name');
-        $this->sortOrder = request()->get('sortOrder', 'asc');
-
-        $data = $this->builder($this->filters);
-
-        // Apply pagination if requested
-        if ($paginate) {
-            $data = $data->paginate($paginate);
-        } else {
-            $data = $data->get(); // This will return a collection
+        if (!$this->canAccessGroup($group)) {
+            return response()->json(['messages' => ['error' => ['Group not found.']]], 404);
         }
 
-        // logger($data);
+        $members = $this->groupMembersQuery($group)
+            ->get()
+            ->map(fn ($member) => [
+                'user_group_uuid' => $member->user_group_uuid,
+                'user_uuid' => $member->user_uuid,
+                'username' => $member->username,
+                'user_email' => $member->user_email,
+                'domain_uuid' => $member->domain_uuid,
+                'domain_name' => $member->domain_name,
+            ])
+            ->values();
 
-        return $data;
+        return response()->json([
+            'group' => [
+                'group_uuid' => $group->group_uuid,
+                'group_name' => $group->group_name,
+                'group_description' => $group->group_description,
+            ],
+            'members' => $members,
+            'available_users' => $this->availableUsersForGroup($group),
+            'permissions' => [
+                'add' => userCheckPermission('group_member_add'),
+                'delete' => userCheckPermission('group_member_delete'),
+                'show_domain' => userCheckPermission('user_all'),
+            ],
+        ]);
+    }
+
+    public function addMember(Request $request, Groups $group): JsonResponse
+    {
+        if (!userCheckPermission('group_member_add')) {
+            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+        }
+
+        if (!$this->canAccessGroup($group)) {
+            return response()->json(['messages' => ['error' => ['Group not found.']]], 404);
+        }
+
+        $validated = $request->validate([
+            'user_uuid' => ['required', 'uuid'],
+        ]);
+
+        $memberDomainUuid = $this->memberDomainUuid($group);
+        $user = DB::table('v_users')
+            ->where('user_uuid', $validated['user_uuid'])
+            ->where('domain_uuid', $memberDomainUuid)
+            ->first(['user_uuid']);
+
+        if (!$user) {
+            return response()->json(['messages' => ['error' => ['User not found.']]], 404);
+        }
+
+        $exists = UserGroup::query()
+            ->where('group_uuid', $group->group_uuid)
+            ->where('user_uuid', $validated['user_uuid'])
+            ->where('domain_uuid', $memberDomainUuid)
+            ->exists();
+
+        if ($exists) {
+            return response()->json(['messages' => ['error' => ['User is already a member.']]], 422);
+        }
+
+        UserGroup::create([
+            'user_group_uuid' => (string) Str::uuid(),
+            'domain_uuid' => $memberDomainUuid,
+            'group_uuid' => $group->group_uuid,
+            'group_name' => $group->group_name,
+            'user_uuid' => $validated['user_uuid'],
+        ]);
+
+        return response()->json([
+            'messages' => ['success' => ['Member added.']],
+            'member_count' => $this->groupMemberCount($group),
+        ], 201);
+    }
+
+    public function deleteMembers(Request $request, Groups $group): JsonResponse
+    {
+        if (!userCheckPermission('group_member_delete')) {
+            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+        }
+
+        if (!$this->canAccessGroup($group)) {
+            return response()->json(['messages' => ['error' => ['Group not found.']]], 404);
+        }
+
+        $validated = $request->validate([
+            'items' => ['required', 'array', 'min:1'],
+            'items.*' => ['required', 'uuid'],
+        ]);
+
+        $deleted = UserGroup::query()
+            ->where('group_uuid', $group->group_uuid)
+            ->whereIn('user_group_uuid', $validated['items'])
+            ->when($group->domain_uuid, fn ($query) => $query->where('domain_uuid', $group->domain_uuid))
+            ->when(!userCheckPermission('user_all'), fn ($query) => $query->where('domain_uuid', session('domain_uuid')))
+            ->delete();
+
+        return response()->json([
+            'messages' => ['success' => ["{$deleted} member(s) removed."]],
+            'member_count' => $this->groupMemberCount($group),
+        ]);
     }
 
     /**
-     * @param  array  $filters
-     * @return Builder
+     *  Get data
      */
-    public function builder(array $filters = [])
+    public function getData(Request $request)
     {
-        $data =  $this->model::query();
-        $domainUuid = session('domain_uuid');
-        $data = $data
-            ->where($this->model->getTable() . '.domain_uuid', $domainUuid)
-            ->orWhereNull($this->model->getTable() . '.domain_uuid');
-        // $data->with(['destinations' => function ($query) {
-        //     $query->select('ring_group_destination_uuid', 'ring_group_uuid', 'destination_number');
-        // }]);
+        return $this->scopedGroups($request)
+            ->select([
+                'group_uuid',
+                'domain_uuid',
+                'group_name',
+                'group_level',
+                'group_description',
+            ])
+            ->withCount([
+                'permissions',
+                'user_groups' => function ($query) {
+                    if (!userCheckPermission('user_all')) {
+                        $query->where('domain_uuid', session('domain_uuid'));
+                    }
+                },
+            ])
+            ->allowedSorts([
+                'group_name',
+                'group_level',
+                'group_description',
+                'permissions_count',
+                'user_groups_count',
+            ])
+            ->defaultSort('group_name')
+            ->paginate(fspbx_pagination_per_page($request));
+    }
 
-        $data->select(
-            'group_uuid',
-            'group_name',
-            'group_protected',
-            'group_level',
-            'group_description'
-        );
+    private function scopedGroups(Request $request): QueryBuilder
+    {
+        return QueryBuilder::for(Groups::class, $request)
+            ->where(function ($query) {
+                $query->where('domain_uuid', session('domain_uuid'))
+                    ->orWhereNull('domain_uuid');
+            })
+            ->allowedFilters([
+                AllowedFilter::callback('search', function ($query, $value) {
+                    $needle = trim((string) $value);
 
-        $data->withCount(['permissions']);
-        $data->withCount(['user_groups']);
+                    if ($needle === '') {
+                        return;
+                    }
 
-        if (is_array($filters)) {
-            foreach ($filters as $field => $value) {
-                if (method_exists($this, $method = "filter" . ucfirst($field))) {
-                    $this->$method($data, $value);
-                }
-            }
-        }
-
-        // Apply sorting
-        $data->orderBy($this->sortField, $this->sortOrder);
-
-        return $data;
+                    $query->where(function ($query) use ($needle) {
+                        $query->where('group_name', 'ilike', "%{$needle}%")
+                            ->orWhere('group_description', 'ilike', "%{$needle}%");
+                    });
+                }),
+            ]);
     }
 
     private function canAccessGroup(Groups $group): bool
     {
         return $group->domain_uuid === session('domain_uuid') || $group->domain_uuid === null;
-    }
-
-
-    /**
-     * @param $query
-     * @param $value
-     * @return void
-     */
-    protected function filterSearch($query, $value)
-    {
-        $searchable = $this->searchable;
-
-        // Case-insensitive partial string search in the specified fields
-        $query->where(function ($query) use ($value, $searchable) {
-            foreach ($searchable as $field) {
-                if (strpos($field, '.') !== false) {
-                    // Nested field (e.g., 'extension.name_formatted')
-                    [$relation, $nestedField] = explode('.', $field, 2);
-
-                    $query->orWhereHas($relation, function ($query) use ($nestedField, $value) {
-                        $query->where($nestedField, 'ilike', '%' . $value . '%');
-                    });
-                } else {
-                    // Direct field
-                    $query->orWhere($field, 'ilike', '%' . $value . '%');
-                }
-            }
-        });
     }
 
 
@@ -472,6 +554,7 @@ class GroupsController extends Controller
             $groupManager = Groups::create(array_merge($validated, [
                 'domain_uuid' => session('domain_uuid'),
                 'group_uuid'  => Str::uuid(),
+                'group_protected' => 'false',
             ]));
 
             DB::commit();
@@ -547,13 +630,22 @@ class GroupsController extends Controller
             ], 403);
         }
 
+        $validated = $request->validate([
+            'items' => ['required', 'array'],
+            'items.*' => ['required', 'uuid'],
+        ]);
+
         try {
             DB::beginTransaction();
 
-            $uuids = $request->input('items');
-
             // delete all matching groups in one query
-            Groups::whereIn('group_uuid', $uuids)->delete();
+            Groups::query()
+                ->whereIn('group_uuid', $validated['items'])
+                ->where(function ($query) {
+                    $query->where('domain_uuid', session('domain_uuid'))
+                        ->orWhereNull('domain_uuid');
+                })
+                ->delete();
 
             DB::commit();
 
@@ -570,15 +662,98 @@ class GroupsController extends Controller
         }
     }
 
-    public function selectAll()
+    public function cloneGroup(Request $request): JsonResponse
+    {
+        if (!userCheckPermission('group_add')) {
+            return response()->json([
+                'messages' => ['error' => ['Access denied.']]
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'items' => ['required', 'array', 'size:1'],
+            'items.*' => ['required', 'uuid'],
+        ], [
+            'items.size' => 'Select exactly one group to clone.',
+        ]);
+
+        $source = Groups::query()
+            ->whereKey($validated['items'][0])
+            ->first();
+
+        if (!$source || !$this->canAccessGroup($source)) {
+            return response()->json([
+                'messages' => ['error' => ['Group not found.']]
+            ], 404);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $cloneDomainUuid = $source->domain_uuid ?: session('domain_uuid');
+            $cloneName = $this->uniqueCloneName($source->group_name, $cloneDomainUuid);
+
+            $clone = Groups::create([
+                'domain_uuid' => $cloneDomainUuid,
+                'group_name' => $cloneName,
+                'group_level' => $source->group_level,
+                'group_protected' => $source->group_protected,
+                'group_description' => $source->group_description,
+            ]);
+
+            $now = date('Y-m-d H:i:s');
+            $hasPermissionDomain = Schema::hasColumn('v_group_permissions', 'domain_uuid');
+
+            $permissionRows = GroupPermissions::query()
+                ->where('group_uuid', $source->group_uuid)
+                ->get()
+                ->map(function ($permission) use ($clone, $cloneName, $hasPermissionDomain, $now) {
+                    $row = [
+                        'group_permission_uuid' => (string) Str::uuid(),
+                        'group_uuid' => $clone->group_uuid,
+                        'group_name' => $cloneName,
+                        'permission_name' => $permission->permission_name,
+                        'permission_protected' => $permission->permission_protected ?? 'false',
+                        'permission_assigned' => $permission->permission_assigned ?? 'true',
+                        'insert_date' => $now,
+                    ];
+
+                    if ($hasPermissionDomain) {
+                        $row['domain_uuid'] = $permission->domain_uuid ?? null;
+                    }
+
+                    return $row;
+                })
+                ->values()
+                ->all();
+
+            if ($permissionRows !== []) {
+                GroupPermissions::query()->insert($permissionRows);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'messages' => ['success' => ["Group cloned as {$cloneName}."]],
+                'group_uuid' => $clone->group_uuid,
+            ], 201);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            logger('GroupManager clone error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
+            return response()->json([
+                'messages' => ['error' => ['Something went wrong while cloning the group.']]
+            ], 500);
+        }
+    }
+
+    public function selectAll(Request $request)
     {
         try {
-            $domainUuid = session('domain_uuid');
-            $uuids = $this->model::where($this->model->getTable() . '.domain_uuid', $domainUuid)
-                ->orWhereNull($this->model->getTable() . '.domain_uuid')
-                ->get($this->model->getKeyName())->pluck($this->model->getKeyName());
-
-
+            $uuids = $this->scopedGroups($request)
+                ->select('group_uuid')
+                ->defaultSort('group_name')
+                ->pluck('group_uuid');
 
             // Return a JSON response indicating success
             return response()->json([
@@ -593,5 +768,87 @@ class GroupsController extends Controller
                 'errors' => ['server' => ['Failed to select all items']]
             ], 500); // 500 Internal Server Error for any other errors
         }
+    }
+
+    private function uniqueCloneName(string $sourceName, ?string $domainUuid): string
+    {
+        $baseName = trim($sourceName) !== '' ? trim($sourceName) : 'Group';
+        $baseName = mb_substr($baseName, 0, 240) . ' Copy';
+        $candidate = $baseName;
+        $suffix = 2;
+
+        while ($this->groupNameExists($candidate, $domainUuid)) {
+            $candidate = mb_substr($baseName, 0, 250 - strlen((string) $suffix)) . " {$suffix}";
+            $suffix++;
+        }
+
+        return $candidate;
+    }
+
+    private function groupNameExists(string $groupName, ?string $domainUuid): bool
+    {
+        return Groups::query()
+            ->where('group_name', $groupName)
+            ->where(function ($query) use ($domainUuid) {
+                $query->where('domain_uuid', $domainUuid)
+                    ->orWhereNull('domain_uuid');
+            })
+            ->exists();
+    }
+
+    private function groupMembersQuery(Groups $group)
+    {
+        return DB::table('v_user_groups as user_groups')
+            ->join('v_users as users', 'user_groups.user_uuid', '=', 'users.user_uuid')
+            ->leftJoin('v_domains as domains', 'user_groups.domain_uuid', '=', 'domains.domain_uuid')
+            ->where('user_groups.group_uuid', $group->group_uuid)
+            ->when($group->domain_uuid, fn ($query) => $query->where('user_groups.domain_uuid', $group->domain_uuid))
+            ->when(!userCheckPermission('user_all'), fn ($query) => $query->where('users.domain_uuid', session('domain_uuid')))
+            ->orderBy('domains.domain_name')
+            ->orderBy('users.username')
+            ->select([
+                'user_groups.user_group_uuid',
+                'user_groups.user_uuid',
+                'user_groups.domain_uuid',
+                'users.username',
+                'users.user_email',
+                'domains.domain_name',
+            ]);
+    }
+
+    private function availableUsersForGroup(Groups $group): array
+    {
+        if (!userCheckPermission('group_member_add')) {
+            return [];
+        }
+
+        $memberDomainUuid = $this->memberDomainUuid($group);
+        $assignedUserUuids = UserGroup::query()
+            ->where('group_uuid', $group->group_uuid)
+            ->where('domain_uuid', $memberDomainUuid)
+            ->pluck('user_uuid');
+
+        return DB::table('v_users')
+            ->where('domain_uuid', $memberDomainUuid)
+            ->whereNotIn('user_uuid', $assignedUserUuids)
+            ->orderBy('username')
+            ->get(['user_uuid', 'username', 'user_email'])
+            ->map(fn ($user) => [
+                'value' => $user->user_uuid,
+                'label' => $user->username,
+                'detail' => $user->user_email,
+            ])
+            ->values()
+            ->all();
+    }
+
+    private function memberDomainUuid(Groups $group): string
+    {
+        return $group->domain_uuid ?: session('domain_uuid');
+    }
+
+    private function groupMemberCount(Groups $group): int
+    {
+        return $this->groupMembersQuery($group)->count();
     }
 }

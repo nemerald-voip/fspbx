@@ -240,9 +240,14 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     // Groups
     Route::post('groups', [GroupsController::class, 'store'])->name('groups.store');
     Route::put('groups/{group}', [GroupsController::class, 'update'])->name('groups.update');
+    Route::get('groups/data', [GroupsController::class, 'getData'])->name('groups.data');
     Route::post('groups/item-options', [GroupsController::class, 'getItemOptions'])->name('groups.item.options');
     Route::post('groups/bulk-delete', [GroupsController::class, 'bulkDelete'])->name('groups.bulk.delete');
+    Route::post('groups/clone', [GroupsController::class, 'cloneGroup'])->name('groups.clone');
     Route::post('groups/select-all', [GroupsController::class, 'selectAll'])->name('groups.select.all');
+    Route::get('groups/{group}/members', [GroupsController::class, 'membersData'])->name('groups.members.data');
+    Route::post('groups/{group}/members', [GroupsController::class, 'addMember'])->name('groups.members.store');
+    Route::post('groups/{group}/members/delete', [GroupsController::class, 'deleteMembers'])->name('groups.members.delete');
     Route::get('groups/{group}/permissions/data', [GroupsController::class, 'permissionsData'])->name('groups.permissions.data');
     Route::post('groups/{group}/permissions/toggle', [GroupsController::class, 'togglePermissionAssignments'])->name('groups.permissions.toggle');
     Route::post('groups/{group}/permissions/reload', [GroupsController::class, 'reloadPermissionSession'])->name('groups.permissions.reload');

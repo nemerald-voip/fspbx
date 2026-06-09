@@ -13,9 +13,9 @@
                 <a :href="routes.groups" class="inline-flex items-center gap-1.5 rounded-md bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     <ArrowUturnLeftIcon class="h-4 w-4" /> Groups
                 </a>
-                <a v-if="permissions.members" :href="routes.members" class="inline-flex items-center gap-1.5 rounded-md bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                <button v-if="permissions.members" type="button" class="inline-flex items-center gap-1.5 rounded-md bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50" @click="showMembersModal = true">
                     <UsersIcon class="h-4 w-4" /> Members
-                </a>
+                </button>
                 <button v-if="permissions.reload" type="button" class="inline-flex items-center gap-1.5 rounded-md bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50" @click="reloadPermissions">
                     <ArrowPathIcon class="h-4 w-4" /> Reload
                 </button>
@@ -148,6 +148,9 @@
     </div>
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages" @update:show="notificationShow = false" />
+
+    <GroupMembersModal :show="showMembersModal" :group="group" :routes="routes"
+        @close="showMembersModal = false" @error="handleErrorResponse" @success="showNotification" />
 </template>
 
 <script setup>
@@ -156,6 +159,7 @@ import axios from 'axios'
 import MainLayout from '../Layouts/MainLayout.vue'
 import Loading from './components/general/Loading.vue'
 import Notification from './components/notifications/Notification.vue'
+import GroupMembersModal from './components/modal/GroupMembersModal.vue'
 import { ArrowPathIcon, ArrowUturnLeftIcon, MagnifyingGlassIcon, UsersIcon } from '@heroicons/vue/24/outline'
 
 const StatTile = (props) => {
@@ -184,6 +188,7 @@ const allRows = ref([])
 const selectedItems = ref([])
 const selectedApplication = ref('')
 const filterData = ref({ search: '', assignment: 'all' })
+const showMembersModal = ref(false)
 const notificationShow = ref(false)
 const notificationType = ref(null)
 const notificationMessages = ref(null)

@@ -22,12 +22,12 @@
             </template>
 
             <template #action>
-                <button v-if="page.props.auth.can.group_create" type="button" @click.prevent="handleCreateButtonClick()"
+                <button v-if="permissions.create" type="button" @click.prevent="handleCreateButtonClick()"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     Create
                 </button>
 
-                <a v-if="page.props.auth.can.domain_groups_view" type="button" href="/domain-groups"
+                <a v-if="permissions.domain_groups_view" type="button" href="/domain-groups"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Domain Groups
                 </a>
@@ -38,31 +38,38 @@
             <template #navigation>
                 <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
                     :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
-                    @pagination-change-page="renderRequestedPage" />
+                    @pagination-change-page="renderRequestedPage" :bulk-actions="bulkActions"
+                    @bulk-action="handleBulkActionRequest" :has-selected-items="selectedItems.length > 0" />
             </template>
             <template #table-header>
 
                 <TableColumnHeader
-                    class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
-                    <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
+                    class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-gray-900 items-center justify-start"
+                    field="group_name" :sort-order="sortData.order" :sorted-field="sortData.name"
+                    @sort="handleSortRequest">
+                    <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems" @click.stop
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                    <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
-                        :has-selected-items="selectedItems.length > 0" />
                     <span class="pl-4">Name</span>
                 </TableColumnHeader>
 
-                <TableColumnHeader header="Level" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-
-                <TableColumnHeader header="Protected" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-
-                <TableColumnHeader header="Description" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Level" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
+                    field="group_level" :sort-order="sortData.order" :sorted-field="sortData.name"
+                    @sort="handleSortRequest" />
+                <TableColumnHeader header="Permissions" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
+                    field="permissions_count" :sort-order="sortData.order" :sorted-field="sortData.name"
+                    @sort="handleSortRequest" />
+                <TableColumnHeader header="Members" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
+                    field="user_groups_count" :sort-order="sortData.order" :sorted-field="sortData.name"
+                    @sort="handleSortRequest" />
+                <TableColumnHeader header="Description" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
+                    field="group_description" :sort-order="sortData.order" :sorted-field="sortData.name"
+                    @sort="handleSortRequest" />
+                <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900"
+                    :sortable="false" />
             </template>
 
             <template v-if="selectPageItems" v-slot:current-selection>
-                <td colspan="9">
+                <td colspan="6">
                     <div class="text-sm text-center m-2">
                         <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
                         <button v-if="!selectAll && selectedItems.length != data.total"
@@ -86,8 +93,8 @@
                             <input v-if="row.group_uuid" v-model="selectedItems" type="checkbox" name="action_box[]"
                                 :value="row.group_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                             <div class="ml-9"
-                                :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.group_update, }"
-                                @click="page.props.auth.can.group_update && handleEditButtonClick(row.group_uuid)">
+                                :class="{ 'cursor-pointer hover:text-gray-900': permissions.update, }"
+                                @click="permissions.update && handleEditButtonClick(row.group_uuid)">
                                 <span class="flex items-center">
                                     {{ row.group_name }}
                                 </span>
@@ -110,19 +117,18 @@
                     </TableField>
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
-                        <a :href="`/core/groups/group_members.php?group_uuid=${row.group_uuid}`"
+                        <button v-if="permissions.members" type="button"
+                            @click="handleMembersButtonClick(row)"
                             class="inline-block rounded bg-white px-2 py-1 text-sm text-gray-600 shadow-sm hover:text-gray-900">
                             Members
                             ({{ row.user_groups_count }})
-                        </a>
+                        </button>
+                        <span v-else>
+                            {{ row.user_groups_count }}
+                        </span>
 
                     </TableField>
 
-
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
-                        <Badge :text="row.group_protected" backgroundColor="bg-blue-100" textColor="text-blue-700"
-                            ringColor="ring-blue-400/20" class="px-2 py-1 text-xs font-semibold" />
-                    </TableField>
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.group_description" />
 
@@ -130,7 +136,7 @@
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap justify-end">
-                                <ejs-tooltip v-if="page.props.auth.can.group_update" :content="'Edit'" position='TopCenter'
+                                <ejs-tooltip v-if="permissions.update" :content="'Edit'" position='TopCenter'
                                     target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
                                         <PencilSquareIcon @click="handleEditButtonClick(row.group_uuid)"
@@ -139,7 +145,15 @@
                                     </div>
                                 </ejs-tooltip>
 
-                                <ejs-tooltip v-if="page.props.auth.can.group_destroy" :content="'Delete'"
+                                <ejs-tooltip v-if="permissions.create" :content="'Clone'" position='TopCenter'
+                                    target="#clone_tooltip_target">
+                                    <div id="clone_tooltip_target">
+                                        <DocumentDuplicateIcon @click="handleSingleItemCloneRequest(row.group_uuid)"
+                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                    </div>
+                                </ejs-tooltip>
+
+                                <ejs-tooltip v-if="permissions.destroy" :content="'Delete'"
                                     position='TopCenter' target="#delete_tooltip_target">
                                     <div id="delete_tooltip_target">
                                         <TrashIcon @click="handleSingleItemDeleteRequest(row.group_uuid)"
@@ -179,26 +193,28 @@
 
     <CreatePermissionGroupForm :show="showCreateModal" :options="itemOptions" :loading="isModalLoading"
         @close="showCreateModal = false" @error="handleErrorResponse" @success="showNotification"
-        @refresh-data="handleSearchButtonClick" />
+        @refresh-data="refreshCurrentPage" />
 
     <UpdatePermissionGroupForm :show="showUpdateModal" :options="itemOptions" :loading="isModalLoading"
         @close="showUpdateModal = false" @error="handleErrorResponse" @success="showNotification"
-        @refresh-data="handleSearchButtonClick" />
+        @refresh-data="refreshCurrentPage" />
 
-    <ConfirmationModal :show="showDeleteConfirmationModal" @close="showDeleteConfirmationModal = false"
-        @confirm="confirmDeleteAction" :header="'Confirm Deletion'"
-        :text="'This action will permanently delete the selected group(s). Are you sure you want to proceed?'"
-        :confirm-button-label="'Delete'" cancel-button-label="Cancel" />
+    <GroupMembersModal :show="showMembersModal" :group="selectedMembersGroup" :routes="routes"
+        @close="handleMembersModalClose" @error="handleErrorResponse" @success="showNotification"
+        @count-changed="handleMemberCountChanged" />
+
+    <ConfirmationModal :show="showConfirmationModal" @close="handleModalClose"
+        @confirm="confirmAction" :header="confirmationHeader"
+        :text="confirmationText"
+        :confirm-button-label="confirmationButtonLabel" cancel-button-label="Cancel" />
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
-import { usePage } from '@inertiajs/vue3'
+import { computed, onMounted, ref } from "vue";
 import axios from 'axios';
-import { router } from "@inertiajs/vue3";
 import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";
@@ -207,60 +223,81 @@ import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import Loading from "./components/general/Loading.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
 import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
+import { DocumentDuplicateIcon } from "@heroicons/vue/24/outline";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
-import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
 import UpdatePermissionGroupForm from "./components/forms/UpdatePermissionGroupForm.vue"
 import CreatePermissionGroupForm from "./components/forms/CreatePermissionGroupForm.vue"
+import GroupMembersModal from "./components/modal/GroupMembersModal.vue";
 import Notification from "./components/notifications/Notification.vue";
 import Badge from "@generalComponents/Badge.vue";
 
 
 
-const page = usePage()
 const loading = ref(false)
 const isModalLoading = ref(false)
+const currentPage = ref(1);
 const selectAll = ref(false);
 const selectedItems = ref([]);
 const selectPageItems = ref(false);
 const showCreateModal = ref(false);
 const showUpdateModal = ref(false);
-const bulkUpdateModalTrigger = ref(false);
-const confirmDeleteAction = ref(null);
-const bulkUpdateFormSubmiting = ref(null);
+const showMembersModal = ref(false);
+const selectedMembersGroup = ref(null);
+const showConfirmationModal = ref(false);
+const confirmAction = ref(null);
+const confirmationHeader = ref('Are you sure?');
+const confirmationText = ref('');
+const confirmationButtonLabel = ref('Continue');
 const notificationType = ref(null);
 const notificationMessages = ref(null);
-const notificationShow = ref(null);
-const showDeleteConfirmationModal = ref(false);
+const notificationShow = ref(false);
 
 const props = defineProps({
-    data: Object,
     routes: Object,
-    itemData: Object,
     pagination: Object,
+    permissions: Object,
 });
 
+const routes = props.routes;
+const permissions = props.permissions;
 const perPage = ref(props.pagination?.per_page);
 
+const data = ref({
+    data: [],
+    prev_page_url: null,
+    next_page_url: null,
+    from: 0,
+    to: 0,
+    total: 0,
+    current_page: 1,
+    last_page: 1,
+    links: [],
+});
 
 const filterData = ref({
     search: null,
 });
 
+const sortData = ref({
+    name: 'group_name',
+    order: 'asc',
+});
+
 const itemOptions = ref({})
 
-// Computed property for bulk actions based on permissions
 const bulkActions = computed(() => {
-    const actions = [
-        // {
-        //     id: 'bulk_update',
-        //     label: 'Edit',
-        //     icon: 'PencilSquareIcon'
-        // }
-    ];
+    const actions = [];
 
-    // Conditionally add the delete action if permission is granted
-    if (page.props.auth.can.device_destroy) {
+    if (permissions.create) {
+        actions.push({
+            id: 'clone',
+            label: 'Clone',
+            icon: 'DocumentDuplicateIcon',
+        });
+    }
+
+    if (permissions.destroy) {
         actions.push({
             id: 'bulk_delete',
             label: 'Delete',
@@ -271,23 +308,59 @@ const bulkActions = computed(() => {
     return actions;
 });
 
+onMounted(() => getData());
+
 
 const handleEditButtonClick = (itemUuid) => {
     showUpdateModal.value = true
     getItemOptions(itemUuid);
 }
 
+const handleMembersButtonClick = (group) => {
+    selectedMembersGroup.value = group;
+    showMembersModal.value = true;
+};
+
+const handleMembersModalClose = () => {
+    showMembersModal.value = false;
+    selectedMembersGroup.value = null;
+};
+
+const handleMemberCountChanged = ({ group_uuid, count }) => {
+    data.value.data = data.value.data.map(group => {
+        if (group.group_uuid !== group_uuid) return group;
+
+        return {
+            ...group,
+            user_groups_count: count,
+        };
+    });
+};
+
 const handleSingleItemDeleteRequest = (uuid) => {
-    showDeleteConfirmationModal.value = true;
-    confirmDeleteAction.value = () => executeBulkDelete([uuid]);
+    showConfirmation({
+        header: 'Confirm Deletion',
+        text: 'This action will permanently delete the selected group. Are you sure you want to proceed?',
+        button: 'Delete',
+        action: () => executeBulkDelete([uuid]),
+    });
+};
+
+const handleSingleItemCloneRequest = (uuid) => {
+    showConfirmation({
+        header: 'Clone Group',
+        text: 'Clone this group and all of its permissions?',
+        button: 'Clone',
+        action: () => executeClone([uuid]),
+    });
 };
 
 const executeBulkDelete = (items = selectedItems.value) => {
-    axios.post(props.routes.bulk_delete, { items })
+    axios.post(routes.bulk_delete, { items })
         .then((response) => {
             handleModalClose();
             showNotification('success', response.data.messages);
-            handleSearchButtonClick();
+            refreshCurrentPage();
         })
         .catch((error) => {
             handleModalClose();
@@ -297,32 +370,50 @@ const executeBulkDelete = (items = selectedItems.value) => {
 
 const handleBulkActionRequest = (action) => {
     if (action === 'bulk_delete') {
-        showDeleteConfirmationModal.value = true;
-        confirmDeleteAction.value = () => executeBulkDelete();
+        showConfirmation({
+            header: 'Confirm Deletion',
+            text: 'This action will permanently delete the selected group(s). Are you sure you want to proceed?',
+            button: 'Delete',
+            action: () => executeBulkDelete(),
+        });
     }
-    if (action === 'bulk_update') {
-        formErrors.value = [];
-        getItemOptions();
-        isModalLoading.value = true
-        bulkUpdateModalTrigger.value = true;
+
+    if (action === 'clone') {
+        if (selectedItems.value.length !== 1) {
+            showNotification('error', { clone: ['Select exactly one group to clone.'] });
+            return;
+        }
+
+        showConfirmation({
+            header: 'Clone Group',
+            text: 'Clone the selected group and all of its permissions?',
+            button: 'Clone',
+            action: () => executeClone(),
+        });
     }
 
 }
 
-const handleBulkUpdateRequest = (form) => {
-    bulkUpdateFormSubmiting.value = true
-    axios.post(`${props.routes.bulk_update}`, form)
+const showConfirmation = ({ header, text, button, action }) => {
+    confirmationHeader.value = header;
+    confirmationText.value = text;
+    confirmationButtonLabel.value = button;
+    confirmAction.value = action;
+    showConfirmationModal.value = true;
+};
+
+const executeClone = (items = selectedItems.value) => {
+    axios.post(routes.clone, { items })
         .then((response) => {
-            bulkUpdateFormSubmiting.value = false;
             handleModalClose();
             showNotification('success', response.data.messages);
-            handleSearchButtonClick();
+            refreshCurrentPage();
         })
         .catch((error) => {
-            bulkUpdateFormSubmiting.value = false;
-            handleFormErrorResponse(error);
+            handleModalClose();
+            handleErrorResponse(error);
         });
-}
+};
 
 const handleCreateButtonClick = () => {
     showCreateModal.value = true
@@ -331,7 +422,7 @@ const handleCreateButtonClick = () => {
 }
 
 const handleSelectAll = () => {
-    axios.post(props.routes.select_all, filterData._rawValue)
+    axios.post(routes.select_all, { filter: filterData.value })
         .then((response) => {
             selectedItems.value = response.data.items;
             selectAll.value = true;
@@ -346,58 +437,67 @@ const handleSelectAll = () => {
 
 
 
-const handleSearchButtonClick = () => {
+const getData = (page = 1) => {
     loading.value = true;
-    router.visit(props.routes.current_page, {
-        data: {
-            filterData: filterData._rawValue,
+    currentPage.value = Number(page) || 1;
+
+    const sort = sortData.value.order === 'desc' ? `-${sortData.value.name}` : sortData.value.name;
+
+    axios.get(routes.data_route, {
+        params: {
+            filter: filterData.value,
+            page: currentPage.value,
             per_page: perPage.value,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: [
-            "data",
-        ],
-        onSuccess: (page) => {
-            loading.value = false;
-            handleClearSelection();
+            sort,
         }
-    });
+    })
+        .then((response) => {
+            data.value = response.data;
+            currentPage.value = response.data.current_page ?? currentPage.value;
+            handleClearSelection();
+        })
+        .catch(handleErrorResponse)
+        .finally(() => {
+            loading.value = false;
+        });
+};
+
+const handleSearchButtonClick = () => {
+    getData(1);
+};
+
+const refreshCurrentPage = () => {
+    getData(currentPage.value);
+};
+
+const handleSortRequest = ({ field, order }) => {
+    sortData.value.name = field;
+    sortData.value.order = order;
+    getData(currentPage.value);
 };
 
 const handleFiltersReset = () => {
     filterData.value.search = null;
-    // After resetting the filters, call handleSearchButtonClick to perform the search with the updated filters
-    handleSearchButtonClick();
+    getData(1);
 }
 
 
 const handlePageSizeChange = (newPerPage) => {
     perPage.value = newPerPage;
-    handleSearchButtonClick();
+    getData(1);
 };
 
 const renderRequestedPage = (url) => {
-    loading.value = true;
-    router.visit(url, {
-        data: {
-            filterData: filterData._rawValue,
-            per_page: perPage.value,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: ["data"],
-        onSuccess: (page) => {
-            loading.value = false;
-        }
-    });
+    if (!url) return;
+    const urlObj = new URL(url, window.location.origin);
+    getData(urlObj.searchParams.get("page") ?? 1);
 };
 
 
 const getItemOptions = (itemUuid = null) => {
     const payload = itemUuid ? { item_uuid: itemUuid } : {}; // Conditionally add itemUuid to payload
     isModalLoading.value = true
-    axios.post(props.routes.item_options, payload)
+    axios.post(routes.item_options, payload)
         .then((response) => {
             itemOptions.value = response.data;
             // console.log(itemOptions.value);
@@ -410,35 +510,12 @@ const getItemOptions = (itemUuid = null) => {
         })
 }
 
-const handleFormErrorResponse = (error) => {
-    if (error.request?.status == 419) {
-        showNotification('error', { request: ["Session expired. Reload the page"] });
-    } else if (error.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
-        // console.log(error.response.data);
-        showNotification('error', error.response.data.errors || { request: [error.message] });
-        formErrors.value = error.response.data.errors;
-    } else if (error.request) {
-        // The request was made but no response was received
-        // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
-        // http.ClientRequest in node.js
-        showNotification('error', { request: [error.request] });
-        console.log(error.request);
-    } else {
-        // Something happened in setting up the request that triggered an Error
-        showNotification('error', { request: [error.message] });
-        console.log(error.message);
-    }
-
-}
-
 const handleErrorResponse = (error) => {
     if (error.response) {
         // The request was made and the server responded with a status code
         // that falls out of the range of 2xx
         // console.log(error.response.data);
-        showNotification('error', error.response.data.errors || { request: [error.message] });
+        showNotification('error', error.response.data.errors || error.response.data.messages || { request: [error.message] });
     } else if (error.request) {
         // The request was made but no response was received
         // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
@@ -453,26 +530,24 @@ const handleErrorResponse = (error) => {
 }
 
 const handleSelectPageItems = () => {
-    if (selectPageItems.value) {
-        selectedItems.value = props.data.data.map(item => item.group_uuid);
-    } else {
-        selectedItems.value = [];
-    }
+    selectedItems.value = selectPageItems.value
+        ? data.value.data.map(item => item.group_uuid).filter(Boolean)
+        : [];
 };
 
 
 
 const handleClearSelection = () => {
-    selectedItems.value = [],
-        selectPageItems.value = false;
+    selectedItems.value = [];
+    selectPageItems.value = false;
     selectAll.value = false;
 }
 
 const handleModalClose = () => {
     showCreateModal.value = false;
     showUpdateModal.value = false;
-    showDeleteConfirmationModal.value = false;
-    bulkUpdateModalTrigger.value = false;
+    showConfirmationModal.value = false;
+    confirmAction.value = null;
 }
 
 const hideNotification = () => {
