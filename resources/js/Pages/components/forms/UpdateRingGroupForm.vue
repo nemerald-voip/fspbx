@@ -1,7 +1,7 @@
 <template>
     <div>
         <Vueform ref="form$" :endpoint="submitForm" @success="handleSuccess" @error="handleError"
-            @response="handleResponse" :display-errors="false" @keydown.enter="handleEnterKeySubmit">
+            @response="handleResponse" :display-errors="false">
             <template #empty>
 
                 <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
@@ -659,31 +659,6 @@ const submitForm = async (FormData, form$) => {
         localOptions.routes.update_route,
         requestData
     );
-};
-
-const handleEnterKeySubmit = (event) => {
-    if (
-        showNewGreetingModal.value ||
-        showGreetingDeleteConfirmationModal.value ||
-        showEditModal.value
-    ) {
-        return;
-    }
-
-    const target = event.target;
-    const tagName = target?.tagName?.toLowerCase();
-
-    if (
-        tagName === 'textarea' ||
-        tagName === 'button' ||
-        target?.isContentEditable ||
-        target?.closest('[role="listbox"]')
-    ) {
-        return;
-    }
-
-    event.preventDefault();
-    form$.value?.submit();
 };
 
 function clearErrorsRecursive(el$) {
