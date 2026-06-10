@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use App\Models\PaymentGateway;
 use App\Models\GatewaySetting;
+use Illuminate\Support\Facades\Artisan;
+use Nwidart\Modules\Facades\Module;
 
 class DatabaseSeeder extends Seeder
 {
@@ -44,6 +46,22 @@ class DatabaseSeeder extends Seeder
         $this->createCallTranscriptionProviders();
 
         Model::reguard();
+
+        $this->runEnabledModuleSeeders();
+    }
+
+    private function runEnabledModuleSeeders(): void
+    {
+        foreach (['Billing'] as $moduleName) {
+            if (! Module::has($moduleName) || ! Module::isEnabled($moduleName)) {
+                continue;
+            }
+
+            Artisan::call('module:seed', [
+                'module' => $moduleName,
+                '--force' => true,
+            ]);
+        }
     }
 
     private function createGroups()
