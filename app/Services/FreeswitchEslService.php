@@ -216,7 +216,70 @@ class FreeswitchEslService
             }
         }
 
+        // Also include Verto (WebRTC) clients
+        $vertoClients = $this->getVertoClients();
+        foreach ($vertoClients as $client) {
+            $registrations[] = $client;
+        }
+
         return collect($registrations);
+    }
+
+    /**
+     * Get connected Verto (WebRTC) clients from mod_verto.
+     */
+    function getVertoClients(): array
+    {
+        if (!extension_loaded('esl') || !$this->isConnected()) {
+            return [];
+        }
+
+        try {
+            $eslEvent = $this->conn->api('verto jsonstatus');
+            if (!$eslEvent) {
+                return [];
+            }
+
+            $body = trim($eslEvent->getBody());
+            $data = json_decode($body, true);
+
+            if (!$data || !isset($data['profiles'])) {
+                return [];
+            }
+
+            $clients = [];
+            foreach ($data['profiles'] as $profile) {
+                foreach ($profile['users'] ?? [] as $user) {
+                    // Verto user login format is typically "extension@domain"
+                    $login = $user['login'] ?? '';
+                    $parts = explode('@', $login);
+                    $extension = $parts[0] ?? '';
+                    $domain = $parts[1] ?? '';
+
+                    $clients[] = [
+                        'call_id' => $user['sessid'] ?? '',
+                        'user' => $login,
+                        'status' => 'Registered(Verto)',
+                        'lan_ip' => '',
+                        'port' => '',
+                        'contact' => 'verto/' . $login,
+                        'agent' => $user['agent'] ?? 'Verto WebRTC',
+                        'transport' => 'WSS',
+                        'wan_ip' => $user['ip'] ?? '',
+                        'sip_profile_name' => $profile['name'] ?? 'verto',
+                        'sip_auth_user' => $extension,
+                        'sip_auth_realm' => $domain,
+                        'ping_time' => '',
+                        'expsecs' => '',
+                    ];
+                }
+            }
+
+            return $clients;
+        } catch (\Throwable $e) {
+            logger('getVertoClients error: ' . $e->getMessage());
+            return [];
+        }
     }
 
     function getAllChannels()
