@@ -41,11 +41,12 @@
                                 </div>
                             </div>
 
-                            <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @vue:mounted="handleFormMounted"
-                                @success="handleSuccess" @error="handleError" @response="handleResponse"
-                                :display-errors="false" :default="defaultValues">
-                                <template #empty>
-                                    <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
+                            <div v-if="!loading" ref="formContainer$" @keydown.enter.capture="handleEnterSubmit">
+                                <Vueform ref="form$" :endpoint="submitForm" @vue:mounted="handleFormMounted"
+                                    @success="handleSuccess" @error="handleError" @response="handleResponse"
+                                    :display-errors="false" :default="defaultValues">
+                                    <template #empty>
+                                        <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
                                         <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
                                             <FormTabs view="vertical">
                                                 <FormTab name="settings" label="Settings" :elements="[
@@ -366,8 +367,9 @@
                                             </FormElements>
                                         </div>
                                     </div>
-                                </template>
-                            </Vueform>
+                                    </template>
+                                </Vueform>
+                            </div>
                         </DialogPanel>
                     </TransitionChild>
                 </div>
@@ -400,6 +402,7 @@ const props = defineProps({
 const emit = defineEmits(["close", "error", "success", "refresh-data", "saved"]);
 
 const form$ = ref(null);
+const formContainer$ = ref(null);
 const submitMode = ref("builder");
 const pendingTabName = ref(null);
 const xmlEditorTheme = ref("chrome");
@@ -493,6 +496,39 @@ const defaultXmlTemplate = (item = {}) => {
 const prepareSubmit = (mode, tabName) => {
     submitMode.value = mode;
     pendingTabName.value = tabName;
+};
+
+const isVisible = (element) => {
+    return Boolean(element.offsetParent || element.getClientRects().length);
+};
+
+const shouldKeepEnterInField = (target) => {
+    if (!(target instanceof Element)) {
+        return false;
+    }
+
+    return Boolean(target.closest("textarea, [contenteditable='true'], .ace_editor, .ace_text-input"));
+};
+
+const handleEnterSubmit = (event) => {
+    if (event.defaultPrevented || event.isComposing || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) {
+        return;
+    }
+
+    if (shouldKeepEnterInField(event.target)) {
+        return;
+    }
+
+    const saveButton = Array.from(formContainer$.value?.querySelectorAll("button") ?? [])
+        .find((button) => button.textContent?.trim() === "Save" && isVisible(button));
+
+    if (!saveButton) {
+        return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    saveButton.click();
 };
 
 const handleFormMounted = () => {
@@ -767,4 +803,4 @@ const handleError = (error, details, form$) => {
 
     form$.messageBag.append("Could not submit form");
 };
-</script>
+</script>h

@@ -75,12 +75,16 @@ class DeviceController extends Controller
                     'cloud_provisioning_get_token' => route('cloud-provisioning.token.get'),
                     'cloud_provisioning_update_api_token' => route('cloud-provisioning.token.update'),
                     'duplicate' => route('devices.duplicate'),
+                    'download_template' => route('devices.template.download'),
+                    'import' => route('devices.import.preview'),
+                    'import_commit' => route('devices.import.commit'),
                     'provisioning_preview' => route('devices.provisioning-preview', ['device' => '__DEVICE_UUID__']),
 
                 ],
                 'permissions' => [
                     'device_key_template_view' => userCheckPermission('device_key_template_view'),
                     'device_provisioning_preview' => userCheckPermission('device_provisioning_preview'),
+                    'device_import' => userCheckPermission('device_import'),
                 ],
             ]
         );
@@ -656,6 +660,7 @@ class DeviceController extends Controller
                 'cloud_provisioning_register_route' => route('cloud-provisioning.register'),
                 'cloud_provisioning_deregister_route' => route('cloud-provisioning.deregister'),
                 'bulk_update_route' => route('devices.bulk.update'),
+                'import_commit' => route('devices.import.commit'),
                 'get_routing_options' => route('routing.options'),
                 'save_key_template_from_device' => $itemUuid ? route('devices.key-templates.store-from-device', ['device' => $itemUuid]) : null,
             ]);

@@ -26,6 +26,7 @@ use App\Http\Controllers\CsrfTokenController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeviceCloudProvisioningController;
 use App\Http\Controllers\DeviceController;
+use App\Http\Controllers\DeviceImportExportController;
 use App\Http\Controllers\DeviceKeyTemplateController;
 use App\Http\Controllers\DialplanController;
 use App\Http\Controllers\DomainController;
@@ -307,6 +308,9 @@ Route::group(['middleware' => 'auth'], function () {
     //Devices
     Route::get('devices', [DeviceController::class, 'index'])->name('devices.index');
     Route::post('devices/duplicate', [DeviceController::class, 'duplicate'])->name('devices.duplicate');
+    Route::get('/devices/template/download', [DeviceImportExportController::class, 'downloadTemplate'])->name('devices.template.download');
+    Route::post('/devices/import', [DeviceImportExportController::class, 'importPreview'])->name('devices.import.preview');
+    Route::post('/devices/import/commit', [DeviceImportExportController::class, 'importCommit'])->name('devices.import.commit');
     Route::get('device-key-templates', [DeviceKeyTemplateController::class, 'index'])->name('device-key-templates.index');
 
     //Phone Numbers
