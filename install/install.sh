@@ -91,7 +91,7 @@ ensure_systemd_fspbx_override_php84() {
 [Service]
 RuntimeDirectory=php
 RuntimeDirectoryMode=0755
-ReadWritePaths=/etc/freeswitch /usr/share/freeswitch /var/lib/freeswitch
+ReadWritePaths=-/etc/freeswitch -/usr/share/freeswitch -/var/lib/freeswitch
 EOF
 
   systemctl daemon-reload

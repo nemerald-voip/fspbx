@@ -16,7 +16,7 @@ class Update188
 [Service]
 RuntimeDirectory=php
 RuntimeDirectoryMode=0755
-ReadWritePaths=/etc/freeswitch /usr/share/freeswitch /var/lib/freeswitch
+ReadWritePaths=-/etc/freeswitch -/usr/share/freeswitch -/var/lib/freeswitch
 INI;
 
     public function apply(): bool
