@@ -27,5 +27,6 @@ class VerifyCsrfToken extends Middleware
         'webhook/bulkvs/sms',
         'webhook/voipms/sms',
         'webhook/fibernetics/sms',
+        'webhook/twilio/sms'
     ];
 }
