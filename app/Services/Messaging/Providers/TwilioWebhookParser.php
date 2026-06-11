@@ -34,8 +34,11 @@ class TwilioWebhookParser implements MessagingWebhookParser
             return;
         }
 
-        // Delivery status callback has a MessageStatus (or SmsStatus) field.
-        if ($messageStatus !== '') {
+        // Twilio sends MessageStatus/SmsStatus = "received" on INBOUND messages, and one of
+        // queued/sent/delivered/undelivered/failed on delivery-status callbacks. Only the
+        // latter set should be treated as a delivery status event — "received" (or an empty
+        // status) is an inbound message.
+        if ($messageStatus !== '' && strtolower($messageStatus) !== 'received') {
             $event = DeliveryStatusEventData::from([
                 'provider'      => 'twilio',
                 'referenceId'   => $messageSid,
