@@ -42,7 +42,7 @@ class TwilioSignatureValidator implements SignatureValidator
     protected function computeSignature(Request $request, string $authToken): string
     {
         $url    = $request->fullUrl();
-        $params = $request->post();
+        $params = $this->originalPostParams($request);
 
         ksort($params);
 
@@ -52,5 +52,30 @@ class TwilioSignatureValidator implements SignatureValidator
         }
 
         return base64_encode(hash_hmac('sha1', $data, $authToken, true));
+    }
+
+    /**
+     * Recover the original, unmodified POST parameters from the raw request body.
+     *
+     * We cannot use $request->post() here: Laravel's TrimStrings and
+     * ConvertEmptyStringsToNull middleware run before this validator and mutate
+     * the parameter bag, which changes the recomputed hash and breaks signature
+     * verification (notably for Messaging Service webhooks). Twilio signs the
+     * values exactly as sent, so we parse them straight from the raw body.
+     *
+     * @return array<string, mixed>
+     */
+    protected function originalPostParams(Request $request): array
+    {
+        $content = $request->getContent();
+
+        if ($content === '') {
+            return $request->post();
+        }
+
+        $params = [];
+        parse_str($content, $params);
+
+        return $params;
     }
 }
