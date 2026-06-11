@@ -199,6 +199,10 @@ class DatabaseSeeder extends Seeder
             ['application_name' => 'Basic Dialer', 'permission_name' => 'basic_dialer_update'],
             ['application_name' => 'Basic Dialer', 'permission_name' => 'basic_dialer_delete'],
             ['application_name' => 'Basic Dialer', 'permission_name' => 'basic_dialer_start'],
+            ['application_name' => 'AI Agents', 'permission_name' => 'ai_agent_view'],
+            ['application_name' => 'AI Agents', 'permission_name' => 'ai_agent_add'],
+            ['application_name' => 'AI Agents', 'permission_name' => 'ai_agent_edit'],
+            ['application_name' => 'AI Agents', 'permission_name' => 'ai_agent_delete'],
         ];
         $timestamp = date("Y-m-d H:i:s");
 

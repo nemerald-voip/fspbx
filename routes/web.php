@@ -4,6 +4,7 @@ use App\Http\Controllers\AccountSettingsController;
 use App\Http\Controllers\AccessControlController;
 use App\Http\Controllers\ActiveConferenceController;
 use App\Http\Controllers\ActiveCallsController;
+use App\Http\Controllers\AiAgentController;
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AppsController;
 use App\Http\Controllers\AppsCredentialsController;
@@ -236,6 +237,9 @@ Route::group(['middleware' => 'auth'], function () {
 
     // Modules
     Route::get('modules', [SwitchModuleController::class, 'index'])->name('modules.index');
+
+    // AI Agents
+    Route::get('ai-agents', [AiAgentController::class, 'index'])->name('ai-agents.index');
 
     // SIP Status
     Route::get('sip-status', [SipStatusController::class, 'index'])->name('sip-status.index');
