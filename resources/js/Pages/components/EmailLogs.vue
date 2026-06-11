@@ -267,7 +267,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import Notification from "./notifications/Notification.vue";
 import ConfirmationModal from "./modal/ConfirmationModal.vue";
 import AddEditItemModal from "./modal/AddEditItemModal.vue";
@@ -388,6 +388,10 @@ const fetchData = async (page = 1) => {
 
 
 watch(() => props.trigger, (newVal) => {
+    fetchData(1)
+})
+
+onMounted(() => {
     fetchData(1)
 })
 
