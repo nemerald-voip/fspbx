@@ -152,6 +152,7 @@ const messageLogsTrigger = ref(false)
 const faxLogsTrigger = ref(false)
 const freeswitchLogsTrigger = ref(false)
 const initialMenuOption = ref(null)
+const selectedMenuOption = ref(null)
 const showTestEmailModal = ref(false)
 const testEmailLoading = ref(false)
 const testEmailErrors = ref({})
@@ -166,11 +167,18 @@ const pages = [
 ]
 
 const handleUpdateSelectedMenuOption = (key) => {
+    selectedMenuOption.value = key
     if (key === 'emails') emailsTrigger.value = !emailsTrigger.value
     if (key === 'inbound_webhooks') inboundWebhooksTrigger.value = !inboundWebhooksTrigger.value
     if (key === 'message_logs') messageLogsTrigger.value = !messageLogsTrigger.value
     if (key === 'fax_logs') faxLogsTrigger.value = !faxLogsTrigger.value
     if (key === 'freeswitch_logs') freeswitchLogsTrigger.value = !freeswitchLogsTrigger.value
+}
+
+const refreshEmailLogsIfVisible = () => {
+    if (selectedMenuOption.value === 'emails') {
+        emailsTrigger.value = !emailsTrigger.value
+    }
 }
 
 const navigation = computed(() => {
@@ -241,7 +249,7 @@ const sendTestEmail = () => {
         notificationType.value = 'success'
         notificationMessages.value = response.data.messages
         notificationShow.value = true
-        emailsTrigger.value = !emailsTrigger.value
+        refreshEmailLogsIfVisible()
     }).catch((error) => {
         testEmailErrors.value = error.response?.data?.errors ?? {}
         notificationType.value = 'error'
@@ -249,6 +257,7 @@ const sendTestEmail = () => {
             ?? error.response?.data?.errors
             ?? { error: ['Unable to send the test email.'] }
         notificationShow.value = true
+        refreshEmailLogsIfVisible()
     }).finally(() => {
         testEmailLoading.value = false
     })

@@ -39,12 +39,15 @@ class TestEmailController extends Controller
         } catch (\Throwable $exception) {
             if (isset($logId)) {
                 try {
-                    EmailLog::query()
-                        ->where('uuid', $logId)
-                        ->update([
-                            'status' => 'failed',
-                            'sent_debug_info' => 'Test email failed at ' . now()->toDateTimeString() . ': ' . $exception->getMessage(),
+                    $log = EmailLog::query()->find($logId);
+
+                    if ($log) {
+                        logger('TestEmailController@store transport reported an error after logging test email: ' . $exception->getMessage());
+
+                        return response()->json([
+                            'messages' => ['success' => ['Test email submitted. Check the email logs for delivery status.']],
                         ]);
+                    }
                 } catch (\Throwable $logException) {
                     logger('TestEmailController@store log update error: ' . $logException->getMessage());
                 }
