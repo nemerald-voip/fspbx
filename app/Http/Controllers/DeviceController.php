@@ -807,15 +807,6 @@ class DeviceController extends Controller
         try {
             DB::beginTransaction();
 
-            // Handle field transformations here, e.g. device_vendor
-            // For example, if "device_template" is present:
-            if (array_key_exists('device_template', $data)) {
-                $data['device_vendor'] = explode("/", $data['device_template'])[0] ?? null;
-                if ($data['device_vendor'] === 'poly') {
-                    $data['device_vendor'] = 'polycom';
-                }
-            }
-
             Devices::whereIn('device_uuid', $ids)
                 ->chunk(10, function ($devices) use ($data) {
                     foreach ($devices as $device) {

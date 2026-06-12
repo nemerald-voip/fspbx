@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use App\Models\ProvisioningTemplate;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -45,6 +47,16 @@ class BulkUpdateDeviceRequest extends FormRequest
             'device_template' => [
                 'nullable',
                 'string',
+            ],
+            'device_template_uuid' => [
+                'nullable',
+                'uuid',
+                Rule::exists('provisioning_templates', 'template_uuid'),
+            ],
+            'device_vendor' => [
+                'nullable',
+                'string',
+                'max:100',
             ],
             // 'device_keys' => [
             //     'nullable',
@@ -111,7 +123,42 @@ class BulkUpdateDeviceRequest extends FormRequest
 
     public function prepareForValidation(): void
     {
-        // logger($this);
+        $incoming = $this->input('device_template');
+        if (is_string($incoming) && Str::isUuid($incoming)) {
+            $this->merge([
+                'device_template_uuid' => $incoming,
+                'device_template' => null,
+            ]);
+        } elseif ($this->has('device_template') && ! $this->has('device_template_uuid')) {
+            $this->merge(['device_template_uuid' => null]);
+        }
 
+        $vendor = null;
+
+        $templateUuid = $this->input('device_template_uuid');
+        if (is_string($templateUuid) && Str::isUuid($templateUuid)) {
+            $templateVendor = ProvisioningTemplate::query()
+                ->where('template_uuid', $templateUuid)
+                ->value('vendor');
+
+            if (is_string($templateVendor) && $templateVendor !== '') {
+                $vendor = strtolower($templateVendor);
+            }
+        }
+
+        if (! $vendor && is_string($incoming) && str_contains($incoming, '/')) {
+            [$vendorPrefix] = explode('/', $incoming, 2);
+            if ($vendorPrefix !== '') {
+                $vendor = strtolower($vendorPrefix);
+            }
+        }
+
+        if ($vendor === 'poly') {
+            $vendor = 'polycom';
+        }
+
+        if ($vendor) {
+            $this->merge(['device_vendor' => $vendor]);
+        }
     }
 }
