@@ -224,6 +224,19 @@
                                         ],
                                     ]" />
 
+                                <SelectElement name="uk_holiday" :search="true" :native="false" label="UK Holiday"
+                                    :submit="false" :items="ukHolidays" input-type="search" autocomplete="off"
+                                    :object="true" @change="handleUKHolidayUpdate" placeholder="Select UK Holiday"
+                                    :floating="false" :conditions="[
+                                        [
+                                            'holiday_type',
+                                            'in',
+                                            [
+                                                'uk_holiday',
+                                            ],
+                                        ],
+                                    ]" />
+
                                 <TextElement name="description" label="Holiday Description"
                                     description="Enter a clear, descriptive name for this holiday (e.g. ‘Company Annual Picnic’)."
                                     :conditions="[
@@ -256,15 +269,15 @@
                                             container: 4,
                                         },
                                     }" :conditions="[
-    [
-        'holiday_type',
-        'in',
-        [
-            'single_date',
-            'date_range',
-        ],
-    ],
-]" />
+                                        [
+                                            'holiday_type',
+                                            'in',
+                                            [
+                                                'single_date',
+                                                'date_range',
+                                            ],
+                                        ],
+                                    ]" />
                                 <DateElement name="start_time" label="Start Time" :date="false" :time="true"
                                     :hour24="false" value-format="HH:mm" :columns="{
                                         default: {
@@ -631,6 +644,30 @@ const handleCAHolidayUpdate = (newValue, oldValue, el$) => {
     }
 }
 
+const handleUKHolidayUpdate = (newValue, oldValue, el$) => {
+    if (newValue != oldValue) {
+        // find the holiday whose value matches newValue
+        const match = ukHolidays.find(h =>
+            h.value.mon === newValue.value.mon
+            && h.value.mday === newValue.value.mday
+            && h.value.mweek === newValue.value.mweek
+            && h.value.wday === newValue.value.wday
+        );
+
+        // pull its label (or fall back to an empty string)
+        const label = match?.label ?? '';
+
+        el$.form$.update({
+            mday: newValue.value.mday,
+            mon: newValue.value.mon,
+            mweek: newValue.value.mweek,
+            wday: newValue.value.wday,
+            description: label,
+        })
+    }
+}
+
+
 // Month (1=Jan … 12=Dec)
 const monthOptions = [
     { value: '1', label: 'January' },
@@ -816,6 +853,58 @@ const caHolidays = [
     {
         label: "St. Patrick's Day (March 17)",
         value: { mon: "3", wday: "", mday: "17", mweek: "" }
+    },
+    {
+        label: "Mother's Day (Second Sunday in May)",
+        value: { mon: "5", wday: "1", mday: "8-14", mweek: "" }
+    },
+    {
+        label: "Father's Day (Third Sunday in June)",
+        value: { mon: "6", wday: "1", mday: "15-21", mweek: "" }
+    },
+    {
+        label: "Halloween (October 31)",
+        value: { mon: "10", wday: "", mday: "31", mweek: "" }
+    }
+];
+
+const ukHolidays = [
+    {
+        label: "New Year's Day (January 1)",
+        value: { mon: "1", wday: "", mday: "1", mweek: "" }
+    },
+    {
+        label: "May Day (First Monday in May)",
+        value: { mon: "5", wday: "2", mday: "1-7", mweek: "" }
+    },
+    {
+        label: "Spring Bank Holiday (Last Monday in May)",
+        value: { mon: "5", wday: "2", mday: "25-31", mweek: "" }
+    },
+    {
+        label: "August Bank Holiday (Last Monday in August)",
+        value: { mon: "8", wday: "2", mday: "25-31", mweek: "" }
+    },
+    {
+        label: "August Bank Holiday (First Monday in August; Scotland Only)",
+        value: { mon: "8", wday: "2", mday: "1-7", mweek: "" }
+    },
+    {
+        label: "Christmas Day (December 25)",
+        value: { mon: "12", wday: "", mday: "25", mweek: "" }
+    },
+    {
+        label: "Boxing Day (December 26)",
+        value: { mon: "12", wday: "", mday: "26", mweek: "" }
+    },
+    // Additional observances
+    {
+        label: "St. Patrick's Day (March 17)",
+        value: { mon: "3", wday: "", mday: "17", mweek: "" }
+    },
+    {
+        label: "St. Andrew's Day (November 30)",
+        value: { mon: "11", wday: "", mday: "30", mweek: "" }
     },
     {
         label: "Mother's Day (Second Sunday in May)",
