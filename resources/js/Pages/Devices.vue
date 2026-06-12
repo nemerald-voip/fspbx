@@ -34,6 +34,12 @@
                     Cloud
                 </button>
 
+                <button v-if="permissions.device_import" type="button" @click.prevent="handleImportButtonClick()"
+                    class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    <DocumentArrowUpIcon class="h-5 w-5" aria-hidden="true" />
+                    Import CSV
+                </button>
+
                 <a v-if="permissions.device_key_template_view" type="button" :href="routes.key_templates"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Key Templates
@@ -351,6 +357,13 @@
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
 
+    <UploadModal :show="showUploadModal" @close="showUploadModal = false" :header="'Upload File'" @upload="uploadFile"
+        @download-template="downloadTemplateFile" :is-submitting="isUploadingFile" :errors="uploadErrors" />
+
+    <ImportDevicesModal v-if="showImportPreviewModal" :show="showImportPreviewModal" :options="itemOptions"
+        :import-data="importPreviewData" :loading="isCommittingImport" @close="showImportPreviewModal = false"
+        @success="handleImportSuccess" @error="handleErrorResponse" />
+
     <AddEditItemModal :show="showProvisioningPreviewModal" :header="provisioningPreviewHeader"
         :loading="isProvisioningPreviewLoading" customClass="sm:max-w-6xl h-[85vh] max-h-[85vh] flex flex-col"
         contentClass="flex min-h-0 flex-1 flex-col" bodyClass="min-h-0 flex-1 overflow-hidden"
@@ -493,7 +506,7 @@ import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import Loading from "./components/general/Loading.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
 import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon, CloudIcon, ChevronUpIcon, ChevronDownIcon } from "@heroicons/vue/24/solid";
-import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
+import { ClipboardDocumentIcon, DocumentArrowUpIcon } from "@heroicons/vue/24/outline";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import BulkUpdateDeviceForm from "./components/forms/BulkUpdateDeviceForm.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
@@ -505,6 +518,8 @@ import CloudProvisioningSettings from "./components/forms/CloudProvisioningSetti
 import AdvancedActionButton from "./components/general/AdvancedActionButton.vue";
 import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
 import AceEditor from "./components/general/AceEditor.vue";
+import UploadModal from "./components/modal/UploadModal.vue";
+import ImportDevicesModal from "./components/modal/ImportDevicesModal.vue";
 
 const page = usePage()
 const props = defineProps({
@@ -543,6 +558,12 @@ const showDuplicateModal = ref(false);
 const itemToDuplicate = ref(null);
 const newMacAddress = ref('');
 const showProvisioningPreviewModal = ref(false);
+const showUploadModal = ref(false);
+const isUploadingFile = ref(false);
+const uploadErrors = ref(null);
+const showImportPreviewModal = ref(false);
+const importPreviewData = ref([]);
+const isCommittingImport = ref(false);
 const isProvisioningPreviewLoading = ref(false);
 const provisioningPreviewData = ref(null);
 const provisioningPreviewError = ref(null);
@@ -686,6 +707,63 @@ const handleProvisioningPreview = async (uuid) => {
     } finally {
         isProvisioningPreviewLoading.value = false;
     }
+};
+
+const handleImportButtonClick = () => {
+    uploadErrors.value = null;
+    showUploadModal.value = true;
+    getItemOptions(null, { mode: 'create' });
+};
+
+const uploadFile = (file) => {
+    isUploadingFile.value = true;
+    uploadErrors.value = null;
+    const formData = new FormData();
+    formData.append('file', file);
+
+    axios.post(props.routes.import, formData)
+        .then((response) => {
+            handleModalClose();
+            setTimeout(() => {
+                importPreviewData.value = response.data.data;
+                showImportPreviewModal.value = true;
+            }, 300);
+        })
+        .catch((error) => {
+            handleClearSelection();
+            handleErrorResponse(error);
+            if (error.response) {
+                uploadErrors.value = error.response.data.errors;
+            }
+        })
+        .finally(() => {
+            isUploadingFile.value = false;
+        });
+};
+
+const handleImportSuccess = (messages) => {
+    showNotification('success', messages);
+    showImportPreviewModal.value = false;
+    importPreviewData.value = [];
+    refreshCurrentPage();
+};
+
+const downloadTemplateFile = () => {
+    axios.get(props.routes.download_template, {
+        responseType: 'blob',
+    })
+        .then((response) => {
+            const fileBlob = new Blob([response.data], { type: 'text/csv' });
+            const fileURL = window.URL.createObjectURL(fileBlob);
+            const link = document.createElement('a');
+            link.href = fileURL;
+            link.setAttribute('download', 'devices_template.csv');
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(fileURL);
+        })
+        .catch(handleErrorResponse);
 };
 
 const closeProvisioningPreview = () => {
@@ -1063,6 +1141,8 @@ const handleModalClose = () => {
     confirmationRestartTrigger.value = false;
     showBulkUpdateModal.value = false;
     showCloudProvisioningSettings.value = false;
+    showUploadModal.value = false;
+    showImportPreviewModal.value = false;
 }
 
 const hideNotification = () => {
