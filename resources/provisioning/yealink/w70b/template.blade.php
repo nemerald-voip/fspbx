@@ -1,4 +1,4 @@
-{{-- version: 1.0.0 --}}
+{{-- version: 1.0.1 --}}
 
 @switch($flavor)
 
@@ -381,7 +381,7 @@ static.security.trust_certificates = {{ $settings['yealink_trust_certificates'] 
 @endif
 @if (isset($settings['admin_name']))
     static.security.user_name.admin = {{ $settings['admin_name'] }}
-    static.security.user_password = {{ $settings['admin_password'] }}
+    static.security.user_password = {{ $settings['admin_name'] }}:{{ $settings['admin_password'] }}
 @endif
 @if (isset($settings['var_name']))
     static.security.user_name.var = {{ $settings['var_name'] }}
