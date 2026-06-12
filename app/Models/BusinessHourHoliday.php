@@ -175,7 +175,9 @@ class BusinessHourHoliday extends Model
     {
         switch ($this->holiday_type) {
             case 'us_holiday':
-                $next = $this->getNextUsHolidayDate()->format('F j, Y');
+            case 'ca_holiday':
+            case 'uk_holiday':
+                $next = $this->getNextPresetHolidayDate()->format('F j, Y');
                 return "Every year (next: {$next})";
 
             case 'single_date':
@@ -249,9 +251,9 @@ class BusinessHourHoliday extends Model
                 }
                 // 5) Nth (or Last) weekday [in month or in a specific month]
                 elseif ($this->mweek !== null && isset($days[$this->wday])) {
-                    $prefix  = $this->mweek === 5
+                    $prefix  = (int) $this->mweek === 6
                         ? 'Last'
-                        : $this->ordinal($this->mweek);
+                        : $this->ordinal((int) $this->mweek);
                     $weekday = $days[$this->wday];
                     if ($this->mon !== null) {
                         $recurrence = "{$prefix} {$weekday} in {$monthName} of every year";
@@ -320,12 +322,12 @@ class BusinessHourHoliday extends Model
     }
 
     /**
-     * Compute the next occurrence of a US holiday, handling:
+     * Compute the next occurrence of a preset holiday, handling:
      *  - fixed dates (mday numeric)
      *  - weekday-in-range patterns ("15-21" + wday)
      *  - Nth/last weekday (mweek)
      */
-    protected function getNextUsHolidayDate(int $year = null): Carbon
+    protected function getNextPresetHolidayDate(int $year = null): Carbon
     {
         $today = Carbon::today();
         $year  = $year ?: $today->year;
@@ -343,9 +345,10 @@ class BusinessHourHoliday extends Model
             [$min, $max] = [(int)$m[1], (int)$m[2]];
 
             // map FS wday (1=Sun…7=Sat) → ISO day (Mon=1…Sun=7)
-            $targetIso = $this->wday === 1
+            $wday = (int) $this->wday;
+            $targetIso = $wday === 1
                 ? 7
-                : $this->wday - 1;
+                : $wday - 1;
 
             for ($day = $min; $day <= $max; $day++) {
                 // skip invalid days (e.g. April 31)
@@ -356,7 +359,7 @@ class BusinessHourHoliday extends Model
                 }
                 if ($d->dayOfWeekIso === $targetIso) {
                     return $d->lt($today)
-                        ? $this->getNextUsHolidayDate($year + 1)
+                        ? $this->getNextPresetHolidayDate($year + 1)
                         : $d;
                 }
             }
@@ -372,12 +375,12 @@ class BusinessHourHoliday extends Model
     private function computeNthWeekdayInMonth(int $year, Carbon $today): Carbon
     {
         $month   = $this->mon;
-        $wdayFs  = $this->wday;   // 1=Sun…7=Sat
+        $wdayFs  = (int) $this->wday;   // 1=Sun…7=Sat
         $targetW = $wdayFs - 1;   // Carbon::create’s dayOfWeek (0=Sun…6=Sat)
-        $ordinal = $this->mweek;  // 1–4 or 5=last
+        $ordinal = (int) $this->mweek;  // 1–5 or 6=last
         $base    = Carbon::create($year, $month, 1);
 
-        if ($ordinal === 5) {
+        if ($ordinal === 6) {
             // last weekday of the month
             $d     = $base->copy()->endOfMonth();
             $delta = ($d->dayOfWeek - $targetW + 7) % 7;

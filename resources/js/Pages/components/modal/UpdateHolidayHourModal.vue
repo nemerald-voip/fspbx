@@ -46,6 +46,14 @@
                                             (h.value.wday ?? '') === (options.item.wday ?? '') &&
                                             (h.value.mweek ?? '') === (options.item.mweek ?? '')
                                         )
+                                        ?? null,
+                                    uk_holiday:
+                                        ukHolidays.find(h =>
+                                            (h.value.mon ?? '') === (options.item.mon ?? '') &&
+                                            (h.value.mday ?? '') === (options.item.mday ?? '') &&
+                                            (h.value.wday ?? '') === (options.item.wday ?? '') &&
+                                            (h.value.mweek ?? '') === (options.item.mweek ?? '')
+                                        )
                                         ?? null
                                 }">
                                 <HiddenElement name="business_hour_uuid" :meta="true" />
@@ -58,6 +66,10 @@
                                     {
                                         value: 'ca_holiday',
                                         label: 'Canadian Holiday',
+                                    },
+                                    {
+                                        value: 'uk_holiday',
+                                        label: 'UK Holiday',
                                     },
                                     {
                                         value: 'single_date',
@@ -83,6 +95,7 @@
                                         [
                                             'us_holiday',
                                             'ca_holiday',
+                                            'uk_holiday',
                                         ],
                                     ],
                                 ]">
@@ -499,6 +512,8 @@ const submitForm = async (FormData, form$) => {
     // console.log(requestData);
 
     delete requestData.us_holiday;
+    delete requestData.ca_holiday;
+    delete requestData.uk_holiday;
 
     requestData.business_hour_uuid = props.business_hour_uuid
 

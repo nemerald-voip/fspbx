@@ -18,6 +18,7 @@ class UpdateHolidayHourRequest extends FormRequest
         $types = [
             'us_holiday',
             'ca_holiday',
+            'uk_holiday',
             'single_date',
             'date_range',
             'recurring_pattern',
@@ -100,14 +101,14 @@ class UpdateHolidayHourRequest extends FormRequest
             $startTime = $this->input('start_time');
             $endTime = $this->input('end_time');
 
-            // US holiday must be fixed‐date (mday) OR floating (wday + mweek)
-            if ($type === 'us_holiday' || $type === 'ca_holiday') {
+            // Preset holidays must be fixed-date (mday) OR floating (wday + mweek)
+            if (in_array($type, ['us_holiday', 'ca_holiday', 'uk_holiday'], true)) {
                 $hasFixed    = filled($this->input('mday'));
                 $hasFloating = filled($this->input('wday')) && filled($this->input('mweek'));
 
                 if (! $hasFixed && ! $hasFloating) {
                     $validator->errors()->add(
-                        'us_holiday',
+                        'holiday_type',
                         'You must select a holiday from the list.'
                     );
                 }
