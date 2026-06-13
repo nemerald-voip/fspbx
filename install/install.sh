@@ -1,165 +1,916 @@
 #!/bin/bash
-set -euo pipefail
 
-GREEN="\e[32m"; RED="\e[31m"; YELLOW="\e[33m"; RESET="\e[0m"
-print_success(){ echo -e "${GREEN}$1${RESET}"; }
-print_error(){ echo -e "${RED}$1${RESET}"; }
-print_warn(){ echo -e "${YELLOW}$1${RESET}"; }
-has_cmd(){ command -v "$1" >/dev/null 2>&1; }
-
-require_root() {
-  if [ "${EUID:-$(id -u)}" -ne 0 ]; then
-    print_error "Please run as root: sudo bash $0"
-    exit 1
-  fi
+# Function to print success message
+print_success() {
+    echo -e "\e[32m$1 \e[0m"  # Green text
 }
 
-write_sury_key_noninteractive() {
-  mkdir -p /etc/apt/keyrings
-  local tmp="/etc/apt/keyrings/sury-php.gpg.tmp.$$"
-
-  curl -fsSL https://packages.sury.org/php/apt.gpg \
-    | gpg --dearmor --batch --yes -o "$tmp"
-
-  chmod 0644 "$tmp"
-  mv -f "$tmp" /etc/apt/keyrings/sury-php.gpg
+# Function to print error message
+print_error() {
+    echo -e "\e[31m$1 \e[0m"  # Red text
 }
 
-normalize_sury_repo() {
-  print_success "Normalizing Sury PHP repo (prevents Signed-By conflicts)..."
+# Detect OS codename
+OS_CODENAME=$(lsb_release -sc 2>/dev/null || echo "")
+echo "Detected OS_CODENAME=$OS_CODENAME"
 
-  mkdir -p /root/php-install-audit/disabled-apt-sources
+print_success  "Welcome to FS PBX installation script"
 
-  # Move any existing Sury php sources out of sources.list.d to avoid Signed-By conflicts
-  shopt -s nullglob
-  for f in /etc/apt/sources.list.d/*.{list,sources}; do
-    if grep -q "packages.sury.org/php" "$f" 2>/dev/null; then
-      print_warn "Moving existing Sury source out of the way: $f"
-      mv -f "$f" "/root/php-install-audit/disabled-apt-sources/$(basename "$f").$(date +%F-%H%M%S).bak"
-    fi
-  done
-  shopt -u nullglob
-
-  # Comment out any Sury php lines in /etc/apt/sources.list (rare)
-  if grep -q "packages.sury.org/php" /etc/apt/sources.list 2>/dev/null; then
-    print_warn "Commenting out Sury lines in /etc/apt/sources.list"
-    cp -a /etc/apt/sources.list "/root/php-install-audit/sources.list.$(date +%F-%H%M%S).bak"
-    sed -i 's|^\(deb .*packages\.sury\.org/php.*\)$|# DISABLED: \1|g' /etc/apt/sources.list
-  fi
-
-  export DEBIAN_FRONTEND=noninteractive
-  apt-get update -y || true
-  apt-get install -y apt-transport-https ca-certificates curl wget gnupg2 lsb-release
-
-  write_sury_key_noninteractive
-
-  local codename
-  codename="$(. /etc/os-release && echo "${VERSION_CODENAME}")"
-
-  cat > /etc/apt/sources.list.d/php-sury.list <<EOF
-deb [signed-by=/etc/apt/keyrings/sury-php.gpg] https://packages.sury.org/php/ ${codename} main
-EOF
-
-  apt-get update -y
-  print_success "Sury repo ready."
-}
-
-apply_fspbx_php84_ini_overrides() {
-  print_success "Applying FS PBX PHP 8.4 overrides (FPM + CLI)..."
-
-  cat > /etc/php/8.4/mods-available/fspbx.ini <<'EOF'
-; FS PBX overrides
-post_max_size = 80M
-upload_max_filesize = 80M
-memory_limit = 512M
-max_input_vars = 8000
-session.gc_maxlifetime = 7200
-EOF
-
-  ln -sf /etc/php/8.4/mods-available/fspbx.ini /etc/php/8.4/fpm/conf.d/99-fspbx.ini
-  ln -sf /etc/php/8.4/mods-available/fspbx.ini /etc/php/8.4/cli/conf.d/99-fspbx.ini
-}
-
-ensure_systemd_fspbx_override_php84() {
-  if ! has_cmd systemctl; then
-    print_warn "systemctl not found; skipping systemd override."
-    return 0
-  fi
-
-  mkdir -p /etc/systemd/system/php8.4-fpm.service.d
-  cat > /etc/systemd/system/php8.4-fpm.service.d/override.conf <<'EOF'
-[Service]
-RuntimeDirectory=php
-RuntimeDirectoryMode=0755
-ReadWritePaths=-/etc/freeswitch -/usr/share/freeswitch -/var/lib/freeswitch
-EOF
-
-  systemctl daemon-reload
-  print_success "Ensured FS PBX systemd override for php8.4-fpm."
-}
-
-install_esl_php84_via_installer() {
-  local installer="/var/www/fspbx/install/install_esl_extension.sh"
-
-  if [ ! -f "$installer" ]; then
-    print_error "ESL installer not found: $installer"
-    exit 1
-  fi
-
-  chmod +x "$installer" || true
-
-  print_success "Installing ESL via: $installer"
-  if ! bash "$installer"; then
-    print_error "ESL installer failed."
-    exit 1
-  fi
-}
-# ---------------- MAIN ----------------
-require_root
+# Set the environment variable to suppress prompts
 export DEBIAN_FRONTEND=noninteractive
 
-print_success "Starting PHP 8.4 installation..."
+# Run the upgrade with the option to keep the existing configuration files
+apt update && apt -o Dpkg::Options::="--force-confold" upgrade -y
 
-# If already installed, still ensure overrides + ESL are applied (idempotent)
-if has_cmd php8.4; then
-  print_success "php8.4 already present. Ensuring required packages + config..."
+# Check if the upgrade was successful
+if [ $? -eq 0 ]; then
+    print_success "System updated and upgraded successfully."
 else
-  normalize_sury_repo
+    print_error "Error occurred during update and upgrade."
+    exit 1
 fi
 
-# Install PHP 8.4 + extensions required by FS PBX
-print_success "Installing PHP 8.4 + extensions..."
-apt-get install -y --no-install-recommends \
-  php8.4 php8.4-cli php8.4-fpm \
-  php8.4-pgsql php8.4-sqlite3 php8.4-odbc \
-  php8.4-curl php8.4-imap php8.4-xml php8.4-gd php8.4-mbstring php8.4-ldap \
-  php8.4-zip \
-  php8.4-redis php8.4-igbinary php8.4-inotify \
-  imagemagick php8.4-imagick php8.4-dev
-
-# Apply FS PBX overrides
-apply_fspbx_php84_ini_overrides
-
-# Systemd override (if needed)
-ensure_systemd_fspbx_override_php84
-
-# Restart PHP-FPM
-print_success "Restarting php8.4-fpm..."
-if has_cmd systemctl; then
-  systemctl restart php8.4-fpm
+print_success "Preflight: ensuring base tools..."
+apt-get update -y && apt-get install -y libc-bin sysvinit-utils
+if [ $? -eq 0 ]; then
+    print_success "Preflight tools installed successfully (ldconfig, service)."
 else
-  service php8.4-fpm restart
+    print_error "Error occurred during preflight tool installation."
+    exit 1
 fi
 
-# Set CLI alternatives to 8.4 (non-interactive)
-if has_cmd update-alternatives; then
-  [ -x /usr/bin/php8.4 ] && update-alternatives --set php /usr/bin/php8.4 >/dev/null 2>&1 || true
-  [ -x /usr/bin/phpize8.4 ] && update-alternatives --set phpize /usr/bin/phpize8.4 >/dev/null 2>&1 || true
-  [ -x /usr/bin/php-config8.4 ] && update-alternatives --set php-config /usr/bin/php-config8.4 >/dev/null 2>&1 || true
+# Unset the environment variable to restore normal behavior
+unset DEBIAN_FRONTEND
+
+# Install essential dependencies
+print_success "Installing essential dependencies..."
+apt-get install -y \
+    wget \
+    lsb-release \
+    systemd \
+    systemd-sysv \
+    ca-certificates \
+    dialog \
+    nano \
+    net-tools \
+    gpg \
+    ffmpeg \
+    gnupg \
+    ghostscript \
+    libtool-bin \
+    python3-systemd \
+    libtiff-tools \
+    libreoffice \
+    libreoffice-base \
+    libreoffice-common \
+    libreoffice-java-common \
+    supervisor \
+    redis-server \
+    apt-transport-https \
+    npm
+
+if [[ "$OS_CODENAME" == "bookworm" ]]; then
+    apt-get install -y software-properties-common
 fi
 
-# Install ESL (custom module)
-install_esl_php84_via_installer
+if [ $? -eq 0 ]; then
+    print_success "Essential dependencies installed successfully."
+else
+    print_error "Error occurred during essential dependency installation."
+    exit 1
+fi
 
-print_success "PHP 8.4 installation completed successfully."
-php8.4 -v | head -n 2 || true
+    if [[ "$OS_CODENAME" == "bookworm" ]]; then
+# Install SNMP and configure it
+print_success "Installing and configuring SNMP..."
+apt-get install -y snmpd
+if [ $? -eq 0 ]; then
+    echo "rocommunity public" > /etc/snmp/snmpd.conf
+
+    # Restart snmpd across systemd/sysvinit/bare init
+    if command -v systemctl >/dev/null 2>&1; then
+        systemctl restart snmpd
+    elif command -v service >/dev/null 2>&1; then
+        service snmpd restart
+    else
+        /etc/init.d/snmpd restart 2>/dev/null || true
+    fi
+
+    print_success "SNMP installed and configured successfully."
+else
+    print_error "Error occurred while installing SNMP."
+    exit 1
+fi
+    fi
+
+print_success "Configuring IPTables firewall rules..."
+bash /var/www/fspbx/install/configure_iptables.sh
+if [ $? -eq 0 ]; then
+    print_success "IPTables configured successfully."
+else
+    print_error "Error occurred while configuring IPTables."
+    exit 1
+fi
+
+print_success "Installing Sngrep..."
+bash /var/www/fspbx/install/install_sngrep.sh
+if [ $? -eq 0 ]; then
+    print_success "Sngrep installed successfully."
+else
+    print_error "Error occurred while installing Sngrep."
+    exit 1
+fi
+
+print_success "Installing PHP..."
+bash /var/www/fspbx/install/install_php.sh
+if [ $? -eq 0 ]; then
+    print_success "PHP installed successfully."
+else
+    print_error "Error occurred while installing PHP."
+    exit 1
+fi
+
+# Include the install_cron_jobs.sh script
+sh /var/www/fspbx/install/install_cron_jobs.sh
+if [ $? -eq 0 ]; then
+    print_success "Cron bob installation script executed successfully."
+else
+    print_error "Error occurred while executing cron job installation script."
+    exit 1
+fi
+
+# Include the add_web_server_to_sudoers.sh script
+sh /var/www/fspbx/install/add_web_server_to_sudoers.sh
+if [ $? -eq 0 ]; then
+    print_success "add_web_server_to_sudoers.sh script executed successfully."
+else
+    print_error "Error occurred while executing add_web_server_to_sudoers.sh script."
+    exit 1
+fi
+
+# Install Composer
+curl -sS https://getcomposer.org/installer | php
+if [ $? -eq 0 ]; then
+    mv composer.phar /usr/local/bin/composer
+    chmod +x /usr/local/bin/composer
+    if [ $? -eq 0 ]; then
+        print_success "Composer installed successfully."
+    else
+        print_error "Error occurred while setting up Composer."
+        exit 1
+    fi
+else
+    print_error "Error occurred during Composer installation."
+    exit 1
+fi
+
+# Install Node.js
+sudo apt-get update -y
+if [ $? -ne 0 ]; then
+    print_error "Error occurred during APT update."
+    exit 1
+fi
+
+sudo mkdir -p /etc/apt/keyrings
+if [ $? -ne 0 ]; then
+    print_error "Failed to create /etc/apt/keyrings."
+    exit 1
+fi
+
+if [[ "$OS_CODENAME" == "bookworm" ]]; then
+    curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
+        | sudo gpg --dearmor --batch --yes -o /etc/apt/keyrings/nodesource.gpg
+    if [ $? -ne 0 ]; then
+        print_error "Error occurred while setting up Node.js GPG key."
+        exit 1
+    fi
+
+    NODE_MAJOR=20
+    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" \
+        | sudo tee /etc/apt/sources.list.d/nodesource.list > /dev/null
+fi
+
+if [[ "$OS_CODENAME" == "trixie" ]]; then
+    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+    if [ $? -ne 0 ]; then
+        print_error "Error occurred while running NodeSource setup script."
+        exit 1
+    fi
+fi
+
+sudo apt-get update -y
+if [ $? -ne 0 ]; then
+    print_error "Error occurred during APT update after adding Node.js repository."
+    exit 1
+fi
+
+sudo apt-get install -y nodejs
+if [ $? -eq 0 ]; then
+    print_success "Node.js installed successfully."
+else
+    print_error "Error occurred during Node.js installation."
+    exit 1
+fi
+
+# Change to the FS PBX directory
+cd /var/www/fspbx/
+if [ $? -eq 0 ]; then
+    print_success "Changed to /var/www/fspbx/ directory."
+else
+    print_error "Error occurred while changing directory to /var/www/fspbx/."
+    exit 1
+fi
+
+print_success "Installing Nginx..."
+bash /var/www/fspbx/install/install_nginx.sh
+if [ $? -eq 0 ]; then
+    print_success "Nginx installed successfully."
+else
+    print_error "Error occurred while installing Nginx."
+    exit 1
+fi
+
+
+# Nginx configuration
+if [ -f /etc/nginx/sites-enabled/fusionpbx ]; then
+    rm /etc/nginx/sites-enabled/fusionpbx
+    if [ $? -eq 0 ]; then
+        print_success "Removed old fusionpbx site from sites-enabled."
+    else
+        print_error "Error occurred while removing fusionpbx from sites-enabled."
+        exit 1
+    fi
+else
+    print_success "No existing fusionpbx site in sites-enabled to remove."
+fi
+
+if [ -f /etc/nginx/sites-available/fusionpbx ]; then
+    rm /etc/nginx/sites-available/fusionpbx
+    if [ $? -eq 0 ]; then
+        print_success "Removed old fusionpbx site from sites-available."
+    else
+        print_error "Error occurred while removing fusionpbx from sites-available."
+        exit 1
+    fi
+else
+    print_success "No existing fusionpbx site in sites-available to remove."
+fi
+
+cp install/nginx_site_config.conf /etc/nginx/sites-available/fspbx.conf
+if [ $? -eq 0 ]; then
+    print_success "Copied new Nginx site config to sites-available."
+else
+    print_error "Error occurred while copying new Nginx site config."
+    exit 1
+fi
+
+# Check if symbolic link already exists and remove it if necessary
+if [ -L /etc/nginx/sites-enabled/fspbx.conf ]; then
+    rm /etc/nginx/sites-enabled/fspbx.conf
+    if [ $? -eq 0 ]; then
+        print_success "Existing symbolic link for fspbx.conf removed."
+    else
+        print_error "Error occurred while removing existing symbolic link for fspbx.conf."
+        exit 1
+    fi
+fi
+
+# Create symbolic link for fspbx.conf
+ln -s /etc/nginx/sites-available/fspbx.conf /etc/nginx/sites-enabled/fspbx.conf
+if [ $? -eq 0 ]; then
+    print_success "Linked new Nginx site config to sites-enabled."
+else
+    print_error "Error occurred while linking new Nginx site config."
+    exit 1
+fi
+
+# Install nginx snippet for Laravel Reverb
+cp install/nginx_reverb.conf /etc/nginx/snippets/fspbx-reverb.conf
+if [ $? -eq 0 ]; then
+    print_success "Copied new Nginx snippet config for Laravel Reverb."
+else
+    print_error "Error occurred while copying new Nginx  snippet config for Laravel Reverb."
+    exit 1
+fi
+
+# FS PBX internal vhost (new in 1.0.2)
+cp install/nginx_fspbx_internal.conf /etc/nginx/sites-available/fspbx_internal.conf
+if [ $? -eq 0 ]; then
+    print_success "Copied internal Nginx site config to sites-available."
+else
+    print_error "Error occurred while copying internal Nginx site config."
+    exit 1
+fi
+
+# Check if symbolic link already exists and remove it if necessary
+if [ -L /etc/nginx/sites-enabled/fspbx_internal.conf ]; then
+    rm /etc/nginx/sites-enabled/fspbx_internal.conf
+    if [ $? -eq 0 ]; then
+        print_success "Existing symbolic link for fspbx_internal.conf removed."
+    else
+        print_error "Error occurred while removing existing symbolic link for fspbx_internal.conf."
+        exit 1
+    fi
+fi
+
+# Create symbolic link for fspbx_internal.conf
+ln -s /etc/nginx/sites-available/fspbx_internal.conf /etc/nginx/sites-enabled/fspbx_internal.conf
+if [ $? -eq 0 ]; then
+    print_success "Linked internal Nginx site config to sites-enabled."
+else
+    print_error "Error occurred while linking internal Nginx site config."
+    exit 1
+fi
+
+
+# Create directories for SSL certificates if they don't exist
+sudo mkdir -p /etc/nginx/ssl/private
+if [ $? -eq 0 ]; then
+    print_success "SSL directory structure created successfully."
+else
+    print_error "Error occurred while creating SSL directory structure."
+    exit 1
+fi
+
+# Generate self-signed SSL certificate and private key
+sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/nginx/ssl/private/privkey.pem -out /etc/nginx/ssl/fullchain.pem -subj "/C=US/ST=State/L=City/O=Organization/OU=Department/CN=example.com"
+if [ $? -eq 0 ]; then
+    print_success "Self-signed SSL certificate and key created successfully."
+else
+    print_error "Error occurred while generating self-signed SSL certificate and key."
+    exit 1
+fi
+
+
+# --- Reload Nginx safely across environments ---
+if command -v systemctl >/dev/null 2>&1; then
+   echo "Reloading Nginx via systemctl..."
+   systemctl reload nginx || systemctl restart nginx
+elif command -v service >/dev/null 2>&1; then
+   echo "Reloading Nginx via service..."
+   service nginx reload || service nginx restart
+else
+   echo "Reloading Nginx directly..."
+   nginx -t && nginx -s reload || nginx -s reopen
+fi
+
+# Ensure the FusionPBX cache directory exists
+print_success "Setting up FusionPBX cache directory..."
+mkdir -p /var/cache/fusionpbx
+chown -R www-data:www-data /var/cache/fusionpbx
+
+print_success "FusionPBX cache directory setup completed."
+
+
+# Copy .env.example to .env
+cp .env.example .env
+if [ $? -eq 0 ]; then
+    print_success ".env file created successfully from .env.example."
+else
+    print_error "Error occurred while copying .env.example to .env."
+    exit 1
+fi
+
+# Install Composer dependencies without interaction
+composer install --no-dev --prefer-dist --optimize-autoloader --no-progress --no-interaction
+if [ $? -eq 0 ]; then
+    print_success "Composer dependencies installed successfully."
+else
+    print_error "Error occurred while installing Composer dependencies."
+    exit 1
+fi
+
+# Generate application key
+php artisan key:generate
+if [ $? -eq 0 ]; then
+    print_success "Application key generated successfully."
+else
+    print_error "Error occurred while generating application key."
+    exit 1
+fi
+
+# Replace the main index file
+cp install/index.php public/index.php
+if [ $? -eq 0 ]; then
+    print_success "Main index file replaced successfully."
+else
+    print_error "Error occurred while replacing the main index file."
+    exit 1
+fi
+
+# Copy check_auth.php to public/resources
+cp install/check_auth.php public/resources/check_auth.php
+if [ $? -eq 0 ]; then
+    print_success "check_auth.php copied to public/resources successfully."
+else
+    print_error "Error occurred while copying check_auth.php to public/resources."
+    exit 1
+fi
+
+print_success "Installing FreeSWITCH..."
+bash /var/www/fspbx/install/install_freeswitch.sh
+if [ $? -eq 0 ]; then
+    print_success "FreeSWITCH installed successfully."
+else
+    print_error "Error occurred while installing FreeSWITCH."
+    exit 1
+fi
+
+
+print_success "Installing FreeSWITCH Sounds..."
+bash /var/www/fspbx/install/install_freeswitch_sounds.sh
+if [ $? -eq 0 ]; then
+    print_success "FreeSWITCH sounds installed successfully."
+else
+    print_error "Error occurred while installing FreeSWITCH sounds."
+    exit 1
+fi
+
+print_success "Installing Fail2Ban and securing Nginx..."
+bash /var/www/fspbx/install/install_fail2ban.sh
+if [ $? -eq 0 ]; then
+    print_success "Fail2Ban installed and configured successfully."
+else
+    print_error "Error occurred while installing Fail2Ban."
+    exit 1
+fi
+
+# Ensure the /etc/fusionpbx directory exists
+if [ ! -d "/etc/fusionpbx" ]; then
+    sudo mkdir -p /etc/fusionpbx
+    print_success "Created /etc/fusionpbx directory."
+fi
+
+# Copy the fusionpbx_config.conf file to /etc/fusionpbx
+sudo cp /var/www/fspbx/install/fusionpbx_config.conf /etc/fusionpbx/config.conf
+if [ $? -eq 0 ]; then
+    print_success "Copied fusionpbx_config.conf to /etc/fusionpbx successfully."
+else
+    print_error "Error occurred while copying fusionpbx_config.conf."
+    exit 1
+fi
+
+print_success "Installing PostgreSQL..."
+bash /var/www/fspbx/install/install_postgresql.sh
+if [ $? -eq 0 ]; then
+    print_success "PostgreSQL installed successfully."
+else
+    print_error "Error occurred while installing PostgreSQL."
+    exit 1
+fi
+
+# Update document root in config.conf
+sudo sed -i 's|document.root = /var/www/fusionpbx|document.root = /var/www/fspbx/public|' /etc/fusionpbx/config.conf
+if [ $? -eq 0 ]; then
+    print_success "Updated document root in config.conf successfully."
+else
+    print_error "Error occurred while updating document root in config.conf."
+    exit 1
+fi
+
+# Extract database credentials from config.conf
+DB_NAME=$(grep '^database.0.name' /etc/fusionpbx/config.conf | cut -d ' ' -f 3)
+DB_USERNAME=$(grep '^database.0.username' /etc/fusionpbx/config.conf | cut -d ' ' -f 3)
+DB_PASSWORD=$(grep '^database.0.password' /etc/fusionpbx/config.conf | cut -d ' ' -f 3)
+
+# Update .env file with database credentials
+sudo sed -i "s|^DB_DATABASE=.*|DB_DATABASE=$DB_NAME|" /var/www/fspbx/.env
+if [ $? -eq 0 ]; then
+    print_success "Updated DB_DATABASE in .env file successfully."
+else
+    print_error "Error occurred while updating DB_DATABASE in .env file."
+    exit 1
+fi
+
+sudo sed -i "s|^DB_USERNAME=.*|DB_USERNAME=$DB_USERNAME|" /var/www/fspbx/.env
+if [ $? -eq 0 ]; then
+    print_success "Updated DB_USERNAME in .env file successfully."
+else
+    print_error "Error occurred while updating DB_USERNAME in .env file."
+    exit 1
+fi
+
+sudo sed -i "s|^DB_PASSWORD=.*|DB_PASSWORD=$DB_PASSWORD|" /var/www/fspbx/.env
+if [ $? -eq 0 ]; then
+    print_success "Updated DB_PASSWORD in .env file successfully."
+else
+    print_error "Error occurred while updating DB_PASSWORD in .env file."
+    exit 1
+fi
+
+
+# Fetch the external IP address of the server
+EXTERNAL_IP=$(curl -s http://checkip.amazonaws.com)
+if [ $? -eq 0 ]; then
+    print_success "External IP address fetched successfully: $EXTERNAL_IP."
+else
+    print_error "Error occurred while fetching the external IP address."
+    exit 1
+fi
+
+# Update APP_URL in .env file with external IP
+sudo sed -i "s|^APP_URL=.*|APP_URL=https://$EXTERNAL_IP|" /var/www/fspbx/.env
+if [ $? -eq 0 ]; then
+    print_success "Updated APP_URL in .env file successfully."
+else
+    print_error "Error occurred while updating APP_URL in .env file."
+    exit 1
+fi
+
+# Update SESSION_DOMAIN in .env file with external IP
+sudo sed -i "s|^SESSION_DOMAIN=.*|SESSION_DOMAIN=$EXTERNAL_IP|" /var/www/fspbx/.env
+if [ $? -eq 0 ]; then
+    print_success "Updated SESSION_DOMAIN in .env file successfully."
+else
+    print_error "Error occurred while updating SESSION_DOMAIN in .env file."
+    exit 1
+fi
+
+# Update SANCTUM_STATEFUL_DOMAINS in .env file with external IP
+sudo sed -i "s|^SANCTUM_STATEFUL_DOMAINS=.*|SANCTUM_STATEFUL_DOMAINS=$EXTERNAL_IP|" /var/www/fspbx/.env
+if [ $? -eq 0 ]; then
+    print_success "Updated SANCTUM_STATEFUL_DOMAINS in .env file successfully."
+else
+    print_error "Error occurred while updating SANCTUM_STATEFUL_DOMAINS in .env file."
+    exit 1
+fi
+
+
+# Create a symbolic link from "public/storage" to "storage/app/public"
+php artisan storage:link
+if [ $? -eq 0 ]; then
+    print_success "Storage link created successfully."
+else
+    print_error "Error occurred while creating storage link."
+    exit 1
+fi
+
+# Copy assets to storage/app/public
+sudo cp /var/www/fspbx/install/assets/* /var/www/fspbx/storage/app/public/
+if [ $? -eq 0 ]; then
+    print_success "Assets copied to storage/app/public successfully."
+else
+    print_error "Error occurred while copying assets to storage/app/public."
+    exit 1
+fi
+
+
+# Change ownership of the entire fspbx directory to www-data
+sudo chown -R www-data:www-data /var/www/fspbx
+if [ $? -eq 0 ]; then
+    print_success "Ownership of /var/www/fspbx and its contents changed to www-data successfully."
+else
+    print_error "Error occurred while changing ownership of /var/www/fspbx."
+    exit 1
+fi
+
+# Set directory permissions to 755
+sudo find /var/www/fspbx -type d -exec chmod 755 {} \;
+if [ $? -eq 0 ]; then
+    print_success "All directories set to 755 permissions successfully."
+else
+    print_error "Error occurred while setting directory permissions."
+    exit 1
+fi
+
+# Set file permissions to 644
+sudo find /var/www/fspbx -type f -exec chmod 644 {} \;
+if [ $? -eq 0 ]; then
+    print_success "All files set to 644 permissions successfully."
+else
+    print_error "Error occurred while setting file permissions."
+    exit 1
+fi
+
+# Change group ownership to www-data for storage and bootstrap/cache
+sudo chgrp -R www-data /var/www/fspbx/storage /var/www/fspbx/bootstrap/cache
+if [ $? -eq 0 ]; then
+    print_success "Group ownership of storage and bootstrap/cache changed to www-data successfully."
+else
+    print_error "Error occurred while changing group ownership to www-data."
+    exit 1
+fi
+
+# Set permissions to ug+rwx for storage and bootstrap/cache
+sudo chmod -R ug+rwx /var/www/fspbx/storage /var/www/fspbx/bootstrap/cache
+if [ $? -eq 0 ]; then
+    print_success "Permissions set to ug+rwx for storage and bootstrap/cache successfully."
+else
+    print_error "Error occurred while setting permissions for storage and bootstrap/cache."
+    exit 1
+fi
+
+# Set /var/www/fspbx as a safe directory for Git
+sudo git config --global --add safe.directory /var/www/fspbx
+if [ $? -eq 0 ]; then
+    print_success "/var/www/fspbx added to Git's safe.directory list."
+else
+    print_error "Error occurred while adding /var/www/fspbx to Git's safe.directory list."
+    exit 1
+fi
+
+# Update settings for email_queue service
+# Copy email_queue service file
+sudo cp /var/www/fspbx/public/app/email_queue/resources/service/debian.service /etc/systemd/system/email_queue.service
+if [ $? -eq 0 ]; then
+    print_success "email_queue service file copied successfully."
+else
+    print_error "Error occurred while copying fax_queue service file."
+    exit 1
+fi
+
+# Update settings for email_queue service
+sudo sed -i "s|WorkingDirectory=/var/www/fusionpbx|WorkingDirectory=/var/www/fspbx/public|" /etc/systemd/system/email_queue.service
+if [ $? -eq 0 ]; then
+    print_success "Updated WorkingDirectory for email_queue service successfully."
+else
+    print_error "Error occurred while updating WorkingDirectory for email_queue service."
+    exit 1
+fi
+
+sudo sed -i "s|ExecStart=/usr/bin/php /var/www/fusionpbx/app/email_queue/resources/service/email_queue.php|ExecStart=/usr/bin/php /var/www/fspbx/public/app/email_queue/resources/service/email_queue.php|" /etc/systemd/system/email_queue.service
+if [ $? -eq 0 ]; then
+    print_success "Updated ExecStart for email_queue service successfully."
+else
+    print_error "Error occurred while updating ExecStart for email_queue service."
+    exit 1
+fi
+
+# Update settings for fax_queue service
+# Copy fax_queue service file
+sudo cp /var/www/fspbx/public/app/fax_queue/resources/service/debian.service /etc/systemd/system/fax_queue.service
+if [ $? -eq 0 ]; then
+    print_success "fax_queue service file copied successfully."
+else
+    print_error "Error occurred while copying fax_queue service file."
+    exit 1
+fi
+
+# Enable fax_queue service
+sudo systemctl enable fax_queue
+if [ $? -eq 0 ]; then
+    print_success "fax_queue service enabled successfully."
+else
+    print_error "Error occurred while enabling fax_queue service."
+    exit 1
+fi
+
+# Enable email_queue service
+sudo systemctl enable email_queue
+if [ $? -eq 0 ]; then
+    print_success "email_queue service enabled successfully."
+else
+    print_error "Error occurred while enabling email_queue service."
+    exit 1
+fi
+
+sudo sed -i "s|WorkingDirectory=/var/www/fusionpbx|WorkingDirectory=/var/www/fspbx/public|" /etc/systemd/system/fax_queue.service
+if [ $? -eq 0 ]; then
+    print_success "Updated WorkingDirectory for fax_queue service successfully."
+else
+    print_error "Error occurred while updating WorkingDirectory for fax_queue service."
+    exit 1
+fi
+
+sudo sed -i "s|ExecStart=/usr/bin/php /var/www/fusionpbx/app/fax_queue/resources/service/fax_queue.php|ExecStart=/usr/bin/php /var/www/fspbx/public/app/fax_queue/resources/service/fax_queue.php|" /etc/systemd/system/fax_queue.service
+if [ $? -eq 0 ]; then
+    print_success "Updated ExecStart for fax_queue service successfully."
+else
+    print_error "Error occurred while updating ExecStart for fax_queue service."
+    exit 1
+fi
+
+# Update settings for event_guard service
+# Copy event_guard service file
+sudo cp /var/www/fspbx/public/app/event_guard/resources/service/debian.service /etc/systemd/system/event_guard.service
+if [ $? -eq 0 ]; then
+    print_success "event_guard service file copied successfully."
+else
+    print_error "Error occurred while copying event_guard service file."
+    exit 1
+fi
+
+# Update settings for event_guard service
+sudo sed -i "s|WorkingDirectory=/var/www/fusionpbx|WorkingDirectory=/var/www/fspbx/public|" /etc/systemd/system/event_guard.service
+if [ $? -eq 0 ]; then
+    print_success "Updated WorkingDirectory for event_guard service successfully."
+else
+    print_error "Error occurred while updating WorkingDirectory for event_guard service."
+    exit 1
+fi
+
+sudo sed -i "s|ExecStart=/usr/bin/php /var/www/fusionpbx/app/event_guard/resources/service/event_guard.php|ExecStart=/usr/bin/php /var/www/fspbx/public/app/event_guard/resources/service/event_guard.php|" /etc/systemd/system/event_guard.service
+if [ $? -eq 0 ]; then
+    print_success "Updated ExecStart for event_guard service successfully."
+else
+    print_error "Error occurred while updating ExecStart for event_guard service."
+    exit 1
+fi
+
+# Enable event_guard service
+sudo systemctl enable event_guard
+if [ $? -eq 0 ]; then
+    print_success "event_guard service enabled successfully."
+else
+    print_error "Error occurred while enabling event_guard service."
+    exit 1
+fi
+
+# Reload systemd daemon to apply changes
+sudo systemctl daemon-reload
+if [ $? -eq 0 ]; then
+    print_success "systemd daemon reloaded successfully."
+else
+    print_error "Error occurred while reloading systemd daemon."
+    exit 1
+fi
+
+
+# Restart email_queue service
+sudo service email_queue stop
+if [ $? -eq 0 ]; then
+    print_success "email_queue service stopped successfully."
+else
+    print_error "Error occurred while stopping email_queue service."
+    exit 1
+fi
+
+sudo service email_queue start
+if [ $? -eq 0 ]; then
+    print_success "email_queue service started successfully."
+else
+    print_error "Error occurred while starting email_queue service."
+    exit 1
+fi
+
+# Restart fax_queue service
+sudo service fax_queue stop
+if [ $? -eq 0 ]; then
+    print_success "fax_queue service stopped successfully."
+else
+    print_error "Error occurred while stopping fax_queue service."
+    exit 1
+fi
+
+sudo service fax_queue start
+if [ $? -eq 0 ]; then
+    print_success "fax_queue service started successfully."
+else
+    print_error "Error occurred while starting fax_queue service."
+    exit 1
+fi
+
+# Restart event_guard service
+sudo service event_guard stop
+if [ $? -eq 0 ]; then
+    print_success "event_guard service stopped successfully."
+else
+    print_error "Error occurred while stopping event_guard service."
+    exit 1
+fi
+
+sudo service event_guard start
+if [ $? -eq 0 ]; then
+    print_success "event_guard service started successfully."
+else
+    print_error "Error occurred while starting event_guard service."
+    exit 1
+fi
+
+# Copy Redis configuration
+sudo cp install/redis.conf /etc/redis/redis.conf
+if [ $? -eq 0 ]; then
+    print_success "Redis configuration file copied successfully."
+else
+    print_error "Error occurred while copying Redis configuration file."
+    exit 1
+fi
+
+# Restart Redis Server
+sudo service redis-server restart
+if [ $? -eq 0 ]; then
+    sleep 6
+    print_success "Redis Server restarted successfully."
+else
+    print_error "Error occurred while restarting Redis Server."
+    exit 1
+fi
+
+# Copy Horizon configuration to Supervisor
+sudo cp install/horizon.conf /etc/supervisor/conf.d/
+if [ $? -eq 0 ]; then
+    print_success "Horizon configuration file copied to Supervisor successfully."
+else
+    print_error "Error occurred while copying Horizon configuration file to Supervisor."
+    exit 1
+fi
+
+# Publish Horizon's assets
+php artisan vendor:publish --provider="Laravel\Horizon\HorizonServiceProvider"
+if [ $? -eq 0 ]; then
+    print_success "Laravel Horizon assets published successfully."
+else
+    print_error "Error occurred while publishing Laravel Horizon assets."
+    exit 1
+fi
+
+# Copy FS PBX CDR Service configuration to Supervisor
+sudo cp install/fs-cdr-service.conf /etc/supervisor/conf.d/
+if [ $? -eq 0 ]; then
+    print_success "FS PBX CDR Service configuration file copied to Supervisor successfully."
+else
+    print_error "Error occurred while copying FS PBX CDR Service configuration file to Supervisor."
+    exit 1
+fi
+
+# Copy FS ELS Emergency Listener configuration to Supervisor
+sudo cp install/fs-esl-listener-emergency.conf /etc/supervisor/conf.d/
+if [ $? -eq 0 ]; then
+    print_success "FS ELS Emergency Listener configuration file copied to Supervisor successfully."
+else
+    print_error "Error occurred while copying FS ELS Emergency Listener configuration file to Supervisor."
+    exit 1
+fi
+
+# Copy Laravel Reverb configuration to Supervisor
+sudo cp install/reverb.conf /etc/supervisor/conf.d/
+if [ $? -eq 0 ]; then
+    print_success "Laravel Reverb configuration file copied to Supervisor successfully."
+else
+    print_error "Error occurred while copying Laravel Reverb configuration file to Supervisor."
+    exit 1
+fi
+
+# Reload Supervisor to read new configuration
+sudo supervisorctl reread
+if [ $? -eq 0 ]; then
+    sleep 6
+    print_success "Supervisor reread configuration successfully."
+else
+    print_error "Error occurred while rereading Supervisor configuration."
+    exit 1
+fi
+
+# Update Supervisor with new configuration
+sudo supervisorctl update
+if [ $? -eq 0 ]; then
+    sleep 6
+    print_success "Supervisor updated with new configuration successfully."
+else
+    print_error "Error occurred while updating Supervisor with new configuration."
+    exit 1
+fi
+
+# Restart Supervisor
+sudo systemctl restart supervisor
+if [ $? -eq 0 ]; then
+    sleep 6
+    print_success "Supervisor restarted successfully."
+else
+    print_error "Error occurred while restarting Supervisor."
+    exit 1
+fi
+
+# Restart Horizon processes under Supervisor
+sudo supervisorctl restart horizon:*
+if [ $? -eq 0 ]; then
+    sleep 6
+    print_success "Horizon processes restarted successfully."
+else
+    print_error "Error occurred while restarting Horizon processes."
+    exit 1
+fi
+
+# Restart FS ELS Emergency process under Supervisor
+sudo supervisorctl start fs-esl-listener-emergency
+if [ $? -eq 0 ]; then
+    sleep 6
+    print_success "FS ELS Emergency process restarted successfully."
+else
+    print_error "Error occurred while restarting FS ELS Emergency process."
+    exit 1
+fi
+
+# Restart FS ELS Emergency process under Supervisor
+sudo supervisorctl restart fs-cdr-service
+if [ $? -eq 0 ]; then
+    sleep 6
+    print_success "FS PBX CDR Service process restarted successfully."
+else
+    print_error "Error occurred while restarting FS PBX CDR Service process."
+    exit 1
+fi
+
+print_success "Seeding the database and configuring FS PBX..."
+# Navigate to Laravel project directory
+cd /var/www/fspbx
+# Run Laravel's initial seed command
+php artisan fspbx:initial-seed
+
+# Check if the command was successful
+if [ $? -eq 0 ]; then
+    print_success "All installation tasks completed successfully!"
+else
+    print_error "Error occurred during database seeding and FS PBX configuration."
+    exit 1
+fi
