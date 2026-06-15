@@ -1008,7 +1008,7 @@ class AppsController extends Controller
                     $user['password_url'] = $includePasswordUrl;
                 }
                 if ($extension->email) {
-                    SendAppCredentials::dispatch($user)->onQueue('emails');
+                    $this->dispatchAppCredentials($user, $extension->domain_uuid);
                 }
             }
 
@@ -1155,7 +1155,7 @@ class AppsController extends Controller
                     $user['password_url'] = $includePasswordUrl;
                 }
                 if ($email) {
-                    SendAppCredentials::dispatch($user)->onQueue('emails');
+                    $this->dispatchAppCredentials($user, $extension->domain_uuid);
                 }
             }
 
@@ -1351,7 +1351,7 @@ class AppsController extends Controller
                             $user['password_url'] = route('appsGetPasswordByToken', $passwordToken);
                         }
 
-                        SendAppCredentials::dispatch($user)->onQueue('emails');
+                        $this->dispatchAppCredentials($user, $extension->domain_uuid);
                     }
 
                     $processed++;
@@ -1424,7 +1424,7 @@ class AppsController extends Controller
                             $user['password_url'] = route('appsGetPasswordByToken', $passwordToken);
                         }
 
-                        SendAppCredentials::dispatch($user)->onQueue('emails');
+                        $this->dispatchAppCredentials($user, $extension->domain_uuid);
                     }
 
                     $processed++;
@@ -1535,7 +1535,7 @@ class AppsController extends Controller
                     $user['password_url'] = $includePasswordUrl;
                 }
                 if ($extension->email) {
-                    SendAppCredentials::dispatch($user)->onQueue('emails');
+                    $this->dispatchAppCredentials($user, $extension->domain_uuid);
                 }
             }
 
@@ -1705,5 +1705,12 @@ class AppsController extends Controller
         });
 
         return $regions;
+    }
+
+    protected function dispatchAppCredentials(array $user, ?string $domainUuid): void
+    {
+        $user['domain_uuid'] = $domainUuid;
+
+        SendAppCredentials::dispatch($user)->onQueue('emails');
     }
 }
