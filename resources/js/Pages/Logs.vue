@@ -199,8 +199,6 @@ onMounted(() => {
         initialMenuOption.value = navigation.value.some((item) => item.key === requestedOption)
             ? requestedOption
             : fallbackOption
-
-        handleUpdateSelectedMenuOption(initialMenuOption.value)
     }
 })
 
