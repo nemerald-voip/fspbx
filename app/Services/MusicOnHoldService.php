@@ -73,7 +73,14 @@ class MusicOnHoldService
     {
         if (! empty($validated['music_on_hold_uuid'])) {
             $stream = $this->scopedQuery()
-                ->where('domain_uuid', session('domain_uuid'))
+                ->when(userCheckPermission('music_on_hold_domain'), function ($query) {
+                    $query->where(function ($query) {
+                        $query->whereIn('domain_uuid', $this->accessibleDomainUuids())
+                            ->orWhereNull('domain_uuid');
+                    });
+                }, function ($query) {
+                    $query->where('domain_uuid', session('domain_uuid'));
+                })
                 ->whereKey($validated['music_on_hold_uuid'])
                 ->firstOrFail();
             $streams = $this->uploadTargetStreams($stream);
@@ -287,7 +294,13 @@ class MusicOnHoldService
         $sessionDomainUuid = session('domain_uuid');
 
         if ($domainUuid === null || $domainUuid === '') {
-            return $sessionDomainUuid;
+            return userCheckPermission('music_on_hold_domain') ? null : $sessionDomainUuid;
+        }
+
+        if (userCheckPermission('music_on_hold_domain')) {
+            abort_unless(in_array($domainUuid, $this->accessibleDomainUuids(), true), 403);
+
+            return $domainUuid;
         }
 
         abort_unless($domainUuid === $sessionDomainUuid, 403);
@@ -326,12 +339,20 @@ class MusicOnHoldService
 
     public function tenantHoldMusicStreamOptions(): array
     {
+        $domainUuid = session('domain_uuid');
+
         return $this->representativeQuery()
-            ->where('domain_uuid', session('domain_uuid'))
+            ->where(function ($query) use ($domainUuid) {
+                $query->where('domain_uuid', $domainUuid)
+                    ->orWhereNull('domain_uuid');
+            })
+            ->orderByRaw('case when domain_uuid = ? then 0 when domain_uuid is null then 1 else 2 end', [$domainUuid])
             ->orderBy('music_on_hold_name')
             ->get()
             ->map(fn (MusicOnHold $stream) => [
-                'label' => $stream->music_on_hold_name,
+                'label' => $stream->domain_uuid === null
+                    ? "{$stream->music_on_hold_name} (Global)"
+                    : $stream->music_on_hold_name,
                 'value' => $stream->music_on_hold_uuid,
             ])
             ->values()
@@ -350,17 +371,10 @@ class MusicOnHoldService
             return ['mode' => 'silence', 'stream_uuid' => null];
         }
 
-        $streamName = $this->streamNameFromHoldMusicValue($value);
+        $stream = $this->streamFromHoldMusicValue($value);
 
-        if ($streamName !== null) {
-            $stream = $this->representativeQuery()
-                ->where('domain_uuid', session('domain_uuid'))
-                ->where('music_on_hold_name', $streamName)
-                ->first();
-
-            if ($stream) {
-                return ['mode' => 'stream', 'stream_uuid' => $stream->music_on_hold_uuid];
-            }
+        if ($stream) {
+            return ['mode' => 'stream', 'stream_uuid' => $stream->music_on_hold_uuid];
         }
 
         return ['mode' => 'stream', 'stream_uuid' => null];
@@ -422,9 +436,16 @@ class MusicOnHoldService
     private function tenantStreamHoldMusicValue(?string $streamUuid): string
     {
         $stream = $this->representativeQuery()
-            ->where('domain_uuid', session('domain_uuid'))
+            ->where(function ($query) {
+                $query->where('domain_uuid', session('domain_uuid'))
+                    ->orWhereNull('domain_uuid');
+            })
             ->whereKey($streamUuid)
             ->firstOrFail();
+
+        if ($stream->domain_uuid === null) {
+            return 'local_stream://' . $stream->music_on_hold_name;
+        }
 
         return 'local_stream://${domain_name}/' . $stream->music_on_hold_name;
     }
@@ -460,21 +481,48 @@ class MusicOnHoldService
         return $value !== '' ? $value : null;
     }
 
-    private function streamNameFromHoldMusicValue(?string $value): ?string
+    private function streamFromHoldMusicValue(?string $value): ?MusicOnHold
     {
         if ($value === null) {
             return null;
         }
 
-        $prefix = 'local_stream://${domain_name}/';
+        $domainUuid = session('domain_uuid');
+        $domainName = session('domain_name');
+        $domainPrefixes = array_filter([
+            'local_stream://${domain_name}/',
+            $domainName ? "local_stream://{$domainName}/" : null,
+        ]);
 
-        if (! str_starts_with($value, $prefix)) {
+        foreach ($domainPrefixes as $prefix) {
+            if (str_starts_with($value, $prefix)) {
+                $streamName = trim(substr($value, strlen($prefix)));
+
+                return $streamName === ''
+                    ? null
+                    : $this->representativeQuery()
+                        ->where('domain_uuid', $domainUuid)
+                        ->where('music_on_hold_name', $streamName)
+                        ->first();
+            }
+        }
+
+        $globalPrefix = 'local_stream://';
+
+        if (! str_starts_with($value, $globalPrefix)) {
             return null;
         }
 
-        $streamName = trim(substr($value, strlen($prefix)));
+        $streamName = trim(substr($value, strlen($globalPrefix)));
 
-        return $streamName !== '' ? $streamName : null;
+        if ($streamName === '' || str_contains($streamName, '/')) {
+            return null;
+        }
+
+        return $this->representativeQuery()
+            ->whereNull('domain_uuid')
+            ->where('music_on_hold_name', $streamName)
+            ->first();
     }
 
     private function firstOrCreateTenantDialplan(string $name, ?string $domainUuid, ?string $domainName, string $continue, int $order): Dialplans
