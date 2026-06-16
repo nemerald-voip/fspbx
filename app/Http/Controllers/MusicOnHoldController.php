@@ -50,7 +50,7 @@ class MusicOnHoldController extends Controller
                 'reload' => userCheckPermission('music_on_hold_edit'),
                 'tenant_settings' => userCheckPermission('music_on_hold_edit'),
                 'view_all' => userCheckPermission('music_on_hold_all'),
-                'manage_domain' => false,
+                'manage_domain' => userCheckPermission('music_on_hold_domain'),
                 'view_path' => userCheckPermission('music_on_hold_path'),
             ],
         ]);
@@ -68,7 +68,7 @@ class MusicOnHoldController extends Controller
 
     public function update(UpdateMusicOnHoldRequest $request, MusicOnHold $music_on_hold, MusicOnHoldService $service): JsonResponse
     {
-        abort_unless($this->canManage($music_on_hold), 403);
+        abort_unless($this->canManage($music_on_hold, $service), 403);
 
         $service->save($request->validated(), $music_on_hold);
 
@@ -155,7 +155,7 @@ class MusicOnHoldController extends Controller
         }
 
         if ($item->exists) {
-            abort_unless($this->canManage($item), 403);
+            abort_unless($this->canManage($item, $service), 403);
             $item->forceFill([
                 'music_on_hold_path' => $service->formPath($item),
                 'music_on_hold_rate' => null,
@@ -181,6 +181,11 @@ class MusicOnHoldController extends Controller
             return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
         }
 
+        $tenantSettings = $service->tenantHoldMusicSettings();
+        $tenantDefaultStreamUuid = ($tenantSettings['mode'] ?? null) === 'stream'
+            ? ($tenantSettings['stream_uuid'] ?? null)
+            : null;
+
         $paginator = $this->baseQuery($request, $service)
             ->allowedSorts([
                 'music_on_hold_name',
@@ -194,7 +199,7 @@ class MusicOnHoldController extends Controller
             ->appends($request->query());
 
         return response()->json(
-            $paginator->through(fn (MusicOnHold $stream) => $this->serializeStream($stream, $service))
+            $paginator->through(fn (MusicOnHold $stream) => $this->serializeStream($stream, $service, $tenantDefaultStreamUuid))
         );
     }
 
@@ -313,7 +318,14 @@ class MusicOnHoldController extends Controller
     private function manageableQuery(MusicOnHoldService $service)
     {
         return $service->scopedQuery()
-            ->where('domain_uuid', session('domain_uuid'));
+            ->when(userCheckPermission('music_on_hold_domain'), function ($query) use ($service) {
+                $query->where(function ($query) use ($service) {
+                    $query->whereIn('domain_uuid', $service->accessibleDomainUuids())
+                        ->orWhereNull('domain_uuid');
+                });
+            }, function ($query) {
+                $query->where('domain_uuid', session('domain_uuid'));
+            });
     }
 
     private function canView(MusicOnHold $stream, MusicOnHoldService $service): bool
@@ -329,12 +341,17 @@ class MusicOnHoldController extends Controller
         return in_array($stream->domain_uuid, $service->accessibleDomainUuids(), true);
     }
 
-    private function canManage(MusicOnHold $stream): bool
+    private function canManage(MusicOnHold $stream, MusicOnHoldService $service): bool
     {
+        if (userCheckPermission('music_on_hold_domain')) {
+            return $stream->domain_uuid === null
+                || in_array($stream->domain_uuid, $service->accessibleDomainUuids(), true);
+        }
+
         return $stream->domain_uuid === session('domain_uuid');
     }
 
-    private function serializeStream(MusicOnHold $stream, MusicOnHoldService $service): array
+    private function serializeStream(MusicOnHold $stream, MusicOnHoldService $service, ?string $tenantDefaultStreamUuid = null): array
     {
         return [
             'music_on_hold_uuid' => $stream->music_on_hold_uuid,
@@ -351,18 +368,23 @@ class MusicOnHoldController extends Controller
             'music_on_hold_chime_list' => $stream->music_on_hold_chime_list,
             'music_on_hold_chime_freq' => $stream->music_on_hold_chime_freq,
             'music_on_hold_chime_max' => $stream->music_on_hold_chime_max,
-            'can_modify' => $this->canManage($stream),
+            'can_modify' => $this->canManage($stream, $service),
+            'is_tenant_default' => $tenantDefaultStreamUuid !== null && $stream->music_on_hold_uuid === $tenantDefaultStreamUuid,
             'files' => $service->fileRows($stream),
         ];
     }
 
     private function streamOptions(Request $request, MusicOnHoldService $service): array
     {
-        return QueryBuilder::for($service->representativeQuery()->where('domain_uuid', session('domain_uuid')))
+        $query = $this->manageableQuery($service);
+
+        return QueryBuilder::for($query)
             ->defaultSort('music_on_hold_name')
             ->get()
             ->map(fn (MusicOnHold $stream) => [
-                'label' => $stream->music_on_hold_name,
+                'label' => $stream->domain_uuid === null
+                    ? "{$stream->music_on_hold_name} (Global)"
+                    : $stream->music_on_hold_name,
                 'value' => $stream->music_on_hold_uuid,
             ])
             ->values()
