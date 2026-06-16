@@ -158,6 +158,7 @@ const testEmailErrors = ref({})
 const testEmailForm = reactive({
     email: '',
 })
+const testEmailRefreshTimers = []
 
 
 const pages = [
@@ -202,6 +203,10 @@ onMounted(() => {
     }
 })
 
+onUnmounted(() => {
+    testEmailRefreshTimers.forEach((timer) => clearTimeout(timer))
+})
+
 
 const notificationType = ref(null);
 const notificationShow = ref(null);
@@ -240,6 +245,7 @@ const sendTestEmail = () => {
         notificationMessages.value = response.data.messages
         notificationShow.value = true
         emailsTrigger.value = !emailsTrigger.value
+        scheduleTestEmailRefreshes(response.data.log_uuid)
     }).catch((error) => {
         testEmailErrors.value = error.response?.data?.errors ?? {}
         notificationType.value = 'error'
@@ -250,6 +256,26 @@ const sendTestEmail = () => {
     }).finally(() => {
         testEmailLoading.value = false
     })
+}
+
+const scheduleTestEmailRefreshes = (logUuid = null) => {
+    ;[15000, 60000].forEach((delay) => {
+        testEmailRefreshTimers.push(setTimeout(() => {
+            refreshTestEmailLog(logUuid)
+        }, delay))
+    })
+}
+
+const refreshTestEmailLog = (logUuid = null) => {
+    if (!logUuid || !props.routes.email_delivery_details) {
+        emailsTrigger.value = !emailsTrigger.value
+        return
+    }
+
+    axios.get(props.routes.email_delivery_details.replace('__UUID__', logUuid))
+        .finally(() => {
+            emailsTrigger.value = !emailsTrigger.value
+        })
 }
 
 
