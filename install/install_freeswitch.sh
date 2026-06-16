@@ -48,7 +48,7 @@ export SW_TOKEN
 
 fi
 
-print_success "Starting FreeSWITCH Installation (Version 1.10)..."
+print_success "Starting FreeSWITCH Installation (Version 1.11)..."
 
 # Detect OS version
 os_codename=$(lsb_release -c -s)
@@ -138,9 +138,9 @@ cd /usr/src
 rm -rf freeswitch
 
 # Set default PHP version to 8.1 if not set
-FREESWITCH_VERSION=${FREESWITCH_VERSION:-"v1.10"}
+FREESWITCH_VERSION=${FREESWITCH_VERSION:-"v1.11"}
 
-# Clone the FreeSWITCH repo (Branch: 1.10)
+# Clone the FreeSWITCH repo (Branch: 1.11)
 print_success "Cloning FreeSWITCH $FREESWITCH_VERSION from repository..."
 git clone --depth 1 --branch $FREESWITCH_VERSION https://github.com/nemerald-voip/freeswitch.git freeswitch
 cd freeswitch
@@ -175,6 +175,7 @@ print_success "Modules configured successfully."
 
 # Configure the build
 print_success "Configuring FreeSWITCH..."
+export CPPFLAGS="${CPPFLAGS} -DHAVE_NUA_RELOAD_TLS"
 ./configure -C --enable-portable-binary --disable-dependency-tracking --enable-debug \
             --prefix=/usr --localstatedir=/var --sysconfdir=/etc \
             --with-openssl --enable-core-pgsql-support
