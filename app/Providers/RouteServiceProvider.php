@@ -72,5 +72,14 @@ class RouteServiceProvider extends ServiceProvider
                     return response('', 429);
                 });
         });
+
+        // Machine-to-machine integration endpoints (e.g. the extension lookup)
+        // are an enumeration oracle (404 vs 200). Cap them so a leaked token
+        // can't be used to brute-force the extension/domain space. Keyed by
+        // bearer token, falling back to client IP.
+        RateLimiter::for('integrations', function (Request $request) {
+            $key = $request->bearerToken() ?: $request->ip();
+            return Limit::perMinute(30)->by('integrations:' . $key);
+        });
     }
 }
