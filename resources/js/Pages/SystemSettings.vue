@@ -76,7 +76,7 @@
                 @update:show="hideNotification" />
 
             <UpdateStripeSettingsModal :settings="gatewaySettings" :uuid="gatewayUuid" :is-enabled="gatewayEnabled"
-                :show="showStripeSettingsModal" :route="routes.payment_gateway_update"
+                :show="showStripeSettingsModal" :route="routes.payment_gateway_update" :test-route="routes.payment_gateway_test"
                 @refresh-data="getPaymentGatewaysData" @close="showStripeSettingsModal = false" />
 
         </template>

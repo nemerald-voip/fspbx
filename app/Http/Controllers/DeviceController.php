@@ -56,6 +56,10 @@ class DeviceController extends Controller
         return Inertia::render(
             $this->viewName,
             [
+                'pagination' => [
+                    'per_page' => fspbx_pagination_per_page(),
+                    'per_page_options' => fspbx_pagination_options(),
+                ],
 
                 'routes' => [
                     'current_page' => route('devices.index'),
@@ -71,10 +75,16 @@ class DeviceController extends Controller
                     'cloud_provisioning_get_token' => route('cloud-provisioning.token.get'),
                     'cloud_provisioning_update_api_token' => route('cloud-provisioning.token.update'),
                     'duplicate' => route('devices.duplicate'),
+                    'download_template' => route('devices.template.download'),
+                    'import' => route('devices.import.preview'),
+                    'import_commit' => route('devices.import.commit'),
+                    'provisioning_preview' => route('devices.provisioning-preview', ['device' => '__DEVICE_UUID__']),
 
                 ],
                 'permissions' => [
                     'device_key_template_view' => userCheckPermission('device_key_template_view'),
+                    'device_provisioning_preview' => userCheckPermission('device_provisioning_preview'),
+                    'device_import' => userCheckPermission('device_import'),
                 ],
             ]
         );
@@ -161,7 +171,7 @@ class DeviceController extends Controller
 
     public function getData()
     {
-        $perPage = 50;
+        $perPage = fspbx_pagination_per_page();
         $currentDomain = session('domain_uuid');
 
         // If the filter is not present, assign default value before QueryBuilder
@@ -650,6 +660,7 @@ class DeviceController extends Controller
                 'cloud_provisioning_register_route' => route('cloud-provisioning.register'),
                 'cloud_provisioning_deregister_route' => route('cloud-provisioning.deregister'),
                 'bulk_update_route' => route('devices.bulk.update'),
+                'import_commit' => route('devices.import.commit'),
                 'get_routing_options' => route('routing.options'),
                 'save_key_template_from_device' => $itemUuid ? route('devices.key-templates.store-from-device', ['device' => $itemUuid]) : null,
             ]);
@@ -795,15 +806,6 @@ class DeviceController extends Controller
 
         try {
             DB::beginTransaction();
-
-            // Handle field transformations here, e.g. device_vendor
-            // For example, if "device_template" is present:
-            if (array_key_exists('device_template', $data)) {
-                $data['device_vendor'] = explode("/", $data['device_template'])[0] ?? null;
-                if ($data['device_vendor'] === 'poly') {
-                    $data['device_vendor'] = 'polycom';
-                }
-            }
 
             Devices::whereIn('device_uuid', $ids)
                 ->chunk(10, function ($devices) use ($data) {
@@ -975,6 +977,7 @@ class DeviceController extends Controller
         $permissions['device_template_update'] = userCheckPermission('device_template');
         $permissions['device_template_view_all'] = userCheckPermission('device_template_view_all');
         $permissions['device_template_view_custom_only'] = userCheckPermission('device_template_view_custom_only');
+        $permissions['device_provisioning_preview'] = userCheckPermission('device_provisioning_preview');
         $permissions['device_domain_update'] = userCheckPermission('device_domain');
         $permissions['manage_device_cloud_provisioning_settings'] = userCheckPermission('manage_device_cloud_provisioning_settings');
         $permissions['device_setting_view'] = userCheckPermission('device_setting_view');

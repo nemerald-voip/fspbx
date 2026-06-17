@@ -144,7 +144,7 @@
                                                     'expansion_keys_submit_keys',
 
                                                 ]"
-                                                    :conditions="[() => options?.item?.device_vendor == 'cisco' || options?.item?.device_vendor == 'snom']" />
+                                                    :conditions="[() => options?.item?.device_vendor == 'cisco' || options?.item?.device_vendor == 'snom' || options?.item?.device_vendor == 'yealink']" />
 
                                                 <FormTab name="cloud_provisioning" label="Cloud Provisioning" :elements="[
                                                     'cloud_provisioning_title',
@@ -239,7 +239,7 @@
                                                     }" />
 
                                                 <SelectElement name="device_profile_uuid" :items="options.profiles"
-                                                    :search="true" :native="false" label="Device Profile (Depreciated)"
+                                                    :search="true" :native="false" label="Device Profile (Deprecated)"
                                                     input-type="search" autocomplete="off" label-prop="name"
                                                     value-prop="value" placeholder="Select Profile (Optional)"
                                                     :floating="false"
@@ -1428,7 +1428,10 @@ const keyTypes = [
     { value: 'speed_dial', name: 'Speed Dial' },
     { value: 'check_voicemail', name: 'Check Voicemail' },
     { value: 'park', name: 'Park & Retrieve' },
+    { value: 'dtmf', name: 'DTMF' },
 ]
+
+const keyTypesWithSelect = ['line', 'check_voicemail', 'blf', 'speed_dial', 'park']
 
 const handleTabSelected = (activeTab, previousTab) => {
     if (activeTab.name == 'cloud_provisioning') {
@@ -1684,8 +1687,6 @@ const handleCloudProvisioningRefreshButtonClick = async () => {
 const normalizeDeviceKeysForForm = (keys = []) => {
     if (!Array.isArray(keys)) return []
 
-    const keyTypesWithSelect = ['line', 'check_voicemail', 'blf', 'speed_dial', 'park']
-
     return keys.map(k => {
         const key_type = (k?.key_type ?? '')?.trim?.() ?? k?.key_type ?? ''
         const key_value = k?.key_value ?? null
@@ -1748,13 +1749,25 @@ const submitForm = async (FormData, form$) => {
             ...k,
             key_area: k.key_area ?? 'expansion',
         })),
-    ]
+    ].map(normalizeKeyForSubmit)
 
     delete data.multi_purpose_keys
     delete data.expansion_keys
 
     return await form$.$vueform.services.axios.put(props.options.routes.update_route, data)
 };
+
+const normalizeKeyForSubmit = (key) => {
+    const keyType = key?.key_type ?? ''
+    const usesSelect = keyTypesWithSelect.includes(keyType)
+
+    return {
+        ...key,
+        key_value: usesSelect
+            ? (key?.key_value_select ?? key?.key_value ?? null)
+            : (key?.key_value_text ?? key?.key_value ?? null),
+    }
+}
 
 const openSaveTemplateModal = () => {
     templateName.value = ''

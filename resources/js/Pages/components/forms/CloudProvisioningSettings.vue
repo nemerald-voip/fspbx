@@ -233,15 +233,10 @@
         @success="emitSuccessToParentFromChild" @clear-errors="handleClearErrors" />
 
 
-    <AddEditItemModal :customClass="'sm:max-w-xl'" :show="showPairModal"
-        :header="'Connect to existing ZTP Organization'" :loading="loadingModal" @close="handleModalClose">
-        <template #modal-body>
-            <PairPolycomOrganizationForm :orgs="ztpOrganizations" :selected-provider="selectedProvider"
-                :errors="formErrors" :is-submitting="pairZtpOrgSubmitting" @submit="handlePairOrgRequest"
-                @cancel="handleModalClose" @error="emitErrorToParentFromChild"
-                @success="emitSuccessToParentFromChild" />
-        </template>
-    </AddEditItemModal>
+    <PairPolycomOrganizationForm :show="showPairModal" :loading="loadingModal" :orgs="ztpOrganizations"
+        :selected-provider="selectedProvider" :route="options?.routes?.cloud_provisioning_pair_organization"
+        @close="handleModalClose" @error="emitErrorToParentFromChild" @success="emitSuccessToParentFromChild"
+        @refresh-data="getCloudProvisioningItemOptions" />
 
     <AddEditItemModal :customClass="'sm:max-w-xl'" :show="showApiTokenModal" :header="'Polycom Api Token'"
         :loading="loadingModal" @close="handleModalClose">
@@ -296,7 +291,6 @@ const showPairModal = ref(false);
 const bulkUpdateModalTrigger = ref(false);
 const showConfirmationModal = ref(false);
 const showPolycomConfirmationModal = ref(false);
-const pairZtpOrgSubmitting = ref(null);
 const updateApiTokenFormSubmitting = ref(null);
 const confirmDeleteAction = ref(null);
 const showDeactivateSpinner = ref(null);
@@ -363,24 +357,6 @@ const executeExistingOrgAction = (provider) => {
     loadingModal.value = true
     getZtpOrganizations(provider);
 }
-
-const handlePairOrgRequest = (form) => {
-    pairZtpOrgSubmitting.value = true;
-    formErrors.value = null;
-
-    axios.post(options.value.routes.cloud_provisioning_pair_organization, form)
-        .then((response) => {
-            emit('success', 'success', response.data.messages);
-            handleModalClose();
-
-        }).catch((error) => {
-            emit('error', error);
-        }).finally(() => {
-            pairZtpOrgSubmitting.value = false;
-            getCloudProvisioningItemOptions(form.provider)
-        })
-
-};
 
 const handleUpdateButtonClick = (provider) => {
     showUpdateModal.value = true

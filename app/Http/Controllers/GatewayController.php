@@ -20,7 +20,6 @@ use Spatie\QueryBuilder\QueryBuilder;
 
 class GatewayController extends Controller
 {
-    protected int $perPage = 50;
 
     public function index()
     {
@@ -29,6 +28,10 @@ class GatewayController extends Controller
         }
 
         return Inertia::render('Gateways', [
+            'pagination' => [
+                'per_page' => fspbx_pagination_per_page(),
+                'per_page_options' => fspbx_pagination_options(),
+            ],
             'routes' => [
                 'current_page' => route('gateways.index'),
                 'data_route' => route('gateways.data'),
@@ -179,7 +182,7 @@ class GatewayController extends Controller
                 'description',
             ])
             ->defaultSort('gateway')
-            ->paginate($this->perPage);
+            ->paginate(fspbx_pagination_per_page($request));
 
         $this->appendSwitchStatus($items->getCollection());
 

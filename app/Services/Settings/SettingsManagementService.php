@@ -55,31 +55,53 @@ class SettingsManagementService
             ->get();
 
         $domainByKey = $domainRows
-            ->filter(fn (DomainSettings $row) => strtolower((string) $row->domain_setting_name) !== 'array')
+            ->filter(fn (DomainSettings $row) => ! $this->isArraySetting($row->domain_setting_name))
             ->keyBy(fn (DomainSettings $row) => $this->settingKey(
                 $row->domain_setting_category,
                 $row->domain_setting_subcategory,
                 $row->domain_setting_name
             ));
 
+        $arrayDomainRowsByKey = $domainRows
+            ->filter(fn (DomainSettings $row) => $this->isArraySetting($row->domain_setting_name))
+            ->groupBy(fn (DomainSettings $row) => $this->arraySettingKey(
+                $row->domain_setting_category,
+                $row->domain_setting_subcategory
+            ));
+
         $matchedDomainUuids = [];
 
-        $rows = $defaults->map(function (DefaultSettings $default) use ($domainByKey, &$matchedDomainUuids) {
+        $rows = $defaults->flatMap(function (DefaultSettings $default) use ($domainByKey, $arrayDomainRowsByKey, &$matchedDomainUuids) {
+            if ($this->isArraySetting($default->default_setting_name)) {
+                $overrides = $arrayDomainRowsByKey->get($this->arraySettingKey(
+                    $default->default_setting_category,
+                    $default->default_setting_subcategory
+                ), collect());
+
+                if ($overrides->isEmpty()) {
+                    return [$this->serializeEffectiveRow($default, null)];
+                }
+
+                return $overrides->map(function (DomainSettings $override) use ($default, &$matchedDomainUuids) {
+                    $matchedDomainUuids[] = $override->domain_setting_uuid;
+
+                    return $this->serializeEffectiveRow($default, $override);
+                });
+            }
+
             $key = $this->settingKey(
                 $default->default_setting_category,
                 $default->default_setting_subcategory,
                 $default->default_setting_name
             );
 
-            $override = strtolower((string) $default->default_setting_name) === 'array'
-                ? null
-                : $domainByKey->get($key);
+            $override = $domainByKey->get($key);
 
             if ($override) {
                 $matchedDomainUuids[] = $override->domain_setting_uuid;
             }
 
-            return $this->serializeEffectiveRow($default, $override);
+            return [$this->serializeEffectiveRow($default, $override)];
         });
 
         $customRows = $domainRows
@@ -364,7 +386,7 @@ class SettingsManagementService
                 : $default->default_setting_value;
 
             $target = null;
-            if (strtolower((string) $default->default_setting_name) !== 'array') {
+            if (! $this->isArraySetting($default->default_setting_name)) {
                 $target = DomainSettings::query()
                     ->where('domain_uuid', $targetDomain->domain_uuid)
                     ->where('domain_setting_category', $default->default_setting_category)
@@ -409,7 +431,7 @@ class SettingsManagementService
                 : $row->domain_setting_value;
 
             $targetRow = null;
-            if ($targetDomain->domain_uuid !== $sourceDomain->domain_uuid && strtolower((string) $row->domain_setting_name) !== 'array') {
+            if ($targetDomain->domain_uuid !== $sourceDomain->domain_uuid && ! $this->isArraySetting($row->domain_setting_name)) {
                 $targetRow = DomainSettings::query()
                     ->where('domain_uuid', $targetDomain->domain_uuid)
                     ->where('domain_setting_category', $row->domain_setting_category)
@@ -464,15 +486,18 @@ class SettingsManagementService
 
     public function affectedDomains(DefaultSettings $setting): array
     {
-        if (strtolower((string) $setting->default_setting_name) === 'array') {
-            return [];
-        }
-
-        return DomainSettings::query()
+        $query = DomainSettings::query()
             ->join('v_domains', 'v_domains.domain_uuid', '=', 'v_domain_settings.domain_uuid')
             ->where('domain_setting_category', $setting->default_setting_category)
-            ->where('domain_setting_subcategory', $setting->default_setting_subcategory)
-            ->where('domain_setting_name', $setting->default_setting_name)
+            ->where('domain_setting_subcategory', $setting->default_setting_subcategory);
+
+        if ($this->isArraySetting($setting->default_setting_name)) {
+            $query->where('domain_setting_name', 'array');
+        } else {
+            $query->where('domain_setting_name', $setting->default_setting_name);
+        }
+
+        return $query
             ->orderBy('v_domains.domain_name')
             ->get([
                 'v_domains.domain_uuid',
@@ -503,7 +528,7 @@ class SettingsManagementService
                 : $row->domain_setting_value;
 
             $target = null;
-            if (strtolower((string) $row->domain_setting_name) !== 'array') {
+            if (! $this->isArraySetting($row->domain_setting_name)) {
                 $target = DefaultSettings::query()
                     ->where('default_setting_category', $row->domain_setting_category)
                     ->where('default_setting_subcategory', $row->domain_setting_subcategory)
@@ -534,7 +559,7 @@ class SettingsManagementService
         $name = $override?->domain_setting_name ?? $default?->default_setting_name;
 
         return [
-            'id' => $default ? 'default:' . $default->default_setting_uuid : 'domain:' . $override->domain_setting_uuid,
+            'id' => $override ? 'domain:' . $override->domain_setting_uuid : 'default:' . $default->default_setting_uuid,
             'default_setting_uuid' => $default?->default_setting_uuid,
             'domain_setting_uuid' => $override?->domain_setting_uuid,
             'category' => $category,
@@ -558,13 +583,17 @@ class SettingsManagementService
 
     private function serializeDefaultRow(DefaultSettings $row): array
     {
-        $overrideCount = strtolower((string) $row->default_setting_name) === 'array'
-            ? 0
-            : DomainSettings::query()
-                ->where('domain_setting_category', $row->default_setting_category)
-                ->where('domain_setting_subcategory', $row->default_setting_subcategory)
-                ->where('domain_setting_name', $row->default_setting_name)
-                ->count();
+        $overrideQuery = DomainSettings::query()
+            ->where('domain_setting_category', $row->default_setting_category)
+            ->where('domain_setting_subcategory', $row->default_setting_subcategory);
+
+        if ($this->isArraySetting($row->default_setting_name)) {
+            $overrideQuery->where('domain_setting_name', 'array');
+        } else {
+            $overrideQuery->where('domain_setting_name', $row->default_setting_name);
+        }
+
+        $overrideCount = $overrideQuery->count();
 
         return [
             'id' => $row->default_setting_uuid,
@@ -639,6 +668,16 @@ class SettingsManagementService
     private function settingKey(?string $category, ?string $subcategory, ?string $name): string
     {
         return strtolower((string) $category) . '|' . strtolower((string) $subcategory) . '|' . strtolower((string) $name);
+    }
+
+    private function arraySettingKey(?string $category, ?string $subcategory): string
+    {
+        return strtolower((string) $category) . '|' . strtolower((string) $subcategory);
+    }
+
+    private function isArraySetting(?string $name): bool
+    {
+        return strtolower((string) $name) === 'array';
     }
 
     private function boolValue(mixed $value): bool

@@ -190,25 +190,11 @@
 
     <AddEditItemModal :customClass="'h-[90vh] max-h-[90vh] flex flex-col overflow-hidden sm:max-w-8xl'"
         :contentClass="'flex min-h-0 flex-1 flex-col'" :bodyClass="'min-h-0 flex-1 overflow-hidden'"
-        :show="showCreateModal" :header="'Create New Provisioning Template'" :loading="loadingModal"
-        @close="handleModalClose">
+        :show="showFormModal" :header="modalHeader" :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <CreateProvisioningTemplateForm :options="itemOptions" :errors="formErrors"
-                :is-submitting="createFormSubmiting" @submit="handleCreateRequest" @cancel="handleModalClose"
-                @error="handleFormErrorResponse" @success="showNotification('success', $event)"
-                @clear-errors="handleClearErrors" />
-        </template>
-    </AddEditItemModal>
-
-    <AddEditItemModal :customClass="'h-[90vh] max-h-[90vh] flex flex-col overflow-hidden sm:max-w-8xl'"
-        :contentClass="'flex min-h-0 flex-1 flex-col'" :bodyClass="'min-h-0 flex-1 overflow-hidden'"
-        :show="showEditModal" :header="'Edit Provisioning Template'" :loading="loadingModal"
-        @close="handleModalClose">
-        <template #modal-body>
-            <UpdateProvisioningTemplateForm :options="itemOptions" :errors="formErrors" :read-only="readOnly"
-                :is-submitting="updateFormSubmiting" @submit="handleUpdateRequest" @cancel="handleModalClose"
-                @error="handleFormErrorResponse" @success="showNotification('success', $event)"
-                @clear-errors="handleClearErrors" />
+            <ProvisioningTemplateForm :options="itemOptions" :mode="formMode" @cancel="handleModalClose"
+                @close="handleModalClose" @refresh-data="handleSearchButtonClick" @error="handleFormErrorResponse"
+                @success="(type, messages) => showNotification(type, messages)" />
         </template>
     </AddEditItemModal>
 
@@ -224,8 +210,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import AddEditItemModal from "./modal/AddEditItemModal.vue";
-import CreateProvisioningTemplateForm from "./forms/CreateProvisioningTemplateForm.vue";
-import UpdateProvisioningTemplateForm from "./forms/UpdateProvisioningTemplateForm.vue";
+import ProvisioningTemplateForm from "./forms/ProvisioningTemplateForm.vue";
 import Notification from "./notifications/Notification.vue";
 import ConfirmationModal from "./modal/ConfirmationModal.vue";
 import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
@@ -244,20 +229,22 @@ const props = defineProps({
     trigger: Boolean
 })
 
-const showCreateModal = ref(false);
-const showEditModal = ref(false);
+const showFormModal = ref(false);
+const formMode = ref('create');
 const loadingModal = ref(false)
-const formErrors = ref(null);
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(null);
 const showDeleteConfirmationModal = ref(false);
 const confirmDeleteAction = ref(null);
 const itemOptions = ref([])
-const createFormSubmiting = ref(null);
-const updateFormSubmiting = ref(null);
 const isTemplatesLoading = ref(false)
-const readOnly = ref(false)
+
+const modalHeader = computed(() => {
+    if (formMode.value === 'create') return 'Create New Provisioning Template';
+    if (formMode.value === 'view') return 'View Provisioning Template';
+    return 'Edit Provisioning Template';
+});
 const data = ref({
     data: [],
     prev_page_url: null,
@@ -370,9 +357,9 @@ const bulkActions = computed(() => {
 });
 
 const handleCreateButtonClick = () => {
-    showCreateModal.value = true
-    formErrors.value = null;
-    loadingModal.value = true
+    formMode.value = 'create';
+    showFormModal.value = true;
+    loadingModal.value = true;
     getItemOptions();
 }
 
@@ -386,54 +373,19 @@ const handleFiltersReset = () => {
     handleSearchButtonClick();
 }
 
-const handleCreateRequest = (form) => {
-    createFormSubmiting.value = true;
-    formErrors.value = null;
-
-    axios.post(props.routes.templates_store, form)
-        .then((response) => {
-            createFormSubmiting.value = false;
-            showNotification('success', response.data.messages);
-            handleModalClose();
-            handleSearchButtonClick();
-        }).catch((error) => {
-            console.log(error);
-            createFormSubmiting.value = false;
-            handleFormErrorResponse(error);
-        });
-};
-
 const handleEditButtonClick = (uuid) => {
-    showEditModal.value = true
-    formErrors.value = null;
-    loadingModal.value = true
-    readOnly.value = false
+    formMode.value = 'edit';
+    showFormModal.value = true;
+    loadingModal.value = true;
     getItemOptions(uuid);
 }
 
 const handleViewButtonClick = (uuid) => {
-    showEditModal.value = true
-    formErrors.value = null;
-    loadingModal.value = true
-    readOnly.value = true
+    formMode.value = 'view';
+    showFormModal.value = true;
+    loadingModal.value = true;
     getItemOptions(uuid);
 }
-
-const handleUpdateRequest = (form) => {
-    updateFormSubmiting.value = true;
-    formErrors.value = null;
-
-    axios.put(`${props.routes.templates_store}/${itemOptions.value.item.template_uuid}`, form)
-        .then((response) => {
-            updateFormSubmiting.value = false;
-            showNotification('success', response.data.messages);
-            handleSearchButtonClick();
-        })
-        .catch((error) => {
-            updateFormSubmiting.value = false;
-            handleFormErrorResponse(error);
-        });
-};
 
 const handleSingleItemDeleteRequest = (uuid) => {
     showDeleteConfirmationModal.value = true;
@@ -455,10 +407,8 @@ const executeBulkDelete = (items = selectedItems.value) => {
 
 
 const handleModalClose = () => {
-    showCreateModal.value = false;
-    showEditModal.value = false;
+    showFormModal.value = false;
     showDeleteConfirmationModal.value = false;
-    // bulkUpdateModalTrigger.value = false;
 }
 
 const getItemOptions = (itemUuid = null) => {
@@ -479,20 +429,6 @@ const getItemOptions = (itemUuid = null) => {
 }
 
 
-const handleBulkActionRequest = (action) => {
-    if (action === 'bulk_delete') {
-        showDeleteConfirmationModal.value = true;
-        confirmDeleteAction.value = () => executeBulkDelete();
-    }
-    if (action === 'bulk_update') {
-        formErrors.value = [];
-        getItemOptions();
-        loadingModal.value = true
-        bulkUpdateModalTrigger.value = true;
-    }
-
-}
-
 const hideNotification = () => {
     notificationShow.value = false;
     notificationType.value = null;
@@ -505,19 +441,11 @@ const showNotification = (type, messages = null) => {
     notificationShow.value = true;
 }
 
-const handleClearErrors = () => {
-    formErrors.value = null;
-}
-
 const handleFormErrorResponse = (error) => {
     if (error.request?.status == 419) {
         showNotification('error', { request: ["Session expired. Reload the page"] });
     } else if (error.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
-        // console.log(error.response.data);
         showNotification('error', error.response.data.errors || { request: [error.message] });
-        formErrors.value = error.response.data.errors;
     } else if (error.request) {
         // The request was made but no response was received
         // `error.request` is an instance of XMLHttpRequest in the browser and an instance of

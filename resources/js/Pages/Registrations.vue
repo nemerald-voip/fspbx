@@ -27,13 +27,13 @@
                     Refresh
                 </button>
 
-                <button v-if="!showGlobal && page.props.auth.can.registrations_view_global" type="button"
+                <button v-if="!filterData.showGlobal && permissions.view_global" type="button"
                     @click.prevent="handleShowGlobal()"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Show global
                 </button>
 
-                <button v-if="showGlobal && page.props.auth.can.registrations_view_global" type="button"
+                <button v-if="filterData.showGlobal && permissions.view_global" type="button"
                     @click.prevent="handleShowLocal()"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Show local
@@ -43,15 +43,14 @@
             <template #navigation>
                 <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
                     :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
-                    @pagination-change-page="renderRequestedPage" />
+                    @pagination-change-page="renderRequestedPage" :bulk-actions="bulkActions"
+                    @bulk-action="handleBulkActionRequest" :has-selected-items="selectedItems.length > 0" />
             </template>
             <template #table-header>
                 <TableColumnHeader header="User"
-                    class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
+                    class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems" @click.stop
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                    <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
-                        :has-selected-items="selectedItems.length > 0" />
                     <div class="pl-4 flex items-center cursor-pointer select-none" @click="handleSortRequest('sip_auth_user')">
                         <span class="mr-2">User</span>
                         <ChevronUpIcon v-if="sortData.name === 'sip_auth_user' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
@@ -59,7 +58,7 @@
                     </div>
                 </TableColumnHeader>
 
-                <TableColumnHeader v-if="showGlobal" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                <TableColumnHeader v-if="filterData.showGlobal" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('sip_auth_realm')">
                         <span class="mr-2">Domain</span>
                         <ChevronUpIcon v-if="sortData.name === 'sip_auth_realm' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
@@ -129,7 +128,7 @@
             </template>
 
             <template v-if="selectPageItems" v-slot:current-selection>
-                <td colspan="10">
+                <td :colspan="filterData.showGlobal ? 11 : 10">
                     <div class="text-sm text-center m-2">
                         <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
                         <button v-if="!selectAll && selectedItems.length != data.total"
@@ -147,11 +146,11 @@
             </template>
 
             <template #table-body>
-                <tr v-for="row in data.data" :key="row.contact">
+                <tr v-for="row in data.data" :key="row.call_id || row.contact">
                     <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500 " :text="row.user">
                         <div class="flex items-center">
                             <input v-if="row.call_id" v-model="selectedItems" type="checkbox" name="action_box[]"
-                                :value="row" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                                :value="row.call_id" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                             <div class="ml-9">
                                 {{ row.user }}
                             </div>
@@ -159,7 +158,7 @@
                         </div>
                     </TableField>
 
-                    <TableField v-if="showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                    <TableField v-if="filterData.showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                         :text="row.sip_auth_realm" />
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.agent" />
@@ -235,7 +234,7 @@
             <template #footer>
                 <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
                     :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
-                    :page-size="pagination.per_page" :page-size-options="pagination.per_page_options"
+                    :page-size="perPage" :page-size-options="props.pagination?.per_page_options ?? []"
                     :show-page-size-selector="true"
                     @pagination-change-page="renderRequestedPage" @page-size-change="handlePageSizeChange" />
             </template>
@@ -243,9 +242,9 @@
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
-    <ConfirmationModal :show="confirmationActionTrigger" @close="confirmationActionTrigger = false" @confirm="confirmAction"
-        :header="'Are you sure?'" :text="'Are you sure you want to proceed with this bulk action?'"
-        :confirm-button-label="bulkActionLabel" cancel-button-label="Cancel" />
+    <ConfirmationModal :show="confirmationActionTrigger" @close="handleModalClose" @confirm="confirmAction"
+        :header="confirmationHeader" :text="confirmationText"
+        :confirm-button-label="confirmationButtonLabel" cancel-button-label="Cancel" />
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
@@ -253,9 +252,7 @@
 
 <script setup>
 import { computed, onMounted, ref } from "vue";
-import { usePage } from '@inertiajs/vue3'
 import axios from 'axios';
-import { router } from "@inertiajs/vue3";
 import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";
@@ -266,38 +263,51 @@ import Badge from "./components/general/Badge.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
 import { ChevronDownIcon, ChevronUpIcon, MagnifyingGlassIcon } from "@heroicons/vue/24/solid";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
-import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
 import RestartIcon from "./components/icons/RestartIcon.vue";
 import SyncIcon from "./components/icons/SyncIcon.vue";
 import LinkOffIcon from "./components/icons/LinkOffIcon.vue";
 import Notification from "./components/notifications/Notification.vue";
 
-const page = usePage()
 const loading = ref(false)
+const currentPage = ref(1);
 const selectAll = ref(false);
 const selectedItems = ref([]);
 const selectPageItems = ref(false);
 const confirmAction = ref(null);
+const confirmationHeader = ref('Are you sure?');
+const confirmationText = ref('');
+const confirmationButtonLabel = ref('Continue');
 const notificationType = ref(null);
 const notificationMessages = ref(null);
-const notificationShow = ref(null);
+const notificationShow = ref(false);
 const confirmationActionTrigger = ref(false);
-const bulkActionLabel = ref('');
 
 const props = defineProps({
-    data: Object,
-    showGlobal: Boolean,
     pagination: Object,
     routes: Object,
-    // itemData: Object,
-    // itemOptions: Object,
+    permissions: Object,
 });
 
+const routes = props.routes;
+const permissions = props.permissions;
+const perPage = ref(props.pagination?.per_page);
+
+const data = ref({
+    data: [],
+    prev_page_url: null,
+    next_page_url: null,
+    from: 0,
+    to: 0,
+    total: 0,
+    current_page: 1,
+    last_page: 1,
+    links: [],
+});
 
 const filterData = ref({
     search: null,
-    showGlobal: props.showGlobal,
+    showGlobal: false,
 });
 
 const sortData = ref({
@@ -305,135 +315,93 @@ const sortData = ref({
     order: 'asc',
 });
 
-const showGlobal = ref(props.showGlobal);
-const pagination = ref({
-    per_page: props.pagination?.per_page ?? 50,
-    per_page_options: props.pagination?.per_page_options ?? [50, 100, 200, 500, 1000],
-});
+const bulkActions = computed(() => [
+    { id: 'bulk_restart', label: 'Restart', icon: 'RestartIcon' },
+    { id: 'bulk_sync', label: 'Sync', icon: 'SyncIcon' },
+    { id: 'bulk_unregister', label: 'Unregister', icon: 'LinkOffIcon' },
+]);
 
-// Computed property for bulk actions based on permissions
-const bulkActions = computed(() => {
-    const actions = [
-        {
-            id: 'bulk_restart',
-            label: 'Restart',
-            icon: 'RestartIcon'
-        },
-        {
-            id: 'bulk_sync',
-            label: 'Sync',
-            icon: 'SyncIcon'
-        },
-        {
-            id: 'bulk_unregister',
-            label: 'Unregister',
-            icon: 'LinkOffIcon'
-        },
-
-    ];
-
-    return actions;
-});
-
-onMounted(() => {
-    // console.log(props.data);
-});
+onMounted(() => getData());
 
 
 const handleBulkActionRequest = (action) => {
     if (action === 'bulk_restart') {
-        confirmationActionTrigger.value = true;
-        bulkActionLabel.value = 'Restart';
-        confirmAction.value = () => executeBulkAction('reboot');
+        showConfirmation({
+            text: 'Restart the selected registration(s)?',
+            button: 'Restart',
+            action: () => executeAction('reboot'),
+        });
     }
 
     if (action === 'bulk_sync') {
-        confirmationActionTrigger.value = true;
-        bulkActionLabel.value = 'Sync';
-        confirmAction.value = () => executeBulkAction('provision');
+        showConfirmation({
+            text: 'Sync the selected registration(s)?',
+            button: 'Sync',
+            action: () => executeAction('provision'),
+        });
     }
 
     if (action === 'bulk_unregister') {
-        confirmationActionTrigger.value = true;
-        bulkActionLabel.value = 'Unregister';
-        confirmAction.value = () => executeBulkAction('unregister');
+        showConfirmation({
+            text: 'Unregister the selected registration(s)?',
+            button: 'Unregister',
+            action: () => executeAction('unregister'),
+        });
     }
-
 }
 
-const executeBulkAction = (action) => {
-    axios.post(props.routes.action,
-        { 'regs': selectedItems.value, 'action': action },
-    )
+const showConfirmation = ({ text, button, action }) => {
+    confirmationHeader.value = 'Are you sure?';
+    confirmationText.value = text;
+    confirmationButtonLabel.value = button;
+    confirmAction.value = action;
+    confirmationActionTrigger.value = true;
+};
+
+const executeAction = (action, items = selectedItems.value) => {
+    axios.post(routes.action, { items, action })
         .then((response) => {
             showNotification('success', response.data.messages);
             handleModalClose();
             handleClearSelection();
+            refreshCurrentPage();
         }).catch((error) => {
             handleClearSelection();
             handleModalClose();
-            handleFormErrorResponse(error);
+            handleErrorResponse(error);
         });
 }
 
-
-
-
 const handleSelectAll = () => {
-    axios.post(props.routes.select_all, filterData._rawValue)
+    axios.post(routes.select_all, { filter: filterData.value })
         .then((response) => {
-
-            // Convert props.data.data to an array using Object.values()
-            const currentPageItems = Object.values(props.data.data);
-
-            // Set selected items to all the full row data returned by the server
-            selectedItems.value = response.data.items.map(item => {
-                // Find the row in the current data that matches the call_id
-                const matchedRow = currentPageItems.find(row => row.call_id === item.call_id);
-                // If found, return the row already present on the page; otherwise, return the received item
-                return matchedRow || item;
-            });
-
+            selectedItems.value = response.data.items;
             selectAll.value = true;
             showNotification('success', response.data.messages);
-
         }).catch((error) => {
             handleClearSelection();
             handleErrorResponse(error);
         });
-
 };
 
 
 const handleAction = (reg, action) => {
-    axios.post(props.routes.action,
-        { 'regs': [reg], 'action': action },
-    )
-        .then((response) => {
-            showNotification('success', response.data.messages);
-
-            handleClearSelection();
-        }).catch((error) => {
-            handleClearSelection();
-            handleErrorResponse(error);
-        });
+    executeAction(action, [reg.call_id]);
 }
 
 const handleRefreshButtonClick = () => {
-    handleSearchButtonClick();
+    refreshCurrentPage();
 }
 
 
 const handleShowGlobal = () => {
     filterData.value.showGlobal = true;
-    showGlobal.value = true;
-    handleSearchButtonClick();
+    getData(1);
 }
 
 const handleShowLocal = () => {
     filterData.value.showGlobal = false;
-    showGlobal.value = false;
-    handleSearchButtonClick();
+    getData(1);
 }
 
 const handleSortRequest = (column) => {
@@ -444,103 +412,88 @@ const handleSortRequest = (column) => {
         sortData.value.order = 'asc';
     }
 
-    handleSearchButtonClick();
+    getData(currentPage.value);
+};
+
+const getData = (page = 1) => {
+    loading.value = true;
+    currentPage.value = Number(page) || 1;
+
+    const sort = sortData.value.order === 'desc' ? `-${sortData.value.name}` : sortData.value.name;
+
+    axios.get(routes.data_route, {
+        params: {
+            filter: filterData.value,
+            page: currentPage.value,
+            per_page: perPage.value,
+            sort,
+        }
+    })
+        .then((response) => {
+            data.value = response.data;
+            currentPage.value = response.data.current_page ?? currentPage.value;
+            handleClearSelection();
+        })
+        .catch(handleErrorResponse)
+        .finally(() => {
+            loading.value = false;
+        });
 };
 
 const handleSearchButtonClick = () => {
-    loading.value = true;
-    router.visit(props.routes.current_page, {
-        data: {
-            filterData: filterData._rawValue,
-            sortField: sortData.value.name,
-            sortOrder: sortData.value.order,
-            per_page: pagination.value.per_page,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: [
-            "data",
-            'showGlobal',
-            'pagination',
-        ],
-        onSuccess: (page) => {
-            loading.value = false;
-            pagination.value.per_page = page.props.pagination?.per_page ?? pagination.value.per_page;
-            handleClearSelection();
-        }
-    });
+    getData(1);
+};
+
+const refreshCurrentPage = () => {
+    getData(currentPage.value);
+};
+
+const handlePageSizeChange = (newPerPage) => {
+    perPage.value = newPerPage;
+    getData(1);
 };
 
 const handleFiltersReset = () => {
     filterData.value.search = null;
-    // After resetting the filters, call handleSearchButtonClick to perform the search with the updated filters
-    handleSearchButtonClick();
+    getData(1);
 }
 
 
 const renderRequestedPage = (url) => {
-    loading.value = true;
-    router.visit(url, {
-        data: {
-            filterData: filterData._rawValue,
-            sortField: sortData.value.name,
-            sortOrder: sortData.value.order,
-            per_page: pagination.value.per_page,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: ["data"],
-        onSuccess: (page) => {
-            loading.value = false;
-        }
-    });
+    if (!url) return;
+    const urlObj = new URL(url, window.location.origin);
+    getData(urlObj.searchParams.get("page") ?? 1);
 };
-
-const handlePageSizeChange = (perPage) => {
-    pagination.value.per_page = perPage;
-    handleClearSelection();
-    handleSearchButtonClick();
-};
-
 
 const handleErrorResponse = (error) => {
     if (error.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
-        showNotification('error', error.response.data.errors || { request: [error.message] });
+        showNotification('error', error.response.data.errors || error.response.data.messages || { request: [error.message] });
     } else if (error.request) {
-        // The request was made but no response was received
-        // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
-        // http.ClientRequest in node.js
         showNotification('error', { request: [error.request] });
         console.log(error.request);
     } else {
-        // Something happened in setting up the request that triggered an Error
         showNotification('error', { request: [error.message] });
         console.log(error.message);
     }
 }
 
 const handleSelectPageItems = () => {
-    if (selectPageItems.value) {
-        const currentPageItems = Object.values(props.data.data);
-        selectedItems.value = currentPageItems.map(item => item);
-
-    } else {
-        selectedItems.value = [];
-    }
+    selectedItems.value = selectPageItems.value
+        ? data.value.data.map((item) => item.call_id).filter(Boolean)
+        : [];
 };
 
 
 
 const handleClearSelection = () => {
-    selectedItems.value = [],
+    selectedItems.value = [];
     selectPageItems.value = false;
     selectAll.value = false;
 }
 
 const handleModalClose = () => {
     confirmationActionTrigger.value = false;
+    confirmAction.value = null;
 }
 
 const hideNotification = () => {

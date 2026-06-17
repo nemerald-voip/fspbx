@@ -100,6 +100,10 @@
                                 <TrashIcon v-if="permissions.destroy" @click="handleSingleItemDeleteRequest(row.device_key_template_uuid)"
                                     class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
                                     title="Delete" />
+                                <div v-if="permissions.create" class="relative z-20 ml-2">
+                                    <AdvancedActionButton :actions="advancedActions"
+                                        @advanced-action="(action) => handleAdvancedActionRequest(action, row.device_key_template_uuid)" />
+                                </div>
                             </div>
                         </template>
                     </TableField>
@@ -120,7 +124,9 @@
             <template #footer>
                 <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
                     :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
-                    @pagination-change-page="renderRequestedPage" />
+                    :page-size="perPage" :page-size-options="props.pagination?.per_page_options ?? []"
+                    :show-page-size-selector="true"
+                    @pagination-change-page="renderRequestedPage" @page-size-change="handlePageSizeChange" />
             </template>
         </DataTable>
     </div>
@@ -150,11 +156,13 @@ import Loading from "./components/general/Loading.vue";
 import Notification from "./components/notifications/Notification.vue";
 import Badge from "@generalComponents/Badge.vue";
 import DeviceKeyTemplateForm from "./components/forms/DeviceKeyTemplateForm.vue";
+import AdvancedActionButton from "./components/general/AdvancedActionButton.vue";
 import { ChevronDownIcon, ChevronUpIcon, MagnifyingGlassIcon, PencilSquareIcon, TrashIcon } from "@heroicons/vue/24/solid";
 
 const props = defineProps({
     routes: Object,
     permissions: Object,
+    pagination: Object,
 });
 
 const routes = props.routes;
@@ -176,6 +184,7 @@ const showForm = ref(false);
 const formMode = ref("create");
 const loadingForm = ref(false);
 const itemOptions = ref({ item: {}, extensions: [], routes: {} });
+const perPage = ref(props.pagination?.per_page);
 
 const data = ref({
     data: [],
@@ -195,6 +204,15 @@ const sortData = ref({ name: "name", order: "asc" });
 const bulkActions = computed(() => permissions.destroy ? [
     { id: "bulk_delete", label: "Delete", icon: "TrashIcon" },
 ] : []);
+
+const advancedActions = computed(() => [
+    {
+        category: "Advanced",
+        actions: [
+            { id: "duplicate", label: "Duplicate", icon: "DocumentDuplicateIcon" },
+        ],
+    },
+]);
 
 const formHeader = computed(() => formMode.value === "create"
     ? "Create Device Key Template"
@@ -224,6 +242,7 @@ const getData = (page = 1) => {
         params: {
             filter: filterData.value,
             page: currentPage.value,
+            per_page: perPage.value,
             sort,
         },
     }).then((response) => {
@@ -236,6 +255,11 @@ const getData = (page = 1) => {
 
 const handleSearchButtonClick = () => getData(1);
 const refreshCurrentPage = () => getData(currentPage.value);
+const handlePageSizeChange = (newPerPage) => {
+    perPage.value = newPerPage;
+    getData(1);
+};
+
 const handleFiltersReset = () => {
     filterData.value.search = null;
     getData(1);
@@ -257,6 +281,22 @@ const handleEditButtonClick = (uuid) => {
     showForm.value = true;
     formMode.value = "update";
     getItemOptions(uuid);
+};
+
+const handleAdvancedActionRequest = async (action, uuid) => {
+    if (action !== "duplicate") return;
+
+    loading.value = true;
+
+    try {
+        const response = await axios.post(routes.duplicate, { uuid });
+        showNotification("success", response.data.messages);
+        refreshCurrentPage();
+    } catch (error) {
+        handleErrorResponse(error);
+    } finally {
+        loading.value = false;
+    }
 };
 
 const getItemOptions = (itemUuid = null) => {

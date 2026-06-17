@@ -56,6 +56,8 @@ class LogsController extends Controller
                     'dashboard_route' => route('dashboard'),
                     'email_logs' => route('email-logs.index'),
                     'email_retry' => route('email-logs.retry'),
+                    'email_delivery_details' => route('email-logs.delivery-details', ['uuid' => '__UUID__']),
+                    'test_email_send' => route('test-email-send.store'),
                     'inbound_webhooks' => route('inbound-webhooks.index'),
                     'message_logs' => route('messages.logs'),
                     'message_retry' => route('messages.retry'),
@@ -64,6 +66,8 @@ class LogsController extends Controller
                     'fax_logs_bulk_delete' => route('fax-logs.bulk.delete'),
                     'fax_logs_retry' => route('fax-logs.retry', ['faxLog' => ':faxLog']),
                     'ai_receptionist_logs' => route('ai-receptionist-logs.index'),
+                    'freeswitch_logs' => route('freeswitch-logs.index'),
+                    'freeswitch_sip_trace' => route('freeswitch-logs.sip-trace'),
 
                 ],
                 'permissions' => function () {
@@ -187,6 +191,10 @@ class LogsController extends Controller
         $permissions['fax_log_view'] = userCheckPermission('fax_log_view');
         $permissions['fax_log_delete'] = userCheckPermission('fax_log_delete');
         $permissions['fax_send'] = userCheckPermission('fax_send');
+        $permissions['log_view'] = userCheckPermission('log_view');
+        $permissions['log_download'] = userCheckPermission('log_download');
+        $permissions['log_path_view'] = userCheckPermission('log_path_view');
+        $permissions['email_test_send'] = userCheckPermission('email_test_send');
 
         return $permissions;
     }

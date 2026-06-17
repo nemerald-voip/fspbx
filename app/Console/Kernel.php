@@ -5,6 +5,7 @@ namespace App\Console;
 use App\Jobs\DeleteOldFaxes;
 use App\Models\DefaultSettings;
 use App\Jobs\DeleteOldEmailLogs;
+use App\Jobs\ProcessScheduledAnnouncements;
 use App\Jobs\ProcessWakeupCalls;
 use App\Jobs\DeleteOldVoicemails;
 use App\Jobs\DeleteOldCallRecordings;
@@ -96,9 +97,12 @@ class Kernel extends ConsoleKernel
             $schedule->job(new \App\Jobs\AuditStaleRingotelUsers())->monthlyOn(1, '00:00');
         }
 
-        // Process scheduled jobs
         if (isset($jobSettings['wake_up_calls']) && $jobSettings['wake_up_calls'] === "true") {
             $schedule->job(new ProcessWakeupCalls())->everyMinute();
+        }
+
+        if (isset($jobSettings['scheduled_announcements']) && $jobSettings['scheduled_announcements'] === "true") {
+            $schedule->job(new ProcessScheduledAnnouncements())->everyMinute();
         }
 
         if (isset($jobSettings['delete_old_faxes']) && $jobSettings['delete_old_faxes'] === "true") {

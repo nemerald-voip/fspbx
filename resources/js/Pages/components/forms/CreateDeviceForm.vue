@@ -144,7 +144,7 @@
                                                     }" />
 
                                                 <SelectElement name="device_profile_uuid" :items="options.profiles"
-                                                    :search="true" :native="false" label="Device Profile (Depreciated)"
+                                                    :search="true" :native="false" label="Device Profile (Deprecated)"
                                                     input-type="search" autocomplete="off" label-prop="name"
                                                     value-prop="value" placeholder="Select Profile (Optional)"
                                                     :floating="false"
@@ -628,7 +628,10 @@ const keyTypes = [
     { value: 'speed_dial', name: 'Speed Dial' },
     { value: 'check_voicemail', name: 'Check Voicemail' },
     { value: 'park', name: 'Park & Retrieve' },
+    { value: 'dtmf', name: 'DTMF' },
 ]
+
+const keyTypesWithSelect = ['line', 'check_voicemail', 'blf', 'speed_dial', 'park']
 
 const getKeyValueSelectItems = async (query, input, index) => {
     const form$ = input.$parent.el$.form$
@@ -740,6 +743,7 @@ const submitForm = async (FormData, form$) => {
     // Using form$.requestData will EXCLUDE conditional elements and it 
     // will submit the form as Content-Type: application/json . 
     const requestData = form$.requestData
+    requestData.device_keys = (requestData.device_keys ?? []).map(normalizeKeyForSubmit)
     // console.log(requestData);
 
     // Using form$.data will INCLUDE conditional elements and it
@@ -748,6 +752,18 @@ const submitForm = async (FormData, form$) => {
 
     return await form$.$vueform.services.axios.post(props.options.routes.store_route, requestData)
 };
+
+const normalizeKeyForSubmit = (key) => {
+    const keyType = key?.key_type ?? ''
+    const usesSelect = keyTypesWithSelect.includes(keyType)
+
+    return {
+        ...key,
+        key_value: usesSelect
+            ? (key?.key_value_select ?? key?.key_value ?? null)
+            : (key?.key_value_text ?? key?.key_value ?? null),
+    }
+}
 
 
 function clearErrorsRecursive(el$) {

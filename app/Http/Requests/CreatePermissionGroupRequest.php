@@ -18,9 +18,7 @@ class CreatePermissionGroupRequest extends FormRequest
             'group_name'        => 'required|string|max:255',
             'domain_uuid'       => 'nullable|uuid',
             'group_level'       => 'required|integer|in:10,20,30,40,50,60,70',
-            'group_protected'   => 'required|string',
             'group_description' => 'nullable|string',
         ];
     }
 }
-

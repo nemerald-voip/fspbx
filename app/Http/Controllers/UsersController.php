@@ -48,7 +48,7 @@ class UsersController extends Controller
             return redirect('/');
         }
 
-        $perPage = 50;
+        $perPage = fspbx_pagination_per_page();
         $currentDomain = session('domain_uuid');
 
         $select = [
@@ -108,6 +108,10 @@ class UsersController extends Controller
             $this->viewName,
             [
                 'data' => $usersDto,
+                'pagination' => [
+                    'per_page' => fspbx_pagination_per_page(),
+                    'per_page_options' => fspbx_pagination_options(),
+                ],
 
                 'routes' => [
                     'current_page' => route('users.index'),

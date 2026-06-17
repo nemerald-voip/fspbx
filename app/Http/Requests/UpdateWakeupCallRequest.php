@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\Extensions;
+use App\Models\WakeupCall;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Http\FormRequest;
@@ -16,11 +17,16 @@ class UpdateWakeupCallRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return Auth::check();
+        return Auth::check() && userCheckPermission('wakeup_calls_edit');
     }
 
     public function rules(): array
     {
+        $wakeupCall = $this->route('wakeup_call');
+        $domainUuid = $wakeupCall instanceof WakeupCall
+            ? $wakeupCall->domain_uuid
+            : session('domain_uuid');
+
         return [
             'wake_up_time' => [
                 'required',
@@ -30,7 +36,8 @@ class UpdateWakeupCallRequest extends FormRequest
             'extension' => [
                 'required',
                 'uuid', // Ensure it's a valid UUID
-                Rule::exists((new Extensions)->getTable(), 'extension_uuid') // Get correct table name dynamically
+                Rule::exists((new Extensions)->getTable(), 'extension_uuid')
+                    ->where('domain_uuid', $domainUuid) // Get correct table name dynamically
             ],
             'status' => [
                 'required',
@@ -73,6 +80,26 @@ class UpdateWakeupCallRequest extends FormRequest
                 $this->merge(['status' => null]);
             }
         }
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            if (userCheckPermission('wakeup_calls_view_all_records') || userCheckPermission('wakeup_calls_all')) {
+                return;
+            }
+
+            $userExtensionUuid = optional($this->user())->extension_uuid;
+
+            if (!$userExtensionUuid) {
+                $validator->errors()->add('extension', 'Your user account is not assigned to an extension.');
+                return;
+            }
+
+            if ($this->input('extension') !== $userExtensionUuid) {
+                $validator->errors()->add('extension', 'You can only manage wake-up calls for your own extension.');
+            }
+        });
     }
 
     /**

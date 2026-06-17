@@ -30,6 +30,12 @@
 				dtmf_digits = '';
 			--flush dtmf digits from the input buffer
 				session:flushDigits();
+            --mark this call as a voicemail return-call before transferring back to XML
+                                session:setVariable("vm_return_call", "true");
+                                session:setVariable("vm_return_destination", destination or "");
+            --export so the variable follows the outbound bridge/B-leg too
+                                session:execute("export", "vm_return_call=true");
+                                session:execute("export", "vm_return_destination=" .. (destination or ""));
 			--transfer the call
 				session:transfer(destination, "XML", context);
 		end

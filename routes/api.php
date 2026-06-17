@@ -26,6 +26,7 @@ use App\Http\Controllers\ConferenceControlController;
 use App\Http\Controllers\ConferenceProfileController;
 use App\Http\Controllers\ConferenceRoomController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\CustomerNotesController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeviceCloudProvisioningController;
 use App\Http\Controllers\DeviceController;
@@ -38,12 +39,12 @@ use App\Http\Controllers\DomainSettingsController;
 use App\Http\Controllers\EmailLogsController;
 use App\Http\Controllers\EmailQueueController;
 use App\Http\Controllers\ExtensionsController;
-use App\Http\Controllers\ExtensionStatisticsController;
 use App\Http\Controllers\FaxesController;
 use App\Http\Controllers\FaxInboxController;
 use App\Http\Controllers\FaxLogController;
 use App\Http\Controllers\FaxSentController;
 use App\Http\Controllers\FirewallController;
+use App\Http\Controllers\FreeswitchLogController;
 use App\Http\Controllers\GreetingsController;
 use App\Http\Controllers\GatewayController;
 use App\Http\Controllers\GroupsController;
@@ -54,22 +55,29 @@ use App\Http\Controllers\InboundWebhooksController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\MessageSettingsController;
 use App\Http\Controllers\MusicOnHoldController;
+use App\Http\Controllers\BasicDialerController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\PaymentGatewayController;
 use App\Http\Controllers\PhoneNumbersController;
+use App\Http\Controllers\ProvisioningController;
+use App\Http\Controllers\RegistrationsController;
 use App\Http\Controllers\RecordingsManagerController;
 use App\Http\Controllers\RingGroupsController;
 use App\Http\Controllers\SipStatusController;
 use App\Http\Controllers\SpeedDialController;
 use App\Http\Controllers\SwitchModuleController;
+use App\Http\Controllers\SwitchVariableController;
 use App\Http\Controllers\SystemController;
 use App\Http\Controllers\SystemSettingsController;
+use App\Http\Controllers\TestEmailController;
 use App\Http\Controllers\TokenController;
 use App\Http\Controllers\UserLogsController;
 use App\Http\Controllers\UsersController;
 use App\Http\Controllers\VirtualReceptionistController;
 use App\Http\Controllers\VoicemailController;
 use App\Http\Controllers\VoicemailMessagesController;
+use App\Http\Controllers\WakeupCallsController;
+use App\Http\Controllers\ScheduledAnnouncementController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -88,6 +96,8 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::get('/dashboard/data', [DashboardController::class, 'getData'])->name('dashboard.data');
     Route::get('/dashboard/counts', [DashboardController::class, 'getCounts'])->name('dashboard.counts');
     Route::get('/dashboard/my-extension-status', [DashboardController::class, 'getMyExtensionStatus'])->name('dashboard.my-extension-status');
+    Route::get('/dashboard/customer-notes', [CustomerNotesController::class, 'show'])->name('dashboard.customer-notes');
+    Route::put('/dashboard/customer-notes', [CustomerNotesController::class, 'update'])->name('dashboard.customer-notes.update');
 
     // Tokens
     Route::resource('/tokens', TokenController::class);
@@ -106,6 +116,12 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     // Email logs
     Route::resource('/email-logs', EmailLogsController::class);
     Route::post('/email-logs/retry', [EmailLogsController::class, 'retry'])->name('email-logs.retry');
+    Route::get('/email-logs/{uuid}/delivery-details', [EmailLogsController::class, 'deliveryDetails'])->name('email-logs.delivery-details');
+    Route::post('/test-email-send', [TestEmailController::class, 'store'])->name('test-email-send.store');
+
+    // FreeSWITCH logs
+    Route::get('/freeswitch-logs', [FreeswitchLogController::class, 'index'])->name('freeswitch-logs.index');
+    Route::post('/freeswitch-logs/sip-trace', [FreeswitchLogController::class, 'sipTrace'])->name('freeswitch-logs.sip-trace');
 
     // Basic Queue
     Route::get('/basic-queues/queues/data', [BasicQueueController::class, 'getQueueData'])->name('basic-queues.queues.data');
@@ -139,6 +155,27 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::delete('/ai-receptionist-settings', [AiReceptionistSettingsController::class, 'destroy'])->name('ai-receptionist-settings.destroy');
     Route::get('/ai-receptionist-settings/service/status', [AiReceptionistSettingsController::class, 'serviceStatus'])->name('ai-receptionist-settings.service.status');
     Route::post('/ai-receptionist-settings/service/control', [AiReceptionistSettingsController::class, 'serviceControl'])->name('ai-receptionist-settings.service.control');
+
+    // Basic Dialer
+    Route::get('/basic-dialer/overview', [BasicDialerController::class, 'getOverview'])->name('basic-dialer.overview');
+    Route::get('/basic-dialer/campaigns/data', [BasicDialerController::class, 'getCampaignData'])->name('basic-dialer.campaigns.data');
+    Route::post('/basic-dialer/campaigns', [BasicDialerController::class, 'storeCampaign'])->name('basic-dialer.campaigns.store');
+    Route::put('/basic-dialer/campaigns/{campaign}', [BasicDialerController::class, 'updateCampaign'])->name('basic-dialer.campaigns.update');
+    Route::post('/basic-dialer/campaigns/{campaign}/start', [BasicDialerController::class, 'startCampaign'])->name('basic-dialer.campaigns.start');
+    Route::post('/basic-dialer/campaigns/{campaign}/pause', [BasicDialerController::class, 'pauseCampaign'])->name('basic-dialer.campaigns.pause');
+    Route::post('/basic-dialer/campaigns/{campaign}/stop', [BasicDialerController::class, 'stopCampaign'])->name('basic-dialer.campaigns.stop');
+    Route::get('/basic-dialer/campaigns/{campaign}/status', [BasicDialerController::class, 'getCampaignStatus'])->name('basic-dialer.campaigns.status');
+    Route::post('/basic-dialer/campaigns/item-options', [BasicDialerController::class, 'getCampaignItemOptions'])->name('basic-dialer.campaigns.item.options');
+    Route::post('/basic-dialer/campaigns/select-all', [BasicDialerController::class, 'selectAllCampaigns'])->name('basic-dialer.campaigns.select.all');
+    Route::post('/basic-dialer/campaigns/bulk-delete', [BasicDialerController::class, 'bulkDeleteCampaigns'])->name('basic-dialer.campaigns.bulk.delete');
+    Route::get('/basic-dialer/contact-lists/data', [BasicDialerController::class, 'getContactListData'])->name('basic-dialer.contact-lists.data');
+    Route::post('/basic-dialer/contact-lists', [BasicDialerController::class, 'storeContactList'])->name('basic-dialer.contact-lists.store');
+    Route::put('/basic-dialer/contact-lists/{contactList}', [BasicDialerController::class, 'updateContactList'])->name('basic-dialer.contact-lists.update');
+    Route::post('/basic-dialer/contact-lists/item-options', [BasicDialerController::class, 'getContactListItemOptions'])->name('basic-dialer.contact-lists.item.options');
+    Route::post('/basic-dialer/contact-lists/select-all', [BasicDialerController::class, 'selectAllContactLists'])->name('basic-dialer.contact-lists.select.all');
+    Route::post('/basic-dialer/contact-lists/bulk-delete', [BasicDialerController::class, 'bulkDeleteContactLists'])->name('basic-dialer.contact-lists.bulk.delete');
+    Route::get('/basic-dialer/contact-lists/{contactList}/contacts', [BasicDialerController::class, 'getContactsForList'])->name('basic-dialer.contact-lists.contacts');
+    Route::delete('/basic-dialer/contact-lists/{contactList}/contacts/{contact}', [BasicDialerController::class, 'deleteContact'])->name('basic-dialer.contact-lists.contacts.destroy');
 
     // Inbound Webhooks
     Route::resource('/inbound-webhooks', InboundWebhooksController::class);
@@ -224,9 +261,17 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     // Groups
     Route::post('groups', [GroupsController::class, 'store'])->name('groups.store');
     Route::put('groups/{group}', [GroupsController::class, 'update'])->name('groups.update');
+    Route::get('groups/data', [GroupsController::class, 'getData'])->name('groups.data');
     Route::post('groups/item-options', [GroupsController::class, 'getItemOptions'])->name('groups.item.options');
     Route::post('groups/bulk-delete', [GroupsController::class, 'bulkDelete'])->name('groups.bulk.delete');
+    Route::post('groups/clone', [GroupsController::class, 'cloneGroup'])->name('groups.clone');
     Route::post('groups/select-all', [GroupsController::class, 'selectAll'])->name('groups.select.all');
+    Route::get('groups/{group}/members', [GroupsController::class, 'membersData'])->name('groups.members.data');
+    Route::post('groups/{group}/members', [GroupsController::class, 'addMember'])->name('groups.members.store');
+    Route::post('groups/{group}/members/delete', [GroupsController::class, 'deleteMembers'])->name('groups.members.delete');
+    Route::get('groups/{group}/permissions/data', [GroupsController::class, 'permissionsData'])->name('groups.permissions.data');
+    Route::post('groups/{group}/permissions/toggle', [GroupsController::class, 'togglePermissionAssignments'])->name('groups.permissions.toggle');
+    Route::post('groups/{group}/permissions/reload', [GroupsController::class, 'reloadPermissionSession'])->name('groups.permissions.reload');
 
     // Domain Groups
     Route::post('domain-groups', [DomainGroupsController::class, 'store'])->name('domain-groups.store');
@@ -325,6 +370,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/devices/bulk-update', [DeviceController::class, 'bulkUpdate'])->name('devices.bulk.update');
     Route::post('/devices/bulk-delete', [DeviceController::class, 'bulkDelete'])->name('devices.bulk.delete');
     Route::post('/devices/restart', [DeviceController::class, 'restart'])->name('devices.restart');
+    Route::get('/devices/{device}/provisioning-preview', [ProvisioningController::class, 'previewDevice'])->name('devices.provisioning-preview');
     Route::post('/devices/select-all', [DeviceController::class, 'selectAll'])->name('devices.select.all');
     Route::post('devices/item-options', [DeviceController::class, 'getItemOptions'])->name('devices.item.options');
     Route::post('devices/assign', [DeviceController::class, 'assign'])->name('devices.assign');
@@ -336,8 +382,14 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::put('/device-key-templates/{device_key_template}', [DeviceKeyTemplateController::class, 'update'])->name('device-key-templates.update');
     Route::post('/device-key-templates/item-options', [DeviceKeyTemplateController::class, 'getItemOptions'])->name('device-key-templates.item.options');
     Route::post('/device-key-templates/select-all', [DeviceKeyTemplateController::class, 'selectAll'])->name('device-key-templates.select.all');
+    Route::post('/device-key-templates/duplicate', [DeviceKeyTemplateController::class, 'duplicate'])->name('device-key-templates.duplicate');
     Route::post('/device-key-templates/bulk-delete', [DeviceKeyTemplateController::class, 'bulkDelete'])->name('device-key-templates.bulk.delete');
     Route::post('/devices/{device}/key-templates', [DeviceKeyTemplateController::class, 'storeFromDevice'])->name('devices.key-templates.store-from-device');
+
+    // Registrations
+    Route::get('/registrations/data', [RegistrationsController::class, 'getData'])->name('registrations.data');
+    Route::post('/registrations/select-all', [RegistrationsController::class, 'selectAll'])->name('registrations.select.all');
+    Route::post('/registrations/action', [RegistrationsController::class, 'handleAction'])->name('registrations.action');
 
     // Gateways
     Route::post('gateways', [GatewayController::class, 'store'])->name('gateways.store');
@@ -403,6 +455,29 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/call-blocks/bulk-delete', [CallBlockController::class, 'bulkDelete'])->name('call-blocks.bulk.delete');
     Route::post('/call-blocks/bulk-toggle', [CallBlockController::class, 'bulkToggle'])->name('call-blocks.bulk.toggle');
 
+    Route::post('wakeup-calls', [WakeupCallsController::class, 'store'])->name('wakeup-calls.store');
+    Route::put('wakeup-calls/{wakeup_call}', [WakeupCallsController::class, 'update'])->name('wakeup-calls.update');
+    Route::delete('wakeup-calls/{wakeup_call}', [WakeupCallsController::class, 'destroy'])->name('wakeup-calls.destroy');
+    Route::get('/wakeup-calls/data', [WakeupCallsController::class, 'getData'])->name('wakeup-calls.data');
+    Route::post('/wakeup-calls/item-options', [WakeupCallsController::class, 'getItemOptions'])->name('wakeup-calls.item.options');
+    Route::post('/wakeup-calls/select-all', [WakeupCallsController::class, 'selectAll'])->name('wakeup-calls.select.all');
+    Route::post('/wakeup-calls/bulk-delete', [WakeupCallsController::class, 'bulkDelete'])->name('wakeup-calls.bulk.delete');
+    Route::post('wakeup-calls/settings', [WakeupCallsController::class, 'getSettings'])->name('wakeup-calls.settings');
+    Route::put('wakeup-calls/settings/update', [WakeupCallsController::class, 'updateSettings'])->name('wakeup-calls.settings.update');
+
+    // Scheduled Announcements
+    Route::get('scheduled-announcements/data', [ScheduledAnnouncementController::class, 'data'])->name('scheduled-announcements.data');
+    Route::post('scheduled-announcements/schedules', [ScheduledAnnouncementController::class, 'storeSchedule'])->name('scheduled-announcements.schedules.store');
+    Route::put('scheduled-announcements/schedules/{schedule}', [ScheduledAnnouncementController::class, 'updateSchedule'])->name('scheduled-announcements.schedules.update');
+    Route::delete('scheduled-announcements/schedules/{schedule}', [ScheduledAnnouncementController::class, 'destroySchedule'])->name('scheduled-announcements.schedules.destroy');
+    Route::post('scheduled-announcements/events', [ScheduledAnnouncementController::class, 'storeEvent'])->name('scheduled-announcements.events.store');
+    Route::put('scheduled-announcements/events/{event}', [ScheduledAnnouncementController::class, 'updateEvent'])->name('scheduled-announcements.events.update');
+    Route::delete('scheduled-announcements/events/{event}', [ScheduledAnnouncementController::class, 'destroyEvent'])->name('scheduled-announcements.events.destroy');
+    Route::post('scheduled-announcements/events/{event}/run', [ScheduledAnnouncementController::class, 'runEvent'])->name('scheduled-announcements.events.run');
+    Route::post('scheduled-announcements/exceptions', [ScheduledAnnouncementController::class, 'storeException'])->name('scheduled-announcements.exceptions.store');
+    Route::put('scheduled-announcements/exceptions/{exception}', [ScheduledAnnouncementController::class, 'updateException'])->name('scheduled-announcements.exceptions.update');
+    Route::delete('scheduled-announcements/exceptions/{exception}', [ScheduledAnnouncementController::class, 'destroyException'])->name('scheduled-announcements.exceptions.destroy');
+
     // Conference Centers
     Route::post('conference-centers', [ConferenceCenterController::class, 'store'])->name('conference-centers.store');
     Route::put('conference-centers/{conference_center}', [ConferenceCenterController::class, 'update'])->name('conference-centers.update');
@@ -422,6 +497,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/music-on-hold/upload', [MusicOnHoldController::class, 'upload'])->name('music-on-hold.upload');
     Route::post('/music-on-hold/files/delete', [MusicOnHoldController::class, 'deleteFile'])->name('music-on-hold.files.delete');
     Route::post('/music-on-hold/reload', [MusicOnHoldController::class, 'reload'])->name('music-on-hold.reload');
+    Route::post('/music-on-hold/tenant-settings', [MusicOnHoldController::class, 'tenantSettings'])->name('music-on-hold.tenant-settings');
 
     // Modules
     Route::get('/modules/data', [SwitchModuleController::class, 'getData'])->name('modules.data');
@@ -620,9 +696,20 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     // System Settings
     Route::put('system-settings/update', [SystemSettingsController::class, 'update'])->name('system-settings.update');
     Route::get('system-settings/payment_gateways', [SystemSettingsController::class, 'getPaymentGatewayData'])->name('system-settings.payment_gateways');
+    Route::post('/gateways/test', [PaymentGatewayController::class, 'test'])->name('gateway.test');
 
     // System
     Route::get('system/data', [SystemController::class, 'data'])->name('system.data');
+
+    // Switch Variables
+    Route::get('switch-variables/data', [SwitchVariableController::class, 'data'])->name('switch-variables.data');
+    Route::post('switch-variables/item-options', [SwitchVariableController::class, 'itemOptions'])->name('switch-variables.item.options');
+    Route::post('switch-variables', [SwitchVariableController::class, 'store'])->name('switch-variables.store');
+    Route::put('switch-variables/{switch_variable}', [SwitchVariableController::class, 'update'])->name('switch-variables.update');
+    Route::post('switch-variables/bulk-copy', [SwitchVariableController::class, 'bulkCopy'])->name('switch-variables.bulk.copy');
+    Route::post('switch-variables/bulk-toggle', [SwitchVariableController::class, 'bulkToggle'])->name('switch-variables.bulk.toggle');
+    Route::post('switch-variables/bulk-delete', [SwitchVariableController::class, 'bulkDelete'])->name('switch-variables.bulk.delete');
+    Route::post('switch-variables/sync', [SwitchVariableController::class, 'sync'])->name('switch-variables.sync');
 
     // Call Transcription
     Route::get('/call-transcription/providers', [CallTranscriptionController::class, 'getProviders'])->name('call-transcription.providers');

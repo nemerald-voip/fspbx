@@ -130,15 +130,6 @@ else
     exit 1
 fi
 
-# Include the install_esl_extension.sh script
-sh /var/www/fspbx/install/install_esl_extension.sh
-if [ $? -eq 0 ]; then
-    print_success "ESL extension installation script executed successfully."
-else
-    print_error "Error occurred while executing ESL extension installation script."
-    exit 1
-fi
-
 # Include the install_cron_jobs.sh script
 sh /var/www/fspbx/install/install_cron_jobs.sh
 if [ $? -eq 0 ]; then
@@ -369,15 +360,6 @@ mkdir -p /var/cache/fusionpbx
 chown -R www-data:www-data /var/cache/fusionpbx
 
 print_success "FusionPBX cache directory setup completed."
-
-print_success "Installing FS PBX Apps..."
-bash /var/www/fspbx/install/install_fusionpbx_apps.sh
-if [ $? -eq 0 ]; then
-    print_success "FS PBX Apps installed successfully."
-else
-    print_error "Error occurred while installing FS PBX Apps."
-    exit 1
-fi
 
 
 # Copy .env.example to .env

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class ProvisioningTemplate extends Model
 {
@@ -37,6 +38,9 @@ class ProvisioningTemplate extends Model
     {
         // On create: ensure checksum; set revision defaults
         static::creating(function (self $m) {
+            if (empty($m->{$m->getKeyName()})) {
+                $m->{$m->getKeyName()} = (string) Str::uuid();
+            }
             if (!empty($m->content) && empty($m->checksum)) {
                 $m->checksum = hash('sha256', $m->content);
             }

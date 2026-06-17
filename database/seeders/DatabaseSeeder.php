@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use App\Models\PaymentGateway;
 use App\Models\GatewaySetting;
+use Illuminate\Support\Facades\Artisan;
+use Nwidart\Modules\Facades\Module;
 
 class DatabaseSeeder extends Seeder
 {
@@ -44,6 +46,22 @@ class DatabaseSeeder extends Seeder
         $this->createCallTranscriptionProviders();
 
         Model::reguard();
+
+        $this->runEnabledModuleSeeders();
+    }
+
+    private function runEnabledModuleSeeders(): void
+    {
+        foreach (['Billing'] as $moduleName) {
+            if (! Module::has($moduleName) || ! Module::isEnabled($moduleName)) {
+                continue;
+            }
+
+            Artisan::call('module:seed', [
+                'module' => $moduleName,
+                '--force' => true,
+            ]);
+        }
     }
 
     private function createGroups()
@@ -100,10 +118,22 @@ class DatabaseSeeder extends Seeder
             ['application_name' => 'Wakeup Calls', 'permission_name' => 'wakeup_calls_edit'],
             ['application_name' => 'Wakeup Calls', 'permission_name' => 'wakeup_calls_delete'],
             ['application_name' => 'Wakeup Calls', 'permission_name' => 'wakeup_calls_all'],
+            ['application_name' => 'Wakeup Calls', 'permission_name' => 'wakeup_calls_view_self_records'],
+            ['application_name' => 'Wakeup Calls', 'permission_name' => 'wakeup_calls_view_all_records'],
             ['application_name' => 'Wakeup Calls', 'permission_name' => 'wakeup_calls_view_settings'],
+            ['application_name' => 'Scheduled Announcements', 'permission_name' => 'scheduled_announcements_list_view'],
+            ['application_name' => 'Scheduled Announcements', 'permission_name' => 'scheduled_announcements_create'],
+            ['application_name' => 'Scheduled Announcements', 'permission_name' => 'scheduled_announcements_update'],
+            ['application_name' => 'Scheduled Announcements', 'permission_name' => 'scheduled_announcements_delete'],
+            ['application_name' => 'Scheduled Announcements', 'permission_name' => 'scheduled_announcements_execute'],
+            ['application_name' => 'Scheduled Announcements', 'permission_name' => 'scheduled_announcements_manage_settings'],
             ['application_name' => 'Cloud Provisioning', 'permission_name' => 'cloud_provisioning_show_credentials'],
             ['application_name' => 'Cloud Provisioning', 'permission_name' => 'polycom_api_token_update'],
             ['application_name' => 'Account Settings', 'permission_name' => 'account_settings_list_view'],
+            ['application_name' => 'Customer Notes', 'permission_name' => 'customer_notes_level_1'],
+            ['application_name' => 'Customer Notes', 'permission_name' => 'customer_notes_level_2'],
+            ['application_name' => 'Customer Notes', 'permission_name' => 'customer_notes_level_3'],
+            ['application_name' => 'Customer Notes', 'permission_name' => 'customer_notes_edit'],
             ['application_name' => 'Ring Groups', 'permission_name' => 'ring_group_view_settings'],
             ['application_name' => 'Ring Groups', 'permission_name' => 'ring_group_view_advanced'],
             ['application_name' => 'Business Hours', 'permission_name' => 'business_hours_list_view'],
@@ -148,10 +178,16 @@ class DatabaseSeeder extends Seeder
             ['application_name' => 'Devices', 'permission_name' => 'device_key_template_update'],
             ['application_name' => 'Devices', 'permission_name' => 'device_key_template_delete'],
             ['application_name' => 'Devices', 'permission_name' => 'device_key_template_assign'],
+            ['application_name' => 'Devices', 'permission_name' => 'device_import'],
             ['application_name' => 'Devices', 'permission_name' => 'device_line_user_id'],
             ['application_name' => 'Devices', 'permission_name' => 'device_template_view_all'],
             ['application_name' => 'Devices', 'permission_name' => 'device_template_view_custom_only'],
+            ['application_name' => 'Devices', 'permission_name' => 'device_provisioning_preview'],
             ['application_name' => 'Logs', 'permission_name' => 'logs_list_view'],
+            ['application_name' => 'Logs', 'permission_name' => 'log_view'],
+            ['application_name' => 'Logs', 'permission_name' => 'log_download'],
+            ['application_name' => 'Logs', 'permission_name' => 'log_path_view'],
+            ['application_name' => 'Email Tools', 'permission_name' => 'email_test_send'],
             ['application_name' => 'System Settings', 'permission_name' => 'payment_gateways_view'],
             ['application_name' => 'System Settings', 'permission_name' => 'call_transcription_settings_view'],
             ['application_name' => 'Call Transcriptions', 'permission_name' => 'transcription_view'],
@@ -172,6 +208,11 @@ class DatabaseSeeder extends Seeder
             ['application_name' => 'AI Receptionists', 'permission_name' => 'ai_receptionist_settings'],
             ['application_name' => 'Messages', 'permission_name' => 'messages_view'],
             ['application_name' => 'Messages', 'permission_name' => 'messages_view_as'],
+            ['application_name' => 'Basic Dialer', 'permission_name' => 'basic_dialer_view'],
+            ['application_name' => 'Basic Dialer', 'permission_name' => 'basic_dialer_create'],
+            ['application_name' => 'Basic Dialer', 'permission_name' => 'basic_dialer_update'],
+            ['application_name' => 'Basic Dialer', 'permission_name' => 'basic_dialer_delete'],
+            ['application_name' => 'Basic Dialer', 'permission_name' => 'basic_dialer_start'],
         ];
         $timestamp = date("Y-m-d H:i:s");
 
@@ -217,8 +258,15 @@ class DatabaseSeeder extends Seeder
                 'wakeup_calls_edit',
                 'wakeup_calls_delete',
                 'wakeup_calls_all',
+                'wakeup_calls_view_all_records',
                 'account_settings_list_view',
                 'wakeup_calls_view_settings',
+                'scheduled_announcements_list_view',
+                'scheduled_announcements_create',
+                'scheduled_announcements_update',
+                'scheduled_announcements_delete',
+                'scheduled_announcements_execute',
+                'scheduled_announcements_manage_settings',
                 'ring_group_view_settings',
                 'ring_group_view_advanced',
                 'business_hours_list_view',
@@ -263,13 +311,19 @@ class DatabaseSeeder extends Seeder
                 'device_key_template_update',
                 'device_key_template_delete',
                 'device_key_template_assign',
+                'device_import',
                 'device_template_view_all',
+                'device_provisioning_preview',
                 'device_line_server_address_primary',
                 'device_line_server_address_secondary',
                 'device_line_outbound_proxy_primary',
                 'device_line_outbound_proxy_secondary',
                 'device_line_user_id',
                 'logs_list_view',
+                'log_view',
+                'log_download',
+                'log_path_view',
+                'email_test_send',
                 'call_transcription_settings_view',
                 'transcription_view',
                 'transcription_read',
@@ -288,12 +342,23 @@ class DatabaseSeeder extends Seeder
                 'ai_receptionist_tools',
                 'ai_receptionist_settings',
                 'ring_group_cid_name_prefix',
+                'basic_dialer_view',
+                'basic_dialer_create',
+                'basic_dialer_update',
+                'basic_dialer_delete',
+                'basic_dialer_start',
             ],
             'admin' => [
                 'wakeup_calls_list_view',
                 'wakeup_calls_create',
                 'wakeup_calls_edit',
                 'wakeup_calls_delete',
+                'wakeup_calls_view_all_records',
+                'scheduled_announcements_list_view',
+                'scheduled_announcements_create',
+                'scheduled_announcements_update',
+                'scheduled_announcements_delete',
+                'scheduled_announcements_execute',
                 'ring_group_view_settings',
                 'business_hours_list_view',
                 'business_hours_create',
@@ -335,6 +400,12 @@ class DatabaseSeeder extends Seeder
                 'messages_view',
                 'messages_view_as',
                 'ring_group_cid_name_prefix',
+                'email_test_send',
+                'basic_dialer_view',
+                'basic_dialer_create',
+                'basic_dialer_update',
+                'basic_dialer_delete',
+                'basic_dialer_start',
             ],
             'Message Admin' => [
                 'message_settings_list_view',
@@ -345,6 +416,7 @@ class DatabaseSeeder extends Seeder
             'user' => [
                 'xml_cdr_view_self_records',
                 'call_block_view_self_records',
+                'wakeup_calls_view_self_records',
                 'extension_do_not_disturb',
                 'extension_forward_all',
                 'extension_forward_busy',
@@ -549,6 +621,38 @@ class DatabaseSeeder extends Seeder
     {
         $settings = [
             [
+                'default_setting_category'      => 'virtual_receptionists',
+                'default_setting_subcategory'   => 'virtual_receptionist_direct_dial',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => "false",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Enable direct extension dialing for new virtual receptionists.",
+            ],
+            [
+                'default_setting_category'      => 'virtual_receptionists',
+                'default_setting_subcategory'   => 'virtual_receptionist_digit_length',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "5",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Default direct dial digit length for new virtual receptionists.",
+            ],
+            [
+                'default_setting_category'      => 'virtual_receptionists',
+                'default_setting_subcategory'   => 'virtual_receptionist_ring_back_tone',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => '${us-ring}',
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Default ring back tone for new virtual receptionists.",
+            ],
+            [
+                'default_setting_category'      => 'virtual_receptionists',
+                'default_setting_subcategory'   => 'virtual_receptionist_prompt_timeout',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "3",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Default input timeout in seconds for new virtual receptionists.",
+            ],
+            [
                 'default_setting_category'      => 'provision',
                 'default_setting_subcategory'   => 'polycom_vvx_firmware_url',
                 'default_setting_name'          => 'text',
@@ -718,6 +822,22 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'polycom_custom_ca_cert1',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => false,
+                'default_setting_description'   => "Upload Polycom custom CA certificate 1. The value should start with '-----BEGIN CERTIFICATE-----' and end with '-----END CERTIFICATE-----'",
+            ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'polycom_custom_ca_cert2',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => false,
+                'default_setting_description'   => "Upload Polycom custom CA certificate 2. The value should start with '-----BEGIN CERTIFICATE-----' and end with '-----END CERTIFICATE-----'",
+            ],
+            [
+                'default_setting_category'      => 'provision',
                 'default_setting_subcategory'   => 'yealink_t46s_wallpaper',
                 'default_setting_name'          => 'text',
                 'default_setting_value'         => "",
@@ -771,6 +891,14 @@ class DatabaseSeeder extends Seeder
                 'default_setting_value'         => "",
                 'default_setting_enabled'       => true,
                 'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'grandstream_time_zone',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "auto",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Grandstream time zone",
             ],
             [
                 'default_setting_category'      => 'provision',
@@ -915,6 +1043,54 @@ class DatabaseSeeder extends Seeder
                 'default_setting_value'         => "false",
                 'default_setting_enabled'       => true,
                 'default_setting_description'   => "Enable or disable the processing of scheduled wake-up calls. If set to 'false', scheduled calls will not be executed.",
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'scheduled_announcements',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => "false",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Enable or disable the processing of scheduled announcements.",
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'scheduled_announcements_active_fqdn',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Optional active-node FQDN override. When blank, APP_URL is used.",
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'scheduled_announcements_authoritative_zone',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Optional DNS zone override for authoritative lookup discovery.",
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'scheduled_announcements_node_ips',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Optional comma-separated public IP override for this node. When blank, FS PBX discovers local and external IPs.",
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'scheduled_announcements_dns_timeout_ms',
+                'default_setting_name'          => 'numeric',
+                'default_setting_value'         => "800",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "DNS guard timeout in milliseconds.",
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'scheduled_announcements_fire_window_seconds',
+                'default_setting_name'          => 'numeric',
+                'default_setting_value'         => "15",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Maximum seconds after the scheduled time that an announcement may still run.",
             ],
             [
                 'default_setting_category'      => 'scheduled_jobs',

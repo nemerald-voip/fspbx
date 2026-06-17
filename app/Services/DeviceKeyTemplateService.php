@@ -64,6 +64,28 @@ class DeviceKeyTemplateService
         });
     }
 
+    public function duplicate(DeviceKeyTemplate $template): DeviceKeyTemplate
+    {
+        return DB::transaction(function () use ($template) {
+            $copy = DeviceKeyTemplate::create([
+                'domain_uuid' => session('domain_uuid'),
+                'name' => $this->copyName($template->name),
+                'description' => $template->description,
+                'enabled' => $template->enabled,
+            ]);
+
+            $this->syncKeys($copy, $template->keys->map(fn ($key) => [
+                'key_area' => $key->key_area ?? 'main',
+                'key_index' => $key->key_index,
+                'key_type' => $key->key_type,
+                'key_value' => $key->key_value,
+                'key_label' => $key->key_label,
+            ])->all());
+
+            return $copy->fresh(['keys']);
+        });
+    }
+
     private function syncKeys(DeviceKeyTemplate $template, mixed $keys): void
     {
         $template->keys()->delete();
@@ -82,5 +104,13 @@ class DeviceKeyTemplateService
                 'key_label' => $key['key_label'] ?? null,
             ]);
         }
+    }
+
+    private function copyName(?string $name): string
+    {
+        $base = trim((string) $name);
+        $name = $base === '' ? 'Device Key Template' : $base;
+
+        return substr($name, 0, 93) . ' (Copy)';
     }
 }

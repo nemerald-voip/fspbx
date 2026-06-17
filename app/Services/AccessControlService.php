@@ -49,31 +49,14 @@ class AccessControlService
     {
         $cidrs = $this->normalizeCidrs($value);
         $description = $this->gatewayNodeDescription($gateway);
-        $gatewayListName = $this->gatewayListName($gateway);
         $managedLists = $this->managedGatewayLists($gateway);
 
-        $this->deleteGatewayProviderNodes($gateway);
-        $this->deleteOldGatewayLists($managedLists, $gatewayListName);
+        $this->deleteProviderMirrorNodes((string) $gateway->gateway_uuid);
+        $this->deleteGatewayLists($managedLists);
 
         if ($cidrs->isEmpty()) {
-            $this->deleteGatewayLists($managedLists->where('access_control_name', $gatewayListName));
-
             return;
         }
-
-        $gatewayList = AccessControl::query()
-            ->firstOrNew(['access_control_name' => $gatewayListName]);
-
-        $gatewayList->forceFill([
-            'access_control_default' => 'deny',
-            'access_control_description' => 'Provider IPs for ' . ($gateway->gateway ?: $gateway->gateway_uuid),
-        ])->save();
-
-        $this->replaceNodes($gatewayList, $cidrs->map(fn ($cidr) => [
-            'node_type' => 'allow',
-            'node_cidr' => $cidr,
-            'node_description' => $description,
-        ])->all());
 
         $providers = AccessControl::query()
             ->firstOrNew(['access_control_name' => self::PROVIDERS_LIST]);
@@ -96,12 +79,16 @@ class AccessControlService
     {
         $managedLists = $this->managedGatewayLists($gateway);
 
-        $this->deleteGatewayProviderNodes($gateway);
+        $this->deleteProviderMirrorNodes((string) $gateway->gateway_uuid);
         $this->deleteGatewayLists($managedLists);
     }
 
     public function removeGatewayProviderIpsForListName(string $listName): void
     {
+        if (strtolower(trim($listName)) === self::PROVIDERS_LIST) {
+            return;
+        }
+
         $accessControl = AccessControl::query()
             ->with('nodes')
             ->where('access_control_name', $listName)
@@ -114,13 +101,70 @@ class AccessControlService
         $this->gatewayUuidsForAccessControl($accessControl)
             ->each(function (string $gatewayUuid) {
                 AccessControlNode::query()
-                    ->where('node_description', $this->gatewayNodeDescriptionFromUuid($gatewayUuid))
+                    ->where('node_description', 'like', 'Managed gateway:%')
+                    ->where('node_description', 'like', '%' . strtolower($gatewayUuid) . '%')
+                    ->whereHas('accessControl', function ($query) {
+                        $query->where('access_control_name', '!=', self::PROVIDERS_LIST);
+                    })
                     ->delete();
             });
     }
 
+    public function preserveProviderIpsForList(AccessControl $accessControl): void
+    {
+        if (strtolower(trim((string) $accessControl->access_control_name)) === self::PROVIDERS_LIST) {
+            return;
+        }
+
+        $nodesByGateway = $accessControl->nodes
+            ->filter(fn ($node) => $node->node_type === 'allow' && filled($node->node_cidr))
+            ->mapToGroups(function ($node) {
+                $gatewayUuid = $this->gatewayUuidFromDescription($node->node_description);
+
+                return $gatewayUuid
+                    ? [$gatewayUuid => $node]
+                    : [];
+            });
+
+        if ($nodesByGateway->isEmpty()) {
+            return;
+        }
+
+        $providers = AccessControl::query()
+            ->firstOrNew(['access_control_name' => self::PROVIDERS_LIST]);
+
+        $providers->forceFill([
+            'access_control_default' => 'deny',
+            'access_control_description' => $providers->access_control_description ?: 'Provider IP access control list.',
+        ])->save();
+
+        $nodesByGateway->each(function (Collection $nodes, string $gatewayUuid) use ($accessControl, $providers) {
+            $description = $this->gatewayNodeDescriptionForList($accessControl, $gatewayUuid);
+
+            if ($providers->nodes()
+                ->where('node_description', 'like', 'Managed gateway:%')
+                ->where('node_description', 'like', '%' . strtolower($gatewayUuid) . '%')
+                ->exists()
+            ) {
+                return;
+            }
+
+            $nodes->each(function ($node) use ($providers, $description) {
+                $providers->nodes()->create([
+                    'node_type' => 'allow',
+                    'node_cidr' => $node->node_cidr,
+                    'node_description' => $description,
+                ]);
+            });
+        });
+    }
+
     public function mirrorManagedGatewayList(AccessControl $accessControl): void
     {
+        if (strtolower(trim((string) $accessControl->access_control_name)) === self::PROVIDERS_LIST) {
+            return;
+        }
+
         $gatewayUuid = $this->gatewayUuidFromListName((string) $accessControl->access_control_name)
             ?? $this->gatewayUuidsForAccessControl($accessControl)->first();
 
@@ -152,13 +196,28 @@ class AccessControlService
             $providers->nodes()->create([
                 'node_type' => 'allow',
                 'node_cidr' => $cidr,
-                'node_description' => $this->gatewayNodeDescriptionFromUuid($gatewayUuid),
+                'node_description' => $this->gatewayNodeDescriptionForList($accessControl, $gatewayUuid),
             ]);
         }
     }
 
     public function gatewayCidrs(Gateways $gateway): Collection
     {
+        $providerCidrs = AccessControlNode::query()
+            ->where('node_description', 'like', 'Managed gateway:%')
+            ->where('node_description', 'like', '%' . strtolower((string) $gateway->gateway_uuid) . '%')
+            ->where('node_type', 'allow')
+            ->whereHas('accessControl', function ($query) {
+                $query->where('access_control_name', self::PROVIDERS_LIST);
+            })
+            ->pluck('node_cidr')
+            ->filter()
+            ->values();
+
+        if ($providerCidrs->isNotEmpty()) {
+            return $providerCidrs;
+        }
+
         $gatewayList = AccessControl::query()
             ->where('access_control_name', $this->gatewayListName($gateway))
             ->first();
@@ -172,7 +231,9 @@ class AccessControlService
         }
 
         return AccessControlNode::query()
-            ->where('node_description', $this->gatewayNodeDescription($gateway))
+            ->where('node_description', 'like', 'Managed gateway:%')
+            ->where('node_description', 'like', '%' . strtolower((string) $gateway->gateway_uuid) . '%')
+            ->where('node_type', 'allow')
             ->pluck('node_cidr')
             ->filter()
             ->values();
@@ -247,17 +308,11 @@ class AccessControlService
         return substr($name . ' Provider IPs', 0, 255);
     }
 
-    private function deleteGatewayProviderNodes(Gateways $gateway): void
-    {
-        AccessControlNode::query()
-            ->where('node_description', $this->gatewayNodeDescription($gateway))
-            ->delete();
-    }
-
     private function deleteProviderMirrorNodes(string $gatewayUuid): void
     {
         AccessControlNode::query()
-            ->where('node_description', $this->gatewayNodeDescriptionFromUuid($gatewayUuid))
+            ->where('node_description', 'like', 'Managed gateway:%')
+            ->where('node_description', 'like', '%' . strtolower($gatewayUuid) . '%')
             ->whereHas('accessControl', function ($query) {
                 $query->where('access_control_name', self::PROVIDERS_LIST);
             })
@@ -266,12 +321,43 @@ class AccessControlService
 
     private function gatewayNodeDescription(Gateways $gateway): string
     {
-        return $this->gatewayNodeDescriptionFromUuid((string) $gateway->gateway_uuid);
+        $gatewayUuid = strtolower((string) $gateway->gateway_uuid);
+        $name = $this->normalizeGatewayName($gateway->gateway ?: $gateway->description);
+
+        if (!$name) {
+            return $this->gatewayNodeDescriptionFromUuid($gatewayUuid);
+        }
+
+        return $this->gatewayNodeDescriptionWithName($name, $gatewayUuid);
     }
 
     private function gatewayNodeDescriptionFromUuid(string $gatewayUuid): string
     {
         return 'Managed gateway:' . strtolower($gatewayUuid);
+    }
+
+    private function gatewayNodeDescriptionForList(AccessControl $accessControl, string $gatewayUuid): string
+    {
+        $name = $this->normalizeGatewayName((string) $accessControl->access_control_name);
+
+        if ($name && str_ends_with(strtolower($name), ' provider ips')) {
+            $name = trim(substr($name, 0, -strlen(' Provider IPs')));
+        }
+
+        return $name
+            ? $this->gatewayNodeDescriptionWithName($name, $gatewayUuid)
+            : $this->gatewayNodeDescriptionFromUuid($gatewayUuid);
+    }
+
+    private function gatewayNodeDescriptionWithName(string $name, string $gatewayUuid): string
+    {
+        $prefix = 'Managed gateway: ';
+        $gatewayUuid = strtolower($gatewayUuid);
+        $suffix = ' (' . $gatewayUuid . ')';
+        $maxNameLength = max(1, 255 - strlen($prefix) - strlen($suffix));
+        $name = substr($this->normalizeGatewayName($name) ?: '', 0, $maxNameLength);
+
+        return $prefix . $name . $suffix;
     }
 
     private function gatewayUuidFromListName(string $listName): ?string
@@ -287,26 +373,21 @@ class AccessControlService
 
     private function managedGatewayLists(Gateways $gateway): Collection
     {
-        $description = $this->gatewayNodeDescription($gateway);
+        $gatewayUuid = strtolower((string) $gateway->gateway_uuid);
         $legacyName = 'gateway_' . strtolower((string) $gateway->gateway_uuid);
         $currentName = $this->gatewayListName($gateway);
 
         return AccessControl::query()
-            ->where(function ($query) use ($description, $legacyName, $currentName) {
+            ->where('access_control_name', '!=', self::PROVIDERS_LIST)
+            ->where(function ($query) use ($gatewayUuid, $legacyName, $currentName) {
                 $query->where('access_control_name', $legacyName)
                     ->orWhere('access_control_name', $currentName)
-                    ->orWhereHas('nodes', function ($query) use ($description) {
-                        $query->where('node_description', $description);
+                    ->orWhereHas('nodes', function ($query) use ($gatewayUuid) {
+                        $query->where('node_description', 'like', 'Managed gateway:%')
+                            ->where('node_description', 'like', '%' . $gatewayUuid . '%');
                     });
             })
             ->get();
-    }
-
-    private function deleteOldGatewayLists(Collection $managedLists, string $currentName): void
-    {
-        $this->deleteGatewayLists(
-            $managedLists->reject(fn (AccessControl $accessControl) => $accessControl->access_control_name === $currentName)
-        );
     }
 
     private function deleteGatewayLists(Collection $accessControls): void
@@ -321,18 +402,32 @@ class AccessControlService
     {
         return $accessControl->nodes
             ->pluck('node_description')
-            ->map(function ($description) {
-                if (!is_string($description)) {
-                    return null;
-                }
-
-                return preg_match('/Managed gateway:([0-9a-f-]{36})/i', $description, $matches)
-                    ? strtolower($matches[1])
-                    : null;
-            })
+            ->map(fn ($description) => $this->gatewayUuidFromDescription($description))
             ->filter()
             ->unique()
             ->values();
+    }
+
+    private function gatewayUuidFromDescription(mixed $description): ?string
+    {
+        if (!is_string($description)) {
+            return null;
+        }
+
+        if (!str_starts_with(strtolower(trim($description)), 'managed gateway:')) {
+            return null;
+        }
+
+        return preg_match('/\b([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\b/i', $description, $matches)
+            ? strtolower($matches[1])
+            : null;
+    }
+
+    private function normalizeGatewayName(mixed $name): ?string
+    {
+        $name = trim(preg_replace('/\s+/', ' ', (string) $name));
+
+        return $name !== '' ? $name : null;
     }
 
     private function normalizeDefault(string $default): string

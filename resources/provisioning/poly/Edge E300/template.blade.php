@@ -1,4 +1,4 @@
-{{-- version: 1.0.3 --}}
+{{-- version: 1.0.5 --}}
 
 @switch($flavor)
 
@@ -12,12 +12,12 @@
     @endif
     CONFIG_FILES="phone[PHONE_MAC_ADDRESS].cfg,  [PHONE_MODEL]-[PHONE_MAC_ADDRESS].cfg" 
     MISC_FILES="" 
-    LOG_FILE_DIRECTORY="" 
-    OVERRIDES_DIRECTORY="" 
-    CONTACTS_DIRECTORY="" 
+    LOG_FILE_DIRECTORY="logs"
+    OVERRIDES_DIRECTORY="phoneconfigs"
+    CONTACTS_DIRECTORY="directories"
     LICENSE_DIRECTORY="" 
     USER_PROFILES_DIRECTORY="" 
-    CALL_LISTS_DIRECTORY="">
+    CALL_LISTS_DIRECTORY="calls">
 
 
   <APPLICATION_SPIP300 APP_FILE_PATH_SPIP300="sip_213.ld" CONFIG_FILES_SPIP300="phone1_213.cfg, sip_213.cfg" />
@@ -58,22 +58,6 @@
 
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <PHONE_CONFIG>
-{{-- Build reg.x.lineKeys map --}}
-@php
-  $lineKeyCounts = [];
-  foreach ($keys as $k) {
-      if (($k['type'] ?? '') === 'line') {
-          $ln  = (int)($k['line'] ?? 0);
-          $cnt = is_numeric($k['value'] ?? null) ? (int)$k['value'] : null;
-          if ($ln > 0 && $cnt !== null) {
-              $lineKeyCounts[$ln] = $cnt;
-          }
-      }
-  }
-@endphp
-
-@php $slot = 1; @endphp
-
 <REGISTRATION
   @foreach ($lines as $line)
     @php  $n = (int)($line['line_number'] ?? 0); @endphp
@@ -81,7 +65,7 @@
 
     reg.{{ $n }}.server.1.register="1"
     
-    reg.{{ $n }}.lineKeys="{{ $lineKeyCounts[$n] ?? 1 }}"
+    reg.{{ $n }}.lineKeys="{{ $polycom_line_key_counts[$n] ?? 1 }}"
 
     reg.{{ $n }}.auth.password="{{ $line['password'] ?? '' }}"
     reg.{{ $n }}.auth.userId="{{ $line['auth_id'] ?? '' }}"
@@ -120,6 +104,11 @@
     @else
         reg.{{ $n }}.callsPerLineKey="{{ $settings['polycom_calls_per_line_key'] ?? '4'  }}"
     @endif
+
+    reg.{{ $n }}.serverFeatureControl.cf="{{ $settings['polycom_feature_key_sync'] ?? '0' }}"
+    reg.{{ $n }}.serverFeatureControl.dnd="{{ $settings['polycom_feature_key_sync'] ?? '0' }}"
+    reg.{{ $n }}.server.1.subscribe.expires="3600"
+    reg.{{ $n }}.server.2.subscribe.expires="3600"
     
     msg.mwi.{{ $n }}.callBackMode="contact"
     msg.mwi.{{ $n }}.callBack="{{ $settings['voicemail_number'] ?? '' }}"
@@ -127,51 +116,15 @@
 />
 
 <lineKey
-    @if (!empty($keys))
+    @if (!empty($polycom_line_key_slots))
         lineKey.reassignment.enabled="1"
     @else 
         lineKey.reassignment.enabled="0"
     @endif
 
-  @foreach ($keys as $k)
-    
-    @if ($k['type'] === 'unassigned')
-        @php $slot += max(1,(int)($k['value'] ?? 0)); @endphp
-        @continue
-    @endif
-    
-    @if ($k['type'] === 'line')
-        @for ($i = 1; $i <= ($lineKeyCounts[$k['line']] ?? 0); $i++)
-            linekey.{{ $slot }}.category="Line"
-            linekey.{{ $slot }}.index="{{ $k['line'] ?? 0 }}"
-            @php $slot++; @endphp
-        @endfor
-    @endif
-  
-    @if ($k['type'] === 'normal')
-        lineKey.{{ $slot }}.category="BLF"
-        lineKey.{{ $slot }}.index="0"
-        @php $slot++; @endphp
-    @endif
-
-    @if ($k['type'] === 'automata')
-      lineKey.{{ $slot }}.category="BLF"
-      lineKey.{{ $slot }}.index="0"
-      @php $slot++; @endphp
-    @endif
-      
-    @if ($k['type'] === 'speeddial')
-      lineKey.{{ $slot }}.category="SpeedDial"
-      lineKey.{{ $slot }}.index="{{ $k['line_number'] ?? 0 }}"
-      @php $slot++; @endphp
-    @endif
-      
-    @if ($k['type'] === 'presence')
-      lineKey.{{ $slot }}.category="BLF"
-      lineKey.{{ $slot }}.index="0"
-      @php $slot++; @endphp
-    @endif
-    
+  @foreach ($polycom_line_key_slots as $keySlot)
+    {{ $keySlot['attribute'] }}.{{ $keySlot['slot'] }}.category="{{ $keySlot['category'] }}"
+    {{ $keySlot['attribute'] }}.{{ $keySlot['slot'] }}.index="{{ $keySlot['index'] }}"
   @endforeach
 />
 
@@ -188,27 +141,16 @@
 		attendant.behaviors.display.remoteCallerID.normal="0"
     @endif
     
-    @if (isset($settings['polycom_spontaneouscallappearances_normal']))
-		attendant.behaviors.display.spontaneousCallAppearances.normal="{{ $settings['polycom_spontaneouscallappearances_normal'] }}"
-	@else
-		attendant.behaviors.display.spontaneousCallAppearances.normal="0"
-    @endif
-    
-    @if (isset($settings['polycom_spontaneouscallappearances_automata']))
-		attendant.behaviors.display.spontaneousCallAppearances.automata="{{ $settings['polycom_spontaneouscallappearances_automata'] }}"
-    @endif
+	attendant.behaviors.display.spontaneousCallAppearances.normal="{{ $settings['polycom_spontaneouscallappearances_normal'] ?? '0'}}"
+    attendant.behaviors.display.spontaneousCallAppearances.automata="{{ $settings['polycom_spontaneouscallappearances_automata'] ?? '0'}}"
     
 		
-  @php $r = 1; @endphp
-  @foreach ($keys as $k)
-    @continue(!in_array(($k['type'] ?? ''), ['normal','automata']) || trim($k['value'] ?? '') === '')
-
-    attendant.resourceList.{{ $r }}.address="{{ $k['value'] ?? '' }}"
-    attendant.resourceList.{{ $r }}.label="{{ $k['label'] ?? $val }}"
-    @if (($k['type'] ?? '') === 'automata')
-      attendant.resourceList.{{ $r }}.type="automata"
+  @foreach ($polycom_attendant_resources as $resource)
+    attendant.resourceList.{{ $resource['index'] }}.address="{{ $resource['address'] }}"
+    attendant.resourceList.{{ $resource['index'] }}.label="{{ $resource['label'] }}"
+    @if (!empty($resource['type']))
+      attendant.resourceList.{{ $resource['index'] }}.type="{{ $resource['type'] }}"
     @endif
-    @php $r++; @endphp
   @endforeach
 />
 
@@ -249,13 +191,19 @@
     />
     
     <general 
-        up.analogHeadsetOption="{{ $settings['polycom_analog_headset_option'] ?? 2 }}"
-        up.oneTouchVoiceMail="{{ $settings['polycom_one_touch_voicemail'] ?? 1 }}"
-        up.OffHookLineView.enabled="{{ $settings['polycom_offhook_line_view_enabled'] ?? 1 }}"
+        up.analogHeadsetOption="{{ $settings['polycom_analog_headset_option'] ?? '2' }}"
+        up.oneTouchVoiceMail="{{ $settings['polycom_one_touch_voicemail'] ?? '1' }}"
+        up.OffHookLineView.enabled="{{ $settings['polycom_offhook_line_view_enabled'] ?? '1' }}"
         up.warningLevel="2"
-        up.headsetMode="{{ $settings['polycom_headset_mode'] ?? 1 }}"
+        up.headsetMode="{{ $settings['polycom_headset_mode'] ?? '1' }}"
         se.stutterOnVoiceMail="0"
         sec.srtp.simplifiedBestEffort="0"
+        powerSaving.enable="{{ $settings['polycom_power_saving_enable'] ?? '0' }}"
+        prov.polling.enabled="{{ $settings['polycom_provision_polling_enabled'] ?? '0' }}"
+		prov.polling.time="{{ $settings['polycom_provision_polling_time'] ?? '03:00' }}"
+		voice.aec.hf.enable="1"
+		voice.aec.hs.enable="1"
+		powerSaving.idleTimeout.officeHours="480"
     />
     
     <sec
@@ -303,6 +251,9 @@
         voIpProt.SIP.specialEvent.checkSync.alwaysReboot="1"
 		voIpProt.SIP.requestValidation.1.method="{{ $settings['polycom_request_validation_method'] ?? 'Source' }}"
 		voIpProt.SIP.requestValidation.1.request="{{ $settings['polycom_request_validation_request'] ?? 'INVITE' }}"
+		@if (array_key_exists('polycom_diversion_header', $settings))
+            voIpProt.SIP.header.diversion.enable = "{{ $settings['polycom_diversion_header'] }}"
+        @endif
 		voIpProt.server.1.failOver.reRegisterOn="1"
 		voIpProt.server.1.failOver.failRegistrationOn="1"
 		voIpProt.server.1.failOver.onlySignalWithRegistered="1" 
@@ -316,7 +267,8 @@
     />
     
     <call
-      call.callWaiting.enable="{{ $settings['polycom_call_waiting'] ?? 1 }}"
+      call.callWaiting.enable="{{ $settings['polycom_call_waiting'] ?? 'beep' }}"
+      call.defaultTransferType="{{ $settings['polycom_default_transfer_method'] ?? 'Consultative' }}"
       {{-- call.directedCallPickupMethod="legacy" --}}
       {{-- call.directedCallPickupString="*04" --}}
      />
@@ -442,7 +394,7 @@
     		tcpIpApp.sntp.address="{{ $settings['ntp_server_primary'] ?? 'null' }}"
     		tcpIpApp.sntp.gmtOffset.overrideDHCP="1"
     		tcpIpApp.sntp.gmtOffset="{{ $settings['polycom_gmt_offset'] ?? '0' }}"
-            tcpIpApp.sntp.daylightSavings.enable="{{ $settings['daylight_savings_enabled'] ? '1' : '0' }}"  
+            tcpIpApp.sntp.daylightSavings.enable="{{ $settings['daylight_savings_enabled'] ? '1' : '0' }}"
     		tcpIpApp.sntp.daylightSavings.fixedDayEnable="0"
     		tcpIpApp.sntp.daylightSavings.start.month="{{ $settings['daylight_savings_start_month'] }}"
     		tcpIpApp.sntp.daylightSavings.start.date="{{ $settings['daylight_savings_start_day'] }}"
@@ -485,15 +437,19 @@
             tcpIpApp.dns.server="{{ $settings['polycom_dns_alt_server'] }}"
         @endif
         @if (isset($settings['polycom_boot_server_option']))
+            device.dhcp.bootSrvUseOpt.set="1"
             device.dhcp.bootSrvUseOpt="{{ $settings['polycom_boot_server_option'] }}"
         @endif
-        @if (isset($settings['polycom_lldp_enabled']))
+        @if (array_key_exists('polycom_lldp_enabled', $settings))
+            device.net.lldpEnabled.set="1"
             device.net.lldpEnabled="{{ $settings['polycom_lldp_enabled'] }}"
         @endif
         @if (isset($settings['polycom_cdp_enabled']))
+            device.net.cdpEnabled.set="1"
             device.net.cdpEnabled="{{ $settings['polycom_cdp_enabled'] }}"
         @endif
         @if (isset($settings['polycom_dhcp_vlan_discovery']))
+            device.dhcp.dhcpVlanDiscUseOpt.set="1"
             device.dhcp.dhcpVlanDiscUseOpt="{{ $settings['polycom_dhcp_vlan_discovery'] }}"
         @endif
     />
@@ -507,6 +463,16 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <polycomConfig>
     <bg bg.color.bm.1.name="{{ $settings['poly_e300_wallpaper'] ?? ''}}" bg.color.selection="2,1" bg.logo="{{ $settings['poly_e300_logo'] ?? ''}}" />
+    <certificate
+        @if (array_key_exists('polycom_custom_ca_cert1', $settings))
+            device.sec.TLS.customCaCert1.set="1"
+            device.sec.TLS.customCaCert1="{{ $settings['polycom_custom_ca_cert1'] }}"
+        @endif
+        @if (array_key_exists('polycom_custom_ca_cert2', $settings))
+            device.sec.TLS.customCaCert2.set="1"
+            device.sec.TLS.customCaCert2="{{ $settings['polycom_custom_ca_cert2'] }}"
+        @endif
+    />
 </polycomConfig>
 @break
 

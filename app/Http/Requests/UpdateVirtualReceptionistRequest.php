@@ -113,6 +113,7 @@ class UpdateVirtualReceptionistRequest extends FormRequest
             'ivr_menu_extension' => 'extension',
             'ivr_menu_greet_long' => 'audio prompt',
             'caller_id_prefix' => 'caller id name prefix',
+            'prompt_timeout' => 'input timeout in seconds',
         ];
     }
 }

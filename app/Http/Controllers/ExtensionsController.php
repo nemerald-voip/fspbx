@@ -100,6 +100,10 @@ class ExtensionsController extends Controller
             $this->viewName,
             [
                 'permissions' => $permissions,
+                'pagination' => [
+                    'per_page' => fspbx_pagination_per_page(),
+                    'per_page_options' => fspbx_pagination_options(),
+                ],
 
                 'routes' => [
                     'current_page' => route('extensions.index'),
@@ -122,7 +126,7 @@ class ExtensionsController extends Controller
 
     public function getData()
     {
-        $perPage = 50;
+        $perPage = fspbx_pagination_per_page();
         $currentDomain = session('domain_uuid');
 
         if (!userCheckPermission('extension_view')) {
@@ -1111,12 +1115,7 @@ public function store(StoreExtensionRequest $request)
             DB::beginTransaction();
             $currentDomain = session('domain_uuid');
 
-            $extension = Extensions::with([
-                'deviceLines' => function ($q) use ($currentDomain) {
-                    $q->where('domain_uuid', $currentDomain)
-                        ->select('device_line_uuid', 'device_uuid', 'auth_id', 'domain_uuid', 'password');
-                }
-            ])->whereKey($extension_uuid)
+            $extension = Extensions::whereKey($extension_uuid)
                 ->where('domain_uuid', $currentDomain)
                 ->firstOrFail();
 
@@ -1126,12 +1125,6 @@ public function store(StoreExtensionRequest $request)
             // Update the extension password
             $extension->password = $newPassword;
             $extension->save();
-
-            // Update all related device line passwords for this domain
-            foreach ($extension->deviceLines as $deviceLine) {
-                $deviceLine->password = $newPassword; // Use correct field name!
-                $deviceLine->save();
-            }
 
             DB::commit();
 
@@ -1169,6 +1162,10 @@ public function store(StoreExtensionRequest $request)
                 ->with([
                     'deviceLines' => function ($q) use ($currentDomain) {
                         $q->where('domain_uuid', $currentDomain)
+                            ->where(function ($query) {
+                                $query->whereNull('external_line')
+                                    ->orWhere('external_line', '!=', 't');
+                            })
                             ->select('device_line_uuid', 'device_uuid', 'auth_id', 'domain_uuid')
                             ->with(['device' => function ($query) {
                                 $query->select('device_uuid', 'device_profile_uuid', 'device_key_template_uuid', 'device_address', 'device_template', 'device_template_uuid')
@@ -1186,8 +1183,8 @@ public function store(StoreExtensionRequest $request)
                 ])
                 ->select('extension_uuid', 'extension')
                 ->where('extension_uuid', $extension_uuid)
-                ->first();
-
+                ->where('domain_uuid', $currentDomain)
+                ->firstOrFail();
 
             $devices = collect($extension->deviceLines)
                 ->pluck('device')
@@ -1267,6 +1264,10 @@ public function store(StoreExtensionRequest $request)
             if ($selfService) {
                 $data['extension'] = $extension->extension;
                 $data['effective_caller_id_number'] = $extension->extension;
+            }
+
+            if (!userCheckPermission('extension_user_context')) {
+                unset($data['user_context']);
             }
 
             // Build Forwarding destinations
@@ -2222,8 +2223,17 @@ public function store(StoreExtensionRequest $request)
         try {
             DB::beginTransaction();
 
-            $extension = Extensions::find(request('extension_uuid'));
-            $extension->update(request()->all());
+            $data = request()->validate([
+                'extension_uuid' => ['required', 'uuid'],
+                'password' => ['required', 'string'],
+            ]);
+
+            $extension = Extensions::where('extension_uuid', $data['extension_uuid'])
+                ->where('domain_uuid', session('domain_uuid'))
+                ->firstOrFail();
+
+            $extension->password = $data['password'];
+            $extension->save();
 
             DB::commit();
 
@@ -2234,7 +2244,7 @@ public function store(StoreExtensionRequest $request)
             ], 200);
         } catch (\Throwable $e) {
             DB::rollBack();
-            logger('UserController@updatePassword error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+            logger('ExtensionsController@updatePassword error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
             return response()->json([
                 'success' => false,
                 'errors' => ['error' => [$e->getMessage()]],
@@ -2298,6 +2308,7 @@ public function store(StoreExtensionRequest $request)
         $permissions['extension_limit'] = userCheckPermission('extension_limit');
         $permissions['extension_max_registrations'] = userCheckPermission('extension_max_registrations');
         $permissions['extension_toll'] = userCheckPermission('extension_toll');
+        $permissions['extension_user_context'] = userCheckPermission('extension_user_context');
 
         $permissions['manage_external_caller_id_number'] = userCheckPermission('outbound_caller_id_number');
         $permissions['manage_external_caller_id_name'] = userCheckPermission('outbound_caller_id_name');

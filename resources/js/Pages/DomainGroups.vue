@@ -22,7 +22,7 @@
             </template>
 
             <template #action>
-                <button v-if="page.props.auth.can.group_create" type="button" @click.prevent="handleCreateButtonClick()"
+                <button v-if="permissions.create" type="button" @click.prevent="handleCreateButtonClick()"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     Create
                 </button>
@@ -74,8 +74,8 @@
                             <input v-if="row.domain_group_uuid" v-model="selectedItems" type="checkbox" name="action_box[]"
                                 :value="row.domain_group_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                             <div class="ml-9"
-                                :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.group_update, }"
-                                @click="page.props.auth.can.group_update && handleEditButtonClick(row.domain_group_uuid)">
+                                :class="{ 'cursor-pointer hover:text-gray-900': permissions.update, }"
+                                @click="permissions.update && handleEditButtonClick(row.domain_group_uuid)">
                                 <span class="flex items-center">
                                     {{ row.group_name }}
                                 </span>
@@ -90,7 +90,7 @@
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap justify-end">
-                                <ejs-tooltip v-if="page.props.auth.can.group_update" :content="'Edit'" position='TopCenter'
+                                <ejs-tooltip v-if="permissions.update" :content="'Edit'" position='TopCenter'
                                     target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
                                         <PencilSquareIcon @click="handleEditButtonClick(row.domain_group_uuid)"
@@ -99,7 +99,7 @@
                                     </div>
                                 </ejs-tooltip>
 
-                                <ejs-tooltip v-if="page.props.auth.can.group_destroy" :content="'Delete'"
+                                <ejs-tooltip v-if="permissions.destroy" :content="'Delete'"
                                     position='TopCenter' target="#delete_tooltip_target">
                                     <div id="delete_tooltip_target">
                                         <TrashIcon @click="handleSingleItemDeleteRequest(row.domain_group_uuid)"
@@ -154,7 +154,6 @@
 
 <script setup>
 import { computed, ref } from "vue";
-import { usePage } from '@inertiajs/vue3'
 import axios from 'axios';
 import { router } from "@inertiajs/vue3";
 import DataTable from "./components/general/DataTable.vue";
@@ -174,7 +173,6 @@ import Notification from "./components/notifications/Notification.vue";
 
 
 
-const page = usePage()
 const loading = ref(false)
 const isModalLoading = ref(false)
 const selectAll = ref(false);
@@ -194,8 +192,10 @@ const props = defineProps({
     data: Object,
     routes: Object,
     itemData: Object,
+    permissions: Object,
 });
 
+const permissions = props.permissions;
 
 const filterData = ref({
     search: null,
@@ -214,7 +214,7 @@ const bulkActions = computed(() => {
     ];
 
     // Conditionally add the delete action if permission is granted
-    if (page.props.auth.can.device_destroy) {
+    if (permissions.destroy) {
         actions.push({
             id: 'bulk_delete',
             label: 'Delete',

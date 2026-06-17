@@ -111,7 +111,7 @@
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
                         <div v-if="row.speed_dial_user.length" class="flex flex-wrap gap-1">
-                            <Badge v-for="user in row.speed_dial_user" :key="user.user_uuid" :text="user.user.username"
+                            <Badge v-for="user in row.speed_dial_user" :key="user.user_uuid" :text="user.username"
                                 backgroundColor="bg-gray-100" textColor="text-gray-700" ringColor="ring-gray-400/20"
                                 class="px-2 py-1 text-xs font-semibold" />
                         </div>

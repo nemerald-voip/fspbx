@@ -48,7 +48,6 @@
                                     group_name: options.item.group_name ?? null,
                                     domain_uuid: String(options.item.domain_uuid ?? ''),
                                     group_level: options.item.group_level ?? null,
-                                    group_protected: options.item.group_protected ?? null,
                                     group_description: options.item.group_description ?? null
                                 }">
 
@@ -59,8 +58,6 @@
                                     placeholder="Select Account Name" :strict="false" />
                                 <SelectElement name="group_level" :items="options.group_levels" :search="true" :native="false" label="Level" input-type="search" autocomplete="off"
                                     placeholder="Select Level" :floating="false" />
-                                <ToggleElement name="group_protected" text="Protected" true-value="true"
-                                    false-value="false" />
                                 <TextElement name="group_description" label="Description"  :floating="false"/>
 
                                 <GroupElement name="container_3" />

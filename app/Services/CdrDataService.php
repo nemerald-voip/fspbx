@@ -388,6 +388,8 @@ class CdrDataService
                 'sip_call_id',
                 'extension_uuid',
                 'call_center_queue_uuid',
+                'record_path',
+                'record_name',
                 'direction',
                 'caller_id_name',
                 'caller_id_number',
@@ -405,7 +407,8 @@ class CdrDataService
                 'cc_cancel_reason',
                 'cc_cause',
                 'status',
-            ]);
+            ])
+            ->with('archive_recording:xml_cdr_uuid,object_key');
     }
 
     public function applyApiIndexFilters(QueryBuilder $query, array $filters): QueryBuilder
@@ -465,6 +468,7 @@ class CdrDataService
                 sip_call_id: $cdr->sip_call_id,
                 extension_uuid: $cdr->extension_uuid,
                 call_center_queue_uuid: $cdr->call_center_queue_uuid,
+                recording_uuid: $this->apiRecordingUuid($cdr),
 
                 direction: $cdr->direction,
 
@@ -569,6 +573,8 @@ class CdrDataService
                 'sip_call_id',
                 'extension_uuid',
                 'call_center_queue_uuid',
+                'record_path',
+                'record_name',
                 'direction',
                 'caller_id_name',
                 'caller_id_number',
@@ -588,6 +594,7 @@ class CdrDataService
                 'sip_hangup_disposition',
                 'status',
             ])
+            ->with('archive_recording:xml_cdr_uuid,object_key')
             ->first();
 
         if (! $cdr) {
@@ -602,6 +609,7 @@ class CdrDataService
             sip_call_id: $cdr->sip_call_id,
             extension_uuid: $cdr->extension_uuid,
             call_center_queue_uuid: $cdr->call_center_queue_uuid,
+            recording_uuid: $this->apiRecordingUuid($cdr),
 
             direction: $cdr->direction,
 
@@ -629,6 +637,28 @@ class CdrDataService
 
             call_flow: $this->buildApiCallFlowData($cdr),
         );
+    }
+
+    public function apiRecordingUuid(CDR $cdr): ?string
+    {
+        return $this->cdrHasRecording($cdr) ? (string) $cdr->xml_cdr_uuid : null;
+    }
+
+    public function cdrHasRecording(CDR $cdr): bool
+    {
+        $recordPath = trim((string) $cdr->record_path);
+        $recordName = trim((string) $cdr->record_name);
+
+        if ($recordPath === 'S3') {
+            return $recordName !== ''
+                || ($cdr->archive_recording && !empty($cdr->archive_recording->object_key));
+        }
+
+        if ($recordPath === '' || $recordName === '') {
+            return false;
+        }
+
+        return is_file(rtrim($recordPath, '/') . '/' . $recordName);
     }
 
     public function buildApiCallFlowData(CDR $cdr): array

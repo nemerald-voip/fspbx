@@ -50,6 +50,7 @@
                                             <FormTabs view="vertical">
                                                 <FormTab name="settings" label="Settings" :elements="[
                                                     'settings_header',
+                                                    'uuid_clean',
                                                     'name',
                                                     'enabled',
                                                     'description',
@@ -81,6 +82,32 @@
                                             class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
                                             <FormElements>
                                                 <StaticElement name="settings_header" tag="h4" content="Template Settings" />
+
+                                                <StaticElement name="uuid_clean"
+                                                    :conditions="[() => props.mode === 'update' && props.options?.permissions?.is_superadmin]">
+
+                                                    <div class="mb-1">
+                                                        <div class="text-sm font-medium text-gray-600 mb-1">
+                                                            Unique ID
+                                                        </div>
+
+                                                        <div class="flex items-center group">
+                                                            <span class="text-sm text-gray-900 select-all font-normal">
+                                                                {{ props.options.item.device_key_template_uuid }}
+                                                            </span>
+
+                                                            <button type="button"
+                                                                @click="handleCopyToClipboard(props.options.item.device_key_template_uuid)"
+                                                                class="ml-2 p-1 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
+                                                                title="Copy to clipboard">
+                                                                <!-- Small Copy Icon -->
+                                                                <ClipboardDocumentIcon
+                                                                    class="h-4 w-4 text-gray-500 hover:text-gray-900  cursor-pointer" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                </StaticElement>
 
                                                 <TextElement name="name" label="Name" placeholder="Template name"
                                                     :floating="false" :columns="{ sm: { container: 6 } }" />
@@ -142,6 +169,7 @@
 import { computed, ref } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from "@headlessui/vue";
 import { XMarkIcon } from "@heroicons/vue/24/solid";
+import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
 import DeviceKeyTemplateKeyList from "./DeviceKeyTemplateKeyList.vue";
 
 const props = defineProps({
@@ -159,6 +187,14 @@ const emit = defineEmits(["close", "error", "success", "refresh-data"]);
 const form$ = ref(null);
 const keyValueOptionsByIndex = {};
 
+const handleCopyToClipboard = (text) => {
+    navigator.clipboard.writeText(text).then(() => {
+        emit("success", "success", { message: ["Copied to clipboard."] });
+    }).catch(() => {
+        emit("error", { response: { data: { errors: { request: ["Failed to copy to clipboard."] } } } });
+    });
+};
+
 const keyTypes = [
     { value: "", name: "N/A" },
     { value: "line", name: "Line" },
@@ -166,7 +202,10 @@ const keyTypes = [
     { value: "speed_dial", name: "Speed Dial" },
     { value: "check_voicemail", name: "Check Voicemail" },
     { value: "park", name: "Park & Retrieve" },
+    { value: "dtmf", name: "DTMF" },
 ];
+
+const keyTypesWithSelect = ["line", "check_voicemail", "blf", "speed_dial", "park"];
 
 const defaultValues = computed(() => ({
     name: props.options?.item?.name ?? null,
@@ -184,11 +223,19 @@ const filterKeysByArea = (keys = [], area = "main") => {
 };
 
 const normalizeKeysForForm = (keys = []) => {
-    const keyTypesWithSelect = ["line", "check_voicemail", "blf", "speed_dial", "park"];
-
     return keys.map((key) => {
         const keyType = key?.key_type ?? "";
         const keyValue = key?.key_value ?? null;
+        let label = null;
+
+        if (keyType === "blf" || keyType === "speed_dial") {
+            const match = props.options?.extensions?.find((extension) =>
+                String(extension.value ?? extension.extension) === String(keyValue)
+            );
+
+            label = match ? nameOnlyFromOption(match) : keyValue;
+        }
+
         const row = {
             ...key,
             key_uuid: key?.device_key_template_key_uuid,
@@ -196,7 +243,7 @@ const normalizeKeysForForm = (keys = []) => {
             key_value: keyValue,
             key_value_select: null,
             key_value_text: null,
-            _generated_label: null,
+            _generated_label: label ?? null,
         };
 
         if (!keyType || keyValue == null || keyValue === "") return row;
@@ -309,7 +356,7 @@ const submitForm = async (FormData, form) => {
         ...(data.keys ?? []).map((key) => ({ ...key, key_area: "main" })),
         ...(data.multi_purpose_keys ?? []).map((key) => ({ ...key, key_area: "multi_purpose" })),
         ...(data.expansion_keys ?? []).map((key) => ({ ...key, key_area: "expansion" })),
-    ];
+    ].map(normalizeKeyForSubmit);
 
     delete data.multi_purpose_keys;
     delete data.expansion_keys;
@@ -319,6 +366,18 @@ const submitForm = async (FormData, form) => {
     }
 
     return await form.$vueform.services.axios.put(props.options.routes.update_route, data);
+};
+
+const normalizeKeyForSubmit = (key) => {
+    const keyType = key?.key_type ?? "";
+    const usesSelect = keyTypesWithSelect.includes(keyType);
+
+    return {
+        ...key,
+        key_value: usesSelect
+            ? (key?.key_value_select ?? key?.key_value ?? null)
+            : (key?.key_value_text ?? key?.key_value ?? null),
+    };
 };
 
 function clearErrorsRecursive(el$) {

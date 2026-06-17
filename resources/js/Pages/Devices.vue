@@ -34,6 +34,12 @@
                     Cloud
                 </button>
 
+                <button v-if="permissions.device_import" type="button" @click.prevent="handleImportButtonClick()"
+                    class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    <DocumentArrowUpIcon class="h-5 w-5" aria-hidden="true" />
+                    Import CSV
+                </button>
+
                 <a v-if="permissions.device_key_template_view" type="button" :href="routes.key_templates"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Key Templates
@@ -258,6 +264,15 @@
                                     </div>
                                 </ejs-tooltip>
 
+                                <ejs-tooltip v-if="permissions.device_provisioning_preview"
+                                    :content="'Preview provisioning'" position='TopCenter'
+                                    :target="'#provisioning_preview_tooltip_target_' + row.device_uuid">
+                                    <div :id="'provisioning_preview_tooltip_target_' + row.device_uuid">
+                                        <MagnifyingGlassIcon @click="handleProvisioningPreview(row.device_uuid)"
+                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                    </div>
+                                </ejs-tooltip>
+
                                 <ejs-tooltip :content="'Restart device'" position='TopCenter'
                                     target="#restart_tooltip_target">
                                     <div id="restart_tooltip_target">
@@ -300,7 +315,9 @@
             <template #footer>
                 <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
                     :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
-                    @pagination-change-page="renderRequestedPage" />
+                    :page-size="perPage" :page-size-options="props.pagination?.per_page_options ?? []"
+                    :show-page-size-selector="true"
+                    @pagination-change-page="renderRequestedPage" @page-size-change="handlePageSizeChange" />
             </template>
         </DataTable>
         <div class="px-4 sm:px-6 lg:px-8"></div>
@@ -339,6 +356,106 @@
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
+
+    <UploadModal :show="showUploadModal" @close="showUploadModal = false" :header="'Upload File'" @upload="uploadFile"
+        @download-template="downloadTemplateFile" :is-submitting="isUploadingFile" :errors="uploadErrors" />
+
+    <ImportDevicesModal v-if="showImportPreviewModal" :show="showImportPreviewModal" :options="itemOptions"
+        :import-data="importPreviewData" :loading="isCommittingImport" @close="showImportPreviewModal = false"
+        @success="handleImportSuccess" @error="handleErrorResponse" />
+
+    <AddEditItemModal :show="showProvisioningPreviewModal" :header="provisioningPreviewHeader"
+        :loading="isProvisioningPreviewLoading" customClass="sm:max-w-6xl h-[85vh] max-h-[85vh] flex flex-col"
+        contentClass="flex min-h-0 flex-1 flex-col" bodyClass="min-h-0 flex-1 overflow-hidden"
+        @close="closeProvisioningPreview">
+        <template #modal-body>
+            <div class="flex h-full min-h-0 flex-col">
+                <div v-if="provisioningPreviewError" class="rounded-md bg-red-50 p-4 text-sm text-red-700">
+                    {{ provisioningPreviewError }}
+                </div>
+
+                <div v-else class="flex min-h-0 flex-1 flex-col gap-3">
+                    <div class="grid gap-2 text-sm text-gray-600 sm:grid-cols-3">
+                        <div>
+                            <span class="font-semibold text-gray-900">Device:</span>
+                            {{ provisioningPreviewData?.device?.device_address_formatted || provisioningPreviewData?.device?.device_address || '—' }}
+                        </div>
+                        <div>
+                            <span class="font-semibold text-gray-900">Vendor:</span>
+                            {{ provisioningPreviewData?.device?.device_vendor || '—' }}
+                        </div>
+                        <div>
+                            <span class="font-semibold text-gray-900">Template:</span>
+                            {{ provisioningPreviewTemplateLabel }}
+                        </div>
+                    </div>
+
+                    <div v-if="provisioningPreviewFiles.length === 0"
+                        class="flex min-h-0 flex-1 flex-col items-center justify-center rounded-md border border-dashed border-gray-300 bg-gray-50 p-8 text-center">
+                        <MagnifyingGlassIcon class="h-10 w-10 text-gray-300" aria-hidden="true" />
+                        <p class="mt-2 text-sm font-medium text-gray-900">No provisioning files generated</p>
+                        <p class="mt-1 text-sm text-gray-500">This device's template did not produce any files to preview.</p>
+                    </div>
+
+                    <template v-else>
+                        <div role="tablist" aria-label="Provisioning files"
+                            class="flex flex-nowrap items-center gap-2 overflow-x-auto border-b border-gray-200 pb-2">
+                            <button v-for="(file, index) in provisioningPreviewFiles" :key="file.flavor" type="button"
+                                role="tab" :aria-selected="activeProvisioningPreviewFlavor === file.flavor"
+                                :tabindex="activeProvisioningPreviewFlavor === file.flavor ? 0 : -1"
+                                @click="activeProvisioningPreviewFlavor = file.flavor"
+                                @keydown.left.prevent="focusProvisioningPreviewTab(index - 1, $event)"
+                                @keydown.right.prevent="focusProvisioningPreviewTab(index + 1, $event)" :class="[
+                                    activeProvisioningPreviewFlavor === file.flavor
+                                        ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
+                                        : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50',
+                                    'shrink-0 whitespace-nowrap rounded-md border px-3 py-1.5 text-sm font-medium'
+                                ]">
+                                {{ file.filename }}
+                            </button>
+                        </div>
+
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="min-w-0 text-sm text-gray-600">
+                                <span class="font-semibold text-gray-900">{{ activeProvisioningPreviewFile?.flavor || '—' }}</span>
+                                <span v-if="activeProvisioningPreviewFile">
+                                    · {{ activeProvisioningPreviewFile.mime }} · {{ formatBytes(activeProvisioningPreviewFile.bytes) }}
+                                </span>
+                            </div>
+                            <div class="flex shrink-0 items-center gap-2">
+                                <button type="button" @click="provisioningPreviewWrap = !provisioningPreviewWrap"
+                                    :aria-pressed="provisioningPreviewWrap" :class="[
+                                        provisioningPreviewWrap
+                                            ? 'bg-indigo-50 text-indigo-700 ring-indigo-300'
+                                            : 'bg-white text-gray-900 ring-gray-300 hover:bg-gray-50',
+                                        'rounded-md px-2.5 py-1.5 text-sm font-semibold shadow-sm ring-1 ring-inset'
+                                    ]">
+                                    Wrap
+                                </button>
+                                <button type="button" @click="copyProvisioningPreview"
+                                    class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                                    Copy
+                                </button>
+                                <button type="button" @click="downloadProvisioningPreview"
+                                    class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                                    Download
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="min-h-0 flex-1 overflow-hidden rounded-md border border-gray-200">
+                            <AceEditor
+                                :key="`${activeProvisioningPreviewFile?.flavor}-${provisioningPreviewWrap}`"
+                                :model-value="activeProvisioningPreviewFile?.content || ''"
+                                :lang="activeProvisioningPreviewLang" theme="one_dark"
+                                :options="{ readOnly: true, wrap: provisioningPreviewWrap, fontSize: 13, tabSize: 2, useWorker: false, highlightActiveLine: false, showGutter: true }"
+                                height="100%" />
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </template>
+    </AddEditItemModal>
 
     <AddEditItemModal :show="showDuplicateModal" :header="'Duplicate Device'" :loading="isModalLoading"
         @close="showDuplicateModal = false">
@@ -389,7 +506,7 @@ import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import Loading from "./components/general/Loading.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
 import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon, CloudIcon, ChevronUpIcon, ChevronDownIcon } from "@heroicons/vue/24/solid";
-import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
+import { ClipboardDocumentIcon, DocumentArrowUpIcon } from "@heroicons/vue/24/outline";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import BulkUpdateDeviceForm from "./components/forms/BulkUpdateDeviceForm.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
@@ -400,6 +517,9 @@ import Notification from "./components/notifications/Notification.vue";
 import CloudProvisioningSettings from "./components/forms/CloudProvisioningSettings.vue";
 import AdvancedActionButton from "./components/general/AdvancedActionButton.vue";
 import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
+import AceEditor from "./components/general/AceEditor.vue";
+import UploadModal from "./components/modal/UploadModal.vue";
+import ImportDevicesModal from "./components/modal/ImportDevicesModal.vue";
 
 const page = usePage()
 const props = defineProps({
@@ -408,6 +528,7 @@ const props = defineProps({
         type: Object,
         default: () => ({}),
     },
+    pagination: Object,
 })
 const routes = props.routes
 const permissions = props.permissions
@@ -436,6 +557,18 @@ const notificationShow = ref(null);
 const showDuplicateModal = ref(false);
 const itemToDuplicate = ref(null);
 const newMacAddress = ref('');
+const showProvisioningPreviewModal = ref(false);
+const showUploadModal = ref(false);
+const isUploadingFile = ref(false);
+const uploadErrors = ref(null);
+const showImportPreviewModal = ref(false);
+const importPreviewData = ref([]);
+const isCommittingImport = ref(false);
+const isProvisioningPreviewLoading = ref(false);
+const provisioningPreviewData = ref(null);
+const provisioningPreviewError = ref(null);
+const activeProvisioningPreviewFlavor = ref(null);
+const provisioningPreviewWrap = ref(false);
 let tooltipCopyContent = ref('Copy to Clipboard');
 
 const data = ref({
@@ -449,6 +582,9 @@ const data = ref({
     last_page: 1,
     links: [],
 });
+
+const perPage = ref(props.pagination?.per_page);
+
 
 onMounted(() => {
     handleSearchButtonClick();
@@ -473,6 +609,65 @@ const advancedActions = computed(() => [
     },
 ]);
 
+const provisioningPreviewFiles = computed(() => provisioningPreviewData.value?.files ?? []);
+
+const activeProvisioningPreviewFile = computed(() => {
+    return provisioningPreviewFiles.value.find((file) => file.flavor === activeProvisioningPreviewFlavor.value)
+        ?? provisioningPreviewFiles.value[0]
+        ?? null;
+});
+
+const activeProvisioningPreviewLang = computed(() => {
+    const file = activeProvisioningPreviewFile.value;
+    if (!file) return 'text';
+
+    const isXml = /xml/i.test(file.mime || '') || /\.xml$/i.test(file.filename || '');
+
+    return isXml ? 'xml' : 'text';
+});
+
+const focusProvisioningPreviewTab = (index, event) => {
+    const files = provisioningPreviewFiles.value;
+    if (files.length === 0) return;
+
+    const wrapped = (index + files.length) % files.length;
+    activeProvisioningPreviewFlavor.value = files[wrapped].flavor;
+    event?.target?.parentElement?.children?.[wrapped]?.focus();
+};
+
+const formatBytes = (bytes) => {
+    const value = Number(bytes);
+    if (!Number.isFinite(value) || value < 0) return '— bytes';
+    if (value < 1024) return `${value} bytes`;
+    if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
+
+    return `${(value / (1024 * 1024)).toFixed(1)} MB`;
+};
+
+const provisioningPreviewHeader = computed(() => {
+    const device = provisioningPreviewData.value?.device;
+    const label = device?.device_address_formatted || device?.device_address;
+
+    return label ? `Provisioning Preview - ${label}` : 'Provisioning Preview';
+});
+
+const provisioningPreviewTemplateLabel = computed(() => {
+    const template = provisioningPreviewData.value?.template;
+    if (!template) return '—';
+
+    const base = template.vendor ? `${template.vendor}/${template.name}` : template.name;
+    const suffixParts = [];
+    if (template.version) suffixParts.push(`v${template.version}`);
+    if (Number(template.revision) > 0) suffixParts.push(`r${template.revision}`);
+
+    return suffixParts.length ? `${base} (${suffixParts.join(', ')})` : base;
+});
+
+const provisioningPreviewRoute = (uuid) => {
+    return (props.routes.provisioning_preview || '/api/devices/__DEVICE_UUID__/provisioning-preview')
+        .replace('__DEVICE_UUID__', uuid);
+};
+
 const handleSortRequest = (column) => {
     if (sortData.value.name === column) {
         sortData.value.order = sortData.value.order === 'asc' ? 'desc' : 'asc';
@@ -491,6 +686,115 @@ const handleAdvancedActionRequest = (action, uuid) => {
         formErrors.value = null;
         showDuplicateModal.value = true;
     }
+};
+
+const handleProvisioningPreview = async (uuid) => {
+    showProvisioningPreviewModal.value = true;
+    isProvisioningPreviewLoading.value = true;
+    provisioningPreviewData.value = null;
+    provisioningPreviewError.value = null;
+    activeProvisioningPreviewFlavor.value = null;
+
+    try {
+        const response = await axios.get(provisioningPreviewRoute(uuid));
+        provisioningPreviewData.value = response.data;
+        activeProvisioningPreviewFlavor.value = response.data?.files?.[0]?.flavor ?? null;
+    } catch (error) {
+        const errors = error.response?.data?.errors;
+        provisioningPreviewError.value = errors
+            ? Object.values(errors).flat().join(' ')
+            : 'Could not render provisioning preview.';
+    } finally {
+        isProvisioningPreviewLoading.value = false;
+    }
+};
+
+const handleImportButtonClick = () => {
+    uploadErrors.value = null;
+    showUploadModal.value = true;
+    getItemOptions(null, { mode: 'create' });
+};
+
+const uploadFile = (file) => {
+    isUploadingFile.value = true;
+    uploadErrors.value = null;
+    const formData = new FormData();
+    formData.append('file', file);
+
+    axios.post(props.routes.import, formData)
+        .then((response) => {
+            handleModalClose();
+            setTimeout(() => {
+                importPreviewData.value = response.data.data;
+                showImportPreviewModal.value = true;
+            }, 300);
+        })
+        .catch((error) => {
+            handleClearSelection();
+            handleErrorResponse(error);
+            if (error.response) {
+                uploadErrors.value = error.response.data.errors;
+            }
+        })
+        .finally(() => {
+            isUploadingFile.value = false;
+        });
+};
+
+const handleImportSuccess = (messages) => {
+    showNotification('success', messages);
+    showImportPreviewModal.value = false;
+    importPreviewData.value = [];
+    refreshCurrentPage();
+};
+
+const downloadTemplateFile = () => {
+    axios.get(props.routes.download_template, {
+        responseType: 'blob',
+    })
+        .then((response) => {
+            const fileBlob = new Blob([response.data], { type: 'text/csv' });
+            const fileURL = window.URL.createObjectURL(fileBlob);
+            const link = document.createElement('a');
+            link.href = fileURL;
+            link.setAttribute('download', 'devices_template.csv');
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(fileURL);
+        })
+        .catch(handleErrorResponse);
+};
+
+const closeProvisioningPreview = () => {
+    showProvisioningPreviewModal.value = false;
+    provisioningPreviewData.value = null;
+    provisioningPreviewError.value = null;
+    activeProvisioningPreviewFlavor.value = null;
+};
+
+const copyProvisioningPreview = async () => {
+    if (!activeProvisioningPreviewFile.value?.content) return;
+
+    try {
+        await navigator.clipboard.writeText(activeProvisioningPreviewFile.value.content);
+        showNotification('success', { preview: ['Provisioning file copied.'] });
+    } catch (error) {
+        showNotification('error', { preview: ['Could not copy provisioning file.'] });
+    }
+};
+
+const downloadProvisioningPreview = () => {
+    const file = activeProvisioningPreviewFile.value;
+    if (!file) return;
+
+    const blob = new Blob([file.content ?? ''], { type: file.mime || 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = file.filename || 'provisioning-preview.cfg';
+    link.click();
+    URL.revokeObjectURL(url);
 };
 
 const submitDuplicateRequest = () => {
@@ -725,6 +1029,7 @@ const getData = (page = 1) => {
         params: {
             filter: filterData.value,
             page: currentPage.value,
+            per_page: perPage.value,
             sort,
         }
     })
@@ -756,6 +1061,11 @@ const handleFiltersReset = () => {
     getData(1);
 }
 
+
+const handlePageSizeChange = (newPerPage) => {
+    perPage.value = newPerPage;
+    getData(1);
+};
 
 const renderRequestedPage = (url) => {
     loading.value = true;
@@ -831,6 +1141,8 @@ const handleModalClose = () => {
     confirmationRestartTrigger.value = false;
     showBulkUpdateModal.value = false;
     showCloudProvisioningSettings.value = false;
+    showUploadModal.value = false;
+    showImportPreviewModal.value = false;
 }
 
 const hideNotification = () => {

@@ -16,6 +16,7 @@ yarn-error.log
 /.vscode
 /Modules/*
 modules_statuses.json
+resources/freeswitch_scripts/custom/*
 
 # Scribe generated docs/cache
 .scribe/

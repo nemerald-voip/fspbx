@@ -5,6 +5,8 @@ namespace App\Http\Webhooks\Jobs;
 use Exception;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
+use App\Models\BillingPrice;
+use App\Models\Organization;
 use App\Models\BillingProduct;
 use Illuminate\Support\Carbon;
 use App\Services\CeretaxService;
@@ -68,6 +70,12 @@ class ProcessStripeWebhookJob extends SpatieProcessWebhookJob
         'product.created',
         'product.deleted',
         'product.updated',
+        'price.created',
+        'price.updated',
+        'price.deleted',
+        'customer.created',
+        'customer.updated',
+        'customer.deleted',
     ];
 
 
@@ -137,6 +145,18 @@ class ProcessStripeWebhookJob extends SpatieProcessWebhookJob
                     case 'product.created':
                     case 'product.deleted':
                         $this->handleStripeProductEvent($payload);
+                        break;
+
+                    case 'price.updated':
+                    case 'price.created':
+                    case 'price.deleted':
+                        $this->handleStripePriceEvent($payload);
+                        break;
+
+                    case 'customer.updated':
+                    case 'customer.created':
+                    case 'customer.deleted':
+                        $this->handleStripeCustomerEvent($payload);
                         break;
 
                     default:
@@ -331,33 +351,203 @@ class ProcessStripeWebhookJob extends SpatieProcessWebhookJob
         $extCreated = isset($obj['created']) ? Carbon::createFromTimestampUTC($obj['created']) : null;
         $extUpdated = isset($obj['updated']) ? Carbon::createFromTimestampUTC($obj['updated']) : null;
 
-        BillingProduct::updateOrCreate(
-            [
-                'provider'            => $provider,
-                'provider_product_id' => $providerId,
-            ],
-            [
-                // generate/stabilize a UUID id for our table if row is new
-                'uuid'                  => Str::uuid()->toString(),
-                'default_price_ref'   => $obj['default_price'] ?? null,
-                'livemode'            => (bool) ($obj['livemode'] ?? $event['livemode'] ?? false),
-                'active'              => (bool) ($obj['active'] ?? true),
-                'name'                => $obj['name'] ?? null,
-                'description'         => $obj['description'] ?? null,
-                'type'                => $obj['type'] ?? null,
-                'statement_descriptor' => $obj['statement_descriptor'] ?? null,
-                'unit_label'          => $obj['unit_label'] ?? null,
-                'url'                 => $obj['url'] ?? null,
-                'metadata'            => $obj['metadata'] ?? [],
-                'images'              => $obj['images'] ?? [],
-                'marketing_features'  => $obj['marketing_features'] ?? [],
-                'package_dimensions'  => $obj['package_dimensions'] ?? null,
-                'shippable'           => array_key_exists('shippable', $obj) ? (is_null($obj['shippable']) ? null : (bool)$obj['shippable']) : null,
-                'external_created_at' => $extCreated,
-                'external_updated_at' => $extUpdated,
-                'deleted_at'          => null, // undelete on update
-            ]
-        );
+        // Resolve the existing row first so we never rewrite the primary key (uuid)
+        // on update — local billing_prices reference billing_products.uuid.
+        $product = BillingProduct::firstOrNew([
+            'provider'            => $provider,
+            'provider_product_id' => $providerId,
+        ]);
+
+        if (! $product->exists) {
+            $product->uuid = Str::uuid()->toString();
+        }
+
+        $product->fill([
+            'default_price_ref'    => $obj['default_price'] ?? null,
+            'livemode'             => (bool) ($obj['livemode'] ?? $event['livemode'] ?? false),
+            'active'               => (bool) ($obj['active'] ?? true),
+            'name'                 => $obj['name'] ?? null,
+            'description'          => $obj['description'] ?? null,
+            'type'                 => $obj['type'] ?? null,
+            'statement_descriptor' => $obj['statement_descriptor'] ?? null,
+            'unit_label'           => $obj['unit_label'] ?? null,
+            'url'                  => $obj['url'] ?? null,
+            'metadata'             => $obj['metadata'] ?? [],
+            'images'               => $obj['images'] ?? [],
+            'marketing_features'   => $obj['marketing_features'] ?? [],
+            'package_dimensions'   => $obj['package_dimensions'] ?? null,
+            'shippable'            => array_key_exists('shippable', $obj) ? (is_null($obj['shippable']) ? null : (bool)$obj['shippable']) : null,
+            'external_created_at'  => $extCreated,
+            'external_updated_at'  => $extUpdated,
+            'synced_at'            => now(),
+            'last_sync_error'      => null,
+        ]);
+        $product->save();
+    }
+
+    /**
+     * Inbound sync for Stripe Price events -> local billing_prices mirror.
+     * Keeps the catalog two-way: prices created/edited in the Stripe
+     * dashboard show up locally so they can be quoted.
+     */
+    protected function handleStripePriceEvent(array $event): void
+    {
+        $type = $event['type'] ?? '';
+        $obj  = Arr::get($event, 'data.object', []);
+
+        $providerId = $obj['id'] ?? null; // price_...
+        if (!$providerId) return;
+
+        if (($obj['billing_scheme'] ?? null) === 'tiered') {
+            $obj = $this->retrieveStripePriceWithTiers($providerId);
+        }
+
+        if ($type === 'price.deleted') {
+            BillingPrice::where('provider', 'stripe')
+                ->where('provider_price_id', $providerId)
+                ->update(['active' => false, 'synced_at' => now()]);
+            return;
+        }
+
+        // Map the local parent product; skip if we don't mirror it yet.
+        $product = BillingProduct::where('provider', 'stripe')
+            ->where('provider_product_id', $obj['product'] ?? null)
+            ->first();
+
+        if (!$product) {
+            Log::warning("[Webhook] price {$providerId} references unknown product " . ($obj['product'] ?? 'null'));
+            return;
+        }
+
+        $recurring = $obj['recurring'] ?? null;
+
+        $price = BillingPrice::firstOrNew([
+            'provider'          => 'stripe',
+            'provider_price_id' => $providerId,
+        ]);
+
+        if (! $price->exists) {
+            $price->price_uuid = Str::uuid()->toString();
+        }
+
+        $price->fill([
+            'product_uuid'      => $product->uuid,
+            'livemode'          => (bool) ($obj['livemode'] ?? $event['livemode'] ?? false),
+            'active'            => (bool) ($obj['active'] ?? true),
+            'currency'          => $obj['currency'] ?? 'usd',
+            'unit_amount_cents' => $this->stripeUnitAmount($obj),
+            'billing_scheme'    => $obj['billing_scheme'] ?? 'per_unit',
+            'tiers_mode'        => $obj['tiers_mode'] ?? null,
+            'tiers'             => $this->stripeTiers($obj),
+            'line_type'         => $recurring ? 'recurring' : 'one_time',
+            'interval'          => $recurring['interval'] ?? null,
+            'interval_count'    => $recurring['interval_count'] ?? null,
+            'nickname'          => $obj['nickname'] ?? null,
+            'lookup_key'        => $obj['lookup_key'] ?? null,
+            'tax_behavior'      => $obj['tax_behavior'] ?? null,
+            'recurring_usage_type' => $recurring['usage_type'] ?? null,
+            'transform_quantity' => $obj['transform_quantity'] ?? null,
+            'metadata'          => $obj['metadata'] ?? [],
+            'synced_at'         => now(),
+            'last_sync_error'   => null,
+        ]);
+        $price->save();
+    }
+
+    protected function stripeUnitAmount(array $obj): ?int
+    {
+        if (array_key_exists('unit_amount', $obj) && $obj['unit_amount'] !== null) {
+            return (int) $obj['unit_amount'];
+        }
+
+        if (array_key_exists('unit_amount_decimal', $obj) && $obj['unit_amount_decimal'] !== null) {
+            return (int) round((float) $obj['unit_amount_decimal']);
+        }
+
+        return null;
+    }
+
+    protected function stripeTiers(array $obj): ?array
+    {
+        $tiers = $obj['tiers'] ?? null;
+
+        if (! is_array($tiers)) {
+            return null;
+        }
+
+        return isset($tiers['data']) && is_array($tiers['data']) ? $tiers['data'] : $tiers;
+    }
+
+    protected function retrieveStripePriceWithTiers(string $priceId): array
+    {
+        $stripe = new \Stripe\StripeClient(['api_key' => $this->stripe_api_key]);
+
+        return $stripe->prices->retrieve($priceId, [
+            'expand' => ['tiers'],
+        ])->toArray();
+    }
+
+    /**
+     * Inbound sync for Stripe Customer events -> local organizations billing
+     * profile. We only reconcile organizations we already track (matched by
+     * fspbx metadata or stored customer id); we never create address-book
+     * organizations from arbitrary Stripe customers.
+     */
+    protected function handleStripeCustomerEvent(array $event): void
+    {
+        $type = $event['type'] ?? '';
+        $obj  = Arr::get($event, 'data.object', []);
+
+        $providerId = $obj['id'] ?? null; // cus_...
+        if (!$providerId) return;
+
+        $organizationUuid = Arr::get($obj, 'metadata.fspbx_organization_uuid');
+
+        $organization = Organization::query()
+            ->when($organizationUuid, fn ($q) => $q->orWhere('organization_uuid', $organizationUuid))
+            ->orWhere('billing_provider_customer_id', $providerId)
+            ->first();
+
+        if (!$organization) {
+            return; // not one of ours
+        }
+
+        if ($type === 'customer.deleted') {
+            $organization->forceFill([
+                'billing_enabled'   => false,
+                'billing_synced_at' => now(),
+            ])->save();
+            return;
+        }
+
+        $email = Arr::get($obj, 'email');
+
+        $organization->forceFill([
+            'billing_provider'             => 'stripe',
+            'billing_provider_customer_id' => $providerId,
+            'name'                         => $obj['name'] ?: $organization->name,
+            'billing_livemode'             => (bool) ($obj['livemode'] ?? $event['livemode'] ?? false),
+            'billing_synced_at'            => now(),
+            'billing_last_sync_error'      => null,
+            'billing_metadata'             => $this->customerUserMetadata($obj['metadata'] ?? []),
+            'billing_invoice_prefix'       => $obj['invoice_prefix'] ?? null,
+            'billing_next_invoice_sequence' => $obj['next_invoice_sequence'] ?? null,
+        ])->save();
+
+        if ($email) {
+            $organization->emails()->updateOrCreate(
+                ['label' => 'billing'],
+                ['email_address' => $email]
+            );
+        }
+    }
+
+    protected function customerUserMetadata(array $metadata): array
+    {
+        return collect($metadata)
+            ->reject(fn ($value, $key) => Str::startsWith((string) $key, 'fspbx_'))
+            ->mapWithKeys(fn ($value, $key) => [(string) $key => is_scalar($value) ? (string) $value : json_encode($value)])
+            ->all();
     }
 
 

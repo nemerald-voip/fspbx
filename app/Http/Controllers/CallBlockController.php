@@ -17,8 +17,6 @@ use Spatie\QueryBuilder\QueryBuilder;
 
 class CallBlockController extends Controller
 {
-    protected int $perPage = 50;
-
     public function index()
     {
         if (! userCheckPermission('call_block_view')) {
@@ -41,6 +39,10 @@ class CallBlockController extends Controller
                 'destroy' => userCheckPermission('call_block_delete'),
                 'view_all_records' => userCheckPermission('call_block_view_all_records'),
                 'view_self_records' => userCheckPermission('call_block_view_self_records'),
+            ],
+            'pagination' => [
+                'per_page' => fspbx_pagination_per_page(),
+                'per_page_options' => fspbx_pagination_options(),
             ],
         ]);
     }
@@ -169,7 +171,7 @@ class CallBlockController extends Controller
                 'call_block_description',
             ])
             ->defaultSort('call_block_direction', 'call_block_number')
-            ->paginate($this->perPage);
+            ->paginate(fspbx_pagination_per_page($request));
     }
 
     public function selectAll(Request $request): JsonResponse
@@ -242,21 +244,43 @@ class CallBlockController extends Controller
             })
             ->allowedFilters([
                 AllowedFilter::callback('search', function ($query, $value) {
-                    $needle = trim((string) $value);
+                    $s = trim((string) $value);
 
-                    if ($needle === '') {
+                    if ($s === '') {
                         return;
                     }
 
-                    $query->where(function ($query) use ($needle) {
-                        $query->where('call_block_uuid', 'ilike', "%{$needle}%")
-                            ->orWhere('call_block_direction', 'ilike', "%{$needle}%")
-                            ->orWhere('call_block_name', 'ilike', "%{$needle}%")
-                            ->orWhere('call_block_country_code', 'ilike', "%{$needle}%")
-                            ->orWhere('call_block_number', 'ilike', "%{$needle}%")
-                            ->orWhere('call_block_app', 'ilike', "%{$needle}%")
-                            ->orWhere('call_block_data', 'ilike', "%{$needle}%")
-                            ->orWhere('call_block_description', 'ilike', "%{$needle}%");
+                    // If it contains any letters, keep original behavior (text search)
+                    if (preg_match('/[A-Za-z]/', $s)) {
+                        $query->where(function ($query) use ($s) {
+                            $query->where('call_block_uuid', 'ilike', "%{$s}%")
+                                ->orWhere('call_block_direction', 'ilike', "%{$s}%")
+                                ->orWhere('call_block_name', 'ilike', "%{$s}%")
+                                ->orWhere('call_block_country_code', 'ilike', "%{$s}%")
+                                ->orWhere('call_block_number', 'ilike', "%{$s}%")
+                                ->orWhere('call_block_app', 'ilike', "%{$s}%")
+                                ->orWhere('call_block_data', 'ilike', "%{$s}%")
+                                ->orWhere('call_block_description', 'ilike', "%{$s}%");
+                        });
+                        return;
+                    }
+
+                    // Numeric-only: remove all non-digits
+                    $digits = preg_replace('/\D+/', '', $s);
+
+                    // If 11 digits and starts with 1 (covers +1 once stripped), drop leading 1
+                    if (strlen($digits) === 11 && str_starts_with($digits, '1')) {
+                        $digits = substr($digits, 1);
+                    }
+
+                    if ($digits === '') {
+                        return;
+                    }
+
+                    $pattern = '%' . implode('%', str_split($digits)) . '%';
+                    $query->where(function ($query) use ($pattern) {
+                        $query->where('call_block_number', 'ilike', $pattern)
+                            ->orWhere('call_block_country_code', 'ilike', $pattern);
                     });
                 }),
             ]);

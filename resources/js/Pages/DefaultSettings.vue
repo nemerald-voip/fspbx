@@ -10,6 +10,9 @@
                 <p class="mt-1 text-sm text-gray-500">Manage system-wide defaults. Each setting may be overridden per domain.</p>
             </div>
             <div class="flex flex-wrap gap-2">
+                <a v-if="permissions.domain_settings && routes.current_domain_settings" :href="routes.current_domain_settings" class="inline-flex items-center gap-1.5 rounded-md bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    <BuildingOffice2Icon class="h-4 w-4" /> Domain Settings
+                </a>
                 <button type="button" class="inline-flex items-center gap-1.5 rounded-md bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50" @click="reloadSettings">
                     <ArrowPathIcon class="h-4 w-4" /> Reload
                 </button>
@@ -113,7 +116,9 @@
                                 <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
                                     <div class="grid min-w-0 max-w-full grid-cols-[auto,minmax(0,1fr)] items-center gap-1.5">
                                         <span class="shrink-0 text-xs text-gray-400">Value</span>
-                                        <code class="block max-w-full truncate rounded bg-gray-100 px-2 py-0.5 font-mono text-xs text-gray-800" :title="fullValue(row.value, row.is_secret)">{{ truncatedValue(row.value, row.is_secret) }}</code>
+                                        <button type="button" class="min-w-0 max-w-full text-left" :title="valueTitle(row.value, row.is_secret)" aria-label="Copy value" @click.stop="copyValue(row.value)">
+                                            <code class="block max-w-full truncate rounded bg-gray-100 px-2 py-0.5 font-mono text-xs text-gray-800 ring-1 ring-transparent transition hover:bg-gray-200 hover:ring-gray-300">{{ truncatedValue(row.value, row.is_secret) }}</code>
+                                        </button>
                                     </div>
                                     <button v-if="row.override_count > 0" type="button" class="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20 hover:bg-amber-100" @click="showAffectedDomains(row)">
                                         <UsersIcon class="h-3 w-3" />
@@ -156,7 +161,7 @@
                 <template #empty>
                     <FormElements>
                         <SelectElement name="target_domain_uuid" label="Target domain" :items="options.domains"
-                            :native="false" input-type="search" autocomplete="off" placeholder="Select domain"
+                            :native="false" :search="true" input-type="search" autocomplete="off" placeholder="Select domain"
                             :strict="false" :floating="false" />
                         <ButtonElement name="submit" button-label="Copy" :submits="true" align="right" />
                     </FormElements>
@@ -171,7 +176,9 @@
                 <div v-for="domain in affectedDomains" :key="domain.domain_setting_uuid" class="flex items-center justify-between py-3 text-sm">
                     <div>
                         <div class="font-medium text-gray-900">{{ domain.domain_description || domain.domain_name }}</div>
-                        <div class="font-mono text-xs text-gray-500">{{ displayValue(domain.value) }}</div>
+                        <button type="button" class="min-w-0 max-w-full text-left" :title="valueTitle(domain.value, affectedDomainsSecret)" aria-label="Copy value" @click.stop="copyValue(domain.value)">
+                            <code class="block max-w-full truncate rounded bg-gray-50 px-1.5 py-0.5 font-mono text-xs text-gray-500 ring-1 ring-transparent transition hover:bg-gray-100 hover:ring-gray-300">{{ displayValue(domain.value, affectedDomainsSecret) }}</code>
+                        </button>
                     </div>
                     <a :href="routes.domain_settings.replace('__DOMAIN__', domain.domain_uuid)" class="rounded-md px-2 py-1 text-indigo-600 hover:bg-indigo-50">Open</a>
                 </div>
@@ -194,7 +201,7 @@ import Notification from './components/notifications/Notification.vue'
 import ConfirmationModal from './components/modal/ConfirmationModal.vue'
 import AddEditItemModal from './components/modal/AddEditItemModal.vue'
 import SettingsEditModal from './components/modal/SettingsEditModal.vue'
-import { MagnifyingGlassIcon, ArrowPathIcon, PlusIcon, UsersIcon } from '@heroicons/vue/24/outline'
+import { MagnifyingGlassIcon, ArrowPathIcon, PlusIcon, UsersIcon, BuildingOffice2Icon } from '@heroicons/vue/24/outline'
 
 const StatTile = (props) => {
     const toneMap = {
@@ -228,6 +235,7 @@ const confirmedAction = ref(null)
 const showCopyModal = ref(false)
 const showAffectedModal = ref(false)
 const affectedDomains = ref([])
+const affectedDomainsSecret = ref(false)
 const notificationShow = ref(false)
 const notificationType = ref(null)
 const notificationMessages = ref(null)
@@ -421,6 +429,7 @@ const reloadSettings = () => {
 }
 
 const showAffectedDomains = (row) => {
+    affectedDomainsSecret.value = Boolean(row.is_secret)
     axios.get(props.routes.affected_domains.replace('__SETTING__', row.default_setting_uuid))
         .then(response => {
             affectedDomains.value = response.data.domains
@@ -444,6 +453,35 @@ const handleErrorResponse = (error) => {
     showNotification('error', error?.response?.data?.messages || error?.response?.data?.errors || { error: ['Request failed.'] })
 }
 
+const copyValue = async (value) => {
+    try {
+        await writeClipboardText(value === null || value === undefined ? '' : String(value))
+        showNotification('success', { success: ['Value copied.'] })
+    } catch (error) {
+        showNotification('error', { error: ['Unable to copy value.'] })
+    }
+}
+
+const writeClipboardText = async (text) => {
+    if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text)
+        return
+    }
+
+    const textarea = document.createElement('textarea')
+    textarea.value = text
+    textarea.setAttribute('readonly', '')
+    textarea.style.position = 'fixed'
+    textarea.style.left = '-9999px'
+    document.body.appendChild(textarea)
+    textarea.select()
+
+    const copied = document.execCommand('copy')
+    document.body.removeChild(textarea)
+
+    if (!copied) throw new Error('Copy failed')
+}
+
 const VALUE_TRUNCATE_AT = 160
 
 const displayValue = (value, secret = false) => {
@@ -461,6 +499,11 @@ const truncatedValue = (value, secret = false) => {
     const text = displayValue(value, secret)
     if (text.length > VALUE_TRUNCATE_AT) return text.slice(0, VALUE_TRUNCATE_AT) + '…'
     return text
+}
+
+const valueTitle = (value, secret = false) => {
+    if (secret) return 'Copy value'
+    return fullValue(value, secret) || 'Copy value'
 }
 
 const formatLabel = (value) => {

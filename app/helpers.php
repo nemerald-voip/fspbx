@@ -45,13 +45,31 @@ if (!function_exists('userCheckPermission')) {
 
 // Check if currenlty signed in user a superadmin
 if (!function_exists('isSuperAdmin')) {
-    function isSuperAdmin()
+    function isSuperAdmin($user = null)
     {
-        foreach (Session::get('user.groups') as $group) {
+        foreach (Session::get('user.groups') ?: [] as $group) {
             if ($group->group_name == "superadmin" && $group->group_level >= 80) {
                 return true;
             }
         }
+
+        $user = $user ?: auth()->user();
+        if (!$user) {
+            return false;
+        }
+
+        $userGroups = $user->user_groups()
+            ->with('group')
+            ->where('domain_uuid', $user->domain_uuid)
+            ->get();
+
+        foreach ($userGroups as $userGroup) {
+            $group = $userGroup->group;
+            if ($group && $group->group_name == "superadmin" && $group->group_level >= 80) {
+                return true;
+            }
+        }
+
         return false;
     }
 }
@@ -103,7 +121,7 @@ if (!function_exists('getFusionPBXPreviousURL')) {
         } elseif (strpos($previous_url, "/voicemails/")) {
             $url = substr($previous_url, 0, strpos(url()->previous(), "/voicemails/")) . "/voicemails";
         } elseif (strpos($previous_url, "/contact-center/")) {
-            $url = substr($previous_url, 0, strpos(url()->previous(), "/contact-center/")) . "/dashboard1";
+            $url = substr($previous_url, 0, strpos(url()->previous(), "/contact-center/")) . "/dashboard";
         } else {
             $url = $previous_url;
         }
@@ -663,7 +681,7 @@ if (!function_exists('getTimeoutDestinationsLabels')) {
     }
 }
 
-// * depreciated
+// * deprecated
 if (!function_exists('get_registrations')) {
     function get_registrations($show = null)
     {
@@ -1680,6 +1698,7 @@ if (!function_exists('buildDestinationAction')) {
                 return match ($t) {
                     'line' => '15',
                     'speed_dial' => '13',
+                    'dtmf' => '11',
                     'blf', 'check_voicemail' => '16',
                     'park' => '16',
                     '' => '0',
@@ -1715,6 +1734,7 @@ if (!function_exists('buildDestinationAction')) {
                 return match ($t) {
                     'line' => '1',
                     'speed_dial' => 'f',
+                    'dtmf' => 'dtmf',
                     'park' => 'c',
                     'blf', 'check_voicemail' => 'bc',
                     '' => '3',
@@ -1747,6 +1767,7 @@ if (!function_exists('buildDestinationAction')) {
             if ($v === 'grandstream') {
                 return match ($t) {
                     'speed_dial'      => 'speed dial',
+                    'dtmf'            => 'dial dtmf',
                     'check_voicemail' => 'blf',
                     'park'            => 'monitored call park',
                     '' => 'none',
@@ -1891,7 +1912,7 @@ if (!function_exists('buildDestinationAction')) {
                         $row['device_key_label'] = $device_lines[$acct]['user_id'];
                     }
                 }
-            } elseif ($rawType === 'speed_dial') {
+            } elseif ($rawType === 'speed_dial' || $rawType === 'dtmf') {
                 $row['device_key_value'] = ($value !== null ? (string)$value : '');
                 $row['device_key_label'] = (strlen((string)$label) ? (string)$label : '');
             } elseif ($rawType === 'blf') {

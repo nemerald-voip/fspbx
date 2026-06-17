@@ -3,6 +3,14 @@
         :initial-menu-option="initialMenuOption" @update-selected-menu-option="handleUpdateSelectedMenuOption">
 
         <template #default="{ selectedMenuOption }">
+            <div class="mb-4 flex justify-end">
+                <button v-if="permissions?.email_test_send" type="button"
+                    class="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
+                    @click="openTestEmailModal">
+                    <EnvelopeIcon class="h-4 w-4" />
+                    Send Test Email
+                </button>
+            </div>
 
             <!-- EMAILS -->
             <section v-show="selectedMenuOption === 'emails'">
@@ -55,6 +63,21 @@
                 <AiReceptionistLogs :trigger="aiReceptionistLogsTrigger" :startPeriod="startPeriod"
                     :endPeriod="endPeriod" :timezone="timezone" :routes="routes" :permissions="permissions"
                     :domain-options="domainOptions" :selected-domain-uuid="selectedDomainUuid" />
+            </section>        
+            
+            <!-- FREESWITCH -->
+            <section v-show="selectedMenuOption === 'freeswitch_logs'">
+                <Vueform>
+                    <StaticElement name="locations_title" tag="h4" content="FreeSWITCH" />
+                </Vueform>
+
+                <FreeSwitchLogs
+                    :trigger="freeswitchLogsTrigger"
+                    :routes="routes"
+                    :permissions="permissions"
+                    @success="showSuccessNotification"
+                    @error="showErrorNotification"
+                />
             </section>
 
         </template>
@@ -68,13 +91,42 @@
                 :header="'Confirm Deletion'" :loading="isDeleteLocationLoading"
                 :text="'This action will permanently delete the selected location. Are you sure you want to proceed?'"
                 confirm-button-label="Delete" cancel-button-label="Cancel" />
+
+            <AddEditItemModal :show="showTestEmailModal" header="Send Test Email" :loading="testEmailLoading"
+                @close="closeTestEmailModal">
+                <template #modal-body>
+                    <form class="space-y-4" @submit.prevent="sendTestEmail">
+                        <div>
+                            <label for="test_email_address" class="block text-sm font-medium text-gray-700">Email address</label>
+                            <input id="test_email_address" v-model.trim="testEmailForm.email" type="email" required
+                                autocomplete="email" placeholder="name@example.com"
+                                class="mt-1 block w-full rounded-md border-0 py-1.5 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600" />
+                            <p v-if="testEmailErrors.email" class="mt-2 text-xs text-red-600">{{ testEmailErrors.email[0] }}</p>
+                        </div>
+
+                        <div class="flex justify-end gap-2">
+                            <button type="button"
+                                class="rounded-md bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                                @click="closeTestEmailModal">
+                                Cancel
+                            </button>
+                            <button type="submit" :disabled="testEmailLoading"
+                                class="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60">
+                                <EnvelopeIcon class="h-4 w-4" />
+                                {{ testEmailLoading ? 'Sending...' : 'Send' }}
+                            </button>
+                        </div>
+                    </form>
+                </template>
+            </AddEditItemModal>
         </template>
 
     </PageWithSideMenu>
 </template>
 
 <script setup>
-import { computed, ref, onMounted, onUnmounted } from 'vue'
+import { computed, reactive, ref, onMounted, onUnmounted } from 'vue'
+import axios from 'axios'
 import PageWithSideMenu from '../Layouts/PageWithSideMenu.vue'
 import Notification from "./components/notifications/Notification.vue";
 import EmailLogs from "./components/EmailLogs.vue";
@@ -82,7 +134,9 @@ import InboundWebhooks from "./components/InboundWebhooks.vue";
 import MessageLogs from "./components/MessageLogs.vue";
 import FaxLogs from "./components/FaxLogs.vue";
 import AiReceptionistLogs from "./components/AiReceptionistLogs.vue";
+import FreeSwitchLogs from "./components/FreeSwitchLogs.vue";
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
+import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
 
 import {
     EnvelopeIcon,
@@ -91,6 +145,7 @@ import {
     ChatBubbleLeftRightIcon,
     CpuChipIcon,
     PrinterIcon,
+    ServerStackIcon,
 } from '@heroicons/vue/24/outline'
 
 const props = defineProps({
@@ -115,7 +170,15 @@ const inboundWebhooksTrigger = ref(false)
 const messageLogsTrigger = ref(false)
 const faxLogsTrigger = ref(false)
 const aiReceptionistLogsTrigger = ref(false)
+const freeswitchLogsTrigger = ref(false)
 const initialMenuOption = ref(null)
+const showTestEmailModal = ref(false)
+const testEmailLoading = ref(false)
+const testEmailErrors = ref({})
+const testEmailForm = reactive({
+    email: '',
+})
+const testEmailRefreshTimers = []
 
 
 const pages = [
@@ -129,6 +192,7 @@ const handleUpdateSelectedMenuOption = (key) => {
     if (key === 'message_logs') messageLogsTrigger.value = !messageLogsTrigger.value
     if (key === 'fax_logs') faxLogsTrigger.value = !faxLogsTrigger.value
     if (key === 'ai_receptionist_logs') aiReceptionistLogsTrigger.value = !aiReceptionistLogsTrigger.value
+    if (key === 'freeswitch_logs') freeswitchLogsTrigger.value = !freeswitchLogsTrigger.value
 }
 
 const navigation = computed(() => {
@@ -143,15 +207,26 @@ const navigation = computed(() => {
         items.push({ key: 'fax_logs', name: 'Faxes', icon: PrinterIcon })
     }
 
+    if (props.permissions?.log_view) {
+        items.push({ key: 'freeswitch_logs', name: 'FreeSWITCH', icon: ServerStackIcon })
+    }
+
     return items
 })
 
 
 onMounted(() => {
     if (navigation.value.length) {
-        initialMenuOption.value = navigation.value[0].key
-        // handleUpdateSelectedMenuOption(navigation.value[0].key)
+        const requestedOption = new URLSearchParams(window.location.search).get('tab')
+        const fallbackOption = navigation.value[0].key
+        initialMenuOption.value = navigation.value.some((item) => item.key === requestedOption)
+            ? requestedOption
+            : fallbackOption
     }
+})
+
+onUnmounted(() => {
+    testEmailRefreshTimers.forEach((timer) => clearTimeout(timer))
 })
 
 
@@ -164,6 +239,77 @@ const hideNotification = () => {
     notificationShow.value = false;
     notificationType.value = null;
     notificationMessages.value = null;
+}
+
+const showSuccessNotification = (messages) => {
+    notificationType.value = 'success'
+    notificationMessages.value = messages
+    notificationShow.value = true
+}
+
+const showErrorNotification = (messages) => {
+    notificationType.value = 'error'
+    notificationMessages.value = messages
+    notificationShow.value = true
+}
+
+const openTestEmailModal = () => {
+    testEmailErrors.value = {}
+    showTestEmailModal.value = true
+}
+
+const closeTestEmailModal = () => {
+    showTestEmailModal.value = false
+    testEmailLoading.value = false
+    testEmailErrors.value = {}
+    testEmailForm.email = ''
+}
+
+const sendTestEmail = () => {
+    if (testEmailLoading.value) return
+
+    testEmailLoading.value = true
+    testEmailErrors.value = {}
+
+    axios.post(props.routes.test_email_send, {
+        email: testEmailForm.email,
+    }).then((response) => {
+        closeTestEmailModal()
+        notificationType.value = 'success'
+        notificationMessages.value = response.data.messages
+        notificationShow.value = true
+        emailsTrigger.value = !emailsTrigger.value
+        scheduleTestEmailRefreshes(response.data.log_uuid)
+    }).catch((error) => {
+        testEmailErrors.value = error.response?.data?.errors ?? {}
+        notificationType.value = 'error'
+        notificationMessages.value = error.response?.data?.messages
+            ?? error.response?.data?.errors
+            ?? { error: ['Unable to send the test email.'] }
+        notificationShow.value = true
+    }).finally(() => {
+        testEmailLoading.value = false
+    })
+}
+
+const scheduleTestEmailRefreshes = (logUuid = null) => {
+    ;[15000, 60000].forEach((delay) => {
+        testEmailRefreshTimers.push(setTimeout(() => {
+            refreshTestEmailLog(logUuid)
+        }, delay))
+    })
+}
+
+const refreshTestEmailLog = (logUuid = null) => {
+    if (!logUuid || !props.routes.email_delivery_details) {
+        emailsTrigger.value = !emailsTrigger.value
+        return
+    }
+
+    axios.get(props.routes.email_delivery_details.replace('__UUID__', logUuid))
+        .finally(() => {
+            emailsTrigger.value = !emailsTrigger.value
+        })
 }
 
 

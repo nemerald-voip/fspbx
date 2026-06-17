@@ -16,7 +16,7 @@ class CreateWakeupCallRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return Auth::check();
+        return Auth::check() && userCheckPermission('wakeup_calls_create');
     }
 
     public function rules(): array
@@ -30,7 +30,8 @@ class CreateWakeupCallRequest extends FormRequest
             'extension' => [
                 'required',
                 'uuid', // Ensure it's a valid UUID
-                Rule::exists((new Extensions)->getTable(), 'extension_uuid') // Get correct table name dynamically
+                Rule::exists((new Extensions)->getTable(), 'extension_uuid')
+                    ->where('domain_uuid', session('domain_uuid')) // Get correct table name dynamically
             ],
             'status' => [
                 'required',
@@ -73,6 +74,26 @@ class CreateWakeupCallRequest extends FormRequest
                 $this->merge(['status' => null]);
             }
         }
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            if (userCheckPermission('wakeup_calls_view_all_records') || userCheckPermission('wakeup_calls_all')) {
+                return;
+            }
+
+            $userExtensionUuid = optional($this->user())->extension_uuid;
+
+            if (!$userExtensionUuid) {
+                $validator->errors()->add('extension', 'Your user account is not assigned to an extension.');
+                return;
+            }
+
+            if ($this->input('extension') !== $userExtensionUuid) {
+                $validator->errors()->add('extension', 'You can only manage wake-up calls for your own extension.');
+            }
+        });
     }
 
     /**

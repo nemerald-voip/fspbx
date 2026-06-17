@@ -1,4 +1,4 @@
-{{-- version: 1.0.6 --}}
+{{-- version: 1.0.8 --}}
 
 @switch($flavor)
 
@@ -1594,6 +1594,10 @@
         @if (array_key_exists('grandstream_wallpaper_url', $settings))
             <item name="lcd.wallpaper.serverPath">{{ $settings['grandstream_wallpaper_url'] }}</item>
         @endif
+
+        <!-- # Screensaver. No, Yes,  OnIfNoVPKIsActive. -->
+		<!-- Pvalue P2918 -->
+		<item name="lcd.screensaver.enable">No</item>
         
         <!-- ############################################################################## -->
 		<!-- ##  Settings/Preferences / LED Control -->
@@ -1612,7 +1616,7 @@
 		<!-- # System Ringtone -->
 		<!-- # String -->
 		<!-- # Mandatory -->
-		<item name="audio.tone.systemRing">f1=440,f2=480,c=200/400;</item>
+		<item name="audio.tone.systemRing">f1=540,f2=516,c=70/16-55/16-70/300;</item>
 
 		<!-- # Dial Tone -->
 		<!-- # String -->

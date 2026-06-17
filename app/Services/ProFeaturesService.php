@@ -300,6 +300,7 @@ class ProFeaturesService
     protected function enableInstalledModule(string $moduleName): void
     {
         Artisan::call('module:enable', ['module' => $moduleName]);
+        Artisan::call('module:migrate', ['module' => $moduleName, '--force' => true]);
 
         try {
             Artisan::call('module:seed', ['module' => $moduleName, '--force' => true]);
@@ -366,6 +367,10 @@ class ProFeaturesService
             'STIR_SHAKEN_MODULE' => [
                 'module' => 'StirShaken',
                 'artifact' => fn(string $version) => "fspbx-stir-shaken-module-{$version}.tar.gz",
+            ],
+            'BILLING_MODULE' => [
+                'module' => 'Billing',
+                'artifact' => fn(string $version) => "fspbx-billing-module-{$version}.tar.gz",
             ],
         ];
     }

@@ -50,7 +50,12 @@ class DomainGroupsController extends Controller
                     'item_options' => route('domain-groups.item.options'),
                     'bulk_delete' => route('domain-groups.bulk.delete'),
                     'select_all' => route('domain-groups.select.all'),
-                ]
+                ],
+                'permissions' => [
+                    'create' => userCheckPermission('group_add'),
+                    'update' => userCheckPermission('group_edit'),
+                    'destroy' => userCheckPermission('group_delete'),
+                ],
             ]
         );
     }

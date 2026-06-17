@@ -181,6 +181,24 @@ EOF
   ln -sf /etc/php/8.4/mods-available/fspbx.ini /etc/php/8.4/cli/conf.d/99-fspbx.ini
 }
 
+ensure_systemd_fspbx_override_php84() {
+  if ! has_cmd systemctl; then
+    print_warn "systemctl not found; skipping systemd override."
+    return 0
+  fi
+
+  mkdir -p /etc/systemd/system/php8.4-fpm.service.d
+  cat > /etc/systemd/system/php8.4-fpm.service.d/override.conf <<'EOF'
+[Service]
+RuntimeDirectory=php
+RuntimeDirectoryMode=0755
+ReadWritePaths=-/etc/freeswitch -/usr/share/freeswitch -/var/lib/freeswitch
+EOF
+
+  systemctl daemon-reload
+  print_success "Ensured FS PBX systemd override for php8.4-fpm."
+}
+
 switch_nginx_to_php84() {
   local php84_sock="/run/php/php8.4-fpm.sock"
   
@@ -235,6 +253,7 @@ ensure_php84_module "redis" "php8.4-redis"
 ensure_php84_module "igbinary" "php8.4-igbinary"
 
 apply_fspbx_php84_ini_overrides
+ensure_systemd_fspbx_override_php84
 switch_nginx_to_php84
 
 capture_modules "php84" "php8.4" || true

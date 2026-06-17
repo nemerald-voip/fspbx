@@ -38,6 +38,12 @@ use App\Console\Commands\Updates\Update179;
 use App\Console\Commands\Updates\Update180;
 use App\Console\Commands\Updates\Update181;
 use App\Console\Commands\Updates\Update182;
+use App\Console\Commands\Updates\Update183;
+use App\Console\Commands\Updates\Update184;
+use App\Console\Commands\Updates\Update185;
+use App\Console\Commands\Updates\Update187;
+use App\Console\Commands\Updates\Update188;
+use App\Console\Commands\Updates\Update189;
 use App\Console\Commands\Updates\Update190;
 use App\Console\Commands\Updates\Update0917;
 use App\Console\Commands\Updates\Update0918;
@@ -153,6 +159,12 @@ class UpdateApp extends Command
             '1.8.0' => Update180::class,
             '1.8.1' => Update181::class,
             '1.8.2' => Update182::class,
+            '1.8.3' => Update183::class,
+            '1.8.4' => Update184::class,
+            '1.8.5' => Update185::class,
+            '1.8.7' => Update187::class,
+            '1.8.8' => Update188::class,
+            '1.8.9' => Update189::class,
             '1.9.0' => Update190::class,
             // Add more versions as needed
         ];

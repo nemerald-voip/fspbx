@@ -60,7 +60,11 @@
             <table border="0" cellspacing="0" cellpadding="0">
               <tr>
                 <td>
-                  <a href="{{ $attributes['windows_link'] ?? '' }}" class="button button--" target="_blank">Get it for <strong>Windows</strong></a>
+                  <a
+                    href="{{ $attributes['windows_link'] ?? '' }}"
+                    target="_blank"
+                    style="background-color:#3869D4; border-top:10px solid #3869D4; border-right:18px solid #3869D4; border-bottom:10px solid #3869D4; border-left:18px solid #3869D4; border-radius:3px; color:#ffffff !important; display:inline-block; font-family:Helvetica, Arial, sans-serif; font-size:16px; font-weight:700; line-height:20px; text-align:center; text-decoration:none; -webkit-text-size-adjust:none;"
+                  ><span style="color:#ffffff;">Get it for Windows</span></a>
 
 
                 </td>
@@ -77,7 +81,11 @@
             <table border="0" cellspacing="0" cellpadding="0">
               <tr>
                 <td>
-                  <a href="{{ $attributes['mac_link'] ?? '' }}" class="button button--" target="_blank">Download for <strong>Mac</strong></a>
+                  <a
+                    href="{{ $attributes['mac_link'] ?? '' }}"
+                    target="_blank"
+                    style="background-color:#3869D4; border-top:10px solid #3869D4; border-right:18px solid #3869D4; border-bottom:10px solid #3869D4; border-left:18px solid #3869D4; border-radius:3px; color:#ffffff !important; display:inline-block; font-family:Helvetica, Arial, sans-serif; font-size:16px; font-weight:700; line-height:20px; text-align:center; text-decoration:none; -webkit-text-size-adjust:none;"
+                  ><span style="color:#ffffff;">Download for Mac</span></a>
 
                 </td>
               </tr>
@@ -128,12 +136,19 @@
         @endif
       </table>
     </td>
-    <td>
-        @if(empty($attributes['password_url']))
-            <img src="data:image/png;base64, {!! base64_encode($attributes['qrCode']) !!} ">
-        @endif
-    </td>
   </tr>
+  @if(empty($attributes['password_url']) && !empty($attributes['qrCodeUrl']))
+    <tr>
+      <td class="attributes_content" align="center" style="padding-top: 0;">
+        <img
+          src="{{ $attributes['qrCodeUrl'] }}"
+          alt="Mobile app credentials QR code"
+          width="180"
+          style="display:block; width:180px; height:auto; margin:0 auto;"
+        >
+      </td>
+    </tr>
+  @endif
 </table>
 
 <p>3. Once you have logged in, start communicating with the users within your organization. You can make and receive phone calls through your extension, put calls on hold, transfer calls, park calls, and much more.</p>

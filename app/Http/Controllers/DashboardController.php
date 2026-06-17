@@ -23,6 +23,8 @@ use App\Models\WhitelistedNumbers;
 use App\Services\CdrDataService;
 use Nwidart\Modules\Facades\Module;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Laravel\Horizon\Contracts\MasterSupervisorRepository;
 use App\Services\FreeswitchEslService;
 use Illuminate\Support\Facades\Auth;
@@ -55,6 +57,7 @@ class DashboardController extends Controller
                     'data_route' => route('dashboard.data'),
                     'counts_route' => route('dashboard.counts'),
                     'my_extension_status_route' => route('dashboard.my-extension-status'),
+                    'customer_notes_route' => route('dashboard.customer-notes'),
                     'extension_item_options' => route('extensions.item.options'),
                 ]
             ]
@@ -67,7 +70,7 @@ class DashboardController extends Controller
         $permissions['extension_view'] = userCheckPermission('extension_view');
         $permissions['account_settings_index'] = userCheckPermission('account_settings_list_view');
 
-        return $permissions;
+        return array_merge($permissions, CustomerNotesController::permissionFlags());
     }
 
     public function getCounts()
@@ -205,13 +208,27 @@ class DashboardController extends Controller
         }
 
         //Wakeup Calls Count
-        if (userCheckPermission("wakeup_calls_list_view")) {
+        if (userCheckPermission("wakeup_calls_list_view") && (userCheckPermission('wakeup_calls_view_all_records') || userCheckPermission('wakeup_calls_all') || userCheckPermission('wakeup_calls_view_self_records'))) {
             $counts['wakeup_calls'] = WakeupCall::where('domain_uuid', $domain_uuid)
+                ->when(!userCheckPermission('wakeup_calls_view_all_records') && !userCheckPermission('wakeup_calls_all'), function ($query) {
+                    $query->where('extension_uuid', optional(auth()->user())->extension_uuid);
+                })
                 ->count();
         }
 
         if (Module::has('ContactCenter') && Module::collections()->has('ContactCenter') && (userCheckPermission("contact_center_settings_edit") || userCheckPermission("contact_center_dashboard_view"))) {
             $counts['queues'] = CallCenterQueues::where('domain_uuid', $domain_uuid)->count();
+        }
+
+        if (
+            Module::has('Billing')
+            && Module::collections()->has('Billing')
+            && userCheckPermission('billing_view')
+        ) {
+            $counts['billing'] = DB::table('billing_quotes')
+                ->where('domain_uuid', $domain_uuid)
+                ->whereIn('status', ['draft', 'sent', 'viewed', 'accepted'])
+                ->count();
         }
 
         $eslService = new FreeswitchEslService();
@@ -493,7 +510,7 @@ class DashboardController extends Controller
         if (userCheckPermission("whitelisted_numbers_list_view")) {
             $apps[] = ['name' => 'Whitelisted Numbers', 'href' => route('whitelisted-numbers.index'), 'icon' => 'HeartIcon', 'slug' => 'whitelisted_numbers'];
         }
-        if (userCheckPermission("wakeup_calls_list_view")) {
+        if (userCheckPermission("wakeup_calls_list_view") && (userCheckPermission('wakeup_calls_view_all_records') || userCheckPermission('wakeup_calls_all') || userCheckPermission('wakeup_calls_view_self_records'))) {
             $apps[] = ['name' => 'Wakeup Calls', 'href' => route('wakeup-calls.index'), 'icon' => 'ClockIcon', 'slug' => 'wakeup_calls'];
         }
 
@@ -515,6 +532,21 @@ class DashboardController extends Controller
             }
 
             $apps[] = $contact_center_app;
+        }
+
+        if (
+            Module::has('Billing')
+            && Module::collections()->has('Billing')
+            && userCheckPermission('billing_view')
+        ) {
+            $apps[] = [
+                'name' => 'Billing',
+                'href' => '/billing',
+                'icon' => 'SettingsApplications',
+                'slug' => 'billing',
+                'alt_href' => userCheckPermission('billing_settings_edit') ? '/billing/settings' : null,
+                'alt_link_label' => userCheckPermission('billing_settings_edit') ? 'Settings' : null,
+            ];
         }
 
 

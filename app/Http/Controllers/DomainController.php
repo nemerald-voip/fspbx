@@ -38,6 +38,10 @@ class DomainController extends Controller
         return Inertia::render(
             $this->viewName,
             [
+                'pagination' => [
+                    'per_page' => fspbx_pagination_per_page(),
+                    'per_page_options' => fspbx_pagination_options(),
+                ],
 
                 'routes' => [
                     // 'current_page' => route('devices.index'),
@@ -64,7 +68,7 @@ class DomainController extends Controller
 
     public function getData()
     {
-        $perPage = 50;
+        $perPage = fspbx_pagination_per_page();
 
         $items = QueryBuilder::for(Domain::class)
             ->select([

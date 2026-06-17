@@ -675,6 +675,7 @@ paths:
                       domain_uuid: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
                       sip_call_id: 0f4b17db-3ef1-476d-b6e7-bcfe07dfd001
                       extension_uuid: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5
+                      recording_uuid: c0ec8113-aa15-40ac-8437-47185dd9dcf4
                       direction: inbound
                       caller_id_name: 'John Smith'
                       caller_id_number: '2135551212'
@@ -706,6 +707,7 @@ paths:
                         domain_uuid: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
                         sip_call_id: 0f4b17db-3ef1-476d-b6e7-bcfe07dfd001
                         extension_uuid: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5
+                        recording_uuid: c0ec8113-aa15-40ac-8437-47185dd9dcf4
                         direction: inbound
                         caller_id_name: 'John Smith'
                         caller_id_number: '2135551212'
@@ -736,6 +738,9 @@ paths:
                         extension_uuid:
                           type: string
                           example: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5
+                        recording_uuid:
+                          type: string
+                          example: c0ec8113-aa15-40ac-8437-47185dd9dcf4
                         direction:
                           type: string
                           example: inbound
@@ -907,6 +912,7 @@ paths:
                   sip_call_id: 0f4b17db-3ef1-476d-b6e7-bcfe07dfd001
                   extension_uuid: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5
                   call_center_queue_uuid: null
+                  recording_uuid: 40aec3e8-a572-40da-954b-ddf6a8a65324
                   direction: inbound
                   caller_id_name: 'John Smith'
                   caller_id_number: '2135551212'
@@ -963,6 +969,9 @@ paths:
                   call_center_queue_uuid:
                     type: string
                     example: null
+                  recording_uuid:
+                    type: string
+                    example: 40aec3e8-a572-40da-954b-ddf6a8a65324
                   direction:
                     type: string
                     example: inbound
@@ -1724,6 +1733,10 @@ paths:
                   type: string
                   description: 'Optional device profile UUID.'
                   example: 51759db8-c8bf-4b2f-b48a-6577d7ad6a1a
+                device_key_template_uuid:
+                  type: string
+                  description: ''
+                  example: null
                 device_template:
                   type: string
                   description: 'Deprecated legacy template identifier. Prefer device_template_uuid.'
@@ -1736,6 +1749,18 @@ paths:
                   type: string
                   description: 'Optional label or description for the device.'
                   example: 'Reception desk device'
+                device_lines:
+                  type: array
+                  description: ''
+                  example:
+                    - []
+                  items:
+                    type: object
+                    properties:
+                      shared_line:
+                        type: string
+                        description: ''
+                        example: null
               required:
                 - device_address
     parameters:
@@ -3712,8 +3737,12 @@ paths:
                   example: null
                 voicemail_file:
                   type: string
-                  description: 'Voicemail delivery mode (e.g., attach). Defaults to "attach" if omitted.'
-                  example: attach
+                  description: 'Voicemail delivery mode. Use "attach" to attach the recording, "link" to email a signed download link, or blank for notification only. Defaults to "attach" if omitted.'
+                  example: link
+                  enum:
+                    - attach
+                    - link
+                    - ''
                 voicemail_local_after_email:
                   type: boolean
                   description: 'Whether to keep voicemail local after emailing it. Defaults to true if omitted.'
@@ -4326,8 +4355,12 @@ paths:
                   example: null
                 voicemail_file:
                   type: string
-                  description: 'Voicemail delivery mode (e.g., attach). If omitted, value is unchanged.'
-                  example: attach
+                  description: 'Voicemail delivery mode. Use "attach" to attach the recording, "link" to email a signed download link, or blank for notification only. If omitted, value is unchanged.'
+                  example: link
+                  enum:
+                    - attach
+                    - link
+                    - ''
                 voicemail_local_after_email:
                   type: boolean
                   description: 'Whether to keep voicemail local after emailing it. If omitted, value is unchanged.'
@@ -6919,6 +6952,7 @@ paths:
                     - ivrs
                     - business_hours
                     - contact_centers
+                    - bridges
                     - faxes
                     - conferences
                     - call_flows
@@ -7530,6 +7564,7 @@ paths:
                     - ivrs
                     - business_hours
                     - contact_centers
+                    - bridges
                     - faxes
                     - conferences
                     - call_flows
@@ -7961,8 +7996,12 @@ paths:
                   example: true
                 voicemail_file:
                   type: string
-                  description: 'Voicemail delivery mode (e.g., attach). Defaults to "attach" if omitted.'
-                  example: attach
+                  description: 'Voicemail delivery mode. Use "attach" to attach the recording, "link" to email a signed download link, or blank for notification only. Defaults to "attach" if omitted.'
+                  example: link
+                  enum:
+                    - attach
+                    - link
+                    - ''
                 voicemail_local_after_email:
                   type: boolean
                   description: 'Whether to keep voicemail local after emailing it. Defaults to true if omitted.'
@@ -8290,8 +8329,12 @@ paths:
                   example: true
                 voicemail_file:
                   type: string
-                  description: 'Voicemail delivery mode (e.g., attach). If omitted, unchanged. Must not be greater than 50 characters.'
-                  example: attach
+                  description: 'Voicemail delivery mode. Use "attach" to attach the recording, "link" to email a signed download link, or blank for notification only. If omitted, unchanged. Must not be greater than 50 characters.'
+                  example: link
+                  enum:
+                    - attach
+                    - link
+                    - ''
                 voicemail_description:
                   type: string
                   description: 'Optional voicemail description/label. If omitted, unchanged. Use null to clear. Must not be greater than 255 characters.'
