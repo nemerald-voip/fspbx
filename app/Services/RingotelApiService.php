@@ -954,6 +954,40 @@ class RingotelApiService
         return $response['result'];
     }
 
+    public function initCall(array $params)
+    {
+        $this->ensureApiTokenExists();
+
+        $data = [
+            'method' => 'initCall',
+            'params' => [
+                'from' => $params['from'],
+                'tonumber' => $params['tonumber'],
+                'toname' => $params['toname'],
+                'domain' => $params['domain'],
+            ],
+        ];
+
+        $response = Http::ringotel()
+            ->timeout($this->timeout)
+            ->withBody(json_encode($data), 'application/json')
+            ->post('/')
+            ->throw(function () {
+                throw new \Exception("Unable to initialize Ringotel call.");
+            })
+            ->json();
+
+        if (isset($response['error'])) {
+            throw new \Exception($response['error']['message']);
+        }
+
+        if (!isset($response['result'])) {
+            throw new \Exception("An unknown error has occurred");
+        }
+
+        return $response['result'];
+    }
+
 
     public function getRegions()
     {
