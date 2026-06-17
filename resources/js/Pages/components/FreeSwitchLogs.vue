@@ -125,6 +125,30 @@
                 <option value="asc">Oldest first</option>
                 <option value="desc">Newest first</option>
             </select>
+
+            <div v-if="permissions?.log_view && routes?.freeswitch_sip_trace" class="ml-auto flex flex-wrap items-center gap-2">
+                <span class="text-sm font-medium text-gray-700">SIP packets</span>
+                <button
+                    type="button"
+                    :disabled="isSipTraceLoading"
+                    @click="setSipTrace(true)"
+                    class="inline-flex items-center gap-1.5 rounded-md bg-white px-2.5 py-1.5 text-xs font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    :class="{ 'bg-indigo-50 text-indigo-700 ring-indigo-200': sipTraceEnabled === true }"
+                >
+                    <SignalIcon class="h-4 w-4" aria-hidden="true" />
+                    Enable
+                </button>
+                <button
+                    type="button"
+                    :disabled="isSipTraceLoading"
+                    @click="setSipTrace(false)"
+                    class="inline-flex items-center gap-1.5 rounded-md bg-white px-2.5 py-1.5 text-xs font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    :class="{ 'bg-gray-100 text-gray-900 ring-gray-300': sipTraceEnabled === false }"
+                >
+                    <NoSymbolIcon class="h-4 w-4" aria-hidden="true" />
+                    Disable
+                </button>
+            </div>
         </div>
 
         <div v-if="meta.errors?.length" class="mt-4 rounded-md bg-rose-50 p-4 text-sm text-rose-700 ring-1 ring-inset ring-rose-200">
@@ -219,17 +243,22 @@
 import { computed, ref, watch } from 'vue';
 import axios from 'axios';
 import { MagnifyingGlassIcon } from '@heroicons/vue/24/solid';
-import { ClipboardDocumentIcon } from '@heroicons/vue/24/outline';
+import { ClipboardDocumentIcon, NoSymbolIcon, SignalIcon } from '@heroicons/vue/24/outline';
+
+const emit = defineEmits(['success', 'error'])
 
 const props = defineProps({
     routes: Object,
     trigger: Boolean,
+    permissions: Object,
 })
 
 const isDataLoading = ref(false)
+const isSipTraceLoading = ref(false)
 const hasLoaded = ref(false)
 const lines = ref([])
 const copiedLog = ref(false)
+const sipTraceEnabled = ref(null)
 const fileOptions = ref([{ value: 'freeswitch.log', label: 'freeswitch.log' }])
 const correlation = ref({
     seed: null,
@@ -320,6 +349,22 @@ const handleFiltersReset = () => {
         correlation_padding_minutes: 5,
     }
     fetchData()
+}
+
+const setSipTrace = async (enabled) => {
+    if (isSipTraceLoading.value || !props.routes?.freeswitch_sip_trace) return
+
+    isSipTraceLoading.value = true
+
+    try {
+        const response = await axios.post(props.routes.freeswitch_sip_trace, { enabled })
+        sipTraceEnabled.value = response.data.enabled ?? enabled
+        emit('success', response.data.messages || { success: [enabled ? 'SIP packet logging enabled.' : 'SIP packet logging disabled.'] })
+    } catch (error) {
+        emit('error', error.response?.data?.messages || error.response?.data?.errors || { error: ['Unable to update SIP packet logging.'] })
+    } finally {
+        isSipTraceLoading.value = false
+    }
 }
 
 const lineTextClass = (level) => {

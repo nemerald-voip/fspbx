@@ -60,7 +60,13 @@
                     <StaticElement name="locations_title" tag="h4" content="FreeSWITCH" />
                 </Vueform>
 
-                <FreeSwitchLogs :trigger="freeswitchLogsTrigger" :routes="routes" />
+                <FreeSwitchLogs
+                    :trigger="freeswitchLogsTrigger"
+                    :routes="routes"
+                    :permissions="permissions"
+                    @success="showSuccessNotification"
+                    @error="showErrorNotification"
+                />
             </section>
 
         </template>
@@ -217,6 +223,18 @@ const hideNotification = () => {
     notificationShow.value = false;
     notificationType.value = null;
     notificationMessages.value = null;
+}
+
+const showSuccessNotification = (messages) => {
+    notificationType.value = 'success'
+    notificationMessages.value = messages
+    notificationShow.value = true
+}
+
+const showErrorNotification = (messages) => {
+    notificationType.value = 'error'
+    notificationMessages.value = messages
+    notificationShow.value = true
 }
 
 const openTestEmailModal = () => {

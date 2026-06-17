@@ -66,6 +66,7 @@ class LogsController extends Controller
                     'fax_logs_bulk_delete' => route('fax-logs.bulk.delete'),
                     'fax_logs_retry' => route('fax-logs.retry', ['faxLog' => ':faxLog']),
                     'freeswitch_logs' => route('freeswitch-logs.index'),
+                    'freeswitch_sip_trace' => route('freeswitch-logs.sip-trace'),
 
                 ],
                 'permissions' => function () {
