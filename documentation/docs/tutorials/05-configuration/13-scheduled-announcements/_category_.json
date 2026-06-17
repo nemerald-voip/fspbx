@@ -1,0 +1,8 @@
+{
+  "label": "Scheduled Announcements",
+  "position": 46,
+  "link": {
+    "type": "generated-index",
+    "description": "Create scheduled bells, tones, and announcements for selected extensions."
+  }
+}

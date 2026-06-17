@@ -1,0 +1,8 @@
+{
+  "label": "Wakeup Calls",
+  "position": 47,
+  "link": {
+    "type": "generated-index",
+    "description": "Schedule automated wake-up calls for extensions."
+  }
+}

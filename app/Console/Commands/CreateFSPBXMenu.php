@@ -130,6 +130,7 @@ class CreateFSPBXMenu extends Command
                     ['title' => 'Business Hours', 'link' => '/business-hours', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'Voicemails', 'link' => '/voicemails', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'Wakeup Calls', 'link' => '/wakeup-calls', 'groups' => ['superadmin', 'admin']],
+                    ['title' => 'Scheduled Announcements', 'link' => '/scheduled-announcements', 'groups' => ['superadmin', 'admin']],
                 ],
             ],
             [

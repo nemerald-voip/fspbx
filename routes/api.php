@@ -74,6 +74,7 @@ use App\Http\Controllers\VirtualReceptionistController;
 use App\Http\Controllers\VoicemailController;
 use App\Http\Controllers\VoicemailMessagesController;
 use App\Http\Controllers\WakeupCallsController;
+use App\Http\Controllers\ScheduledAnnouncementController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -443,6 +444,19 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/wakeup-calls/bulk-delete', [WakeupCallsController::class, 'bulkDelete'])->name('wakeup-calls.bulk.delete');
     Route::post('wakeup-calls/settings', [WakeupCallsController::class, 'getSettings'])->name('wakeup-calls.settings');
     Route::put('wakeup-calls/settings/update', [WakeupCallsController::class, 'updateSettings'])->name('wakeup-calls.settings.update');
+
+    // Scheduled Announcements
+    Route::get('scheduled-announcements/data', [ScheduledAnnouncementController::class, 'data'])->name('scheduled-announcements.data');
+    Route::post('scheduled-announcements/schedules', [ScheduledAnnouncementController::class, 'storeSchedule'])->name('scheduled-announcements.schedules.store');
+    Route::put('scheduled-announcements/schedules/{schedule}', [ScheduledAnnouncementController::class, 'updateSchedule'])->name('scheduled-announcements.schedules.update');
+    Route::delete('scheduled-announcements/schedules/{schedule}', [ScheduledAnnouncementController::class, 'destroySchedule'])->name('scheduled-announcements.schedules.destroy');
+    Route::post('scheduled-announcements/events', [ScheduledAnnouncementController::class, 'storeEvent'])->name('scheduled-announcements.events.store');
+    Route::put('scheduled-announcements/events/{event}', [ScheduledAnnouncementController::class, 'updateEvent'])->name('scheduled-announcements.events.update');
+    Route::delete('scheduled-announcements/events/{event}', [ScheduledAnnouncementController::class, 'destroyEvent'])->name('scheduled-announcements.events.destroy');
+    Route::post('scheduled-announcements/events/{event}/run', [ScheduledAnnouncementController::class, 'runEvent'])->name('scheduled-announcements.events.run');
+    Route::post('scheduled-announcements/exceptions', [ScheduledAnnouncementController::class, 'storeException'])->name('scheduled-announcements.exceptions.store');
+    Route::put('scheduled-announcements/exceptions/{exception}', [ScheduledAnnouncementController::class, 'updateException'])->name('scheduled-announcements.exceptions.update');
+    Route::delete('scheduled-announcements/exceptions/{exception}', [ScheduledAnnouncementController::class, 'destroyException'])->name('scheduled-announcements.exceptions.destroy');
 
     // Conference Centers
     Route::post('conference-centers', [ConferenceCenterController::class, 'store'])->name('conference-centers.store');

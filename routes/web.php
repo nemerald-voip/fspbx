@@ -59,6 +59,7 @@ use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\RingGroupsController;
 use App\Http\Controllers\SansayActiveCallsController;
 use App\Http\Controllers\SansayRegistrationsController;
+use App\Http\Controllers\ScheduledAnnouncementController;
 use App\Http\Controllers\SipStatusController;
 use App\Http\Controllers\SpeedDialController;
 use App\Http\Controllers\SwitchVariableController;
@@ -321,6 +322,9 @@ Route::group(['middleware' => 'auth'], function () {
 
     //Wakeup Calls
     Route::get('wakeup-calls', [WakeupCallsController::class, 'index'])->name('wakeup-calls.index');
+
+    // Scheduled Announcements
+    Route::get('scheduled-announcements', [ScheduledAnnouncementController::class, 'index'])->name('scheduled-announcements.index');
 
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
