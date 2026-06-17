@@ -12,9 +12,9 @@ use Illuminate\Support\Collection;
 class FreeswitchLogController extends Controller
 {
     private const DEFAULT_LOG_DIR = '/var/log/freeswitch';
-    private const DEFAULT_SIZE_KB = 512;
+    private const DEFAULT_SIZE_KB = 5120;
     private const MAX_SIZE_KB = 10240;
-    private const DEFAULT_MAX_LINES = 1000;
+    private const DEFAULT_MAX_LINES = 3000;
     private const MAX_LINES = 5000;
     private const DEFAULT_CORRELATION_PADDING_MINUTES = 5;
     private const MAX_CORRELATION_PADDING_MINUTES = 60;
