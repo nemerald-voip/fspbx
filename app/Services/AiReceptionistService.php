@@ -39,6 +39,7 @@ class AiReceptionistService
     private const WARM_TRANSFER_TIMEOUT_SECONDS = 60;
     private const WARM_TRANSFER_POLL_INTERVAL_SECONDS = 1;
     private const WARM_TRANSFER_MIN_CONSULT_SECONDS = 2;
+    private const WARM_TRANSFER_CONNECT_TONE = 'tone_stream://L=1;v=-18;%(90,0,640)';
 
     public const ENGINE_DEFINITIONS = [
         'openai_realtime' => [
@@ -608,12 +609,15 @@ class AiReceptionistService
         }
 
         $commands['resolved_recipient_uuid'] = $recipientUuid;
+
         $bridgeResponse = $this->eslString("uuid_bridge {$warmTransfer->caller_uuid} {$recipientUuid}");
         $commands['bridge_caller_to_recipient'] = $bridgeResponse;
 
         if (str_starts_with($bridgeResponse, '-ERR')) {
             $commands['bridge_caller_to_recipient_bg'] = $this->eslString("bgapi uuid_bridge {$warmTransfer->caller_uuid} {$recipientUuid}");
         }
+
+        $commands['recipient_connect_tone'] = $this->eslString("bgapi sched_api +1 none uuid_broadcast {$recipientUuid} " . self::WARM_TRANSFER_CONNECT_TONE . " both");
 
         $commands['kill_openai'] = $this->eslString("bgapi sched_api +1 none uuid_kill {$warmTransfer->openai_uuid}");
 
@@ -871,11 +875,14 @@ class AiReceptionistService
         }
 
         $commands['resolved_recipient_uuid'] = $recipientUuid;
+
         $commands['bridge_caller_to_recipient'] = $this->eslString("uuid_bridge {$warmTransfer->caller_uuid} {$recipientUuid}");
 
         if (str_starts_with($commands['bridge_caller_to_recipient'], '-ERR')) {
             $commands['bridge_caller_to_recipient_bg'] = $this->eslString("bgapi uuid_bridge {$warmTransfer->caller_uuid} {$recipientUuid}");
         }
+
+        $commands['recipient_connect_tone'] = $this->eslString("bgapi sched_api +1 none uuid_broadcast {$recipientUuid} " . self::WARM_TRANSFER_CONNECT_TONE . " both");
 
         if (filled($warmTransfer->openai_uuid)) {
             $commands['kill_caller_openai'] = $this->eslString("bgapi sched_api +1 none uuid_kill {$warmTransfer->openai_uuid}");
