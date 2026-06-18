@@ -204,6 +204,12 @@
                                                                 placeholder="Add phrases callers might say"
                                                                 :columns="{ sm: { container: 6 } }" />
 
+                                                            <TagsElement name="collected_fields" label="Details to Collect"
+                                                                :floating="false" :search="true" :create="true" allow-absent
+                                                                :add-option-on="['enter', 'tab', ';', ',']"
+                                                                placeholder="Add details to ask before routing"
+                                                                :columns="{ sm: { container: 6 } }" />
+
                                                             <SelectElement name="route_action" :items="actionOptions"
                                                                 label="Action" label-prop="name" value-prop="value"
                                                                 :native="false" :search="true" :floating="false"
@@ -368,6 +374,7 @@ const defaultValues = computed(() => ({
         route_uuid: route.route_uuid ?? null,
         name: route.name ?? null,
         match_phrases: route.match_phrases ?? [],
+        collected_fields: route.collected_fields ?? [],
         route_action: route.action_type === "email"
             ? "email"
             : (route.transfer_type === "warm" ? "warm_transfer" : "cold_transfer"),
@@ -431,7 +438,7 @@ const instructionsPreview = computed(() => {
         "- If the caller says a route name, treat that as a clear match and do not ask whether they meant a different route.",
         "- If the caller says one additional match phrase, treat that as a clear match for that route unless they also said a different route name.",
         "- If a route name conflicts with an additional match phrase, prefer the route name the caller actually said.",
-        "- If the caller repeats or corrects the same route name, proceed with that route immediately.",
+        "- If the caller repeats or corrects the same route name, proceed with that route flow.",
         "- If exactly one route clearly matches, proceed using that route.",
         "- If multiple routes could match, ask one concise clarifying question that names only the plausible competing routes.",
         "- Do not ask about unrelated routes. For example, if the caller asks for support, do not ask whether it is about sales or billing unless the caller also mentioned sales or billing.",
@@ -444,19 +451,22 @@ const instructionsPreview = computed(() => {
         "- Keep internal routing decisions out of spoken responses.",
         "",
         "# Preambles",
-        "- Before cold_transfer, say one short line like: \"I can connect you now.\" Then call the tool immediately.",
-        "- Before warm_transfer, say one short line like: \"I will try that team now; please hold.\" Then call the tool immediately.",
-        "- Before send_email, say one short line like: \"I will send that message now.\" Then call the tool immediately.",
+        "- Before calling any route tool, make sure the route's collected_fields are known when the Available Routes line lists any. Use details the caller already gave; ask only for missing details.",
+        "- Before cold_transfer, after required route details are collected, say one short line like: \"I can connect you now.\" Then call the tool.",
+        "- Before warm_transfer, after required route details are collected, say one short line like: \"I will try that team now; please hold.\" Then call the tool.",
+        "- Before send_email, after required route details are collected, say one short line like: \"I will send that message now.\" Then call the tool.",
         "",
         "# Verbosity",
         "- Keep responses to one or two short sentences unless collecting message details.",
         "- When collecting details, ask for only the next missing value.",
+        "- If a matched route lists collected_fields, extract those details from the full conversation first, then ask only for missing fields and include the answers in collected_fields.",
+        "- Do not ask again for a detail the caller already gave. If the caller says multiple details in one turn, split them into the matching fields.",
         "- Do not over-explain routing or tool behavior.",
         "",
         "# Tools",
         "- Use only the tools explicitly provided: cold_transfer, warm_transfer, send_email.",
         "- Only call tools with route_uuid values listed under Available Routes.",
-        "- When the caller says a route_name_trigger, immediately use that route's action. Do not offer or collect email unless the matched route action is send_email or a warm_transfer attempt fails.",
+        "- When the caller says a route_name_trigger, select that route and collect its collected_fields before using that route's action. Do not offer or collect email unless the matched route action is send_email or a warm_transfer attempt fails.",
         "- Only say an action is complete after the tool call succeeds.",
         "- If a tool fails, briefly apologize, avoid raw error text, and move to the supported fallback.",
         "",
@@ -477,10 +487,17 @@ const instructionsPreview = computed(() => {
                     .join(", ")
                 : "";
             const additionalPhrases = phrases || "none";
+            const fields = Array.isArray(route.collected_fields)
+                ? route.collected_fields
+                    .map((field) => String(field ?? "").trim())
+                    .filter(Boolean)
+                    .join(", ")
+                : "";
+            const collectedFields = fields || "none";
 
             if (route.route_action === "email") {
                 const extra = route.email_instructions ? `; message_instructions=${route.email_instructions}` : "";
-                lines.push(`- ${route.name}: route_uuid=${routeUuid}; action=send_email; route_name_trigger=${route.name}; additional_match_phrases=${additionalPhrases}${extra}`);
+                lines.push(`- ${route.name}: route_uuid=${routeUuid}; action=send_email; route_name_trigger=${route.name}; additional_match_phrases=${additionalPhrases}; collected_fields=${collectedFields}${extra}`);
                 return;
             }
 
@@ -488,7 +505,7 @@ const instructionsPreview = computed(() => {
             const destination = typeof route.destination_target === "object" && route.destination_target !== null
                 ? (route.destination_target.name ?? route.destination_target.extension ?? route.destination_target.value)
                 : (route.destination_label ?? route.destination_target ?? "");
-            lines.push(`- ${route.name}: route_uuid=${routeUuid}; action=${action}; route_name_trigger=${route.name}; additional_match_phrases=${additionalPhrases}; destination=${destination}`);
+            lines.push(`- ${route.name}: route_uuid=${routeUuid}; action=${action}; route_name_trigger=${route.name}; additional_match_phrases=${additionalPhrases}; collected_fields=${collectedFields}; destination=${destination}`);
         });
     }
 
@@ -499,15 +516,18 @@ const instructionsPreview = computed(() => {
         "- Do not use for warm transfer or email routes.",
         "- Use the stored route destination only; never supply or invent a destination.",
         "",
-        "## warm_transfer(route_uuid, handoff_summary)",
+        "## warm_transfer(route_uuid, handoff_summary, collected_fields)",
         "- Use when the caller topic clearly matches a warm transfer route.",
         "- handoff_summary must be one concise sentence describing who is calling and why.",
-        "- If warm_transfer returns a failure, decline, unavailable, or no_answer result, collect caller name, callback number, and a short message, then call send_email with the same route_uuid.",
+        "- If the route lists collected_fields, use values already stated in the conversation first; ask only for missing values and include them as collected_fields.",
+        "- If warm_transfer returns a failure, decline, unavailable, or no_answer result, reuse the caller name, callback number, and collected_fields you already have. Ask only for any missing callback detail and a short message, then call send_email with the same route_uuid.",
         "",
-        "## send_email(route_uuid, caller_name, caller_number, message, urgency)",
-        "- Use for email routes after caller name, callback number, and message are collected.",
-        "- Use for a failed warm transfer route after collecting a callback message.",
+        "## send_email(route_uuid, caller_name, caller_number, message, urgency, collected_fields)",
+        "- Use for email routes after caller name, callback number, and message are known.",
+        "- Use for a failed warm transfer route after collecting only the missing callback message details.",
+        "- If the route lists collected_fields, use values already stated in the conversation first; ask only for missing values and include them as collected_fields.",
         "- Do not use for cold transfer routes.",
+        "- After send_email succeeds, say one final confirmation and goodbye.",
         "",
         "# Unclear Audio",
         "- If caller audio is unclear, ask them to repeat the last detail.",
@@ -516,6 +536,7 @@ const instructionsPreview = computed(() => {
         "",
         "# Entity Capture",
         "- Capture caller name, callback number, and message exactly enough for staff to follow up.",
+        "- Treat phrases like \"This is [caller name] with [company name]\" as both caller name and company when those details are needed.",
         "- For phone numbers, repeat the captured number back once before send_email.",
         "- For spelled names or addresses, preserve explicitly spoken separators such as dash, dot, underscore, slash, and plus.",
         "- Ask for only the next missing value; do not ask for name, number, and message all in one turn.",
@@ -623,6 +644,7 @@ const submitForm = async (FormData, form$) => {
 
     requestData.routes = (requestData.routes ?? []).map((route, index) => {
         const routeElement = form$.el$(`routes.${index}.match_phrases`);
+        const collectedFieldsElement = form$.el$(`routes.${index}.collected_fields`);
         const targetValue = route.destination_target;
         const routeAction = route.route_action ?? "cold_transfer";
         const destinationTarget = typeof targetValue === "object" && targetValue !== null
@@ -635,6 +657,7 @@ const submitForm = async (FormData, form$) => {
         return {
             ...route,
             match_phrases: normalizeTags(routeElement?.value ?? route.match_phrases),
+            collected_fields: normalizeTags(collectedFieldsElement?.value ?? route.collected_fields),
             action_type: routeAction === "email" ? "email" : "transfer",
             transfer_type: routeAction === "warm_transfer" ? "warm" : (routeAction === "cold_transfer" ? "cold" : null),
             destination_target: routeAction === "email" ? null : destinationTarget,

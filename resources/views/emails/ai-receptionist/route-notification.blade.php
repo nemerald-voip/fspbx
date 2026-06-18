@@ -31,6 +31,12 @@
             <td>{{ $attributes['failure_status'] }}</td>
         </tr>
     @endif
+    @foreach(($attributes['collected_fields'] ?? []) as $field => $value)
+        <tr>
+            <td><strong>{{ $field }}</strong></td>
+            <td>{{ $value }}</td>
+        </tr>
+    @endforeach
 </table>
 
 @if(!empty($attributes['message']))

@@ -159,6 +159,8 @@ class AiReceptionistAgentController extends Controller
         $payload = $request->validate([
             'route_uuid' => ['required', 'uuid'],
             'handoff_summary' => ['required', 'string', 'max:2000'],
+            'collected_fields' => ['nullable', 'array'],
+            'wait_for_decision' => ['nullable', 'boolean'],
         ]);
 
         return response()->json($service->recordBuiltInToolRun(
@@ -231,6 +233,7 @@ class AiReceptionistAgentController extends Controller
             'message' => ['required', 'string', 'max:5000'],
             'urgency' => ['nullable', 'string', 'max:64'],
             'transcript' => ['nullable', 'string', 'max:50000'],
+            'collected_fields' => ['nullable', 'array'],
         ]);
 
         return response()->json($service->recordBuiltInToolRun(
@@ -254,6 +257,7 @@ class AiReceptionistAgentController extends Controller
             'message' => ['required', 'string', 'max:5000'],
             'urgency' => ['nullable', 'string', 'max:64'],
             'transcript' => ['nullable', 'string', 'max:50000'],
+            'collected_fields' => ['nullable', 'array'],
         ]);
 
         return response()->json($service->recordBuiltInToolRun(

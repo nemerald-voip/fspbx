@@ -232,8 +232,10 @@ def accept_payload(config: dict[str, Any]) -> dict[str, Any]:
                 "description": (
                     "Cold transfer the caller to a configured cold-transfer route. "
                     f"Allowed routes: {route_list_for_action(config, 'cold_transfer')}. "
-                    "If the caller said one of these route names, use that route immediately. "
-                    "Before calling this tool, speak one short sentence telling the caller you are connecting them now."
+                    "If the caller said one of these route names, select that route. "
+                    "Before calling this tool, use any already-stated details for collected_fields listed for the route, "
+                    "ask only for missing collected_fields, "
+                    "then speak one short sentence telling the caller you are connecting them now."
                 ),
                 "parameters": {
                     "type": "object",
@@ -249,15 +251,22 @@ def accept_payload(config: dict[str, Any]) -> dict[str, Any]:
                 "description": (
                     "Start a warm transfer for a configured warm-transfer route. "
                     f"Allowed routes: {route_list_for_action(config, 'warm_transfer')}. "
-                    "If the caller said one of these route names, use that route immediately. "
-                    "Before calling this tool, tell the caller you are connecting them now and ask them to hold. "
-                    "If the result says the transfer failed or was declined, collect a message and call send_email for the same route."
+                    "If the caller said one of these route names, select that route. "
+                    "Before calling this tool, use any already-stated details for collected_fields listed for the route, "
+                    "ask only for missing collected_fields, "
+                    "then tell the caller you are connecting them now and ask them to hold. "
+                    "If the result says the transfer failed or was declined, reuse already-collected caller details, "
+                    "ask only for a missing callback detail and short message, then call send_email for the same route."
                 ),
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "route_uuid": route_uuid_property(config, "warm_transfer"),
                         "handoff_summary": {"type": "string"},
+                        "collected_fields": {
+                            "type": "object",
+                            "additionalProperties": {"type": "string"},
+                        },
                     },
                     "required": ["route_uuid", "handoff_summary"],
                 },
@@ -270,7 +279,8 @@ def accept_payload(config: dict[str, Any]) -> dict[str, Any]:
                     "or to a warm-transfer route only after that warm transfer failed. "
                     f"Allowed routes: {route_list_for_action(config, 'send_email')}. "
                     "Do not use this as a substitute for a clear cold_transfer or warm_transfer route match. "
-                    "Collect caller name, callback number, and the message before calling."
+                    "Use caller name, callback number, and collected_fields already stated in the conversation. "
+                    "Ask only for missing callback details and the message before calling."
                 ),
                 "parameters": {
                     "type": "object",
@@ -280,6 +290,10 @@ def accept_payload(config: dict[str, Any]) -> dict[str, Any]:
                         "caller_number": {"type": "string"},
                         "message": {"type": "string"},
                         "urgency": {"type": "string"},
+                        "collected_fields": {
+                            "type": "object",
+                            "additionalProperties": {"type": "string"},
+                        },
                     },
                     "required": ["route_uuid", "message"],
                 },
@@ -361,6 +375,9 @@ class CallContext:
     latest_assistant_transcript: str = ""
     assistant_transcript_version: int = 0
     response_completed: bool = True
+    response_sequence: int = 0
+    completed_response_sequence: int = 0
+    response_sequences: dict[str, int] = field(default_factory=dict)
     response_started_transcript_version: int = 0
     last_completed_response_transcript: str = ""
     handled_function_calls: set[str] = field(default_factory=set)
@@ -377,6 +394,8 @@ class CallContext:
     # everything we just generated". Word-count heuristics on transcript.done get
     # the audio length wrong and cause the bridge swap to clip the tail.
     audio_output_active: bool = False
+    audio_buffer_started_sequence: int = 0
+    audio_buffer_stopped_sequence: int = 0
     response_had_audio_transcript: bool = False
     audio_buffer_observed: bool = False
     auto_response_disabled: bool = False
@@ -588,9 +607,15 @@ class RealtimeCallController:
             [t.get("name") for t in consult_tools],
         )
 
-    async def restore_caller_session(self, ws: aiohttp.ClientWebSocketResponse, context: CallContext) -> None:
+    async def restore_caller_session(
+        self,
+        ws: aiohttp.ClientWebSocketResponse,
+        context: CallContext,
+        *,
+        force: bool = False,
+    ) -> None:
         """Restore the original caller-receptionist persona + full tool list."""
-        if not context.in_consult:
+        if not context.in_consult and not force:
             return
 
         session_update: dict[str, Any] = {
@@ -816,6 +841,10 @@ class RealtimeCallController:
             return
 
         if event_type == "response.created":
+            context.response_sequence += 1
+            response_id = self.response_id_from_event(event)
+            if response_id:
+                context.response_sequences[response_id] = context.response_sequence
             context.response_completed = False
             context.response_started_transcript_version = context.assistant_transcript_version
             context.last_completed_response_transcript = ""
@@ -843,11 +872,16 @@ class RealtimeCallController:
         if event_type == "output_audio_buffer.started":
             context.audio_output_active = True
             context.audio_buffer_observed = True
+            context.audio_buffer_started_sequence = context.response_sequence
             return
 
         if event_type == "output_audio_buffer.stopped":
             context.audio_output_active = False
             context.audio_buffer_observed = True
+            context.audio_buffer_stopped_sequence = max(
+                context.audio_buffer_stopped_sequence,
+                context.audio_buffer_started_sequence or context.response_sequence,
+            )
             if context.response_completed:
                 await self.maybe_run_pending_tools(ws, client, context)
             return
@@ -859,6 +893,16 @@ class RealtimeCallController:
 
         if event_type in {"response.done", "response.completed"}:
             context.response_completed = True
+            response_id = self.response_id_from_event(event)
+            completed_sequence = (
+                context.response_sequences.get(response_id)
+                if response_id
+                else context.response_sequence
+            )
+            context.completed_response_sequence = max(
+                context.completed_response_sequence,
+                completed_sequence or context.response_sequence,
+            )
             context.last_completed_response_transcript = (
                 context.latest_assistant_transcript
                 if context.assistant_transcript_version > context.response_started_transcript_version
@@ -940,7 +984,7 @@ class RealtimeCallController:
         if context.response_had_audio_transcript and not context.audio_buffer_observed:
             await asyncio.sleep(playback_delay_seconds(context.latest_assistant_transcript, minimum=0.5))
 
-        if context.post_response_call_changing_tools:
+        if self.ready_post_response_call_changing_tools(context):
             await self.run_scheduled_function_calls(ws, client, context)
             return
 
@@ -1121,11 +1165,41 @@ class RealtimeCallController:
     ) -> None:
         # Currently only end_call uses the post_response path. Transfer tools take
         # the reject-and-retry path instead — see reject_silent_transfer_call.
-        calls = context.post_response_call_changing_tools[:]
-        context.post_response_call_changing_tools.clear()
+        calls: list[dict[str, Any]] = []
+        deferred: list[dict[str, Any]] = []
+
+        for call in context.post_response_call_changing_tools:
+            if not self.post_response_call_ready(context, call):
+                deferred.append(call)
+                continue
+
+            calls.append(call)
+
+        context.post_response_call_changing_tools = deferred
 
         for call in calls:
             await self.run_function_call(client, context, call["name"], call["arguments"])
+
+    def ready_post_response_call_changing_tools(self, context: CallContext) -> bool:
+        return any(
+            self.post_response_call_ready(context, call)
+            for call in context.post_response_call_changing_tools
+        )
+
+    def post_response_call_ready(self, context: CallContext, call: dict[str, Any]) -> bool:
+        after_sequence = call.get("_after_response_sequence")
+        if after_sequence is not None and context.completed_response_sequence <= int(after_sequence):
+            return False
+
+        if (
+            call.get("_wait_for_audio_buffer_stopped")
+            and after_sequence is not None
+            and context.audio_buffer_observed
+            and context.audio_buffer_stopped_sequence <= int(after_sequence)
+        ):
+            return False
+
+        return True
 
     async def run_function_call_and_respond(
         self,
@@ -1187,6 +1261,10 @@ class RealtimeCallController:
         # Skip creating a new response when the OpenAI leg is about to be killed —
         # otherwise we'd burn compute and risk audio bleeding to the freshly bridged
         # caller↔recipient leg before the kill fires.
+        if name == "warm_transfer" and result.get("active"):
+            self.watch_warm_transfer_if_needed(ws, client, context, name, result)
+            return
+
         if (
             name in {"cold_transfer", "accept_transfer", "decline_transfer"}
             and result.get("success")
@@ -1211,12 +1289,17 @@ class RealtimeCallController:
                     "reason": "message_sent",
                     "status": "completed",
                 },
+                "_after_response_sequence": context.response_sequence,
+                "_wait_for_audio_buffer_stopped": True,
             })
             response["instructions"] = (
                 "Tell the caller in one brief sentence that the message has been sent "
                 "and the team will follow up. Then say goodbye and stop. Do not ask "
                 "another question. Do not call any tools."
             )
+            response["tool_choice"] = "none"
+
+        if name == "warm_transfer" and result.get("response_instructions") and not result.get("success"):
             response["tool_choice"] = "none"
 
         if name != "send_email" and context.auto_response_disabled:
@@ -1252,11 +1335,6 @@ class RealtimeCallController:
         tool_name: str,
         result: dict[str, Any],
     ) -> None:
-        # Two-agent warm transfer is synchronously resolved by the Laravel
-        # warm_transfer tool call, so the caller-side Realtime controller no longer
-        # needs a consult watchdog.
-        return
-
         warm_transfer_uuid = str(result.get("warm_transfer_uuid") or "")
         if not warm_transfer_uuid:
             return
@@ -1322,6 +1400,18 @@ class RealtimeCallController:
 
                 if not reason:
                     # Terminal but no failure reason (e.g. completed normally).
+                    return
+
+                instructions = status.get("response_instructions")
+                if instructions and not ws.closed:
+                    await self.restore_caller_session(ws, context, force=True)
+                    await self.ws_send(ws, context, {
+                        "type": "response.create",
+                        "response": {
+                            "instructions": str(instructions),
+                            "tool_choice": "none",
+                        },
+                    })
                     return
 
                 logger.info(
@@ -1414,6 +1504,10 @@ class RealtimeCallController:
             "arguments": call.get("arguments") or {},
         }, sort_keys=True)
 
+    def response_id_from_event(self, event: dict[str, Any]) -> str:
+        response = event.get("response") if isinstance(event.get("response"), dict) else {}
+        return str(response.get("id") or event.get("response_id") or "").strip()
+
     def decode_arguments(self, raw: Any) -> dict[str, Any]:
         if isinstance(raw, dict):
             return raw
@@ -1441,6 +1535,7 @@ class RealtimeCallController:
                 session_uuid,
                 str(arguments.get("route_uuid") or ""),
                 str(arguments.get("handoff_summary") or ""),
+                arguments.get("collected_fields") or {},
             )
 
         if name == "send_email":
@@ -1450,6 +1545,7 @@ class RealtimeCallController:
                 "caller_number": arguments.get("caller_number"),
                 "message": arguments.get("message"),
                 "urgency": arguments.get("urgency"),
+                "collected_fields": arguments.get("collected_fields") or {},
                 "transcript": "\n".join(context.transcript),
             })
 

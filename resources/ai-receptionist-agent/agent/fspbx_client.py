@@ -99,10 +99,18 @@ class FspbxClient:
             "route_uuid": route_uuid,
         })
 
-    async def warm_transfer(self, session_uuid: str, route_uuid: str, handoff_summary: str) -> dict[str, Any]:
+    async def warm_transfer(
+        self,
+        session_uuid: str,
+        route_uuid: str,
+        handoff_summary: str,
+        collected_fields: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         return await self._request("POST", f"/api/ai-receptionist-agent/sessions/{session_uuid}/warm-transfer", {
             "route_uuid": route_uuid,
             "handoff_summary": handoff_summary,
+            "collected_fields": collected_fields or {},
+            "wait_for_decision": False,
         })
 
     async def check_warm_transfer(self, session_uuid: str, warm_transfer_uuid: str | None = None) -> dict[str, Any]:

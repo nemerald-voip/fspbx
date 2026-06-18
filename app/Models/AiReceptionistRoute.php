@@ -18,6 +18,7 @@ class AiReceptionistRoute extends Model
 
     protected $casts = [
         'match_phrases' => 'array',
+        'collected_fields' => 'array',
         'notify_on_failed_warm_transfer' => 'boolean',
         'enabled' => 'boolean',
     ];

@@ -322,8 +322,19 @@ class AiReceptionistService
 
     public function warmTransfer(AiReceptionistSession $session, array $payload): array
     {
+        $waitForDecision = (bool) ($payload['wait_for_decision'] ?? true);
         $activeWarmTransfer = $this->activeWarmTransfer($session);
         if ($activeWarmTransfer) {
+            if (! $waitForDecision) {
+                return [
+                    'success' => true,
+                    'active' => true,
+                    'status' => $activeWarmTransfer->status,
+                    'warm_transfer_uuid' => $activeWarmTransfer->warm_transfer_uuid,
+                    'message' => 'Warm transfer is already in progress.',
+                ];
+            }
+
             return $this->waitForWarmTransferDecision($session, $activeWarmTransfer);
         }
 
@@ -351,6 +362,7 @@ class AiReceptionistService
         $consultOpenAiUuid = (string) Str::uuid();
         $recipientUuid = (string) Str::uuid();
         $handoffSummary = trim((string) ($payload['handoff_summary'] ?? ''));
+        $collectedFields = $this->normalizeCollectedFieldValues($payload['collected_fields'] ?? []);
 
         $warmTransfer = AiReceptionistWarmTransfer::query()->create([
             'warm_transfer_uuid' => (string) Str::uuid(),
@@ -368,6 +380,7 @@ class AiReceptionistService
             'handoff_summary' => $handoffSummary,
             'metadata' => [
                 'route' => $this->routePayload($route, includePrivate: false),
+                'collected_fields' => $collectedFields,
                 'timeout_seconds' => self::WARM_TRANSFER_TIMEOUT_SECONDS,
             ],
             'started_at' => now(),
@@ -383,11 +396,11 @@ class AiReceptionistService
         $commands = [];
         $holdMusic = $this->warmTransferHoldMusic($callerUuid);
         $commands['set_caller_hold_music'] = $this->eslString("uuid_setvar {$callerUuid} hold_music {$holdMusic}");
+        $commands['set_openai_hangup_after_bridge'] = $this->eslString("uuid_setvar {$openAiUuid} hangup_after_bridge false");
+        $commands['set_openai_park_after_bridge'] = $this->eslString("uuid_setvar {$openAiUuid} park_after_bridge true");
         $commands['hold_caller'] = $this->eslString("uuid_hold {$callerUuid}");
         $commands['park_caller'] = $this->eslString("uuid_park {$callerUuid}");
         $commands['caller_moh'] = $this->eslString("uuid_broadcast {$callerUuid} {$holdMusic} aleg");
-        $commands['set_openai_hangup_after_bridge'] = $this->eslString("uuid_setvar {$openAiUuid} hangup_after_bridge false");
-        $commands['set_openai_park_after_bridge'] = $this->eslString("uuid_setvar {$openAiUuid} park_after_bridge true");
         $commands['park_openai'] = $this->eslString("uuid_park {$openAiUuid}");
 
         $domainName = $this->domainName($session);
@@ -515,6 +528,17 @@ class AiReceptionistService
         $session->forceFill([
             'status' => 'warm_transfer_consulting',
         ])->save();
+
+        if (! $waitForDecision) {
+            return [
+                'success' => true,
+                'active' => true,
+                'status' => 'consulting',
+                'warm_transfer_uuid' => $warmTransfer->warm_transfer_uuid,
+                'route' => $this->routePayload($route, includePrivate: false),
+                'message' => 'Warm transfer started.',
+            ];
+        }
 
         return $this->waitForWarmTransferDecision($session, $warmTransfer);
     }
@@ -695,6 +719,28 @@ class AiReceptionistService
 
         if (! $warmTransfer || ($requestedWarmTransferUuid !== '' && $warmTransfer->warm_transfer_uuid !== $requestedWarmTransferUuid)) {
             $latestWarmTransfer = $this->latestWarmTransfer($session);
+            $route = $latestWarmTransfer?->route;
+            $terminalStatuses = ['declined', 'failed', 'no_answer', 'unavailable', 'recipient_hangup'];
+
+            if (
+                $latestWarmTransfer
+                && $route
+                && ($latestWarmTransfer->decision === 'declined' || in_array($latestWarmTransfer->status, $terminalStatuses, true))
+            ) {
+                return array_merge(
+                    [
+                        'active' => false,
+                        'warm_transfer_uuid' => $latestWarmTransfer->warm_transfer_uuid,
+                        'reason' => $latestWarmTransfer->failure_reason ?: $latestWarmTransfer->status,
+                    ],
+                    $this->warmTransferFailureResponse(
+                        $route,
+                        $latestWarmTransfer->failure_reason ?: $latestWarmTransfer->status,
+                        true,
+                        (bool) data_get($latestWarmTransfer->metadata, 'team_notified', false)
+                    )
+                );
+            }
 
             return [
                 'success' => true,
@@ -756,6 +802,7 @@ class AiReceptionistService
         $providerConfig = $settings['provider_config'] ?? [];
         $instructionBuilder = app(AiReceptionistInstructionBuilder::class);
         $receptionist = $warmTransfer->session?->receptionist;
+        $collectedFields = $this->warmTransferCollectedFields($warmTransfer);
 
         return [
             'warm_transfer_uuid' => $warmTransfer->warm_transfer_uuid,
@@ -764,11 +811,16 @@ class AiReceptionistService
             'model' => $providerConfig['openai_realtime_model'] ?? 'gpt-realtime-2',
             'transcription_model' => $providerConfig['openai_realtime_transcription_model'] ?? 'gpt-4o-mini-transcribe',
             'voice' => optional($warmTransfer->session?->receptionist)->openai_voice ?: 'marin',
-            'instructions' => $instructionBuilder->consultInstructions($route, (string) $warmTransfer->handoff_summary),
+            'instructions' => $instructionBuilder->consultInstructions(
+                $route,
+                (string) $warmTransfer->handoff_summary,
+                $collectedFields
+            ),
             'initial_message' => $instructionBuilder->consultInitialMessage(
                 $route,
                 (string) $warmTransfer->handoff_summary,
-                $this->receptionistSpokenName($receptionist)
+                $this->receptionistSpokenName($receptionist),
+                $collectedFields
             ),
             'route' => $this->routePayload($route, includePrivate: false),
         ];
@@ -909,6 +961,11 @@ class AiReceptionistService
         ])->save();
 
         $notified = $this->notifyFailedWarmTransfer($session, $route, $warmTransfer, $reason);
+        $warmTransfer->forceFill([
+            'metadata' => array_merge($warmTransfer->metadata ?? [], [
+                'team_notified' => $notified,
+            ]),
+        ])->save();
 
         return [
             'success' => true,
@@ -916,6 +973,10 @@ class AiReceptionistService
             'decision' => 'declined',
             'team_notified' => $notified,
             'warm_transfer_uuid' => $warmTransfer->warm_transfer_uuid,
+            'message' => 'The recipient could not take the call.',
+            'response_instructions' => $notified
+                ? 'The transfer recipient declined. The separate caller-side receptionist session will notify the original caller. Do not speak to the recipient again and do not call another tool.'
+                : 'The transfer recipient declined. The separate caller-side receptionist session will collect the fallback message from the original caller. Do not speak to the recipient again and do not call another tool.',
         ];
     }
 
@@ -940,6 +1001,7 @@ class AiReceptionistService
         $message = trim((string) ($payload['message'] ?? ''));
         $urgency = trim((string) ($payload['urgency'] ?? ''));
         $transcript = trim((string) ($payload['transcript'] ?? $session->transcript ?? ''));
+        $collectedFields = $this->normalizeCollectedFieldValues($payload['collected_fields'] ?? []);
         $logId = (string) Str::uuid();
 
         Mail::to($recipient)->send(new AiReceptionistRouteNotification([
@@ -952,6 +1014,7 @@ class AiReceptionistService
             'caller_number' => $callerNumber ?: null,
             'message' => $message,
             'urgency' => $urgency ?: null,
+            'collected_fields' => $collectedFields,
             'transcript' => $transcript ?: null,
         ]));
 
@@ -1274,6 +1337,7 @@ class AiReceptionistService
                 'ai_receptionist_uuid' => $receptionist->ai_receptionist_uuid,
                 'name' => $name,
                 'match_phrases' => $this->normalizeMatchPhrases($routeData['match_phrases'] ?? []),
+                'collected_fields' => $this->normalizeMatchPhrases($routeData['collected_fields'] ?? []),
                 'action_type' => $actionType,
                 'transfer_type' => $transferType,
                 'destination_type' => $actionType === 'transfer' ? $this->blankToNull($routeData['destination_type'] ?? null) : null,
@@ -1315,6 +1379,7 @@ class AiReceptionistService
             'route_uuid' => $route->route_uuid,
             'name' => $route->name,
             'match_phrases' => $route->match_phrases ?: [],
+            'collected_fields' => $route->collected_fields ?: [],
             'action_type' => $route->action_type,
             'transfer_type' => $route->transfer_type,
             'destination_type' => $route->destination_type,
@@ -1345,14 +1410,16 @@ class AiReceptionistService
 
         foreach ($routes as $route) {
             $phrases = collect($route->match_phrases ?: [])->filter()->implode(', ');
+            $fields = collect($route->collected_fields ?: [])->filter()->implode(', ');
 
             if ($route->action_type === 'email') {
                 $extra = $route->email_instructions ? ' Instructions: ' . $route->email_instructions : '';
                 $lines[] = sprintf(
-                    '- %s (route_uuid: %s): take a message and email the team. Match phrases: %s. Collect caller name, callback number, and a short message before calling send_email with this route_uuid.%s',
+                    '- %s (route_uuid: %s): take a message and email the team. Match phrases: %s. Collect caller name, callback number, a short message%s before calling send_email with this route_uuid.%s',
                     $route->name,
                     $route->route_uuid,
                     $phrases ?: $route->name,
+                    $fields ? ', and these route details: ' . $fields : '',
                     $extra
                 );
                 continue;
@@ -1360,12 +1427,13 @@ class AiReceptionistService
 
             $mode = $route->transfer_type === 'warm' ? 'warm transfer' : 'cold transfer';
             $lines[] = sprintf(
-                '- %s (route_uuid: %s): %s to %s. Match phrases: %s.',
+                '- %s (route_uuid: %s): %s to %s. Match phrases: %s.%s',
                 $route->name,
                 $route->route_uuid,
                 $mode,
                 $route->destination_label ?: $route->destination_target,
-                $phrases ?: $route->name
+                $phrases ?: $route->name,
+                $fields ? ' Collect these route details first: ' . $fields . '.' : ''
             );
         }
 
@@ -1436,7 +1504,7 @@ class AiReceptionistService
                     $route,
                     $warmTransfer->failure_reason ?: $warmTransfer->status,
                     true,
-                    false
+                    (bool) data_get($warmTransfer->metadata, 'team_notified', false)
                 );
             }
 
@@ -1501,14 +1569,22 @@ class AiReceptionistService
             'team_notified' => $teamNotified,
             'returned_to_ai' => $returnedToAi,
             'message' => 'The recipient could not be reached. Apologize briefly, collect a callback message, then call send_email for this same route_uuid.',
-            'response_instructions' => 'You are speaking to the original caller again. Briefly apologize in the language you have been speaking with the caller, say that you could not reach that team right now, then collect their name, callback number, and a short message. After collecting the message, call send_email with the same route_uuid. Do not switch language unless the caller does.',
+            'response_instructions' => 'You are speaking to the original caller again. Briefly apologize in the language you have been speaking with the caller, say that you could not reach that team right now, then reuse the caller name, callback number, and collected_fields already provided. Ask only for any missing callback detail and a short message. After collecting the message, call send_email with the same route_uuid. After send_email succeeds, say one final confirmation and goodbye. Do not switch language unless the caller does.',
         ];
     }
 
-    private function recipientConsultInstructions(AiReceptionistRoute $route, string $handoffSummary): string
+    private function recipientConsultInstructions(
+        AiReceptionistRoute $route,
+        string $handoffSummary,
+        array $collectedFields = []
+    ): string
     {
         $team = $route->destination_label ?: $route->name;
         $summary = $handoffSummary !== '' ? $handoffSummary : 'The caller asked to be connected.';
+        $fieldSummary = $this->collectedFieldsHandoffSummary($collectedFields);
+        if ($fieldSummary !== '') {
+            $summary .= ' Details collected: ' . $fieldSummary . '.';
+        }
 
         // Keep this VERY tight. OpenAI Realtime treats per-response `instructions` as
         // a script for the next response, and the model will paraphrase any
@@ -1545,7 +1621,11 @@ class AiReceptionistService
             'warm_transfer_uuid' => $warmTransfer->warm_transfer_uuid,
             'message' => $message,
             'response_instructions' => $route
-                ? $this->recipientConsultInstructions($route, (string) $warmTransfer->handoff_summary)
+                ? $this->recipientConsultInstructions(
+                    $route,
+                    (string) $warmTransfer->handoff_summary,
+                    $this->warmTransferCollectedFields($warmTransfer)
+                )
                 : 'You are speaking to the transfer recipient now. Brief them, ask if they accept the call, and wait for their spoken acceptance before calling complete_warm_transfer.',
         ];
     }
@@ -1900,7 +1980,7 @@ class AiReceptionistService
     private function normalizeMatchPhrases(mixed $phrases): array
     {
         if (is_string($phrases)) {
-            $phrases = preg_split('/[\n,]+/', $phrases) ?: [];
+            $phrases = preg_split('/[\n,;]+/', $phrases) ?: [];
         }
 
         return collect(Arr::wrap($phrases))
@@ -1915,6 +1995,46 @@ class AiReceptionistService
             ->unique(fn (string $phrase) => Str::lower($phrase))
             ->values()
             ->all();
+    }
+
+    private function normalizeCollectedFieldValues(mixed $fields): array
+    {
+        if (! is_array($fields)) {
+            return [];
+        }
+
+        $normalized = [];
+
+        foreach ($fields as $key => $value) {
+            if (is_array($value)) {
+                $name = trim((string) ($value['name'] ?? $value['label'] ?? $key));
+                $fieldValue = trim((string) ($value['value'] ?? $value['answer'] ?? ''));
+            } else {
+                $name = is_string($key) ? trim($key) : '';
+                $fieldValue = trim((string) $value);
+            }
+
+            if ($name === '' || $fieldValue === '') {
+                continue;
+            }
+
+            $normalized[$name] = $fieldValue;
+        }
+
+        return $normalized;
+    }
+
+    private function warmTransferCollectedFields(AiReceptionistWarmTransfer $warmTransfer): array
+    {
+        return $this->normalizeCollectedFieldValues(data_get($warmTransfer->metadata, 'collected_fields', []));
+    }
+
+    private function collectedFieldsHandoffSummary(array $fields): string
+    {
+        return collect($fields)
+            ->map(fn ($value, $field) => trim((string) $field) . ': ' . trim((string) $value))
+            ->filter(fn ($line) => trim($line, " \t\n\r\0\x0B:") !== '')
+            ->implode('; ');
     }
 
     private function saveDialplan(AiReceptionist $receptionist, bool $isNew): void

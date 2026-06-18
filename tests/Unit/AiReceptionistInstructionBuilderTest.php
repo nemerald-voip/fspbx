@@ -29,6 +29,7 @@ class AiReceptionistInstructionBuilderTest extends TestCase
                 'route_uuid' => 'warm-route',
                 'name' => 'Support',
                 'match_phrases' => ['support', 'technical support'],
+                'collected_fields' => ['account number', 'issue summary'],
                 'action_type' => 'transfer',
                 'transfer_type' => 'warm',
                 'destination_label' => 'Support Desk',
@@ -49,8 +50,11 @@ class AiReceptionistInstructionBuilderTest extends TestCase
         $this->assertStringContainsString('send_email', $instructions);
         $this->assertStringContainsString('Route names are primary triggers.', $instructions);
         $this->assertStringContainsString('If a route name conflicts with an additional match phrase, prefer the route name the caller actually said.', $instructions);
-        $this->assertStringContainsString('route_name_trigger=Support; additional_match_phrases=technical support', $instructions);
+        $this->assertStringContainsString('route_name_trigger=Support; additional_match_phrases=technical support; collected_fields=account number, issue summary', $instructions);
+        $this->assertStringContainsString('warm_transfer(route_uuid, handoff_summary, collected_fields)', $instructions);
         $this->assertStringContainsString('Do not ask about unrelated routes.', $instructions);
+        $this->assertStringContainsString('Do not ask again for a detail the caller already gave.', $instructions);
+        $this->assertStringContainsString('Treat phrases like "This is [caller name] with [company name]" as both caller name and company', $instructions);
         $this->assertStringContainsString('After send_email succeeds, say one final confirmation and goodbye.', $instructions);
         $this->assertStringNotContainsString('transfer_call', $instructions);
         $this->assertStringNotContainsString('warm_transfer_call', $instructions);
@@ -66,12 +70,16 @@ class AiReceptionistInstructionBuilderTest extends TestCase
         ]);
 
         $instructions = app(AiReceptionistInstructionBuilder::class)
-            ->consultInstructions($route, 'Caller needs help with a login issue.');
+            ->consultInstructions($route, 'Caller needs help with a login issue.', [
+                'Account Number' => '12345',
+                'Issue Summary' => 'Portal login error',
+            ]);
 
         $this->assertStringContainsString('accept_transfer', $instructions);
         $this->assertStringContainsString('decline_transfer', $instructions);
         $this->assertStringContainsString('The original caller cannot hear you.', $instructions);
         $this->assertStringContainsString('You already have the caller summary in this prompt.', $instructions);
+        $this->assertStringContainsString('Collected route details: Account Number: 12345; Issue Summary: Portal login error', $instructions);
         $this->assertStringContainsString('Never say "I am ready"', $instructions);
     }
 
@@ -105,9 +113,14 @@ class AiReceptionistInstructionBuilderTest extends TestCase
         $message = app(AiReceptionistInstructionBuilder::class)->consultInitialMessage(
             $route,
             'Caller needs help with a login issue.',
-            'Emma'
+            'Emma',
+            [
+                'Account Number' => '12345',
+                'Issue Summary' => 'Portal login error',
+            ]
         );
 
         $this->assertStringContainsString('I have a caller asking for Support. Caller needs help with a login issue.', $message);
+        $this->assertStringContainsString('Details collected: Account Number: 12345; Issue Summary: Portal login error.', $message);
     }
 }

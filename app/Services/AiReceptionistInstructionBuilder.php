@@ -42,7 +42,7 @@ class AiReceptionistInstructionBuilder
             '- If the caller says a route name, treat that as a clear match and do not ask whether they meant a different route.',
             '- If the caller says one additional match phrase, treat that as a clear match for that route unless they also said a different route name.',
             '- If a route name conflicts with an additional match phrase, prefer the route name the caller actually said.',
-            '- If the caller repeats or corrects the same route name, proceed with that route immediately.',
+            '- If the caller repeats or corrects the same route name, proceed with that route flow.',
             '- If exactly one route clearly matches, proceed using that route.',
             '- If multiple routes could match, ask one concise clarifying question that names only the plausible competing routes.',
             '- Do not ask about unrelated routes. For example, if the caller asks for support, do not ask whether it is about sales or billing unless the caller also mentioned sales or billing.',
@@ -55,19 +55,22 @@ class AiReceptionistInstructionBuilder
             '- Keep internal routing decisions out of spoken responses.',
             '',
             '# Preambles',
-            '- Before cold_transfer, say one short line like: "I can connect you now." Then call the tool immediately.',
-            '- Before warm_transfer, say one short line like: "I will try that team now; please hold." Then call the tool immediately.',
-            '- Before send_email, say one short line like: "I will send that message now." Then call the tool immediately.',
+            '- Before calling any route tool, make sure the route\'s collected_fields are known when the Available Routes line lists any. Use details the caller already gave; ask only for missing details.',
+            '- Before cold_transfer, after required route details are collected, say one short line like: "I can connect you now." Then call the tool.',
+            '- Before warm_transfer, after required route details are collected, say one short line like: "I will try that team now; please hold." Then call the tool.',
+            '- Before send_email, after required route details are collected, say one short line like: "I will send that message now." Then call the tool.',
             '',
             '# Verbosity',
             '- Keep responses to one or two short sentences unless collecting message details.',
             '- When collecting details, ask for only the next missing value.',
+            '- If a matched route lists collected_fields, extract those details from the full conversation first, then ask only for missing fields and include the answers in collected_fields.',
+            '- Do not ask again for a detail the caller already gave. If the caller says multiple details in one turn, split them into the matching fields.',
             '- Do not over-explain routing or tool behavior.',
             '',
             '# Tools',
             '- Use only the tools explicitly provided: cold_transfer, warm_transfer, send_email.',
             '- Only call tools with route_uuid values listed under Available Routes.',
-            '- When the caller says a route_name_trigger, immediately use that route\'s action. Do not offer or collect email unless the matched route action is send_email or a warm_transfer attempt fails.',
+            '- When the caller says a route_name_trigger, select that route and collect its collected_fields before using that route\'s action. Do not offer or collect email unless the matched route action is send_email or a warm_transfer attempt fails.',
             '- Only say an action is complete after the tool call succeeds.',
             '- If a tool fails, briefly apologize, avoid raw error text, and move to the supported fallback.',
             '',
@@ -89,14 +92,16 @@ class AiReceptionistInstructionBuilder
             '- Do not use for warm transfer or email routes.',
             '- Use the stored route destination only; never supply or invent a destination.',
             '',
-            '## warm_transfer(route_uuid, handoff_summary)',
+            '## warm_transfer(route_uuid, handoff_summary, collected_fields)',
             '- Use when the caller topic clearly matches a warm transfer route.',
             '- handoff_summary must be one concise sentence describing who is calling and why.',
-            '- If warm_transfer returns a failure, decline, unavailable, or no_answer result, collect caller name, callback number, and a short message, then call send_email with the same route_uuid.',
+            '- If the route lists collected_fields, use values already stated in the conversation first; ask only for missing values and include them as collected_fields.',
+            '- If warm_transfer returns a failure, decline, unavailable, or no_answer result, reuse the caller name, callback number, and collected_fields you already have. Ask only for any missing callback detail and a short message, then call send_email with the same route_uuid.',
             '',
-            '## send_email(route_uuid, caller_name, caller_number, message, urgency)',
-            '- Use for email routes after caller name, callback number, and message are collected.',
-            '- Use for a failed warm transfer route after collecting a callback message.',
+            '## send_email(route_uuid, caller_name, caller_number, message, urgency, collected_fields)',
+            '- Use for email routes after caller name, callback number, and message are known.',
+            '- Use for a failed warm transfer route after collecting only the missing callback message details.',
+            '- If the route lists collected_fields, use values already stated in the conversation first; ask only for missing values and include them as collected_fields.',
             '- Do not use for cold transfer routes.',
             '- After send_email succeeds, say one final confirmation and goodbye.',
             '',
@@ -107,6 +112,7 @@ class AiReceptionistInstructionBuilder
             '',
             '# Entity Capture',
             '- Capture caller name, callback number, and message exactly enough for staff to follow up.',
+            '- Treat phrases like "This is [caller name] with [company name]" as both caller name and company when those details are needed.',
             '- For phone numbers, repeat the captured number back once before send_email.',
             '- For spelled names or addresses, preserve explicitly spoken separators such as dash, dot, underscore, slash, and plus.',
             '- Ask for only the next missing value; do not ask for name, number, and message all in one turn.',
@@ -125,11 +131,12 @@ class AiReceptionistInstructionBuilder
         return implode("\n", $lines);
     }
 
-    public function consultInstructions(AiReceptionistRoute $route, string $handoffSummary): string
+    public function consultInstructions(AiReceptionistRoute $route, string $handoffSummary, array $collectedFields = []): string
     {
         $recipient = $this->consultRecipientName($route);
         $topic = $this->consultTopic($route);
         $summary = $this->consultSummary($route, $handoffSummary);
+        $fieldSummary = $this->collectedFieldsSummary($collectedFields);
 
         return implode("\n", [
             '# Role and Objective',
@@ -167,6 +174,7 @@ class AiReceptionistInstructionBuilder
             "Recipient: {$recipient}",
             "Caller topic: {$topic}",
             $summary !== '' ? "Additional caller detail: {$summary}" : 'Additional caller detail: none',
+            $fieldSummary !== '' ? "Collected route details: {$fieldSummary}" : 'Collected route details: none',
             '',
             '# Unclear Audio',
             '- If the recipient response is unclear, ask once whether they can accept the call now.',
@@ -183,7 +191,7 @@ class AiReceptionistInstructionBuilder
             '',
             '## Required Flow',
             '- Introduce yourself as the AI receptionist.',
-            '- Briefly state that a caller is waiting and summarize why they are calling.',
+            '- Briefly state that a caller is waiting and summarize why they are calling, including any collected route details.',
             '- Ask if the recipient can accept the call now.',
             '- Never say "I am ready" or ask the recipient to share the caller summary.',
             '- If the recipient clearly accepts, call accept_transfer with their exact spoken response.',
@@ -193,10 +201,16 @@ class AiReceptionistInstructionBuilder
         ]);
     }
 
-    public function consultInitialMessage(AiReceptionistRoute $route, string $handoffSummary, ?string $receptionistName = null): string
+    public function consultInitialMessage(
+        AiReceptionistRoute $route,
+        string $handoffSummary,
+        ?string $receptionistName = null,
+        array $collectedFields = []
+    ): string
     {
         $topic = $this->consultTopic($route);
         $summary = $this->consultSummary($route, $handoffSummary);
+        $fieldSummary = $this->collectedFieldsSummary($collectedFields);
         $identity = trim((string) $receptionistName) !== ''
             ? trim((string) $receptionistName) . ', the AI receptionist'
             : 'the AI receptionist';
@@ -204,6 +218,9 @@ class AiReceptionistInstructionBuilder
         $spoken = "Hi, this is {$identity}. I have a caller asking for {$topic}.";
         if ($summary !== '') {
             $spoken .= " {$summary}.";
+        }
+        if ($fieldSummary !== '') {
+            $spoken .= " Details collected: {$fieldSummary}.";
         }
         $spoken .= ' Can you take the call now?';
 
@@ -228,6 +245,7 @@ class AiReceptionistInstructionBuilder
                     'route_uuid' => $routeData['route_uuid'] ?? 'generated-after-save',
                     'name' => $routeData['name'] ?? 'Unnamed route',
                     'match_phrases' => $routeData['match_phrases'] ?? [],
+                    'collected_fields' => $routeData['collected_fields'] ?? [],
                     'action_type' => $routeData['action_type'] ?? 'transfer',
                     'transfer_type' => $routeData['transfer_type'] ?? 'cold',
                     'destination_label' => $routeData['destination_label'] ?? $routeData['destination_target'] ?? null,
@@ -249,27 +267,34 @@ class AiReceptionistInstructionBuilder
             ->filter(fn ($phrase) => $phrase !== '' && Str::lower($phrase) !== Str::lower((string) $route->name))
             ->implode(', ');
         $phrases = $phrases !== '' ? $phrases : 'none';
+        $fields = collect($route->collected_fields ?: [])
+            ->map(fn ($field) => trim((string) $field))
+            ->filter()
+            ->implode(', ');
+        $fields = $fields !== '' ? $fields : 'none';
 
         if ($route->action_type === 'email') {
             $extra = trim((string) $route->email_instructions);
 
             return sprintf(
-                '- %s: route_uuid=%s; action=send_email; route_name_trigger=%s; additional_match_phrases=%s%s',
+                '- %s: route_uuid=%s; action=send_email; route_name_trigger=%s; additional_match_phrases=%s; collected_fields=%s%s',
                 $route->name,
                 $route->route_uuid,
                 $route->name,
                 $phrases,
+                $fields,
                 $extra !== '' ? '; message_instructions=' . Str::limit($extra, 500, '') : ''
             );
         }
 
         return sprintf(
-            '- %s: route_uuid=%s; action=%s; route_name_trigger=%s; additional_match_phrases=%s; destination=%s',
+            '- %s: route_uuid=%s; action=%s; route_name_trigger=%s; additional_match_phrases=%s; collected_fields=%s; destination=%s',
             $route->name,
             $route->route_uuid,
             $route->transfer_type === 'warm' ? 'warm_transfer' : 'cold_transfer',
             $route->name,
             $phrases,
+            $fields,
             $route->destination_label ?: $route->destination_target
         );
     }
@@ -283,6 +308,29 @@ class AiReceptionistInstructionBuilder
         }
 
         return $label !== '' ? $label : 'there';
+    }
+
+    private function collectedFieldsSummary(array $collectedFields): string
+    {
+        return collect($collectedFields)
+            ->map(function ($value, $key) {
+                $field = is_string($key) ? trim($key) : '';
+
+                if (is_array($value)) {
+                    $field = trim((string) ($value['name'] ?? $value['label'] ?? $field));
+                    $value = $value['value'] ?? $value['answer'] ?? null;
+                }
+
+                $answer = trim((string) $value);
+
+                if ($field === '' || $answer === '') {
+                    return null;
+                }
+
+                return "{$field}: {$answer}";
+            })
+            ->filter()
+            ->implode('; ');
     }
 
     private function consultTopic(AiReceptionistRoute $route): string

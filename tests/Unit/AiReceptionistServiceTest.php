@@ -32,6 +32,24 @@ class AiReceptionistServiceTest extends TestCase
         $this->assertSame(['billing', 'sales'], $method->invoke($service, "billing\nsales, billing"));
     }
 
+    public function test_collected_field_values_normalization_keeps_named_answers(): void
+    {
+        $method = new ReflectionMethod(AiReceptionistService::class, 'normalizeCollectedFieldValues');
+        $method->setAccessible(true);
+
+        $service = app(AiReceptionistService::class);
+
+        $this->assertSame([], $method->invoke($service, null));
+        $this->assertSame([
+            'Account Number' => '12345',
+            'Location' => 'Suite 9',
+        ], $method->invoke($service, [
+            'Account Number' => ' 12345 ',
+            ['name' => 'Location', 'value' => ' Suite 9 '],
+            'blank' => '',
+        ]));
+    }
+
     public function test_warm_transfer_originate_variables_quote_values_and_skip_blanks(): void
     {
         $method = new ReflectionMethod(AiReceptionistService::class, 'eslOriginateVariables');

@@ -102,6 +102,7 @@ return new class extends Migration
                 $table->uuid('ai_receptionist_uuid')->index();
                 $table->string('name');
                 $table->json('match_phrases')->nullable();
+                $table->json('collected_fields')->nullable();
                 $table->string('action_type')->default('transfer')->index();
                 $table->string('transfer_type')->nullable()->index();
                 $table->string('destination_type')->nullable();

@@ -15,6 +15,9 @@ Urgency: {{ $attributes['urgency'] }}
 @if(!empty($attributes['failure_status']))
 Transfer Status: {{ $attributes['failure_status'] }}
 @endif
+@foreach(($attributes['collected_fields'] ?? []) as $field => $value)
+{{ $field }}: {{ $value }}
+@endforeach
 
 @if(!empty($attributes['message']))
 Message:

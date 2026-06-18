@@ -286,6 +286,7 @@ class AiReceptionistController extends Controller
             'routes.*.route_uuid' => ['nullable', 'uuid'],
             'routes.*.name' => ['nullable', 'string', 'max:255'],
             'routes.*.match_phrases' => ['nullable'],
+            'routes.*.collected_fields' => ['nullable'],
             'routes.*.action_type' => ['nullable', Rule::in(['transfer', 'email'])],
             'routes.*.transfer_type' => ['nullable', Rule::in(['warm', 'cold'])],
             'routes.*.destination_type' => ['nullable', 'string', 'max:64'],
