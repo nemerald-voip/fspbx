@@ -189,26 +189,27 @@
 
                                                 <ListElement name="routes" :sort="true" size="sm"
                                                     :controls="{ add: true, remove: true, sort: true }"
-                                                    :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-sm' } }">
+                                                    :add-classes="{ ListElement: { listItem: 'bg-white p-4 sm:p-5 mb-4 rounded-lg ring-1 ring-gray-200 shadow-sm' } }">
                                                     <template #default="{ index }">
                                                         <ObjectElement :name="index">
                                                             <HiddenElement name="route_uuid" :meta="true" />
                                                             <HiddenElement name="destination_label" :meta="true" />
 
+                                                            <StaticElement name="route_header" tag="div"
+                                                                :add-classes="{ StaticElement: { container: 'border-b border-gray-200 pb-3' } }"
+                                                                :label="(el$) => {
+                                                                    const enabled = el$.parent.value.enabled;
+                                                                    const badge = enabled
+                                                                        ? `<span class='ml-2 inline-flex items-center px-2 py-0.5 text-xs font-medium rounded bg-green-50 text-green-600 ring-1 ring-green-200'>Enabled</span>`
+                                                                        : `<span class='ml-2 inline-flex items-center px-2 py-0.5 text-xs font-medium rounded bg-gray-100 text-gray-500 ring-1 ring-gray-200'>Disabled</span>`;
+                                                                    return `<span class='text-xs font-semibold uppercase tracking-wide text-gray-400'>Route ${index + 1}</span>${badge}`;
+                                                                }" :content="(el$) => {
+                                                                    const name = String(el$.parent.value.name ?? '').trim() || 'Untitled route';
+                                                                    return `<span class='text-base font-semibold text-gray-900'>${name}</span>`;
+                                                                }" />
+
                                                             <TextElement name="name" label="Route Name"
                                                                 :floating="false" :columns="{ sm: { container: 6 } }" />
-
-                                                            <TagsElement name="match_phrases" label="Match Phrases"
-                                                                :floating="false" :search="true" :create="true" allow-absent
-                                                                :add-option-on="['enter', 'tab', ';', ',']"
-                                                                placeholder="Add phrases callers might say"
-                                                                :columns="{ sm: { container: 6 } }" />
-
-                                                            <TagsElement name="collected_fields" label="Details to Collect"
-                                                                :floating="false" :search="true" :create="true" allow-absent
-                                                                :add-option-on="['enter', 'tab', ';', ',']"
-                                                                placeholder="Add details to ask before routing"
-                                                                :columns="{ sm: { container: 6 } }" />
 
                                                             <SelectElement name="route_action" :items="actionOptions"
                                                                 label="Action" label-prop="name" value-prop="value"
@@ -220,6 +221,16 @@
                                                                         el$.form$.el$('routes.' + index + '.destination_label')?.update(null);
                                                                     }
                                                                 }" />
+
+                                                            <TagsElement name="match_phrases" label="Match Phrases"
+                                                                :floating="false" :search="true" :create="true" allow-absent
+                                                                :add-option-on="['enter', 'tab', ';', ',']"
+                                                                placeholder="Add phrases callers might say" />
+
+                                                            <TagsElement name="collected_fields" label="Details to Collect"
+                                                                :floating="false" :search="true" :create="true" allow-absent
+                                                                :add-option-on="['enter', 'tab', ';', ',']"
+                                                                placeholder="Add details to ask before routing" />
 
                                                             <SelectElement name="destination_type" :items="routeRoutingTypes"
                                                                 label="Destination Type" label-prop="label" value-prop="value"
@@ -284,15 +295,6 @@
                                                                     ['routes.' + index + '.route_action', 'email']
                                                                 ]" />
 
-                                                            <ToggleElement name="notify_on_failed_warm_transfer"
-                                                                text="Send Failed Transfer Notice"
-                                                                :true-value="true" :false-value="false"
-                                                                :labels="{ on: 'On', off: 'Off' }"
-                                                                :columns="{ sm: { container: 6 } }" label="&nbsp;"
-                                                                :conditions="[
-                                                                    ['routes.' + index + '.route_action', 'warm_transfer']
-                                                                ]" />
-
                                                             <TextElement name="failed_transfer_email_to"
                                                                 label="Fallback Email To" :floating="false"
                                                                 description="Used when the recipient declines or cannot answer and the caller leaves a message."
@@ -300,10 +302,23 @@
                                                                     ['routes.' + index + '.route_action', 'warm_transfer']
                                                                 ]" />
 
-                                                            <ToggleElement name="enabled" text="Enabled"
+                                                            <ToggleElement name="notify_on_failed_warm_transfer"
+                                                                label="Send Failed Transfer Notice" align="left" size="sm"
                                                                 :true-value="true" :false-value="false"
                                                                 :labels="{ on: 'On', off: 'Off' }"
-                                                                :columns="{ sm: { container: 6 } }" label="&nbsp;" />
+                                                                :columns="{ sm: { container: 6 } }"
+                                                                :conditions="[
+                                                                    ['routes.' + index + '.route_action', 'warm_transfer']
+                                                                ]" />
+
+                                                            <StaticElement name="enabled_divider" tag="hr"
+                                                                :add-classes="{ StaticElement: { container: 'border-gray-200' } }" />
+
+                                                            <ToggleElement name="enabled" label="Route Enabled"
+                                                                align="left" size="sm"
+                                                                :true-value="true" :false-value="false"
+                                                                :labels="{ on: 'On', off: 'Off' }"
+                                                                :columns="{ sm: { container: 6 } }" />
                                                         </ObjectElement>
                                                     </template>
                                                 </ListElement>
