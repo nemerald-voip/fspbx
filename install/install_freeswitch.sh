@@ -48,7 +48,7 @@ export SW_TOKEN
 
 fi
 
-print_success "Starting FreeSWITCH Installation (Version 1.10)..."
+print_success "Starting FreeSWITCH Installation (Version 1.11)..."
 
 # Detect OS version
 os_codename=$(lsb_release -c -s)
@@ -92,21 +92,23 @@ export C_INCLUDE_PATH=/usr/include/libks
 print_success "libks installed successfully."
 
 # Install sofia-sip
-    if [[ "$OS_CODENAME" == "bookworm" ]]; then
 cd /usr/src
 rm -rf sofia-sip
 git clone https://github.com/freeswitch/sofia-sip.git
 cd sofia-sip
-git checkout v1.13.17
+
+# FreeSWITCH 1.11 uses nua_reload_tls for TLS certificate hot-reload.
+# Debian 12 and 13 package Sofia-SIP 1.12.11, which does not provide it.
+SOFIA_SIP_VERSION=${SOFIA_SIP_VERSION:-"100d3577f5c5a6790ab68a5e3425ab1a091236c5"}
+git checkout "$SOFIA_SIP_VERSION"
 sh autogen.sh
 ./configure --enable-debug
 make -j $(getconf _NPROCESSORS_ONLN)
 make install
-	fi
+ldconfig
 
 if [[ "$OS_CODENAME" == "trixie" ]]; then
     curl -sSL https://freeswitch.org/fsget | bash -s $SW_TOKEN
-    apt install -y libsofia-sip-ua-dev libsofia-sip-ua0
 fi
 
 print_success "sofia-sip installed successfully."
@@ -138,9 +140,9 @@ cd /usr/src
 rm -rf freeswitch
 
 # Set default PHP version to 8.1 if not set
-FREESWITCH_VERSION=${FREESWITCH_VERSION:-"v1.10"}
+FREESWITCH_VERSION=${FREESWITCH_VERSION:-"v1.11"}
 
-# Clone the FreeSWITCH repo (Branch: 1.10)
+# Clone the FreeSWITCH repo (Branch: 1.11)
 print_success "Cloning FreeSWITCH $FREESWITCH_VERSION from repository..."
 git clone --depth 1 --branch $FREESWITCH_VERSION https://github.com/nemerald-voip/freeswitch.git freeswitch
 cd freeswitch
@@ -175,6 +177,13 @@ print_success "Modules configured successfully."
 
 # Configure the build
 print_success "Configuring FreeSWITCH..."
+export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig:/usr/local/lib/$(gcc -dumpmachine)/pkgconfig:${PKG_CONFIG_PATH:-}"
+if ! printf '#include <sofia-sip/nua.h>\n#ifndef HAVE_NUA_RELOAD_TLS\n#error HAVE_NUA_RELOAD_TLS missing\n#endif\nint main(void) { return nua_reload_tls(0, 0); }\n' | gcc $(pkg-config --cflags sofia-sip-ua) -xc - -o /tmp/sofia_tls_reload_check $(pkg-config --libs sofia-sip-ua); then
+    print_error "Installed Sofia-SIP does not provide nua_reload_tls required by FreeSWITCH 1.11."
+    exit 1
+fi
+rm -f /tmp/sofia_tls_reload_check
+export CPPFLAGS="${CPPFLAGS} -DHAVE_NUA_RELOAD_TLS"
 ./configure -C --enable-portable-binary --disable-dependency-tracking --enable-debug \
             --prefix=/usr --localstatedir=/var --sysconfdir=/etc \
             --with-openssl --enable-core-pgsql-support
@@ -223,6 +232,10 @@ else
     print_error "Error: freeswitch.service not found!" >&2
     exit 1
 fi
+
+# Keep the v1.11 unit aligned with FS PBX's existing runtime user.
+sed -i -e 's/Environment="USER=freeswitch"/Environment="USER=www-data"/' /lib/systemd/system/freeswitch.service
+sed -i -e 's/Environment="GROUP=freeswitch"/Environment="GROUP=www-data"/' /lib/systemd/system/freeswitch.service
 
 # Set correct permissions
 chmod 644 /lib/systemd/system/freeswitch.service 
