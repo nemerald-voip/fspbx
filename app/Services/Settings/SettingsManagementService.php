@@ -8,6 +8,7 @@ use App\Models\DomainSettings;
 use App\Models\FusionCache;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -345,6 +346,10 @@ class SettingsManagementService
             $setting->save();
         });
 
+        if ($settings->contains(fn (DefaultSettings $setting) => $setting->default_setting_category === 'scheduled_jobs')) {
+            Cache::forget('scheduled_jobs_settings');
+        }
+
         return $settings->count();
     }
 
@@ -365,7 +370,16 @@ class SettingsManagementService
 
     public function deleteDefaults(array $uuids): int
     {
-        return DefaultSettings::query()->whereIn('default_setting_uuid', $uuids)->delete();
+        $settings = DefaultSettings::query()->whereIn('default_setting_uuid', $uuids)->get();
+        $count = $settings->count();
+
+        DefaultSettings::query()->whereIn('default_setting_uuid', $settings->pluck('default_setting_uuid'))->delete();
+
+        if ($settings->contains(fn (DefaultSettings $setting) => $setting->default_setting_category === 'scheduled_jobs')) {
+            Cache::forget('scheduled_jobs_settings');
+        }
+
+        return $count;
     }
 
     public function revertDomain(Domain $domain, array $uuids): int
@@ -754,6 +768,10 @@ class SettingsManagementService
 
     private function applySettingSideEffects(string $scope, array $setting): void
     {
+        if ($scope === 'default' && $setting['category'] === 'scheduled_jobs') {
+            Cache::forget('scheduled_jobs_settings');
+        }
+
         if ($setting['category'] === 'destinations' && $setting['subcategory'] === 'dialplan_mode') {
             FusionCache::clear('dialplan:mode');
         }
