@@ -71,6 +71,9 @@ chown -R www-data:www-data /var/cache/fusionpbx
 if [ -f "/lib/systemd/system/freeswitch.service" ]; then
     sed -i -e 's/Environment="USER=freeswitch"/Environment="USER=www-data"/' /lib/systemd/system/freeswitch.service
     sed -i -e 's/Environment="GROUP=freeswitch"/Environment="GROUP=www-data"/' /lib/systemd/system/freeswitch.service
+    if ! grep -qF 'ExecStartPre=/bin/mkdir -p /var/run/freeswitch' /lib/systemd/system/freeswitch.service; then
+        sed -i -e '/^ExecStartPre=\/bin\/chown/i ExecStartPre=/bin/mkdir -p /var/run/freeswitch' /lib/systemd/system/freeswitch.service
+    fi
     chmod 644 /lib/systemd/system/freeswitch.service
 fi
 

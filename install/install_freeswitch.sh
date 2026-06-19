@@ -236,6 +236,7 @@ fi
 # Keep the v1.11 unit aligned with FS PBX's existing runtime user.
 sed -i -e 's/Environment="USER=freeswitch"/Environment="USER=www-data"/' /lib/systemd/system/freeswitch.service
 sed -i -e 's/Environment="GROUP=freeswitch"/Environment="GROUP=www-data"/' /lib/systemd/system/freeswitch.service
+sed -i -e '/^ExecStartPre=\/bin\/chown/i ExecStartPre=/bin/mkdir -p /var/run/freeswitch' /lib/systemd/system/freeswitch.service
 
 # Set correct permissions
 chmod 644 /lib/systemd/system/freeswitch.service 

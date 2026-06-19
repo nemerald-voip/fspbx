@@ -131,6 +131,7 @@ EOF
 
 sed -i -e 's/Environment="USER=freeswitch"/Environment="USER=www-data"/' debian/freeswitch-systemd.freeswitch.service
 sed -i -e 's/Environment="GROUP=freeswitch"/Environment="GROUP=www-data"/' debian/freeswitch-systemd.freeswitch.service
+sed -i -e '/^ExecStartPre=\/bin\/chown/i ExecStartPre=/bin/mkdir -p /var/run/freeswitch' debian/freeswitch-systemd.freeswitch.service
 
 DEBIAN_FRONTEND=noninteractive mk-build-deps -i -r -t "apt-get -y --no-install-recommends" debian/control
 
