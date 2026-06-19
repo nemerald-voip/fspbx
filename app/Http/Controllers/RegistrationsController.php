@@ -32,9 +32,13 @@ class RegistrationsController extends Controller
      */
     public function index()
     {
+        $showGlobal = $this->truthy(request('filter.showGlobal', request('filterData.showGlobal', false)))
+            && userCheckPermission('registration_all');
+
         return Inertia::render(
             $this->viewName,
             [
+                'showGlobal' => $showGlobal,
                 'pagination' => [
                     'per_page' => fspbx_pagination_per_page(),
                     'per_page_options' => fspbx_pagination_options(),

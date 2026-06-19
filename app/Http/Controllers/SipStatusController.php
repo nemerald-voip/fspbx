@@ -255,7 +255,7 @@ class SipStatusController extends Controller
                 'sip_profile_name' => $name,
                 'state' => $state,
                 'registration_count' => $this->getRegistrationCount($eslService, $name),
-                'registrations_url' => route('registrations.index'),
+                'registrations_url' => $this->getRegistrationsUrl(),
                 'details' => collect($this->profileInfoFields)->map(fn ($field) => [
                     'label' => $field,
                     'value' => $info ? (string) $info->{$field} : '',
@@ -273,19 +273,20 @@ class SipStatusController extends Controller
             return 0;
         }
 
-        $count = 0;
-        $domainName = session('domain_name');
+        return count($xml->registrations->registration);
+    }
 
-        foreach ($xml->registrations->registration as $registration) {
-            $realm = (string) $registration->{'sip-auth-realm'};
-            $userParts = explode('@', (string) $registration->user);
-
-            if ($realm === $domainName || ($userParts[1] ?? null) === $domainName) {
-                $count++;
-            }
+    protected function getRegistrationsUrl(): string
+    {
+        if (userCheckPermission('registration_all')) {
+            return route('registrations.index', [
+                'filter' => [
+                    'showGlobal' => 'true',
+                ],
+            ]);
         }
 
-        return $count;
+        return route('registrations.index');
     }
 
     protected function getSipProfiles(?string $hostname): array
