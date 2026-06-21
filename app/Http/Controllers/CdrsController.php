@@ -104,7 +104,16 @@ class CdrsController extends Controller
         try {
 
             // Get item data
-            $item = $this->model::where($this->model->getKeyName(), request('item_uuid'))
+            $itemQuery = $this->model::where($this->model->getKeyName(), request('item_uuid'));
+
+            // Tenant users must not be able to fetch a CDR from another domain by UUID.
+            // Users with the cross-domain CDR permission retain access to rows shown by
+            // the page's "all domains" view.
+            if (! userCheckPermission('xml_cdr_domain')) {
+                $itemQuery->where('domain_uuid', session('domain_uuid'));
+            }
+
+            $item = $itemQuery
                 ->select([
                     'xml_cdr_uuid',
                     'domain_uuid',
