@@ -70,13 +70,24 @@ class ExtensionObserver
                 $deviceLineData['user_id'] = $extension->extension;
             }
 
-            DeviceLines::where('domain_uuid', $extension->domain_uuid)
+            $deviceLines = DeviceLines::where('domain_uuid', $extension->domain_uuid)
                 ->where('auth_id', $oldExtension)
                 ->where(function ($query) {
                     $query->whereNull('external_line')
                         ->orWhere('external_line', '!=', 't');
-                })
-                ->update($deviceLineData);
+                });
+
+            if ($extension->wasChanged('extension')) {
+                (clone $deviceLines)
+                    ->where('label', $oldExtension)
+                    ->update(['label' => $extension->extension]);
+
+                (clone $deviceLines)
+                    ->where('display_name', $oldExtension)
+                    ->update(['display_name' => $extension->extension]);
+            }
+
+            $deviceLines->update($deviceLineData);
         }
 
         // Get the attributes from the model
