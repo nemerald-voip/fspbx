@@ -15,6 +15,7 @@ Before you begin, ensure:
 * FS PBX is installed and running.
 * You have a domain name (e.g., pbx.example.com).
 * Your server is publicly accessible on ports 80 and 443.
+* Know how to edit text files using something like nano or vi
 * A user with sudo privileges
 
 # Step 1: Run the SSL Installation Command
@@ -25,7 +26,7 @@ FS PBX includes an **Artisan command** that automates the process of generating 
 
 2. Run the command to install the certificate:
 
-   `php artisan app:install-lets-encrypt-certificate`
+   `sudo php artisan app:install-lets-encrypt-certificate`
 
 3. Enter the domain when prompted (e.g., `fs-pbx.example.com`).
 
@@ -34,10 +35,13 @@ To confirm that the SSL certificate is working correctly, open a web browser and
 
 `https://fs-pbx.example.com`
 
-
 # Step 3: Enable Auto-Renewal
 
-The script automatically sets up a cron job to renew the certificate:
+Check the script set up a cron job to renew the certificate:
+
+`sudo crontab -l`
+
+One of the lines should look like this:
 
 `0 3 * * * dehydrated -c && systemctl reload nginx`
 
@@ -51,7 +55,7 @@ If you encounter any issues, check the logs with:
 
 # Updating Environment Configuration
 
-After creating the SSL certificate, it is recommended to update the `.env` file with the following settings:
+After creating the SSL certificate, it is recommended to update the `.env` file with the following settings using sudo and your favourite text editor:
 
 ```
 APP_URL=https://fs-pbx.example.com
