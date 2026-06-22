@@ -39,13 +39,15 @@ class Update191
 
             if ($updatedNginxConfig !== $nginxConfig) {
                 $this->writeFile(self::NGINX_CONFIG, $updatedNginxConfig);
+            }
 
-                if (! $this->runProcess(['nginx', '-t'])) {
+            if (! $this->runProcess(['nginx', '-t'])) {
+                if ($updatedNginxConfig !== $nginxConfig) {
                     $this->writeFile(self::NGINX_CONFIG, $nginxConfig);
                     echo "Nginx validation failed. Restored the existing site configuration.\n";
-
-                    return false;
                 }
+
+                return false;
             }
 
             if ($dehydratedConfig !== null && $updatedDehydratedConfig !== $dehydratedConfig) {
@@ -55,10 +57,16 @@ class Update191
 
             if ($updatedNginxConfig !== $nginxConfig) {
                 echo "Updated the Nginx ACME configuration.\n";
+            }
 
-                if (! $this->runProcess(['systemctl', 'reload', 'nginx'])) {
-                    echo "Warning: Nginx could not be reloaded. The validated configuration will be used on its next restart.\n";
-                }
+            // A reload cannot reliably replace the existing 127.0.0.1:80
+            // socket with the new wildcard listeners. Restart Nginx so the
+            // public IPv4 and IPv6 port-80 sockets are actually opened.
+            echo "Restarting Nginx to activate the ACME listener...\n";
+            if (! $this->runProcess(['systemctl', 'restart', 'nginx'])) {
+                echo "Nginx could not be restarted.\n";
+
+                return false;
             }
 
             echo 'Update '.self::VERSION." completed successfully.\n";
