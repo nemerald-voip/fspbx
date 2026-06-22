@@ -537,6 +537,7 @@ const tlsCert = ref({
     installed: false,
     domains: [],
     issuer: null,
+    is_self_signed: false,
     serial: null,
     is_staging: false,
     valid_to: null,
@@ -571,7 +572,11 @@ const tlsBadge = computed(() => {
             : { text: "Active (Let's Encrypt)", ...statusColor("up") };
     }
 
-    return { text: "Self-signed", ...statusColor("warn") };
+    if (tlsCert.value.is_self_signed) {
+        return { text: "Self-signed", ...statusColor("warn") };
+    }
+
+    return { text: "Active", ...statusColor("up") };
 });
 
 const filteredSummary = computed(() => {

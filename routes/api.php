@@ -748,7 +748,9 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post('/pms/char', CharPmsWebhookController::class)->name('pms.char');
 });
 
-// Peer-to-peer TLS certificate replication (authorized by the shared push
-// secret, not a session) so the active node can push a renewed cert to peers.
+// Peer-to-peer ACME token and TLS certificate replication. These endpoints use
+// the shared push secret instead of a user session.
+Route::post('letsencrypt/challenge', [LetsEncryptController::class, 'receiveChallenge'])
+    ->name('letsencrypt.challenge');
 Route::post('letsencrypt/receive-certificate', [LetsEncryptController::class, 'receiveCertificate'])
     ->name('letsencrypt.receive-certificate');

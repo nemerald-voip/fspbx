@@ -169,6 +169,47 @@ class LetsEncryptController extends Controller
     }
 
     /**
+     * Present or clean up an HTTP-01 token pushed by the active cluster node.
+     */
+    public function receiveChallenge(Request $request): JsonResponse
+    {
+        $secret = $request->header('X-FsPbx-Cert-Secret') ?: $request->input('secret');
+
+        if (! $this->service->verifyPushSecret(is_string($secret) ? $secret : null)) {
+            return response()->json(['errors' => ['auth' => ['Invalid or missing push secret.']]], 403);
+        }
+
+        $validated = $request->validate([
+            'action' => ['required', 'string', 'in:present,cleanup'],
+            'token' => ['required', 'string', 'max:255', 'regex:/^[A-Za-z0-9_-]+$/'],
+            'value' => ['required_if:action,present', 'nullable', 'string', 'max:4096'],
+        ]);
+
+        try {
+            if ($validated['action'] === 'present') {
+                $this->service->storeChallengeToken($validated['token'], $validated['value']);
+            } else {
+                $this->service->removeChallengeToken($validated['token']);
+            }
+
+            return response()->json([
+                'messages' => ['success' => [
+                    $validated['action'] === 'present'
+                        ? 'Challenge token stored.'
+                        : 'Challenge token removed.',
+                ]],
+            ]);
+        } catch (Throwable $exception) {
+            logger('LetsEncryptController@receiveChallenge error: '.$exception->getMessage()
+                .' at '.$exception->getFile().':'.$exception->getLine());
+
+            return response()->json([
+                'errors' => ['challenge' => [$exception->getMessage() ?: 'Unable to update challenge token.']],
+            ], 500);
+        }
+    }
+
+    /**
      * Generate a strong random peer push secret for the rotate button. Does not
      * persist it — the admin reviews it and saves via the settings form (and
      * copies the same value to the other nodes).

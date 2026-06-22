@@ -48,6 +48,7 @@ class LetsEncryptService
             'installed' => false,
             'domains' => [],
             'issuer' => null,
+            'is_self_signed' => false,
             'is_staging' => false,
             'serial' => null,
             'valid_from' => null,
@@ -71,6 +72,7 @@ class LetsEncryptService
                     'installed' => true,
                     'domains' => $this->extractSans($parsed),
                     'issuer' => $issuer,
+                    'is_self_signed' => ($parsed['issuer'] ?? []) == ($parsed['subject'] ?? []),
                     'is_staging' => $isStaging,
                     'serial' => $parsed['serialNumberHex'] ?? ($parsed['serialNumber'] ?? null),
                     'valid_from' => isset($parsed['validFrom_time_t'])
@@ -174,27 +176,16 @@ class LetsEncryptService
         $ac->register(true, $email ? [$email] : []);
 
         $domainKey = $this->domainKey();
+        $challengePeers = $this->peerHosts($domains);
 
-        $handler = function ($opts) use ($webrootBase) {
-            // $opts['key'] is the absolute URL path, e.g. /.well-known/acme-challenge/<token>
-            $file = $webrootBase.$opts['key'];
-            $this->ensureDir(dirname($file), 0755);
-
-            if (file_put_contents($file, $opts['value']) === false) {
-                throw new RuntimeException("Unable to write ACME challenge token to {$file}.");
-            }
-            @chmod($file, 0644);
-
-            // Pre-flight: confirm the token is reachable over HTTP (port 80) for
-            // this SAN, exactly as Let's Encrypt will fetch it, so a misconfigured
-            // webroot (or a failover name not yet replicated to this node) fails
-            // fast with a clear message instead of a generic ACME error.
-            $this->verifyChallengeReachable($opts['domain'], $opts['key'], $opts['value']);
-
-            // Removal callback (cleans up the token after validation).
-            return function () use ($file) {
-                @unlink($file);
-            };
+        $handler = function ($opts) use ($webrootBase, $challengePeers) {
+            return $this->publishHttpChallenge(
+                $opts['domain'],
+                $opts['key'],
+                $opts['value'],
+                $webrootBase,
+                $challengePeers
+            );
         };
 
         $domainConfig = [];
@@ -233,7 +224,7 @@ class LetsEncryptService
         // Replicate the new bundle to peer nodes (failover / multi-node). A
         // failed push fails the whole operation so it retries and nodes do not
         // diverge (one node holding a newer cert than the other).
-        $pushResults = $this->pushToPeers($root);
+        $pushResults = $this->pushToPeers($root, $challengePeers);
         $this->assertPeersInSync($pushResults);
 
         return [
@@ -500,6 +491,47 @@ class LetsEncryptService
         }
     }
 
+    /**
+     * Publish one HTTP-01 token locally and to every peer before preflight.
+     * Returns the cleanup callback expected by ACMECert.
+     */
+    protected function publishHttpChallenge(
+        string $domain,
+        string $path,
+        string $value,
+        string $webrootBase,
+        array $peers
+    ): callable {
+        $file = $webrootBase.$path;
+        $token = basename($path);
+        $this->ensureDir(dirname($file), 0755);
+
+        if (file_put_contents($file, $value) === false) {
+            throw new RuntimeException("Unable to write ACME challenge token to {$file}.");
+        }
+        @chmod($file, 0644);
+
+        try {
+            // A SAN may resolve to any cluster node. Publish every token to all
+            // peers before checking reachability or starting CA validation.
+            $this->assertChallengePeersInSync(
+                $this->pushChallengeToPeers('present', $token, $value, $peers)
+            );
+
+            $this->verifyChallengeReachable($domain, $path, $value);
+        } catch (Throwable $exception) {
+            @unlink($file);
+            $this->cleanupPeerChallenge($token, $peers);
+
+            throw $exception;
+        }
+
+        return function () use ($file, $token, $peers) {
+            @unlink($file);
+            $this->cleanupPeerChallenge($token, $peers);
+        };
+    }
+
     protected function atomicSymlink(string $target, string $linkPath): void
     {
         $tmpLink = $linkPath.'.tmp'.bin2hex(random_bytes(4));
@@ -756,6 +788,44 @@ class LetsEncryptService
     }
 
     /**
+     * Store a challenge token received from the active peer node.
+     */
+    public function storeChallengeToken(string $token, string $value): void
+    {
+        $path = $this->challengeTokenPath($token);
+        $this->ensureDir(dirname($path), 0755);
+
+        if (file_put_contents($path, $value) === false) {
+            throw new RuntimeException("Unable to write ACME challenge token to {$path}.");
+        }
+
+        @chmod($path, 0644);
+    }
+
+    /**
+     * Remove a challenge token received from a peer. Missing tokens are safe.
+     */
+    public function removeChallengeToken(string $token): void
+    {
+        $path = $this->challengeTokenPath($token);
+
+        if (is_file($path) && ! @unlink($path)) {
+            throw new RuntimeException("Unable to remove ACME challenge token from {$path}.");
+        }
+    }
+
+    protected function challengeTokenPath(string $token): string
+    {
+        if (! preg_match('/^[A-Za-z0-9_-]{1,255}$/', $token)) {
+            throw new RuntimeException('Invalid ACME challenge token.');
+        }
+
+        $webroot = rtrim((string) ($this->config()['webroot'] ?: $this->defaultWebroot()), '/');
+
+        return $webroot.'/.well-known/acme-challenge/'.$token;
+    }
+
+    /**
      * Peer node base URLs to replicate the cert to, derived from the SAN list:
      * every hostname except the primary (failover record), as https URLs, with
      * this node dropped by IP. So a cluster only needs the domain field filled,
@@ -764,9 +834,9 @@ class LetsEncryptService
      *
      * @return array<int, string>
      */
-    public function peerHosts(): array
+    public function peerHosts(?array $domains = null): array
     {
-        $domains = $this->parseDomains((string) ($this->config()['domain'] ?? ''));
+        $domains ??= $this->parseDomains((string) ($this->config()['domain'] ?? ''));
         $hosts = array_map(fn ($d) => 'https://'.$d, array_slice($domains, 1));
 
         if (empty($hosts)) {
@@ -826,9 +896,9 @@ class LetsEncryptService
      *
      * @return array<int, array{host: string, ok: bool, status: int, error: ?string}>
      */
-    public function pushToPeers(?string $polycomRoot = null): array
+    public function pushToPeers(?string $polycomRoot = null, ?array $hosts = null): array
     {
-        $hosts = $this->peerHosts();
+        $hosts ??= $this->peerHosts();
         $secret = (string) ($this->config()['push_secret'] ?? '');
         $results = [];
 
@@ -887,6 +957,94 @@ class LetsEncryptService
         }
 
         return $results;
+    }
+
+    /**
+     * Publish or remove one HTTP-01 token on every peer node.
+     *
+     * @return array<int, array{host: string, ok: bool, status: int, error: ?string}>
+     */
+    public function pushChallengeToPeers(
+        string $action,
+        string $token,
+        ?string $value = null,
+        ?array $hosts = null
+    ): array {
+        $hosts ??= $this->peerHosts();
+        $secret = (string) ($this->config()['push_secret'] ?? '');
+        $results = [];
+
+        if (empty($hosts)) {
+            return $results;
+        }
+
+        if ($secret === '') {
+            foreach ($hosts as $host) {
+                $results[] = ['host' => $host, 'ok' => false, 'status' => 0, 'error' => 'no peer push secret configured'];
+            }
+
+            return $results;
+        }
+
+        foreach ($hosts as $host) {
+            $url = $host.'/api/letsencrypt/challenge';
+            $result = ['host' => $host, 'ok' => false, 'status' => 0, 'error' => null];
+
+            try {
+                $response = Http::withHeaders(['X-FsPbx-Cert-Secret' => $secret])
+                    ->withOptions(['verify' => false])
+                    ->timeout(15)
+                    ->post($url, array_filter([
+                        'action' => $action,
+                        'token' => $token,
+                        'value' => $value,
+                    ], fn ($item) => $item !== null));
+
+                $result['status'] = $response->status();
+                $result['ok'] = $response->successful();
+
+                if (! $response->successful()) {
+                    $result['error'] = 'HTTP '.$response->status();
+                    logger("LetsEncryptService: peer challenge {$action} on {$host} failed ({$result['error']}).");
+                }
+            } catch (Throwable $exception) {
+                $result['error'] = $exception->getMessage();
+                logger("LetsEncryptService: peer challenge {$action} on {$host} errored: {$exception->getMessage()}");
+            }
+
+            $results[] = $result;
+        }
+
+        return $results;
+    }
+
+    protected function cleanupPeerChallenge(string $token, array $hosts): void
+    {
+        foreach ($this->pushChallengeToPeers('cleanup', $token, null, $hosts) as $result) {
+            if (empty($result['ok'])) {
+                logger('LetsEncryptService: unable to clean up challenge token on '
+                    .$result['host'].': '.($result['error'] ?? 'unknown error'));
+            }
+        }
+    }
+
+    protected function assertChallengePeersInSync(array $results): void
+    {
+        $failed = array_values(array_filter($results, fn ($result) => empty($result['ok'])));
+
+        if (empty($failed)) {
+            return;
+        }
+
+        $hosts = implode(', ', array_map(
+            fn ($result) => $result['host'].' ('.($result['error'] ?? 'unknown error').')',
+            $failed
+        ));
+
+        throw new RuntimeException(
+            'Failed to publish the ACME challenge token to peer node(s): '.$hosts
+            .'. Certificate validation was not started.'
+        );
     }
 
     /**
