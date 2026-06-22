@@ -35,6 +35,7 @@
         "predis/predis": "^2.0",
         "propaganistas/laravel-phone": "^5.0",
         "simplesoftwareio/simple-qrcode": "^4.2",
+        "skoerfgen/acmecert": "^3.7",
         "spatie/laravel-activitylog": "^4.8",
         "spatie/laravel-data": "^4.8",
         "spatie/laravel-query-builder": "^5.7",

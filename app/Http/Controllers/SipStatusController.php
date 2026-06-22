@@ -68,6 +68,11 @@ class SipStatusController extends Controller
                 'current_page' => route('sip-status.index'),
                 'data_route' => route('sip-status.data'),
                 'action' => route('sip-status.action'),
+                'tls_status' => route('sip-status.tls.status'),
+                'tls_config' => route('sip-status.tls.config'),
+                'tls_issue' => route('sip-status.tls.issue'),
+                'tls_revoke' => route('sip-status.tls.revoke'),
+                'tls_generate_secret' => route('sip-status.tls.generate-secret'),
             ],
             'permissions' => $this->getPermissions(),
         ]);
@@ -444,6 +449,7 @@ class SipStatusController extends Controller
             'sip_status_switch_status' => $this->canViewSwitchStatus(),
             'sip_profile_edit' => $this->canEditSipProfiles(),
             'can_run_commands' => $this->canRunCommands(),
+            'can_manage_tls' => $this->canRunCommands(),
         ];
     }
 

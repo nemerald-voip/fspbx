@@ -11,10 +11,19 @@ use Throwable;
 
 class AuthoritativeDnsActiveNodeGuard
 {
-    public function canExecute(?FreeswitchEslService $esl = null): array
+    /**
+     * @param  string|null  $fqdn  Override the active FQDN (e.g. another feature's
+     *                             failover record) instead of reading the
+     *                             scheduled-announcements settings.
+     * @param  array|null  $nodeIps  Override this node's IPs (auto-detected list)
+     *                               instead of reading scheduled_announcements_node_ips.
+     */
+    public function canExecute(?FreeswitchEslService $esl = null, ?string $fqdn = null, ?array $nodeIps = null): array
     {
-        $fqdn = $this->activeFqdn();
-        $nodeIps = $this->nodeIps();
+        $fqdn = ($fqdn !== null && trim($fqdn) !== '')
+            ? strtolower(trim($fqdn, " \t\n\r\0\x0B."))
+            : $this->activeFqdn();
+        $nodeIps = $nodeIps !== null ? $this->normalizeIps($nodeIps) : $this->nodeIps();
 
         if (empty($fqdn)) {
             return $this->result(false, 'active_unknown', 'No active FQDN could be determined from settings or APP_URL.', $fqdn, [], [], $nodeIps);

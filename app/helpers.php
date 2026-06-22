@@ -43,6 +43,42 @@ if (!function_exists('userCheckPermission')) {
     }
 }
 
+if (!function_exists('polycom_inline_cert')) {
+    /**
+     * Format a PEM certificate for inline use in a Polycom XML config attribute
+     * (device.sec.TLS.customCaCert*). Literal newlines inside an XML attribute
+     * are normalized to spaces by the phone's parser, which collapses the PEM
+     * onto one line and breaks decoding ("Could not decode cert chain").
+     *
+     * This re-extracts each certificate's base64 body (tolerating input that
+     * already has spaces or no line breaks) and re-emits it with line breaks as
+     * &#10; character references, which survive XML attribute normalization.
+     * The result MUST be printed unescaped, e.g. {!! polycom_inline_cert($v) !!}.
+     */
+    function polycom_inline_cert($pem): string
+    {
+        $pem = (string) $pem;
+
+        if (trim($pem) === '') {
+            return '';
+        }
+
+        if (!preg_match_all('/-----BEGIN CERTIFICATE-----(.*?)-----END CERTIFICATE-----/s', $pem, $matches)) {
+            // Unrecognized format: at least preserve any existing newlines.
+            return str_replace(["\r\n", "\r", "\n"], '&#10;', trim($pem));
+        }
+
+        $certs = [];
+        foreach ($matches[1] as $body) {
+            $base64 = preg_replace('/[^A-Za-z0-9+\/=]/', '', $body);
+            $wrapped = implode('&#10;', str_split($base64, 64));
+            $certs[] = '-----BEGIN CERTIFICATE-----&#10;'.$wrapped.'&#10;-----END CERTIFICATE-----';
+        }
+
+        return implode('&#10;', $certs);
+    }
+}
+
 // Check if currenlty signed in user a superadmin
 if (!function_exists('isSuperAdmin')) {
     function isSuperAdmin($user = null)

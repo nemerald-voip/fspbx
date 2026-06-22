@@ -60,6 +60,7 @@ use App\Http\Controllers\ProvisioningController;
 use App\Http\Controllers\RegistrationsController;
 use App\Http\Controllers\RecordingsManagerController;
 use App\Http\Controllers\RingGroupsController;
+use App\Http\Controllers\LetsEncryptController;
 use App\Http\Controllers\SipStatusController;
 use App\Http\Controllers\SpeedDialController;
 use App\Http\Controllers\SwitchModuleController;
@@ -206,6 +207,13 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     // SIP Status
     Route::get('sip-status/data', [SipStatusController::class, 'data'])->name('sip-status.data');
     Route::post('sip-status/action', [SipStatusController::class, 'action'])->name('sip-status.action');
+
+    // FreeSWITCH TLS (Let's Encrypt)
+    Route::get('sip-status/tls', [LetsEncryptController::class, 'status'])->name('sip-status.tls.status');
+    Route::post('sip-status/tls/config', [LetsEncryptController::class, 'saveConfig'])->name('sip-status.tls.config');
+    Route::post('sip-status/tls/issue', [LetsEncryptController::class, 'issue'])->name('sip-status.tls.issue');
+    Route::post('sip-status/tls/revoke', [LetsEncryptController::class, 'revoke'])->name('sip-status.tls.revoke');
+    Route::post('sip-status/tls/generate-secret', [LetsEncryptController::class, 'generateSecret'])->name('sip-status.tls.generate-secret');
 
     // Ring Group AI Text-to-Speech & File Serving
     Route::post('ring-groups/{ring_group}/text-to-speech', [RingGroupsController::class, 'textToSpeech'])->name('ring-groups.textToSpeech');
@@ -739,3 +747,8 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     // CHAR PMS
     Route::post('/pms/char', CharPmsWebhookController::class)->name('pms.char');
 });
+
+// Peer-to-peer TLS certificate replication (authorized by the shared push
+// secret, not a session) so the active node can push a renewed cert to peers.
+Route::post('letsencrypt/receive-certificate', [LetsEncryptController::class, 'receiveCertificate'])
+    ->name('letsencrypt.receive-certificate');

@@ -7,6 +7,7 @@ use App\Models\DefaultSettings;
 use App\Jobs\DeleteOldEmailLogs;
 use App\Jobs\ProcessScheduledAnnouncements;
 use App\Jobs\ProcessWakeupCalls;
+use App\Jobs\RenewTlsCertificate;
 use App\Jobs\DeleteOldVoicemails;
 use App\Jobs\DeleteOldCallRecordings;
 use App\Jobs\DeleteOldTranscriptions;
@@ -84,6 +85,13 @@ class Kernel extends ConsoleKernel
         // Check fax service status
         if (isset($jobSettings['check_fax_service_status']) && $jobSettings['check_fax_service_status'] === "true") {
             $schedule->job(new \App\Jobs\CheckFaxServiceStatus())->everyThirtyMinutes();
+        }
+
+        // Renew FreeSWITCH Let's Encrypt TLS certificate (no-ops until < 30 days remain)
+        if (isset($jobSettings['renew_tls_certificates']) && $jobSettings['renew_tls_certificates'] === "true") {
+            $schedule->job(new RenewTlsCertificate())
+                ->dailyAt('03:30')
+                ->timezone($scheduledJobsTimezone);
         }
 
         // Reap stuck outbound faxes — required safety net for the new
