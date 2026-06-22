@@ -123,6 +123,29 @@ class LetsEncryptServiceTest extends TestCase
         });
     }
 
+    public function test_key_loaders_create_the_missing_letsencrypt_storage_directory(): void
+    {
+        $service = $this->testableService();
+        $storageDir = $this->webroot.'/storage/letsencrypt';
+
+        $accountKey = $service->accountKeyForTest();
+        $domainKey = $service->domainKeyForTest();
+
+        $this->assertDirectoryExists($storageDir);
+        $this->assertSame('file://'.$storageDir.'/account.key', $accountKey);
+        $this->assertFileExists($storageDir.'/account.key');
+        $this->assertFileExists($storageDir.'/domain.key');
+        $this->assertStringContainsString('PRIVATE KEY', $domainKey);
+    }
+
+    public function test_revoke_key_lookup_does_not_create_an_unrelated_account_key(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Revoke the certificate from the node that issued it.');
+
+        $this->testableService()->accountKeyForTest(false);
+    }
+
     private function testableService(): TestableLetsEncryptService
     {
         return new TestableLetsEncryptService(
@@ -161,6 +184,16 @@ class TestableLetsEncryptService extends LetsEncryptService
         return $this->publishHttpChallenge($domain, $path, $value, $webroot, $peers);
     }
 
+    public function accountKeyForTest(bool $create = true): string
+    {
+        return $this->accountKey($create);
+    }
+
+    public function domainKeyForTest(): string
+    {
+        return $this->domainKey();
+    }
+
     public function pushChallengeToPeers(
         string $action,
         string $token,
@@ -189,5 +222,10 @@ class TestableLetsEncryptService extends LetsEncryptService
     protected function verifyChallengeReachable(string $domain, string $path, string $expected): void
     {
         $this->events[] = 'verify:'.$domain;
+    }
+
+    protected function storageDir(): string
+    {
+        return $this->testWebroot.'/storage/letsencrypt';
     }
 }

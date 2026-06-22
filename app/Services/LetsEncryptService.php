@@ -288,7 +288,7 @@ class LetsEncryptService
 
         $ac = new ACMECert($isStaging ? false : true);
         $ac->setLogger(false);
-        $ac->loadAccountKey($this->accountKey());
+        $ac->loadAccountKey($this->accountKey(false));
         $ac->revoke($pem); // reads the leaf certificate from the combined PEM
 
         // Replace with a self-signed cert so TLS profiles keep working. Use the
@@ -550,13 +550,23 @@ class LetsEncryptService
     /**
      * Load the persisted ACME account key, creating one on first use.
      */
-    protected function accountKey(): string
+    protected function accountKey(bool $create = true): string
     {
-        $path = $this->storageDir().'/account.key';
+        $storageDir = $this->storageDir();
+        $path = $storageDir.'/account.key';
 
         if (! is_file($path)) {
+            if (! $create) {
+                throw new RuntimeException(
+                    'The ACME account key is missing on this node. Revoke the certificate from the node that issued it.'
+                );
+            }
+
+            $this->ensureDir($storageDir, 0700);
             $key = (new ACMECert())->generateECKey('P-384');
-            file_put_contents($path, $key);
+            if (file_put_contents($path, $key) === false) {
+                throw new RuntimeException("Unable to write ACME account key to {$path}.");
+            }
             @chmod($path, 0600);
         }
 
@@ -568,15 +578,25 @@ class LetsEncryptService
      */
     protected function domainKey(): string
     {
-        $path = $this->storageDir().'/domain.key';
+        $storageDir = $this->storageDir();
+        $this->ensureDir($storageDir, 0700);
+        $path = $storageDir.'/domain.key';
 
         if (! is_file($path)) {
             $key = (new ACMECert())->generateECKey('P-384');
-            file_put_contents($path, $key);
+            if (file_put_contents($path, $key) === false) {
+                throw new RuntimeException("Unable to write ACME domain key to {$path}.");
+            }
             @chmod($path, 0600);
         }
 
-        return file_get_contents($path);
+        $key = file_get_contents($path);
+
+        if ($key === false) {
+            throw new RuntimeException("Unable to read ACME domain key from {$path}.");
+        }
+
+        return $key;
     }
 
     protected function storageDir(): string
