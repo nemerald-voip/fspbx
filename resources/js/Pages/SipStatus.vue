@@ -642,18 +642,20 @@ const fetchTls = () => {
         });
 };
 
+const tlsSettingsPayload = () => ({
+    domain: tlsConfig.value.domain,
+    account_email: tlsConfig.value.account_email,
+    webroot: tlsConfig.value.webroot,
+    staging: tlsStaging.value,
+    auto_renew: tlsAutoRenew.value,
+    push_secret: tlsConfig.value.push_secret,
+});
+
 const saveTlsConfig = () => {
     tlsLoading.value = true;
     tlsErrors.value = {};
 
-    axios.post(props.routes.tls_config, {
-        domain: tlsConfig.value.domain,
-        account_email: tlsConfig.value.account_email,
-        webroot: tlsConfig.value.webroot,
-        staging: tlsStaging.value,
-        auto_renew: tlsAutoRenew.value,
-        push_secret: tlsConfig.value.push_secret,
-    })
+    axios.post(props.routes.tls_config, tlsSettingsPayload())
         .then((response) => {
             if (response.data.status) {
                 applyTlsStatus(response.data.status);
@@ -679,7 +681,7 @@ const rotateSecret = () => {
         .then((response) => {
             tlsConfig.value.push_secret = response.data.secret;
             showSecret.value = true;
-            showNotification("success", { success: ["New secret generated — click Save to apply it (replicated to all nodes)."] });
+            showNotification("success", response.data.messages || { success: ["Peer push secret rotated and saved."] });
         })
         .catch(handleError)
         .finally(() => {
@@ -689,19 +691,22 @@ const rotateSecret = () => {
 
 const issueTls = () => {
     tlsLoading.value = true;
+    tlsErrors.value = {};
 
-    axios.post(props.routes.tls_issue, {
-        domain: tlsConfig.value.domain,
-        account_email: tlsConfig.value.account_email,
-        staging: tlsStaging.value,
-    })
+    axios.post(props.routes.tls_issue, tlsSettingsPayload())
         .then((response) => {
             if (response.data.status) {
                 applyTlsStatus(response.data.status);
             }
             showNotification("success", response.data.messages || { success: ["Certificate issued."] });
         })
-        .catch(handleError)
+        .catch((error) => {
+            if (error?.response?.status === 422 && error.response.data?.errors) {
+                tlsErrors.value = error.response.data.errors;
+            } else {
+                handleError(error);
+            }
+        })
         .finally(() => {
             tlsLoading.value = false;
         });

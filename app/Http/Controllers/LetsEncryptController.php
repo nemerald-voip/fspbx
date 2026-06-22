@@ -31,16 +31,7 @@ class LetsEncryptController extends Controller
     public function saveConfig(SaveLetsEncryptSettingsRequest $request): JsonResponse
     {
         $validated = $request->validated();
-
-        $this->service->saveSetting('domain', implode(' ', $this->service->parseDomains($validated['domain'])));
-        $this->service->saveSetting('account_email', $validated['account_email']);
-        $this->service->saveSetting('webroot', $validated['webroot']);
-        $this->service->saveSetting('staging', $validated['staging'] ? 'true' : 'false');
-        $this->service->saveSetting('auto_renew', $validated['auto_renew'] ? 'true' : 'false');
-        $this->service->saveSetting('push_secret', $validated['push_secret'] ?? '');
-
-        // Mirror the auto-renew flag onto the scheduled-jobs toggle the Kernel reads.
-        $this->service->saveScheduledJobToggle($validated['auto_renew']);
+        $this->persistSettings($validated);
 
         return response()->json([
             'messages' => ['success' => ['Settings saved.']],
@@ -51,24 +42,19 @@ class LetsEncryptController extends Controller
     /**
      * Issue or renew the certificate now, install it and reload FreeSWITCH.
      */
-    public function issue(Request $request): JsonResponse
+    public function issue(SaveLetsEncryptSettingsRequest $request): JsonResponse
     {
-        if (! $this->canManage()) {
-            return response()->json(['errors' => ['auth' => ['Access denied.']]], 403);
-        }
+        $validated = $request->validated();
 
-        $validated = $request->validate([
-            // One or more hostnames (SANs), whitespace/comma separated.
-            'domain' => ['required', 'string', 'max:1024'],
-            'account_email' => ['required', 'email', 'max:255'],
-            'staging' => ['nullable', 'boolean'],
-        ]);
+        // Persist the complete form before ACME work begins. Configuration
+        // changes remain saved even when issuance or peer validation fails.
+        $this->persistSettings($validated);
 
         try {
             $result = $this->service->issue(
                 $validated['domain'],
                 $validated['account_email'],
-                $request->has('staging') ? $request->boolean('staging') : null,
+                (bool) $validated['staging'],
             );
 
             $validTo = $result['valid_to'] ? date('M j, Y', strtotime($result['valid_to'])) : 'unknown';
@@ -210,9 +196,7 @@ class LetsEncryptController extends Controller
     }
 
     /**
-     * Generate a strong random peer push secret for the rotate button. Does not
-     * persist it — the admin reviews it and saves via the settings form (and
-     * copies the same value to the other nodes).
+     * Generate and immediately persist a strong peer push secret.
      */
     public function generateSecret(): JsonResponse
     {
@@ -220,7 +204,24 @@ class LetsEncryptController extends Controller
             return response()->json(['errors' => ['auth' => ['Access denied.']]], 403);
         }
 
-        return response()->json(['secret' => Str::random(40)]);
+        $secret = Str::random(40);
+        $this->service->saveSetting('push_secret', $secret);
+
+        return response()->json([
+            'secret' => $secret,
+            'messages' => ['success' => ['Peer push secret rotated and saved.']],
+        ]);
+    }
+
+    protected function persistSettings(array $validated): void
+    {
+        $this->service->saveSetting('domain', implode(' ', $this->service->parseDomains($validated['domain'])));
+        $this->service->saveSetting('account_email', $validated['account_email']);
+        $this->service->saveSetting('webroot', $validated['webroot']);
+        $this->service->saveSetting('staging', $validated['staging'] ? 'true' : 'false');
+        $this->service->saveSetting('auto_renew', $validated['auto_renew'] ? 'true' : 'false');
+        $this->service->saveSetting('push_secret', $validated['push_secret'] ?? '');
+        $this->service->saveScheduledJobToggle((bool) $validated['auto_renew']);
     }
 
     protected function canManage(): bool
