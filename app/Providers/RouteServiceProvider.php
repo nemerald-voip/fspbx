@@ -72,5 +72,12 @@ class RouteServiceProvider extends ServiceProvider
                     return response('', 429);
                 });
         });
+
+        // Call-flow simulation walks several tables per request; cap it so an
+        // agent-tool loop can't hammer the DB.
+        RateLimiter::for('call-flow-simulate', function (Request $request) {
+            $key = $request->bearerToken() ?: (optional($request->user())->id ?: $request->ip());
+            return Limit::perMinute(10)->by('call-flow-simulate:' . $key);
+        });
     }
 }
