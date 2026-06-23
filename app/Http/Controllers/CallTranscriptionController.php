@@ -14,6 +14,7 @@ use App\Models\CallTranscriptionProvider;
 use App\Models\CallTranscriptionProviderConfig;
 use App\Services\CallTranscriptionConfigService;
 use App\Http\Requests\StoreAssemblyAiConfigRequest;
+use App\Http\Requests\StoreElevenLabsConfigRequest;
 use App\Http\Requests\StoreTranscriptionOptionsRequest;
 use App\Services\CallTranscription\CallTranscriptionService;
 
@@ -319,6 +320,156 @@ class CallTranscriptionController extends Controller
         }
     }
 
+
+    // ── ElevenLabs config (mirrors AssemblyAI pattern) ─────────────────
+
+    public function getElevenLabsConfig(Request $request)
+    {
+        $data = $request->validate([
+            'domain_uuid' => ['nullable', 'uuid'],
+        ]);
+        $domainUuid = $data['domain_uuid'] ?? null;
+
+        $provider = CallTranscriptionProvider::where('key', 'elevenlabs')
+            ->where('is_active', true)
+            ->first();
+
+        if (!$provider) {
+            return response()->json([
+                'messages' => ['error' => ['ElevenLabs provider is not configured or inactive.']],
+            ], 422);
+        }
+
+        $scope = null;
+        $config = null;
+
+        if ($domainUuid) {
+            $domainCfg = CallTranscriptionProviderConfig::where('provider_uuid', $provider->uuid)
+                ->where('domain_uuid', $domainUuid)
+                ->first();
+
+            if ($domainCfg) {
+                $config = data_get($domainCfg, 'config', []);
+                $scope = 'domain';
+            }
+        }
+
+        if (!$config) {
+            $systemCfg = CallTranscriptionProviderConfig::where('provider_uuid', $provider->uuid)
+                ->whereNull('domain_uuid')
+                ->first();
+
+            if ($systemCfg) {
+                $config = data_get($systemCfg, 'config', []);
+                $scope = 'system';
+            }
+        }
+
+        if ($config instanceof \Illuminate\Database\Eloquent\Casts\ArrayObject) {
+            $config = $config->toArray();
+        }
+
+        return response()->json(array_merge([
+            'scope'       => $scope,
+            'domain_uuid' => $domainUuid,
+        ], $config ?? []));
+    }
+
+    public function storeElevenLabsConfig(StoreElevenLabsConfigRequest $request)
+    {
+        $validated  = $request->validated();
+        $domainUuid = $validated['domain_uuid'] ?? null;
+
+        $provider = CallTranscriptionProvider::where('key', 'elevenlabs')->where('is_active', true)->first();
+
+        if (!$provider) {
+            return response()->json([
+                'messages' => ['error' => ['ElevenLabs provider is not configured or inactive.']],
+            ], 422);
+        }
+
+        $config = Arr::except($validated, ['domain_uuid']);
+
+        try {
+            DB::beginTransaction();
+
+            CallTranscriptionProviderConfig::updateOrCreate(
+                [
+                    'provider_uuid' => $provider->uuid,
+                    'domain_uuid'   => $domainUuid,
+                ],
+                [
+                    'provider_uuid' => $provider->uuid,
+                    'domain_uuid'   => $domainUuid,
+                    'config'        => $config,
+                ]
+            );
+
+            DB::commit();
+
+            app(CallTranscriptionConfigService::class)->invalidate($domainUuid);
+
+            return response()->json([
+                'messages' => ['success' => ['ElevenLabs options saved']],
+            ], 201);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+
+            logger('CallTranscriptionController@storeElevenLabsConfig error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
+            return response()->json([
+                'messages' => ['error' => ['Something went wrong while saving.']],
+            ], 500);
+        }
+    }
+
+    public function destroyElevenLabsConfig(Request $request)
+    {
+        $data = $request->validate([
+            'domain_uuid' => ['required', 'uuid'],
+        ]);
+
+        $domainUuid = $data['domain_uuid'];
+
+        $provider = CallTranscriptionProvider::where('key', 'elevenlabs')
+            ->where('is_active', true)
+            ->first();
+
+        if (!$provider) {
+            return response()->json([
+                'messages' => ['error' => ['ElevenLabs provider is not configured or inactive.']],
+            ], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $deleted = CallTranscriptionProviderConfig::where('provider_uuid', $provider->uuid)
+                ->where('domain_uuid', $domainUuid)
+                ->delete();
+
+            DB::commit();
+
+            app(CallTranscriptionConfigService::class)->invalidate($domainUuid);
+
+            return response()->json([
+                'messages' => ['success' => [
+                    $deleted ? 'Reverted to defaults.' : 'No custom options found; already using defaults.'
+                ]],
+            ], 200);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+
+            logger(
+                'CallTranscriptionController@destroyElevenLabsConfig error: ' .
+                    $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine()
+            );
+
+            return response()->json([
+                'messages' => ['error' => ['Something went wrong while reverting to defaults.']],
+            ], 500);
+        }
+    }
 
     /**
      * Start a transcription for a CDR recording.
