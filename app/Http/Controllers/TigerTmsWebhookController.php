@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\PmsProviderSettings;
 use App\Services\TigerTmsSiteMapper;
+use App\Services\TigerTmsWebhookSignatureValidator;
 use App\Services\TigerTmsWebhookNormalizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,12 +16,30 @@ use Spatie\WebhookClient\WebhookProcessor;
 
 class TigerTmsWebhookController extends Controller
 {
-    public function __invoke(Request $request, TigerTmsSiteMapper $siteMapper, TigerTmsWebhookNormalizer $normalizer): JsonResponse
+    public function __invoke(
+        Request $request,
+        TigerTmsSiteMapper $siteMapper,
+        TigerTmsWebhookNormalizer $normalizer,
+        TigerTmsWebhookSignatureValidator $signatureValidator
+    ): JsonResponse
     {
-        Log::info('TigerTMS webhook received', [
-            'request' => $this->safeRequestContext($request),
-            'payload' => $request->all(),
-        ]);
+        $signature = $signatureValidator->verify($request);
+
+        if (! $signature['configured']) {
+            Log::warning('TigerTMS webhook signature was not verified because no secret is configured', [
+                'request' => $this->safeRequestContext($request),
+            ]);
+        } elseif (! $signature['valid']) {
+            Log::warning('TigerTMS webhook rejected because signature validation failed', [
+                'reason' => $signature['reason'],
+                'request' => $this->safeRequestContext($request),
+            ]);
+
+            return response()->json([
+                'result' => 'failed',
+                'information' => 'Invalid webhook signature.',
+            ], 401);
+        }
 
         $normalized = $normalizer->normalize($request->all());
         $payloadDomainUuid = $siteMapper->inbound($normalized['site'] ?? null);
@@ -51,18 +70,6 @@ class TigerTmsWebhookController extends Controller
             '_tigertms_event' => $normalized['event'] ?? null,
             '_tigertms_action' => $normalized['action'] ?? null,
             '_tigertms_request' => $this->safeRequestContext($request),
-        ]);
-
-        Log::info('TigerTMS webhook accepted', [
-            'domain_uuid' => $resolvedDomainUuid ?: null,
-            'site' => $normalized['site'] ?? null,
-            'site_unprocessable' => $siteIsUnprocessable,
-            'provider_enabled' => $providerEnabled,
-            'room' => $normalized['room'] ?? null,
-            'event' => $normalized['event'] ?? null,
-            'action' => $normalized['action'] ?? null,
-            'request' => $this->safeRequestContext($request),
-            'payload' => $request->except(['_tigertms_request']),
         ]);
 
         $webhookConfig = new WebhookConfig([
@@ -100,6 +107,7 @@ class TigerTmsWebhookController extends Controller
                     'x-api-key',
                     'x-auth-token',
                     'x-signature',
+                    'x-ilink-signature',
                     'tigertms-token',
                 ], true);
 

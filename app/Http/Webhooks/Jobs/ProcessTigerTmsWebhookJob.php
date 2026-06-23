@@ -27,29 +27,19 @@ class ProcessTigerTmsWebhookJob extends SpatieProcessWebhookJob implements Shoul
         $roomName = (string) ($normalized['room'] ?? Arr::get($payload, '_tigertms_room', ''));
         $action = $normalized['action'] ?? Arr::get($payload, '_tigertms_action');
 
-        Log::info('TigerTMS webhook processing started', [
-            'webhook_call_id' => $this->webhookCall->id ?? null,
-            'domain_uuid' => $domainUuid,
-            'normalized' => $normalized,
-            'site_unprocessable' => (bool) Arr::get($payload, '_tigertms_site_unprocessable', false),
-            'payload' => $payload,
-        ]);
-
         if ((bool) Arr::get($payload, '_tigertms_site_unprocessable', false)) {
             Log::warning('TigerTMS webhook skipped because site value is not recognized', [
-                'webhook_call_id' => $this->webhookCall->id ?? null,
+                ...$this->logContext($payload, $normalized),
                 'site' => Arr::get($payload, '_tigertms_site'),
-                'payload' => $payload,
             ]);
 
             return;
         }
 
         if (!in_array($action, ['checkin', 'checkout'], true)) {
-            Log::info('TigerTMS webhook logged without processing because event is not recognized yet', [
-                'webhook_call_id' => $this->webhookCall->id ?? null,
+            Log::warning('TigerTMS webhook skipped because event is not recognized yet', [
+                ...$this->logContext($payload, $normalized),
                 'event' => $normalized['event'] ?? Arr::get($payload, '_tigertms_event'),
-                'payload' => $payload,
             ]);
 
             return;
@@ -57,10 +47,9 @@ class ProcessTigerTmsWebhookJob extends SpatieProcessWebhookJob implements Shoul
 
         if ($domainUuid === '' || $roomName === '') {
             Log::warning('TigerTMS webhook skipped because domain or room is missing', [
-                'webhook_call_id' => $this->webhookCall->id ?? null,
+                ...$this->logContext($payload, $normalized),
                 'domain_uuid' => $domainUuid,
                 'room' => $roomName,
-                'payload' => $payload,
             ]);
 
             return;
@@ -68,10 +57,9 @@ class ProcessTigerTmsWebhookJob extends SpatieProcessWebhookJob implements Shoul
 
         if (! app(PmsProviderSettings::class)->isTigerTms($domainUuid)) {
             Log::warning('TigerTMS webhook skipped because TigerTMS is not enabled for this tenant', [
-                'webhook_call_id' => $this->webhookCall->id ?? null,
+                ...$this->logContext($payload, $normalized),
                 'domain_uuid' => $domainUuid,
                 'room' => $roomName,
-                'payload' => $payload,
             ]);
 
             return;
@@ -90,11 +78,10 @@ class ProcessTigerTmsWebhookJob extends SpatieProcessWebhookJob implements Shoul
 
         if (!$room) {
             Log::warning('TigerTMS webhook skipped because hotel room was not found', [
-                'webhook_call_id' => $this->webhookCall->id ?? null,
+                ...$this->logContext($payload, $normalized),
                 'domain_uuid' => $domainUuid,
                 'room' => $roomName,
                 'tigertms_room' => $roomCode,
-                'payload' => $payload,
             ]);
 
             return;
@@ -106,13 +93,6 @@ class ProcessTigerTmsWebhookJob extends SpatieProcessWebhookJob implements Shoul
 
         if ($action === 'checkout') {
             $outboundSync->withoutOutboundSync(fn () => $service->checkOut($room));
-
-            Log::info('TigerTMS checkout processed', [
-                'webhook_call_id' => $this->webhookCall->id ?? null,
-                'domain_uuid' => $domainUuid,
-                'room_uuid' => $room->uuid,
-                'room' => $roomName,
-            ]);
 
             return;
         }
@@ -127,13 +107,6 @@ class ProcessTigerTmsWebhookJob extends SpatieProcessWebhookJob implements Shoul
         ], fn ($value) => $value !== null && $value !== '');
 
         $outboundSync->withoutOutboundSync(fn () => $service->checkIn($room, $payloadForService));
-
-        Log::info('TigerTMS check-in processed', [
-            'webhook_call_id' => $this->webhookCall->id ?? null,
-            'domain_uuid' => $domainUuid,
-            'room_uuid' => $room->uuid,
-            'room' => $roomName,
-        ]);
     }
 
     private function guestDisplayName(array $normalized): ?string
@@ -144,5 +117,20 @@ class ProcessTigerTmsWebhookJob extends SpatieProcessWebhookJob implements Shoul
         ])));
 
         return $name === '' ? null : $name;
+    }
+
+    private function logContext(array $payload, array $normalized): array
+    {
+        return [
+            'webhook_call_id' => $this->webhookCall->id ?? null,
+            'webhook_id' => $payload['id'] ?? null,
+            'delivery_id' => Arr::get($payload, '_tigertms_request.headers.x-ilink-delivery.0'),
+            'domain_uuid' => Arr::get($payload, '_tigertms_resolved_domain_uuid'),
+            'site' => $normalized['site'] ?? null,
+            'room' => $normalized['room'] ?? null,
+            'event' => $normalized['event'] ?? null,
+            'action' => $normalized['action'] ?? null,
+            'reservation_number' => $normalized['reservation_number'] ?? null,
+        ];
     }
 }

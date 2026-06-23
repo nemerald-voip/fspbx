@@ -6,6 +6,8 @@ return [
     'password' => env('TIGERTMS_PASSWORD'),
     'timeout' => (int) env('TIGERTMS_TIMEOUT', 20),
     'default_language' => env('TIGERTMS_DEFAULT_LANGUAGE', 'en-US'),
+    'webhook_secret' => env('TIGERTMS_WEBHOOK_SECRET'),
+    'webhook_signature_tolerance_seconds' => (int) env('TIGERTMS_WEBHOOK_SIGNATURE_TOLERANCE_SECONDS', 300),
 
     'test_site_id' => env('TIGERTMS_TEST_SITE_ID'),
     'test_domain_uuid' => env('TIGERTMS_TEST_DOMAIN_UUID'),
