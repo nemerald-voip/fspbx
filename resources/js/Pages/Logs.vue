@@ -23,6 +23,17 @@
                     :selected-domain-uuid="selectedDomainUuid" />
             </section>
 
+            <!-- TIGERTMS -->
+            <section v-if="features?.tigertms_logs" v-show="selectedMenuOption === 'tigertms_logs'">
+                <Vueform>
+                    <StaticElement name="locations_title" tag="h4" content="TigerTMS" />
+                </Vueform>
+
+                <TigerTmsLogs :trigger="tigerTmsLogsTrigger" :startPeriod="startPeriod" :endPeriod="endPeriod"
+                    :timezone="timezone" :routes="routes" :permissions="permissions" :domain-options="domainOptions"
+                    :selected-domain-uuid="selectedDomainUuid" />
+            </section>
+
             <!-- WEBHOOKS -->
             <section v-show="selectedMenuOption === 'inbound_webhooks'">
                 <Vueform>
@@ -119,6 +130,7 @@ import axios from 'axios'
 import PageWithSideMenu from '../Layouts/PageWithSideMenu.vue'
 import Notification from "./components/notifications/Notification.vue";
 import EmailLogs from "./components/EmailLogs.vue";
+import TigerTmsLogs from "./components/TigerTmsLogs.vue";
 import InboundWebhooks from "./components/InboundWebhooks.vue";
 import MessageLogs from "./components/MessageLogs.vue";
 import FaxLogs from "./components/FaxLogs.vue";
@@ -129,6 +141,7 @@ import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
 import {
     EnvelopeIcon,
     InboxArrowDownIcon,
+    BuildingOffice2Icon,
     DocumentTextIcon,
     ChatBubbleLeftRightIcon,
     PrinterIcon,
@@ -141,6 +154,10 @@ const props = defineProps({
     timezone: String,
     routes: Object,
     permissions: Object,
+    features: {
+        type: Object,
+        default: () => ({}),
+    },
     domainOptions: {
         type: Array,
         default: () => [],
@@ -153,6 +170,7 @@ const isDeleteLocationLoading = ref(false)
 const showDeleteLocationConfirmationModal = ref(false)
 const confirmDeleteLocationAction = ref(null);
 const emailsTrigger = ref(false)
+const tigerTmsLogsTrigger = ref(false)
 const inboundWebhooksTrigger = ref(false)
 const messageLogsTrigger = ref(false)
 const faxLogsTrigger = ref(false)
@@ -174,6 +192,7 @@ const pages = [
 
 const handleUpdateSelectedMenuOption = (key) => {
     if (key === 'emails') emailsTrigger.value = !emailsTrigger.value
+    if (key === 'tigertms_logs') tigerTmsLogsTrigger.value = !tigerTmsLogsTrigger.value
     if (key === 'inbound_webhooks') inboundWebhooksTrigger.value = !inboundWebhooksTrigger.value
     if (key === 'message_logs') messageLogsTrigger.value = !messageLogsTrigger.value
     if (key === 'fax_logs') faxLogsTrigger.value = !faxLogsTrigger.value
@@ -183,9 +202,14 @@ const handleUpdateSelectedMenuOption = (key) => {
 const navigation = computed(() => {
     const items = [
         { key: 'emails', name: 'Emails', icon: EnvelopeIcon },
-        { key: 'inbound_webhooks', name: 'Inbound Webhooks', icon: InboxArrowDownIcon },
         { key: 'message_logs', name: 'Messages', icon: ChatBubbleLeftRightIcon },
     ]
+
+    if (props.features?.tigertms_logs) {
+        items.push({ key: 'tigertms_logs', name: 'TigerTMS', icon: BuildingOffice2Icon })
+    }
+
+    items.push({ key: 'inbound_webhooks', name: 'Inbound Webhooks', icon: InboxArrowDownIcon })
 
     if (props.permissions?.fax_log_view) {
         items.push({ key: 'fax_logs', name: 'Faxes', icon: PrinterIcon })

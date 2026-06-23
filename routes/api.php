@@ -68,6 +68,8 @@ use App\Http\Controllers\SwitchVariableController;
 use App\Http\Controllers\SystemController;
 use App\Http\Controllers\SystemSettingsController;
 use App\Http\Controllers\TestEmailController;
+use App\Http\Controllers\TigerTmsLogsController;
+use App\Http\Controllers\TigerTmsWebhookController;
 use App\Http\Controllers\TokenController;
 use App\Http\Controllers\UserLogsController;
 use App\Http\Controllers\UsersController;
@@ -116,6 +118,9 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/email-logs/retry', [EmailLogsController::class, 'retry'])->name('email-logs.retry');
     Route::get('/email-logs/{uuid}/delivery-details', [EmailLogsController::class, 'deliveryDetails'])->name('email-logs.delivery-details');
     Route::post('/test-email-send', [TestEmailController::class, 'store'])->name('test-email-send.store');
+
+    // TigerTMS logs
+    Route::get('/tigertms-logs', [TigerTmsLogsController::class, 'index'])->name('tigertms-logs.index');
 
     // FreeSWITCH logs
     Route::get('/freeswitch-logs', [FreeswitchLogController::class, 'index'])->name('freeswitch-logs.index');
@@ -623,6 +628,8 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/call-detail-records/recordings/summarize', [CallTranscriptionController::class, 'summarize'])->name('cdrs.recording.summarize');
 
     // Account Settings
+    Route::get('account-settings/pms-provider', [AccountSettingsController::class, 'pmsProvider'])->name('account-settings.pms-provider');
+    Route::put('account-settings/pms-provider', [AccountSettingsController::class, 'updatePmsProvider'])->name('account-settings.pms-provider.update');
     Route::put('account-settings/update', [AccountSettingsController::class, 'update'])->name('account-settings.update');
 
     // Default Settings
@@ -747,6 +754,8 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     // CHAR PMS
     Route::post('/pms/char', CharPmsWebhookController::class)->name('pms.char');
 });
+
+Route::post('/pms/tigertms', TigerTmsWebhookController::class)->name('pms.tigertms');
 
 // Peer-to-peer ACME token and TLS certificate replication. These endpoints use
 // the shared push secret instead of a user session.

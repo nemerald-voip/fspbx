@@ -8,6 +8,7 @@ use App\Models\Domain;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Models\DomainSettings;
+use App\Services\PmsProviderSettings;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\DB;
@@ -76,9 +77,12 @@ class AccountSettingsController extends Controller
                     'transcription_policy_destroy_route' => route('call-transcription.policy.destroy'),
                     'assemblyai_route' => route('call-transcription.assemblyai'),
                     'assemblyai_store_route' => route('call-transcription.assemblyai.store'),
+                    'pms_provider' => route('account-settings.pms-provider'),
+                    'pms_provider_update' => route('account-settings.pms-provider.update'),
 
                     //'bulk_update' => route('devices.bulk.update'),
                 ],
+                'pms_provider_options' => app(PmsProviderSettings::class)->options(),
                 'permissions' => function () {
                     return $this->getUserPermissions();
                 },
@@ -232,6 +236,36 @@ class AccountSettingsController extends Controller
                 'errors' => ['server' => ['Server returned an error while processing your request.']]
             ], 500); // 500 Internal Server Error for any other errors
         }
+    }
+
+    public function pmsProvider(PmsProviderSettings $settings): JsonResponse
+    {
+        if (!userCheckPermission("account_settings_list_view")) {
+            return response()->json(['errors' => ['authorization' => ['Access denied.']]], 403);
+        }
+
+        return response()->json([
+            'provider' => $settings->provider(session('domain_uuid')),
+            'options' => $settings->options(),
+        ]);
+    }
+
+    public function updatePmsProvider(Request $request, PmsProviderSettings $settings): JsonResponse
+    {
+        if (!userCheckPermission("account_settings_list_view")) {
+            return response()->json(['errors' => ['authorization' => ['Access denied.']]], 403);
+        }
+
+        $validated = $request->validate([
+            'pms_provider' => ['required', 'string', 'in:charpms,tigertms'],
+        ]);
+
+        $settings->saveProvider((string) session('domain_uuid'), $validated['pms_provider']);
+
+        return response()->json([
+            'provider' => $validated['pms_provider'],
+            'messages' => ['server' => ['PMS provider updated.']],
+        ]);
     }
 
     public function getUserPermissions()

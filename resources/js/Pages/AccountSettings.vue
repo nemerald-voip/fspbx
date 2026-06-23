@@ -94,9 +94,19 @@
 
             <!-- ROOM MANAGEMENT -->
             <section v-show="selectedMenuOption === 'room_management'">
-                <Vueform>
+                <Vueform ref="pmsProviderForm$" :endpoint="submitPmsProviderForm" @success="handlePmsProviderSuccess"
+                    @error="handleError" @response="handleResponse" :display-errors="false">
+                    <StaticElement name="pms_provider_title" tag="h4" content="Hotel PMS Provider"
+                        description="Select which PMS integration to use." />
+                    <SelectElement name="pms_provider" label="Provider" :items="pmsProviderOptions" :native="false"
+                        :search="false" :floating="false" :columns="{
+                            sm: {
+                                container: 6,
+                            },
+                        }" />
+                    <ButtonElement name="pms_provider_submit" button-label="Save PMS Provider" :submits="true"
+                        align="right" />
                     <StaticElement name="room_management_title" tag="h4" content="Room Management" description="" />
-                    <GroupElement name="container_1" />
                 </Vueform>
 
                 <RoomManagement :trigger="roomManagementTrigger" :routes="routes" :permissions="permissions"
@@ -196,6 +206,10 @@ const props = defineProps({
     timezones: Object,
     routes: Object,
     permissions: Object,
+    pms_provider_options: {
+        type: Array,
+        default: () => [],
+    },
 
 })
 
@@ -207,6 +221,7 @@ const pages = [
 // State for collapsible navigation
 const initialMenuOption = ref(null)
 const form$ = ref(null)
+const pmsProviderForm$ = ref(null)
 const isLocationsLoading = ref(false)
 const isDeleteLocationLoading = ref(false)
 const locations = ref([])
@@ -220,11 +235,20 @@ const confirmDeleteLocationAction = ref(null);
 const autoProvisioningTrigger = ref(false)
 const roomManagementTrigger = ref(false)
 const roomStatusTrigger = ref(false)
+const pmsProviderOptions = props.pms_provider_options?.length
+    ? props.pms_provider_options
+    : [
+        { value: 'charpms', label: 'CharPMS' },
+        { value: 'tigertms', label: 'TigerTMS' },
+    ]
 
 const handleUpdateSelectedMenuOption = (key) => {
     if (key === 'locations') getLocations()
     if (key === 'auto_provisioning') autoProvisioningTrigger.value = !autoProvisioningTrigger.value
-    if (key === 'room_management') roomManagementTrigger.value = !roomManagementTrigger.value
+    if (key === 'room_management') {
+        roomManagementTrigger.value = !roomManagementTrigger.value
+        getPmsProvider()
+    }
     if (key === 'room_status') roomStatusTrigger.value = !roomStatusTrigger.value
 }
 
@@ -272,6 +296,7 @@ onMounted(() => {
     })
 
     form$.value.clean()
+    getPmsProvider()
     // console.log(form$.value.data);
 })
 
@@ -330,6 +355,29 @@ const executeLocationBulkDelete = async (items) => {
         isDeleteLocationLoading.value = false;
     }
 };
+
+const getPmsProvider = async () => {
+    if (!props.routes.pms_provider || !pmsProviderForm$.value) return
+
+    try {
+        const response = await axios.get(props.routes.pms_provider)
+        pmsProviderForm$.value.update({
+            pms_provider: response.data.provider ?? props.data.named_settings?.pms_provider?.value ?? 'charpms',
+        })
+        pmsProviderForm$.value.clean()
+    } catch (error) {
+        handleErrorResponse(error)
+    }
+}
+
+const submitPmsProviderForm = async (FormData, form$) => {
+    return await form$.$vueform.services.axios.put(props.routes.pms_provider_update, form$.requestData)
+}
+
+const handlePmsProviderSuccess = (response, form$) => {
+    showNotification('success', response.data.messages)
+    form$.clean()
+}
 
 const submitForm = async (FormData, form$) => {
     // Using form$.requestData will EXCLUDE conditional elements and it 
