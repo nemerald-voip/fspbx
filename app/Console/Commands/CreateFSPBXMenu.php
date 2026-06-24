@@ -76,16 +76,9 @@ class CreateFSPBXMenu extends Command
 
         // Define hierarchical menu items
         $categories = [
-            [
-                'title' => 'Home',
-                'link' => null,
-                'groups' => ['superadmin', 'admin', 'user', 'fax', 'agent'],
-                'subcategories' => [
-                    // ['title' => 'Account Settings', 'link' => '/core/users/user_edit.php?id=user', 'groups' => ['superadmin', 'admin', 'user', 'agent']],
-                    ['title' => 'Dashboard', 'link' => '/dashboard', 'groups' => ['superadmin', 'admin', 'user', 'agent']],
-                    ['title' => 'Logout', 'link' => '/logout', 'groups' => ['superadmin', 'admin', 'user', 'fax', 'agent']],
-                ],
-            ],
+            // NOTE: The legacy "Home" menu (Dashboard + Logout) has been removed.
+            // The dashboard is reachable via the logo, and Logout now lives in the
+            // top-right user menu (see resources/js/Pages/components/Menu.vue).
             [
                 'title' => 'Accounts',
                 'link' => null,

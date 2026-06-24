@@ -33,6 +33,7 @@ class Update192
             echo "Removed {$removed} legacy E911 dialplan template file(s).\n";
 
             $this->removeLogViewerMenuItemsFromAllMenus();
+            $this->removeHomeMenuFromFspbxMenu();
 
             $this->ensureMenuItem(
                 parentTitle: 'Applications',
@@ -162,6 +163,74 @@ class Update192
             ->delete();
 
         echo "Removed {$deleted} Log Viewer menu item(s) from all menus and associated access/language rows.\n";
+    }
+
+    private function removeHomeMenuFromFspbxMenu(): void
+    {
+        $menu = Menu::query()
+            ->where('menu_name', 'fspbx')
+            ->first();
+
+        if (! $menu) {
+            echo "Menu 'fspbx' was not found; skipping Home menu removal.\n";
+            return;
+        }
+
+        $homeItemUuids = MenuItem::query()
+            ->where('menu_uuid', $menu->menu_uuid)
+            ->where('menu_item_title', 'Home')
+            ->whereNull('menu_item_parent_uuid')
+            ->pluck('menu_item_uuid')
+            ->all();
+
+        if ($homeItemUuids === []) {
+            echo "No Home menu item found in menu 'fspbx'.\n";
+            return;
+        }
+
+        $menuItemUuids = $this->withMenuItemDescendantsInMenu($menu->menu_uuid, $homeItemUuids);
+
+        MenuLanguage::query()
+            ->where('menu_uuid', $menu->menu_uuid)
+            ->whereIn('menu_item_uuid', $menuItemUuids)
+            ->delete();
+
+        MenuItemGroup::query()
+            ->where('menu_uuid', $menu->menu_uuid)
+            ->whereIn('menu_item_uuid', $menuItemUuids)
+            ->delete();
+
+        $deleted = MenuItem::query()
+            ->where('menu_uuid', $menu->menu_uuid)
+            ->whereIn('menu_item_uuid', $menuItemUuids)
+            ->delete();
+
+        echo "Removed {$deleted} Home menu item(s) from menu 'fspbx' and associated access/language rows.\n";
+    }
+
+    private function withMenuItemDescendantsInMenu(string $menuUuid, array $menuItemUuids): array
+    {
+        $allMenuItemUuids = array_values(array_unique(array_filter($menuItemUuids)));
+        $pendingParentUuids = $allMenuItemUuids;
+
+        while ($pendingParentUuids !== []) {
+            $childUuids = MenuItem::query()
+                ->where('menu_uuid', $menuUuid)
+                ->whereIn('menu_item_parent_uuid', $pendingParentUuids)
+                ->pluck('menu_item_uuid')
+                ->all();
+
+            $newChildUuids = array_values(array_diff($childUuids, $allMenuItemUuids));
+
+            if ($newChildUuids === []) {
+                break;
+            }
+
+            $allMenuItemUuids = array_merge($allMenuItemUuids, $newChildUuids);
+            $pendingParentUuids = $newChildUuids;
+        }
+
+        return $allMenuItemUuids;
     }
 
     private function withMenuItemDescendantsAcrossMenus(array $menuItemUuids): array
