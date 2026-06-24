@@ -11,9 +11,19 @@
                     Fax Dashboard
                 </h2>
             </div>
-            <div class="mt-4 sm:ml-4 sm:mt-0">
+            <div class="mt-4 flex flex-col gap-3 sm:ml-4 sm:mt-0 sm:flex-row sm:items-center">
+                <!-- Location filter: scopes the counts and tables below to the selected locations -->
+                <div v-if="showLocationFilter" class="relative z-[1] w-full min-w-64 sm:w-72">
+                    <Vueform :key="locationFilterKey" :display-errors="false" size="sm">
+                        <MultiselectElement name="locations" :items="locationFilterOptions"
+                            :default="filterData.locations" :native="false" :search="true" input-type="search"
+                            autocomplete="off" :close-on-select="false" :hide-selected="false" :floating="false"
+                            placeholder="All locations" @change="handleUpdateLocationFilter" />
+                    </Vueform>
+                </div>
+
                 <button type="button" @click.prevent="handleNewFaxButtonClick()"
-                    class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                    class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     <DocumentPlusIcon class="-ml-0.5 mr-1.5 h-5 w-5" aria-hidden="true" />
                     Send New Fax
                 </button>
@@ -506,7 +516,8 @@ const showDeleteConfirmationModal = ref(false);
 
 const props = defineProps({
     data: Object,
-    stats: Object,
+    stats: Array,
+    locations: Array,
     routes: Object,
     pagination: Object,
     permissions: Object,
@@ -515,9 +526,17 @@ const props = defineProps({
 const permissions = props.permissions ?? {};
 const perPage = ref(props.pagination?.per_page);
 
+const stats = ref(props.stats ?? []);
+const statsLoading = ref(false);
+const locationFilterKey = ref(0);
+
 const filterData = ref({
     search: null,
+    locations: [],
 });
+
+const showLocationFilter = computed(() => (props.locations?.length ?? 0) > 1);
+const locationFilterOptions = computed(() => props.locations ?? []);
 
 const data = ref(props.data ?? {
     data: [],
@@ -582,9 +601,29 @@ onMounted(() => {
     getRecentInboundFaxes();
 });
 
+const getStats = () => {
+    statsLoading.value = true
+    axios.get(props.routes.stats_route, {
+        params: {
+            filter: filterData.value,
+        }
+    })
+        .then((response) => {
+            stats.value = response.data;
+        }).catch((error) => {
+            handleErrorResponse(error);
+        }).finally(() => {
+            statsLoading.value = false
+        })
+}
+
 const getRecentOutboundFaxes = () => {
     recentOutboundLoading.value = true
-    axios.get(props.routes.recent_outbound_route)
+    axios.get(props.routes.recent_outbound_route, {
+        params: {
+            filter: filterData.value,
+        }
+    })
         .then((response) => {
             recentOutboundFaxes.value = response.data;
             // console.log(recentOutboundFaxes.value);
@@ -599,7 +638,11 @@ const getRecentOutboundFaxes = () => {
 
 const getRecentInboundFaxes = () => {
     recentInboundLoading.value = true
-    axios.get(props.routes.recent_inbound_route)
+    axios.get(props.routes.recent_inbound_route, {
+        params: {
+            filter: filterData.value,
+        }
+    })
         .then((response) => {
             recentInboundFaxes.value = response.data;
             // console.log(recentInboundFaxes.value);
@@ -610,6 +653,19 @@ const getRecentInboundFaxes = () => {
         }).finally(() => {
             recentInboundLoading.value = false
         })
+}
+
+// Re-fetch every location-aware section of the dashboard.
+const refreshDashboard = () => {
+    getStats();
+    getRecentOutboundFaxes();
+    getRecentInboundFaxes();
+    getData(1);
+}
+
+const handleUpdateLocationFilter = (value) => {
+    filterData.value.locations = Array.isArray(value) ? value : [];
+    refreshDashboard();
 }
 
 const handleNewFaxButtonClick = (itemUuid) => {

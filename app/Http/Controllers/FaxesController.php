@@ -16,6 +16,7 @@ use App\Data\FaxDetailData;
 use App\Models\FusionCache;
 use App\Models\OutboundFax;
 use Illuminate\Support\Str;
+use App\Models\Location;
 use App\Models\Destinations;
 use Illuminate\Http\Request;
 use App\Models\DefaultSettings;
@@ -30,11 +31,13 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Requests\CreateNewFaxRequest;
 use App\Services\FaxSendService;
+use Illuminate\Validation\ValidationException;
 use Exception;
 
 class FaxesController extends Controller
 {
     protected $viewName = 'Faxes';
+    private const NO_ALLOWED_LOCATION_UUID = '__no_allowed_location__';
     /**
      * Display a listing of the resource.
      *
@@ -47,54 +50,10 @@ class FaxesController extends Controller
             return redirect('/');
         }
 
-        $currentDomain = session('domain_uuid');
-
         $faxes = $this->getFaxServers();
         $faxesDto = FaxData::collect($faxes);
 
         // logger($faxesDto);
-
-        $period = [
-            Carbon::now()->startOfDay()->subDays(30),
-            Carbon::now()->endOfDay()
-        ];
-        // dd(Carbon::now()->endOfDay());
-        // Convert the dates to the desired format for the query
-        // $period = [$startDate->toDateString(), $endDate->toDateString()];
-
-        // Calculate total of sent faxes in the last month
-        $totalReceived = FaxFiles::where('fax_mode', 'rx')
-            ->where('domain_uuid', $currentDomain)
-            ->inUsersLocations()
-            ->whereBetween('fax_date', $period)
-            ->count();
-        // ->toSql();
-
-        // Calculate total of sent faxes in the last month
-        $totalSent = FaxFiles::where('fax_mode', 'tx')
-            ->where('domain_uuid', $currentDomain)
-            ->inUsersLocations()
-            ->whereBetween('fax_date', $period)
-            ->count();
-        // ->toSql();
-
-        $totalReceivedPages = FaxFiles::query()
-            ->join('v_fax_logs', 'v_fax_logs.fax_log_uuid', '=', 'v_fax_files.fax_file_uuid')
-            ->where('v_fax_files.fax_mode', 'rx')
-            ->where('v_fax_files.domain_uuid', $currentDomain)
-            ->inUsersLocations()
-            ->whereBetween('v_fax_files.fax_date', $period)
-            ->sum(DB::raw('coalesce(v_fax_logs.fax_document_transferred_pages, 0)'));
-
-        $totalSentPages = FaxFiles::query()
-            ->join('v_fax_logs', 'v_fax_logs.fax_log_uuid', '=', 'v_fax_files.fax_file_uuid')
-            ->where('v_fax_files.fax_mode', 'tx')
-            ->where('v_fax_files.domain_uuid', $currentDomain)
-            ->inUsersLocations()
-            ->whereBetween('v_fax_files.fax_date', $period)
-            ->sum(DB::raw('coalesce(v_fax_logs.fax_document_transferred_pages, 0)'));
-
-        $totalFaxes = $faxes->total();
 
         return Inertia::render(
             $this->viewName,
@@ -105,18 +64,16 @@ class FaxesController extends Controller
                     'per_page_options' => fspbx_pagination_options(),
                 ],
 
-                'stats' => [
-                    ['name' => 'Faxes Sent (Last 30 Days)', 'stat' => $totalSent],
-                    ['name' => 'Faxes Received (Last 30 Days)', 'stat' => $totalReceived],
-                    ['name' => 'Pages Sent (Last 30 Days)', 'stat' => $totalSentPages],
-                    ['name' => 'Pages Received (Last 30 Days)', 'stat' => $totalReceivedPages],
-                    ['name' => 'Active Fax Servers', 'stat' => $totalFaxes],
-                ],
+                // Initial counts with no location filter applied.
+                'stats' => $this->computeStats(),
 
+                // Options for the dashboard-wide location filter (multi-select).
+                'locations' => $this->getAvailableLocations(),
 
                 'routes' => [
                     'current_page' => route('faxes.index'),
                     'data_route' => route('faxes.data'),
+                    'stats_route' => route('faxes.stats'),
                     'recent_outbound_route' => route('faxes.recent-outbound'),
                     'recent_inbound_route' => route('faxes.recent-inbound'),
                     'item_options' => route('faxes.item.options'),
@@ -128,6 +85,202 @@ class FaxesController extends Controller
                 'permissions' => $this->getUserPermissions(),
             ]
         );
+    }
+
+    /**
+     * Return the dashboard stat cards, optionally scoped to the selected locations.
+     */
+    public function getStats(Request $request)
+    {
+        if (!userCheckPermission("fax_view")) {
+            abort(403);
+        }
+
+        $locationUuids = $this->getRequestedLocationUuids($request);
+
+        return response()->json($this->computeStats($locationUuids));
+    }
+
+    /**
+     * Compute the five dashboard counts for the last 30 days.
+     *
+     * @param array $locationUuids When provided, counts are limited to fax servers in these locations.
+     */
+    private function computeStats(array $locationUuids = []): array
+    {
+        $currentDomain = session('domain_uuid');
+
+        $period = [
+            Carbon::now()->startOfDay()->subDays(30),
+            Carbon::now()->endOfDay(),
+        ];
+
+        $applyLocations = function ($query, $relation = 'locations') use ($locationUuids) {
+            if (!empty($locationUuids)) {
+                $query->whereHas($relation, function ($q) use ($locationUuids) {
+                    $q->whereIn('locations.location_uuid', $locationUuids);
+                });
+            }
+        };
+
+        // Faxes received / sent in the last 30 days
+        $totalReceived = FaxFiles::where('fax_mode', 'rx')
+            ->where('domain_uuid', $currentDomain)
+            ->inUsersLocations()
+            ->tap($applyLocations)
+            ->whereBetween('fax_date', $period)
+            ->count();
+
+        $totalSent = FaxFiles::where('fax_mode', 'tx')
+            ->where('domain_uuid', $currentDomain)
+            ->inUsersLocations()
+            ->tap($applyLocations)
+            ->whereBetween('fax_date', $period)
+            ->count();
+
+        $totalReceivedPages = FaxFiles::query()
+            ->join('v_fax_logs', 'v_fax_logs.fax_log_uuid', '=', 'v_fax_files.fax_file_uuid')
+            ->where('v_fax_files.fax_mode', 'rx')
+            ->where('v_fax_files.domain_uuid', $currentDomain)
+            ->inUsersLocations()
+            ->tap($applyLocations)
+            ->whereBetween('v_fax_files.fax_date', $period)
+            ->sum(DB::raw('coalesce(v_fax_logs.fax_document_transferred_pages, 0)'));
+
+        $totalSentPages = FaxFiles::query()
+            ->join('v_fax_logs', 'v_fax_logs.fax_log_uuid', '=', 'v_fax_files.fax_file_uuid')
+            ->where('v_fax_files.fax_mode', 'tx')
+            ->where('v_fax_files.domain_uuid', $currentDomain)
+            ->inUsersLocations()
+            ->tap($applyLocations)
+            ->whereBetween('v_fax_files.fax_date', $period)
+            ->sum(DB::raw('coalesce(v_fax_logs.fax_document_transferred_pages, 0)'));
+
+        $totalFaxes = Faxes::where('domain_uuid', $currentDomain)
+            ->inUsersLocations()
+            ->tap($applyLocations)
+            ->count();
+
+        return [
+            ['name' => 'Faxes Sent (Last 30 Days)', 'stat' => $totalSent],
+            ['name' => 'Faxes Received (Last 30 Days)', 'stat' => $totalReceived],
+            ['name' => 'Pages Sent (Last 30 Days)', 'stat' => $totalSentPages],
+            ['name' => 'Pages Received (Last 30 Days)', 'stat' => $totalReceivedPages],
+            ['name' => 'Active Fax Servers', 'stat' => $totalFaxes],
+        ];
+    }
+
+    /**
+     * Locations the current user may filter the dashboard by.
+     */
+    private function getAvailableLocations(): array
+    {
+        return $this->getAvailableLocationQuery()
+            ->get(['location_uuid', 'name'])
+            ->map(fn($location) => [
+                'value' => $location->location_uuid,
+                'label' => $location->name,
+            ])
+            ->values()
+            ->toArray();
+    }
+
+    public function getLocationOptions()
+    {
+        if (!userCheckPermission("fax_view")) {
+            abort(403);
+        }
+
+        return response()->json(
+            $this->getAvailableLocationQuery()
+                ->get(['location_uuid', 'name'])
+        );
+    }
+
+    private function getAvailableLocationQuery()
+    {
+        $query = Location::where('domain_uuid', session('domain_uuid'))
+            ->orderBy('name');
+
+        if (!isSuperAdmin()) {
+            $query->whereIn('location_uuid', $this->getUserLocationUuids());
+        }
+
+        return $query;
+    }
+
+    private function getUserLocationUuids(): array
+    {
+        if (!auth()->check()) {
+            return [];
+        }
+
+        return auth()->user()
+            ->locations()
+            ->where('locations.domain_uuid', session('domain_uuid'))
+            ->pluck('locations.location_uuid')
+            ->all();
+    }
+
+    private function getAccessibleLocationUuids(): array
+    {
+        return $this->getAvailableLocationQuery()
+            ->pluck('location_uuid')
+            ->all();
+    }
+
+    /**
+     * Extract and sanitise the requested location uuids from the filter payload.
+     */
+    private function getRequestedLocationUuids(Request $request): array
+    {
+        return $this->filterAccessibleLocationUuids($request->input('filter.locations', []));
+    }
+
+    private function filterAccessibleLocationUuids($value): array
+    {
+        $requested = collect(is_array($value) ? $value : [$value])
+            ->filter()
+            ->filter(fn($uuid) => is_scalar($uuid))
+            ->map(fn($uuid) => (string) $uuid)
+            ->unique()
+            ->values()
+            ->all();
+
+        if (empty($requested)) {
+            return [];
+        }
+
+        $allowed = $this->getAccessibleLocationUuids();
+        $locations = array_values(array_intersect($requested, $allowed));
+
+        return $locations ?: [self::NO_ALLOWED_LOCATION_UUID];
+    }
+
+    private function validateAccessibleLocations(array $locations): array
+    {
+        $requested = collect($locations)
+            ->filter()
+            ->filter(fn($uuid) => is_scalar($uuid))
+            ->map(fn($uuid) => (string) $uuid)
+            ->unique()
+            ->values()
+            ->all();
+
+        if (empty($requested)) {
+            return [];
+        }
+
+        $allowed = $this->getAccessibleLocationUuids();
+        $invalid = array_values(array_diff($requested, $allowed));
+
+        if (!empty($invalid)) {
+            throw ValidationException::withMessages([
+                'locations' => ['Select only locations you have access to.'],
+            ]);
+        }
+
+        return $requested;
     }
 
     /**
@@ -169,6 +322,14 @@ class FaxesController extends Controller
                             ->orWhere('fax_extension', 'ilike', "%{$value}%");
                     });
                 }),
+                AllowedFilter::callback('locations', function ($query, $value) {
+                    $locationUuids = $this->filterAccessibleLocationUuids($value);
+                    if (!empty($locationUuids)) {
+                        $query->whereHas('locations', function ($q) use ($locationUuids) {
+                            $q->whereIn('locations.location_uuid', $locationUuids);
+                        });
+                    }
+                }),
             ])
             ->allowedSorts([
                 'fax_name',
@@ -198,6 +359,10 @@ class FaxesController extends Controller
             $hasLocations = array_key_exists('locations', $data);
             $locations = $data['locations'] ?? [];
             unset($data['locations']);
+
+            if ($hasLocations) {
+                $locations = $this->validateAccessibleLocations($locations);
+            }
 
             // Create the fax server
             $fax = Faxes::create($data);
@@ -253,6 +418,10 @@ class FaxesController extends Controller
                 'messages' => ['success' => ['Fax server created successfully']],
                 'fax' => $fax->fresh(['allowed_emails', 'allowed_domain_names', 'locations']),
             ], 200);
+        } catch (ValidationException $e) {
+            DB::rollBack();
+
+            throw $e;
         } catch (\Throwable $e) {
             DB::rollBack();
             logger('FaxesController@update error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
@@ -262,7 +431,7 @@ class FaxesController extends Controller
         }
     }
 
-    public function getRecentOutbound()
+    public function getRecentOutbound(Request $request)
     {
         $period = [
             Carbon::now()->startOfDay()->subDays(30),
@@ -270,6 +439,7 @@ class FaxesController extends Controller
         ];
 
         $currentDomain = session('domain_uuid');
+        $locationUuids = $this->getRequestedLocationUuids($request);
 
         $outboundFaxes = QueryBuilder::for(OutboundFax::class)
             ->select([
@@ -284,8 +454,13 @@ class FaxesController extends Controller
                 'created_at',
             ])
             ->where('domain_uuid', $currentDomain)
-            ->whereHas('faxServer', function ($q) {
+            ->whereHas('faxServer', function ($q) use ($locationUuids) {
                 $q->inUsersLocations();
+                if (!empty($locationUuids)) {
+                    $q->whereHas('locations', function ($sub) use ($locationUuids) {
+                        $sub->whereIn('locations.location_uuid', $locationUuids);
+                    });
+                }
             })
             ->with([
                 'logs' => function ($q) {
@@ -310,7 +485,7 @@ class FaxesController extends Controller
         ]);
     }
 
-    public function getRecentInbound()
+    public function getRecentInbound(Request $request)
     {
         $period = [
             Carbon::now()->startOfDay()->subDays(30),
@@ -318,6 +493,7 @@ class FaxesController extends Controller
         ];
 
         $currentDomain = session('domain_uuid');
+        $locationUuids = $this->getRequestedLocationUuids($request);
 
 
         $inboundFaxes = QueryBuilder::for(FaxLogs::class)
@@ -333,8 +509,13 @@ class FaxesController extends Controller
             ->where('domain_uuid', $currentDomain)
             ->whereNull('outbound_fax_uuid')
             ->where('fax_file', 'ilike', '%/inbox/%')
-            ->whereHas('fax', function ($q) {
+            ->whereHas('fax', function ($q) use ($locationUuids) {
                 $q->inUsersLocations();
+                if (!empty($locationUuids)) {
+                    $q->whereHas('locations', function ($sub) use ($locationUuids) {
+                        $sub->whereIn('locations.location_uuid', $locationUuids);
+                    });
+                }
             })
             ->whereBetween('fax_date', $period)
             ->orderByDesc('fax_date')
@@ -398,6 +579,7 @@ class FaxesController extends Controller
                         ]);
                     },
                 ])
+                ->inUsersLocations()
                 ->whereKey($itemUuid)
                 ->firstOrFail();
 
@@ -444,7 +626,7 @@ class FaxesController extends Controller
         // 3) Any routes your front end needs
         $routes = array_merge($routes, [
             'store_route'  => route('faxes.store'),
-            'locations' => route('locations.index'),
+            'locations' => route('faxes.location-options'),
         ]);
 
         $currentDomain = session('domain_uuid');
@@ -497,6 +679,7 @@ class FaxesController extends Controller
         $phone_numbers = QueryBuilder::for(Faxes::class)
             ->allowedSorts('fax_caller_id_number')
             ->where('domain_uuid', $currentDomain)
+            ->inUsersLocations()
             ->defaultSort('fax_caller_id_number')
             ->get([
                 'fax_uuid',
@@ -747,8 +930,13 @@ class FaxesController extends Controller
             $locations = $data['locations'] ?? [];
             unset($data['locations']);
 
+            if ($hasLocations) {
+                $locations = $this->validateAccessibleLocations($locations);
+            }
+
             // Find the fax by UUID including relations
             $fax = Faxes::with(['allowed_emails', 'allowed_domain_names'])
+                ->inUsersLocations()
                 ->where('fax_uuid', $id)
                 ->firstOrFail();
 
@@ -819,6 +1007,10 @@ class FaxesController extends Controller
                 'messages' => ['success' => ['Fax updated successfully']],
                 'fax' => $fax->fresh(['allowed_emails', 'allowed_domain_names']),
             ], 200);
+        } catch (ValidationException $e) {
+            DB::rollBack();
+
+            throw $e;
         } catch (\Throwable $e) {
             DB::rollBack();
             logger('FaxesController@update error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
@@ -1072,7 +1264,10 @@ class FaxesController extends Controller
 
         if ($request->get('id') != "") {
             // logger($request->get('id'));
-            $fax = Faxes::find($request->get('id'));
+            $fax = Faxes::where('domain_uuid', Session::get('domain_uuid'))
+                ->inUsersLocations()
+                ->where('fax_uuid', $request->get('id'))
+                ->first();
         } else {
             $fax = null;
         }
@@ -1090,6 +1285,7 @@ class FaxesController extends Controller
             ->sortBy('destination_number');
 
         $fax_numbers = Faxes::where('domain_uuid', Session::get('domain_uuid'))
+            ->inUsersLocations()
             ->get(
                 ['fax_caller_id_number']
             )
@@ -1166,6 +1362,7 @@ class FaxesController extends Controller
             }
 
             $fax = Faxes::where('domain_uuid', session('domain_uuid'))
+                ->inUsersLocations()
                 ->where('fax_uuid', $data['fax_uuid'])
                 ->first();
 

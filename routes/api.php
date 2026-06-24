@@ -591,9 +591,11 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::put('faxes/{fax}', [FaxesController::class, 'update'])->name('faxes.update');
     Route::post('faxes/item-options', [FaxesController::class, 'getItemOptions'])->name('faxes.item.options');
     Route::post('faxes/new-fax-options', [FaxesController::class, 'getNewFaxOptions'])->name('faxes.new.fax.options');
+    Route::get('faxes/location-options', [FaxesController::class, 'getLocationOptions'])->name('faxes.location-options');
     Route::post('/faxes/bulk-delete', [FaxesController::class, 'bulkDelete'])->name('faxes.bulk.delete');
     Route::post('/faxes/bulk-update', [FaxesController::class, 'bulkUpdate'])->name('faxes.bulk.update');
     Route::get('faxes/data', [FaxesController::class, 'getData'])->name('faxes.data');
+    Route::get('faxes/stats', [FaxesController::class, 'getStats'])->name('faxes.stats');
     Route::get('faxes/recent-outbound', [FaxesController::class, 'getRecentOutbound'])->name('faxes.recent-outbound');
     Route::get('faxes/recent-inbound', [FaxesController::class, 'getRecentInbound'])->name('faxes.recent-inbound');
     Route::get('/faxes/newfax/create', [FaxesController::class, 'new'])->name('faxes.newfax');
