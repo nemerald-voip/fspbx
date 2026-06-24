@@ -13,6 +13,7 @@ use Throwable;
 class Update192
 {
     private const VERSION = '1.9.2';
+    private const DIALPLAN_TEMPLATE_DIR = 'public/app/dialplans/resources/switch/conf/dialplan';
 
     private const DIALPLAN_TEMPLATE_FILES = [
         'public/app/dialplans/resources/switch/conf/dialplan/100_e911_peerless.xml',
@@ -57,6 +58,8 @@ class Update192
     {
         $removed = 0;
 
+        $this->ensureDialplanTemplateDirectoryIsWritable();
+
         foreach (self::DIALPLAN_TEMPLATE_FILES as $relativePath) {
             $path = base_path($relativePath);
 
@@ -68,14 +71,46 @@ class Update192
                 throw new \RuntimeException($path . ' exists but is not a file.');
             }
 
-            if (! unlink($path)) {
-                throw new \RuntimeException('Unable to remove ' . $path . '.');
+            $this->ensureLegacyE911TemplateIsWritable($path);
+
+            if (! @unlink($path)) {
+                throw new \RuntimeException(
+                    'Unable to remove ' . $path . '. Check ownership and write permissions on its containing directory.'
+                );
             }
 
             $removed++;
         }
 
         return $removed;
+    }
+
+    private function ensureDialplanTemplateDirectoryIsWritable(): void
+    {
+        $directory = base_path(self::DIALPLAN_TEMPLATE_DIR);
+
+        if (! is_dir($directory)) {
+            throw new \RuntimeException($directory . ' does not exist or is not a directory.');
+        }
+
+        @chown($directory, 'www-data');
+        @chgrp($directory, 'www-data');
+        @chmod($directory, 0775);
+        clearstatcache(true, $directory);
+
+        if (! is_writable($directory)) {
+            throw new \RuntimeException(
+                'Unable to make ' . $directory . ' writable. Run this update with permissions to change that directory owner/mode.'
+            );
+        }
+    }
+
+    private function ensureLegacyE911TemplateIsWritable(string $path): void
+    {
+        @chown($path, 'www-data');
+        @chgrp($path, 'www-data');
+        @chmod($path, 0664);
+        clearstatcache(true, $path);
     }
 
     private function ensureMenuItem(
