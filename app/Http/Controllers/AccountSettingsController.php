@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use Inertia\Inertia;
 use Inertia\Response;
 use App\Models\Domain;
-use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Models\DomainSettings;
 use App\Services\PmsProviderSettings;
@@ -17,13 +16,14 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Contracts\Foundation\Application;
 use App\Http\Requests\UpdateAccountSettingsRequest;
+use App\Services\Settings\SettingsManagementService;
 
 class AccountSettingsController extends Controller
 {
     public $model;
     protected $viewName = 'AccountSettings';
 
-    public function __construct()
+    public function __construct(private readonly SettingsManagementService $settings)
     {
         $this->model = new Domain();
     }
@@ -171,11 +171,23 @@ class AccountSettingsController extends Controller
                         ? false
                         : $s['domain_setting_enabled'];
 
-                    DomainSettings::where('domain_setting_uuid', $s['domain_setting_uuid'])
-                        ->update([
-                            'domain_setting_value'   => $s['domain_setting_value'],
-                            'domain_setting_enabled' => $enabled,
-                        ]);
+                    $setting = DomainSettings::where('domain_uuid', $domain->domain_uuid)
+                        ->where('domain_setting_uuid', $s['domain_setting_uuid'])
+                        ->first();
+
+                    if (! $setting) {
+                        continue;
+                    }
+
+                    $this->settings->saveDomainOverride($domain, [
+                        'domain_setting_category' => $setting->domain_setting_category,
+                        'domain_setting_subcategory' => $setting->domain_setting_subcategory,
+                        'domain_setting_name' => $setting->domain_setting_name,
+                        'domain_setting_value' => $s['domain_setting_value'],
+                        'domain_setting_order' => $setting->domain_setting_order,
+                        'domain_setting_enabled' => $enabled,
+                        'domain_setting_description' => $setting->domain_setting_description,
+                    ], $setting);
                 }
             }
 
@@ -204,14 +216,13 @@ class AccountSettingsController extends Controller
 
                     $def = $defaults[$sub];
 
-                    // create the new override
-                    $domain->settings()->create([
-                        'domain_setting_uuid'        => Str::uuid()->toString(),
-                        'domain_setting_category'    => $def->default_setting_category,
+                    $this->settings->saveDomainOverride($domain, [
+                        'domain_setting_category' => $def->default_setting_category,
                         'domain_setting_subcategory' => $sub,
-                        'domain_setting_name'        => $def->default_setting_name,
-                        'domain_setting_value'       => $new['domain_setting_value'],
-                        'domain_setting_enabled'     => true,
+                        'domain_setting_name' => $def->default_setting_name,
+                        'domain_setting_value' => $new['domain_setting_value'],
+                        'domain_setting_order' => $def->default_setting_order,
+                        'domain_setting_enabled' => true,
                         'domain_setting_description' => $def->default_setting_description,
                     ]);
                 }
