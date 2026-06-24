@@ -43,8 +43,8 @@ class StoreExtensionRequest extends FormRequest
             'voicemail_file'                  => ['required', 'string', 'max:16'],
             'voicemail_local_after_email'     => ['required', 'in:true,false,1,0'],
             'voicemail_tutorial'              => ['required', 'in:true,false,1,0'],
-            'voicemail_id'                    => ['required', 'string', 'max:60'],
-            'voicemail_password'              => ['required', 'string', 'max:20'],
+            'voicemail_id'                    => ['nullable', 'string', 'max:60'],
+            'voicemail_password'              => ['nullable', 'string', 'max:20'],
 
         ];
     }
@@ -61,14 +61,16 @@ class StoreExtensionRequest extends FormRequest
 
         $fullName = trim($first . ' ' . $last); // Will work even if $last is empty
 
-        $voicemailPassword = $this->extension;
-        if (get_domain_setting('password_complexity')) {
+        $extension = $this->input('extension');
+
+        $voicemailPassword = $extension;
+        if (get_domain_setting('password_complexity') == 'true') {
             $voicemailPassword = str_pad(mt_rand(0, 9999), 4, '0', STR_PAD_LEFT);
         }
 
         $this->merge([
             'effective_caller_id_name' => $fullName,
-            'effective_caller_id_number' => $this->extension,
+            'effective_caller_id_number' => $extension,
             'user_context' => $this->input('user_context', session('domain_name')),
             'accountcode' => $this->input('accountcode', session('domain_name')),
             'domain_uuid' => $this->input('domain_uuid', session('domain_uuid')),
@@ -83,7 +85,7 @@ class StoreExtensionRequest extends FormRequest
             'voicemail_file' => 'attach',
             'voicemail_local_after_email' => 'true',
             'voicemail_tutorial' => 'true',
-            'voicemail_id' => $this->extension,
+            'voicemail_id' => $extension,
             'voicemail_password' => $voicemailPassword,
         ]);
 

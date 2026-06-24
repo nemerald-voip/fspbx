@@ -346,9 +346,12 @@ class SettingsManagementService
             $setting->save();
         });
 
-        if ($settings->contains(fn (DefaultSettings $setting) => $setting->default_setting_category === 'scheduled_jobs')) {
-            Cache::forget('scheduled_jobs_settings');
-        }
+        $settings->each(fn (DefaultSettings $setting) => $this->applySettingSideEffects('default', [
+            'category' => $setting->default_setting_category,
+            'subcategory' => $setting->default_setting_subcategory,
+            'name' => $setting->default_setting_name,
+            'value' => $setting->default_setting_value,
+        ]));
 
         return $settings->count();
     }
@@ -365,6 +368,15 @@ class SettingsManagementService
             $setting->save();
         });
 
+        $settings->each(fn (DomainSettings $setting) => $this->applySettingSideEffects('domain', [
+            'domain_uuid' => $domain->domain_uuid,
+            'domain_name' => $domain->domain_name,
+            'category' => $setting->domain_setting_category,
+            'subcategory' => $setting->domain_setting_subcategory,
+            'name' => $setting->domain_setting_name,
+            'value' => $setting->domain_setting_value,
+        ]));
+
         return $settings->count();
     }
 
@@ -375,19 +387,39 @@ class SettingsManagementService
 
         DefaultSettings::query()->whereIn('default_setting_uuid', $settings->pluck('default_setting_uuid'))->delete();
 
-        if ($settings->contains(fn (DefaultSettings $setting) => $setting->default_setting_category === 'scheduled_jobs')) {
-            Cache::forget('scheduled_jobs_settings');
-        }
+        $settings->each(fn (DefaultSettings $setting) => $this->applySettingSideEffects('default', [
+            'category' => $setting->default_setting_category,
+            'subcategory' => $setting->default_setting_subcategory,
+            'name' => $setting->default_setting_name,
+            'value' => $setting->default_setting_value,
+        ]));
 
         return $count;
     }
 
     public function revertDomain(Domain $domain, array $uuids): int
     {
-        return DomainSettings::query()
+        $settings = DomainSettings::query()
             ->where('domain_uuid', $domain->domain_uuid)
             ->whereIn('domain_setting_uuid', $uuids)
+            ->get();
+
+        $count = $settings->count();
+
+        DomainSettings::query()
+            ->whereIn('domain_setting_uuid', $settings->pluck('domain_setting_uuid'))
             ->delete();
+
+        $settings->each(fn (DomainSettings $setting) => $this->applySettingSideEffects('domain', [
+            'domain_uuid' => $domain->domain_uuid,
+            'domain_name' => $domain->domain_name,
+            'category' => $setting->domain_setting_category,
+            'subcategory' => $setting->domain_setting_subcategory,
+            'name' => $setting->domain_setting_name,
+            'value' => $setting->domain_setting_value,
+        ]));
+
+        return $count;
     }
 
     public function copyDefaultsToDomain(array $defaultUuids, Domain $targetDomain): int
@@ -777,6 +809,8 @@ class SettingsManagementService
         }
 
         if ($setting['category'] === 'domain' && $setting['subcategory'] === 'time_zone' && $setting['name'] === 'name') {
+            $this->clearTimeZoneCache($scope === 'domain' ? ($setting['domain_uuid'] ?? null) : null);
+
             if ($scope === 'domain' && ! empty($setting['domain_name'])) {
                 FusionCache::clear('dialplan:' . $setting['domain_name']);
             }
@@ -785,5 +819,19 @@ class SettingsManagementService
                 FusionCache::clear('dialplan:public');
             }
         }
+    }
+
+    private function clearTimeZoneCache(?string $domainUuid = null): void
+    {
+        if ($domainUuid) {
+            Cache::forget("{$domainUuid}_timeZone");
+            return;
+        }
+
+        Domain::query()
+            ->pluck('domain_uuid')
+            ->each(fn (string $uuid) => Cache::forget("{$uuid}_timeZone"));
+
+        Cache::forget('_timeZone');
     }
 }

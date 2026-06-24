@@ -114,6 +114,7 @@ class CreateFSPBXMenu extends Command
                 'groups' => ['superadmin', 'admin', 'user', 'fax', 'agent'],
                 'subcategories' => [
                     ['title' => 'Basic Dialer', 'link' => '/basic-dialer', 'groups' => ['superadmin', 'admin']],
+                    ['title' => 'Basic Queues', 'link' => '/basic-queues', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'Bridges', 'link' => '/bridges', 'groups' => ['superadmin']],
                     ['title' => 'Call Block', 'link' => '/call-blocks', 'groups' => ['superadmin', 'admin', 'user']],
                     ['title' => 'Call History', 'link' => '/call-detail-records', 'groups' => ['superadmin', 'admin', 'user']],
@@ -139,6 +140,7 @@ class CreateFSPBXMenu extends Command
                 'groups' => ['superadmin', 'admin'],
                 'subcategories' => [
                     ['title' => 'Active Calls', 'link' => '/active-calls', 'groups' => ['superadmin', 'admin']],
+                    ['title' => 'Active Basic Queues', 'link' => '/active-basic-queues', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'Active Conferences', 'link' => '/active-conferences', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'Extension Statistics', 'link' => '/extension-statistics', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'Firewall', 'link' => '/firewall', 'groups' => ['superadmin']],
