@@ -21,11 +21,18 @@ class Update192
         'public/app/dialplans/resources/switch/conf/dialplan/100_e911_thinq.xml',
     ];
 
+    private const LOG_VIEWER_MENU_LINKS = [
+        '/logs?tab=freeswitch_logs',
+        '/app/log_viewer/log_viewer.php',
+    ];
+
     public function apply(): bool
     {
         try {
             $removed = $this->removeLegacyE911DialplanTemplates();
             echo "Removed {$removed} legacy E911 dialplan template file(s).\n";
+
+            $this->removeLogViewerMenuItemsFromAllMenus();
 
             $this->ensureMenuItem(
                 parentTitle: 'Applications',
@@ -123,6 +130,62 @@ class Update192
         @chgrp($path, 'www-data');
         @chmod($path, 0664);
         clearstatcache(true, $path);
+    }
+
+    private function removeLogViewerMenuItemsFromAllMenus(): void
+    {
+        $menuItemUuids = MenuItem::query()
+            ->where(function ($query) {
+                $query->whereIn('menu_item_link', self::LOG_VIEWER_MENU_LINKS)
+                    ->orWhere('menu_item_title', 'Log Viewer');
+            })
+            ->pluck('menu_item_uuid')
+            ->all();
+
+        if ($menuItemUuids === []) {
+            echo "No Log Viewer menu items found.\n";
+            return;
+        }
+
+        $menuItemUuids = $this->withMenuItemDescendantsAcrossMenus($menuItemUuids);
+
+        MenuLanguage::query()
+            ->whereIn('menu_item_uuid', $menuItemUuids)
+            ->delete();
+
+        MenuItemGroup::query()
+            ->whereIn('menu_item_uuid', $menuItemUuids)
+            ->delete();
+
+        $deleted = MenuItem::query()
+            ->whereIn('menu_item_uuid', $menuItemUuids)
+            ->delete();
+
+        echo "Removed {$deleted} Log Viewer menu item(s) from all menus and associated access/language rows.\n";
+    }
+
+    private function withMenuItemDescendantsAcrossMenus(array $menuItemUuids): array
+    {
+        $allMenuItemUuids = array_values(array_unique(array_filter($menuItemUuids)));
+        $pendingParentUuids = $allMenuItemUuids;
+
+        while ($pendingParentUuids !== []) {
+            $childUuids = MenuItem::query()
+                ->whereIn('menu_item_parent_uuid', $pendingParentUuids)
+                ->pluck('menu_item_uuid')
+                ->all();
+
+            $newChildUuids = array_values(array_diff($childUuids, $allMenuItemUuids));
+
+            if ($newChildUuids === []) {
+                break;
+            }
+
+            $allMenuItemUuids = array_merge($allMenuItemUuids, $newChildUuids);
+            $pendingParentUuids = $newChildUuids;
+        }
+
+        return $allMenuItemUuids;
     }
 
     private function ensureMenuItem(

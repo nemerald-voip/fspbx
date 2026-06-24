@@ -145,7 +145,6 @@ class CreateFSPBXMenu extends Command
                     ['title' => 'Extension Statistics', 'link' => '/extension-statistics', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'Firewall', 'link' => '/firewall', 'groups' => ['superadmin']],
                     ['title' => 'Logs', 'link' => '/logs', 'groups' => ['superadmin']],
-                    ['title' => 'Log Viewer', 'link' => '/logs?tab=freeswitch_logs', 'groups' => ['superadmin']],
                     ['title' => 'Registrations', 'link' => '/registrations', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'SIP Status', 'link' => '/sip-status', 'groups' => ['superadmin']],
                     ['title' => 'System Status', 'link' => '/system', 'groups' => ['superadmin']],
