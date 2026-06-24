@@ -71,6 +71,9 @@
                                         ? options.item.allowed_domain_names.map(domain => ({ email: domain.domain }))
                                         : [],
 
+                                    locations: options.item.locations
+                                        ? options.item.locations.map(l => l.location_uuid)
+                                        : [],
                                 }">
 
                                 <template #empty>
@@ -106,6 +109,7 @@
                                                     'fax_toll_allow',
                                                     'fax_send_channels',
                                                     'advanced_title',
+                                                    'locations',
                                                     'advanced_container',
                                                     'advanced_submit'
 
@@ -194,7 +198,13 @@
                                                         },
                                                     }" description="Enter the maximum number of channels to use." />
 
-
+                                                <TagsElement name="locations" :close-on-select="false" :search="true"
+                                                    label-prop="name" value-prop="location_uuid" :items="locations"
+                                                    :track-by="['name', 'description']"
+                                                    label="Locations"
+                                                    input-type="search" autocomplete="off" placeholder="Select Locations"
+                                                    :floating="false" :loading="isLocationsLoading"
+                                                    description="Assign one or more locations. If none are selected, this resource is visible to all users." />
 
                                                 <GroupElement name="advanced_container" />
 
@@ -246,8 +256,7 @@
                                                     description="Enter any trusted email addresses not covered by authorized domains." />
 
 
-                                                <ListElement name="authorized_emails" :initial="0" :sort="true"
-                                                    :key="'email-' + Math.random().toString(20)">
+                                                <ListElement name="authorized_emails" :initial="0" :sort="true">
                                                     <template #default="{ index }">
                                                         <ObjectElement :name="index">
                                                             <TextElement name="email" placeholder="Enter email address"
@@ -294,6 +303,8 @@ const props = defineProps({
 
 const form$ = ref(null)
 const showResetConfirmationModal = ref(false);
+const locations = ref([])
+const isLocationsLoading = ref(false)
 
 const handleEmailListChange = (newValue, oldValue, el$) => {
     // Basic email regex pattern
@@ -332,9 +343,28 @@ function clearErrorsRecursive(el$) {
 
 
 const handleTabSelected = (activeTab, previousTab) => {
-
+    if (activeTab.name == 'page1') {
+        getLocations()
+    }
 }
 
+const getLocations = async () => {
+    isLocationsLoading.value = true
+    axios.get(props.options.routes.locations, {
+        params: {
+            domain_uuid: props.options.item.domain_uuid
+        }
+    })
+        .then((response) => {
+            locations.value = response.data;
+            // console.log(locations.value);
+
+        }).catch((error) => {
+            emit('error', error)
+        }).finally(() => {
+            isLocationsLoading.value = false
+        });
+}
 
 const handleResponse = (response, form$) => {
     // Clear form including nested elements 

@@ -195,6 +195,10 @@ class FaxesController extends Controller
             $data = $request->validated();
             // logger($data);
 
+            $hasLocations = array_key_exists('locations', $data);
+            $locations = $data['locations'] ?? [];
+            unset($data['locations']);
+
             // Create the fax server
             $fax = Faxes::create($data);
 
@@ -232,6 +236,10 @@ class FaxesController extends Controller
                 }
             }
 
+            if ($hasLocations) {
+                $fax->locations()->sync($locations);
+            }
+
             // Generate dialplan for the new fax server
             $this->generateDialPlanXML($fax);
 
@@ -243,7 +251,7 @@ class FaxesController extends Controller
 
             return response()->json([
                 'messages' => ['success' => ['Fax server created successfully']],
-                'fax' => $fax->fresh(['allowed_emails', 'allowed_domain_names']),
+                'fax' => $fax->fresh(['allowed_emails', 'allowed_domain_names', 'locations']),
             ], 200);
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -735,6 +743,10 @@ class FaxesController extends Controller
 
             $data = $request->validated();
 
+            $hasLocations = array_key_exists('locations', $data);
+            $locations = $data['locations'] ?? [];
+            unset($data['locations']);
+
             // Find the fax by UUID including relations
             $fax = Faxes::with(['allowed_emails', 'allowed_domain_names'])
                 ->where('fax_uuid', $id)
@@ -792,8 +804,8 @@ class FaxesController extends Controller
             }
 
             // If key missing -> keep current; if present but [] -> unassign all
-            if (array_key_exists('locations', $data)) {
-                $fax->locations()->sync($data['locations'] ?? []);
+            if ($hasLocations) {
+                $fax->locations()->sync($locations);
             }
 
             $this->generateDialPlanXML($fax);
