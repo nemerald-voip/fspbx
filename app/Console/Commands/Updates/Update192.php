@@ -93,6 +93,13 @@ class Update192
             throw new \RuntimeException($directory . ' does not exist or is not a directory.');
         }
 
+        if (! is_writable($directory) && ! $this->isRunningAsRoot()) {
+            throw new \RuntimeException(
+                $directory . ' is not writable. Update ' . self::VERSION . ' must be run with sudo to fix ownership. '
+                . ' Run: sudo php artisan app:update'
+            );
+        }
+
         @chown($directory, 'www-data');
         @chgrp($directory, 'www-data');
         @chmod($directory, 0775);
@@ -100,9 +107,14 @@ class Update192
 
         if (! is_writable($directory)) {
             throw new \RuntimeException(
-                'Unable to make ' . $directory . ' writable. Run this update with permissions to change that directory owner/mode.'
+                'Unable to make ' . $directory . ' writable after setting ownership and permissions.'
             );
         }
+    }
+
+    private function isRunningAsRoot(): bool
+    {
+        return function_exists('posix_geteuid') && posix_geteuid() === 0;
     }
 
     private function ensureLegacyE911TemplateIsWritable(string $path): void
