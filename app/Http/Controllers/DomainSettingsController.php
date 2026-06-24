@@ -24,7 +24,12 @@ class DomainSettingsController extends Controller
             return redirect('/');
         }
 
-        return Inertia::render('DomainSettings', [
+        return Inertia::render('DomainSettings', $this->pageProps($domain));
+    }
+
+    public function pageProps(Domain $domain): array
+    {
+        return [
             'domain' => [
                 'domain_uuid' => $domain->domain_uuid,
                 'domain_name' => $domain->domain_name,
@@ -57,7 +62,7 @@ class DomainSettingsController extends Controller
                 'types' => SettingsManagementService::TYPE_OPTIONS,
                 'domains' => $this->domainOptions($domain->domain_uuid),
             ],
-        ]);
+        ];
     }
 
     public function data(Request $request, Domain $domain): JsonResponse

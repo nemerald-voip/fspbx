@@ -1,11 +1,11 @@
 <template>
-    <MainLayout />
+    <component :is="embedded ? 'div' : MainLayout">
 
-    <div class="m-3 space-y-4">
+    <div :class="embedded ? 'space-y-4' : 'm-3 space-y-4'">
         <!-- Header -->
         <header class="flex flex-wrap items-end justify-between gap-3">
             <div>
-                <p class="text-xs font-medium uppercase tracking-wider text-indigo-600">Domain settings</p>
+                <p class="text-xs font-medium uppercase tracking-wider text-indigo-600">Domain variables</p>
                 <h1 class="mt-1 text-2xl font-semibold text-gray-900">{{ domain.domain_description || domain.domain_name }}</h1>
                 <p class="mt-1 text-sm text-gray-500">Override global defaults for this domain, or revert customizations back to the system default.</p>
             </div>
@@ -26,7 +26,7 @@
         </header>
 
         <!-- Stats -->
-        <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div v-if="!embedded" class="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <StatTile label="Total settings" :value="stats.total" tone="gray" />
             <StatTile label="Overridden" :value="stats.overrides" tone="amber" />
             <StatTile label="Domain only" :value="stats.custom" tone="purple" />
@@ -36,7 +36,7 @@
         <!-- Main two-column layout -->
         <div class="flex flex-col gap-4 lg:flex-row">
             <!-- Sidebar -->
-            <aside class="lg:w-72 lg:shrink-0">
+            <aside v-if="!embedded" class="lg:w-72 lg:shrink-0">
                 <div class="rounded-lg bg-white p-3 shadow-sm ring-1 ring-gray-200">
                     <div class="relative mb-3">
                         <MagnifyingGlassIcon class="pointer-events-none absolute inset-y-0 left-3 h-4 w-4 my-auto text-gray-400" />
@@ -121,15 +121,17 @@
                                 <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
                                     <div class="inline-flex min-w-0 max-w-full items-center gap-1.5">
                                         <span class="shrink-0 text-xs text-gray-400">Value</span>
-                                        <button type="button" class="min-w-0 max-w-full text-left" :title="valueTitle(row.effective_value, row.is_secret)" aria-label="Copy value" @click.stop="copyValue(row.effective_value)">
+                                        <button v-if="hasCopyableValue(row.effective_value)" type="button" class="min-w-0 max-w-full text-left" :title="valueTitle(row.effective_value, row.is_secret)" aria-label="Copy value" @click.stop="copyValue(row.effective_value)">
                                             <code class="block max-w-full truncate rounded bg-gray-100 px-2 py-0.5 font-mono text-xs text-gray-800 ring-1 ring-transparent transition hover:bg-gray-200 hover:ring-gray-300">{{ truncatedValue(row.effective_value, row.is_secret) }}</code>
                                         </button>
+                                        <code v-else class="block rounded bg-gray-100 px-2 py-0.5 font-mono text-xs text-gray-400">{{ displayValue(row.effective_value, row.is_secret) }}</code>
                                     </div>
                                     <div v-if="row.source === 'override'" class="inline-flex min-w-0 max-w-full items-center gap-1.5 text-xs text-gray-400">
                                         <span class="shrink-0">default</span>
-                                        <button type="button" class="min-w-0 max-w-full text-left" :title="valueTitle(row.default_value, row.is_secret)" aria-label="Copy default value" @click.stop="copyValue(row.default_value)">
+                                        <button v-if="hasCopyableValue(row.default_value)" type="button" class="min-w-0 max-w-full text-left" :title="valueTitle(row.default_value, row.is_secret)" aria-label="Copy default value" @click.stop="copyValue(row.default_value)">
                                             <code class="block max-w-full truncate rounded bg-gray-50 px-1.5 py-0.5 font-mono text-xs text-gray-500 line-through ring-1 ring-transparent transition hover:bg-gray-100 hover:ring-gray-300">{{ truncatedValue(row.default_value, row.is_secret) }}</code>
                                         </button>
+                                        <code v-else class="block rounded bg-gray-50 px-1.5 py-0.5 font-mono text-xs text-gray-400 line-through">{{ displayValue(row.default_value, row.is_secret) }}</code>
                                     </div>
                                 </div>
                             </div>
@@ -164,7 +166,7 @@
     <SettingsEditModal :show="showEditor" mode="domain" :item="editorItem" :types="options.types" :categories="options.categories" :route="editorRoute"
         :loading="editorLoading" @close="showEditor = false" @success="handleModalSuccess" @error="handleErrorResponse" />
 
-    <AddEditItemModal :show="showCopyModal" header="Copy Domain Settings" @close="showCopyModal = false">
+    <AddEditItemModal :show="showCopyModal" header="Copy Domain Variables" @close="showCopyModal = false">
         <template #modal-body>
             <Vueform :endpoint="submitCopyForm" @success="handleCopySuccess" @error="handleErrorResponse" :display-errors="false">
                 <template #empty>
@@ -182,6 +184,7 @@
     <ConfirmationModal :show="showConfirmModal" header="Confirm Revert" text="Selected domain override rows will be removed and defaults will take effect." confirm-button-label="Revert" cancel-button-label="Cancel" @close="showConfirmModal = false" @confirm="executeConfirmedAction" />
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages" @update:show="notificationShow = false" />
+    </component>
 </template>
 
 <script setup>
@@ -214,6 +217,7 @@ const props = defineProps({
     routes: Object,
     permissions: Object,
     options: Object,
+    embedded: Boolean,
 })
 
 const allRows = ref([])
@@ -468,6 +472,8 @@ const handleErrorResponse = (error) => {
 }
 
 const copyValue = async (value) => {
+    if (!hasCopyableValue(value)) return
+
     try {
         await writeClipboardText(value === null || value === undefined ? '' : String(value))
         showNotification('success', { success: ['Value copied.'] })
@@ -475,6 +481,10 @@ const copyValue = async (value) => {
         showNotification('error', { error: ['Unable to copy value.'] })
     }
 }
+
+const hasCopyableValue = (value) => value !== null
+    && value !== undefined
+    && (typeof value !== 'string' || value.trim() !== '')
 
 const writeClipboardText = async (text) => {
     if (navigator.clipboard?.writeText) {
