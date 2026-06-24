@@ -36,7 +36,7 @@ class ProcessTigerTmsWebhookJob extends SpatieProcessWebhookJob implements Shoul
             return;
         }
 
-        if (!in_array($action, ['checkin', 'checkout'], true)) {
+        if (!in_array($action, ['checkin', 'checkout', 'transfer'], true)) {
             Log::warning('TigerTMS webhook skipped because event is not recognized yet', [
                 ...$this->logContext($payload, $normalized),
                 'event' => $normalized['event'] ?? Arr::get($payload, '_tigertms_event'),
@@ -45,11 +45,10 @@ class ProcessTigerTmsWebhookJob extends SpatieProcessWebhookJob implements Shoul
             return;
         }
 
-        if ($domainUuid === '' || $roomName === '') {
-            Log::warning('TigerTMS webhook skipped because domain or room is missing', [
+        if ($domainUuid === '') {
+            Log::warning('TigerTMS webhook skipped because domain is missing', [
                 ...$this->logContext($payload, $normalized),
                 'domain_uuid' => $domainUuid,
-                'room' => $roomName,
             ]);
 
             return;
@@ -65,16 +64,27 @@ class ProcessTigerTmsWebhookJob extends SpatieProcessWebhookJob implements Shoul
             return;
         }
 
-        $roomCode = app(TigerTmsRoomMapper::class)->normalize($roomName);
+        /** @var HotelRoomService $service */
+        $service = app(HotelRoomService::class);
+        $outboundSync = app(PmsOutboundSyncContext::class);
 
-        $room = HotelRoom::query()
-            ->where('domain_uuid', $domainUuid)
-            ->where(function ($query) use ($roomName, $roomCode) {
-                $query->where('room_name', $roomName)
-                    ->orWhere('room_name', $roomCode)
-                    ->orWhere('room_name', 'Room ' . $roomCode);
-            })
-            ->first();
+        if ($action === 'transfer') {
+            $this->processTransfer($payload, $normalized, $domainUuid, $service, $outboundSync);
+
+            return;
+        }
+
+        if ($roomName === '') {
+            Log::warning('TigerTMS webhook skipped because room is missing', [
+                ...$this->logContext($payload, $normalized),
+                'domain_uuid' => $domainUuid,
+            ]);
+
+            return;
+        }
+
+        $roomCode = app(TigerTmsRoomMapper::class)->normalize($roomName);
+        $room = $this->findRoom($domainUuid, $roomName);
 
         if (!$room) {
             Log::warning('TigerTMS webhook skipped because hotel room was not found', [
@@ -86,10 +96,6 @@ class ProcessTigerTmsWebhookJob extends SpatieProcessWebhookJob implements Shoul
 
             return;
         }
-
-        /** @var HotelRoomService $service */
-        $service = app(HotelRoomService::class);
-        $outboundSync = app(PmsOutboundSyncContext::class);
 
         if ($action === 'checkout') {
             $outboundSync->withoutOutboundSync(fn () => $service->checkOut($room));
@@ -107,6 +113,67 @@ class ProcessTigerTmsWebhookJob extends SpatieProcessWebhookJob implements Shoul
         ], fn ($value) => $value !== null && $value !== '');
 
         $outboundSync->withoutOutboundSync(fn () => $service->checkIn($room, $payloadForService));
+    }
+
+    private function processTransfer(
+        array $payload,
+        array $normalized,
+        string $domainUuid,
+        HotelRoomService $service,
+        PmsOutboundSyncContext $outboundSync
+    ): void {
+        $fromRoom = (string) ($normalized['from_room'] ?? '');
+        $toRoom = (string) ($normalized['to_room'] ?? '');
+
+        if ($fromRoom === '' || $toRoom === '') {
+            Log::warning('TigerTMS transfer skipped because source or destination room is missing', [
+                ...$this->logContext($payload, $normalized),
+                'from_room' => $fromRoom,
+                'to_room' => $toRoom,
+            ]);
+
+            return;
+        }
+
+        $source = $this->findRoom($domainUuid, $fromRoom);
+        $destination = $this->findRoom($domainUuid, $toRoom);
+
+        if (! $source || ! $destination) {
+            Log::warning('TigerTMS transfer skipped because source or destination room was not found', [
+                ...$this->logContext($payload, $normalized),
+                'from_room' => $fromRoom,
+                'to_room' => $toRoom,
+                'source_found' => (bool) $source,
+                'destination_found' => (bool) $destination,
+            ]);
+
+            return;
+        }
+
+        try {
+            $outboundSync->withoutOutboundSync(fn () => $service->move($source, $destination));
+        } catch (\DomainException $e) {
+            Log::warning('TigerTMS transfer skipped because FS PBX could not move the guest', [
+                ...$this->logContext($payload, $normalized),
+                'from_room_uuid' => $source->uuid,
+                'to_room_uuid' => $destination->uuid,
+                'reason' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    private function findRoom(string $domainUuid, string $roomName): ?HotelRoom
+    {
+        $roomCode = app(TigerTmsRoomMapper::class)->normalize($roomName);
+
+        return HotelRoom::query()
+            ->where('domain_uuid', $domainUuid)
+            ->where(function ($query) use ($roomName, $roomCode) {
+                $query->where('room_name', $roomName)
+                    ->orWhere('room_name', $roomCode)
+                    ->orWhere('room_name', 'Room ' . $roomCode);
+            })
+            ->first();
     }
 
     private function guestDisplayName(array $normalized): ?string
@@ -128,6 +195,8 @@ class ProcessTigerTmsWebhookJob extends SpatieProcessWebhookJob implements Shoul
             'domain_uuid' => Arr::get($payload, '_tigertms_resolved_domain_uuid'),
             'site' => $normalized['site'] ?? null,
             'room' => $normalized['room'] ?? null,
+            'from_room' => $normalized['from_room'] ?? null,
+            'to_room' => $normalized['to_room'] ?? null,
             'event' => $normalized['event'] ?? null,
             'action' => $normalized['action'] ?? null,
             'reservation_number' => $normalized['reservation_number'] ?? null,

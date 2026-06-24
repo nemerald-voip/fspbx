@@ -39,6 +39,16 @@ class TigerTmsWebhookNormalizer
         return [
             'site' => $this->stringOrNull($site),
             'room' => $this->stringOrNull($room),
+            'from_room' => $this->stringOrNull($this->first($payload, [
+                'fromRoom', 'fromRoomNumber', 'from_room', 'from_room_number',
+                'data.fromRoom', 'data.fromRoomNumber', 'data.from_room', 'data.from_room_number',
+                'payload.fromRoom', 'payload.fromRoomNumber', 'payload.from_room', 'payload.from_room_number',
+            ])),
+            'to_room' => $this->stringOrNull($this->first($payload, [
+                'toRoom', 'toRoomNumber', 'to_room', 'to_room_number',
+                'data.toRoom', 'data.toRoomNumber', 'data.to_room', 'data.to_room_number',
+                'payload.toRoom', 'payload.toRoomNumber', 'payload.to_room', 'payload.to_room_number',
+            ])),
             'event' => $this->stringOrNull($event),
             'action' => $action,
             'reservation_number' => $this->stringOrNull($this->first($payload, [
@@ -97,6 +107,10 @@ class TigerTmsWebhookNormalizer
             $event === 'chko',
             str_contains($event, 'checkout'),
             str_contains($event, 'checkedout') => 'checkout',
+
+            str_contains($event, 'transfer'),
+            str_contains($event, 'roommove'),
+            str_contains($event, 'move') => 'transfer',
 
             default => null,
         };
