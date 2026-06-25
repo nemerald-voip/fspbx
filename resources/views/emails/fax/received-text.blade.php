@@ -13,6 +13,9 @@ A new fax was received for {{ $destination }} and is attached to this email.
 From: {{ $sender }}
 To: {{ $destination }}
 Pages: {{ $attributes['fax_pages'] ?? '' }}
+@if (!empty($attributes['fax_date']))
+Received: {{ $attributes['fax_date'] }}
+@endif
 {{-- Status: {{ $attributes['fax_result_text'] ?? '' }} --}}
 
 The fax is attached as a {{ ($attributes['attachment_mime'] ?? '') === 'application/pdf' ? 'PDF' : 'TIFF' }} file.

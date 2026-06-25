@@ -6,6 +6,7 @@ use App\Models\Faxes;
 use App\Models\FaxFiles;
 use App\Models\FaxLogs;
 use Illuminate\Bus\Queueable;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -243,6 +244,10 @@ class ProcessFaxWebhookEventJob implements ShouldQueue
             'caller_id_name' => $this->stringOrNull($this->data['caller_id_name'] ?? null),
             'caller_id_number' => $this->stringOrNull($this->data['caller_id_number'] ?? null),
             'fax_pages' => $this->stringOrNull($this->data['fax_document_total_pages'] ?? null) ?? '0',
+            'fax_date' => $this->formattedFaxDate(
+                $this->numericOrNull($this->timestamp) ?? time(),
+                $fax->domain_uuid
+            ),
             'fax_result_text' => $this->stringOrNull($this->data['fax_result_text'] ?? null) ?? 'OK',
             'attachment_path' => $attachmentPath,
             'attachment_name' => $baseName . ($isPdf ? '.pdf' : '.tif'),
@@ -277,6 +282,17 @@ class ProcessFaxWebhookEventJob implements ShouldQueue
             ->unique()
             ->values()
             ->all();
+    }
+
+    private function formattedFaxDate(int $faxEpoch, ?string $domainUuid): ?string
+    {
+        if (!$domainUuid) {
+            return null;
+        }
+
+        return Carbon::createFromTimestamp($faxEpoch, 'UTC')
+            ->setTimezone(get_local_time_zone($domainUuid))
+            ->format('g:i:s A M d, Y');
     }
 
     private function stringOrNull($value): ?string
