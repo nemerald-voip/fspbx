@@ -68,6 +68,8 @@ class LogsController extends Controller
                     'fax_logs_retry' => route('fax-logs.retry', ['faxLog' => ':faxLog']),
                     'freeswitch_logs' => route('freeswitch-logs.index'),
                     'freeswitch_sip_trace' => route('freeswitch-logs.sip-trace'),
+                    'nginx_logs' => route('nginx-logs.index'),
+                    'laravel_logs' => route('laravel-logs.index'),
 
                 ],
                 'permissions' => function () {

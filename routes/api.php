@@ -49,10 +49,12 @@ use App\Http\Controllers\HotelHousekeepingDefinitionController;
 use App\Http\Controllers\HotelRoomController;
 use App\Http\Controllers\HotelRoomStatusController;
 use App\Http\Controllers\InboundWebhooksController;
+use App\Http\Controllers\LaravelLogController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\MessageSettingsController;
 use App\Http\Controllers\MusicOnHoldController;
 use App\Http\Controllers\BasicDialerController;
+use App\Http\Controllers\NginxLogController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\PaymentGatewayController;
 use App\Http\Controllers\PhoneNumbersController;
@@ -125,6 +127,12 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     // FreeSWITCH logs
     Route::get('/freeswitch-logs', [FreeswitchLogController::class, 'index'])->name('freeswitch-logs.index');
     Route::post('/freeswitch-logs/sip-trace', [FreeswitchLogController::class, 'sipTrace'])->name('freeswitch-logs.sip-trace');
+
+    // Nginx logs
+    Route::get('/nginx-logs', [NginxLogController::class, 'index'])->name('nginx-logs.index');
+
+    // Laravel logs
+    Route::get('/laravel-logs', [LaravelLogController::class, 'index'])->name('laravel-logs.index');
 
     // Basic Queue
     Route::get('/basic-queues/queues/data', [BasicQueueController::class, 'getQueueData'])->name('basic-queues.queues.data');

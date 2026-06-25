@@ -3,33 +3,22 @@
         :initial-menu-option="initialMenuOption" @update-selected-menu-option="handleUpdateSelectedMenuOption">
 
         <template #default="{ selectedMenuOption }">
-            <div class="mb-4 flex justify-end">
-                <button v-if="permissions?.email_test_send" type="button"
-                    class="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
-                    @click="openTestEmailModal">
-                    <EnvelopeIcon class="h-4 w-4" />
-                    Send Test Email
-                </button>
-            </div>
-
             <!-- EMAILS -->
             <section v-show="selectedMenuOption === 'emails'">
-                <Vueform>
-                    <StaticElement name="locations_title" tag="h4" content="Emails" />
-                </Vueform>
+                <div class="flex items-start justify-between gap-3">
+                    <Vueform class="min-w-0">
+                        <StaticElement name="locations_title" tag="h4" content="Emails" />
+                    </Vueform>
+
+                    <button v-if="permissions?.email_test_send" type="button"
+                        class="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
+                        @click="openTestEmailModal">
+                        <EnvelopeIcon class="h-4 w-4" />
+                        Send Test Email
+                    </button>
+                </div>
 
                 <EmailLogs :trigger="emailsTrigger" :startPeriod="startPeriod" :endPeriod="endPeriod"
-                    :timezone="timezone" :routes="routes" :permissions="permissions" :domain-options="domainOptions"
-                    :selected-domain-uuid="selectedDomainUuid" />
-            </section>
-
-            <!-- TIGERTMS -->
-            <section v-if="features?.tigertms_logs" v-show="selectedMenuOption === 'tigertms_logs'">
-                <Vueform>
-                    <StaticElement name="locations_title" tag="h4" content="TigerTMS" />
-                </Vueform>
-
-                <TigerTmsLogs :trigger="tigerTmsLogsTrigger" :startPeriod="startPeriod" :endPeriod="endPeriod"
                     :timezone="timezone" :routes="routes" :permissions="permissions" :domain-options="domainOptions"
                     :selected-domain-uuid="selectedDomainUuid" />
             </section>
@@ -78,6 +67,43 @@
                     @success="showSuccessNotification"
                     @error="showErrorNotification"
                 />
+            </section>
+
+            <!-- NGINX -->
+            <section v-show="selectedMenuOption === 'nginx_logs'">
+                <Vueform>
+                    <StaticElement name="locations_title" tag="h4" content="Web service" />
+                </Vueform>
+
+                <NginxLogs
+                    :trigger="nginxLogsTrigger"
+                    :routes="routes"
+                    :permissions="permissions"
+                />
+            </section>
+
+            <!-- LARAVEL -->
+            <section v-show="selectedMenuOption === 'laravel_logs'">
+                <Vueform>
+                    <StaticElement name="locations_title" tag="h4" content="Laravel" />
+                </Vueform>
+
+                <LaravelLogs
+                    :trigger="laravelLogsTrigger"
+                    :routes="routes"
+                    :permissions="permissions"
+                />
+            </section>
+
+            <!-- Keep TigerTMS last so new log tabs stay above the PMS integration logs. -->
+            <section v-if="features?.tigertms_logs" v-show="selectedMenuOption === 'tigertms_logs'">
+                <Vueform>
+                    <StaticElement name="locations_title" tag="h4" content="TigerTMS" />
+                </Vueform>
+
+                <TigerTmsLogs :trigger="tigerTmsLogsTrigger" :startPeriod="startPeriod" :endPeriod="endPeriod"
+                    :timezone="timezone" :routes="routes" :permissions="permissions" :domain-options="domainOptions"
+                    :selected-domain-uuid="selectedDomainUuid" />
             </section>
 
         </template>
@@ -135,6 +161,8 @@ import InboundWebhooks from "./components/InboundWebhooks.vue";
 import MessageLogs from "./components/MessageLogs.vue";
 import FaxLogs from "./components/FaxLogs.vue";
 import FreeSwitchLogs from "./components/FreeSwitchLogs.vue";
+import NginxLogs from "./components/NginxLogs.vue";
+import LaravelLogs from "./components/LaravelLogs.vue";
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
 
@@ -146,6 +174,7 @@ import {
     ChatBubbleLeftRightIcon,
     PrinterIcon,
     ServerStackIcon,
+    GlobeAltIcon,
 } from '@heroicons/vue/24/outline'
 
 const props = defineProps({
@@ -175,6 +204,8 @@ const inboundWebhooksTrigger = ref(false)
 const messageLogsTrigger = ref(false)
 const faxLogsTrigger = ref(false)
 const freeswitchLogsTrigger = ref(false)
+const nginxLogsTrigger = ref(false)
+const laravelLogsTrigger = ref(false)
 const initialMenuOption = ref(null)
 const showTestEmailModal = ref(false)
 const testEmailLoading = ref(false)
@@ -197,6 +228,8 @@ const handleUpdateSelectedMenuOption = (key) => {
     if (key === 'message_logs') messageLogsTrigger.value = !messageLogsTrigger.value
     if (key === 'fax_logs') faxLogsTrigger.value = !faxLogsTrigger.value
     if (key === 'freeswitch_logs') freeswitchLogsTrigger.value = !freeswitchLogsTrigger.value
+    if (key === 'nginx_logs') nginxLogsTrigger.value = !nginxLogsTrigger.value
+    if (key === 'laravel_logs') laravelLogsTrigger.value = !laravelLogsTrigger.value
 }
 
 const navigation = computed(() => {
@@ -204,10 +237,6 @@ const navigation = computed(() => {
         { key: 'emails', name: 'Emails', icon: EnvelopeIcon },
         { key: 'message_logs', name: 'Messages', icon: ChatBubbleLeftRightIcon },
     ]
-
-    if (props.features?.tigertms_logs) {
-        items.push({ key: 'tigertms_logs', name: 'TigerTMS', icon: BuildingOffice2Icon })
-    }
 
     items.push({ key: 'inbound_webhooks', name: 'Inbound Webhooks', icon: InboxArrowDownIcon })
 
@@ -217,6 +246,13 @@ const navigation = computed(() => {
 
     if (props.permissions?.log_view) {
         items.push({ key: 'freeswitch_logs', name: 'FreeSWITCH', icon: ServerStackIcon })
+        items.push({ key: 'nginx_logs', name: 'Web service', icon: GlobeAltIcon })
+        items.push({ key: 'laravel_logs', name: 'Laravel', icon: DocumentTextIcon })
+    }
+
+    // Keep TigerTMS as the last tab. Add future log tabs above this block.
+    if (props.features?.tigertms_logs) {
+        items.push({ key: 'tigertms_logs', name: 'TigerTMS', icon: BuildingOffice2Icon })
     }
 
     return items
