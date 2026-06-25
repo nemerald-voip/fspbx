@@ -80,6 +80,7 @@ use App\Http\Controllers\VoicemailController;
 use App\Http\Controllers\VoicemailMessagesController;
 use App\Http\Controllers\WakeupCallsController;
 use App\Http\Controllers\ScheduledAnnouncementController;
+use App\Http\Controllers\SipProfileController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -220,6 +221,16 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     // SIP Status
     Route::get('sip-status/data', [SipStatusController::class, 'data'])->name('sip-status.data');
     Route::post('sip-status/action', [SipStatusController::class, 'action'])->name('sip-status.action');
+
+    // SIP Profiles
+    Route::get('sip-profiles/data', [SipProfileController::class, 'getData'])->name('sip-profiles.data');
+    Route::post('sip-profiles', [SipProfileController::class, 'store'])->name('sip-profiles.store');
+    Route::post('sip-profiles/item-options', [SipProfileController::class, 'getItemOptions'])->name('sip-profiles.item.options');
+    Route::post('sip-profiles/select-all', [SipProfileController::class, 'selectAll'])->name('sip-profiles.select.all');
+    Route::post('sip-profiles/bulk-delete', [SipProfileController::class, 'bulkDelete'])->name('sip-profiles.bulk.delete');
+    Route::post('sip-profiles/bulk-toggle', [SipProfileController::class, 'bulkToggle'])->name('sip-profiles.bulk.toggle');
+    Route::put('sip-profiles/{sip_profile}', [SipProfileController::class, 'update'])->name('sip-profiles.update');
+    Route::delete('sip-profiles/{sip_profile}', [SipProfileController::class, 'destroy'])->name('sip-profiles.destroy');
 
     // FreeSWITCH TLS (Let's Encrypt)
     Route::get('sip-status/tls', [LetsEncryptController::class, 'status'])->name('sip-status.tls.status');

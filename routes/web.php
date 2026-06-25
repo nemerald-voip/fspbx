@@ -60,6 +60,7 @@ use App\Http\Controllers\RingGroupsController;
 use App\Http\Controllers\SansayActiveCallsController;
 use App\Http\Controllers\SansayRegistrationsController;
 use App\Http\Controllers\ScheduledAnnouncementController;
+use App\Http\Controllers\SipProfileController;
 use App\Http\Controllers\SipStatusController;
 use App\Http\Controllers\SpeedDialController;
 use App\Http\Controllers\SwitchVariableController;
@@ -241,6 +242,9 @@ Route::group(['middleware' => 'auth'], function () {
 
     // SIP Status
     Route::get('sip-status', [SipStatusController::class, 'index'])->name('sip-status.index');
+
+    // SIP Profiles
+    Route::get('sip-profiles', [SipProfileController::class, 'index'])->name('sip-profiles.index');
 
     // User Logs
     Route::get('user-logs', [UserLogsController::class, 'index'])->name('user-logs.index');
