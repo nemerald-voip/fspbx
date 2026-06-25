@@ -12,6 +12,9 @@ class Update191
     private const LEGACY_WELLKNOWN = '/var/www/dehydrated';
     private const WELLKNOWN = '/var/www/fspbx/public/.well-known/acme-challenge';
     private const NGINX_CONFIG = '/etc/nginx/sites-available/fspbx.conf';
+    private const LEGACY_NGINX_CONFIG = '/etc/nginx/sites-available/freeswitchpbx.conf';
+    private const NGINX_ENABLED = '/etc/nginx/sites-enabled/fspbx.conf';
+    private const LEGACY_NGINX_ENABLED = '/etc/nginx/sites-enabled/freeswitchpbx.conf';
 
     public function apply(): bool
     {
@@ -28,7 +31,8 @@ class Update191
                 echo "Dehydrated uses a custom WELLKNOWN directory. Leaving it unchanged.\n";
             }
 
-            $nginxConfig = $this->readNginxConfig();
+            $nginxConfigPath = $this->normalizeNginxSiteConfig();
+            $nginxConfig = $this->readNginxConfig($nginxConfigPath);
             $updatedNginxConfig = $this->updateNginxConfig($nginxConfig);
 
             if (! $this->hasDefaultAcmeServer($updatedNginxConfig)) {
@@ -38,12 +42,12 @@ class Update191
             }
 
             if ($updatedNginxConfig !== $nginxConfig) {
-                $this->writeFile(self::NGINX_CONFIG, $updatedNginxConfig);
+                $this->writeFile($nginxConfigPath, $updatedNginxConfig);
             }
 
             if (! $this->runProcess(['nginx', '-t'])) {
                 if ($updatedNginxConfig !== $nginxConfig) {
-                    $this->writeFile(self::NGINX_CONFIG, $nginxConfig);
+                    $this->writeFile($nginxConfigPath, $nginxConfig);
                     echo "Nginx validation failed. Restored the existing site configuration.\n";
                 }
 
@@ -152,16 +156,70 @@ class Update191
         ) ?? $config;
     }
 
-    private function readNginxConfig(): string
+    private function normalizeNginxSiteConfig(): string
     {
-        if (! is_file(self::NGINX_CONFIG)) {
+        if (is_file(self::NGINX_CONFIG)) {
+            return self::NGINX_CONFIG;
+        }
+
+        if (! is_file(self::LEGACY_NGINX_CONFIG)) {
             throw new \RuntimeException('Nginx site configuration was not found at '.self::NGINX_CONFIG.'.');
         }
 
-        $config = file_get_contents(self::NGINX_CONFIG);
+        if (! rename(self::LEGACY_NGINX_CONFIG, self::NGINX_CONFIG)) {
+            throw new \RuntimeException('Unable to rename '.self::LEGACY_NGINX_CONFIG.' to '.self::NGINX_CONFIG.'.');
+        }
+
+        echo 'Renamed legacy Nginx site configuration to '.self::NGINX_CONFIG.".\n";
+
+        $this->normalizeNginxEnabledSite();
+
+        return self::NGINX_CONFIG;
+    }
+
+    private function normalizeNginxEnabledSite(): void
+    {
+        if (! is_link(self::LEGACY_NGINX_ENABLED)) {
+            return;
+        }
+
+        $legacyTarget = readlink(self::LEGACY_NGINX_ENABLED);
+        $pointsToLegacyConfig = $legacyTarget === self::LEGACY_NGINX_CONFIG
+            || $legacyTarget === basename(self::LEGACY_NGINX_CONFIG);
+
+        if (! $pointsToLegacyConfig) {
+            return;
+        }
+
+        if (file_exists(self::NGINX_ENABLED) || is_link(self::NGINX_ENABLED)) {
+            if (! unlink(self::LEGACY_NGINX_ENABLED)) {
+                throw new \RuntimeException('Unable to remove legacy Nginx enabled site '.self::LEGACY_NGINX_ENABLED.'.');
+            }
+
+            return;
+        }
+
+        if (! symlink(self::NGINX_CONFIG, self::NGINX_ENABLED)) {
+            throw new \RuntimeException('Unable to enable Nginx site at '.self::NGINX_ENABLED.'.');
+        }
+
+        if (! unlink(self::LEGACY_NGINX_ENABLED)) {
+            throw new \RuntimeException('Unable to remove legacy Nginx enabled site '.self::LEGACY_NGINX_ENABLED.'.');
+        }
+
+        echo 'Renamed legacy Nginx enabled site to '.self::NGINX_ENABLED.".\n";
+    }
+
+    private function readNginxConfig(string $path): string
+    {
+        if (! is_file($path)) {
+            throw new \RuntimeException('Nginx site configuration was not found at '.$path.'.');
+        }
+
+        $config = file_get_contents($path);
 
         if ($config === false) {
-            throw new \RuntimeException('Unable to read '.self::NGINX_CONFIG.'.');
+            throw new \RuntimeException('Unable to read '.$path.'.');
         }
 
         return $config;
