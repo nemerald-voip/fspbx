@@ -19,10 +19,8 @@ class UaCstaMakeCall extends Command
         {--lan-ip= : Narrow selection to a LAN IP when several devices match}
         {--call-id= : Narrow selection to a specific FreeSWITCH registration call-id}
         {--ringotel-domain= : Override the Ringotel organization domain used by API calls}
-        {--direct-esl : Send the SEND_INFO event directly through PHP ESL}
-        {--relative-lua-path : Use lua/uacsta_makecall.lua instead of the absolute app path}
-        {--async : Queue the Lua script with bgapi luarun instead of running it synchronously}
-        {--dry-run : Resolve and print the selected registrations without sending SIP INFO}';
+        {--sdp : Add the optional sdp flag to sofia_csta_call}
+        {--dry-run : Resolve and print the selected registrations without sending the command}';
 
     protected $description = 'Send a uaCSTA MakeCall request to the selected registered user agent.';
 
@@ -44,10 +42,11 @@ class UaCstaMakeCall extends Command
                 }
 
                 $this->table(
-                    ['#', 'Vendor', 'Device IP', 'Registration IP', 'Registrations', 'Agent', 'Call IDs'],
+                    ['#', 'Vendor', 'Profile', 'Device IP', 'Registration IP', 'Registrations', 'Agent', 'Call IDs'],
                     $groups->map(fn (array $group) => [
                         $group['index'],
                         $group['vendor'],
+                        $group['sip_profile_name'] ?: 'unknown',
                         $group['lan_ip'] ?: 'unknown',
                         $group['registration_lan_ip'] ?: 'unknown',
                         $group['count'],
@@ -74,25 +73,25 @@ class UaCstaMakeCall extends Command
                     'lan_ip' => $this->option('lan-ip'),
                     'call_id' => $this->option('call-id'),
                     'ringotel_domain' => $this->option('ringotel-domain'),
-                    'direct_esl' => (bool) $this->option('direct-esl'),
-                    'relative_lua_path' => (bool) $this->option('relative-lua-path'),
-                    'async' => (bool) $this->option('async'),
+                    'sdp' => (bool) $this->option('sdp'),
                     'dry_run' => (bool) $this->option('dry-run'),
                 ]
             );
 
-            $group = $result['group'];
-            $this->info(sprintf(
-                'Selected %s registration group: %s (%s), %d registration(s).',
-                $group['vendor'],
-                $group['lan_ip'] ?: 'unknown LAN IP',
-                $group['agent'] ?: 'unknown agent',
-                $group['count']
-            ));
+            foreach ($result['groups'] ?? [$result['group']] as $group) {
+                $this->info(sprintf(
+                    'Selected %s registration group: %s on %s (%s), %d registration(s).',
+                    $group['vendor'],
+                    $group['lan_ip'] ?: 'unknown LAN IP',
+                    $group['sip_profile_name'] ?: 'unknown profile',
+                    $group['agent'] ?: 'unknown agent',
+                    $group['count']
+                ));
+            }
 
             foreach ($result['results'] as $item) {
                 if (! $item['sent']) {
-                    $this->warn($item['reason'] ?? 'FreeSWITCH did not confirm the SIP INFO script ran.');
+                    $this->warn($item['reason'] ?? 'FreeSWITCH did not confirm the uaCSTA command ran.');
                     if (($item['result'] ?? null) !== null) {
                         $this->line('Response: ' . (is_scalar($item['result']) ? (string) $item['result'] : json_encode($item['result'])));
                     }
@@ -101,12 +100,15 @@ class UaCstaMakeCall extends Command
 
                 $this->line(sprintf(
                     '%s %s via %s -> %s',
-                    $this->option('dry-run') ? 'Would send' : ($this->option('async') ? 'Queued' : 'Sent'),
+                    $this->option('dry-run') ? 'Would send' : 'Sent',
                     $item['vendor'],
-                    $item['sip_profile_name'],
+                    $item['sip_profile_name'] ?: ($item['transport'] ?? 'unknown'),
                     $item['target_uri']
                 ));
                 $this->line('Transport: ' . ($item['transport'] ?? 'esl'));
+                if (! empty($item['command'])) {
+                    $this->line('Command: ' . $item['command']);
+                }
                 if (($item['result'] ?? null) !== null && $item['result'] !== '+OK') {
                     $this->line('Response: ' . (is_scalar($item['result']) ? (string) $item['result'] : json_encode($item['result'])));
                 }

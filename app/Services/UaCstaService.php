@@ -11,19 +11,18 @@ use RuntimeException;
 
 class UaCstaService
 {
-    private const ACTION_SIP_INFO = 'sip_info';
+    private const ACTION_FREESWITCH = 'freeswitch';
     private const ACTION_API = 'api';
 
     private array $userAgents = [
         'poly' => [
             'label' => 'Poly / Polycom',
-            'action' => self::ACTION_SIP_INFO,
+            'action' => self::ACTION_FREESWITCH,
             'patterns' => ['poly', 'polycom', 'vvx', 'edge'],
-            'calling_device' => 'aor',
         ],
         'yealink' => [
             'label' => 'Yealink',
-            'action' => self::ACTION_SIP_INFO,
+            'action' => self::ACTION_FREESWITCH,
             'patterns' => [
                 'yealink',
                 'sip-t',
@@ -43,25 +42,22 @@ class UaCstaService
                 'w80',
                 'w90',
             ],
-            'calling_device' => 'extension',
         ],
         'grandstream' => [
             'label' => 'Grandstream',
-            'action' => self::ACTION_SIP_INFO,
+            'action' => self::ACTION_FREESWITCH,
             'patterns' => ['grandstream', 'gxp', 'grp', 'wp8', 'wp82', 'ht8'],
-            'calling_device' => 'extension',
         ],
         'snom' => [
             'label' => 'Snom',
-            'action' => self::ACTION_SIP_INFO,
+            'action' => self::ACTION_FREESWITCH,
             'patterns' => ['snom'],
-            'calling_device' => 'extension',
+            'sdp' => true,
         ],
         'ringotel' => [
             'label' => 'Ringotel',
             'action' => self::ACTION_API,
             'patterns' => ['ringotel'],
-            'calling_device' => 'extension',
         ],
     ];
 
@@ -81,71 +77,72 @@ class UaCstaService
             throw new RuntimeException("No controllable registrations found for {$extensionNumber}@{$domain->domain_name}.");
         }
 
-        $selected = $this->selectGroup($groups, $options);
-        $vendor = (string) $selected['vendor'];
-        $definition = $this->userAgents[$vendor] ?? null;
+        $selectedGroups = $this->selectGroups($groups, $options);
+        $apiGroups = $selectedGroups->filter(fn (array $group) => $this->actionForVendor((string) $group['vendor']) === self::ACTION_API);
+        $freeswitchGroups = $selectedGroups->filter(fn (array $group) => $this->actionForVendor((string) $group['vendor']) === self::ACTION_FREESWITCH);
 
-        if (! $definition) {
-            throw new RuntimeException("Unsupported user agent vendor [{$vendor}].");
+        if ($apiGroups->isNotEmpty() && $freeswitchGroups->isNotEmpty()) {
+            throw new RuntimeException("Both API and FreeSWITCH endpoints matched. Choose a vendor, LAN IP, or call-id:\n" . $this->formatGroups($selectedGroups));
         }
 
-        if ($definition['action'] === self::ACTION_API) {
-            $result = $this->sendApiMakeCall($vendor, $extension, $domain, $destination, $options);
+        if ($apiGroups->isNotEmpty()) {
+            $selected = $this->singleGroupOrFail($apiGroups, $groups, 'API selection');
+            $result = $this->sendApiMakeCall((string) $selected['vendor'], $extension, $domain, $destination, $options);
             $eslService->disconnect();
 
             return [
                 'domain' => $domain,
                 'extension' => $extension,
                 'group' => $selected,
+                'groups' => [$selected],
                 'results' => [$result],
             ];
         }
 
         $results = [];
-        foreach ($selected['registrations'] as $registration) {
-            $targetUri = $this->targetUriFromContact((string) ($registration['contact'] ?? ''));
+        foreach ($freeswitchGroups as $group) {
+            $vendor = (string) $group['vendor'];
+            $definition = $this->userAgents[$vendor] ?? null;
+            $registration = $group['registrations'][0] ?? [];
+            $profile = (string) ($group['sip_profile_name'] ?? $registration['sip_profile_name'] ?? '');
+            $deviceIp = (string) ($group['lan_ip'] ?? '');
+            $useSdp = (bool) ($options['sdp'] ?? false) || (bool) ($definition['sdp'] ?? false);
 
-            if ($targetUri === null) {
+            if ($profile === '' || $deviceIp === '') {
                 $results[] = [
                     'sent' => false,
-                    'reason' => 'Registration contact could not be parsed.',
+                    'reason' => 'Registration profile or endpoint IP could not be resolved.',
+                    'vendor' => $vendor,
+                    'agent' => $group['agent'] ?? '',
+                    'lan_ip' => $deviceIp,
+                    'sip_profile_name' => $profile,
                     'registration' => $registration,
                 ];
                 continue;
             }
 
-            $body = $this->makeCallBody(
-                $this->callingDevice($definition, $extensionNumber, $domain->domain_name),
-                $destination
+            $command = $this->buildCstaCommand(
+                $profile,
+                $extension->extension . '@' . $domain->domain_name,
+                $destination,
+                $deviceIp,
+                $useSdp
             );
-
-            $fromUri = 'sip:' . $extensionNumber . '@' . $domain->domain_name;
-            $command = null;
-
-            $command = $this->buildLuaCommand(
-                (string) $registration['sip_profile_name'],
-                $targetUri,
-                $fromUri,
-                $body,
-                (bool) ($options['async'] ?? false),
-                (bool) ($options['relative_lua_path'] ?? false)
-            );
-
-            $result = match (true) {
-                (bool) ($options['dry_run'] ?? false) => 'dry-run',
-                (bool) ($options['direct_esl'] ?? false) => $this->sendSipInfo($eslService, (string) $registration['sip_profile_name'], $targetUri, $fromUri, $body),
-                default => $eslService->executeCommand($command, false),
-            };
-            $sent = $this->sendSucceeded($result, (bool) ($options['dry_run'] ?? false), (bool) ($options['direct_esl'] ?? false), (bool) ($options['async'] ?? false));
+            $result = ($options['dry_run'] ?? false)
+                ? 'dry-run'
+                : $eslService->executeCommand($command, false);
+            $sent = $this->commandSucceeded($result, (bool) ($options['dry_run'] ?? false));
 
             $results[] = [
                 'sent' => $sent,
-                'transport' => ($options['direct_esl'] ?? false) ? 'esl' : 'lua',
+                'transport' => 'esl',
                 'vendor' => $vendor,
-                'agent' => $registration['agent'] ?? '',
-                'lan_ip' => $registration['lan_ip'] ?? '',
-                'sip_profile_name' => $registration['sip_profile_name'] ?? '',
-                'target_uri' => $targetUri,
+                'agent' => $group['agent'] ?? '',
+                'lan_ip' => $deviceIp,
+                'sip_profile_name' => $profile,
+                'target_uri' => $extension->extension . '@' . $domain->domain_name,
+                'destination' => $destination,
+                'sdp' => $useSdp,
                 'command' => $command,
                 'result' => $result,
             ];
@@ -156,7 +153,8 @@ class UaCstaService
         return [
             'domain' => $domain,
             'extension' => $extension,
-            'group' => $selected,
+            'group' => $freeswitchGroups->first(),
+            'groups' => $freeswitchGroups->values()->all(),
             'results' => $results,
         ];
     }
@@ -226,7 +224,7 @@ class UaCstaService
             ->groupBy(function (array $registration) {
                 return implode('|', [
                     $registration['uacsta_vendor'],
-                    $this->normalizeAgent((string) ($registration['agent'] ?? '')),
+                    $registration['sip_profile_name'] ?? '',
                     $this->normalizeLanIp($this->registrationDeviceIp($registration)),
                 ]);
             })
@@ -242,13 +240,14 @@ class UaCstaService
                     'agent' => $first['agent'] ?? '',
                     'lan_ip' => $deviceIp,
                     'registration_lan_ip' => $first['lan_ip'] ?? '',
+                    'sip_profile_name' => $first['sip_profile_name'] ?? '',
                     'count' => $registrations->count(),
                     'registrations' => $registrations->values()->all(),
                 ];
             });
     }
 
-    private function selectGroup(Collection $groups, array $options): array
+    private function selectGroups(Collection $groups, array $options): Collection
     {
         if (! empty($options['call_id'])) {
             $matches = $groups->filter(function (array $group) use ($options) {
@@ -256,7 +255,7 @@ class UaCstaService
                     ->contains(fn (array $registration) => (string) ($registration['call_id'] ?? '') === (string) $options['call_id']);
             });
 
-            return $this->singleGroupOrFail($matches, $groups, 'call-id');
+            return collect([$this->singleGroupOrFail($matches, $groups, 'call-id')]);
         }
 
         $matches = $groups;
@@ -273,7 +272,15 @@ class UaCstaService
                 ->values();
         }
 
-        return $this->singleGroupOrFail($matches, $groups, 'selection');
+        if ($matches->isEmpty()) {
+            throw new RuntimeException("No uaCSTA registrations matched the selection. Available choices:\n" . $this->formatGroups($groups));
+        }
+
+        if (! empty($options['lan_ip'])) {
+            return collect([$this->singleGroupOrFail($matches, $groups, 'selection')]);
+        }
+
+        return $matches->values();
     }
 
     private function singleGroupOrFail(Collection $matches, Collection $allGroups, string $context): array
@@ -294,9 +301,10 @@ class UaCstaService
         return $groups
             ->map(function (array $group) {
                 return sprintf(
-                    '[%d] vendor=%s lan_ip=%s count=%d agent=%s',
+                    '[%d] vendor=%s profile=%s lan_ip=%s count=%d agent=%s',
                     $group['index'],
                     $group['vendor'],
+                    $group['sip_profile_name'] ?: '(unknown)',
                     $group['lan_ip'] ?: '(unknown)',
                     $group['count'],
                     $group['agent'] ?: '(unknown)'
@@ -320,11 +328,6 @@ class UaCstaService
         return null;
     }
 
-    private function normalizeAgent(string $agent): string
-    {
-        return trim(preg_replace('/\s+/', ' ', Str::lower($agent)) ?? '');
-    }
-
     private function normalizeLanIp(string $lanIp): string
     {
         return trim(Str::lower($lanIp));
@@ -334,25 +337,25 @@ class UaCstaService
     {
         $agentIp = $this->deviceIpFromAgent((string) ($registration['agent'] ?? ''));
 
-        return $agentIp ?: (string) ($registration['lan_ip'] ?? '');
+        return $agentIp
+            ?: $this->deviceIpFromContact((string) ($registration['contact'] ?? ''))
+            ?: (string) ($registration['lan_ip'] ?? '');
     }
 
     private function deviceIpFromAgent(string $agent): ?string
     {
-        $lastSegment = trim(Str::afterLast($agent, '/'));
+        if (preg_match('/\bX-LAN:\s*([^\/;\s]+)/i', $agent, $matches)) {
+            $ip = trim($matches[1]);
 
-        if ($lastSegment === '' || $lastSegment === $agent) {
-            return null;
-        }
-
-        if (filter_var($lastSegment, FILTER_VALIDATE_IP)) {
-            return $lastSegment;
+            if (filter_var($ip, FILTER_VALIDATE_IP)) {
+                return $ip;
+            }
         }
 
         return null;
     }
 
-    private function targetUriFromContact(string $contact): ?string
+    private function deviceIpFromContact(string $contact): ?string
     {
         $contactUri = $this->extractSipUri($contact);
 
@@ -360,15 +363,12 @@ class UaCstaService
             return null;
         }
 
-        if (preg_match('/[;?&]fs_path=([^;>]+)/', $contactUri, $matches)) {
-            $path = urldecode($matches[1]);
-
-            if ($path !== '') {
-                return $path;
-            }
+        if (preg_match('/^sips?:[^@]+@\[?([0-9a-f:.]+)\]?(?::\d+)?(?:[;?]|$)/i', $contactUri, $matches)
+            && filter_var($matches[1], FILTER_VALIDATE_IP)) {
+            return $matches[1];
         }
 
-        return preg_replace('/;(fs_nat|fs_path|received)=[^;>]+/', '', $contactUri);
+        return null;
     }
 
     private function extractSipUri(string $contact): ?string
@@ -384,58 +384,42 @@ class UaCstaService
         return null;
     }
 
-    private function callingDevice(array $definition, string $extensionNumber, string $domainName): string
-    {
-        return ($definition['calling_device'] ?? 'extension') === 'aor'
-            ? 'sip:' . $extensionNumber . '@' . $domainName
-            : $extensionNumber;
-    }
-
-    private function makeCallBody(string $callingDevice, string $destination): string
-    {
-        return '<?xml version="1.0" encoding="UTF-8"?>'
-            . '<MakeCall xmlns="http://www.ecma-international.org/standards/ecma-323/csta/ed3">'
-            . '<callingDevice>' . $this->xml($callingDevice) . '</callingDevice>'
-            . '<calledDirectoryNumber>' . $this->xml($destination) . '</calledDirectoryNumber>'
-            . '<autoOriginate>doNotPrompt</autoOriginate>'
-            . '</MakeCall>';
-    }
-
-    private function buildLuaCommand(
+    private function buildCstaCommand(
         string $profile,
-        string $toUri,
-        string $fromUri,
-        string $body,
-        bool $async,
-        bool $relativePath
-    ): string
-    {
-        $script = $relativePath
-            ? 'lua/uacsta_makecall.lua'
-            : str_replace('\\', '/', base_path('resources/lua/uacsta_makecall.lua'));
+        string $aor,
+        string $destination,
+        string $deviceIp,
+        bool $sdp
+    ): string {
+        $parts = [
+            'sofia_csta_call',
+            $this->freeswitchArg($profile, 'profile'),
+            $this->freeswitchArg($aor, 'extension address'),
+            $this->freeswitchArg($destination, 'destination'),
+            $this->freeswitchArg($deviceIp, 'endpoint IP'),
+        ];
 
-        return ($async ? 'bgapi luarun ' : 'lua ') . $script . ' '
-            . base64_encode($profile) . ' '
-            . base64_encode($toUri) . ' '
-            . base64_encode($fromUri) . ' '
-            . base64_encode($body);
+        if ($sdp) {
+            $parts[] = 'sdp';
+        }
+
+        return implode(' ', $parts);
     }
 
-    private function sendSipInfo(
-        FreeswitchEslService $eslService,
-        string $profile,
-        string $toUri,
-        string $fromUri,
-        string $body
-    ): ?string {
-        return $eslService->sendEvent('SEND_INFO', [
-            'profile' => $profile,
-            'to-uri' => $toUri,
-            'from-uri' => $fromUri,
-            'content-type' => 'application/csta+xml',
-            'content-disposition' => 'signal;handling=required',
-            'content-length' => strlen($body),
-        ], $body, false);
+    private function freeswitchArg(string $value, string $label): string
+    {
+        $value = trim($value);
+
+        if ($value === '' || preg_match('/\s/', $value)) {
+            throw new RuntimeException("Invalid {$label} for sofia_csta_call.");
+        }
+
+        return $value;
+    }
+
+    private function actionForVendor(string $vendor): ?string
+    {
+        return $this->userAgents[$vendor]['action'] ?? null;
     }
 
     private function sendApiMakeCall(
@@ -510,7 +494,7 @@ class UaCstaService
         ];
     }
 
-    private function sendSucceeded(mixed $result, bool $dryRun, bool $directEsl, bool $async): bool
+    private function commandSucceeded(mixed $result, bool $dryRun): bool
     {
         if ($dryRun) {
             return true;
@@ -520,17 +504,6 @@ class UaCstaService
             return false;
         }
 
-        if ($directEsl) {
-            return str_starts_with($result, '+OK');
-        }
-
-        return $async
-            ? str_starts_with($result, '+OK')
-            : str_contains($result, '+OK uaCSTA SEND_INFO fired');
-    }
-
-    private function xml(string $value): string
-    {
-        return htmlspecialchars($value, ENT_QUOTES | ENT_XML1, 'UTF-8');
+        return trim($result) !== '' && ! str_starts_with(trim($result), '-ERR');
     }
 }
