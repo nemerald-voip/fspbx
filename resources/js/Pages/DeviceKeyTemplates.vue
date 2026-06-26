@@ -139,6 +139,21 @@
         :header="formHeader" @close="handleFormClose" @error="handleErrorResponse" @success="showNotification"
         @refresh-data="refreshCurrentPage" />
 
+    <AddEditItemModal :show="showCopyModal" header="Copy Key Template To Domain" @close="handleCopyModalClose">
+        <template #modal-body>
+            <Vueform :endpoint="submitCopyForm" @success="handleCopySuccess" @error="handleErrorResponse" :display-errors="false">
+                <template #empty>
+                    <FormElements>
+                        <SelectElement name="target_domain_uuid" label="Target domain" :items="copyDomainOptions"
+                            :native="false" :search="true" input-type="search" autocomplete="off" placeholder="Select domain"
+                            :strict="false" :floating="false" />
+                        <ButtonElement name="submit" button-label="Copy" :submits="true" align="right" />
+                    </FormElements>
+                </template>
+            </Vueform>
+        </template>
+    </AddEditItemModal>
+
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
 </template>
@@ -157,12 +172,14 @@ import Notification from "./components/notifications/Notification.vue";
 import Badge from "@generalComponents/Badge.vue";
 import DeviceKeyTemplateForm from "./components/forms/DeviceKeyTemplateForm.vue";
 import AdvancedActionButton from "./components/general/AdvancedActionButton.vue";
+import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
 import { ChevronDownIcon, ChevronUpIcon, MagnifyingGlassIcon, PencilSquareIcon, TrashIcon } from "@heroicons/vue/24/solid";
 
 const props = defineProps({
     routes: Object,
     permissions: Object,
     pagination: Object,
+    options: Object,
 });
 
 const routes = props.routes;
@@ -185,6 +202,8 @@ const formMode = ref("create");
 const loadingForm = ref(false);
 const itemOptions = ref({ item: {}, extensions: [], routes: {} });
 const perPage = ref(props.pagination?.per_page);
+const showCopyModal = ref(false);
+const copyTemplateUuid = ref(null);
 
 const data = ref({
     data: [],
@@ -205,11 +224,16 @@ const bulkActions = computed(() => permissions.destroy ? [
     { id: "bulk_delete", label: "Delete", icon: "TrashIcon" },
 ] : []);
 
+const copyDomainOptions = computed(() => props.options?.domains ?? []);
+
 const advancedActions = computed(() => [
     {
         category: "Advanced",
         actions: [
             { id: "duplicate", label: "Duplicate", icon: "DocumentDuplicateIcon" },
+            ...(permissions.copy_to_domain && copyDomainOptions.value.length
+                ? [{ id: "copy_to_domain", label: "Copy to domain", icon: "DocumentDuplicateIcon" }]
+                : []),
         ],
     },
 ]);
@@ -284,6 +308,12 @@ const handleEditButtonClick = (uuid) => {
 };
 
 const handleAdvancedActionRequest = async (action, uuid) => {
+    if (action === "copy_to_domain") {
+        copyTemplateUuid.value = uuid;
+        showCopyModal.value = true;
+        return;
+    }
+
     if (action !== "duplicate") return;
 
     loading.value = true;
@@ -297,6 +327,23 @@ const handleAdvancedActionRequest = async (action, uuid) => {
     } finally {
         loading.value = false;
     }
+};
+
+const submitCopyForm = async (FormData, form) => {
+    return await form.$vueform.services.axios.post(routes.copy_to_domain, {
+        ...form.requestData,
+        uuid: copyTemplateUuid.value,
+    });
+};
+
+const handleCopySuccess = (response) => {
+    handleCopyModalClose();
+    showNotification("success", response.data.messages);
+};
+
+const handleCopyModalClose = () => {
+    showCopyModal.value = false;
+    copyTemplateUuid.value = null;
 };
 
 const getItemOptions = (itemUuid = null) => {

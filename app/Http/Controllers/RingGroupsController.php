@@ -63,6 +63,7 @@ class RingGroupsController extends Controller
                     'item_options' => route('ring-groups.item.options'),
                     'bulk_delete' => route('ring-groups.bulk.delete'),
                     'select_all' => route('ring-groups.select.all'),
+                    'duplicate' => route('ring-groups.duplicate'),
                 ]
             ]
         );
