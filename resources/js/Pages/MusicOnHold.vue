@@ -167,6 +167,7 @@
                                     >
                                         {{ row.music_on_hold_name }}
                                     </button>
+                                    <Badge v-if="row.is_tenant_default" text="TENANT DEFAULT" v-bind="tenantDefaultBadge" class="ml-2 align-middle" />
                                     <div v-if="permissions.view_path && row.music_on_hold_path" class="mt-1 max-w-md truncate text-xs text-gray-400">
                                         {{ row.music_on_hold_path }}
                                     </div>
@@ -472,7 +473,18 @@
                             />
                         </div>
 
-                        <div class="absolute right-3 top-3 z-10 flex items-center gap-1 opacity-0 transition group-hover:opacity-100" @click.stop>
+                        <div
+                            v-if="row.is_tenant_default"
+                            class="absolute right-3 top-3 z-10 rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-semibold uppercase leading-none text-emerald-700 ring-1 ring-inset ring-emerald-600/20"
+                        >
+                            TENANT DEFAULT
+                        </div>
+
+                        <div
+                            class="absolute right-3 z-10 flex items-center gap-1 opacity-0 transition group-hover:opacity-100"
+                            :class="row.is_tenant_default ? 'top-9' : 'top-3'"
+                            @click.stop
+                        >
                             <button
                                 v-if="permissions.update && row.can_modify"
                                 type="button"
@@ -824,6 +836,7 @@ const itemOptions = ref({
 const grayBadge = { backgroundColor: "bg-gray-50", textColor: "text-gray-700", ringColor: "ring-gray-600/20" };
 const blueBadge = { backgroundColor: "bg-blue-50", textColor: "text-blue-700", ringColor: "ring-blue-600/20" };
 const amberBadge = { backgroundColor: "bg-amber-50", textColor: "text-amber-700", ringColor: "ring-amber-600/20" };
+const tenantDefaultBadge = { backgroundColor: "bg-emerald-50", textColor: "text-emerald-700", ringColor: "ring-emerald-600/20" };
 
 const columnCount = computed(() => filterData.value.showGlobal ? 6 : 5);
 const formHeader = computed(() => formMode.value === "create"
@@ -1088,6 +1101,7 @@ const submitTenantSettings = () => {
         .then((response) => {
             closeTenantSettingsModal();
             showNotification("success", response.data.messages);
+            refreshCurrentPage();
         })
         .catch((error) => handleError(error, true))
         .finally(() => {
