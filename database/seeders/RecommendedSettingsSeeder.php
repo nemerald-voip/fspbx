@@ -27,6 +27,14 @@ class RecommendedSettingsSeeder extends Seeder
     {
         $settings = [
             [
+                'default_setting_category'      => 'pms',
+                'default_setting_subcategory'   => 'pms_provider',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => 'charpms',
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => 'Hotel PMS provider for this tenant. Use charpms or tigertms.',
+            ],
+            [
                 'default_setting_category'      => 'destinations',
                 'default_setting_subcategory'   => 'dialplan_mode',
                 'default_setting_name'          => 'text',

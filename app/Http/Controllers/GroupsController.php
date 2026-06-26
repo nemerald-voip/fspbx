@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Schema;
+use App\Services\Auth\UserSessionInvalidationService;
 use App\Http\Requests\CreatePermissionGroupRequest;
 use App\Http\Requests\UpdatePermissionGroupRequest;
 use Spatie\QueryBuilder\AllowedFilter;
@@ -182,6 +183,11 @@ class GroupsController extends Controller
             return response()->json(['messages' => ['error' => ['One or more permissions are invalid.']]], 422);
         }
 
+        $affectedUserUuids = UserGroup::query()
+            ->where('group_uuid', $group->group_uuid)
+            ->when($group->domain_uuid, fn ($query) => $query->where('domain_uuid', $group->domain_uuid))
+            ->pluck('user_uuid');
+
         DB::transaction(function () use ($assigned, $group, $validPermissionNames) {
             if (!$assigned) {
                 GroupPermissions::query()
@@ -228,6 +234,8 @@ class GroupsController extends Controller
                 GroupPermissions::query()->insert($newRows);
             }
         });
+
+        app(UserSessionInvalidationService::class)->invalidateByUserUuids($affectedUserUuids);
 
         $action = $assigned ? 'assigned' : 'removed';
         $count = $validPermissionNames->count();
@@ -360,6 +368,8 @@ class GroupsController extends Controller
             'user_uuid' => $validated['user_uuid'],
         ]);
 
+        app(UserSessionInvalidationService::class)->invalidateByUserUuids([$validated['user_uuid']]);
+
         return response()->json([
             'messages' => ['success' => ['Member added.']],
             'member_count' => $this->groupMemberCount($group),
@@ -381,12 +391,18 @@ class GroupsController extends Controller
             'items.*' => ['required', 'uuid'],
         ]);
 
-        $deleted = UserGroup::query()
+        $memberQuery = UserGroup::query()
             ->where('group_uuid', $group->group_uuid)
             ->whereIn('user_group_uuid', $validated['items'])
             ->when($group->domain_uuid, fn ($query) => $query->where('domain_uuid', $group->domain_uuid))
-            ->when(!userCheckPermission('user_all'), fn ($query) => $query->where('domain_uuid', session('domain_uuid')))
-            ->delete();
+            ->when(!userCheckPermission('user_all'), fn ($query) => $query->where('domain_uuid', session('domain_uuid')));
+
+        $affectedUserUuids = (clone $memberQuery)->pluck('user_uuid');
+        $deleted = $memberQuery->delete();
+
+        if ($deleted > 0) {
+            app(UserSessionInvalidationService::class)->invalidateByUserUuids($affectedUserUuids);
+        }
 
         return response()->json([
             'messages' => ['success' => ["{$deleted} member(s) removed."]],

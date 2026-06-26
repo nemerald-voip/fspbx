@@ -51,12 +51,23 @@ class StoreZtpOrganizationRequest extends FormRequest
             'bootServerOption' => 'nullable|string|in:' . implode(',', $dhcpBootServerOptionList),
             'option60Type' => 'nullable|string|in:' . implode(',', $dhcpOption60TypeList),
             'localization' => 'nullable|string|in:' . implode(',', $locales),
-            'address' => 'nullable|string|max:255',
+            'address' => 'required|string|max:255',
+            'prov_un' => 'required|string|max:64',
+            'prov_pw' => 'required|string|max:64',
             'username' => 'nullable|string|max:64',
             'password' => 'nullable|string|max:64',
             'quickSetup' => 'nullable|boolean',
             'polling' => 'nullable|boolean',
             'ucs' => 'nullable|string',
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'address.required' => 'Address is required.',
+            'prov_un.required' => 'Username is required.',
+            'prov_pw.required' => 'Password is required.',
         ];
     }
 
@@ -88,13 +99,13 @@ class StoreZtpOrganizationRequest extends FormRequest
     {
         if ($this->has('prov_un')) {
             $this->merge([
-                'username' => $this->prov_un,
+                'username' => $this->input('prov_un'),
             ]);
         }
 
         if ($this->has('prov_pw')) {
             $this->merge([
-                'password' => $this->prov_pw,
+                'password' => $this->input('prov_pw'),
             ]);
         }
     }

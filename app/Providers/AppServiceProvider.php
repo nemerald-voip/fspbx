@@ -13,6 +13,7 @@ use App\Models\EmergencyCall;
 use App\Models\EmergencyCallEmail;
 use App\Models\EmergencyCallMember;
 use App\Models\Extensions;
+use App\Models\HotelRoomStatus;
 use App\Models\Messages;
 use App\Models\RingGroups;
 use App\Models\Sanctum\PersonalAccessToken;
@@ -29,10 +30,12 @@ use App\Observers\EmergencyCallEmailObserver;
 use App\Observers\EmergencyCallMemberObserver;
 use App\Observers\EmergencyCallObserver;
 use App\Observers\ExtensionObserver;
+use App\Observers\HotelRoomStatusObserver;
 use App\Observers\MessageObserver;
 use App\Observers\RingGroupObserver;
 use App\Observers\UserDomainGroupPermissionsObserver;
 use App\Observers\UserObserver;
+use App\Services\PmsOutboundSyncContext;
 use App\Services\PolycomCloudProvider;
 use App\Services\RingotelApiService;
 use Illuminate\Database\Eloquent\Builder;
@@ -55,6 +58,8 @@ class AppServiceProvider extends ServiceProvider
     public function register()
     {
         Sanctum::ignoreMigrations();
+
+        $this->app->singleton(PmsOutboundSyncContext::class);
     }
 
     /**
@@ -121,6 +126,7 @@ class AppServiceProvider extends ServiceProvider
         CallFlows::observe(CallFlowObserver::class);
         RingGroups::observe(RingGroupObserver::class);
         Messages::observe(MessageObserver::class);
+        HotelRoomStatus::observe(HotelRoomStatusObserver::class);
 
 
         Builder::macro('orWhereLike', function (string $column, string $search) {

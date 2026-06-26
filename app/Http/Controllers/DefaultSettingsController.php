@@ -124,7 +124,7 @@ class DefaultSettingsController extends Controller
             return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
         }
 
-        $defaultSetting->delete();
+        $this->settings->deleteDefaults([$defaultSetting->default_setting_uuid]);
 
         return response()->json(['messages' => ['success' => ['Default setting deleted.']]]);
     }

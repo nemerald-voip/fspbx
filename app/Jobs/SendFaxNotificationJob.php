@@ -11,6 +11,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Redis;
 use Throwable;
@@ -116,7 +117,7 @@ class SendFaxNotificationJob implements ShouldQueue
         if ($log) {
             $attributes['fax_pages']       = (string) ($log->fax_document_transferred_pages ?? '');
             $attributes['fax_total_pages'] = (string) ($log->fax_document_total_pages ?? '');
-            $attributes['fax_date']        = optional($log->fax_date)->format('Y-m-d H:i');
+            $attributes['fax_date']        = $this->formattedFaxDate($log, $fax);
 
             $duration = (int) ($log->fax_duration ?? 0);
             if ($duration > 0) {
@@ -186,6 +187,31 @@ class SendFaxNotificationJob implements ShouldQueue
             ->orderByDesc('fax_date')
             ->orderByDesc('fax_epoch')
             ->first();
+    }
+
+    private function formattedFaxDate(FaxLogs $log, OutboundFax $fax): ?string
+    {
+        $domainUuid = $log->domain_uuid ?: $fax->domain_uuid;
+
+        if (!$domainUuid) {
+            return null;
+        }
+
+        $timeZone = get_local_time_zone($domainUuid);
+
+        if (!empty($log->fax_epoch)) {
+            return Carbon::createFromTimestamp((int) $log->fax_epoch, 'UTC')
+                ->setTimezone($timeZone)
+                ->format('g:i:s A M d, Y');
+        }
+
+        if (!empty($log->fax_date)) {
+            return Carbon::parse($log->fax_date, 'UTC')
+                ->setTimezone($timeZone)
+                ->format('g:i:s A M d, Y');
+        }
+
+        return null;
     }
 
     private function failureMessage(array $attributes): string

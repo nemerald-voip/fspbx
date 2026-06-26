@@ -1,12 +1,13 @@
 <template>
     <Menu as="div" class="">
         <div>
-            <MenuButton
+            <MenuButton ref="trigger"
                 class="flex items-center rounded py-2 hover:bg-gray-200 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-1 focus:bg-gray-200 focus:ring-gray-300 transition duration-500 ease-in-out">
                 <span class="sr-only">Open options</span>
                 <EllipsisVerticalIcon class="h-5 w-5" aria-hidden="true" />
             </MenuButton>
         </div>
+        <Teleport to="body">
         <transition
             enter-active-class="transition ease-out duration-100"
             enter-from-class="transform opacity-0 scale-95"
@@ -14,8 +15,8 @@
             leave-active-class="transition ease-in duration-75"
             leave-from-class="transform opacity-100 scale-100"
             leave-to-class="transform opacity-0 scale-95">
-            <MenuItems
-                class="absolute right-0 z-10 mt-2.5 mr-2 origin-top-right rounded-md bg-white py-2 shadow-xl ring-1 ring-gray-900/5 focus:outline-none">
+            <MenuItems ref="container"
+                class="z-50 w-56 origin-top-right rounded-md bg-white py-2 shadow-xl ring-1 ring-gray-900/5 focus:outline-none">
                 <div v-for="(group, idx) in actions" :key="group.category">
                     <!-- Dynamic category name -->
                     <div class="px-4 py-3">
@@ -42,6 +43,7 @@
                 </div>
             </MenuItems>
         </transition>
+        </Teleport>
     </Menu>
 </template>
 
@@ -50,6 +52,16 @@
 import { defineAsyncComponent } from 'vue'
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import { EllipsisVerticalIcon } from "@heroicons/vue/24/outline";
+import { usePopper } from '../../../composables/usePopper';
+
+// Anchor the teleported menu to the trigger button. Using the `fixed` strategy
+// lets the menu escape the table's overflow-x-auto wrapper, which otherwise
+// clips it vertically when only one row is present.
+const [trigger, container] = usePopper({
+    placement: 'bottom-end',
+    strategy: 'fixed',
+    modifiers: [{ name: 'offset', options: { offset: [0, 8] } }],
+});
 
 const RestartIcon = defineAsyncComponent(() => import('../icons/RestartIcon.vue'));
 const LinkOffIcon = defineAsyncComponent(() => import('../icons/LinkOffIcon.vue'));

@@ -32,7 +32,10 @@ class InstallLetsEncryptCertificate extends Command
         }
 
         $dehydratedDir = "/etc/dehydrated";
-        $wellKnownDir = "/var/www/dehydrated";
+        // Shared ACME webroot served by nginx (root /var/www/fspbx/public).
+        // Both this web-cert flow and FS PBX's FreeSWITCH-cert flow write
+        // challenge tokens here, so the /var/www/dehydrated alias is not needed.
+        $wellKnownDir = "/var/www/fspbx/public/.well-known/acme-challenge";
         $certsDir = "/etc/dehydrated/certs/$domain";
         $nginxConf = "/etc/nginx/sites-available/fspbx.conf";
 
@@ -57,7 +60,7 @@ class InstallLetsEncryptCertificate extends Command
             "$dehydratedDir/config",
             <<<EOF
 BASEDIR=$dehydratedDir
-WELLKNOWN=/var/www/dehydrated
+WELLKNOWN=$wellKnownDir
 EOF
         );
 

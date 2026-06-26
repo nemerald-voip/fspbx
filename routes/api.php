@@ -23,6 +23,7 @@ use App\Http\Controllers\ConferenceProfileController;
 use App\Http\Controllers\ConferenceRoomController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\CustomerNotesController;
+use App\Http\Controllers\DatabaseTransactionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeviceCloudProvisioningController;
 use App\Http\Controllers\DeviceController;
@@ -49,17 +50,21 @@ use App\Http\Controllers\HotelHousekeepingDefinitionController;
 use App\Http\Controllers\HotelRoomController;
 use App\Http\Controllers\HotelRoomStatusController;
 use App\Http\Controllers\InboundWebhooksController;
+use App\Http\Controllers\LaravelLogController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\MessageSettingsController;
 use App\Http\Controllers\MusicOnHoldController;
 use App\Http\Controllers\BasicDialerController;
+use App\Http\Controllers\NginxLogController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\PaymentGatewayController;
 use App\Http\Controllers\PhoneNumbersController;
+use App\Http\Controllers\PinNumberController;
 use App\Http\Controllers\ProvisioningController;
 use App\Http\Controllers\RegistrationsController;
 use App\Http\Controllers\RecordingsManagerController;
 use App\Http\Controllers\RingGroupsController;
+use App\Http\Controllers\LetsEncryptController;
 use App\Http\Controllers\SipStatusController;
 use App\Http\Controllers\SpeedDialController;
 use App\Http\Controllers\SwitchModuleController;
@@ -67,6 +72,8 @@ use App\Http\Controllers\SwitchVariableController;
 use App\Http\Controllers\SystemController;
 use App\Http\Controllers\SystemSettingsController;
 use App\Http\Controllers\TestEmailController;
+use App\Http\Controllers\TigerTmsLogsController;
+use App\Http\Controllers\TigerTmsWebhookController;
 use App\Http\Controllers\TokenController;
 use App\Http\Controllers\UserLogsController;
 use App\Http\Controllers\UsersController;
@@ -74,6 +81,8 @@ use App\Http\Controllers\VirtualReceptionistController;
 use App\Http\Controllers\VoicemailController;
 use App\Http\Controllers\VoicemailMessagesController;
 use App\Http\Controllers\WakeupCallsController;
+use App\Http\Controllers\ScheduledAnnouncementController;
+use App\Http\Controllers\SipProfileController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -115,8 +124,18 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::get('/email-logs/{uuid}/delivery-details', [EmailLogsController::class, 'deliveryDetails'])->name('email-logs.delivery-details');
     Route::post('/test-email-send', [TestEmailController::class, 'store'])->name('test-email-send.store');
 
+    // TigerTMS logs
+    Route::get('/tigertms-logs', [TigerTmsLogsController::class, 'index'])->name('tigertms-logs.index');
+
     // FreeSWITCH logs
     Route::get('/freeswitch-logs', [FreeswitchLogController::class, 'index'])->name('freeswitch-logs.index');
+    Route::post('/freeswitch-logs/sip-trace', [FreeswitchLogController::class, 'sipTrace'])->name('freeswitch-logs.sip-trace');
+
+    // Nginx logs
+    Route::get('/nginx-logs', [NginxLogController::class, 'index'])->name('nginx-logs.index');
+
+    // Laravel logs
+    Route::get('/laravel-logs', [LaravelLogController::class, 'index'])->name('laravel-logs.index');
 
     // Basic Queue
     Route::get('/basic-queues/queues/data', [BasicQueueController::class, 'getQueueData'])->name('basic-queues.queues.data');
@@ -204,6 +223,24 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     // SIP Status
     Route::get('sip-status/data', [SipStatusController::class, 'data'])->name('sip-status.data');
     Route::post('sip-status/action', [SipStatusController::class, 'action'])->name('sip-status.action');
+
+    // SIP Profiles
+    Route::get('sip-profiles/data', [SipProfileController::class, 'getData'])->name('sip-profiles.data');
+    Route::post('sip-profiles', [SipProfileController::class, 'store'])->name('sip-profiles.store');
+    Route::post('sip-profiles/item-options', [SipProfileController::class, 'getItemOptions'])->name('sip-profiles.item.options');
+    Route::post('sip-profiles/select-all', [SipProfileController::class, 'selectAll'])->name('sip-profiles.select.all');
+    Route::post('sip-profiles/bulk-delete', [SipProfileController::class, 'bulkDelete'])->name('sip-profiles.bulk.delete');
+    Route::post('sip-profiles/bulk-toggle', [SipProfileController::class, 'bulkToggle'])->name('sip-profiles.bulk.toggle');
+    Route::post('sip-profiles/{sip_profile}/duplicate', [SipProfileController::class, 'duplicate'])->name('sip-profiles.duplicate');
+    Route::put('sip-profiles/{sip_profile}', [SipProfileController::class, 'update'])->name('sip-profiles.update');
+    Route::delete('sip-profiles/{sip_profile}', [SipProfileController::class, 'destroy'])->name('sip-profiles.destroy');
+
+    // FreeSWITCH TLS (Let's Encrypt)
+    Route::get('sip-status/tls', [LetsEncryptController::class, 'status'])->name('sip-status.tls.status');
+    Route::post('sip-status/tls/config', [LetsEncryptController::class, 'saveConfig'])->name('sip-status.tls.config');
+    Route::post('sip-status/tls/issue', [LetsEncryptController::class, 'issue'])->name('sip-status.tls.issue');
+    Route::post('sip-status/tls/revoke', [LetsEncryptController::class, 'revoke'])->name('sip-status.tls.revoke');
+    Route::post('sip-status/tls/generate-secret', [LetsEncryptController::class, 'generateSecret'])->name('sip-status.tls.generate-secret');
 
     // Ring Group AI Text-to-Speech & File Serving
     Route::post('ring-groups/{ring_group}/text-to-speech', [RingGroupsController::class, 'textToSpeech'])->name('ring-groups.textToSpeech');
@@ -342,6 +379,11 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     // User logs
     Route::post('user-logs/select-all', [UserLogsController::class, 'selectAll'])->name('user-logs.select.all');
 
+    // Database Transactions
+    Route::get('database-transactions/data', [DatabaseTransactionController::class, 'getData'])->name('database-transactions.data');
+    Route::get('database-transactions/{database_transaction}', [DatabaseTransactionController::class, 'show'])->name('database-transactions.show');
+    Route::post('database-transactions/{database_transaction}/undo', [DatabaseTransactionController::class, 'undo'])->name('database-transactions.undo');
+
     // Devices 
     Route::post('devices', [DeviceController::class, 'store'])->name('devices.store');
     Route::put('devices/{device}', [DeviceController::class, 'update'])->name('devices.update');
@@ -425,6 +467,16 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/bridges/bulk-delete', [BridgeController::class, 'bulkDelete'])->name('bridges.bulk.delete');
     Route::post('/bridges/bulk-toggle', [BridgeController::class, 'bulkToggle'])->name('bridges.bulk.toggle');
 
+    // PIN Numbers
+    Route::post('pin-numbers', [PinNumberController::class, 'store'])->name('pin-numbers.store');
+    Route::put('pin-numbers/{pin_number}', [PinNumberController::class, 'update'])->name('pin-numbers.update');
+    Route::get('/pin-numbers/data', [PinNumberController::class, 'getData'])->name('pin-numbers.data');
+    Route::post('/pin-numbers/item-options', [PinNumberController::class, 'getItemOptions'])->name('pin-numbers.item.options');
+    Route::post('/pin-numbers/select-all', [PinNumberController::class, 'selectAll'])->name('pin-numbers.select.all');
+    Route::post('/pin-numbers/bulk-copy', [PinNumberController::class, 'bulkCopy'])->name('pin-numbers.bulk.copy');
+    Route::post('/pin-numbers/bulk-delete', [PinNumberController::class, 'bulkDelete'])->name('pin-numbers.bulk.delete');
+    Route::post('/pin-numbers/bulk-toggle', [PinNumberController::class, 'bulkToggle'])->name('pin-numbers.bulk.toggle');
+
     // Call Blocks
     Route::post('call-blocks', [CallBlockController::class, 'store'])->name('call-blocks.store');
     Route::put('call-blocks/{call_block}', [CallBlockController::class, 'update'])->name('call-blocks.update');
@@ -443,6 +495,19 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/wakeup-calls/bulk-delete', [WakeupCallsController::class, 'bulkDelete'])->name('wakeup-calls.bulk.delete');
     Route::post('wakeup-calls/settings', [WakeupCallsController::class, 'getSettings'])->name('wakeup-calls.settings');
     Route::put('wakeup-calls/settings/update', [WakeupCallsController::class, 'updateSettings'])->name('wakeup-calls.settings.update');
+
+    // Scheduled Announcements
+    Route::get('scheduled-announcements/data', [ScheduledAnnouncementController::class, 'data'])->name('scheduled-announcements.data');
+    Route::post('scheduled-announcements/schedules', [ScheduledAnnouncementController::class, 'storeSchedule'])->name('scheduled-announcements.schedules.store');
+    Route::put('scheduled-announcements/schedules/{schedule}', [ScheduledAnnouncementController::class, 'updateSchedule'])->name('scheduled-announcements.schedules.update');
+    Route::delete('scheduled-announcements/schedules/{schedule}', [ScheduledAnnouncementController::class, 'destroySchedule'])->name('scheduled-announcements.schedules.destroy');
+    Route::post('scheduled-announcements/events', [ScheduledAnnouncementController::class, 'storeEvent'])->name('scheduled-announcements.events.store');
+    Route::put('scheduled-announcements/events/{event}', [ScheduledAnnouncementController::class, 'updateEvent'])->name('scheduled-announcements.events.update');
+    Route::delete('scheduled-announcements/events/{event}', [ScheduledAnnouncementController::class, 'destroyEvent'])->name('scheduled-announcements.events.destroy');
+    Route::post('scheduled-announcements/events/{event}/run', [ScheduledAnnouncementController::class, 'runEvent'])->name('scheduled-announcements.events.run');
+    Route::post('scheduled-announcements/exceptions', [ScheduledAnnouncementController::class, 'storeException'])->name('scheduled-announcements.exceptions.store');
+    Route::put('scheduled-announcements/exceptions/{exception}', [ScheduledAnnouncementController::class, 'updateException'])->name('scheduled-announcements.exceptions.update');
+    Route::delete('scheduled-announcements/exceptions/{exception}', [ScheduledAnnouncementController::class, 'destroyException'])->name('scheduled-announcements.exceptions.destroy');
 
     // Conference Centers
     Route::post('conference-centers', [ConferenceCenterController::class, 'store'])->name('conference-centers.store');
@@ -563,9 +628,11 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::put('faxes/{fax}', [FaxesController::class, 'update'])->name('faxes.update');
     Route::post('faxes/item-options', [FaxesController::class, 'getItemOptions'])->name('faxes.item.options');
     Route::post('faxes/new-fax-options', [FaxesController::class, 'getNewFaxOptions'])->name('faxes.new.fax.options');
+    Route::get('faxes/location-options', [FaxesController::class, 'getLocationOptions'])->name('faxes.location-options');
     Route::post('/faxes/bulk-delete', [FaxesController::class, 'bulkDelete'])->name('faxes.bulk.delete');
     Route::post('/faxes/bulk-update', [FaxesController::class, 'bulkUpdate'])->name('faxes.bulk.update');
     Route::get('faxes/data', [FaxesController::class, 'getData'])->name('faxes.data');
+    Route::get('faxes/stats', [FaxesController::class, 'getStats'])->name('faxes.stats');
     Route::get('faxes/recent-outbound', [FaxesController::class, 'getRecentOutbound'])->name('faxes.recent-outbound');
     Route::get('faxes/recent-inbound', [FaxesController::class, 'getRecentInbound'])->name('faxes.recent-inbound');
     Route::get('/faxes/newfax/create', [FaxesController::class, 'new'])->name('faxes.newfax');
@@ -600,6 +667,8 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/call-detail-records/recordings/summarize', [CallTranscriptionController::class, 'summarize'])->name('cdrs.recording.summarize');
 
     // Account Settings
+    Route::get('account-settings/pms-provider', [AccountSettingsController::class, 'pmsProvider'])->name('account-settings.pms-provider');
+    Route::put('account-settings/pms-provider', [AccountSettingsController::class, 'updatePmsProvider'])->name('account-settings.pms-provider.update');
     Route::put('account-settings/update', [AccountSettingsController::class, 'update'])->name('account-settings.update');
 
     // Default Settings
@@ -724,3 +793,12 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     // CHAR PMS
     Route::post('/pms/char', CharPmsWebhookController::class)->name('pms.char');
 });
+
+Route::post('/pms/tigertms', TigerTmsWebhookController::class)->name('pms.tigertms');
+
+// Peer-to-peer ACME token and TLS certificate replication. These endpoints use
+// the shared push secret instead of a user session.
+Route::post('letsencrypt/challenge', [LetsEncryptController::class, 'receiveChallenge'])
+    ->name('letsencrypt.challenge');
+Route::post('letsencrypt/receive-certificate', [LetsEncryptController::class, 'receiveCertificate'])
+    ->name('letsencrypt.receive-certificate');

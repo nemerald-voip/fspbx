@@ -1,0 +1,8 @@
+{
+  "label": "FreeSWITCH TLS Certificates",
+  "position": 48,
+  "link": {
+    "type": "generated-index",
+    "description": "Install and manage certificates for FreeSWITCH SIP-TLS and secure WebSockets."
+  }
+}

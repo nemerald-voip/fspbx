@@ -68,6 +68,11 @@ class SipStatusController extends Controller
                 'current_page' => route('sip-status.index'),
                 'data_route' => route('sip-status.data'),
                 'action' => route('sip-status.action'),
+                'tls_status' => route('sip-status.tls.status'),
+                'tls_config' => route('sip-status.tls.config'),
+                'tls_issue' => route('sip-status.tls.issue'),
+                'tls_revoke' => route('sip-status.tls.revoke'),
+                'tls_generate_secret' => route('sip-status.tls.generate-secret'),
             ],
             'permissions' => $this->getPermissions(),
         ]);
@@ -255,7 +260,7 @@ class SipStatusController extends Controller
                 'sip_profile_name' => $name,
                 'state' => $state,
                 'registration_count' => $this->getRegistrationCount($eslService, $name),
-                'registrations_url' => route('registrations.index'),
+                'registrations_url' => $this->getRegistrationsUrl(),
                 'details' => collect($this->profileInfoFields)->map(fn ($field) => [
                     'label' => $field,
                     'value' => $info ? (string) $info->{$field} : '',
@@ -273,19 +278,20 @@ class SipStatusController extends Controller
             return 0;
         }
 
-        $count = 0;
-        $domainName = session('domain_name');
+        return count($xml->registrations->registration);
+    }
 
-        foreach ($xml->registrations->registration as $registration) {
-            $realm = (string) $registration->{'sip-auth-realm'};
-            $userParts = explode('@', (string) $registration->user);
-
-            if ($realm === $domainName || ($userParts[1] ?? null) === $domainName) {
-                $count++;
-            }
+    protected function getRegistrationsUrl(): string
+    {
+        if (userCheckPermission('registration_all')) {
+            return route('registrations.index', [
+                'filter' => [
+                    'showGlobal' => 'true',
+                ],
+            ]);
         }
 
-        return $count;
+        return route('registrations.index');
     }
 
     protected function getSipProfiles(?string $hostname): array
@@ -443,6 +449,7 @@ class SipStatusController extends Controller
             'sip_status_switch_status' => $this->canViewSwitchStatus(),
             'sip_profile_edit' => $this->canEditSipProfiles(),
             'can_run_commands' => $this->canRunCommands(),
+            'can_manage_tls' => $this->canRunCommands(),
         ];
     }
 

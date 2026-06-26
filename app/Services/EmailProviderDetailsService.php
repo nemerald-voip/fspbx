@@ -87,13 +87,14 @@ class EmailProviderDetailsService
         }
 
         $payload = $response->json();
+        $logStatus = $this->syncPostmarkStatusFromDetails($log, $payload, $messageId);
 
         return [
             'available' => true,
             'provider' => 'Postmark',
             'message_id' => $messageId,
             'subject' => $payload['Subject'] ?? $log->subject,
-            'status' => $payload['Status'] ?? null,
+            'status' => $logStatus ?? $payload['Status'] ?? null,
             'message_stream' => $payload['MessageStream'] ?? $log->provider_message_stream,
             'events' => $payload['MessageEvents'] ?? [],
             'raw' => $payload,
@@ -140,5 +141,38 @@ class EmailProviderDetailsService
         }
 
         return (string) data_get($response->json(), 'Messages.0.MessageID', '');
+    }
+
+    private function syncPostmarkStatusFromDetails(EmailLog $log, array $payload, string $messageId): ?string
+    {
+        $events = collect($payload['MessageEvents'] ?? []);
+        $status = null;
+        $summary = null;
+
+        if ($events->contains(fn ($event) => ($event['Type'] ?? $event['RecordType'] ?? null) === 'SpamComplaint')) {
+            $status = 'permanent_failed';
+            $summary = 'Postmark spam complaint';
+        } elseif ($events->contains(fn ($event) => in_array(($event['Type'] ?? $event['RecordType'] ?? null), ['Bounced', 'Bounce'], true))) {
+            $status = 'permanent_failed';
+            $summary = 'Postmark bounce';
+        } elseif ($events->contains(fn ($event) => ($event['Type'] ?? $event['RecordType'] ?? null) === 'Transient')) {
+            $status = 'failed';
+            $event = $events->first(fn ($event) => ($event['Type'] ?? $event['RecordType'] ?? null) === 'Transient');
+            $summary = 'Postmark transient delivery issue: ' . (data_get($event, 'Details.DeliveryMessage') ?: data_get($event, 'Description') ?: 'Temporary delivery issue');
+        }
+
+        $updates = [
+            'provider_message_id' => $messageId,
+            'provider_message_stream' => $payload['MessageStream'] ?? $log->provider_message_stream,
+        ];
+
+        if ($status !== null) {
+            $updates['status'] = $status;
+            $updates['sent_debug_info'] = $summary;
+        }
+
+        $log->forceFill($updates)->save();
+
+        return $status;
     }
 }

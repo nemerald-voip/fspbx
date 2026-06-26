@@ -34,6 +34,7 @@ class CreateFaxRequest extends FormRequest
             'fax_destination_number' => ['present'],
             'authorized_domains' => ['nullable', 'array'],
             'authorized_emails' => ['nullable', 'array'],
+            'locations' => ['nullable', 'array'],
         ];
     }
 

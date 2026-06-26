@@ -18,7 +18,7 @@
                     </div>
                     <div class="hidden lg:ml-6 lg:flex lg:space-x-4">
 
-                        <div v-for="item in page.props.menus" :key="page.props.menus.menu_item_id"
+                        <div v-for="item in visibleMenus" :key="page.props.menus.menu_item_id"
                             class="inline-flex items-center">
                             <Menu as="div" class="">
                                 <MenuButton
@@ -50,7 +50,39 @@
                         </div>
                     </div>
                 </div>
-                <div class="flex items-center">
+                <div class="flex items-center gap-x-1">
+                    <!-- User menu -->
+                    <Menu as="div" class="relative flex-shrink-0">
+                        <MenuButton
+                            class="inline-flex items-center gap-x-1.5 rounded-md px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 cursor-pointer">
+                            <UserCircleIcon class="h-6 w-6 text-gray-400" />
+                            <span class="hidden sm:block">{{ userName }}</span>
+                            <ChevronDownIcon class="h-5 w-5" />
+                        </MenuButton>
+
+                        <transition enter-active-class="transition ease-out duration-100"
+                            enter-from-class="transform opacity-0 scale-95"
+                            enter-to-class="transform opacity-100 scale-100"
+                            leave-active-class="transition ease-in duration-75"
+                            leave-from-class="transform opacity-100 scale-100"
+                            leave-to-class="transform opacity-0 scale-95">
+                            <MenuItems
+                                class="absolute right-0 mt-1 w-56 origin-top-right shadow-xl bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-20">
+                                <div class="px-4 py-3 border-b border-gray-100">
+                                    <p class="text-xs text-gray-400">Signed in as</p>
+                                    <p class="text-sm font-medium text-gray-700 truncate">{{ userEmail }}</p>
+                                </div>
+                                <MenuItem v-slot="{ active }">
+                                    <a href="/logout"
+                                        :class="[active ? 'bg-gray-100' : '', 'flex items-center gap-x-2 px-4 py-2 text-sm text-gray-600 whitespace-nowrap cursor-pointer no-underline']">
+                                        <ArrowRightOnRectangleIcon class="h-5 w-5 text-gray-400" />
+                                        Logout
+                                    </a>
+                                </MenuItem>
+                            </MenuItems>
+                        </transition>
+                    </Menu>
+
                     <div class="flex-shrink-0">
                         <button v-if="page.props.domainSelectPermission" type="button" @click="openDomainPanel"
                             class="relative inline-flex items-center gap-x-1.5 rounded-md  px-3 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 cursor-pointer ">
@@ -78,7 +110,7 @@
                 <ul role="list" class="flex flex-1 flex-col gap-y-7 mx-3">
                     <li>
                         <ul role="list" class="-mx-2 space-y-1">
-                            <li v-for="item in page.props.menus" :key="page.props.menus.menu_item_id">
+                            <li v-for="item in visibleMenus" :key="page.props.menus.menu_item_id">
                                 <a v-if="!item.child_menu" :href="item.href"
                                     :class="[item.current ? 'bg-gray-50' : 'hover:bg-gray-50', 'block rounded-md py-2 pr-2 pl-10 text-sm leading-6 font-semibold text-gray-700']">{{
                                     item.menu_item_title }}</a>
@@ -177,11 +209,22 @@ import { ref, computed } from 'vue';
 import { usePage } from '@inertiajs/vue3'
 
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
-import { Bars3Icon, XMarkIcon } from '@heroicons/vue/24/outline'
+import { Bars3Icon, XMarkIcon, UserCircleIcon, ArrowRightOnRectangleIcon } from '@heroicons/vue/24/outline'
 import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/vue/20/solid'
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot, } from '@headlessui/vue'
 
 const page = usePage()
+
+// Logged-in user info (shown in the top-right user menu)
+const userName = computed(() => page.props.auth?.user?.name ?? '')
+const userEmail = computed(() => page.props.auth?.user?.email ?? '')
+
+// Top navigation menus, excluding the legacy "Home" menu.
+// Its only useful items were Dashboard (now reachable via the logo) and
+// Logout (now in the user menu above).
+const visibleMenus = computed(() =>
+    (page.props.menus ?? []).filter(item => item.menu_item_title !== 'Home')
+)
 
 const isDomainPanelVisible = ref(false);
 

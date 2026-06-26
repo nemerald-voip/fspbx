@@ -1,4 +1,4 @@
-{{-- version: 1.0.6 --}}
+{{-- version: 1.0.7 --}}
 
 @switch($flavor)
 
@@ -472,11 +472,11 @@
     <certificate
         @if (array_key_exists('polycom_custom_ca_cert1', $settings))
             device.sec.TLS.customCaCert1.set="1"
-            device.sec.TLS.customCaCert1="{{ $settings['polycom_custom_ca_cert1'] }}"
+            device.sec.TLS.customCaCert1="{!! polycom_inline_cert($settings['polycom_custom_ca_cert1']) !!}"
         @endif
         @if (array_key_exists('polycom_custom_ca_cert2', $settings))
             device.sec.TLS.customCaCert2.set="1"
-            device.sec.TLS.customCaCert2="{{ $settings['polycom_custom_ca_cert2'] }}"
+            device.sec.TLS.customCaCert2="{!! polycom_inline_cert($settings['polycom_custom_ca_cert2']) !!}"
         @endif
     />
 </polycomConfig>

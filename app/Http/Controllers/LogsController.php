@@ -58,6 +58,7 @@ class LogsController extends Controller
                     'email_retry' => route('email-logs.retry'),
                     'email_delivery_details' => route('email-logs.delivery-details', ['uuid' => '__UUID__']),
                     'test_email_send' => route('test-email-send.store'),
+                    'tigertms_logs' => $this->tigerTmsLogsEnabled() ? route('tigertms-logs.index') : null,
                     'inbound_webhooks' => route('inbound-webhooks.index'),
                     'message_logs' => route('messages.logs'),
                     'message_retry' => route('messages.retry'),
@@ -66,14 +67,27 @@ class LogsController extends Controller
                     'fax_logs_bulk_delete' => route('fax-logs.bulk.delete'),
                     'fax_logs_retry' => route('fax-logs.retry', ['faxLog' => ':faxLog']),
                     'freeswitch_logs' => route('freeswitch-logs.index'),
+                    'freeswitch_sip_trace' => route('freeswitch-logs.sip-trace'),
+                    'nginx_logs' => route('nginx-logs.index'),
+                    'laravel_logs' => route('laravel-logs.index'),
 
                 ],
                 'permissions' => function () {
                     return $this->getUserPermissions();
                 },
+                'features' => [
+                    'tigertms_logs' => $this->tigerTmsLogsEnabled(),
+                ],
 
             ]
         );
+    }
+
+    private function tigerTmsLogsEnabled(): bool
+    {
+        return filled(config('tigertms.base_url'))
+            && filled(config('tigertms.username'))
+            && filled(config('tigertms.password'));
     }
 
     /**

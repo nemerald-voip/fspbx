@@ -1,4 +1,4 @@
-{{-- version: 1.0.1 --}}
+{{-- version: 1.0.3 --}}
 
 @switch($flavor)
 
@@ -188,52 +188,6 @@ linekey.{{ $slot }}.line = 0
 linekey.{{ $slot }}.label =
 linekey.{{ $slot }}.value =
 linekey.{{ $slot }}.extension =
-
-@endfor
-
-################################################################
-##                       Expansion Keys                       ##
-################################################################
-@php $slot = 1; @endphp
-@foreach ($expansion_keys as $k)
-@php
-  $type = (string)($k['type'] ?? '');
-  $ln   = (int)($k['line'] ?? 0);
-
-  $label = isset($k['label']) ? (string)$k['label'] : ' ';
-
-  if ($type === '15' && $ln > 0 && !isset($k['label']) && !empty($sharedLines[$ln])) {
-      $appearanceIndex[$ln] = ($appearanceIndex[$ln] ?? 0) + 1;
-      $sfx = $suffixFor($appearanceIndex[$ln]);
-
-      $base = '';
-      if (!empty($lines[$ln]['display_name']))       $base = (string)$lines[$ln]['display_name'];
-      elseif (!empty($lines[$ln]['auth_id']))        $base = (string)$lines[$ln]['auth_id'];
-      else                                          $base = (string)$ln;
-
-      $label = trim($base . ' ' . $sfx);
-  }
-
-  $value = isset($k['value']) ? (string)$k['value'] : '';
-  $ext   = array_key_exists('extension', $k) ? (string)($k['extension'] ?? '') : '';
-@endphp
-expansion_module.1.key.{{ $slot }}.type = {{ $k['type'] }}
-expansion_module.1.key.{{ $slot }}.line = {{ $k['line'] }}
-expansion_module.1.key.{{ $slot }}.label = {{ $label }}
-expansion_module.1.key.{{ $slot }}.value = {{ $value }}
-expansion_module.1.key.{{ $slot }}.extension = {{ $ext }}
-expansion_module.1.key.{{ $slot }}.xml_phonebook =
-
-@php $slot++; @endphp
-@endforeach
-
-@for ($slot; $slot <= 60; $slot++)
-expansion_module.1.key.{{ $slot }}.type = 0
-expansion_module.1.key.{{ $slot }}.line = 0
-expansion_module.1.key.{{ $slot }}.label =
-expansion_module.1.key.{{ $slot }}.value =
-expansion_module.1.key.{{ $slot }}.extension =
-expansion_module.1.key.{{ $slot }}.xml_phonebook =
 
 @endfor
 

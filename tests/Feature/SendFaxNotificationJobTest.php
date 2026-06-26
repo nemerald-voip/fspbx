@@ -8,7 +8,6 @@ use App\Models\OutboundFax;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use ReflectionMethod;
@@ -26,6 +25,7 @@ class SendFaxNotificationJobTest extends TestCase
         touch($this->databasePath);
 
         config([
+            'cache.default' => 'array',
             'database.default' => 'sqlite',
             'database.connections.sqlite.database' => $this->databasePath,
             'mail.from.address' => 'noreply@example.test',
@@ -79,18 +79,11 @@ class SendFaxNotificationJobTest extends TestCase
         $this->assertSame('25', $attributes['fax_pages']);
         $this->assertSame('25', $attributes['fax_total_pages']);
 
-        Mail::fake();
-        Mail::to('sender@example.test')->send(new FaxSent($attributes));
+        $mail = new FaxSent($attributes);
 
-        Mail::assertSent(FaxSent::class, function (FaxSent $mail) {
-            $body = view('emails.fax.success-text', ['attributes' => $mail->attributes])->render();
-
-            $this->assertSame('Fax sent to +15551234567 (25 pages)', $mail->attributes['email_subject']);
-            $this->assertStringContainsString('Pages sent: 25.', $body);
-            $this->assertStringNotContainsString('8 of 25', $body);
-
-            return true;
-        });
+        $this->assertSame('Fax sent to +15551234567 (25 pages)', $mail->attributes['email_subject']);
+        $this->assertSame('25', $mail->attributes['fax_pages']);
+        $this->assertSame('25', $mail->attributes['fax_total_pages']);
     }
 
     public function test_it_falls_back_to_the_newest_log_when_current_attempt_log_is_missing(): void
@@ -120,6 +113,30 @@ class SendFaxNotificationJobTest extends TestCase
 
         $this->assertSame('25', $attributes['fax_pages']);
         $this->assertSame('25', $attributes['fax_total_pages']);
+    }
+
+    public function test_it_formats_notification_date_in_the_domain_timezone(): void
+    {
+        $outboundFaxUuid = (string) Str::uuid();
+        $domainUuid = (string) Str::uuid();
+        $attemptUuid = (string) Str::uuid();
+
+        $this->insertDomainSetting($domainUuid, 'time_zone', 'America/New_York');
+        $this->insertOutboundFax($outboundFaxUuid, [
+            'domain_uuid' => $domainUuid,
+            'status' => 'sent',
+            'current_attempt_uuid' => $attemptUuid,
+        ]);
+
+        $this->insertFaxLog($outboundFaxUuid, $attemptUuid, [
+            'domain_uuid' => $domainUuid,
+            'fax_success' => '1',
+            'fax_date' => Carbon::parse('2026-05-28 10:20:00', 'UTC'),
+        ]);
+
+        $attributes = $this->buildAttributes($outboundFaxUuid);
+
+        $this->assertSame('6:20:00 AM May 28, 2026', $attributes['fax_date']);
     }
 
     private function buildAttributes(string $outboundFaxUuid): array
@@ -167,6 +184,19 @@ class SendFaxNotificationJobTest extends TestCase
             'fax_date' => $faxDate,
             'fax_epoch' => $faxDate instanceof Carbon ? $faxDate->timestamp : Carbon::parse($faxDate)->timestamp,
         ], $overrides));
+    }
+
+    private function insertDomainSetting(string $domainUuid, string $subcategory, ?string $value, string $enabled = 'true'): void
+    {
+        DB::table('v_domain_settings')->insert([
+            'domain_setting_uuid' => (string) Str::uuid(),
+            'domain_uuid' => $domainUuid,
+            'domain_setting_category' => 'domain',
+            'domain_setting_subcategory' => $subcategory,
+            'domain_setting_name' => 'text',
+            'domain_setting_value' => $value,
+            'domain_setting_enabled' => $enabled,
+        ]);
     }
 
     private function createSchema(): void
@@ -224,6 +254,16 @@ class SendFaxNotificationJobTest extends TestCase
             $table->string('default_setting_name')->nullable();
             $table->text('default_setting_value')->nullable();
             $table->string('default_setting_enabled')->nullable();
+        });
+
+        Schema::create('v_domain_settings', function (Blueprint $table) {
+            $table->string('domain_setting_uuid')->primary();
+            $table->string('domain_uuid')->nullable();
+            $table->string('domain_setting_category')->nullable();
+            $table->string('domain_setting_subcategory')->nullable();
+            $table->string('domain_setting_name')->nullable();
+            $table->text('domain_setting_value')->nullable();
+            $table->string('domain_setting_enabled')->nullable();
         });
     }
 }

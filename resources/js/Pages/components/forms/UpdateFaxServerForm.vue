@@ -281,8 +281,7 @@
                                                     description="Enter any trusted email addresses not covered by authorized domains." />
 
 
-                                                <ListElement name="authorized_emails" :initial="0" :sort="true"
-                                                    :key="'email-' + Math.random().toString(20)">
+                                                <ListElement name="authorized_emails" :initial="0" :sort="true">
                                                     <template #default="{ index }">
                                                         <ObjectElement :name="index">
                                                             <TextElement name="email" placeholder="Enter email address"

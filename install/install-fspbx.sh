@@ -42,7 +42,7 @@ INSTALL_DIR="/var/www/fspbx"
 PUBLIC_DIR="$INSTALL_DIR/public"
 BACKUP_DIR="/var/www/fspbx_backup_$(date +%Y%m%d_%H%M%S)"
 export PHP_VERSION="8.1"
-export FREESWITCH_VERSION="v1.10"
+export FREESWITCH_VERSION="v1.11"
 
 #Set Postgres Version
 if [[ "$OS_CODENAME" == "bookworm" ]]; then

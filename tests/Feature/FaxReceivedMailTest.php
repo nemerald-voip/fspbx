@@ -2,11 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Jobs\ProcessFaxWebhookEventJob;
 use App\Mail\FaxReceived;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use ReflectionMethod;
 use Tests\TestCase;
 
 class FaxReceivedMailTest extends TestCase
@@ -21,6 +23,7 @@ class FaxReceivedMailTest extends TestCase
         touch($this->databasePath);
 
         config([
+            'cache.default' => 'array',
             'database.default' => 'sqlite',
             'database.connections.sqlite.database' => $this->databasePath,
             'mail.from.address' => 'fallback@example.test',
@@ -85,6 +88,31 @@ class FaxReceivedMailTest extends TestCase
         $this->assertSame('Fallback Sender', $from->name);
     }
 
+    public function test_received_fax_date_is_formatted_in_the_domain_timezone(): void
+    {
+        $domainUuid = (string) Str::uuid();
+
+        $this->insertDomainSetting($domainUuid, 'time_zone', 'America/New_York', category: 'domain');
+
+        $job = new ProcessFaxWebhookEventJob('fax.received', '1779963600', []);
+        $method = new ReflectionMethod(ProcessFaxWebhookEventJob::class, 'formattedFaxDate');
+        $method->setAccessible(true);
+
+        $this->assertSame(
+            '6:20:00 AM May 28, 2026',
+            $method->invoke($job, 1779963600, $domainUuid)
+        );
+    }
+
+    public function test_received_fax_email_displays_the_received_date_when_available(): void
+    {
+        $mail = new FaxReceived($this->attributes([
+            'fax_date' => '9:00:00 PM May 27, 2026',
+        ]));
+
+        $this->assertSame('9:00:00 PM May 27, 2026', $mail->attributes['fax_date']);
+    }
+
     private function attributes(array $overrides = []): array
     {
         return array_merge([
@@ -106,12 +134,18 @@ class FaxReceivedMailTest extends TestCase
         ]);
     }
 
-    private function insertDomainSetting(string $domainUuid, string $subcategory, ?string $value, string $enabled = 'true'): void
+    private function insertDomainSetting(
+        string $domainUuid,
+        string $subcategory,
+        ?string $value,
+        string $enabled = 'true',
+        string $category = 'fax'
+    ): void
     {
         DB::table('v_domain_settings')->insert([
             'domain_setting_uuid' => (string) Str::uuid(),
             'domain_uuid' => $domainUuid,
-            'domain_setting_category' => 'fax',
+            'domain_setting_category' => $category,
             'domain_setting_subcategory' => $subcategory,
             'domain_setting_name' => 'text',
             'domain_setting_value' => $value,

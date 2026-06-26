@@ -125,6 +125,30 @@
                 <option value="asc">Oldest first</option>
                 <option value="desc">Newest first</option>
             </select>
+
+            <div v-if="permissions?.log_view && routes?.freeswitch_sip_trace" class="ml-auto flex flex-wrap items-center gap-2">
+                <span class="text-sm font-medium text-gray-700">SIP packets</span>
+                <button
+                    type="button"
+                    :disabled="isSipTraceLoading"
+                    @click="setSipTrace(true)"
+                    class="inline-flex items-center gap-1.5 rounded-md bg-white px-2.5 py-1.5 text-xs font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    :class="{ 'bg-indigo-50 text-indigo-700 ring-indigo-200': sipTraceEnabled === true }"
+                >
+                    <SignalIcon class="h-4 w-4" aria-hidden="true" />
+                    Enable
+                </button>
+                <button
+                    type="button"
+                    :disabled="isSipTraceLoading"
+                    @click="setSipTrace(false)"
+                    class="inline-flex items-center gap-1.5 rounded-md bg-white px-2.5 py-1.5 text-xs font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    :class="{ 'bg-gray-100 text-gray-900 ring-gray-300': sipTraceEnabled === false }"
+                >
+                    <NoSymbolIcon class="h-4 w-4" aria-hidden="true" />
+                    Disable
+                </button>
+            </div>
         </div>
 
         <div v-if="meta.errors?.length" class="mt-4 rounded-md bg-rose-50 p-4 text-sm text-rose-700 ring-1 ring-inset ring-rose-200">
@@ -158,15 +182,27 @@
         </div>
 
         <div class="mt-4 overflow-hidden rounded-md bg-white ring-1 ring-gray-200">
-            <div class="flex flex-col gap-2 border-b border-gray-200 px-4 py-3 text-sm text-gray-500 sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex flex-col gap-3 border-b border-gray-200 px-4 py-3 text-sm text-gray-500 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <span class="font-medium text-gray-900">{{ meta.matched_lines || 0 }}</span>
                     matched line{{ (meta.matched_lines || 0) === 1 ? '' : 's' }}
                     <span v-if="meta.truncated_matches">, showing latest {{ filterData.max_lines }}</span>
                 </div>
-                <div>
-                    {{ formatBytes(meta.bytes_read || 0) }} read
-                    <span v-if="meta.log_dir"> from {{ meta.log_dir }}</span>
+                <div class="flex flex-wrap items-center gap-3">
+                    <div>
+                        {{ formatBytes(meta.bytes_read || 0) }} read
+                        <span v-if="meta.log_dir"> from {{ meta.log_dir }}</span>
+                    </div>
+                    <button
+                        type="button"
+                        :disabled="isDataLoading || lines.length === 0"
+                        title="Copy shown log"
+                        @click="copyVisibleLog"
+                        class="inline-flex items-center gap-1.5 rounded-md bg-white px-2.5 py-1.5 text-xs font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        <ClipboardDocumentIcon class="h-4 w-4" aria-hidden="true" />
+                        {{ copiedLog ? 'Copied' : 'Copy shown log' }}
+                    </button>
                 </div>
             </div>
 
@@ -189,9 +225,8 @@
                     v-for="(line, index) in lines"
                     :key="`${line.file}-${line.line_number}-${index}`"
                     :class="lineTextClass(line.level)"
-                    class="grid grid-cols-[10rem_5.5rem_minmax(40rem,1fr)] gap-3 border-b border-white/5 px-4 py-2 font-mono text-xs leading-5"
+                    class="grid grid-cols-[5.5rem_minmax(40rem,1fr)] gap-3 border-b border-white/5 px-4 py-2 font-mono text-xs leading-5"
                 >
-                    <div class="truncate opacity-70">{{ line.file }}</div>
                     <div>
                         <span :class="levelBadgeClass(line.level)" class="rounded px-1.5 py-0.5 uppercase">
                             {{ line.level || 'log' }}
@@ -208,15 +243,22 @@
 import { computed, ref, watch } from 'vue';
 import axios from 'axios';
 import { MagnifyingGlassIcon } from '@heroicons/vue/24/solid';
+import { ClipboardDocumentIcon, NoSymbolIcon, SignalIcon } from '@heroicons/vue/24/outline';
+
+const emit = defineEmits(['success', 'error'])
 
 const props = defineProps({
     routes: Object,
     trigger: Boolean,
+    permissions: Object,
 })
 
 const isDataLoading = ref(false)
+const isSipTraceLoading = ref(false)
 const hasLoaded = ref(false)
 const lines = ref([])
+const copiedLog = ref(false)
+const sipTraceEnabled = ref(null)
 const fileOptions = ref([{ value: 'freeswitch.log', label: 'freeswitch.log' }])
 const correlation = ref({
     seed: null,
@@ -239,8 +281,8 @@ const filterData = ref({
     search: '',
     log_file: 'freeswitch.log',
     level: 'all',
-    size_kb: 512,
-    max_lines: 1000,
+    size_kb: 5120,
+    max_lines: 3000,
     sort: 'asc',
     correlation_padding_minutes: 5,
 })
@@ -262,6 +304,7 @@ watch(() => props.trigger, () => {
 
 const fetchData = async () => {
     isDataLoading.value = true
+    copiedLog.value = false
 
     try {
         const response = await axios.get(props.routes.freeswitch_logs, {
@@ -300,12 +343,28 @@ const handleFiltersReset = () => {
         search: '',
         log_file: 'freeswitch.log',
         level: 'all',
-        size_kb: 512,
-        max_lines: 1000,
+        size_kb: 5120,
+        max_lines: 3000,
         sort: 'asc',
         correlation_padding_minutes: 5,
     }
     fetchData()
+}
+
+const setSipTrace = async (enabled) => {
+    if (isSipTraceLoading.value || !props.routes?.freeswitch_sip_trace) return
+
+    isSipTraceLoading.value = true
+
+    try {
+        const response = await axios.post(props.routes.freeswitch_sip_trace, { enabled })
+        sipTraceEnabled.value = response.data.enabled ?? enabled
+        emit('success', response.data.messages || { success: [enabled ? 'SIP packet logging enabled.' : 'SIP packet logging disabled.'] })
+    } catch (error) {
+        emit('error', error.response?.data?.messages || error.response?.data?.errors || { error: ['Unable to update SIP packet logging.'] })
+    } finally {
+        isSipTraceLoading.value = false
+    }
 }
 
 const lineTextClass = (level) => {
@@ -349,7 +408,42 @@ const formatWindow = (window) => {
 }
 
 const copyToClipboard = async (value) => {
-    if (!value || !navigator?.clipboard) return
-    await navigator.clipboard.writeText(value)
+    if (!value) return
+    await writeClipboardText(value)
+}
+
+const copyVisibleLog = async () => {
+    if (!lines.value.length) return
+
+    try {
+        await writeClipboardText(lines.value.map((line) => line.message || '').join('\n'))
+        copiedLog.value = true
+        window.setTimeout(() => {
+            copiedLog.value = false
+        }, 1500)
+    } catch (error) {
+        copiedLog.value = false
+        console.error('Failed to copy FreeSWITCH log:', error)
+    }
+}
+
+const writeClipboardText = async (text) => {
+    if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text)
+        return
+    }
+
+    const textarea = document.createElement('textarea')
+    textarea.value = text
+    textarea.setAttribute('readonly', '')
+    textarea.style.position = 'fixed'
+    textarea.style.left = '-9999px'
+    document.body.appendChild(textarea)
+    textarea.select()
+
+    const copied = document.execCommand('copy')
+    document.body.removeChild(textarea)
+
+    if (!copied) throw new Error('Copy failed')
 }
 </script>

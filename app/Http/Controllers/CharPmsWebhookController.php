@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Http\JsonResponse;
 use App\Models\HotelPendingAction;
+use App\Services\PmsProviderSettings;
 use Illuminate\Routing\Controller;
 
 // Fast existence checks
@@ -47,6 +48,10 @@ class CharPmsWebhookController extends Controller
 
         if (!Str::isUuid($domainUuid)) {
             return response()->json(['code' => 7, 'description' => 'Token user is not assigned to a valid domain'], 403);
+        }
+
+        if (!app(PmsProviderSettings::class)->isCharPms($domainUuid)) {
+            return response()->json(['code' => 12, 'description' => 'CharPMS is not enabled for this tenant'], 403);
         }
 
         // Attach for the job and logs if needed

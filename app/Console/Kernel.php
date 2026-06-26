@@ -5,7 +5,9 @@ namespace App\Console;
 use App\Jobs\DeleteOldFaxes;
 use App\Models\DefaultSettings;
 use App\Jobs\DeleteOldEmailLogs;
+use App\Jobs\ProcessScheduledAnnouncements;
 use App\Jobs\ProcessWakeupCalls;
+use App\Jobs\RenewTlsCertificate;
 use App\Jobs\DeleteOldVoicemails;
 use App\Jobs\DeleteOldCallRecordings;
 use App\Jobs\DeleteOldTranscriptions;
@@ -85,6 +87,13 @@ class Kernel extends ConsoleKernel
             $schedule->job(new \App\Jobs\CheckFaxServiceStatus())->everyThirtyMinutes();
         }
 
+        // Renew FreeSWITCH Let's Encrypt TLS certificate (no-ops until < 30 days remain)
+        if (isset($jobSettings['renew_tls_certificates']) && $jobSettings['renew_tls_certificates'] === "true") {
+            $schedule->job(new RenewTlsCertificate())
+                ->dailyAt('03:30')
+                ->timezone($scheduledJobsTimezone);
+        }
+
         // Reap stuck outbound faxes — required safety net for the new
         // event-driven outbound flow (recovers from lost webhooks, orphaned
         // FS calls, primary crashes mid-send). Always on; runs on each server
@@ -98,6 +107,10 @@ class Kernel extends ConsoleKernel
 
         if (isset($jobSettings['wake_up_calls']) && $jobSettings['wake_up_calls'] === "true") {
             $schedule->job(new ProcessWakeupCalls())->everyMinute();
+        }
+
+        if (isset($jobSettings['scheduled_announcements']) && $jobSettings['scheduled_announcements'] === "true") {
+            $schedule->job(new ProcessScheduledAnnouncements())->everyMinute();
         }
 
         if (isset($jobSettings['delete_old_faxes']) && $jobSettings['delete_old_faxes'] === "true") {

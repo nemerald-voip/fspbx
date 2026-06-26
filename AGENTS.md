@@ -99,6 +99,19 @@ This repo is a Laravel, Vue/Inertia, VueForm, and FreeSWITCH application. Before
 - Deleting a stream should delete the whole generated stream folder under `/usr/share/freeswitch/sounds/music/{domain-or-global}/{stream-name}`, not just individual DB rows. Keep deletion guarded so it cannot remove the music root or a domain root.
 - Avoid icons that look like playback unless the action actually starts playback. For file selection rows, prefer an audio/file icon; reserve play icons for buttons that open or start the player.
 
+## Scheduled Announcements
+
+- Scheduled Announcements are broader than school bells. Keep naming and UI copy generic enough for bells, tones, and periodic announcements.
+- The schedule is the main object. It owns one recording, one selected-extension list, optional start/end dates, events, and exclusions. Events are simple day/time rows; their presence means they run. Do not add event names or per-event enabled flags unless the product scope changes.
+- Exclusions are simple date/comment rows on the schedule. A matching exclusion skips that schedule for that local date. Do not model alternate schedules or exception types unless explicitly requested.
+- Use VueForm for all create/update modal controls and mirror existing Ring Group recording controls for recording select/play/edit/delete/upload behavior.
+- Keep Scheduled Announcements controllers thin. Put validation and normalization in FormRequest classes, and keep schedule persistence/execution behavior in services.
+- Do not use FreeSWITCH `sched_api` or pre-schedule FreeSWITCH jobs. Laravel finds due events and executes at fire time through `FreeswitchEslService`.
+- Real-time behavior is "on time or missed, never late." Respect the configured fire window; events found after the window should be logged as missed rather than played late.
+- Redundant-server execution is guarded by authoritative DNS active-node checks before claim and before ESL execution. If active status, DNS, local node IPs, or FreeSWITCH health are uncertain, fail closed and log a skipped/missed run rather than risking duplicates.
+- Busy extension behavior is schedule-scoped. `skip` should check active FreeSWITCH channels and leave busy extensions alone; `force` may originate with auto-answer even if a phone is already on a call. `page.lua` is a useful reference for busy-extension detection, but scheduled playback should stay in the Laravel/ESL path.
+- Playback should include a short silence lead-in before the recording to avoid clipped audio on auto-answer endpoints.
+
 ## Fax Jobs And Retention
 
 - New outbound fax state lives in `outbound_faxes`; do not use legacy `v_fax_queue` for current outbound fax alerts or status decisions.

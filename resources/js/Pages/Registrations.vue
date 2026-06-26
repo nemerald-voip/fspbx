@@ -287,6 +287,7 @@ const props = defineProps({
     pagination: Object,
     routes: Object,
     permissions: Object,
+    showGlobal: Boolean,
 });
 
 const routes = props.routes;
@@ -307,7 +308,7 @@ const data = ref({
 
 const filterData = ref({
     search: null,
-    showGlobal: false,
+    showGlobal: props.showGlobal,
 });
 
 const sortData = ref({

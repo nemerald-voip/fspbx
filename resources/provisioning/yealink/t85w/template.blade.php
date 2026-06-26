@@ -1,4 +1,4 @@
-{{-- version: 1.0.1 --}}
+{{-- version: 1.0.2 --}}
 
 @switch($flavor)
 
@@ -194,9 +194,25 @@ linekey.{{ $slot }}.extension =
 ################################################################
 ##                       Expansion Keys                       ##
 ################################################################
-@php $slot = 1; @endphp
+@php
+  $expansionKeysPerModule = 78;
+  $expansionModuleCount = 3;
+  $configuredExpansionSlots = [];
+@endphp
 @foreach ($expansion_keys as $k)
 @php
+  $rawSlot = (int)($k['id'] ?? $loop->iteration);
+  if ($rawSlot <= 0) {
+      $rawSlot = $loop->iteration;
+  }
+
+  $module = intdiv($rawSlot - 1, $expansionKeysPerModule) + 1;
+  $slot = (($rawSlot - 1) % $expansionKeysPerModule) + 1;
+@endphp
+@continue($module > $expansionModuleCount)
+@php
+  $configuredExpansionSlots[$module][$slot] = true;
+
   $type = (string)($k['type'] ?? '');
   $ln   = (int)($k['line'] ?? 0);
 
@@ -217,24 +233,26 @@ linekey.{{ $slot }}.extension =
   $value = isset($k['value']) ? (string)$k['value'] : '';
   $ext   = array_key_exists('extension', $k) ? (string)($k['extension'] ?? '') : '';
 @endphp
-expansion_module.1.key.{{ $slot }}.type = {{ $k['type'] }}
-expansion_module.1.key.{{ $slot }}.line = {{ $k['line'] }}
-expansion_module.1.key.{{ $slot }}.label = {{ $label }}
-expansion_module.1.key.{{ $slot }}.value = {{ $value }}
-expansion_module.1.key.{{ $slot }}.extension = {{ $ext }}
-expansion_module.1.key.{{ $slot }}.xml_phonebook =
+expansion_module.{{ $module }}.key.{{ $slot }}.type = {{ $k['type'] }}
+expansion_module.{{ $module }}.key.{{ $slot }}.line = {{ $k['line'] }}
+expansion_module.{{ $module }}.key.{{ $slot }}.label = {{ $label }}
+expansion_module.{{ $module }}.key.{{ $slot }}.value = {{ $value }}
+expansion_module.{{ $module }}.key.{{ $slot }}.extension = {{ $ext }}
+expansion_module.{{ $module }}.key.{{ $slot }}.xml_phonebook =
 
-@php $slot++; @endphp
 @endforeach
 
-@for ($slot; $slot <= 60; $slot++)
-expansion_module.1.key.{{ $slot }}.type = 0
-expansion_module.1.key.{{ $slot }}.line = 0
-expansion_module.1.key.{{ $slot }}.label =
-expansion_module.1.key.{{ $slot }}.value =
-expansion_module.1.key.{{ $slot }}.extension =
-expansion_module.1.key.{{ $slot }}.xml_phonebook =
+@for ($module = 1; $module <= $expansionModuleCount; $module++)
+@for ($slot = 1; $slot <= $expansionKeysPerModule; $slot++)
+@continue(isset($configuredExpansionSlots[$module][$slot]))
+expansion_module.{{ $module }}.key.{{ $slot }}.type = 0
+expansion_module.{{ $module }}.key.{{ $slot }}.line = 0
+expansion_module.{{ $module }}.key.{{ $slot }}.label =
+expansion_module.{{ $module }}.key.{{ $slot }}.value =
+expansion_module.{{ $module }}.key.{{ $slot }}.extension =
+expansion_module.{{ $module }}.key.{{ $slot }}.xml_phonebook =
 
+@endfor
 @endfor
 
 ################################################################

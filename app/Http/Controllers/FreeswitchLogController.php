@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CDR;
 use App\Models\DefaultSettings;
+use App\Services\FreeswitchEslService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -12,12 +13,13 @@ use Illuminate\Support\Collection;
 class FreeswitchLogController extends Controller
 {
     private const DEFAULT_LOG_DIR = '/var/log/freeswitch';
-    private const DEFAULT_SIZE_KB = 512;
+    private const DEFAULT_SIZE_KB = 5120;
     private const MAX_SIZE_KB = 10240;
-    private const DEFAULT_MAX_LINES = 1000;
+    private const DEFAULT_MAX_LINES = 3000;
     private const MAX_LINES = 5000;
     private const DEFAULT_CORRELATION_PADDING_MINUTES = 5;
     private const MAX_CORRELATION_PADDING_MINUTES = 60;
+    private const MAX_SIP_TRACE_BLOCK_LINES = 180;
 
     public function index(Request $request): JsonResponse
     {
@@ -121,6 +123,67 @@ class FreeswitchLogController extends Controller
                 'truncated_matches' => $result['truncated_matches'],
                 'errors' => $result['errors'],
             ],
+        ]);
+    }
+
+    public function sipTrace(Request $request, FreeswitchEslService $eslService): JsonResponse
+    {
+        if (! userCheckPermission('log_view')) {
+            return response()->json([
+                'messages' => ['error' => ['Permission denied.']],
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'enabled' => ['required', 'boolean'],
+        ]);
+
+        if (! $eslService->isConnected()) {
+            return response()->json([
+                'messages' => ['error' => ['FreeSWITCH event socket is unavailable.']],
+            ], 503);
+        }
+
+        $enabled = (bool) $validated['enabled'];
+        $commands = $enabled
+            ? ['sofia global siptrace on', 'sofia tracelevel info']
+            : ['sofia global siptrace off'];
+        $sipTraceApplied = false;
+
+        try {
+            foreach ($commands as $command) {
+                $response = $eslService->executeCommand($command, false);
+
+                if ($this->eslResponseFailed($response)) {
+                    if ($enabled && $sipTraceApplied) {
+                        $eslService->executeCommand('sofia global siptrace off', false);
+                    }
+
+                    return response()->json([
+                        'messages' => [
+                            'error' => ['FreeSWITCH returned an error.'],
+                            'error_1' => [$this->cleanEslError((string) $response)],
+                        ],
+                    ], 500);
+                }
+
+                if ($command === 'sofia global siptrace on') {
+                    $sipTraceApplied = true;
+                }
+            }
+        } finally {
+            $eslService->disconnect();
+        }
+
+        return response()->json([
+            'messages' => [
+                'success' => [
+                    $enabled
+                        ? 'SIP packet logging enabled.'
+                        : 'SIP packet logging disabled.',
+                ],
+            ],
+            'enabled' => $enabled,
         ]);
     }
 
@@ -445,6 +508,7 @@ class FreeswitchLogController extends Controller
             }
 
             $lineNumber = 0;
+            $entries = [];
 
             while (($line = fgets($handle)) !== false) {
                 $lineNumber++;
@@ -452,21 +516,43 @@ class FreeswitchLogController extends Controller
                 $line = rtrim($line, "\r\n");
 
                 $parsed = $this->parseLine($line);
-                if (! $this->matchesLine($line, $parsed['level'], $searchTerms, $textSearch, $level)) {
-                    continue;
-                }
-
-                $lines[] = [
+                $entries[] = [
                     'file' => $file['basename'],
                     'line_number' => $lineNumber,
                     'timestamp' => $parsed['timestamp'],
                     'level' => $parsed['level'],
                     'message' => $line,
-                    'matched_terms' => $this->matchedTerms($line, $searchTerms),
+                    'matched_terms' => [],
                 ];
             }
 
             fclose($handle);
+
+            $sipTraceBlocks = $this->sipTraceBlocks($entries);
+            $included = [];
+
+            foreach ($entries as $index => $entry) {
+                if (! $this->matchesLine($entry['message'], $entry['level'], $searchTerms, $textSearch, $level)) {
+                    continue;
+                }
+
+                $block = $sipTraceBlocks[$index] ?? ['start' => $index, 'end' => $index];
+
+                for ($blockIndex = $block['start']; $blockIndex <= $block['end']; $blockIndex++) {
+                    if (! isset($entries[$blockIndex])) {
+                        continue;
+                    }
+
+                    $lineKey = $entries[$blockIndex]['line_number'];
+                    if (isset($included[$lineKey])) {
+                        continue;
+                    }
+
+                    $included[$lineKey] = true;
+                    $entries[$blockIndex]['matched_terms'] = $this->matchedTerms($entries[$blockIndex]['message'], $searchTerms);
+                    $lines[] = $entries[$blockIndex];
+                }
+            }
         }
 
         $matchedLines = count($lines);
@@ -487,6 +573,77 @@ class FreeswitchLogController extends Controller
             'truncated_matches' => $truncated,
             'errors' => $errors,
         ];
+    }
+
+    private function sipTraceBlocks(array $entries): array
+    {
+        $blocks = [];
+        $entryCount = count($entries);
+
+        for ($index = 0; $index < $entryCount; $index++) {
+            if (! $this->isSipTraceStart($entries[$index]['message'])) {
+                continue;
+            }
+
+            $end = $index;
+            $boundaryCount = 0;
+            $maxEnd = min($entryCount - 1, $index + self::MAX_SIP_TRACE_BLOCK_LINES);
+
+            for ($blockIndex = $index + 1; $blockIndex <= $maxEnd; $blockIndex++) {
+                if ($this->isSipTraceStart($entries[$blockIndex]['message'])) {
+                    $end = $blockIndex - 1;
+                    break;
+                }
+
+                if ($blockIndex > $index + 1 && $boundaryCount < 2 && $this->isTimestampedLogLine($entries[$blockIndex]['message'])) {
+                    $end = $blockIndex - 1;
+                    break;
+                }
+
+                $end = $blockIndex;
+
+                if ($this->isSipTraceBoundary($entries[$blockIndex]['message'])) {
+                    $boundaryCount++;
+
+                    if ($boundaryCount >= 2) {
+                        break;
+                    }
+                }
+            }
+
+            for ($blockIndex = $index; $blockIndex <= $end; $blockIndex++) {
+                $blocks[$blockIndex] = ['start' => $index, 'end' => $end];
+            }
+
+            $index = max($index, $end);
+        }
+
+        return $blocks;
+    }
+
+    private function isSipTraceStart(string $line): bool
+    {
+        return (bool) preg_match('/\b(?:send|recv)\s+\d+\s+bytes\s+(?:to|from)\s+/i', $line);
+    }
+
+    private function isSipTraceBoundary(string $line): bool
+    {
+        return (bool) preg_match('/^-{20,}$/', trim($line));
+    }
+
+    private function isTimestampedLogLine(string $line): bool
+    {
+        return (bool) preg_match('/^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}(?:\.\d+)?\s+\[[A-Z]+\]/', $line);
+    }
+
+    private function eslResponseFailed($response): bool
+    {
+        return $response === null || str_starts_with(ltrim((string) $response), '-ERR');
+    }
+
+    private function cleanEslError(string $message): string
+    {
+        return trim(preg_replace('/^-ERR\s*/', '', $message)) ?: 'FreeSWITCH returned no response.';
     }
 
     private function parseLine(string $line): array

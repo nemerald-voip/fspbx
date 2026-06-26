@@ -9,6 +9,10 @@ class PostmarkWebhookProfile extends FaxWebhookProfile
 {
     public function shouldProcess(Request $request): bool
     {
+        if ($this->isOutboundEmailEvent($request)) {
+            return true;
+        }
+
         // 1. Extract raw destination
         $toEmail = $request['ToFull'][0]['Email'] ?? null;
         if (!$toEmail || strpos($toEmail, '@') === false) {
@@ -96,5 +100,15 @@ class PostmarkWebhookProfile extends FaxWebhookProfile
             }
         }
         return $stored;
+    }
+
+    private function isOutboundEmailEvent(Request $request): bool
+    {
+        return in_array($request['RecordType'] ?? null, [
+            'Delivery',
+            'Transient',
+            'Bounce',
+            'SpamComplaint',
+        ], true) && !empty($request['MessageID']);
     }
 }
