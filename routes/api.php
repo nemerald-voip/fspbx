@@ -404,6 +404,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/device-key-templates/item-options', [DeviceKeyTemplateController::class, 'getItemOptions'])->name('device-key-templates.item.options');
     Route::post('/device-key-templates/select-all', [DeviceKeyTemplateController::class, 'selectAll'])->name('device-key-templates.select.all');
     Route::post('/device-key-templates/duplicate', [DeviceKeyTemplateController::class, 'duplicate'])->name('device-key-templates.duplicate');
+    Route::post('/device-key-templates/copy-to-domain', [DeviceKeyTemplateController::class, 'copyToDomain'])->name('device-key-templates.copy-to-domain');
     Route::post('/device-key-templates/bulk-delete', [DeviceKeyTemplateController::class, 'bulkDelete'])->name('device-key-templates.bulk.delete');
     Route::post('/devices/{device}/key-templates', [DeviceKeyTemplateController::class, 'storeFromDevice'])->name('devices.key-templates.store-from-device');
 
