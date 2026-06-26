@@ -23,6 +23,7 @@ use App\Http\Controllers\ConferenceProfileController;
 use App\Http\Controllers\ConferenceRoomController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\CustomerNotesController;
+use App\Http\Controllers\DatabaseTransactionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeviceCloudProvisioningController;
 use App\Http\Controllers\DeviceController;
@@ -58,6 +59,7 @@ use App\Http\Controllers\NginxLogController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\PaymentGatewayController;
 use App\Http\Controllers\PhoneNumbersController;
+use App\Http\Controllers\PinNumberController;
 use App\Http\Controllers\ProvisioningController;
 use App\Http\Controllers\RegistrationsController;
 use App\Http\Controllers\RecordingsManagerController;
@@ -229,6 +231,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('sip-profiles/select-all', [SipProfileController::class, 'selectAll'])->name('sip-profiles.select.all');
     Route::post('sip-profiles/bulk-delete', [SipProfileController::class, 'bulkDelete'])->name('sip-profiles.bulk.delete');
     Route::post('sip-profiles/bulk-toggle', [SipProfileController::class, 'bulkToggle'])->name('sip-profiles.bulk.toggle');
+    Route::post('sip-profiles/{sip_profile}/duplicate', [SipProfileController::class, 'duplicate'])->name('sip-profiles.duplicate');
     Route::put('sip-profiles/{sip_profile}', [SipProfileController::class, 'update'])->name('sip-profiles.update');
     Route::delete('sip-profiles/{sip_profile}', [SipProfileController::class, 'destroy'])->name('sip-profiles.destroy');
 
@@ -376,6 +379,11 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     // User logs
     Route::post('user-logs/select-all', [UserLogsController::class, 'selectAll'])->name('user-logs.select.all');
 
+    // Database Transactions
+    Route::get('database-transactions/data', [DatabaseTransactionController::class, 'getData'])->name('database-transactions.data');
+    Route::get('database-transactions/{database_transaction}', [DatabaseTransactionController::class, 'show'])->name('database-transactions.show');
+    Route::post('database-transactions/{database_transaction}/undo', [DatabaseTransactionController::class, 'undo'])->name('database-transactions.undo');
+
     // Devices 
     Route::post('devices', [DeviceController::class, 'store'])->name('devices.store');
     Route::put('devices/{device}', [DeviceController::class, 'update'])->name('devices.update');
@@ -458,6 +466,16 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/bridges/bulk-copy', [BridgeController::class, 'bulkCopy'])->name('bridges.bulk.copy');
     Route::post('/bridges/bulk-delete', [BridgeController::class, 'bulkDelete'])->name('bridges.bulk.delete');
     Route::post('/bridges/bulk-toggle', [BridgeController::class, 'bulkToggle'])->name('bridges.bulk.toggle');
+
+    // PIN Numbers
+    Route::post('pin-numbers', [PinNumberController::class, 'store'])->name('pin-numbers.store');
+    Route::put('pin-numbers/{pin_number}', [PinNumberController::class, 'update'])->name('pin-numbers.update');
+    Route::get('/pin-numbers/data', [PinNumberController::class, 'getData'])->name('pin-numbers.data');
+    Route::post('/pin-numbers/item-options', [PinNumberController::class, 'getItemOptions'])->name('pin-numbers.item.options');
+    Route::post('/pin-numbers/select-all', [PinNumberController::class, 'selectAll'])->name('pin-numbers.select.all');
+    Route::post('/pin-numbers/bulk-copy', [PinNumberController::class, 'bulkCopy'])->name('pin-numbers.bulk.copy');
+    Route::post('/pin-numbers/bulk-delete', [PinNumberController::class, 'bulkDelete'])->name('pin-numbers.bulk.delete');
+    Route::post('/pin-numbers/bulk-toggle', [PinNumberController::class, 'bulkToggle'])->name('pin-numbers.bulk.toggle');
 
     // Call Blocks
     Route::post('call-blocks', [CallBlockController::class, 'store'])->name('call-blocks.store');

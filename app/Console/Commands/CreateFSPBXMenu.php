@@ -162,7 +162,7 @@ class CreateFSPBXMenu extends Command
                     ['title' => 'Ringotel App Settings', 'link' => '/apps', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'SIP Profiles', 'link' => '/sip-profiles', 'groups' => ['superadmin']],
                     ['title' => 'System Settings', 'link' => '/system-settings', 'groups' => ['superadmin']],
-                    ['title' => 'Transactions', 'link' => '/app/database_transactions/database_transactions.php', 'groups' => ['superadmin']],
+                    ['title' => 'Transactions', 'link' => '/database-transactions', 'groups' => ['superadmin']],
                     ['title' => 'Variables', 'link' => '/vars', 'groups' => ['superadmin']],
                 ],
             ],

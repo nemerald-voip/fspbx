@@ -3,10 +3,10 @@
 
     <div class="m-3">
         <DataTable @search-action="fetchData(1)" @reset-filters="resetFilters">
-            <template #title>SIP Profiles</template>
+            <template #title>PIN Numbers</template>
 
             <template #subtitle>
-                Manage Sofia SIP profiles, and profile parameters.
+                Manage PIN numbers and account codes.
             </template>
 
             <template #filters>
@@ -25,7 +25,7 @@
 
                 <div class="relative mb-2 min-w-40 sm:mr-4">
                     <select
-                        v-model="filterData.sip_profile_enabled"
+                        v-model="filterData.enabled"
                         class="block w-full rounded-md border-0 py-1.5 pl-3 pr-8 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600"
                         @change="fetchData(1)"
                     >
@@ -38,6 +38,15 @@
 
             <template #action>
                 <div class="flex flex-wrap items-center justify-end gap-2">
+                    <a
+                        v-if="permissions.export"
+                        :href="routes.export"
+                        class="inline-flex items-center gap-1 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                    >
+                        <ArrowDownTrayIcon class="h-4 w-4" />
+                        Export
+                    </a>
+
                     <button
                         v-if="permissions.create"
                         type="button"
@@ -77,37 +86,41 @@
                             :disabled="pageItems.length === 0"
                             class="h-4 w-4 rounded border-gray-300 text-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
                         />
-                        <button class="flex items-center" :class="{ 'ml-4': hasSelectableActions }" @click="setSort('sip_profile_name')">
-                            <span class="mr-2">Profile</span>
-                            <ChevronUpIcon v-if="sortData.name === 'sip_profile_name' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
-                            <ChevronDownIcon v-else-if="sortData.name === 'sip_profile_name' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                        <button class="flex items-center" :class="{ 'ml-4': hasSelectableActions }" @click="setSort('pin_number')">
+                            <span class="mr-2">PIN Number</span>
+                            <ChevronUpIcon v-if="sortData.name === 'pin_number' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                            <ChevronDownIcon v-else-if="sortData.name === 'pin_number' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
                         </button>
                     </div>
                 </TableColumnHeader>
-                <TableColumnHeader header="Bindings" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="State" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Config" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
-                    <button class="flex items-center" @click="setSort('sip_profile_hostname')">
-                        <span class="mr-2">Hostname</span>
-                        <ChevronUpIcon v-if="sortData.name === 'sip_profile_hostname' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
-                        <ChevronDownIcon v-else-if="sortData.name === 'sip_profile_hostname' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                    <button class="flex items-center" @click="setSort('accountcode')">
+                        <span class="mr-2">Account Code</span>
+                        <ChevronUpIcon v-if="sortData.name === 'accountcode' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'accountcode' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
                     </button>
                 </TableColumnHeader>
-                <TableColumnHeader header="Description" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="State" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <button class="flex items-center" @click="setSort('description')">
+                        <span class="mr-2">Description</span>
+                        <ChevronUpIcon v-if="sortData.name === 'description' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'description' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                    </button>
+                </TableColumnHeader>
                 <TableColumnHeader v-if="hasRowActions" header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
             </template>
 
             <template v-if="selectPageItems" #current-selection>
                 <td :colspan="columnCount">
                     <div class="m-2 text-center text-sm">
-                        <span class="font-semibold">{{ selectedItems.length }}</span> SIP profiles are selected.
+                        <span class="font-semibold">{{ selectedItems.length }}</span> PIN numbers are selected.
                         <button
                             v-if="!selectAll && selectedItems.length !== data.total"
                             class="rounded px-2 py-2 text-blue-500 transition duration-500 ease-in-out hover:bg-blue-200 hover:text-blue-500 focus:bg-blue-200 focus:outline-none focus:ring-1 focus:ring-blue-300"
                             @click="selectAllMatching"
                         >
-                            Select all {{ data.total }} SIP profiles
+                            Select all {{ data.total }} PIN numbers
                         </button>
                         <button
                             v-if="selectAll"
@@ -121,66 +134,42 @@
             </template>
 
             <template #table-body>
-                <tr v-for="row in data.data" :key="row.sip_profile_uuid">
+                <tr v-for="row in data.data" :key="row.pin_number_uuid">
                     <TableField class="px-4 py-2 text-sm text-gray-500">
                         <div class="flex items-center">
                             <input
                                 v-if="hasSelectableActions"
                                 v-model="selectedItems"
                                 type="checkbox"
-                                :value="row.sip_profile_uuid"
+                                :value="row.pin_number_uuid"
                                 class="h-4 w-4 rounded border-gray-300 text-indigo-600"
                             />
                             <button
                                 type="button"
                                 class="min-w-0 text-left"
                                 :class="{ 'ml-4': hasSelectableActions, 'cursor-pointer': permissions.update }"
-                                @click="permissions.update && openEditModal(row)"
+                                @click="permissions.update && openEditModal(row.pin_number_uuid)"
                             >
                                 <span class="block font-medium text-gray-900" :class="{ 'hover:text-indigo-600': permissions.update }">
-                                    {{ row.sip_profile_name }}
+                                    {{ row.pin_number }}
                                 </span>
-                                <span v-if="row.context" class="mt-1 block truncate text-xs text-gray-400">context: {{ row.context }}</span>
                             </button>
                         </div>
                     </TableField>
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
-                        <div class="space-y-1">
-                            <div class="flex items-center gap-1.5 font-mono text-xs text-gray-700">
-                                <span class="w-8 font-sans text-[10px] uppercase tracking-wide text-gray-400">SIP</span>
-                                {{ row.sip_ip || "—" }}<span class="text-gray-400">:</span>{{ row.sip_port || "5060" }}
-                            </div>
-                            <div
-                                v-if="row.tls_enabled"
-                                class="flex items-center gap-1.5 font-mono text-xs text-emerald-700"
-                                :title="row.tls_value && row.tls_value.startsWith('$') ? `TLS gated by ${row.tls_value}` : 'TLS enabled'"
-                            >
-                                <span class="w-8 font-sans text-[10px] uppercase tracking-wide text-emerald-500">TLS</span>
-                                {{ row.sip_ip || "—" }}<span class="text-emerald-400">:</span>{{ row.tls_port || "5061" }}
-                            </div>
-                        </div>
+                        {{ row.accountcode || "No account code" }}
                     </TableField>
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
-                        <button v-if="permissions.update" type="button" @click="confirmAction('toggle', [row.sip_profile_uuid])">
-                            <Badge :text="row.sip_profile_enabled === 'true' ? 'Enabled' : 'Disabled'" v-bind="enabledBadge(row.sip_profile_enabled)" />
+                        <button v-if="permissions.update" type="button" @click="confirmAction('toggle', [row.pin_number_uuid])">
+                            <Badge :text="row.enabled === 'true' ? 'Enabled' : 'Disabled'" v-bind="enabledBadge(row.enabled)" />
                         </button>
-                        <Badge v-else :text="row.sip_profile_enabled === 'true' ? 'Enabled' : 'Disabled'" v-bind="enabledBadge(row.sip_profile_enabled)" />
-                    </TableField>
-
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
-                        <div class="flex flex-wrap gap-1.5">
-                            <Badge :text="`${row.settings_count} settings`" v-bind="countBadge" />
-                        </div>
-                    </TableField>
-
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
-                        {{ row.sip_profile_hostname || "—" }}
+                        <Badge v-else :text="row.enabled === 'true' ? 'Enabled' : 'Disabled'" v-bind="enabledBadge(row.enabled)" />
                     </TableField>
 
                     <TableField class="max-w-xl px-2 py-2 text-sm text-gray-500">
-                        <span class="line-clamp-2">{{ row.sip_profile_description || "No description" }}</span>
+                        <span class="line-clamp-2">{{ row.description || "No description" }}</span>
                     </TableField>
 
                     <TableField v-if="hasRowActions" class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
@@ -191,16 +180,16 @@
                                     type="button"
                                     class="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
                                     title="Edit"
-                                    @click="openEditModal(row)"
+                                    @click="openEditModal(row.pin_number_uuid)"
                                 >
                                     <PencilSquareIcon class="h-5 w-5" />
                                 </button>
                                 <button
-                                    v-if="permissions.create"
+                                    v-if="permissions.copy"
                                     type="button"
                                     class="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
-                                    title="Clone"
-                                    @click="cloneProfile(row)"
+                                    title="Copy"
+                                    @click="confirmAction('copy', [row.pin_number_uuid])"
                                 >
                                     <DocumentDuplicateIcon class="h-5 w-5" />
                                 </button>
@@ -209,7 +198,7 @@
                                     type="button"
                                     class="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-red-600"
                                     title="Delete"
-                                    @click="confirmAction('delete', [row.sip_profile_uuid])"
+                                    @click="confirmAction('delete', [row.pin_number_uuid])"
                                 >
                                     <TrashIcon class="h-5 w-5" />
                                 </button>
@@ -221,7 +210,7 @@
 
             <template #empty>
                 <div v-if="!loading && data.data.length === 0" class="px-6 py-8 text-center text-sm text-gray-500">
-                    No SIP profiles found.
+                    No PIN numbers found.
                 </div>
             </template>
 
@@ -245,7 +234,7 @@
         </DataTable>
     </div>
 
-    <SipProfileForm
+    <PinNumberForm
         :show="showForm"
         :header="formHeader"
         :mode="formMode"
@@ -255,7 +244,6 @@
         @error="handleError"
         @success="showNotification"
         @refresh-data="refreshData"
-        @reload-options="reloadItemOptions"
     />
 
     <ConfirmationModal
@@ -278,15 +266,16 @@ import { computed, onMounted, ref, watch } from "vue";
 import axios from "axios";
 import MainLayout from "../Layouts/MainLayout.vue";
 import DataTable from "./components/general/DataTable.vue";
-import Paginator from "./components/general/Paginator.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";
-import Loading from "./components/general/Loading.vue";
-import Badge from "./components/general/Badge.vue";
+import Paginator from "./components/general/Paginator.vue";
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
+import Loading from "./components/general/Loading.vue";
 import Notification from "./components/notifications/Notification.vue";
-import SipProfileForm from "./components/forms/SipProfileForm.vue";
+import PinNumberForm from "./components/forms/PinNumberForm.vue";
+import Badge from "@generalComponents/Badge.vue";
 import {
+    ArrowDownTrayIcon,
     ChevronDownIcon,
     ChevronUpIcon,
     DocumentDuplicateIcon,
@@ -294,102 +283,124 @@ import {
     PencilSquareIcon,
     PlusIcon,
     TrashIcon,
-} from "@heroicons/vue/24/outline";
+} from "@heroicons/vue/24/solid";
 
 const props = defineProps({
     routes: Object,
     permissions: Object,
 });
 
-const data = ref({ data: [], current_page: 1, last_page: 1, links: [], from: 0, to: 0, total: 0 });
-const filterData = ref({ search: "", sip_profile_enabled: "" });
-const sortData = ref({ name: "sip_profile_name", order: "asc" });
-const selectedItems = ref([]);
-const selectAll = ref(false);
+const routes = props.routes;
+const permissions = props.permissions;
+
 const loading = ref(false);
-const notificationShow = ref(false);
-const notificationType = ref("success");
-const notificationMessages = ref(null);
+const loadingForm = ref(false);
+const currentPage = ref(1);
+const selectedItems = ref([]);
+const selectPageItems = ref(false);
+const selectAll = ref(false);
+const syncingPageSelection = ref(false);
 const showForm = ref(false);
 const formMode = ref("create");
-const loadingForm = ref(false);
-const editingItemUuid = ref(null);
-const itemOptions = ref({ item: {}, domains: [], settings: [], permissions: {}, routes: {} });
-const confirmation = ref({ show: false, action: null, items: [], header: "", text: "", button: "Continue", color: "indigo", loading: false });
-
-const routes = computed(() => props.routes || {});
-const permissions = computed(() => props.permissions || {});
-const hasSelectableActions = computed(() => permissions.value.update || permissions.value.destroy);
-const hasRowActions = computed(() => permissions.value.update || permissions.value.create || permissions.value.destroy);
-const pageItems = computed(() => data.value.data.map((row) => row.sip_profile_uuid));
-const columnCount = computed(() => 6 + (hasRowActions.value ? 1 : 0));
-const formHeader = computed(() => (formMode.value === "create" ? "Create SIP Profile" : "Edit SIP Profile"));
-const selectPageItems = computed({
-    get() {
-        return pageItems.value.length > 0 && pageItems.value.every((uuid) => selectedItems.value.includes(uuid));
-    },
-    set(checked) {
-        selectAll.value = false;
-        selectedItems.value = checked
-            ? Array.from(new Set([...selectedItems.value, ...pageItems.value]))
-            : selectedItems.value.filter((uuid) => !pageItems.value.includes(uuid));
-    },
+const notificationType = ref(null);
+const notificationMessages = ref(null);
+const notificationShow = ref(false);
+const itemOptions = ref({
+    item: {},
+    routes: {},
 });
 
-const countBadge = { backgroundColor: "bg-slate-50", textColor: "text-slate-700", ringColor: "ring-slate-600/20" };
+const data = ref({
+    data: [],
+    prev_page_url: null,
+    next_page_url: null,
+    from: 0,
+    to: 0,
+    total: 0,
+    current_page: 1,
+    last_page: 1,
+    links: [],
+});
+
+const filterData = ref({
+    search: null,
+    enabled: "",
+});
+
+const sortData = ref({
+    name: "pin_number",
+    order: "asc",
+});
+
+const confirmation = ref({
+    show: false,
+    loading: false,
+    action: null,
+    items: [],
+    header: "Confirm Action",
+    text: "",
+    button: "Continue",
+    color: "indigo",
+});
+
+const pageItems = computed(() => data.value.data.map((item) => item.pin_number_uuid));
+const hasSelectableActions = computed(() => permissions.copy || permissions.update || permissions.destroy);
+const hasRowActions = computed(() => permissions.copy || permissions.update || permissions.destroy);
+const columnCount = computed(() => hasRowActions.value ? 5 : 4);
+
 const bulkActions = computed(() => {
     const actions = [];
 
-    if (permissions.value.update) {
-        actions.push({ id: "toggle", label: "Toggle", icon: "SyncIcon" });
+    if (permissions.copy) {
+        actions.push({ id: "copy", label: "Copy", icon: "DocumentDuplicateIcon" });
     }
 
-    if (permissions.value.destroy) {
+    if (permissions.update) {
+        actions.push({ id: "toggle", label: "Toggle Enabled", icon: "PencilSquareIcon" });
+    }
+
+    if (permissions.destroy) {
         actions.push({ id: "delete", label: "Delete", icon: "TrashIcon" });
     }
 
     return actions;
 });
 
-watch(() => data.value.current_page, () => { selectAll.value = false; });
-onMounted(() => fetchData());
-
-function queryParams(page = 1) {
-    const params = { page };
-
-    if (filterData.value.search) params["filter[search]"] = filterData.value.search;
-    if (filterData.value.sip_profile_enabled) params["filter[sip_profile_enabled]"] = filterData.value.sip_profile_enabled;
-    if (sortData.value.name) params.sort = `${sortData.value.order === "desc" ? "-" : ""}${sortData.value.name}`;
-
-    return params;
-}
-
-function resolvePage(page = 1) {
-    if (typeof page === "number") return page;
-    if (!page) return 1;
-
-    try {
-        return Number(new URL(page, window.location.origin).searchParams.get("page") || 1);
-    } catch {
-        return 1;
+const formHeader = computed(() => {
+    if (formMode.value === "create") {
+        return "Create PIN Number";
     }
-}
 
-function fetchData(page = 1) {
-    loading.value = true;
+    return `Update PIN Number - ${itemOptions.value?.item?.pin_number || "Loading..."}`;
+});
 
-    axios
-        .get(routes.value.data_route, { params: queryParams(resolvePage(page)) })
-        .then((response) => { data.value = response.data; })
-        .catch(handleError)
-        .finally(() => { loading.value = false; });
-}
+onMounted(() => {
+    fetchData();
+});
 
-function refreshData() {
-    fetchData(data.value.current_page || 1);
-}
+watch(selectPageItems, (checked) => {
+    if (syncingPageSelection.value) {
+        return;
+    }
 
-function setSort(column) {
+    if (checked) {
+        selectedItems.value = pageItems.value;
+        return;
+    }
+
+    if (!selectAll.value) {
+        selectedItems.value = [];
+    }
+});
+
+watch(selectedItems, () => {
+    if (selectedItems.value.length === 0) {
+        selectPageItems.value = false;
+        selectAll.value = false;
+    }
+});
+
+const setSort = (column) => {
     if (sortData.value.name === column) {
         sortData.value.order = sortData.value.order === "asc" ? "desc" : "asc";
     } else {
@@ -397,158 +408,239 @@ function setSort(column) {
         sortData.value.order = "asc";
     }
 
-    fetchData(1);
-}
+    fetchData(currentPage.value);
+};
 
-function resetFilters() {
-    filterData.value = { search: "", sip_profile_enabled: "" };
-    fetchData(1);
-}
+const resolvePage = (page = 1) => {
+    if (typeof page === "number") {
+        return page;
+    }
 
-function selectAllMatching() {
-    axios
-        .post(routes.value.select_all, { filter: filterData.value })
+    if (!page) {
+        return 1;
+    }
+
+    try {
+        return Number(new URL(page, window.location.origin).searchParams.get("page") || 1);
+    } catch {
+        return 1;
+    }
+};
+
+const fetchData = (page = 1) => {
+    loading.value = true;
+    currentPage.value = resolvePage(page);
+
+    let sort = sortData.value.name;
+    if (sortData.value.order === "desc") {
+        sort = `-${sort}`;
+    }
+
+    axios.get(routes.data_route, {
+        params: {
+            filter: activeFilters(),
+            page: currentPage.value,
+            sort,
+        },
+    })
+        .then((response) => {
+            data.value = response.data;
+            currentPage.value = response.data.current_page ?? currentPage.value;
+            syncPageSelection();
+        })
+        .catch(handleError)
+        .finally(() => {
+            loading.value = false;
+        });
+};
+
+const activeFilters = () => {
+    const filters = {};
+
+    if (filterData.value.search) {
+        filters.search = filterData.value.search;
+    }
+
+    if (filterData.value.enabled) {
+        filters.enabled = filterData.value.enabled;
+    }
+
+    return filters;
+};
+
+const resetFilters = () => {
+    filterData.value.search = null;
+    filterData.value.enabled = "";
+    fetchData(1);
+};
+
+const refreshData = () => {
+    fetchData(currentPage.value);
+};
+
+const openCreateModal = () => {
+    formMode.value = "create";
+    showForm.value = true;
+    getItemOptions();
+};
+
+const openEditModal = (uuid) => {
+    formMode.value = "update";
+    showForm.value = true;
+    getItemOptions(uuid);
+};
+
+const closeForm = () => {
+    showForm.value = false;
+    formMode.value = "create";
+    itemOptions.value = {
+        item: {},
+        routes: {},
+    };
+};
+
+const getItemOptions = (itemUuid = null) => {
+    loadingForm.value = true;
+
+    axios.post(routes.item_options, itemUuid ? { itemUuid } : {})
+        .then((response) => {
+            itemOptions.value = response.data;
+        })
+        .catch((error) => {
+            closeForm();
+            handleError(error);
+        })
+        .finally(() => {
+            loadingForm.value = false;
+        });
+};
+
+const selectAllMatching = () => {
+    axios.post(routes.select_all, { filter: activeFilters() })
         .then((response) => {
             selectedItems.value = response.data.items;
             selectAll.value = true;
             showNotification("success", response.data.messages);
         })
-        .catch(handleError);
-}
-
-function clearSelection() {
-    selectedItems.value = [];
-    selectAll.value = false;
-}
-
-function openCreateModal() {
-    formMode.value = "create";
-    editingItemUuid.value = null;
-    loadItemOptions();
-}
-
-function openEditModal(row) {
-    formMode.value = "edit";
-    editingItemUuid.value = row.sip_profile_uuid;
-    loadItemOptions(row.sip_profile_uuid);
-}
-
-function cloneProfile(row) {
-    axios
-        .post(row.duplicate_route)
-        .then((response) => {
-            showNotification("success", response.data.messages);
-            refreshData();
-        })
-        .catch(handleError);
-}
-
-function loadItemOptions(itemUuid = null) {
-    loadingForm.value = true;
-    showForm.value = true;
-
-    axios
-        .post(routes.value.item_options, { itemUuid })
-        .then((response) => { itemOptions.value = response.data; })
         .catch((error) => {
+            clearSelection();
             handleError(error);
-            closeForm();
-        })
-        .finally(() => { loadingForm.value = false; });
-}
+        });
+};
 
-function reloadItemOptions() {
-    if (editingItemUuid.value) {
-        loadItemOptions(editingItemUuid.value);
-    }
-}
+const clearSelection = () => {
+    selectedItems.value = [];
+    selectPageItems.value = false;
+    selectAll.value = false;
+};
 
-function closeForm() {
-    showForm.value = false;
-    editingItemUuid.value = null;
-    itemOptions.value = { item: {}, domains: [], settings: [], permissions: {}, routes: {} };
-}
+const syncPageSelection = () => {
+    syncingPageSelection.value = true;
+    selectPageItems.value = pageItems.value.length > 0 && pageItems.value.every((uuid) => selectedItems.value.includes(uuid));
+    syncingPageSelection.value = false;
+};
 
-function handleBulkAction(action) {
+const handleBulkAction = (action) => {
     confirmAction(action, selectedItems.value);
-}
+};
 
-function confirmAction(action, items) {
-    if (!items.length) {
-        showNotification("error", { request: ["No SIP profiles selected."] });
+const confirmAction = (action, items) => {
+    const copy = {
+        header: "Confirm Copy",
+        text: "Copy the selected PIN number(s)?",
+        button: "Copy",
+        color: "indigo",
+    };
+
+    const toggle = {
+        header: "Confirm Toggle",
+        text: "Toggle enabled for the selected PIN number(s)?",
+        button: "Toggle",
+        color: "indigo",
+    };
+
+    const del = {
+        header: "Confirm Deletion",
+        text: "This action will permanently delete the selected PIN number(s).",
+        button: "Delete",
+        color: "red",
+    };
+
+    const config = { copy, toggle, delete: del }[action];
+    if (!config) {
         return;
     }
 
-    const count = items.length;
-    const copy = {
-        toggle: {
-            header: "Toggle SIP profiles?",
-            text: `Toggle enabled state for ${count} selected SIP profile${count === 1 ? "" : "s"}.`,
-            button: "Toggle",
-            color: "indigo",
-        },
-        delete: {
-            header: "Delete SIP profiles?",
-            text: `Delete ${count} selected SIP profile${count === 1 ? "" : "s"} and its domains/settings.`,
-            button: "Delete",
-            color: "red",
-        },
-    }[action];
-
-    confirmation.value = { show: true, action, items: [...items], loading: false, ...copy };
-}
-
-function executeConfirmedAction() {
-    const actionRoutes = {
-        toggle: routes.value.bulk_toggle,
-        delete: routes.value.bulk_delete,
+    confirmation.value = {
+        ...confirmation.value,
+        ...config,
+        show: true,
+        loading: false,
+        action,
+        items,
     };
+};
+
+const closeConfirmation = () => {
+    confirmation.value.show = false;
+    confirmation.value.loading = false;
+    confirmation.value.action = null;
+    confirmation.value.items = [];
+};
+
+const executeConfirmedAction = () => {
+    const endpoint = {
+        copy: routes.bulk_copy,
+        toggle: routes.bulk_toggle,
+        delete: routes.bulk_delete,
+    }[confirmation.value.action];
+
+    if (!endpoint) {
+        closeConfirmation();
+        return;
+    }
 
     confirmation.value.loading = true;
 
-    axios
-        .post(actionRoutes[confirmation.value.action], { items: confirmation.value.items })
+    axios.post(endpoint, { items: confirmation.value.items })
         .then((response) => {
-            showNotification("success", response.data.messages);
             closeConfirmation();
             clearSelection();
+            showNotification("success", response.data.messages);
             refreshData();
         })
         .catch((error) => {
-            handleError(error);
             closeConfirmation();
-            refreshData();
-        })
-        .finally(() => { confirmation.value.loading = false; });
-}
+            clearSelection();
+            handleError(error);
+        });
+};
 
-function closeConfirmation() {
-    confirmation.value.show = false;
-}
-
-function enabledBadge(enabled) {
-    return enabled === "true"
-        ? { backgroundColor: "bg-green-50", textColor: "text-green-700", ringColor: "ring-green-600/20" }
-        : { backgroundColor: "bg-gray-50", textColor: "text-gray-600", ringColor: "ring-gray-500/20" };
-}
-
-function showNotification(type, messages = null) {
+const showNotification = (type, messages = null) => {
     notificationType.value = type;
     notificationMessages.value = messages;
     notificationShow.value = true;
-}
+};
 
-function handleError(error) {
-    if (error?.response?.status === 419) {
-        showNotification("error", { request: ["Session expired. Reload the page."] });
-        return;
+const handleError = (error) => {
+    if (error.response) {
+        showNotification("error", error.response.data.errors || error.response.data.messages || { request: [error.message] });
+    } else if (error.request) {
+        showNotification("error", { request: [error.request] });
+    } else {
+        showNotification("error", { request: [error.message] });
     }
+};
 
-    if (error?.response?.data) {
-        showNotification("error", error.response.data.messages || error.response.data.errors || { request: [error.message] });
-        return;
+const enabledBadge = (enabled) => enabled === "true"
+    ? {
+        backgroundColor: "bg-green-50",
+        textColor: "text-green-700",
+        ringColor: "ring-green-600/20",
     }
-
-    showNotification("error", { request: [error?.message || "Request failed."] });
-}
+    : {
+        backgroundColor: "bg-gray-50",
+        textColor: "text-gray-700",
+        ringColor: "ring-gray-600/20",
+    };
 </script>

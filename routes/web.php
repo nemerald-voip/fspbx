@@ -23,6 +23,7 @@ use App\Http\Controllers\ConferenceControlController;
 use App\Http\Controllers\ConferenceProfileController;
 use App\Http\Controllers\ConferenceRoomController;
 use App\Http\Controllers\CsrfTokenController;
+use App\Http\Controllers\DatabaseTransactionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeviceCloudProvisioningController;
 use App\Http\Controllers\DeviceController;
@@ -48,6 +49,7 @@ use App\Http\Controllers\MessageMediaController;
 use App\Http\Controllers\MessageSettingsController;
 use App\Http\Controllers\MusicOnHoldController;
 use App\Http\Controllers\PhoneNumbersController;
+use App\Http\Controllers\PinNumberController;
 use App\Http\Controllers\PolycomLogController;
 use App\Http\Controllers\PolycomProvisioningFileController;
 use App\Http\Controllers\ProFeaturesController;
@@ -249,11 +251,18 @@ Route::group(['middleware' => 'auth'], function () {
     // User Logs
     Route::get('user-logs', [UserLogsController::class, 'index'])->name('user-logs.index');
 
+    // Database Transactions
+    Route::get('database-transactions', [DatabaseTransactionController::class, 'index'])->name('database-transactions.index');
+
     // Business hours
     Route::get('business-hours', [BusinessHoursController::class, 'index'])->name('business-hours.index');
 
     // Bridges
     Route::get('bridges', [BridgeController::class, 'index'])->name('bridges.index');
+
+    // PIN Numbers
+    Route::get('pin-numbers', [PinNumberController::class, 'index'])->name('pin-numbers.index');
+    Route::get('pin-numbers/export', [PinNumberController::class, 'export'])->name('pin-numbers.export');
 
     // Call Blocks
     Route::get('call-blocks', [CallBlockController::class, 'index'])->name('call-blocks.index');

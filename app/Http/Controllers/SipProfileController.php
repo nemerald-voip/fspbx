@@ -44,6 +44,8 @@ class SipProfileController extends Controller
             return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
         }
 
+        $highlightKeys = ['sip-ip', 'sip-port', 'tls-sip-port', 'context', 'tls', 'auth-calls'];
+
         $profiles = $this->profileQuery($request)
             ->select([
                 'sip_profile_uuid',
@@ -53,6 +55,10 @@ class SipProfileController extends Controller
                 'sip_profile_description',
             ])
             ->withCount(['domains', 'settings'])
+            ->with(['settings' => fn ($query) => $query
+                ->select(['sip_profile_uuid', 'sip_profile_setting_name', 'sip_profile_setting_value'])
+                ->whereIn('sip_profile_setting_name', $highlightKeys)
+                ->where('sip_profile_setting_enabled', 'true')])
             ->allowedSorts([
                 'sip_profile_name',
                 'sip_profile_hostname',
@@ -62,17 +68,30 @@ class SipProfileController extends Controller
             ->defaultSort('sip_profile_name')
             ->paginate($this->perPage)
             ->appends($request->query())
-            ->through(fn (SipProfiles $profile) => [
-                'sip_profile_uuid' => $profile->sip_profile_uuid,
-                'sip_profile_name' => $profile->sip_profile_name,
-                'sip_profile_hostname' => $profile->sip_profile_hostname,
-                'sip_profile_enabled' => $profile->sip_profile_enabled,
-                'sip_profile_description' => $profile->sip_profile_description,
-                'domains_count' => $profile->domains_count,
-                'settings_count' => $profile->settings_count,
-                'update_route' => route('sip-profiles.update', ['sip_profile' => $profile->sip_profile_uuid]),
-                'destroy_route' => route('sip-profiles.destroy', ['sip_profile' => $profile->sip_profile_uuid]),
-            ]);
+            ->through(function (SipProfiles $profile) {
+                $values = $profile->settings
+                    ->mapWithKeys(fn ($setting) => [$setting->sip_profile_setting_name => $setting->sip_profile_setting_value]);
+
+                return [
+                    'sip_profile_uuid' => $profile->sip_profile_uuid,
+                    'sip_profile_name' => $profile->sip_profile_name,
+                    'sip_profile_hostname' => $profile->sip_profile_hostname,
+                    'sip_profile_enabled' => $profile->sip_profile_enabled,
+                    'sip_profile_description' => $profile->sip_profile_description,
+                    'domains_count' => $profile->domains_count,
+                    'settings_count' => $profile->settings_count,
+                    'context' => $values->get('context'),
+                    'sip_ip' => $values->get('sip-ip'),
+                    'sip_port' => $values->get('sip-port'),
+                    'tls_enabled' => filled($values->get('tls')) && $values->get('tls') !== 'false',
+                    'tls_value' => $values->get('tls'),
+                    'tls_port' => $values->get('tls-sip-port'),
+                    'auth_calls' => $values->get('auth-calls') === 'true',
+                    'update_route' => route('sip-profiles.update', ['sip_profile' => $profile->sip_profile_uuid]),
+                    'destroy_route' => route('sip-profiles.destroy', ['sip_profile' => $profile->sip_profile_uuid]),
+                    'duplicate_route' => route('sip-profiles.duplicate', ['sip_profile' => $profile->sip_profile_uuid]),
+                ];
+            });
 
         return response()->json($profiles);
     }
@@ -149,6 +168,20 @@ class SipProfileController extends Controller
         return response()->json([
             'messages' => ['success' => ['SIP profile deleted.']],
         ]);
+    }
+
+    public function duplicate(SipProfiles $sip_profile, SipProfileService $service): JsonResponse
+    {
+        if (! userCheckPermission('sip_profile_add')) {
+            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+        }
+
+        $copy = $service->duplicate($sip_profile);
+
+        return response()->json([
+            'messages' => ['success' => ['SIP profile cloned.']],
+            'sip_profile_uuid' => $copy->sip_profile_uuid,
+        ], 201);
     }
 
     public function bulkToggle(Request $request, SipProfileService $service): JsonResponse

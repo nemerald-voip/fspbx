@@ -33,6 +33,67 @@ class SipProfileService
         return $profile;
     }
 
+    public function duplicate(SipProfiles $source): SipProfiles
+    {
+        $copy = new SipProfiles([
+            'sip_profile_uuid' => (string) Str::uuid(),
+            'sip_profile_name' => $this->uniqueName($source->sip_profile_name),
+            'sip_profile_hostname' => $source->sip_profile_hostname,
+            'sip_profile_enabled' => 'false',
+            'sip_profile_description' => $source->sip_profile_description,
+        ]);
+
+        DB::transaction(function () use ($copy, $source) {
+            $copy->fill($this->withAudit([], 'v_sip_profiles', true));
+            $copy->save();
+
+            $settings = DB::table('v_sip_profile_settings')
+                ->where('sip_profile_uuid', $source->sip_profile_uuid)
+                ->get();
+
+            foreach ($settings as $setting) {
+                DB::table('v_sip_profile_settings')->insert($this->withAudit([
+                    'sip_profile_setting_uuid' => (string) Str::uuid(),
+                    'sip_profile_uuid' => $copy->sip_profile_uuid,
+                    'sip_profile_setting_name' => $setting->sip_profile_setting_name,
+                    'sip_profile_setting_value' => $setting->sip_profile_setting_value,
+                    'sip_profile_setting_enabled' => $setting->sip_profile_setting_enabled,
+                    'sip_profile_setting_description' => $setting->sip_profile_setting_description,
+                ], 'v_sip_profile_settings', true));
+            }
+
+            $domains = DB::table('v_sip_profile_domains')
+                ->where('sip_profile_uuid', $source->sip_profile_uuid)
+                ->get();
+
+            foreach ($domains as $domain) {
+                DB::table('v_sip_profile_domains')->insert($this->withAudit([
+                    'sip_profile_domain_uuid' => (string) Str::uuid(),
+                    'sip_profile_uuid' => $copy->sip_profile_uuid,
+                    'sip_profile_domain_name' => $domain->sip_profile_domain_name,
+                    'sip_profile_domain_alias' => $domain->sip_profile_domain_alias,
+                    'sip_profile_domain_parse' => $domain->sip_profile_domain_parse,
+                ], 'v_sip_profile_domains', true));
+            }
+        });
+
+        return $copy;
+    }
+
+    private function uniqueName(?string $name): string
+    {
+        $base = trim((string) $name) !== '' ? trim((string) $name) : 'profile';
+        $candidate = $base . ' copy';
+        $suffix = 1;
+
+        while (SipProfiles::query()->where('sip_profile_name', $candidate)->exists()) {
+            $suffix++;
+            $candidate = $base . ' copy ' . $suffix;
+        }
+
+        return $candidate;
+    }
+
     public function toggle(Collection $profiles): void
     {
         $hostnames = $profiles->pluck('sip_profile_hostname');
