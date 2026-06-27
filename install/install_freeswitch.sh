@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Honor the Bash requirement even when invoked as `sh install_freeswitch.sh`.
+if [ -z "${BASH_VERSION:-}" ]; then
+    exec /bin/bash "$0" "$@"
+fi
+
 # Set error handling
 set -e
 

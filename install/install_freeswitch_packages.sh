@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Honor the Bash requirement even when invoked as `sh install_freeswitch_packages.sh`.
+if [ -z "${BASH_VERSION:-}" ]; then
+    exec /bin/bash "$0" "$@"
+fi
+
 set -euo pipefail
 
 print_success() {
