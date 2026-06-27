@@ -63,6 +63,12 @@
                                                     'main_container',
                                                     'main_submit',
                                                 ]" />
+                                                <FormTab name="side" label="Side Keys" :elements="[
+                                                    'side_header',
+                                                    'side_keys',
+                                                    'side_container',
+                                                    'side_submit',
+                                                ]" />
                                                 <FormTab name="multi" label="Multi Purpose Keys" :elements="[
                                                     'multi_header',
                                                     'multi_purpose_keys',
@@ -124,7 +130,8 @@
                                                 <ButtonElement name="settings_submit" button-label="Save"
                                                     :submits="true" align="right" />
 
-                                                <StaticElement name="main_header" tag="h4" content="Function Keys" />
+                                                <StaticElement name="main_header" tag="h4" content="Function Keys"
+                                                    description="Programmable DSS keys for BLF, speed dial, line appearances, and other call actions." />
                                                 <DeviceKeyTemplateKeyList name="keys" area="main" :key-types="keyTypes"
                                                     :form-data="form$?.data" :get-next-key-number="getNextKeyNumber"
                                                     :get-key-value-select-items="getKeyValueSelectItems"
@@ -133,7 +140,19 @@
                                                 <ButtonElement name="main_submit" button-label="Save" :submits="true"
                                                     align="right" />
 
-                                                <StaticElement name="multi_header" tag="h4" content="Multi Purpose Keys" />
+                                                <StaticElement name="side_header" tag="h4" content="Side Keys"
+                                                    description="Keys beside the display on supported Fanvil phones. Use these for primary-screen line appearances and other call actions." />
+                                                <DeviceKeyTemplateKeyList name="side_keys" area="side"
+                                                    :key-types="keyTypes" :form-data="form$?.data"
+                                                    :get-next-key-number="getNextKeyNumber"
+                                                    :get-key-value-select-items="getKeyValueSelectItems"
+                                                    :update-label="updateLabel" />
+                                                <GroupElement name="side_container" />
+                                                <ButtonElement name="side_submit" button-label="Save" :submits="true"
+                                                    align="right" />
+
+                                                <StaticElement name="multi_header" tag="h4" content="Multi Purpose Keys"
+                                                    description="Additional programmable keys used by Grandstream phones." />
                                                 <DeviceKeyTemplateKeyList name="multi_purpose_keys" area="multi_purpose"
                                                     :key-types="keyTypes" :form-data="form$?.data"
                                                     :get-next-key-number="getNextKeyNumber"
@@ -143,7 +162,8 @@
                                                 <ButtonElement name="multi_submit" button-label="Save" :submits="true"
                                                     align="right" />
 
-                                                <StaticElement name="expansion_header" tag="h4" content="Expansion Keys" />
+                                                <StaticElement name="expansion_header" tag="h4" content="Expansion Keys"
+                                                    description="Keys provided by an attached expansion module." />
                                                 <DeviceKeyTemplateKeyList name="expansion_keys" area="expansion"
                                                     :key-types="keyTypes" :form-data="form$?.data"
                                                     :get-next-key-number="getNextKeyNumber"
@@ -212,6 +232,7 @@ const defaultValues = computed(() => ({
     enabled: props.options?.item?.enabled ?? "true",
     description: props.options?.item?.description ?? null,
     keys: normalizeKeysForForm(filterKeysByArea(props.options?.item?.keys ?? [], "main")),
+    side_keys: normalizeKeysForForm(filterKeysByArea(props.options?.item?.keys ?? [], "side")),
     multi_purpose_keys: normalizeKeysForForm(filterKeysByArea(props.options?.item?.keys ?? [], "multi_purpose")),
     expansion_keys: normalizeKeysForForm(filterKeysByArea(props.options?.item?.keys ?? [], "expansion")),
 }));
@@ -354,10 +375,12 @@ const submitForm = async (FormData, form) => {
     const data = form.data;
     data.keys = [
         ...(data.keys ?? []).map((key) => ({ ...key, key_area: "main" })),
+        ...(data.side_keys ?? []).map((key) => ({ ...key, key_area: "side" })),
         ...(data.multi_purpose_keys ?? []).map((key) => ({ ...key, key_area: "multi_purpose" })),
         ...(data.expansion_keys ?? []).map((key) => ({ ...key, key_area: "expansion" })),
     ].map(normalizeKeyForSubmit);
 
+    delete data.side_keys;
     delete data.multi_purpose_keys;
     delete data.expansion_keys;
 
@@ -370,6 +393,18 @@ const submitForm = async (FormData, form) => {
 
 const normalizeKeyForSubmit = (key) => {
     const keyType = key?.key_type ?? "";
+
+    if (!keyType) {
+        return {
+            ...key,
+            key_value: null,
+            key_value_select: null,
+            key_value_text: null,
+            key_label: null,
+            _generated_label: null,
+        };
+    }
+
     const usesSelect = keyTypesWithSelect.includes(keyType);
 
     return {

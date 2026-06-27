@@ -20,7 +20,7 @@ class StoreDeviceKeyTemplateRequest extends FormRequest
             'description' => ['nullable', 'string'],
             'enabled' => ['required', Rule::in(['true', 'false'])],
             'keys' => ['nullable', 'array'],
-            'keys.*.key_area' => ['nullable', 'string', Rule::in(['main', 'multi_purpose', 'expansion'])],
+            'keys.*.key_area' => ['nullable', 'string', Rule::in(['main', 'side', 'multi_purpose', 'expansion'])],
             'keys.*.key_index' => ['required', 'integer', 'min:1'],
             'keys.*.key_type' => ['nullable', 'string', 'max:50'],
             'keys.*.key_value' => ['nullable', 'string', 'max:64'],
