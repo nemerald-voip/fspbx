@@ -68,6 +68,17 @@ chown -R www-data:www-data /var/log/freeswitch
 chown -R www-data:www-data /var/run/freeswitch
 chown -R www-data:www-data /var/cache/fusionpbx
 
+print_success "Preparing FS PBX configuration for the FreeSWITCH restart..."
+RESTART_PREPARATION_COMPLETE=true
+
+if sudo -u www-data -- php /var/www/fspbx/artisan freeswitch:prepare-restart --no-interaction; then
+    print_success "FreeSWITCH variables and XML cache prepared successfully."
+else
+    RESTART_PREPARATION_COMPLETE=false
+    print_error "Automatic FreeSWITCH restart preparation was incomplete."
+    print_error "Before restarting, use Advanced > Variables > Sync XML and Status > SIP Status > Flush Cache."
+fi
+
 if [ -f "/lib/systemd/system/freeswitch.service" ]; then
     sed -i -e 's/Environment="USER=freeswitch"/Environment="USER=www-data"/' /lib/systemd/system/freeswitch.service
     sed -i -e 's/Environment="GROUP=freeswitch"/Environment="GROUP=www-data"/' /lib/systemd/system/freeswitch.service
@@ -86,3 +97,7 @@ systemctl daemon-reload
 systemctl enable freeswitch
 
 print_success "FreeSWITCH packages installed successfully."
+
+if [[ "$RESTART_PREPARATION_COMPLETE" == "false" ]]; then
+    print_error "ACTION REQUIRED: Synchronize Variables XML and flush the SIP Status cache before restarting FreeSWITCH."
+fi

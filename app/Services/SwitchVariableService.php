@@ -148,9 +148,11 @@ class SwitchVariableService
             ->all();
     }
 
-    public function syncVarsXml(): bool
+    public function syncVarsXml(bool $markReloadRequired = true): bool
     {
-        session()->forget('user_defined_variables');
+        if ($markReloadRequired) {
+            session()->forget('user_defined_variables');
+        }
 
         $confDir = $this->switchConfDir();
         if (! $confDir) {
@@ -192,7 +194,10 @@ class SwitchVariableService
             });
 
         File::put(rtrim($confDir, '/') . '/vars.xml', $xml . "\n");
-        session(['reload_xml' => true]);
+
+        if ($markReloadRequired) {
+            session(['reload_xml' => true]);
+        }
 
         return true;
     }
