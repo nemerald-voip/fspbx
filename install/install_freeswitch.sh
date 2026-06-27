@@ -228,6 +228,12 @@ chown -R www-data:www-data /var/log/freeswitch
 chown -R www-data:www-data /var/run/freeswitch
 chown -R www-data:www-data /var/cache/fusionpbx
 
+# PHP-FPM may have started before these paths existed, causing systemd to skip
+# the optional ReadWritePaths entries. Restart it to rebuild its mount namespace.
+systemctl daemon-reload
+systemctl restart php8.4-fpm
+print_success "Restarted php8.4-fpm with access to the FreeSWITCH directories."
+
 if [[ "$FRESH_INSTALL" == "false" ]]; then
     print_success "Preparing FS PBX configuration for the FreeSWITCH restart..."
 
