@@ -43,7 +43,7 @@ Check the script set up a cron job to renew the certificate:
 
 One of the lines should look like this:
 
-`0 3 * * * dehydrated -c && systemctl reload nginx`
+`0 3 * * * dehydrated -c && nginx -t && systemctl reload nginx`
 
 # Conclusion
 
