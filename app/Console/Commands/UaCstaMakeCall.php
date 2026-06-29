@@ -18,7 +18,6 @@ class UaCstaMakeCall extends Command
         {--vendor= : User agent vendor to target, for example poly or yealink}
         {--lan-ip= : Narrow selection to a LAN IP when several devices match}
         {--call-id= : Narrow selection to a specific FreeSWITCH registration call-id}
-        {--ringotel-domain= : Override the Ringotel organization domain used by API calls}
         {--sdp : Add the optional sdp flag to sofia_csta_call}
         {--dry-run : Resolve and print the selected registrations without sending the command}';
 
@@ -72,7 +71,6 @@ class UaCstaMakeCall extends Command
                     'vendor' => $this->option('vendor') ?: $this->argument('vendor'),
                     'lan_ip' => $this->option('lan-ip'),
                     'call_id' => $this->option('call-id'),
-                    'ringotel_domain' => $this->option('ringotel-domain'),
                     'sdp' => (bool) $this->option('sdp'),
                     'dry_run' => (bool) $this->option('dry-run'),
                 ]

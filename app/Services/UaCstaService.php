@@ -52,7 +52,6 @@ class UaCstaService
             'label' => 'Snom',
             'action' => self::ACTION_FREESWITCH,
             'patterns' => ['snom'],
-            'sdp' => true,
         ],
         'ringotel' => [
             'label' => 'Ringotel',
@@ -451,12 +450,8 @@ class UaCstaService
         }
 
         $ringotel = app(RingotelApiService::class);
-        $ringotelDomain = $options['ringotel_domain'] ?? null;
-
-        if (! $ringotelDomain) {
-            $organization = $ringotel->getOrganization($mobileApp->org_id);
-            $ringotelDomain = $organization->domain ?? null;
-        }
+        $organization = $ringotel->getOrganization($mobileApp->org_id);
+        $ringotelDomain = $organization->domain ?? null;
 
         if (! $ringotelDomain) {
             throw new RuntimeException("Ringotel organization domain could not be resolved for org {$mobileApp->org_id}.");
