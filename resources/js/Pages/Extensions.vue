@@ -196,10 +196,16 @@
                             <template #action-buttons>
                                 <div class="flex items-center whitespace-nowrap">
                                     <ejs-tooltip v-if="String(row.mobile_app?.status) === '1'"
-                                        :content="'Mobile App (Activated)'" position='TopCenter'>
-                                        <DevicePhoneMobileSolidIcon
-                                            class="h-5 w-5 text-blue-400 hover:text-blue-600 active:bg-blue-300"
-                                            aria-label="Mobile App (Activated)" />
+                                        :content="mobileAppTooltip(row)" position='TopCenter'>
+                                        <span class="relative inline-flex">
+                                            <DevicePhoneMobileSolidIcon
+                                                class="h-5 w-5 text-blue-400 hover:text-blue-600 active:bg-blue-300"
+                                                aria-label="Mobile App (Activated)" />
+                                            <span v-if="ringotelStatusFor(row)"
+                                                :class="ringotelDotClass(ringotelStatusFor(row))"
+                                                class="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white shadow-sm">
+                                            </span>
+                                        </span>
                                     </ejs-tooltip>
                                     <ejs-tooltip v-if="String(row.mobile_app?.status) === '-1'"
                                         :content="'Mobile App (Phonebook Only)'" position='TopCenter'>
@@ -391,6 +397,7 @@ const notificationMessages = ref(null);
 const notificationShow = ref(null);
 const showDeleteConfirmationModal = ref(false);
 const isRegsLoading = ref(false)
+const isRingotelLoading = ref(false)
 const showUploadModal = ref(false);
 const isUploadingFile = ref(null);
 const uploadErrors = ref(null);
@@ -432,6 +439,7 @@ const sortData = ref({
 
 const itemOptions = ref({})
 const registrations = ref({})
+const ringotelStatuses = ref({})
 const expandedExtension = ref(null)
 
 
@@ -521,8 +529,66 @@ onMounted(async () => {
         handleErrorResponse(error);
     } finally {
         isRegsLoading.value = false
+        getRingotelStatuses()
     }
 })
+
+const getRingotelStatuses = async () => {
+    if (!props.routes?.ringotel_status) {
+        return
+    }
+
+    isRingotelLoading.value = true
+
+    try {
+        const response = await axios.get(props.routes.ringotel_status)
+        ringotelStatuses.value = response.data.data || {}
+    } catch (error) {
+        ringotelStatuses.value = {}
+    } finally {
+        isRingotelLoading.value = false
+    }
+}
+
+const ringotelStatusFor = (row) => {
+    return ringotelStatuses.value?.[row.extension_uuid] ?? null
+}
+
+const ringotelDotClass = (status) => {
+    return {
+        green: 'bg-green-600',
+        blue: 'bg-blue-600',
+        red: 'bg-rose-600',
+        gray: 'bg-gray-500',
+    }[status?.state_color] ?? 'bg-gray-500'
+}
+
+const formatRingotelTimestamp = (timestamp) => {
+    if (!timestamp) {
+        return 'Never'
+    }
+
+    const normalized = Number(timestamp) > 9999999999 ? Number(timestamp) : Number(timestamp) * 1000
+
+    return new Intl.DateTimeFormat(undefined, {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+    }).format(new Date(normalized))
+}
+
+const mobileAppTooltip = (row) => {
+    const status = ringotelStatusFor(row)
+
+    if (isRingotelLoading.value && !status) {
+        return 'Mobile App (Activated). Ringotel status is loading.'
+    }
+
+    if (!status) {
+        return 'Mobile App (Activated). Ringotel status unavailable.'
+    }
+
+    return `Mobile App (Activated). Ringotel: ${status.state_label}. Last login: ${formatRingotelTimestamp(status.last_login_ts)}.`
+}
 
 
 const handleImportButtonClick = () => {
@@ -775,6 +841,7 @@ const handleSearchButtonClick = () => {
 
 const refreshCurrentPage = () => {
     getData(currentPage.value)
+    getRingotelStatuses()
 };
 
 const handleFiltersReset = () => {

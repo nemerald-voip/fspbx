@@ -52,6 +52,8 @@ use App\Traits\ChecksLimits;
 use App\Exports\ExtensionsExport;
 use App\Models\DomainSettings;
 use App\Models\DefaultSettings;
+use App\Services\RingotelApiService;
+use Illuminate\Support\Facades\Cache;
 
 class ExtensionsController extends Controller
 {
@@ -113,6 +115,7 @@ class ExtensionsController extends Controller
                     'bulk_delete' => route('extensions.bulk.delete'),
                     'select_all' => route('extensions.select.all'),
                     'registrations' => route('extensions.registrations'),
+                    'ringotel_status' => route('extensions.ringotel.status'),
                     'download_template' => route('extensions.template.download'),
                     'import' => route('extensions.import'),
                     'create_user' => route('extensions.make.user'),
@@ -359,6 +362,74 @@ class ExtensionsController extends Controller
                 'success' => false,
                 'errors' => ['error' => [$e->getMessage()]],
             ], 500);
+        }
+    }
+
+    public function ringotelStatus(RingotelApiService $ringotelApiService)
+    {
+        if (!userCheckPermission('extension_view')) {
+            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+        }
+
+        $currentDomain = session('domain_uuid');
+
+        try {
+            $orgId = DomainSettings::where('domain_uuid', $currentDomain)
+                ->where('domain_setting_category', 'app shell')
+                ->where('domain_setting_subcategory', 'org_id')
+                ->where('domain_setting_enabled', true)
+                ->value('domain_setting_value');
+
+            if (empty($orgId)) {
+                return response()->json([
+                    'success' => true,
+                    'data' => [],
+                ]);
+            }
+
+            $mobileAppUsers = MobileAppUsers::query()
+                ->where('domain_uuid', $currentDomain)
+                ->where('status', 1)
+                ->whereNotNull('user_id')
+                ->get(['extension_uuid', 'user_id']);
+
+            if ($mobileAppUsers->isEmpty()) {
+                return response()->json([
+                    'success' => true,
+                    'data' => [],
+                ]);
+            }
+
+            $cacheKey = "ringotel:extension-status:{$currentDomain}:{$orgId}";
+            $data = Cache::remember($cacheKey, now()->addSeconds(45), function () use ($ringotelApiService, $orgId, $mobileAppUsers) {
+                $ringotelUsers = $ringotelApiService->getUsersByOrgId($orgId)->keyBy('id');
+
+                return $mobileAppUsers
+                    ->mapWithKeys(function ($mobileAppUser) use ($ringotelUsers, $ringotelApiService) {
+                        $ringotelUser = $ringotelUsers->get($mobileAppUser->user_id);
+
+                        if (!$ringotelUser) {
+                            return [];
+                        }
+
+                        return [
+                            $mobileAppUser->extension_uuid => $ringotelApiService->normalizeUserPresence($ringotelUser),
+                        ];
+                    })
+                    ->all();
+            });
+
+            return response()->json([
+                'success' => true,
+                'data' => $data,
+            ]);
+        } catch (\Throwable $e) {
+            logger('ExtensionsController@ringotelStatus error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+
+            return response()->json([
+                'success' => false,
+                'data' => [],
+            ]);
         }
     }
 

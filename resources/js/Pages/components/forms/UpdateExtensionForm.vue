@@ -1372,6 +1372,43 @@
                                                     </div>
                                                 </StaticElement>
 
+                                                <StaticElement name="mobile_app_ringotel_state"
+                                                    :conditions="[() => !!mobileAppOptions?.mobile_app && mobileAppOptions?.mobile_app?.status == 1]">
+                                                    <div class="mt-4 space-y-4 rounded-md border border-gray-200 bg-gray-50 p-4">
+                                                        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                                            <div>
+                                                                <div class="flex items-center gap-x-3">
+                                                                    <span class="font-semibold">Extension State:</span>
+                                                                    <Badge v-if="ringotelUser"
+                                                                        :backgroundColor="ringotelStateBadge(ringotelUser).backgroundColor"
+                                                                        :textColor="ringotelStateBadge(ringotelUser).textColor"
+                                                                        :text="ringotelUser.state_label"
+                                                                        :ringColor="ringotelStateBadge(ringotelUser).ringColor"
+                                                                        class="px-2 py-1 text-xs font-semibold" />
+                                                                    <Badge v-else backgroundColor="bg-gray-100"
+                                                                        textColor="text-gray-700"
+                                                                        :text="'Unavailable'"
+                                                                        ringColor="ring-gray-400/20"
+                                                                        class="px-2 py-1 text-xs font-semibold" />
+                                                                </div>
+                                                                <p class="mt-1 text-xs text-gray-500">
+                                                                    Ringotel API state controls whether DND should be toggled on or off.
+                                                                </p>
+                                                            </div>
+                                                            <div class="flex items-center gap-2">
+                                                                <select :value="ringotelUser?.dnd ? 'dnd' : 'available'"
+                                                                    :disabled="!ringotelUser || isMobileAppLoading.state"
+                                                                    @change="handleRingotelStateChange"
+                                                                    class="block w-44 rounded-md border-0 py-1.5 pl-3 pr-8 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 disabled:bg-gray-100 disabled:text-gray-500">
+                                                                    <option value="available">Available</option>
+                                                                    <option value="dnd">Do Not Disturb</option>
+                                                                </select>
+                                                                <Spinner :show="isMobileAppLoading.state" />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </StaticElement>
+
                                                 <ButtonElement name="enable_mobile_app" button-label="Enable"
                                                     label="Step 1: Enable Mobile App for Extension"
                                                     @click="handleMobileAppEnableButtonClick"
@@ -1506,6 +1543,38 @@
 
                                                 <GroupElement name="container5"
                                                     :conditions="[() => !!mobileAppOptions?.mobile_app]" />
+
+                                                <StaticElement name="mobile_app_devices"
+                                                    :conditions="[() => !!mobileAppOptions?.mobile_app && mobileAppOptions?.mobile_app?.status == 1]">
+                                                    <div class="mt-5">
+                                                        <h3 class="text-sm font-semibold text-gray-900">Mobile App Devices</h3>
+                                                        <div v-if="ringotelUser?.devices?.length"
+                                                            class="mt-3 overflow-hidden rounded-md border border-gray-200">
+                                                            <table class="min-w-full divide-y divide-gray-200">
+                                                                <thead class="bg-gray-50">
+                                                                    <tr>
+                                                                        <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700">Device</th>
+                                                                        <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700">Status</th>
+                                                                        <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700">Last Login</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody class="divide-y divide-gray-200 bg-white">
+                                                                    <tr v-for="device in ringotelUser.devices" :key="device.id || device.name">
+                                                                        <td class="px-3 py-2 text-sm text-gray-700">
+                                                                            <div class="font-medium text-gray-900">{{ device.name }}</div>
+                                                                            <div v-if="device.id" class="text-xs text-gray-500">{{ device.id }}</div>
+                                                                        </td>
+                                                                        <td class="px-3 py-2 text-sm text-gray-700">{{ device.status_label }}</td>
+                                                                        <td class="px-3 py-2 text-sm text-gray-700">{{ formatRingotelTimestamp(device.last_login_ts) }}</td>
+                                                                    </tr>
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                        <div v-else class="mt-3 rounded-md border border-gray-200 bg-gray-50 px-3 py-3 text-sm text-gray-500">
+                                                            No mobile app devices found.
+                                                        </div>
+                                                    </div>
+                                                </StaticElement>
 
 
                                                 <StaticElement name="mobile_app_loading">
@@ -1987,10 +2056,54 @@ const isMobileAppLoading = reactive({
     activate: false,
     deactivate: false,
     remove: false,
+    state: false,
 })
 const mobileAppContactOnly = ref(false)
 const recordedName = ref(props.options?.recorded_name)
 const availableGreetings = ref(null)
+const ringotelUser = computed(() => mobileAppOptions.value?.ringotel_user ?? null)
+
+const ringotelStateBadge = (user) => {
+    return {
+        green: {
+            backgroundColor: 'bg-green-100',
+            textColor: 'text-green-700',
+            ringColor: 'ring-green-400/20',
+        },
+        blue: {
+            backgroundColor: 'bg-blue-100',
+            textColor: 'text-blue-700',
+            ringColor: 'ring-blue-400/20',
+        },
+        red: {
+            backgroundColor: 'bg-rose-100',
+            textColor: 'text-rose-700',
+            ringColor: 'ring-rose-400/20',
+        },
+        gray: {
+            backgroundColor: 'bg-gray-100',
+            textColor: 'text-gray-700',
+            ringColor: 'ring-gray-400/20',
+        },
+    }[user?.state_color] ?? {
+        backgroundColor: 'bg-gray-100',
+        textColor: 'text-gray-700',
+        ringColor: 'ring-gray-400/20',
+    }
+}
+
+const formatRingotelTimestamp = (timestamp) => {
+    if (!timestamp) {
+        return 'Never'
+    }
+
+    const normalized = Number(timestamp) > 9999999999 ? Number(timestamp) : Number(timestamp) * 1000
+
+    return new Intl.DateTimeFormat(undefined, {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+    }).format(new Date(normalized))
+}
 
 watch(
     () => props.options?.recorded_name,
@@ -2230,6 +2343,32 @@ const getMobileAppOptions = async () => {
         }).finally(() => {
             isMobileAppOptionsLoading.value = false
         });
+}
+
+const handleRingotelStateChange = async (event) => {
+    const dnd = event.target.value === 'dnd'
+
+    if (!ringotelUser.value || ringotelUser.value.dnd === dnd) {
+        return
+    }
+
+    isMobileAppLoading.state = true
+
+    try {
+        const response = await axios.post(mobileAppOptions.value.routes.set_user_state, {
+            mobile_app_user_uuid: mobileAppOptions.value.mobile_app.mobile_app_user_uuid,
+            dnd,
+        })
+
+        mobileAppOptions.value.ringotel_user = response.data.ringotel_user
+        emit('success', 'success', response.data.messages)
+        emit('refresh-data')
+    } catch (error) {
+        emit('error', error)
+        event.target.value = ringotelUser.value?.dnd ? 'dnd' : 'available'
+    } finally {
+        isMobileAppLoading.state = false
+    }
 }
 
 const handleMobileAppEnableButtonClick = async () => {

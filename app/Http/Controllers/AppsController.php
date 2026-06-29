@@ -882,8 +882,9 @@ class AppsController extends Controller
         try {
 
             $mobile_app = QueryBuilder::for(MobileAppUsers::query())
-                ->select('mobile_app_user_uuid', 'org_id', 'conn_id', 'user_id', 'status')
+                ->select('mobile_app_user_uuid', 'extension_uuid', 'org_id', 'conn_id', 'user_id', 'status')
                 ->where('extension_uuid', request('extension_uuid'))
+                ->where('domain_uuid', session('domain_uuid'))
                 ->first();
 
 
@@ -898,11 +899,26 @@ class AppsController extends Controller
             }
 
             $connections = $this->ringotelApiService->getConnections($org_id);
+            $ringotelUser = null;
+
+            if ($mobile_app && (string) $mobile_app->status === '1' && !empty($mobile_app->user_id)) {
+                try {
+                    $ringotelUser = $this->ringotelApiService->normalizeUserPresence(
+                        $this->ringotelApiService->getUser($mobile_app->org_id ?: $org_id, $mobile_app->user_id)
+                    );
+                } catch (\Throwable $e) {
+                    logger('AppsController@getMobileAppOptions Ringotel user error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+                }
+            }
 
             return response()->json([
                 'mobile_app' => $mobile_app,
                 'org_id' => $org_id,
                 'connections' => $connections,
+                'ringotel_user' => $ringotelUser,
+                'routes' => [
+                    'set_user_state' => route('apps.user.state'),
+                ],
             ]);
         } catch (\Throwable $e) {
             logger('ExtensionsController@getMobileAppOptions error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
@@ -1605,6 +1621,43 @@ class AppsController extends Controller
                     'message' => 'An unexpected error occurred. Please try again later.',
                 ],
             ]);
+        }
+    }
+
+    public function setUserState(Request $request, RingotelApiService $ringotelApiService)
+    {
+        $request->validate([
+            'mobile_app_user_uuid' => ['required', 'uuid'],
+            'dnd' => ['required', 'boolean'],
+        ]);
+
+        try {
+            $mobileApp = MobileAppUsers::query()
+                ->whereKey($request->input('mobile_app_user_uuid'))
+                ->where('domain_uuid', session('domain_uuid'))
+                ->where('status', 1)
+                ->firstOrFail();
+
+            $ringotelApiService->setUserState($mobileApp->org_id, $mobileApp->user_id, $request->boolean('dnd'));
+            Cache::forget('ringotel:extension-status:' . session('domain_uuid') . ':' . $mobileApp->org_id);
+            $ringotelUser = $ringotelApiService->normalizeUserPresence(
+                $ringotelApiService->getUser($mobileApp->org_id, $mobileApp->user_id)
+            );
+
+            return response()->json([
+                'ringotel_user' => $ringotelUser,
+                'messages' => [
+                    'success' => [$request->boolean('dnd') ? 'Ringotel DND has been enabled.' : 'Ringotel DND has been disabled.'],
+                ],
+            ], 200);
+        } catch (\Throwable $e) {
+            logger('AppsController@setUserState error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
+            return response()->json([
+                'errors' => [
+                    'error' => ['Unable to update Ringotel state.'],
+                ],
+            ], 500);
         }
     }
 
