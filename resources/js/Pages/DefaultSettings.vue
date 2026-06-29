@@ -119,7 +119,7 @@
                                         <button v-if="hasCopyableValue(row.value)" type="button" class="min-w-0 max-w-full text-left" :title="valueTitle(row.value, row.is_secret)" aria-label="Copy value" @click.stop="copyValue(row.value)">
                                             <code class="block max-w-full truncate rounded bg-gray-100 px-2 py-0.5 font-mono text-xs text-gray-800 ring-1 ring-transparent transition hover:bg-gray-200 hover:ring-gray-300">{{ truncatedValue(row.value, row.is_secret) }}</code>
                                         </button>
-                                        <code v-else class="block rounded bg-gray-100 px-2 py-0.5 font-mono text-xs text-gray-400">{{ displayValue(row.value, row.is_secret) }}</code>
+                                        <code v-else class="block max-w-full truncate rounded bg-gray-100 px-2 py-0.5 font-mono text-xs text-gray-400">{{ truncatedValue(row.value, row.is_secret) }}</code>
                                     </div>
                                     <button v-if="row.override_count > 0" type="button" class="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20 hover:bg-amber-100" @click="showAffectedDomains(row)">
                                         <UsersIcon class="h-3 w-3" />
@@ -180,7 +180,7 @@
                         <button v-if="hasCopyableValue(domain.value)" type="button" class="min-w-0 max-w-full text-left" :title="valueTitle(domain.value, affectedDomainsSecret)" aria-label="Copy value" @click.stop="copyValue(domain.value)">
                             <code class="block max-w-full truncate rounded bg-gray-50 px-1.5 py-0.5 font-mono text-xs text-gray-500 ring-1 ring-transparent transition hover:bg-gray-100 hover:ring-gray-300">{{ displayValue(domain.value, affectedDomainsSecret) }}</code>
                         </button>
-                        <code v-else class="block rounded bg-gray-50 px-1.5 py-0.5 font-mono text-xs text-gray-400">{{ displayValue(domain.value, affectedDomainsSecret) }}</code>
+                        <code v-else class="block max-w-full truncate rounded bg-gray-50 px-1.5 py-0.5 font-mono text-xs text-gray-400">{{ displayValue(domain.value, affectedDomainsSecret) }}</code>
                     </div>
                     <a :href="routes.domain_settings.replace('__DOMAIN__', domain.domain_uuid)" class="rounded-md px-2 py-1 text-indigo-600 hover:bg-indigo-50">Open</a>
                 </div>
@@ -466,10 +466,6 @@ const copyValue = async (value) => {
     }
 }
 
-const hasCopyableValue = (value) => value !== null
-    && value !== undefined
-    && (typeof value !== 'string' || value.trim() !== '')
-
 const writeClipboardText = async (text) => {
     if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(text)
@@ -489,6 +485,10 @@ const writeClipboardText = async (text) => {
 
     if (!copied) throw new Error('Copy failed')
 }
+
+const hasCopyableValue = (value) => value !== null
+    && value !== undefined
+    && (typeof value !== 'string' || value.trim() !== '')
 
 const VALUE_TRUNCATE_AT = 160
 

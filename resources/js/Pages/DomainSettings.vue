@@ -124,14 +124,14 @@
                                         <button v-if="hasCopyableValue(row.effective_value)" type="button" class="min-w-0 max-w-full text-left" :title="valueTitle(row.effective_value, row.is_secret)" aria-label="Copy value" @click.stop="copyValue(row.effective_value)">
                                             <code class="block max-w-full truncate rounded bg-gray-100 px-2 py-0.5 font-mono text-xs text-gray-800 ring-1 ring-transparent transition hover:bg-gray-200 hover:ring-gray-300">{{ truncatedValue(row.effective_value, row.is_secret) }}</code>
                                         </button>
-                                        <code v-else class="block rounded bg-gray-100 px-2 py-0.5 font-mono text-xs text-gray-400">{{ displayValue(row.effective_value, row.is_secret) }}</code>
+                                        <code v-else class="block max-w-full truncate rounded bg-gray-100 px-2 py-0.5 font-mono text-xs text-gray-400">{{ truncatedValue(row.effective_value, row.is_secret) }}</code>
                                     </div>
                                     <div v-if="row.source === 'override'" class="inline-flex min-w-0 max-w-full items-center gap-1.5 text-xs text-gray-400">
                                         <span class="shrink-0">default</span>
                                         <button v-if="hasCopyableValue(row.default_value)" type="button" class="min-w-0 max-w-full text-left" :title="valueTitle(row.default_value, row.is_secret)" aria-label="Copy default value" @click.stop="copyValue(row.default_value)">
                                             <code class="block max-w-full truncate rounded bg-gray-50 px-1.5 py-0.5 font-mono text-xs text-gray-500 line-through ring-1 ring-transparent transition hover:bg-gray-100 hover:ring-gray-300">{{ truncatedValue(row.default_value, row.is_secret) }}</code>
                                         </button>
-                                        <code v-else class="block rounded bg-gray-50 px-1.5 py-0.5 font-mono text-xs text-gray-400 line-through">{{ displayValue(row.default_value, row.is_secret) }}</code>
+                                        <code v-else class="block max-w-full truncate rounded bg-gray-50 px-1.5 py-0.5 font-mono text-xs text-gray-400 line-through">{{ truncatedValue(row.default_value, row.is_secret) }}</code>
                                     </div>
                                 </div>
                             </div>
@@ -217,7 +217,10 @@ const props = defineProps({
     routes: Object,
     permissions: Object,
     options: Object,
-    embedded: Boolean,
+    embedded: {
+        type: Boolean,
+        default: false,
+    },
 })
 
 const allRows = ref([])
@@ -482,10 +485,6 @@ const copyValue = async (value) => {
     }
 }
 
-const hasCopyableValue = (value) => value !== null
-    && value !== undefined
-    && (typeof value !== 'string' || value.trim() !== '')
-
 const writeClipboardText = async (text) => {
     if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(text)
@@ -505,6 +504,10 @@ const writeClipboardText = async (text) => {
 
     if (!copied) throw new Error('Copy failed')
 }
+
+const hasCopyableValue = (value) => value !== null
+    && value !== undefined
+    && (typeof value !== 'string' || value.trim() !== '')
 
 const VALUE_TRUNCATE_AT = 160
 

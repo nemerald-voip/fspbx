@@ -67,6 +67,11 @@
                     @edit-item="handleUpdateLocationButtonClick" @delete-item="handleDeleteLocationButtonClick" />
             </section>
 
+            <!-- DOMAIN VARIABLES -->
+            <section v-if="selectedMenuOption === 'domain_variables' && props.domainSettings">
+                <DomainSettingsPanel v-bind="props.domainSettings" embedded />
+            </section>
+
             <!-- AUTO PROVISIONING -->
             <section v-show="selectedMenuOption === 'auto_provisioning'">
                 <Vueform>
@@ -78,11 +83,6 @@
 
                 <AutoProvisioning :trigger="autoProvisioningTrigger" :routes="routes" :permissions="permissions"
                     :domain_uuid="data.domain_uuid" />
-            </section>
-
-            <!-- DOMAIN VARIABLES -->
-            <section v-if="selectedMenuOption === 'domain_settings' && domainSettings">
-                <DomainSettingsPanel v-bind="domainSettings" embedded />
             </section>
 
             <!--  Transcription - General Settings -->
@@ -99,9 +99,19 @@
 
             <!-- ROOM MANAGEMENT -->
             <section v-show="selectedMenuOption === 'room_management'">
-                <Vueform>
+                <Vueform ref="pmsProviderForm$" :endpoint="submitPmsProviderForm" @success="handlePmsProviderSuccess"
+                    @error="handleError" @response="handleResponse" :display-errors="false">
+                    <StaticElement name="pms_provider_title" tag="h4" content="Hotel PMS Provider"
+                        description="Select which PMS integration to use." />
+                    <SelectElement name="pms_provider" label="Provider" :items="pmsProviderOptions" :native="false"
+                        :search="false" :floating="false" :columns="{
+                            sm: {
+                                container: 6,
+                            },
+                        }" />
+                    <ButtonElement name="pms_provider_submit" button-label="Save PMS Provider" :submits="true"
+                        align="right" />
                     <StaticElement name="room_management_title" tag="h4" content="Room Management" description="" />
-                    <GroupElement name="container_1" />
                 </Vueform>
 
                 <RoomManagement :trigger="roomManagementTrigger" :routes="routes" :permissions="permissions"
@@ -174,6 +184,7 @@ import EmergencyCalls from "./components/EmergencyCalls.vue";
 import AutoProvisioning from "./components/AutoProvisioning.vue";
 import RoomManagement from "./components/RoomManagement.vue";
 import RoomStatus from "./components/RoomStatus.vue";
+import DomainSettingsPanel from "./DomainSettings.vue";
 import EmergencyServiceStatus from "./components/EmergencyServiceStatus.vue";
 import Locations from "./components/Locations.vue";
 import CreateLocationModal from "./components/modal/CreateLocationModal.vue"
@@ -182,7 +193,6 @@ import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import GraphicEqIcon from "@icons/GraphicEqIcon.vue"
 import CallTranscriptionOptionsForm from "./components/forms/CallTranscriptionOptionsForm.vue"
 import AssemblyAiForm from "./components/forms/AssemblyAiForm.vue"
-import DomainSettingsPanel from "./DomainSettings.vue"
 import {
     Cog6ToothIcon,
     MapPinIcon,
@@ -191,8 +201,8 @@ import {
     KeyIcon,
     BellAlertIcon,
     ClipboardDocumentCheckIcon,
-    AdjustmentsVerticalIcon,
     AdjustmentsHorizontalIcon,
+    AdjustmentsVerticalIcon,
 } from '@heroicons/vue/24/outline'
 
 const props = defineProps({
@@ -203,7 +213,14 @@ const props = defineProps({
     timezones: Object,
     routes: Object,
     permissions: Object,
-    domainSettings: Object,
+    pms_provider_options: {
+        type: Array,
+        default: () => [],
+    },
+    domainSettings: {
+        type: Object,
+        default: null,
+    },
 
 })
 
@@ -215,6 +232,7 @@ const pages = [
 // State for collapsible navigation
 const initialMenuOption = ref(null)
 const form$ = ref(null)
+const pmsProviderForm$ = ref(null)
 const isLocationsLoading = ref(false)
 const isDeleteLocationLoading = ref(false)
 const locations = ref([])
@@ -228,18 +246,27 @@ const confirmDeleteLocationAction = ref(null);
 const autoProvisioningTrigger = ref(false)
 const roomManagementTrigger = ref(false)
 const roomStatusTrigger = ref(false)
+const pmsProviderOptions = props.pms_provider_options?.length
+    ? props.pms_provider_options
+    : [
+        { value: 'charpms', label: 'CharPMS' },
+        { value: 'tigertms', label: 'TigerTMS' },
+    ]
 
 const handleUpdateSelectedMenuOption = (key) => {
     if (key === 'locations') getLocations()
     if (key === 'auto_provisioning') autoProvisioningTrigger.value = !autoProvisioningTrigger.value
-    if (key === 'room_management') roomManagementTrigger.value = !roomManagementTrigger.value
+    if (key === 'room_management') {
+        roomManagementTrigger.value = !roomManagementTrigger.value
+        getPmsProvider()
+    }
     if (key === 'room_status') roomStatusTrigger.value = !roomStatusTrigger.value
 }
 
 const navigation = [
     { key: 'general', name: 'General', icon: Cog6ToothIcon },
-    ...(props.domainSettings ? [{ key: 'domain_settings', name: 'Domain Variables', icon: AdjustmentsHorizontalIcon }] : []),
     { key: 'locations', name: 'Locations', icon: MapPinIcon },
+    ...(props.domainSettings ? [{ key: 'domain_variables', name: 'Domain Variables', icon: AdjustmentsHorizontalIcon }] : []),
     { key: 'auto_provisioning', name: 'Auto Provisioning', icon: WrenchScrewdriverIcon },
     // { key: 'billing', name: 'Billing', icon: CreditCardIcon },
     {
@@ -281,6 +308,7 @@ onMounted(() => {
     })
 
     form$.value.clean()
+    getPmsProvider()
     // console.log(form$.value.data);
 })
 
@@ -339,6 +367,29 @@ const executeLocationBulkDelete = async (items) => {
         isDeleteLocationLoading.value = false;
     }
 };
+
+const getPmsProvider = async () => {
+    if (!props.routes.pms_provider || !pmsProviderForm$.value) return
+
+    try {
+        const response = await axios.get(props.routes.pms_provider)
+        pmsProviderForm$.value.update({
+            pms_provider: response.data.provider ?? props.data.named_settings?.pms_provider?.value ?? 'charpms',
+        })
+        pmsProviderForm$.value.clean()
+    } catch (error) {
+        handleErrorResponse(error)
+    }
+}
+
+const submitPmsProviderForm = async (FormData, form$) => {
+    return await form$.$vueform.services.axios.put(props.routes.pms_provider_update, form$.requestData)
+}
+
+const handlePmsProviderSuccess = (response, form$) => {
+    showNotification('success', response.data.messages)
+    form$.clean()
+}
 
 const submitForm = async (FormData, form$) => {
     // Using form$.requestData will EXCLUDE conditional elements and it 
