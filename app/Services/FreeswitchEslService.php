@@ -87,6 +87,40 @@ class FreeswitchEslService
         }
     }
 
+    public function sendEvent(string $eventName, array $headers = [], ?string $body = null, bool $disconnect = true): ?string
+    {
+        try {
+            if (! $this->isConnected()) {
+                $this->reconnect();
+            }
+
+            if (! class_exists('\ESLevent')) {
+                throw new \Exception("FreeSWITCH PHP ESL event class is not available.");
+            }
+
+            $event = new \ESLevent($eventName);
+
+            foreach ($headers as $name => $value) {
+                $event->addHeader((string) $name, (string) $value);
+            }
+
+            if ($body !== null) {
+                $event->addBody($body);
+            }
+
+            $this->conn->sendEvent($event);
+
+            return '+OK event sent';
+        } catch (Throwable $e) {
+            logger($e->getMessage());
+            return null;
+        } finally {
+            if ($disconnect) {
+                $this->disconnect();
+            }
+        }
+    }
+
     public function disconnect()
     {
         if ($this->conn) {
