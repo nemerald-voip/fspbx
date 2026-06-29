@@ -580,14 +580,14 @@ const mobileAppTooltip = (row) => {
     const status = ringotelStatusFor(row)
 
     if (isRingotelLoading.value && !status) {
-        return 'Mobile App (Activated). Ringotel status is loading.'
+        return 'Mobile App (Activated). Mobile App status is loading.'
     }
 
     if (!status) {
-        return 'Mobile App (Activated). Ringotel status unavailable.'
+        return 'Mobile App (Activated). Mobile App status unavailable.'
     }
 
-    return `Mobile App (Activated). Ringotel: ${status.state_label}. Last login: ${formatRingotelTimestamp(status.last_login_ts)}.`
+    return `Mobile App (Activated). State: ${status.state_label}. Last Seen: ${formatRingotelTimestamp(status.last_login_ts)}.`
 }
 
 

@@ -314,6 +314,7 @@
                                                 <FormTab name="mobile_app" label="Mobile App" :elements="[
                                                     'mobile_app_title',
                                                     'mobile_app_status',
+                                                    'mobile_app_ringotel_state',
                                                     'enable_mobile_app',
                                                     'enable_mobile_app_contact',
                                                     'mobile_app_connection',
@@ -323,6 +324,7 @@
                                                     'deactivate_mobile_app',
                                                     'activate_mobile_app',
                                                     'remove_mobile_app',
+                                                    'mobile_app_devices',
                                                     'mobile_app_loading',
                                                     'mobile_app_error',
                                                     'container2',
@@ -1392,7 +1394,7 @@
                                                                         class="px-2 py-1 text-xs font-semibold" />
                                                                 </div>
                                                                 <p class="mt-1 text-xs text-gray-500">
-                                                                    Ringotel API state controls whether DND should be toggled on or off.
+                                                                    Mobile App state controls whether DND should be toggled on or off.
                                                                 </p>
                                                             </div>
                                                             <div class="flex items-center gap-2">
@@ -1554,8 +1556,8 @@
                                                                 <thead class="bg-gray-50">
                                                                     <tr>
                                                                         <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700">Device</th>
-                                                                        <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700">Status</th>
-                                                                        <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700">Last Login</th>
+                                                                        <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700">Last Seen</th>
+                                                                        <th class="px-3 py-2 text-right text-xs font-semibold text-gray-700"></th>
                                                                     </tr>
                                                                 </thead>
                                                                 <tbody class="divide-y divide-gray-200 bg-white">
@@ -1564,8 +1566,17 @@
                                                                             <div class="font-medium text-gray-900">{{ device.name }}</div>
                                                                             <div v-if="device.id" class="text-xs text-gray-500">{{ device.id }}</div>
                                                                         </td>
-                                                                        <td class="px-3 py-2 text-sm text-gray-700">{{ device.status_label }}</td>
                                                                         <td class="px-3 py-2 text-sm text-gray-700">{{ formatRingotelTimestamp(device.last_login_ts) }}</td>
+                                                                        <td class="px-3 py-2 text-right">
+                                                                            <button v-if="canDeleteMobileAppDevice(device)"
+                                                                                type="button"
+                                                                                title="Remove device"
+                                                                                :disabled="isMobileAppLoading.device"
+                                                                                @click="handleMobileAppDeviceDeleteClick(device)"
+                                                                                class="inline-flex h-7 w-7 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-rose-600 disabled:cursor-not-allowed disabled:text-gray-300">
+                                                                                <XMarkIcon class="h-4 w-4" aria-hidden="true" />
+                                                                            </button>
+                                                                        </td>
                                                                     </tr>
                                                                 </tbody>
                                                             </table>
@@ -2057,6 +2068,7 @@ const isMobileAppLoading = reactive({
     deactivate: false,
     remove: false,
     state: false,
+    device: false,
 })
 const mobileAppContactOnly = ref(false)
 const recordedName = ref(props.options?.recorded_name)
@@ -2368,6 +2380,33 @@ const handleRingotelStateChange = async (event) => {
         event.target.value = ringotelUser.value?.dnd ? 'dnd' : 'available'
     } finally {
         isMobileAppLoading.state = false
+    }
+}
+
+const canDeleteMobileAppDevice = (device) => {
+    return device?.source === 'device' && !!device?.id
+}
+
+const handleMobileAppDeviceDeleteClick = async (device) => {
+    if (!canDeleteMobileAppDevice(device) || isMobileAppLoading.device) {
+        return
+    }
+
+    isMobileAppLoading.device = true
+
+    try {
+        const response = await axios.post(mobileAppOptions.value.routes.delete_device, {
+            mobile_app_user_uuid: mobileAppOptions.value.mobile_app.mobile_app_user_uuid,
+            termid: device.id,
+        })
+
+        mobileAppOptions.value.ringotel_user = response.data.ringotel_user
+        emit('success', 'success', response.data.messages)
+        emit('refresh-data')
+    } catch (error) {
+        emit('error', error)
+    } finally {
+        isMobileAppLoading.device = false
     }
 }
 

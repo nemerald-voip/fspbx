@@ -824,6 +824,35 @@ class RingotelApiService
         return $response['result'] ?? true;
     }
 
+    public function deleteDevice($orgId, $userId, $termId)
+    {
+        $this->ensureApiTokenExists();
+
+        $data = [
+            'method' => 'deleteDevice',
+            'params' => [
+                'orgid' => $orgId,
+                'userid' => $userId,
+                'termid' => $termId,
+            ],
+        ];
+
+        $response = Http::ringotel()
+            ->timeout($this->timeout)
+            ->withBody(json_encode($data), 'application/json')
+            ->post('/')
+            ->throw(function () use ($termId) {
+                throw new \Exception("Unable to remove device ID: $termId");
+            })
+            ->json();
+
+        if (isset($response['error'])) {
+            throw new \Exception($response['error']['message']);
+        }
+
+        return $response['result'] ?? true;
+    }
+
     public function normalizeUserPresence(RingotelUserDTO $user): array
     {
         $state = is_numeric($user->state) ? (int) $user->state : null;
@@ -843,14 +872,21 @@ class RingotelApiService
 
         $devices = collect($user->devices ?? [])
             ->map(function ($device) {
-                $timestamp = data_get($device, 'ts');
+                $timestamp = data_get($device, 'ts')
+                    ?? data_get($device, 'last_login')
+                    ?? data_get($device, 'lastLogin')
+                    ?? data_get($device, 'lastseen')
+                    ?? data_get($device, 'last_seen');
+                $status = data_get($device, 'st') ?? data_get($device, 'status');
 
                 return [
                     'id' => data_get($device, 'id'),
-                    'name' => data_get($device, 'ua') ?: 'Unknown device',
-                    'status' => data_get($device, 'st'),
-                    'status_label' => (string) data_get($device, 'st') === '1' ? 'Online' : 'Offline',
+                    'name' => data_get($device, 'ua') ?: data_get($device, 'name') ?: data_get($device, 'devinfo') ?: 'Unknown device',
+                    'ip' => data_get($device, 'ip') ?? data_get($device, 'iaddr'),
+                    'status' => $status,
+                    'status_label' => (string) $status === '1' ? 'Online' : 'Offline',
                     'last_login_ts' => is_numeric($timestamp) ? (int) $timestamp : null,
+                    'source' => 'device',
                 ];
             })
             ->values()
@@ -871,6 +907,31 @@ class RingotelApiService
             'last_login_ts' => $lastLogin ?: null,
             'devices' => $devices,
         ];
+    }
+
+    public function normalizeRegistrationHistoryDevices(array $history): array
+    {
+        return collect($history)
+            ->map(function ($event) {
+                $registeredAt = data_get($event, 'treg');
+                $unregisteredAt = data_get($event, 'tunreg');
+                $lastSeen = $unregisteredAt ?: $registeredAt;
+
+                return [
+                    'id' => data_get($event, 'rid'),
+                    'name' => data_get($event, 'devinfo') ?: 'Unknown device',
+                    'ip' => data_get($event, 'iaddr'),
+                    'status' => null,
+                    'status_label' => null,
+                    'last_login_ts' => is_numeric($lastSeen) ? (int) $lastSeen : null,
+                    'source' => 'history',
+                ];
+            })
+            ->filter(fn ($device) => !empty($device['name']) || !empty($device['id']))
+            ->sortByDesc('last_login_ts')
+            ->unique(fn ($device) => $device['name'] . '|' . ($device['id'] ?? ''))
+            ->values()
+            ->all();
     }
 
     function createUser($params)
