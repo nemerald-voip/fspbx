@@ -2,26 +2,26 @@
     <Listbox v-model="currentItem" @update:modelValue="value => emit('update:model-value', value)">
         <div class="relative">
             <ListboxButton
-                class="relative w-full cursor-default rounded-md bg-white py-2 pl-3 pr-10 text-left ring-1 ring-inset ring-gray-300 focus:outline-none focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-blue-600 sm:text-sm">
-                <span :class="{ 'text-gray-400': !currentItem }" class="block truncate">
+                class="relative w-full cursor-default rounded-md bg-surface py-2 pl-3 pr-10 text-left ring-1 ring-inset ring-strong focus:outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-info sm:text-sm">
+                <span :class="{ 'text-subtle': !currentItem }" class="block truncate">
                     {{ currentItem ? currentItem.name : placeholder }}
                 </span>
                 <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                    <ChevronUpDownIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                    <ChevronUpDownIcon class="h-5 w-5 text-subtle" aria-hidden="true" />
                 </span>
             </ListboxButton>
 
             <transition leave-active-class="transition duration-100 ease-in" leave-from-class="opacity-100"
                 leave-to-class="opacity-0">
                 <ListboxOptions
-                    class="absolute z-10 mt-1 px-2 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm">
+                    class="absolute z-10 mt-1 px-2 max-h-60 w-full overflow-auto rounded-md bg-surface py-1 text-base shadow-lg ring-1 ring-black/5 dark:ring-white/10 focus:outline-none sm:text-sm">
                     <input v-if="search" v-model="searchKeyword"
-                        class="w-full rounded-md border-0 py-1.5 pl-10 shadow-md mb-1 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600"
+                        class="w-full rounded-md border-0 py-1.5 pl-10 shadow-md mb-1 text-sm leading-6 text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus"
                         placeholder="Search" type="search"/>
 
                     <ListboxOption v-if="props.allowEmpty" v-slot="{ active, selected }" :value="null" as="template">
                         <li :class="[
-                            active ? 'bg-blue-100 text-blue-800' : 'text-gray-900',
+                            active ? 'bg-info-subtle text-info' : 'text-heading',
                             'relative cursor-default select-none py-2 pl-10 pr-4',
                         ]">
                             <span :class="[
@@ -32,19 +32,19 @@
                     </ListboxOption>
 
                     <template v-for="(group, groupName) in filteredOptions">
-                        <div class="p-2 text-gray-900 font-bold">
+                        <div class="p-2 text-heading font-bold">
                             {{ groupName }}
                         </div>
                         <ListboxOption v-slot="{ active, selected }" v-for="item in group" :key="item.value" :value="item" as="template">
                             <li :class="[
-                            active ? 'bg-blue-100 text-blue-800' : 'text-gray-900',
+                            active ? 'bg-info-subtle text-info' : 'text-heading',
                             'relative cursor-default select-none py-2 pl-10 pr-4',
                         ]">
                             <span :class="[
                                 selected ? 'font-medium' : 'font-normal',
                                 'block truncate',
                             ]">{{ item.name }}</span>
-                                <span v-if="selected" class="absolute inset-y-0 left-0 flex items-center pl-3 text-blue-600">
+                                <span v-if="selected" class="absolute inset-y-0 left-0 flex items-center pl-3 text-info">
                                 <CheckIcon class="h-5 w-5" aria-hidden="true" />
                             </span>
                             </li>

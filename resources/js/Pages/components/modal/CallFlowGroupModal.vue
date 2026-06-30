@@ -4,7 +4,7 @@
             <Dialog as="div" class="relative z-50" @close="emit('close')">
                 <TransitionChild as="div" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100"
                     leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0">
-                    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+                    <div class="fixed inset-0 bg-gray-500 dark:bg-gray-900 bg-opacity-75 transition-opacity" />
                 </TransitionChild>
 
                 <div class="fixed inset-0 z-50 w-screen overflow-y-auto">
@@ -15,12 +15,12 @@
                             leave-from="opacity-100 translate-y-0 sm:scale-100"
                             leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
                             <DialogPanel
-                                class="relative transform overflow-hidden rounded-lg bg-white px-6 pb-6 pt-6 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-xl sm:p-8">
+                                class="relative transform overflow-hidden rounded-lg bg-surface px-6 pb-6 pt-6 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-xl sm:p-8">
                                 <div>
-                                    <DialogTitle as="h3" class="text-base font-semibold leading-6 text-gray-900">
+                                    <DialogTitle as="h3" class="text-base font-semibold leading-6 text-heading">
                                         New Group
                                     </DialogTitle>
-                                    <p class="mt-1 text-sm text-gray-500">
+                                    <p class="mt-1 text-sm text-muted">
                                         Create a reusable group for related call flows.
                                     </p>
                                 </div>
@@ -36,7 +36,7 @@
                                                 :columns="{ container: 12 }" />
 
                                             <StaticElement v-if="error" name="group_error">
-                                                <p class="text-sm text-red-600">{{ error }}</p>
+                                                <p class="text-sm text-danger">{{ error }}</p>
                                             </StaticElement>
 
                                             <GroupElement name="button_container" />

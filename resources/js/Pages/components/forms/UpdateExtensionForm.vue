@@ -4,7 +4,7 @@
             :inert="showNewGreetingModal || showNewNameGreetingModal || showDeviceCreateModal || showDeviceAssignModal || showUpdatePasswordModal">
             <TransitionChild as="div" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100"
                 leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0">
-                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+                <div class="fixed inset-0 bg-gray-500 dark:bg-gray-900 bg-opacity-75 transition-opacity" />
             </TransitionChild>
             <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
                 <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
@@ -17,15 +17,15 @@
 
 
                         <DialogPanel
-                            class="relative transform  rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-5xl sm:p-6">
+                            class="relative transform  rounded-lg bg-surface px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-5xl sm:p-6">
 
-                            <DialogTitle as="h3" class="mb-4 pr-8 text-base font-semibold leading-6 text-gray-900">
+                            <DialogTitle as="h3" class="mb-4 pr-8 text-base font-semibold leading-6 text-heading">
                                 {{ header }}
                             </DialogTitle>
 
                             <div class="absolute right-0 top-0 pr-4 pt-4 sm:block">
                                 <button type="button"
-                                    class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                                    class="rounded-md bg-surface text-subtle hover:text-muted focus:outline-none focus:ring-2 focus:ring-focus focus:ring-offset-2"
                                     @click="handleClose">
                                     <span class="sr-only">Close</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
@@ -35,7 +35,7 @@
                             <div v-if="loading" class="w-full h-full">
                                 <div class="flex justify-center items-center space-x-3">
                                     <div>
-                                        <svg class="animate-spin  h-10 w-10 text-blue-600"
+                                        <svg class="animate-spin  h-10 w-10 text-info"
                                             xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
                                                 stroke-width="4">
@@ -45,7 +45,7 @@
                                             </path>
                                         </svg>
                                     </div>
-                                    <div class="text-lg text-blue-600 m-auto">Loading...</div>
+                                    <div class="text-lg text-info m-auto">Loading...</div>
                                 </div>
                             </div>
 
@@ -378,7 +378,7 @@
                                         </div>
 
                                         <div
-                                            class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
+                                            class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-body bg-surface-2 px-4 py-6 sm:p-6">
                                             <FormElements>
 
                                                 <HiddenElement name="extension_uuid" :meta="true" />
@@ -386,21 +386,21 @@
                                                     :conditions="[() => options.permissions.is_superadmin]">
 
                                                     <div class="mb-1">
-                                                        <div class="text-sm font-medium text-gray-600 mb-1">
+                                                        <div class="text-sm font-medium text-body mb-1">
                                                             Unique ID
                                                         </div>
 
                                                         <div class="flex items-center group">
-                                                            <span class="text-sm text-gray-900 select-all font-normal">
+                                                            <span class="text-sm text-heading select-all font-normal">
                                                                 {{ options.item.extension_uuid }}
                                                             </span>
                                                             <button type="button"
                                                                 @click="handleCopyToClipboard(options.item.extension_uuid)"
-                                                                class="ml-2 p-1 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
+                                                                class="ml-2 p-1 rounded-full text-subtle hover:text-info hover:bg-info-subtle transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
                                                                 title="Copy to clipboard">
                                                                 <!-- Small Copy Icon -->
                                                                 <ClipboardDocumentIcon
-                                                                    class="h-4 w-4 text-gray-500 hover:text-gray-900  cursor-pointer" />
+                                                                    class="h-4 w-4 text-muted hover:text-heading  cursor-pointer" />
                                                             </button>
                                                         </div>
                                                     </div>
@@ -439,8 +439,8 @@
                                                     description="Prevents users from making or receiving calls, except for emergency calls. Typically used for billing or policy-related suspensions."
                                                     :replace-class="{
                                                         'toggle.toggleOn': {
-                                                            'form-bg-primary': 'bg-red-500',
-                                                            'form-border-color-primary': 'border-red-500',
+                                                            'form-bg-primary': 'bg-danger',
+                                                            'form-border-color-primary': 'border-danger',
                                                             'form-color-on-primary': 'form-color-on-danger'
 
                                                         }
@@ -451,8 +451,8 @@
                                                 <ToggleElement name="do_not_disturb" text="Do Not Disturb"
                                                     true-value="true" false-value="false" :replace-class="{
                                                         'toggle.toggleOn': {
-                                                            'form-bg-primary': 'bg-red-500',
-                                                            'form-border-color-primary': 'border-red-500',
+                                                            'form-bg-primary': 'bg-danger',
+                                                            'form-border-color-primary': 'border-danger',
                                                             'form-color-on-primary': 'form-color-on-danger'
 
                                                         }
@@ -884,7 +884,7 @@
 
                                                 <ListElement name="follow_me_destinations" :sort="true"
                                                     :controls="{ add: false }"
-                                                    :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }"
+                                                    :add-classes="{ ListElement: { listItem: 'bg-surface p-4 mb-4 rounded-lg shadow-md' } }"
                                                     :conditions="[['follow_me_enabled', '==', 'true']]">
                                                     <template #default="{ index }">
                                                         <ObjectElement :name="index">
@@ -1039,7 +1039,7 @@
                                                         :conditions="[hasPlayableGreeting]"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                                         <PlayCircleIcon
-                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-info hover:bg-info-subtle hover:text-info active:bg-info-subtle active:duration-150 cursor-pointer" />
                                                     </ButtonElement>
 
 
@@ -1049,7 +1049,7 @@
                                                         }"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                                         <PauseCircleIcon
-                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
+                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-danger hover:bg-danger-subtle hover:text-danger active:bg-danger-subtle active:duration-150 cursor-pointer" />
 
                                                     </ButtonElement>
 
@@ -1060,7 +1060,7 @@
                                                         }" :conditions="[hasPlayableGreeting]"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                                         <CloudArrowDownIcon
-                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-info hover:bg-info-subtle hover:text-info active:bg-info-subtle active:duration-150 cursor-pointer" />
 
                                                     </ButtonElement>
 
@@ -1070,7 +1070,7 @@
                                                         }"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                                         <Spinner :show="true"
-                                                            class="h-8 w-8 ml-0 mr-0 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                                            class="h-8 w-8 ml-0 mr-0 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-info hover:bg-info-subtle hover:text-info active:bg-info-subtle active:duration-150 cursor-pointer" />
 
                                                     </ButtonElement>
 
@@ -1081,7 +1081,7 @@
                                                         :conditions="[hasPlayableGreeting]"                                                        
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                                         <PencilSquareIcon
-                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-info hover:bg-info-subtle hover:text-info active:bg-info-subtle active:duration-150 cursor-pointer" />
 
                                                     </ButtonElement> -->
 
@@ -1091,7 +1091,7 @@
                                                         }" :conditions="[hasPlayableGreeting]"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                                         <TrashIcon
-                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
+                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-danger hover:bg-danger-subtle hover:text-danger active:bg-danger-subtle active:duration-150 cursor-pointer" />
 
                                                     </ButtonElement>
 
@@ -1101,7 +1101,7 @@
                                                         }"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                                         <PlusIcon
-                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-info hover:bg-info-subtle hover:text-info active:bg-info-subtle active:duration-150 cursor-pointer" />
 
                                                     </ButtonElement>
 
@@ -1130,12 +1130,12 @@
                                                     :conditions="[['voicemail_enabled', '==', 'true']]">
                                                     <div class="pt-2 flex items-center whitespace-nowrap space-x-2">
                                                         <Badge v-if="recordedName == 'Custom recording'"
-                                                            :text="recordedName" backgroundColor="bg-green-50"
-                                                            textColor="text-green-700" ringColor="ring-green-600/20" />
+                                                            :text="recordedName" backgroundColor="bg-success-subtle"
+                                                            textColor="text-success" ringColor="ring-success/20" />
 
                                                         <Badge v-if="recordedName == 'System Default'"
-                                                            :text="recordedName" backgroundColor="bg-blue-50"
-                                                            textColor="text-blue-700" ringColor="ring-blue-600/20" />
+                                                            :text="recordedName" backgroundColor="bg-info-subtle"
+                                                            textColor="text-info" ringColor="ring-info/20" />
                                                     </div>
                                                 </StaticElement>
 
@@ -1151,7 +1151,7 @@
                                                         :conditions="[function () { return recordedName == 'Custom recording' }]"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                                         <PlayCircleIcon
-                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-info hover:bg-info-subtle hover:text-info active:bg-info-subtle active:duration-150 cursor-pointer" />
                                                     </ButtonElement>
 
 
@@ -1162,7 +1162,7 @@
                                                         }"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                                         <PauseCircleIcon
-                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
+                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-danger hover:bg-danger-subtle hover:text-danger active:bg-danger-subtle active:duration-150 cursor-pointer" />
 
                                                     </ButtonElement>
 
@@ -1174,7 +1174,7 @@
                                                         :conditions="[function () { return recordedName == 'Custom recording' }]"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                                         <CloudArrowDownIcon
-                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-info hover:bg-info-subtle hover:text-info active:bg-info-subtle active:duration-150 cursor-pointer" />
 
                                                     </ButtonElement>
 
@@ -1185,7 +1185,7 @@
                                                         }"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                                         <Spinner :show="true"
-                                                            class="h-8 w-8 ml-0 mr-0 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                                            class="h-8 w-8 ml-0 mr-0 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-info hover:bg-info-subtle hover:text-info active:bg-info-subtle active:duration-150 cursor-pointer" />
 
                                                     </ButtonElement>
 
@@ -1196,7 +1196,7 @@
                                                         :conditions="[hasPlayableGreeting]"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                                         <PencilSquareIcon
-                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-info hover:bg-info-subtle hover:text-info active:bg-info-subtle active:duration-150 cursor-pointer" />
 
                                                     </ButtonElement> -->
 
@@ -1207,7 +1207,7 @@
                                                         :conditions="[function () { return recordedName == 'Custom recording' }]"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                                         <TrashIcon
-                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
+                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-danger hover:bg-danger-subtle hover:text-danger active:bg-danger-subtle active:duration-150 cursor-pointer" />
 
                                                     </ButtonElement>
 
@@ -1218,7 +1218,7 @@
                                                         }"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                                         <PlusIcon
-                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-info hover:bg-info-subtle hover:text-info active:bg-info-subtle active:duration-150 cursor-pointer" />
 
                                                     </ButtonElement>
 
@@ -1331,42 +1331,42 @@
                                                     <div v-if="mobileAppOptions?.mobile_app && mobileAppOptions?.mobile_app?.status == 1"
                                                         class="flex items-center gap-x-3">
                                                         <div
-                                                            class="flex-none rounded-full bg-green-400/10 p-1 text-green-400">
+                                                            class="flex-none rounded-full bg-success/10 p-1 text-success">
                                                             <div class="size-2 rounded-full bg-current" />
                                                         </div>
                                                         <h1 class="flex gap-x-3 text-md">
                                                             <span class="font-semibold ">Mobile App Status:</span>
-                                                            <Badge backgroundColor="bg-green-100"
-                                                                textColor="text-green-700" :text="'Active'"
-                                                                ringColor="ring-green-400/20"
+                                                            <Badge backgroundColor="bg-success-subtle"
+                                                                textColor="text-success" :text="'Active'"
+                                                                ringColor="ring-success/20"
                                                                 class="px-2 py-1 text-xs font-semibold" />
                                                         </h1>
                                                     </div>
                                                     <div v-if="mobileAppOptions?.mobile_app && mobileAppOptions?.mobile_app?.status == -1"
                                                         class="flex items-center gap-x-3">
                                                         <div
-                                                            class="flex-none rounded-full bg-green-400/10 p-1 text-green-400">
+                                                            class="flex-none rounded-full bg-success/10 p-1 text-success">
                                                             <div class="size-2 rounded-full bg-current" />
                                                         </div>
                                                         <h1 class="flex gap-x-3 text-md">
                                                             <span class="font-semibold ">Mobile App Status:</span>
-                                                            <Badge backgroundColor="bg-blue-100"
-                                                                textColor="text-blue-700" :text="'Contact Only'"
-                                                                ringColor="ring-blue-400/20"
+                                                            <Badge backgroundColor="bg-info-subtle"
+                                                                textColor="text-info" :text="'Contact Only'"
+                                                                ringColor="ring-info/20"
                                                                 class="px-2 py-1 text-xs font-semibold" />
                                                         </h1>
                                                     </div>
                                                     <div v-if="!mobileAppOptions?.mobile_app"
                                                         class="flex items-center gap-x-3">
                                                         <div
-                                                            class="flex-none rounded-full bg-gray-400/10 p-1 text-gray-400">
+                                                            class="flex-none rounded-full bg-gray-400/10 p-1 text-subtle">
                                                             <div class="size-2 rounded-full bg-current" />
                                                         </div>
                                                         <h1 class="flex gap-x-3 text-md">
                                                             <span class="font-semibold ">Mobile App Status:</span>
-                                                            <Badge backgroundColor="bg-gray-100"
-                                                                textColor="text-gray-700" :text="'Not Enabled'"
-                                                                ringColor="ring-gray-400/20"
+                                                            <Badge backgroundColor="bg-surface-3"
+                                                                textColor="text-body" :text="'Not Enabled'"
+                                                                ringColor="ring-strong/20"
                                                                 class="px-2 py-1 text-xs font-semibold" />
                                                         </h1>
                                                     </div>
@@ -1403,7 +1403,7 @@
                                                 <StaticElement name="mobile_app_credentials"
                                                     :conditions="[() => !!mobileApp]">
                                                     <div v-if="mobileApp && mobileApp.user"
-                                                        class="flex bg-white p-6 rounded-lg shadow-md ">
+                                                        class="flex bg-surface p-6 rounded-lg shadow-md ">
 
                                                         <div class="grow">
                                                             <h3 class="text-lg font-semibold mb-4">Mobile App Details
@@ -1416,7 +1416,7 @@
                                                                     <button type="button"
                                                                         @click="handleCopyToClipboard(mobileApp.user.username)">
                                                                         <ClipboardDocumentIcon
-                                                                            class="h-5 w-5 text-blue-500 hover:text-blue-900 cursor-pointer" />
+                                                                            class="h-5 w-5 text-info hover:text-info cursor-pointer" />
                                                                     </button>
                                                                 </li>
 
@@ -1426,7 +1426,7 @@
                                                                     <button type="button"
                                                                         @click="handleCopyToClipboard(mobileApp.user.domain)">
                                                                         <ClipboardDocumentIcon
-                                                                            class="h-5 w-5 text-blue-500 hover:text-blue-900 cursor-pointer" />
+                                                                            class="h-5 w-5 text-info hover:text-info cursor-pointer" />
                                                                     </button>
                                                                 </li>
 
@@ -1439,7 +1439,7 @@
                                                                     <button v-if="mobileApp.user.password" type="button"
                                                                         @click="handleCopyToClipboard(mobileApp.user.password)">
                                                                         <ClipboardDocumentIcon
-                                                                            class="h-5 w-5 text-blue-500 hover:text-blue-900 cursor-pointer" />
+                                                                            class="h-5 w-5 text-info hover:text-info cursor-pointer" />
                                                                     </button>
                                                                     <a v-if="mobileApp.user.password_url"
                                                                         :href="mobileApp.user.password_url"
@@ -1457,7 +1457,7 @@
                                                             <h4 class="text-md font-semibold mb-2">QR Code</h4>
                                                             <img :src="`data:image/png;base64,${mobileApp.qrcode}`"
                                                                 alt="QR Code" class="w-30 h-30 border rounded" />
-                                                            <!-- <p class="text-xs text-gray-400 mt-1">Scan this code in the
+                                                            <!-- <p class="text-xs text-subtle mt-1">Scan this code in the
                                                                 mobile app to sign in.</p> -->
                                                         </div>
                                                     </div>
@@ -1510,13 +1510,13 @@
 
                                                 <StaticElement name="mobile_app_loading">
                                                     <div v-if="isMobileAppOptionsLoading"
-                                                        class="text-center my-5 text-sm text-gray-500">
+                                                        class="text-center my-5 text-sm text-muted">
                                                         <div class="animate-pulse flex space-x-4">
                                                             <div class="flex-1 space-y-6 py-1">
-                                                                <div class="h-2 bg-slate-200 rounded"></div>
-                                                                <div class="h-2 bg-slate-200 rounded"></div>
-                                                                <div class="h-2 bg-slate-200 rounded"></div>
-                                                                <div class="h-2 bg-slate-200 rounded"></div>
+                                                                <div class="h-2 bg-surface-3 rounded"></div>
+                                                                <div class="h-2 bg-surface-3 rounded"></div>
+                                                                <div class="h-2 bg-surface-3 rounded"></div>
+                                                                <div class="h-2 bg-surface-3 rounded"></div>
 
                                                             </div>
                                                         </div>
@@ -1525,14 +1525,14 @@
 
                                                 <StaticElement name="mobile_app_error">
                                                     <div v-if="mobileAppError"
-                                                        class="border-l-4 border-yellow-400 bg-yellow-50 p-4">
+                                                        class="border-l-4 border-warning bg-warning-subtle p-4">
                                                         <div class="flex">
                                                             <div class="shrink-0">
-                                                                <ExclamationTriangleIcon class="size-5 text-yellow-400"
+                                                                <ExclamationTriangleIcon class="size-5 text-warning"
                                                                     aria-hidden="true" />
                                                             </div>
                                                             <div class="ml-3">
-                                                                <p class="text-sm text-yellow-700">
+                                                                <p class="text-sm text-warning">
                                                                     {{ mobileAppError }}
                                                                 </p>
                                                             </div>
@@ -1561,48 +1561,48 @@
                                                     <div class="space-y-8 sm:space-y-6">
                                                         <div>
                                                             <dt
-                                                                class="text-sm font-medium text-gray-500 sm:w-40 sm:shrink-0">
+                                                                class="text-sm font-medium text-muted sm:w-40 sm:shrink-0">
                                                                 Domain</dt>
                                                             <dd
-                                                                class="flex flex-row items-center mt-1 gap-2 text-sm text-gray-900 sm:col-span-2">
+                                                                class="flex flex-row items-center mt-1 gap-2 text-sm text-heading sm:col-span-2">
                                                                 {{ sip_credentials?.context }}
 
                                                                 <div
                                                                     @click="handleCopyToClipboard(sip_credentials?.context)">
                                                                     <ClipboardDocumentIcon
-                                                                        class="h-5 w-5 text-gray-500 hover:text-gray-900 cursor-pointer" />
+                                                                        class="h-5 w-5 text-muted hover:text-heading cursor-pointer" />
                                                                 </div>
 
                                                             </dd>
                                                         </div>
                                                         <div>
                                                             <dt
-                                                                class="text-sm font-medium text-gray-500 sm:w-40 sm:shrink-0">
+                                                                class="text-sm font-medium text-muted sm:w-40 sm:shrink-0">
                                                                 Username</dt>
                                                             <dd
-                                                                class="flex flex-row items-center mt-1 gap-2 text-sm text-gray-900 sm:col-span-2">
+                                                                class="flex flex-row items-center mt-1 gap-2 text-sm text-heading sm:col-span-2">
                                                                 {{ sip_credentials?.extension }}
 
                                                                 <div
                                                                     @click="handleCopyToClipboard(sip_credentials?.extension)">
                                                                     <ClipboardDocumentIcon
-                                                                        class="h-5 w-5 text-gray-500 hover:text-gray-900 cursor-pointer" />
+                                                                        class="h-5 w-5 text-muted hover:text-heading cursor-pointer" />
                                                                 </div>
 
                                                             </dd>
                                                         </div>
                                                         <div>
                                                             <dt
-                                                                class="text-sm font-medium text-gray-500 sm:w-40 sm:shrink-0">
+                                                                class="text-sm font-medium text-muted sm:w-40 sm:shrink-0">
                                                                 Password</dt>
                                                             <dd
-                                                                class="flex flex-row items-center mt-1 gap-2 text-sm text-gray-900 sm:col-span-2">
+                                                                class="flex flex-row items-center mt-1 gap-2 text-sm text-heading sm:col-span-2">
                                                                 {{ sip_credentials?.password }}
 
                                                                 <div
                                                                     @click="handleCopyToClipboard(sip_credentials?.password)">
                                                                     <ClipboardDocumentIcon
-                                                                        class="h-5 w-5 text-gray-500 hover:text-gray-900 cursor-pointer" />
+                                                                        class="h-5 w-5 text-muted hover:text-heading cursor-pointer" />
                                                                 </div>
 
                                                             </dd>

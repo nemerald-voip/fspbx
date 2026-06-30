@@ -4,36 +4,36 @@
         <div class="m-3">
             <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
                 <template #title>
-                    <h1 class="text-xl font-bold text-gray-900 flex items-center">
-                        <a :href="props.routes.faxes_index" class="hover:text-indigo-600">
+                    <h1 class="text-xl font-bold text-heading flex items-center">
+                        <a :href="props.routes.faxes_index" class="hover:text-accent-fg">
                             Fax Dashboard
                         </a>
-                        <svg class="mx-3 h-5 w-5 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg class="mx-3 h-5 w-5 text-subtle" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                         </svg>
-                        <span class="font-medium text-gray-500">{{ props.fax_label ? `${props.fax_label} Sent` : 'Sent Faxes' }}</span>
+                        <span class="font-medium text-muted">{{ props.fax_label ? `${props.fax_label} Sent` : 'Sent Faxes' }}</span>
                     </h1>
                 </template>
 
                 <template #filters>
                     <div class="w-full mb-3 mt-1">
-                        <p class="text-sm text-gray-500">
+                        <p class="text-sm text-muted">
                             The total page count for your filtered results is <span
-                                class="font-semibold text-gray-900">{{ stats.total_transferred_pages ?? 0 }}</span>.
+                                class="font-semibold text-heading">{{ stats.total_transferred_pages ?? 0 }}</span>.
                         </p>
                     </div>
 
                     <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
                         <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                            <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                            <MagnifyingGlassIcon class="h-5 w-5 text-subtle" aria-hidden="true" />
                         </div>
                         <input type="search" v-model="filterData.search" name="mobile-search-candidate"
                             id="mobile-search-candidate"
-                            class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
+                            class="block w-full rounded-md border-0 py-1.5 pl-10 text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus sm:hidden"
                             placeholder="Search" @keydown.enter="handleSearchButtonClick" />
                         <input type="search" v-model="filterData.search" name="desktop-search-candidate"
                             id="desktop-search-candidate"
-                            class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
+                            class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus sm:block"
                             placeholder="Search" @keydown.enter="handleSearchButtonClick" />
                     </div>
 
@@ -61,26 +61,26 @@
 
                 <template #table-header>
                     <TableColumnHeader
-                        class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
+                        class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-heading items-center justify-start">
                         <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
-                            class="h-4 w-4 rounded border-gray-300 text-indigo-600" />
+                            class="h-4 w-4 rounded border-strong text-accent-fg" />
 
                         <span class="pl-4">From</span>
                     </TableColumnHeader>
 
                     <!-- Email -->
-                    <TableColumnHeader header="To" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader header="To" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
 
                     <!-- Timestamp -->
                     <TableColumnHeader header="Date"
-                        class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                        class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
 
 
                     <TableColumnHeader header="Pages"
-                        class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                        class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
 
                     <!-- Empty for any action buttons -->
-                    <TableColumnHeader header="" class="px-2 py-3.5 text-center text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader header="" class="px-2 py-3.5 text-center text-sm font-semibold text-heading" />
                 </template>
 
 
@@ -91,12 +91,12 @@
                         <div class="text-sm text-center m-2">
                             <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
                             <button v-if="!selectAll && selectedItems.length != data.total"
-                                class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
+                                class="text-info rounded py-2 px-2 hover:bg-info-subtle  hover:text-info focus:outline-none focus:ring-1 focus:bg-info-subtle focus:ring-focus transition duration-500 ease-in-out"
                                 @click="handleSelectAll">
                                 Select all {{ data.total }} items
                             </button>
                             <button v-if="selectAll"
-                                class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
+                                class="text-info rounded py-2 px-2 hover:bg-info-subtle  hover:text-info focus:outline-none focus:ring-1 focus:bg-info-subtle focus:ring-focus transition duration-500 ease-in-out"
                                 @click="handleClearSelection">
                                 Clear selection
                             </button>
@@ -107,11 +107,11 @@
 
                 <template #table-body>
                     <tr v-for="row in data.data" :key="row.fax_file_uuid">
-                        <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500">
+                        <TableField class="whitespace-nowrap px-4 py-2 text-sm text-muted">
                             <div class="flex items-center">
                                 <input v-if="row.fax_file_uuid" v-model="selectedItems" type="checkbox"
                                     name="action_box[]" :value="row.fax_file_uuid"
-                                    class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                                    class="h-4 w-4 rounded border-strong text-accent-fg">
                                 <div class="ml-4">
                                     <span class="flex flex-col items-center">
                                         <span v-if="row.fax_caller_id_name != row.fax_caller_id_number">{{
@@ -123,21 +123,21 @@
                         </TableField>
 
                         <!-- Email -->
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted"
                             :text="row.fax_destination_formatted ?? ''" />
 
 
 
                         <!-- Timestamp (localized) -->
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted"
                             :text="row.fax_date_formatted" />
 
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted"
                             :text="row.fax_log?.fax_document_transferred_pages ?? ''" />
 
 
                         <!-- Action buttons -->
-                        <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
+                        <TableField class="whitespace-nowrap px-2 py-1 text-sm text-muted">
 
                             <template #action-buttons>
                                 <div class="flex items-center whitespace-nowrap justify-end">
@@ -145,7 +145,7 @@
                                         target="#preview_tooltip_target">
                                         <div id="preview_tooltip_target">
                                             <EyeIcon @click="handlePreviewButtonClick(row.fax_file_uuid)"
-                                                class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                                class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer" />
                                         </div>
                                     </ejs-tooltip>
 
@@ -153,7 +153,7 @@
                                         target="#destination_tooltip_target">
                                         <div id="destination_tooltip_target">
                                             <CloudArrowDownIcon @click="handleDownloadButtonClick(row.fax_file_uuid)"
-                                                class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                                class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer" />
 
                                         </div>
                                     </ejs-tooltip>
@@ -162,7 +162,7 @@
                                         target="#delete_tooltip_target">
                                         <div id="delete_tooltip_target">
                                             <TrashIcon @click="handleDeleteButtonClick(row.fax_file_uuid)"
-                                                class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                                class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer" />
                                         </div>
                                     </ejs-tooltip>
                                 </div>
@@ -176,9 +176,9 @@
                 <template #empty>
                     <!-- Conditional rendering for 'no records' message -->
                     <div v-if="data.data.length === 0" class="text-center my-5 ">
-                        <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                        <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
-                        <p class="mt-1 text-sm text-gray-500">
+                        <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-subtle" />
+                        <h3 class="mt-2 text-sm font-semibold text-heading">No results found</h3>
+                        <p class="mt-1 text-sm text-muted">
                             Adjust your search and try again.
                         </p>
                     </div>
@@ -202,17 +202,17 @@
     <!-- Fax preview modal -->
     <div v-if="showPreviewModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
         @click.self="closePreviewModal">
-        <div class="flex h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-lg bg-white shadow-xl">
+        <div class="flex h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-lg bg-surface shadow-xl">
             <div class="flex items-center justify-between border-b px-4 py-3">
-                <h2 class="text-lg font-semibold text-gray-900">Fax Preview</h2>
+                <h2 class="text-lg font-semibold text-heading">Fax Preview</h2>
 
                 <button type="button" @click="closePreviewModal"
-                    class="rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700">
+                    class="rounded p-1 text-muted hover:bg-surface-3 hover:text-body">
                     <XMarkIcon class="h-5 w-5" />
                 </button>
             </div>
 
-            <div class="flex-1 bg-gray-100">
+            <div class="flex-1 bg-surface-3">
                 <iframe v-if="previewUrl" :src="previewUrl" class="h-full w-full" />
             </div>
         </div>

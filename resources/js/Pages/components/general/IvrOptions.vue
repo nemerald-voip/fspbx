@@ -3,26 +3,26 @@
         <div class="col-span-12">
             <div class="overflow-visible">
                 <div class="inline-block min-w-full py-2 align-middle">
-                    <table class="min-w-full divide-y divide-gray-300">
+                    <table class="min-w-full divide-y divide-strong">
                         <thead>
                             <tr>
                                 <th scope="col"
-                                    class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6 lg:pl-8">
+                                    class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-heading sm:pl-6 lg:pl-8">
                                     Key
                                 </th>
-                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-heading">
                                     Action
                                 </th>
                                 <th scope="col"
-                                    class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 md:table-cell">
+                                    class="hidden px-3 py-3.5 text-left text-sm font-semibold text-heading md:table-cell">
                                     Ext./Number
                                 </th>
                                 <th scope="col"
-                                    class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell">
+                                    class="hidden px-3 py-3.5 text-left text-sm font-semibold text-heading lg:table-cell">
                                     Desc
                                 </th>
                                 <th scope="col"
-                                    class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 md:table-cell">
+                                    class="hidden px-3 py-3.5 text-left text-sm font-semibold text-heading md:table-cell">
                                     Status
                                 </th>
                                 <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6 lg:pr-8">
@@ -31,57 +31,57 @@
                             </tr>
                         </thead>
 
-                        <tbody class="divide-y divide-gray-200">
+                        <tbody class="divide-y divide-default">
                             <tr
                                 v-for="(option, index) in items"
                                 :key="option.ivr_menu_option_uuid ?? index"
                             >
-                                <td class="py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6 lg:pl-8">
+                                <td class="py-4 pl-4 pr-3 text-sm font-medium text-heading sm:pl-6 lg:pl-8">
                                     {{ option.ivr_menu_option_digits }}
                                 </td>
 
-                                <td class="px-3 py-4 text-sm text-gray-500">
+                                <td class="px-3 py-4 text-sm text-muted">
                                     {{ option.key_type_display }}
                                     <dl class="font-normal md:hidden">
-                                        <dd class="mt-1 truncate text-gray-700">{{ option.key_name }}</dd>
-                                        <dd class="mt-1 truncate text-gray-500 md:hidden">
+                                        <dd class="mt-1 truncate text-body">{{ option.key_name }}</dd>
+                                        <dd class="mt-1 truncate text-muted md:hidden">
                                             {{ option.ivr_menu_option_description }}
                                         </dd>
                                         <dd class="mt-1 md:hidden">
                                             <Badge
                                                 v-if="option.ivr_menu_option_enabled"
                                                 :text="'Enabled'"
-                                                backgroundColor="bg-green-50"
-                                                textColor="text-green-700"
-                                                ringColor="ring-green-600/20"
+                                                backgroundColor="bg-success-subtle"
+                                                textColor="text-success"
+                                                ringColor="ring-success/20"
                                             />
                                         </dd>
                                     </dl>
                                 </td>
 
-                                <td class="hidden px-3 py-4 text-sm text-gray-500 md:table-cell">
+                                <td class="hidden px-3 py-4 text-sm text-muted md:table-cell">
                                     {{ option.key_name }}
                                 </td>
 
-                                <td class="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell">
+                                <td class="hidden px-3 py-4 text-sm text-muted lg:table-cell">
                                     {{ option.ivr_menu_option_description }}
                                 </td>
 
-                                <td class="hidden px-3 py-4 text-sm text-gray-500 md:table-cell">
+                                <td class="hidden px-3 py-4 text-sm text-muted md:table-cell">
                                     <Badge
                                         v-if="option.ivr_menu_option_enabled"
                                         :text="'Enabled'"
-                                        backgroundColor="bg-green-50"
-                                        textColor="text-green-700"
-                                        ringColor="ring-green-600/20"
+                                        backgroundColor="bg-success-subtle"
+                                        textColor="text-success"
+                                        ringColor="ring-success/20"
                                     />
 
                                     <Badge
                                         v-else
                                         :text="'Disabled'"
-                                        backgroundColor="bg-rose-50"
-                                        textColor="text-rose-700"
-                                        ringColor="ring-rose-600/20"
+                                        backgroundColor="bg-danger-subtle"
+                                        textColor="text-danger"
+                                        ringColor="ring-danger/20"
                                     />
                                 </td>
 
@@ -89,10 +89,10 @@
                                     <Menu as="div" class="relative inline-block text-left">
                                         <div>
                                             <MenuButton
-                                                class="flex items-center rounded-full bg-gray-100 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100">
+                                                class="flex items-center rounded-full bg-surface-3 text-subtle hover:text-body focus:outline-none focus:ring-2 focus:ring-focus focus:ring-offset-2">
                                                 <span class="sr-only">Open options</span>
                                                 <EllipsisVerticalIcon
-                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-500 hover:bg-gray-200 hover:text-gray-900 active:bg-gray-300 active:duration-150 cursor-pointer"
+                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-muted hover:bg-surface-3 hover:text-heading active:bg-surface-3 active:duration-150 cursor-pointer"
                                                     aria-hidden="true"
                                                 />
                                             </MenuButton>
@@ -107,13 +107,13 @@
                                             leave-to-class="transform opacity-0 scale-95"
                                         >
                                             <MenuItems
-                                                class="absolute right-0 z-10 mt-2 w-36 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                                                class="absolute right-0 z-10 mt-2 w-36 origin-top-right rounded-md bg-surface shadow-lg ring-1 ring-black/5 dark:ring-white/10 focus:outline-none">
                                                 <div class="py-1">
                                                     <MenuItem v-slot="{ active }">
                                                         <a
                                                             href="#"
                                                             @click.prevent="emit('edit-key', option)"
-                                                            :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm']"
+                                                            :class="[active ? 'bg-surface-3 text-heading' : 'text-body', 'block px-4 py-2 text-sm']"
                                                         >
                                                             Edit
                                                         </a>
@@ -123,7 +123,7 @@
                                                         <a
                                                             href="#"
                                                             @click.prevent="emit('delete-key', option)"
-                                                            :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'flex px-4 py-2 text-sm']"
+                                                            :class="[active ? 'bg-surface-3 text-heading' : 'text-body', 'flex px-4 py-2 text-sm']"
                                                         >
                                                             Delete
                                                             <Spinner class="ml-1" :show="isDeleting" />
@@ -142,7 +142,7 @@
         </div>
 
         <div
-            class="col-span-full flex justify-center bg-gray-100 px-4 py-4 text-center text-sm font-medium text-indigo-500 hover:text-indigo-700 sm:rounded-b-lg">
+            class="col-span-full flex justify-center bg-surface-3 px-4 py-4 text-center text-sm font-medium text-accent-fg hover:text-accent-fg sm:rounded-b-lg">
             <button @click.prevent="emit('add-key')" class="flex items-center gap-2">
                 <PlusIcon class="h-6 w-6 text-black-500 hover:text-black-900 active:h-8 active:w-8" />
                 <span>Add new key</span>

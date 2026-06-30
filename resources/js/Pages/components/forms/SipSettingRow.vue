@@ -2,7 +2,7 @@
     <div
         class="flex flex-col gap-1 rounded-md border px-2.5 py-2 transition"
         :class="[
-            hasError ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-white hover:border-gray-300',
+            hasError ? 'border-danger bg-danger-subtle' : 'border-default bg-surface hover:border-strong',
             setting.sip_profile_setting_enabled === 'false' ? 'opacity-70' : '',
         ]"
     >
@@ -22,7 +22,7 @@
                     v-if="hasOptions"
                     v-model="setting.sip_profile_setting_value"
                     :disabled="!canEdit"
-                    class="block w-full rounded-md border-0 py-1.5 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 disabled:bg-gray-50 disabled:text-gray-500"
+                    class="block w-full rounded-md border-0 py-1.5 text-sm text-heading ring-1 ring-inset ring-strong focus:ring-2 focus:ring-inset focus:ring-focus disabled:bg-surface-2 disabled:text-muted"
                 >
                     <option v-for="opt in valueOptions" :key="opt" :value="opt">{{ opt }}</option>
                 </select>
@@ -33,7 +33,7 @@
                     :disabled="!canEdit"
                     spellcheck="false"
                     placeholder="value"
-                    class="block w-full rounded-md border-0 py-1.5 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 disabled:bg-gray-50 disabled:text-gray-500"
+                    class="block w-full rounded-md border-0 py-1.5 text-sm text-heading ring-1 ring-inset ring-strong focus:ring-2 focus:ring-inset focus:ring-focus disabled:bg-surface-2 disabled:text-muted"
                 />
             </div>
 
@@ -48,7 +48,7 @@
                     v-model="setting.sip_profile_setting_description"
                     :disabled="!canEdit"
                     placeholder="Add a note"
-                    class="block w-full rounded-md border-0 bg-transparent py-1.5 text-sm text-gray-600 ring-1 ring-inset ring-transparent placeholder:text-gray-400 hover:ring-gray-200 focus:bg-white focus:ring-2 focus:ring-inset focus:ring-indigo-600 disabled:text-gray-400"
+                    class="block w-full rounded-md border-0 bg-transparent py-1.5 text-sm text-body ring-1 ring-inset ring-transparent placeholder:text-subtle hover:ring-strong focus:bg-surface focus:ring-2 focus:ring-inset focus:ring-focus disabled:text-subtle"
                 />
             </div>
 
@@ -57,7 +57,7 @@
                 <button
                     v-if="canRemove"
                     type="button"
-                    class="rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-red-600"
+                    class="rounded-full p-1.5 text-subtle hover:bg-surface-3 hover:text-danger"
                     title="Remove"
                     @click="emit('remove')"
                 >
@@ -67,8 +67,8 @@
         </div>
 
         <!-- Documentation for known parameters -->
-        <p v-if="definition" class="px-1 text-xs text-gray-400">{{ definition.description }}</p>
-        <p v-if="hasError" class="px-1 text-xs text-red-600">{{ error }}</p>
+        <p v-if="definition" class="px-1 text-xs text-subtle">{{ definition.description }}</p>
+        <p v-if="hasError" class="px-1 text-xs text-danger">{{ error }}</p>
     </div>
 </template>
 

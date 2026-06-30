@@ -37,7 +37,7 @@
                     </div>
 
                     <div
-                        class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
+                        class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-body bg-surface-2 px-4 py-6 sm:p-6">
                         <FormElements>
 
                             <StaticElement name="business_hours_header" tag="h4" content="Business Hours" />
@@ -82,7 +82,7 @@
                                 @change="handleCustomHoursUpdate" />
                             <ListElement name="time_slots" :sort="true" label="Time Slots"
                                 :conditions="[['custom_hours', true]]"
-                                :add-classes="{ ListElement: { listItem: 'bg-white p-3 sm:p-4 mb-4 rounded-lg shadow-md' } }">
+                                :add-classes="{ ListElement: { listItem: 'bg-surface p-3 sm:p-4 mb-4 rounded-lg shadow-md' } }">
                                 <template #default="{ index }">
                                     <ObjectElement :name="index">
                                         <CheckboxgroupElement name="weekdays" view="tabs" label="Weekdays" :items="[

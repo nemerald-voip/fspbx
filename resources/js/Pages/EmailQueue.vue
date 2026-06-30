@@ -8,11 +8,11 @@
             <template #filters>
                 <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
                     <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                        <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                        <MagnifyingGlassIcon class="h-5 w-5 text-subtle" aria-hidden="true" />
                     </div>
 
                     <input type="text" v-model="filterData.search"
-                        class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
+                        class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus sm:block"
                         placeholder="Search" />
                 </div>
 
@@ -29,12 +29,12 @@
 
             <template #action>
                 <button v-if="!filterData.showGlobal" type="button" @click.prevent="handleShowGlobal"
-                    class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    class="rounded-md bg-surface px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2">
                     Show global
                 </button>
 
                 <button v-if="filterData.showGlobal" type="button" @click.prevent="handleShowLocal"
-                    class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    class="rounded-md bg-surface px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2">
                     Show local
                 </button>
             </template>
@@ -47,21 +47,21 @@
             </template>
 
             <template #table-header>
-                <TableColumnHeader class="whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900">
+                <TableColumnHeader class="whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-heading">
                     <div class="flex items-center justify-start">
                         <input type="checkbox" v-model="selectPageItems"
-                            class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                            class="h-4 w-4 rounded border-strong text-accent-fg">
                         <span class="pl-4">From</span>
                     </div>
                 </TableColumnHeader>
 
-                <TableColumnHeader header="To" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="To" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
                 <TableColumnHeader v-if="filterData.showGlobal" header="Domain"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Subject" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Host" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Date" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+                <TableColumnHeader header="Subject" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+                <TableColumnHeader header="Host" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+                <TableColumnHeader header="Date" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+                <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
                 <TableColumnHeader header="" class="px-2 py-3.5" />
             </template>
 
@@ -70,12 +70,12 @@
                     <div class="text-sm text-center m-2">
                         <span class="font-semibold">{{ selectedItems.length }}</span> items are selected.
                         <button v-if="!selectAll && selectedItems.length != data.total"
-                            class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
+                            class="text-info rounded py-2 px-2 hover:bg-info-subtle hover:text-info focus:outline-none focus:ring-1 focus:bg-info-subtle focus:ring-focus transition duration-500 ease-in-out"
                             @click="handleSelectAll">
                             Select all {{ data.total }} items
                         </button>
                         <button v-if="selectAll"
-                            class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
+                            class="text-info rounded py-2 px-2 hover:bg-info-subtle hover:text-info focus:outline-none focus:ring-1 focus:bg-info-subtle focus:ring-focus transition duration-500 ease-in-out"
                             @click="handleClearSelection">
                             Clear selection
                         </button>
@@ -85,19 +85,19 @@
 
             <template #table-body>
                 <tr v-for="row in data.data" :key="row.email_queue_uuid">
-                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500">
+                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-muted">
                         <div class="flex items-center">
                             <input v-if="row.email_queue_uuid" v-model="selectedItems" type="checkbox"
-                                :value="row.email_queue_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                                :value="row.email_queue_uuid" class="h-4 w-4 rounded border-strong text-accent-fg">
                             <div class="ml-9">
                                 {{ row.email_from }}
                             </div>
                         </div>
                     </TableField>
 
-                    <TableField class="px-2 py-2 text-sm text-gray-500" :text="row.email_to" />
+                    <TableField class="px-2 py-2 text-sm text-muted" :text="row.email_to" />
 
-                    <TableField v-if="filterData.showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                    <TableField v-if="filterData.showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-muted"
                         :text="row.domain?.domain_description">
                         <EjsTooltip :content="row.domain?.domain_name" position="TopLeft"
                             :target="'#domain_tooltip_' + row.email_queue_uuid">
@@ -107,19 +107,19 @@
                         </EjsTooltip>
                     </TableField>
 
-                    <TableField class="px-2 py-2 text-sm text-gray-500" :text="row.email_subject" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.hostname" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                    <TableField class="px-2 py-2 text-sm text-muted" :text="row.email_subject" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted" :text="row.hostname" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted"
                         :text="row.email_date_formatted" />
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted">
                         <Badge :text="row.email_status"
                             :backgroundColor="determineColor(row.email_status).backgroundColor"
                             :textColor="determineColor(row.email_status).textColor"
                             :ringColor="determineColor(row.email_status).ringColor" />
                     </TableField>
 
-                    <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
+                    <TableField class="whitespace-nowrap px-2 py-1 text-sm text-muted">
                         <div class="flex items-center whitespace-nowrap justify-end">
                             <EjsTooltip v-if="props.permissions.email_queue_update"
                                 :content="row.email_status === 'blank' ? 'Mark as sent' : 'Reset status'"
@@ -127,9 +127,9 @@
                                 <div :id="'status_tooltip_' + row.email_queue_uuid">
                                     <button
                                         @click="executeStatusUpdate([row.email_queue_uuid], row.email_status === 'blank' ? 'sent' : null)"
-                                        class="h-9 w-9 transition duration-500 ease-in-out p-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer flex items-center justify-center">
+                                        class="h-9 w-9 transition duration-500 ease-in-out p-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer flex items-center justify-center">
                                         <EnvelopeIcon v-if="row.email_status === 'blank'"
-                                            class="h-full w-full text-blue-500" />
+                                            class="h-full w-full text-info" />
                                         <ArrowPathIcon v-else class="h-full w-full" />
                                     </button>
                                 </div>
@@ -139,7 +139,7 @@
                                 position="TopCenter" :target="'#delete_tooltip_' + row.email_queue_uuid">
                                 <div :id="'#delete_tooltip_' + row.email_queue_uuid">
                                     <TrashIcon @click="handleSingleItemDeleteRequest(row.email_queue_uuid)"
-                                        class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                        class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer" />
                                 </div>
                             </EjsTooltip>
                         </div>
@@ -149,9 +149,9 @@
 
             <template #empty>
                 <div v-if="data.data.length === 0" class="text-center my-6">
-                    <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
-                    <p class="mt-1 text-sm text-gray-500">
+                    <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-subtle" />
+                    <h3 class="mt-2 text-sm font-semibold text-heading">No results found</h3>
+                    <p class="mt-1 text-sm text-muted">
                         Adjust your search or filters and try again.
                     </p>
                 </div>
@@ -468,27 +468,27 @@ const determineColor = (status) => {
     switch (status) {
         case "sent":
             return {
-                backgroundColor: "bg-green-50",
-                textColor: "text-green-700",
-                ringColor: "ring-green-600/20",
+                backgroundColor: "bg-success-subtle",
+                textColor: "text-success",
+                ringColor: "ring-success/20",
             };
         case "waiting":
             return {
-                backgroundColor: "bg-yellow-50",
-                textColor: "text-yellow-700",
-                ringColor: "ring-yellow-600/20",
+                backgroundColor: "bg-warning-subtle",
+                textColor: "text-warning",
+                ringColor: "ring-warning/20",
             };
         case "blank":
             return {
-                backgroundColor: "bg-gray-50",
-                textColor: "text-gray-700",
-                ringColor: "ring-gray-600/20",
+                backgroundColor: "bg-surface-2",
+                textColor: "text-body",
+                ringColor: "ring-strong/20",
             };
         default:
             return {
-                backgroundColor: "bg-blue-50",
-                textColor: "text-blue-700",
-                ringColor: "ring-blue-600/20",
+                backgroundColor: "bg-info-subtle",
+                textColor: "text-info",
+                ringColor: "ring-info/20",
             };
     }
 };

@@ -12,37 +12,37 @@
             <template #filters>
                 <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
                     <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                        <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                        <MagnifyingGlassIcon class="h-5 w-5 text-subtle" aria-hidden="true" />
                     </div>
                     <input type="text" v-model="filterData.search" name="mobile-search-conference-rooms"
                         id="mobile-search-conference-rooms"
-                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
+                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus sm:hidden"
                         placeholder="Search" @keydown.enter="handleSearchButtonClick" />
                     <input type="text" v-model="filterData.search" name="desktop-search-conference-rooms"
                         id="desktop-search-conference-rooms"
-                        class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
+                        class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus sm:block"
                         placeholder="Search" @keydown.enter="handleSearchButtonClick" />
                 </div>
             </template>
 
             <template #action>
                 <a :href="routes.centers"
-                    class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    class="rounded-md bg-surface px-2.5 py-1.5 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2">
                     Conference Centers
                 </a>
 
                 <a v-if="permissions.profile_view" :href="routes.conference_profiles"
-                    class="ml-2 sm:ml-4 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    class="ml-2 sm:ml-4 rounded-md bg-surface px-2.5 py-1.5 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2">
                     Profiles
                 </a>
 
                 <a v-if="permissions.active_view" :href="routes.active_conferences"
-                    class="ml-2 sm:ml-4 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    class="ml-2 sm:ml-4 rounded-md bg-surface px-2.5 py-1.5 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2">
                     Active Conferences
                 </a>
 
                 <button v-if="permissions.create" type="button" @click.prevent="handleCreateButtonClick"
-                    class="ml-2 sm:ml-4 rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                    class="ml-2 sm:ml-4 rounded-md bg-accent px-2.5 py-1.5 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
                     Create
                 </button>
             </template>
@@ -56,94 +56,94 @@
 
             <template #table-header>
                 <TableColumnHeader
-                    class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
+                    class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-heading items-center justify-start">
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
-                        class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                        class="h-4 w-4 rounded border-strong text-accent-fg">
                     <div class="pl-4 flex items-center cursor-pointer select-none"
                         @click="handleSortRequest('conference_room_name')">
                         <span class="mr-2">Name</span>
                         <ChevronUpIcon v-if="sortData.name === 'conference_room_name' && sortData.order === 'asc'"
-                            class="h-4 w-4 text-gray-500" />
+                            class="h-4 w-4 text-muted" />
                         <ChevronDownIcon v-else-if="sortData.name === 'conference_room_name' && sortData.order === 'desc'"
-                            class="h-4 w-4 text-gray-500" />
+                            class="h-4 w-4 text-muted" />
                     </div>
                 </TableColumnHeader>
 
-                <TableColumnHeader header="Center" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                <TableColumnHeader header="Center" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-heading">
                     <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('moderator_pin')">
                         <span class="mr-2">Moderator PIN</span>
                         <ChevronUpIcon v-if="sortData.name === 'moderator_pin' && sortData.order === 'asc'"
-                            class="h-4 w-4 text-gray-500" />
+                            class="h-4 w-4 text-muted" />
                         <ChevronDownIcon v-else-if="sortData.name === 'moderator_pin' && sortData.order === 'desc'"
-                            class="h-4 w-4 text-gray-500" />
+                            class="h-4 w-4 text-muted" />
                     </div>
                 </TableColumnHeader>
-                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-heading">
                     <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('participant_pin')">
                         <span class="mr-2">Participant PIN</span>
                         <ChevronUpIcon v-if="sortData.name === 'participant_pin' && sortData.order === 'asc'"
-                            class="h-4 w-4 text-gray-500" />
+                            class="h-4 w-4 text-muted" />
                         <ChevronDownIcon v-else-if="sortData.name === 'participant_pin' && sortData.order === 'desc'"
-                            class="h-4 w-4 text-gray-500" />
+                            class="h-4 w-4 text-muted" />
                     </div>
                 </TableColumnHeader>
-                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-heading">
                     <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('record')">
                         <span class="mr-2">Record</span>
                         <ChevronUpIcon v-if="sortData.name === 'record' && sortData.order === 'asc'"
-                            class="h-4 w-4 text-gray-500" />
+                            class="h-4 w-4 text-muted" />
                         <ChevronDownIcon v-else-if="sortData.name === 'record' && sortData.order === 'desc'"
-                            class="h-4 w-4 text-gray-500" />
+                            class="h-4 w-4 text-muted" />
                     </div>
                 </TableColumnHeader>
-                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-heading">
                     <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('wait_mod')">
                         <span class="mr-2">Wait Moderator</span>
                         <ChevronUpIcon v-if="sortData.name === 'wait_mod' && sortData.order === 'asc'"
-                            class="h-4 w-4 text-gray-500" />
+                            class="h-4 w-4 text-muted" />
                         <ChevronDownIcon v-else-if="sortData.name === 'wait_mod' && sortData.order === 'desc'"
-                            class="h-4 w-4 text-gray-500" />
+                            class="h-4 w-4 text-muted" />
                     </div>
                 </TableColumnHeader>
-                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-heading">
                     <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('mute')">
                         <span class="mr-2">Muted</span>
                         <ChevronUpIcon v-if="sortData.name === 'mute' && sortData.order === 'asc'"
-                            class="h-4 w-4 text-gray-500" />
+                            class="h-4 w-4 text-muted" />
                         <ChevronDownIcon v-else-if="sortData.name === 'mute' && sortData.order === 'desc'"
-                            class="h-4 w-4 text-gray-500" />
+                            class="h-4 w-4 text-muted" />
                     </div>
                 </TableColumnHeader>
-                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-heading">
                     <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('sounds')">
                         <span class="mr-2">Sounds</span>
                         <ChevronUpIcon v-if="sortData.name === 'sounds' && sortData.order === 'asc'"
-                            class="h-4 w-4 text-gray-500" />
+                            class="h-4 w-4 text-muted" />
                         <ChevronDownIcon v-else-if="sortData.name === 'sounds' && sortData.order === 'desc'"
-                            class="h-4 w-4 text-gray-500" />
+                            class="h-4 w-4 text-muted" />
                     </div>
                 </TableColumnHeader>
-                <TableColumnHeader header="Members" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader v-if="permissions.enabled" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                <TableColumnHeader header="Members" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+                <TableColumnHeader v-if="permissions.enabled" class="px-2 py-3.5 text-left text-sm font-semibold text-heading">
                     <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('enabled')">
                         <span class="mr-2">Enabled</span>
                         <ChevronUpIcon v-if="sortData.name === 'enabled' && sortData.order === 'asc'"
-                            class="h-4 w-4 text-gray-500" />
+                            class="h-4 w-4 text-muted" />
                         <ChevronDownIcon v-else-if="sortData.name === 'enabled' && sortData.order === 'desc'"
-                            class="h-4 w-4 text-gray-500" />
+                            class="h-4 w-4 text-muted" />
                     </div>
                 </TableColumnHeader>
-                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-heading">
                     <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('description')">
                         <span class="mr-2">Description</span>
                         <ChevronUpIcon v-if="sortData.name === 'description' && sortData.order === 'asc'"
-                            class="h-4 w-4 text-gray-500" />
+                            class="h-4 w-4 text-muted" />
                         <ChevronDownIcon v-else-if="sortData.name === 'description' && sortData.order === 'desc'"
-                            class="h-4 w-4 text-gray-500" />
+                            class="h-4 w-4 text-muted" />
                     </div>
                 </TableColumnHeader>
-                <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-heading" />
             </template>
 
             <template v-if="selectPageItems" v-slot:current-selection>
@@ -151,12 +151,12 @@
                     <div class="text-sm text-center m-2">
                         <span class="font-semibold">{{ selectedItems.length }}</span> items are selected.
                         <button v-if="!selectAll && selectedItems.length !== data.total"
-                            class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
+                            class="text-info rounded py-2 px-2 hover:bg-info-subtle hover:text-info focus:outline-none focus:ring-1 focus:bg-info-subtle focus:ring-focus transition duration-500 ease-in-out"
                             @click="handleSelectAll">
                             Select all {{ data.total }} items
                         </button>
                         <button v-if="selectAll"
-                            class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
+                            class="text-info rounded py-2 px-2 hover:bg-info-subtle hover:text-info focus:outline-none focus:ring-1 focus:bg-info-subtle focus:ring-focus transition duration-500 ease-in-out"
                             @click="handleClearSelection">
                             Clear selection
                         </button>
@@ -166,71 +166,71 @@
 
             <template #table-body>
                 <tr v-for="row in data.data" :key="row.conference_room_uuid">
-                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500" :text="row.conference_room_name">
+                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-muted" :text="row.conference_room_name">
                         <div class="flex items-center">
                             <input v-model="selectedItems" type="checkbox" name="action_box[]"
-                                :value="row.conference_room_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                            <div class="ml-4" :class="{ 'cursor-pointer hover:text-gray-900': permissions.update }"
+                                :value="row.conference_room_uuid" class="h-4 w-4 rounded border-strong text-accent-fg">
+                            <div class="ml-4" :class="{ 'cursor-pointer hover:text-heading': permissions.update }"
                                 @click="permissions.update && handleEditButtonClick(row.conference_room_uuid)">
                                 {{ row.conference_room_name }}
                             </div>
                         </div>
                     </TableField>
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted"
                         :text="centerLabel(row)" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted"
                         :text="formatPin(row.moderator_pin)" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted"
                         :text="formatPin(row.participant_pin)" />
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted">
                         <BooleanToggle :enabled="row.record" :editable="permissions.update && permissions.record"
                             @toggle="executeToggle([row.conference_room_uuid], 'record')" />
                     </TableField>
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted">
                         <BooleanToggle :enabled="row.wait_mod" :editable="permissions.update && permissions.wait_mod"
                             @toggle="executeToggle([row.conference_room_uuid], 'wait_mod')" />
                     </TableField>
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted">
                         <BooleanToggle :enabled="row.mute" :editable="permissions.update && permissions.mute"
                             @toggle="executeToggle([row.conference_room_uuid], 'mute')" />
                     </TableField>
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted">
                         <BooleanToggle :enabled="row.sounds" :editable="permissions.update && permissions.sounds"
                             @toggle="executeToggle([row.conference_room_uuid], 'sounds')" />
                     </TableField>
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.member_count" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted" :text="row.member_count" />
 
-                    <TableField v-if="permissions.enabled" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                    <TableField v-if="permissions.enabled" class="whitespace-nowrap px-2 py-2 text-sm text-muted">
                         <BooleanToggle :enabled="row.enabled" :editable="permissions.update"
                             @toggle="executeToggle([row.conference_room_uuid], 'enabled')" />
                     </TableField>
 
-                    <TableField class="px-2 py-2 text-sm text-gray-500" :text="row.description" />
+                    <TableField class="px-2 py-2 text-sm text-muted" :text="row.description" />
 
-                    <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
+                    <TableField class="whitespace-nowrap px-2 py-1 text-sm text-muted">
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap justify-end gap-1">
                                 <a v-if="permissions.interactive_view || permissions.active_view"
                                     :href="toolUrl(permissions.interactive_view ? routes.interactive : routes.active_conferences, row.conference_room_uuid)"
-                                    class="rounded px-2 py-1 text-xs font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-700">
+                                    class="rounded px-2 py-1 text-xs font-medium text-muted hover:bg-surface-3 hover:text-body">
                                     View
                                 </a>
                                 <a v-if="permissions.cdr_view" :href="toolUrl(routes.cdr, row.conference_room_uuid)"
-                                    class="rounded px-2 py-1 text-xs font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-700">
+                                    class="rounded px-2 py-1 text-xs font-medium text-muted hover:bg-surface-3 hover:text-body">
                                     CDR
                                 </a>
                                 <a v-if="permissions.session_view" :href="toolUrl(routes.sessions, row.conference_room_uuid)"
-                                    class="rounded px-2 py-1 text-xs font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-700">
+                                    class="rounded px-2 py-1 text-xs font-medium text-muted hover:bg-surface-3 hover:text-body">
                                     Sessions
                                 </a>
                                 <PencilSquareIcon v-if="permissions.update" @click="handleEditButtonClick(row.conference_room_uuid)"
-                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
+                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer"
                                     title="Edit" />
                                 <TrashIcon v-if="permissions.destroy" @click="handleSingleItemDeleteRequest(row.conference_room_uuid)"
-                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
+                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer"
                                     title="Delete" />
                             </div>
                         </template>
@@ -240,9 +240,9 @@
 
             <template #empty>
                 <div v-if="data.data.length === 0" class="text-center my-5">
-                    <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
-                    <p class="mt-1 text-sm text-gray-500">Adjust your search and try again.</p>
+                    <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-subtle" />
+                    <h3 class="mt-2 text-sm font-semibold text-heading">No results found</h3>
+                    <p class="mt-1 text-sm text-muted">Adjust your search and try again.</p>
                 </div>
             </template>
 
@@ -609,8 +609,8 @@ const handleErrorResponse = (error) => {
 
 function enabledBadgeProps(value) {
     return value === "true"
-        ? { backgroundColor: "bg-green-50", textColor: "text-green-700", ringColor: "ring-green-600/20" }
-        : { backgroundColor: "bg-gray-50", textColor: "text-gray-600", ringColor: "ring-gray-500/20" };
+        ? { backgroundColor: "bg-success-subtle", textColor: "text-success", ringColor: "ring-success/20" }
+        : { backgroundColor: "bg-surface-2", textColor: "text-body", ringColor: "ring-strong/20" };
 }
 
 const formatPin = (pin) => {

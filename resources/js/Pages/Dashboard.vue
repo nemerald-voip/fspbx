@@ -1,19 +1,19 @@
 <template>
     <MainLayout>
-        <TopBanner :show="showTopBanner" @close="showTopBanner = false" color="bg-rose-600" :text="topBannerText" />
+        <TopBanner :show="showTopBanner" @close="showTopBanner = false" color="bg-danger-solid" :text="topBannerText" />
 
-        <main class="bg-slate-50/60">
+        <main class="bg-surface-2/60">
             <div class="mx-auto max-w-none px-4 py-8 sm:px-6 lg:px-8">
                 <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                     <div>
-                        <p class="text-sm font-medium text-cyan-700">Account dashboard</p>
-                        <h1 class="mt-1 text-2xl font-semibold tracking-tight text-gray-950 sm:text-3xl">{{
+                        <p class="text-sm font-medium text-info">Account dashboard</p>
+                        <h1 class="mt-1 text-2xl font-semibold tracking-tight text-heading sm:text-3xl">{{
                             company_data.company_name }}</h1>
                     </div>
 
                     <a v-if="permissions.account_settings_index" type="button" :href="routes.account_settings_page"
-                        class="inline-flex w-fit items-center justify-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 transition hover:bg-gray-50 hover:ring-gray-400">
-                        <CogIcon class="-ml-0.5 size-5 text-gray-400" aria-hidden="true" />
+                        class="inline-flex w-fit items-center justify-center gap-x-1.5 rounded-md bg-surface px-3 py-2 text-sm font-semibold text-heading ring-1 ring-inset ring-strong transition hover:bg-surface-2 hover:ring-strong">
+                        <CogIcon class="-ml-0.5 size-5 text-subtle" aria-hidden="true" />
                         Settings
                     </a>
                 </div>
@@ -22,11 +22,11 @@
                     class="mx-auto grid max-w-2xl grid-cols-1 grid-rows-1 items-start gap-6 lg:mx-0 lg:max-w-none lg:grid-cols-3">
                     <!-- Right column: Account summary + My Extension -->
                     <div class="space-y-6 lg:col-start-3 lg:row-end-1">
-                        <div v-if="permissions.extension_view" class="rounded-lg bg-white p-6 ring-1 ring-gray-200">
+                        <div v-if="permissions.extension_view" class="rounded-lg bg-surface p-6 ring-1 ring-strong">
                             <dl class="flex flex-wrap">
-                                <div class="flex-auto truncate border-b border-gray-100 pb-5">
-                                    <dt class="text-sm font-medium leading-6 text-gray-500">Account name</dt>
-                                    <div class="mt-1 text-lg font-semibold leading-6 text-gray-950">{{
+                                <div class="flex-auto truncate border-b border-default pb-5">
+                                    <dt class="text-sm font-medium leading-6 text-muted">Account name</dt>
+                                    <div class="mt-1 text-lg font-semibold leading-6 text-heading">{{
                                         company_data.company_name }}</div>
                                 </div>
 
@@ -38,25 +38,25 @@
                                     <div v-if="counts.extensions !== undefined && counts.extensions >= 0"
                                         class="mt-6 flex w-full flex-none gap-x-4">
                                         <dt class="flex-none">
-                                            <ContactPhoneIcon class="h-6 w-5 text-gray-400" aria-hidden="true" />
+                                            <ContactPhoneIcon class="h-6 w-5 text-subtle" aria-hidden="true" />
                                         </dt>
-                                        <dd class="min-w-0 flex-1 text-sm leading-6 text-gray-500">
+                                        <dd class="min-w-0 flex-1 text-sm leading-6 text-muted">
                                             <div class="flex items-center justify-between gap-3">
-                                                <span class="font-medium text-gray-700">Extensions</span>
-                                                <span class="font-semibold text-gray-950">{{ counts.extensions }}</span>
+                                                <span class="font-medium text-body">Extensions</span>
+                                                <span class="font-semibold text-heading">{{ counts.extensions }}</span>
                                             </div>
                                             <div class="mt-3 flex flex-wrap gap-2">
                                                 <span
-                                                    class="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
+                                                    class="inline-flex items-center rounded-full bg-success-subtle px-2.5 py-1 text-xs font-medium text-success ring-1 ring-inset ring-success/20">
                                                     Online: {{ onlineExtensions }}
                                                 </span>
                                                 <span
-                                                    class="inline-flex items-center rounded-full bg-rose-50 px-2.5 py-1 text-xs font-medium text-rose-700 ring-1 ring-inset ring-rose-600/20">
+                                                    class="inline-flex items-center rounded-full bg-danger-subtle px-2.5 py-1 text-xs font-medium text-danger ring-1 ring-inset ring-danger/20">
                                                     Offline: {{ offlineExtensions }}
                                                 </span>
                                             </div>
-                                            <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-gray-100">
-                                                <div class="h-full rounded-full bg-emerald-500"
+                                            <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-surface-3">
+                                                <div class="h-full rounded-full bg-success"
                                                     :style="{ width: registrationPercent + '%' }"></div>
                                             </div>
                                         </dd>
@@ -65,27 +65,27 @@
                                     <div v-if="counts.phone_numbers !== undefined && counts.phone_numbers >= 0"
                                         class="mt-5 flex w-full flex-none gap-x-4">
                                         <dt class="flex-none">
-                                            <DialpadIcon class="h-6 w-5 text-gray-400" aria-hidden="true" />
+                                            <DialpadIcon class="h-6 w-5 text-subtle" aria-hidden="true" />
                                         </dt>
-                                        <dd class="text-sm leading-6 text-gray-500">Phone Numbers: <span
-                                                class="font-semibold text-gray-900">{{ counts.phone_numbers }}</span>
+                                        <dd class="text-sm leading-6 text-muted">Phone Numbers: <span
+                                                class="font-semibold text-heading">{{ counts.phone_numbers }}</span>
                                         </dd>
                                     </div>
 
                                     <div v-if="counts.faxes !== undefined && counts.faxes >= 0"
                                         class="mt-4 flex w-full flex-none gap-x-4">
                                         <dt class="flex-none">
-                                            <FaxIcon class="h-6 w-5 text-gray-400" aria-hidden="true" />
+                                            <FaxIcon class="h-6 w-5 text-subtle" aria-hidden="true" />
                                         </dt>
-                                        <dd class="text-sm leading-6 text-gray-500">Virtual Faxes: <span
-                                                class="font-semibold text-gray-900">{{ counts.faxes }}</span></dd>
+                                        <dd class="text-sm leading-6 text-muted">Virtual Faxes: <span
+                                                class="font-semibold text-heading">{{ counts.faxes }}</span></dd>
                                     </div>
 
                                     <div class="mt-4 flex w-full flex-none gap-x-4">
                                         <dt class="flex-none">
-                                            <ClockIcon class="h-6 w-5 text-gray-400" aria-hidden="true" />
+                                            <ClockIcon class="h-6 w-5 text-subtle" aria-hidden="true" />
                                         </dt>
-                                        <dd class="text-sm font-medium leading-6 text-gray-500">Time Zone: {{
+                                        <dd class="text-sm font-medium leading-6 text-muted">Time Zone: {{
                                             company_data.time_zone }}</dd>
                                     </div>
                                 </template>
@@ -96,20 +96,20 @@
                             @keydown.enter="showCustomerNotesModal = true"
                             @keydown.space.prevent="showCustomerNotesModal = true"
                             :class="[
-                                'group relative w-full overflow-hidden rounded-lg p-5 text-left shadow-sm ring-1 transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2',
+                                'group relative w-full overflow-hidden rounded-lg p-5 text-left shadow-sm ring-1 transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2',
                                 hasVisibleCustomerNotesContent
-                                    ? 'border border-amber-200 bg-amber-100/90 ring-amber-300/30'
-                                    : 'border border-gray-200 bg-white ring-gray-200',
+                                    ? 'border border-warning bg-warning/90 ring-warning/30'
+                                    : 'border border-default bg-surface ring-strong',
                             ]">
                             <div class="relative flex items-start justify-between gap-4">
                                 <div>
                                     <p :class="[
                                         'text-xs font-semibold uppercase tracking-wide',
-                                        hasVisibleCustomerNotesContent ? 'text-amber-800' : 'text-cyan-700',
+                                        hasVisibleCustomerNotesContent ? 'text-warning' : 'text-info',
                                     ]">Customer Notes</p>
                                     <h3 :class="[
                                         'mt-1 text-base font-semibold',
-                                        hasVisibleCustomerNotesContent ? 'text-amber-950' : 'text-gray-950',
+                                        hasVisibleCustomerNotesContent ? 'text-warning' : 'text-heading',
                                     ]">Technician notes</h3>
                                 </div>
                             </div>
@@ -118,7 +118,7 @@
                                 <div v-for="note in visibleCustomerNotes" :key="note.key"
                                     :class="[
                                         'rounded-md px-3 py-2 ring-1 ring-inset',
-                                        hasVisibleCustomerNotesContent ? 'bg-white/55 ring-amber-700/10' : 'bg-gray-50 ring-gray-200',
+                                        hasVisibleCustomerNotesContent ? 'bg-white/55 ring-warning/10' : 'bg-surface-2 ring-strong',
                                         note.borderClass,
                                     ]">
                                     <div class="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide"
@@ -128,56 +128,56 @@
                                     </div>
                                     <div v-if="note.content" class="relative">
                                         <div :ref="(el) => setCustomerNotesPreviewRef(note.key, el)"
-                                            class="customer-notes-preview max-h-28 overflow-hidden text-sm leading-5 text-amber-950"
+                                            class="customer-notes-preview max-h-28 overflow-hidden text-sm leading-5 text-warning"
                                             v-html="note.content"></div>
                                         <div v-if="overflowingCustomerNotes[note.key]"
                                             :class="[
                                                 'pointer-events-none absolute inset-x-0 bottom-0 flex h-10 items-end justify-center bg-gradient-to-t pb-0.5 text-lg font-semibold leading-none',
                                                 hasVisibleCustomerNotesContent
-                                                    ? 'from-amber-50 via-amber-50/95 text-amber-900'
-                                                    : 'from-gray-50 via-gray-50/95 text-gray-700',
+                                                    ? 'from-warning via-warning/95 text-warning'
+                                                    : 'from-surface-2 via-surface-2/95 text-body',
                                             ]">
                                             ...
                                         </div>
                                     </div>
-                                    <p v-else class="text-sm italic leading-5 text-amber-900/75">No notes yet.</p>
+                                    <p v-else class="text-sm italic leading-5 text-warning/75">No notes yet.</p>
                                 </div>
                             </div>
                         </section>
 
                         <div v-if="my_extension_status"
-                            class="overflow-hidden rounded-lg bg-white ring-1 ring-gray-200">
-                            <div class="flex flex-col gap-4 border-b border-gray-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                            class="overflow-hidden rounded-lg bg-surface ring-1 ring-strong">
+                            <div class="flex flex-col gap-4 border-b border-default px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                                 <div>
-                                    <p class="text-xs font-medium uppercase tracking-wide text-cyan-700">My Extension</p>
-                                    <h3 class="mt-1 text-sm font-semibold text-gray-950">{{ my_extension_status.name }}</h3>
+                                    <p class="text-xs font-medium uppercase tracking-wide text-info">My Extension</p>
+                                    <h3 class="mt-1 text-sm font-semibold text-heading">{{ my_extension_status.name }}</h3>
                                 </div>
 
                                 <button type="button" @click="openExtensionModal(my_extension_status.extension_uuid)"
-                                    class="inline-flex w-fit items-center justify-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 transition hover:bg-gray-50 hover:ring-gray-400">
-                                    <CogIcon class="-ml-0.5 size-5 text-gray-400" aria-hidden="true" />
+                                    class="inline-flex w-fit items-center justify-center gap-x-1.5 rounded-md bg-surface px-3 py-2 text-sm font-semibold text-heading ring-1 ring-inset ring-strong transition hover:bg-surface-2 hover:ring-strong">
+                                    <CogIcon class="-ml-0.5 size-5 text-subtle" aria-hidden="true" />
                                     Manage
                                 </button>
                             </div>
 
                             <div class="px-5 py-4">
-                                <p class="text-sm font-medium text-gray-700">Active call handling</p>
+                                <p class="text-sm font-medium text-body">Active call handling</p>
                                 <div class="mt-3 flex flex-wrap gap-2">
                                     <span v-if="my_extension_status.do_not_disturb"
-                                        class="inline-flex items-center rounded-full bg-rose-100 px-2.5 py-1 text-xs font-medium text-rose-800 ring-1 ring-inset ring-rose-400/20">
+                                        class="inline-flex items-center rounded-full bg-danger-subtle px-2.5 py-1 text-xs font-medium text-danger ring-1 ring-inset ring-danger/20">
                                         DND
                                     </span>
                                     <span v-for="forward in activeForwarding" :key="forward.key"
-                                        class="inline-flex max-w-full items-center rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-800 ring-1 ring-inset ring-blue-400/20">
+                                        class="inline-flex max-w-full items-center rounded-full bg-info-subtle px-2.5 py-1 text-xs font-medium text-info ring-1 ring-inset ring-info/20">
                                         <span>{{ forward.badge }}</span>
-                                        <span v-if="forward.target" class="ml-1 max-w-48 truncate text-blue-700">- {{ forward.target }}</span>
+                                        <span v-if="forward.target" class="ml-1 max-w-48 truncate text-info">- {{ forward.target }}</span>
                                     </span>
                                     <span v-if="my_extension_status.call_sequence_enabled"
-                                        class="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-800 ring-1 ring-inset ring-blue-400/20">
+                                        class="inline-flex items-center rounded-full bg-info-subtle px-2.5 py-1 text-xs font-medium text-info ring-1 ring-inset ring-info/20">
                                         Sequence
                                     </span>
                                     <span v-if="!hasActiveCallHandling"
-                                        class="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
+                                        class="inline-flex items-center rounded-full bg-success-subtle px-2.5 py-1 text-xs font-medium text-success ring-1 ring-inset ring-success/20">
                                         Normal routing
                                     </span>
                                 </div>
@@ -189,8 +189,8 @@
                     <div class="lg:col-span-2 lg:row-span-2 lg:row-end-2 space-y-6">
                       <div>
                         <div class="flex items-center justify-between">
-                            <h2 class="text-base font-semibold leading-6 text-gray-950">Quick Access</h2>
-                            <span v-if="cards.length" class="text-sm text-gray-500">
+                            <h2 class="text-base font-semibold leading-6 text-heading">Quick Access</h2>
+                            <span v-if="cards.length" class="text-sm text-muted">
                                 {{ cards.length }} shortcut{{ cards.length === 1 ? '' : 's' }}
                             </span>
                         </div>
@@ -203,9 +203,9 @@
                         </div>
 
                         <div v-else
-                            class="mt-4 rounded-lg border-2 border-dashed border-gray-200 bg-white p-8 text-center">
-                            <p class="text-sm font-medium text-gray-700">No shortcuts available</p>
-                            <p class="mt-1 text-sm text-gray-500">Shortcuts will appear here once you have access to features.</p>
+                            class="mt-4 rounded-lg border-2 border-dashed border-default bg-surface p-8 text-center">
+                            <p class="text-sm font-medium text-body">No shortcuts available</p>
+                            <p class="mt-1 text-sm text-muted">Shortcuts will appear here once you have access to features.</p>
                         </div>
                       </div>
 
@@ -332,24 +332,24 @@ const customerNoteLayers = [
         level: 1,
         label: 'Level 1',
         borderClass: 'border-l-4 border-l-amber-600',
-        labelClass: 'text-amber-800',
-        dotClass: 'bg-amber-600',
+        labelClass: 'text-warning',
+        dotClass: 'bg-warning',
     },
     {
         key: 'level_2',
         level: 2,
         label: 'Level 2',
         borderClass: 'border-l-4 border-l-sky-600',
-        labelClass: 'text-sky-800',
-        dotClass: 'bg-sky-600',
+        labelClass: 'text-info',
+        dotClass: 'bg-info',
     },
     {
         key: 'level_3',
         level: 3,
         label: 'Level 3',
         borderClass: 'border-l-4 border-l-rose-600',
-        labelClass: 'text-rose-800',
-        dotClass: 'bg-rose-600',
+        labelClass: 'text-danger',
+        dotClass: 'bg-danger',
     },
 ];
 
@@ -541,7 +541,7 @@ const getMyExtensionStatus = () => {
 }
 
 .customer-notes-preview :deep(a) {
-    color: #0e7490;
+    color: rgb(var(--color-info));
     text-decoration: underline;
 }
 </style>

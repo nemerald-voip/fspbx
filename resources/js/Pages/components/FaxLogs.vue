@@ -3,19 +3,19 @@
         <div class="flex flex-col sm:flex-row sm:flex-wrap">
             <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
                 <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                    <MagnifyingGlassIcon class="h-5 w-5 text-subtle" aria-hidden="true" />
                 </div>
                 <input
                     type="search"
                     v-model="filterData.search"
-                    class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
+                    class="block w-full rounded-md border-0 py-1.5 pl-10 text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus sm:hidden"
                     placeholder="Search"
                     @keydown.enter="handleSearchButtonClick"
                 />
                 <input
                     type="search"
                     v-model="filterData.search"
-                    class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
+                    class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus sm:block"
                     placeholder="Search"
                     @keydown.enter="handleSearchButtonClick"
                 />
@@ -49,7 +49,7 @@
             <div class="relative min-w-40 mb-2 shrink-0 sm:mr-4">
                 <select
                     v-model="filterData.status"
-                    class="block w-full rounded-md border-0 py-2 pl-3 pr-10 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600"
+                    class="block w-full rounded-md border-0 py-2 pl-3 pr-10 text-sm text-heading ring-1 ring-inset ring-strong focus:ring-2 focus:ring-inset focus:ring-focus"
                 >
                     <option value="all">All</option>
                     <option value="success">Success</option>
@@ -62,7 +62,7 @@
                     <button
                         type="button"
                         @click.prevent="handleSearchButtonClick"
-                        class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                        class="rounded-md bg-accent px-2.5 py-1.5 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
                     >
                         Search
                     </button>
@@ -70,7 +70,7 @@
                     <button
                         type="button"
                         @click.prevent="handleFiltersReset"
-                        class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                        class="rounded-md bg-surface px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2"
                     >
                         Reset
                     </button>
@@ -81,7 +81,7 @@
         <div class="mt-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
             <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
                 <Paginator
-                    class="border border-gray-200"
+                    class="border border-default"
                     :previous="data.prev_page_url"
                     :next="data.next_page_url"
                     :from="data.from"
@@ -93,58 +93,58 @@
                     @pagination-change-page="renderRequestedPage"
                 />
 
-                <div class="overflow-hidden-t border-l border-r border-gray-200">
-                    <table class="min-w-full divide-y divide-gray-200 mb-4">
-                        <thead class="bg-gray-100">
+                <div class="overflow-hidden-t border-l border-r border-default">
+                    <table class="min-w-full divide-y divide-default mb-4">
+                        <thead class="bg-surface-3">
                             <tr>
-                                <th class="w-12 py-3 pl-6 pr-3 text-left text-sm font-semibold text-gray-900">
+                                <th class="w-12 py-3 pl-6 pr-3 text-left text-sm font-semibold text-heading">
                                     <div class="flex items-center">
                                         <input
                                             v-if="canDelete"
                                             type="checkbox"
                                             v-model="selectPageItems"
                                             @change="handleSelectPageItems"
-                                            class="h-4 w-4 rounded border-gray-300 text-indigo-600"
+                                            class="h-4 w-4 rounded border-strong text-accent-fg"
                                         />
                                     </div>
                                 </th>
-                                <th class="w-12 py-3 pl-6 pr-3 text-left text-sm font-semibold text-gray-900">
+                                <th class="w-12 py-3 pl-6 pr-3 text-left text-sm font-semibold text-heading">
                                     <span class="sr-only">Direction</span>
                                 </th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Date</th>
-                                <th v-if="showDomainColumn" class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Domain</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">From</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">To</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Status</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Code</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Result</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">ECM</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Pages</th>
-                                <th v-if="hasActions" class="px-6 py-3 text-right text-sm font-semibold text-gray-900">Action</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-heading">Date</th>
+                                <th v-if="showDomainColumn" class="px-6 py-3 text-left text-sm font-semibold text-heading">Domain</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-heading">From</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-heading">To</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-heading">Status</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-heading">Code</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-heading">Result</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-heading">ECM</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-heading">Pages</th>
+                                <th v-if="hasActions" class="px-6 py-3 text-right text-sm font-semibold text-heading">Action</th>
                             </tr>
                         </thead>
 
-                        <tbody v-if="!isDataLoading && data.data?.length" class="divide-y divide-gray-200 bg-white">
+                        <tbody v-if="!isDataLoading && data.data?.length" class="divide-y divide-default bg-surface">
                             <tr v-if="canDelete && (selectPageItems || selectAll)">
                                 <td :colspan="faxColumnCount">
                                     <div class="text-sm text-center m-2">
                                         <span class="font-semibold">{{ selectedItems.length }}</span> items are selected.
                                         <button
                                             v-if="!selectAll && selectedItems.length != data.total"
-                                            class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
+                                            class="text-info rounded py-2 px-2 hover:bg-info-subtle hover:text-info focus:outline-none focus:ring-1 focus:bg-info-subtle focus:ring-focus transition duration-500 ease-in-out"
                                             @click="handleSelectAll"
                                         >
                                             Select all {{ data.total }} items
                                         </button>
                                         <button
                                             v-if="selectAll"
-                                            class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
+                                            class="text-info rounded py-2 px-2 hover:bg-info-subtle hover:text-info focus:outline-none focus:ring-1 focus:bg-info-subtle focus:ring-focus transition duration-500 ease-in-out"
                                             @click="handleClearSelection"
                                         >
                                             Clear selection
                                         </button>
                                         <button
-                                            class="text-red-500 rounded py-2 px-2 hover:bg-red-50 hover:text-red-600 focus:outline-none focus:ring-1 focus:bg-red-50 focus:ring-red-300 transition duration-500 ease-in-out"
+                                            class="text-danger rounded py-2 px-2 hover:bg-danger-subtle hover:text-danger focus:outline-none focus:ring-1 focus:bg-danger-subtle focus:ring-focus transition duration-500 ease-in-out"
                                             @click="handleBulkDeleteRequest"
                                         >
                                             Delete selected
@@ -154,21 +154,21 @@
                             </tr>
 
                             <template v-for="row in data.data" :key="row.fax_log_uuid">
-                                <tr @click="toggleExpand(row.fax_log_uuid)" class="hover:bg-gray-50 cursor-pointer">
-                                    <td class="w-12 whitespace-nowrap px-6 py-2 text-sm font-medium text-gray-500">
+                                <tr @click="toggleExpand(row.fax_log_uuid)" class="hover:bg-surface-2 cursor-pointer">
+                                    <td class="w-12 whitespace-nowrap px-6 py-2 text-sm font-medium text-muted">
                                         <input
                                             v-if="canDelete"
                                             v-model="selectedItems"
                                             type="checkbox"
                                             :value="row.fax_log_uuid"
-                                            class="h-4 w-4 rounded border-gray-300 text-indigo-600"
+                                            class="h-4 w-4 rounded border-strong text-accent-fg"
                                             @click.stop
                                         />
                                     </td>
-                                    <td class="w-12 whitespace-nowrap py-2 pl-6 pr-3 text-sm text-gray-500">
+                                    <td class="w-12 whitespace-nowrap py-2 pl-6 pr-3 text-sm text-muted">
                                         <div class="relative group inline-flex items-center">
-                                            <PhoneOutgoingIcon class="w-5 h-5 text-blue-600" v-if="row.direction === 'outbound'" />
-                                            <PhoneIncomingIcon class="w-5 h-5 text-green-600" v-if="row.direction === 'inbound'" />
+                                            <PhoneOutgoingIcon class="w-5 h-5 text-info" v-if="row.direction === 'outbound'" />
+                                            <PhoneIncomingIcon class="w-5 h-5 text-success" v-if="row.direction === 'inbound'" />
                                             <span v-if="!row.direction">{{ directionText(row) }}</span>
                                             <div class="absolute bottom-full left-1/2 mb-1 hidden -translate-x-1/2 whitespace-nowrap rounded bg-gray-800 px-2 py-1 text-xs text-white shadow-lg group-hover:block">
                                                 {{ directionTooltip(row) }}
@@ -176,19 +176,19 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="whitespace-nowrap px-6 py-2 text-sm font-medium text-gray-500">
+                                    <td class="whitespace-nowrap px-6 py-2 text-sm font-medium text-muted">
                                         {{ row.fax_date_formatted }}
                                     </td>
-                                    <td v-if="showDomainColumn" class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
+                                    <td v-if="showDomainColumn" class="whitespace-nowrap px-6 py-2 text-sm text-muted">
                                         {{ domainLabel(row) }}
                                     </td>
-                                    <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
+                                    <td class="whitespace-nowrap px-6 py-2 text-sm text-muted">
                                         {{ faxSource(row) }}
                                     </td>
-                                    <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
+                                    <td class="whitespace-nowrap px-6 py-2 text-sm text-muted">
                                         {{ faxDestination(row) }}
                                     </td>
-                                    <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
+                                    <td class="whitespace-nowrap px-6 py-2 text-sm text-muted">
                                         <Badge
                                             :text="statusBadge(row).text"
                                             :backgroundColor="statusBadge(row).backgroundColor"
@@ -196,24 +196,24 @@
                                             :ringColor="statusBadge(row).ringColor"
                                         />
                                     </td>
-                                    <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
+                                    <td class="whitespace-nowrap px-6 py-2 text-sm text-muted">
                                         {{ row.fax_result_code ?? '' }}
                                     </td>
-                                    <td class="px-6 py-2 text-sm text-gray-500" :title="row.fax_result_text ?? ''">
+                                    <td class="px-6 py-2 text-sm text-muted" :title="row.fax_result_text ?? ''">
                                         <div class="max-w-md truncate">{{ row.fax_result_text ?? '' }}</div>
                                     </td>
-                                    <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
+                                    <td class="whitespace-nowrap px-6 py-2 text-sm text-muted">
                                         {{ row.fax_ecm_used ?? '' }}
                                     </td>
-                                    <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
+                                    <td class="whitespace-nowrap px-6 py-2 text-sm text-muted">
                                         {{ pagesText(row) }}
                                     </td>
-                                    <td v-if="hasActions" class="whitespace-nowrap px-6 py-2 text-sm text-gray-500" @click.stop>
+                                    <td v-if="hasActions" class="whitespace-nowrap px-6 py-2 text-sm text-muted" @click.stop>
                                         <div class="flex items-center justify-end">
                                             <div v-if="canRetry(row)" class="relative group flex items-center justify-center cursor-pointer">
                                                 <ArrowPathIcon
                                                     @click="handleRetryButtonClick(row)"
-                                                    class="h-7 w-7 transition duration-300 ease-in-out p-1 text-gray-400 hover:bg-gray-200 hover:text-gray-600 rounded-full"
+                                                    class="h-7 w-7 transition duration-300 ease-in-out p-1 text-subtle hover:bg-surface-3 hover:text-body rounded-full"
                                                 />
                                                 <div class="absolute bottom-full mb-1 hidden group-hover:block whitespace-nowrap bg-gray-800 text-white text-xs rounded py-1 px-2 z-10 shadow-lg">
                                                     Retry outbound fax
@@ -223,7 +223,7 @@
                                             <div v-if="canDelete" class="relative group flex items-center justify-center cursor-pointer">
                                                 <TrashIcon
                                                     @click="handleDeleteButtonClick(row.fax_log_uuid)"
-                                                    class="h-7 w-7 transition duration-300 ease-in-out p-1 text-gray-400 hover:bg-gray-200 hover:text-gray-600 rounded-full"
+                                                    class="h-7 w-7 transition duration-300 ease-in-out p-1 text-subtle hover:bg-surface-3 hover:text-body rounded-full"
                                                 />
                                                 <div class="absolute bottom-full mb-1 hidden group-hover:block whitespace-nowrap bg-gray-800 text-white text-xs rounded py-1 px-2 z-10 shadow-lg">
                                                     Delete
@@ -235,39 +235,39 @@
                                 </tr>
 
                                 <tr v-if="expandedRow === row.fax_log_uuid">
-                                    <td :colspan="faxColumnCount" class="bg-gray-50 px-6 py-4 shadow-inner">
+                                    <td :colspan="faxColumnCount" class="bg-surface-2 px-6 py-4 shadow-inner">
                                         <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                                            <div class="rounded-md border border-gray-200 bg-white p-4">
-                                                <div class="text-sm font-semibold text-gray-900 mb-2">Overview</div>
-                                                <div class="space-y-2 text-sm text-gray-600">
-                                                    <div><span class="font-medium text-gray-700">Log ID:</span> {{ displayValue(row.fax_log_uuid) }}</div>
-                                                    <div><span class="font-medium text-gray-700">Fax ID:</span> {{ displayValue(row.fax_uuid) }}</div>
-                                                    <div><span class="font-medium text-gray-700">Mode:</span> {{ displayValue(row.fax_file?.fax_mode) }}</div>
-                                                    <div><span class="font-medium text-gray-700">Direction:</span> {{ displayValue(directionText(row)) }}</div>
-                                                    <div><span class="font-medium text-gray-700">Date:</span> {{ displayValue(row.fax_date_formatted) }}</div>
-                                                    <div><span class="font-medium text-gray-700">Duration:</span> {{ displayValue(row.fax_duration) }}</div>
+                                            <div class="rounded-md border border-default bg-surface p-4">
+                                                <div class="text-sm font-semibold text-heading mb-2">Overview</div>
+                                                <div class="space-y-2 text-sm text-body">
+                                                    <div><span class="font-medium text-body">Log ID:</span> {{ displayValue(row.fax_log_uuid) }}</div>
+                                                    <div><span class="font-medium text-body">Fax ID:</span> {{ displayValue(row.fax_uuid) }}</div>
+                                                    <div><span class="font-medium text-body">Mode:</span> {{ displayValue(row.fax_file?.fax_mode) }}</div>
+                                                    <div><span class="font-medium text-body">Direction:</span> {{ displayValue(directionText(row)) }}</div>
+                                                    <div><span class="font-medium text-body">Date:</span> {{ displayValue(row.fax_date_formatted) }}</div>
+                                                    <div><span class="font-medium text-body">Duration:</span> {{ displayValue(row.fax_duration) }}</div>
                                                 </div>
                                             </div>
 
-                                            <div class="rounded-md border border-gray-200 bg-white p-4">
-                                                <div class="text-sm font-semibold text-gray-900 mb-2">Transmission</div>
-                                                <div class="space-y-2 text-sm text-gray-600">
-                                                    <div><span class="font-medium text-gray-700">From:</span> {{ displayValue(faxSource(row)) }}</div>
-                                                    <div><span class="font-medium text-gray-700">To:</span> {{ displayValue(faxDestination(row)) }}</div>
-                                                    <div><span class="font-medium text-gray-700">Local Station ID:</span> {{ displayValue(row.fax_local_station_id) }}</div>
-                                                    <div><span class="font-medium text-gray-700">Transfer Rate:</span> {{ displayValue(row.fax_transfer_rate) }}</div>
-                                                    <div><span class="font-medium text-gray-700">Bad Rows:</span> {{ displayValue(row.fax_bad_rows) }}</div>
-                                                    <div><span class="font-medium text-gray-700">Pages:</span> {{ displayValue(pagesText(row)) }}</div>
+                                            <div class="rounded-md border border-default bg-surface p-4">
+                                                <div class="text-sm font-semibold text-heading mb-2">Transmission</div>
+                                                <div class="space-y-2 text-sm text-body">
+                                                    <div><span class="font-medium text-body">From:</span> {{ displayValue(faxSource(row)) }}</div>
+                                                    <div><span class="font-medium text-body">To:</span> {{ displayValue(faxDestination(row)) }}</div>
+                                                    <div><span class="font-medium text-body">Local Station ID:</span> {{ displayValue(row.fax_local_station_id) }}</div>
+                                                    <div><span class="font-medium text-body">Transfer Rate:</span> {{ displayValue(row.fax_transfer_rate) }}</div>
+                                                    <div><span class="font-medium text-body">Bad Rows:</span> {{ displayValue(row.fax_bad_rows) }}</div>
+                                                    <div><span class="font-medium text-body">Pages:</span> {{ displayValue(pagesText(row)) }}</div>
                                                 </div>
                                             </div>
 
-                                            <div class="rounded-md border border-gray-200 bg-white p-4 lg:col-span-2">
-                                                <div class="text-sm font-semibold text-gray-900 mb-2">Result</div>
-                                                <div class="space-y-2 text-sm text-gray-600">
-                                                    <div><span class="font-medium text-gray-700">Code:</span> {{ displayValue(row.fax_result_code) }}</div>
-                                                    <div><span class="font-medium text-gray-700">Text:</span> {{ displayValue(row.fax_result_text) }}</div>
-                                                    <div><span class="font-medium text-gray-700">URI:</span> <span class="break-all">{{ displayValue(row.fax_uri) }}</span></div>
-                                                    <div><span class="font-medium text-gray-700">File:</span> <span class="break-all">{{ displayValue(row.fax_file_path) }}</span></div>
+                                            <div class="rounded-md border border-default bg-surface p-4 lg:col-span-2">
+                                                <div class="text-sm font-semibold text-heading mb-2">Result</div>
+                                                <div class="space-y-2 text-sm text-body">
+                                                    <div><span class="font-medium text-body">Code:</span> {{ displayValue(row.fax_result_code) }}</div>
+                                                    <div><span class="font-medium text-body">Text:</span> {{ displayValue(row.fax_result_text) }}</div>
+                                                    <div><span class="font-medium text-body">URI:</span> <span class="break-all">{{ displayValue(row.fax_uri) }}</span></div>
+                                                    <div><span class="font-medium text-body">File:</span> <span class="break-all">{{ displayValue(row.fax_file_path) }}</span></div>
                                                 </div>
                                             </div>
                                         </div>
@@ -278,24 +278,24 @@
                     </table>
 
                     <div v-if="!isDataLoading && data.data?.length === 0" class="text-center my-5">
-                        <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                        <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
+                        <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-subtle" />
+                        <h3 class="mt-2 text-sm font-semibold text-heading">No results found</h3>
                     </div>
 
-                    <div v-if="isDataLoading" class="text-center my-5 text-sm text-gray-500">
+                    <div v-if="isDataLoading" class="text-center my-5 text-sm text-muted">
                         <div class="animate-pulse flex space-x-4">
                             <div class="flex-1 space-y-6 py-1">
-                                <div class="h-2 bg-slate-200 rounded"></div>
-                                <div class="h-2 bg-slate-200 rounded"></div>
-                                <div class="h-2 bg-slate-200 rounded"></div>
-                                <div class="h-2 bg-slate-200 rounded"></div>
+                                <div class="h-2 bg-surface-3 rounded"></div>
+                                <div class="h-2 bg-surface-3 rounded"></div>
+                                <div class="h-2 bg-surface-3 rounded"></div>
+                                <div class="h-2 bg-surface-3 rounded"></div>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <Paginator
-                    class="border border-gray-200"
+                    class="border border-default"
                     :previous="data.prev_page_url"
                     :next="data.next_page_url"
                     :from="data.from"
@@ -606,9 +606,9 @@ const statusBadge = (row) => {
     if (String(row?.fax_success ?? "0") === "1") {
         return {
             text: "Success",
-            backgroundColor: "bg-green-50",
-            textColor: "text-green-700",
-            ringColor: "ring-green-600/20",
+            backgroundColor: "bg-success-subtle",
+            textColor: "text-success",
+            ringColor: "ring-success/20",
         };
     }
 
@@ -617,40 +617,40 @@ const statusBadge = (row) => {
             case "waiting":
                 return {
                     text: "Retry queued",
-                    backgroundColor: "bg-blue-50",
-                    textColor: "text-blue-700",
-                    ringColor: "ring-blue-600/20",
+                    backgroundColor: "bg-info-subtle",
+                    textColor: "text-info",
+                    ringColor: "ring-info/20",
                 };
             case "sending":
                 return {
                     text: "Sending",
-                    backgroundColor: "bg-indigo-50",
-                    textColor: "text-indigo-700",
-                    ringColor: "ring-indigo-600/20",
+                    backgroundColor: "bg-accent-subtle",
+                    textColor: "text-accent-fg",
+                    ringColor: "ring-accent/20",
                 };
             case "trying":
             case "busy":
                 return {
                     text: "Retrying",
-                    backgroundColor: "bg-yellow-50",
-                    textColor: "text-yellow-800",
-                    ringColor: "ring-yellow-600/20",
+                    backgroundColor: "bg-warning-subtle",
+                    textColor: "text-warning",
+                    ringColor: "ring-warning/20",
                 };
             case "sent":
                 return {
                     text: "Retried",
-                    backgroundColor: "bg-green-50",
-                    textColor: "text-green-700",
-                    ringColor: "ring-green-600/20",
+                    backgroundColor: "bg-success-subtle",
+                    textColor: "text-success",
+                    ringColor: "ring-success/20",
                 };
         }
     }
 
     return {
         text: "Failed",
-        backgroundColor: "bg-red-50",
-        textColor: "text-red-700",
-        ringColor: "ring-red-600/20",
+        backgroundColor: "bg-danger-subtle",
+        textColor: "text-danger",
+        ringColor: "ring-danger/20",
     };
 };
 

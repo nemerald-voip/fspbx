@@ -11,7 +11,7 @@
                         type="button"
                         @click.prevent="exportCsv"
                         :disabled="isExporting"
-                        class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        class="inline-flex items-center gap-x-1.5 rounded-md bg-surface px-2.5 py-1.5 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <DocumentArrowDownIcon class="h-5 w-5" aria-hidden="true" />
                         Export CSV
@@ -20,13 +20,13 @@
 
                     <!-- <button v-if="!showGlobal && page.props.auth.can.cdrs_view_global" type="button"
                         @click.prevent="handleShowGlobal()"
-                        class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                        class="rounded-md bg-surface px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2">
                         Show global
                     </button>
 
                     <button v-if="showGlobal && page.props.auth.can.cdrs_view_global" type="button"
                         @click.prevent="handleShowLocal()"
-                        class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                        class="rounded-md bg-surface px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2">
                         Show local
                     </button> -->
                 </template>
@@ -34,14 +34,14 @@
                 <template #filters>
                     <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
                         <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                            <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                            <MagnifyingGlassIcon class="h-5 w-5 text-subtle" aria-hidden="true" />
                         </div>
                         <input
                             type="search"
                             v-model="filterData.search"
                             name="mobile-search-candidate"
                             id="mobile-search-candidate"
-                            class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
+                            class="block w-full rounded-md border-0 py-1.5 pl-10 text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus sm:hidden"
                             placeholder="Search"
                             @keydown.enter="handleSearchButtonClick"
                         />
@@ -50,7 +50,7 @@
                             v-model="filterData.search"
                             name="desktop-search-candidate"
                             id="desktop-search-candidate"
-                            class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
+                            class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus sm:block"
                             placeholder="Search"
                             @keydown.enter="handleSearchButtonClick"
                         />
@@ -82,62 +82,62 @@
                 <template #table-header>
                     <TableColumnHeader
                         header="Extension"
-                        class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
+                        class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-heading sm:pl-6"
                     />
                     <TableColumnHeader
                         header="Total Calls"
-                        class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
+                        class="px-2 py-3.5 text-left text-sm font-semibold text-heading"
                     />
                     <TableColumnHeader
                         header="Inbound"
-                        class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
+                        class="px-2 py-3.5 text-left text-sm font-semibold text-heading"
                     />
                     <TableColumnHeader
                         header="Outbound"
-                        class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
+                        class="px-2 py-3.5 text-left text-sm font-semibold text-heading"
                     />
                     <TableColumnHeader
                         header="Missed"
-                        class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
+                        class="px-2 py-3.5 text-left text-sm font-semibold text-heading"
                     />
                     <TableColumnHeader
                         header="Total Talk"
-                        class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
+                        class="px-2 py-3.5 text-left text-sm font-semibold text-heading"
                     />
                     <TableColumnHeader
                         header="Avg Call Duration"
-                        class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
+                        class="px-2 py-3.5 text-left text-sm font-semibold text-heading"
                     />
                 </template>
 
                 <template #table-body>
                     <tr v-for="row in data.data" :key="row.extension_uuid">
                         <TableField
-                            class="whitespace-nowrap py-3.5 pl-4 pr-3 text-sm text-gray-500"
+                            class="whitespace-nowrap py-3.5 pl-4 pr-3 text-sm text-muted"
                             :text="row.extension_label"
                         />
                         <TableField
-                            class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                            class="whitespace-nowrap px-2 py-2 text-sm text-muted"
                             :text="row.call_count"
                         />
                         <TableField
-                            class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                            class="whitespace-nowrap px-2 py-2 text-sm text-muted"
                             :text="row.inbound"
                         />
                         <TableField
-                            class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                            class="whitespace-nowrap px-2 py-2 text-sm text-muted"
                             :text="row.outbound"
                         />
                         <TableField
-                            class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                            class="whitespace-nowrap px-2 py-2 text-sm text-muted"
                             :text="row.missed"
                         />
                         <TableField
-                            class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                            class="whitespace-nowrap px-2 py-2 text-sm text-muted"
                             :text="row.total_talk_time_formatted"
                         />
                         <TableField
-                            class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                            class="whitespace-nowrap px-2 py-2 text-sm text-muted"
                             :text="row.average_duration_formatted"
                         />
                     </tr>
@@ -145,9 +145,9 @@
 
                 <template #empty>
                     <div v-if="data.data.length === 0" class="text-center my-5">
-                        <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                        <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
-                        <p class="mt-1 text-sm text-gray-500">
+                        <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-subtle" />
+                        <h3 class="mt-2 text-sm font-semibold text-heading">No results found</h3>
+                        <p class="mt-1 text-sm text-muted">
                             Adjust your search and try again.
                         </p>
                     </div>

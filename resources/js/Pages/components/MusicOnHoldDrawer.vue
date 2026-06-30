@@ -10,7 +10,7 @@
                 leave-from="opacity-100"
                 leave-to="opacity-0"
             >
-                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+                <div class="fixed inset-0 bg-gray-500 dark:bg-gray-900 bg-opacity-75 transition-opacity" />
             </TransitionChild>
 
             <div class="fixed inset-0 overflow-hidden">
@@ -26,17 +26,17 @@
                             leave-to="translate-x-full"
                         >
                             <DialogPanel class="pointer-events-auto w-screen max-w-2xl">
-                                <div class="flex h-full flex-col bg-white shadow-xl">
-                                    <div class="border-b border-gray-200 px-6 py-4">
+                                <div class="flex h-full flex-col bg-surface shadow-xl">
+                                    <div class="border-b border-default px-6 py-4">
                                         <div class="flex items-start justify-between gap-3">
                                             <div class="min-w-0 flex-1">
-                                                <DialogTitle class="truncate text-lg font-semibold text-gray-900" :title="stream?.music_on_hold_name">
+                                                <DialogTitle class="truncate text-lg font-semibold text-heading" :title="stream?.music_on_hold_name">
                                                     {{ stream?.music_on_hold_name || "Music on Hold" }}
                                                 </DialogTitle>
-                                                <p v-if="stream?.domain_label" class="mt-0.5 text-xs text-gray-500">
+                                                <p v-if="stream?.domain_label" class="mt-0.5 text-xs text-muted">
                                                     {{ stream.domain_label }}
                                                 </p>
-                                                <p v-if="permissions.view_path && stream?.music_on_hold_path" class="mt-1 truncate text-xs text-gray-400" :title="stream.music_on_hold_path">
+                                                <p v-if="permissions.view_path && stream?.music_on_hold_path" class="mt-1 truncate text-xs text-subtle" :title="stream.music_on_hold_path">
                                                     {{ stream.music_on_hold_path }}
                                                 </p>
                                             </div>
@@ -44,7 +44,7 @@
                                                 <button
                                                     v-if="permissions.update && stream?.can_modify"
                                                     type="button"
-                                                    class="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+                                                    class="rounded-full p-2 text-subtle transition hover:bg-surface-3 hover:text-body"
                                                     title="Edit stream"
                                                     @click="emit('edit')"
                                                 >
@@ -53,7 +53,7 @@
                                                 <button
                                                     v-if="permissions.destroy && stream?.can_modify"
                                                     type="button"
-                                                    class="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+                                                    class="rounded-full p-2 text-subtle transition hover:bg-surface-3 hover:text-body"
                                                     title="Delete stream"
                                                     @click="emit('delete')"
                                                 >
@@ -61,7 +61,7 @@
                                                 </button>
                                                 <button
                                                     type="button"
-                                                    class="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+                                                    class="rounded-full p-2 text-subtle transition hover:bg-surface-3 hover:text-body"
                                                     title="Close"
                                                     @click="emit('close')"
                                                 >
@@ -81,9 +81,9 @@
                                         </div>
                                     </div>
 
-                                    <div v-if="activeFile" class="border-b border-gray-200 bg-gray-50 px-6 py-4">
-                                        <p class="mb-2 truncate text-sm font-medium text-gray-700" :title="activeFile.name">
-                                            <MusicalNoteIcon class="mr-1 inline-block h-4 w-4 align-text-bottom text-indigo-500" />
+                                    <div v-if="activeFile" class="border-b border-default bg-surface-2 px-6 py-4">
+                                        <p class="mb-2 truncate text-sm font-medium text-body" :title="activeFile.name">
+                                            <MusicalNoteIcon class="mr-1 inline-block h-4 w-4 align-text-bottom text-accent-fg" />
                                             {{ activeFile.name }}
                                         </p>
                                         <AudioPlayer
@@ -96,18 +96,18 @@
 
                                     <div class="flex-1 overflow-y-auto px-6 py-4">
                                         <div class="mb-2 flex items-center justify-between">
-                                            <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                            <h4 class="text-xs font-semibold uppercase tracking-wide text-muted">
                                                 Files<span v-if="stream?.files?.length"> ({{ stream.files.length }})</span>
                                             </h4>
                                         </div>
 
-                                        <ul v-if="stream?.files?.length" class="-mx-2 divide-y divide-gray-100">
+                                        <ul v-if="stream?.files?.length" class="-mx-2 divide-y divide-default">
                                             <li
                                                 v-for="file in stream.files"
                                                 :key="file.name"
                                                 :class="[
                                                     'group flex items-center gap-2 rounded px-2 py-2 transition',
-                                                    activeFile?.name === file.name ? 'bg-indigo-50' : 'hover:bg-gray-50',
+                                                    activeFile?.name === file.name ? 'bg-accent-subtle' : 'hover:bg-surface-2',
                                                 ]"
                                             >
                                                 <button
@@ -115,8 +115,8 @@
                                                     :class="[
                                                         'rounded-full p-1.5 transition',
                                                         activeFile?.name === file.name
-                                                            ? 'bg-indigo-600 text-white hover:bg-indigo-500'
-                                                            : 'text-indigo-500 hover:bg-indigo-100 hover:text-indigo-700',
+                                                            ? 'bg-accent text-on-accent hover:bg-accent-hover'
+                                                            : 'text-accent-fg hover:bg-accent-subtle hover:text-accent-fg',
                                                     ]"
                                                     title="Select file"
                                                     @click="setActiveFile(file)"
@@ -128,14 +128,14 @@
                                                     class="min-w-0 flex-1 text-left"
                                                     @click="setActiveFile(file)"
                                                 >
-                                                    <p class="truncate text-sm text-gray-800" :title="file.name">{{ file.name }}</p>
-                                                    <p class="text-xs text-gray-500">
+                                                    <p class="truncate text-sm text-heading" :title="file.name">{{ file.name }}</p>
+                                                    <p class="text-xs text-muted">
                                                         {{ file.size_label }}<span v-if="file.modified_at"> &middot; {{ formatDate(file.modified_at) }}</span>
                                                     </p>
                                                 </button>
                                                 <button
                                                     type="button"
-                                                    class="rounded-full p-1.5 text-gray-400 transition hover:bg-gray-200 hover:text-gray-600"
+                                                    class="rounded-full p-1.5 text-subtle transition hover:bg-surface-3 hover:text-body"
                                                     title="Download"
                                                     @click="emit('download', file.download_url)"
                                                 >
@@ -144,7 +144,7 @@
                                                 <button
                                                     v-if="permissions.destroy && stream?.can_modify"
                                                     type="button"
-                                                    class="rounded-full p-1.5 text-gray-400 transition hover:bg-gray-200 hover:text-gray-600"
+                                                    class="rounded-full p-1.5 text-subtle transition hover:bg-surface-3 hover:text-body"
                                                     title="Delete"
                                                     @click="emit('delete-file', file)"
                                                 >
@@ -154,15 +154,15 @@
                                         </ul>
 
                                         <div v-else class="mt-6 text-center">
-                                            <MusicalNoteIcon class="mx-auto h-10 w-10 text-gray-300" />
-                                            <p class="mt-2 text-sm text-gray-500">No audio files in this stream yet.</p>
+                                            <MusicalNoteIcon class="mx-auto h-10 w-10 text-subtle" />
+                                            <p class="mt-2 text-sm text-muted">No audio files in this stream yet.</p>
                                         </div>
                                     </div>
 
-                                    <div v-if="permissions.create && stream?.can_modify" class="border-t border-gray-200 bg-white px-6 py-4">
+                                    <div v-if="permissions.create && stream?.can_modify" class="border-t border-default bg-surface px-6 py-4">
                                         <button
                                             type="button"
-                                            class="flex w-full items-center justify-center gap-2 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                                            class="flex w-full items-center justify-center gap-2 rounded-md bg-surface px-3 py-2 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2"
                                             @click="emit('upload')"
                                         >
                                             <ArrowUpTrayIcon class="h-4 w-4" />
@@ -201,9 +201,9 @@ const props = defineProps({
 
 const emit = defineEmits(["close", "edit", "delete", "delete-file", "upload", "download"]);
 
-const grayBadge = { backgroundColor: "bg-gray-50", textColor: "text-gray-700", ringColor: "ring-gray-600/20" };
-const blueBadge = { backgroundColor: "bg-blue-50", textColor: "text-blue-700", ringColor: "ring-blue-600/20" };
-const amberBadge = { backgroundColor: "bg-amber-50", textColor: "text-amber-700", ringColor: "ring-amber-600/20" };
+const grayBadge = { backgroundColor: "bg-surface-2", textColor: "text-body", ringColor: "ring-strong/20" };
+const blueBadge = { backgroundColor: "bg-info-subtle", textColor: "text-info", ringColor: "ring-info/20" };
+const amberBadge = { backgroundColor: "bg-warning-subtle", textColor: "text-warning", ringColor: "ring-warning/20" };
 
 const activeFile = ref(null);
 

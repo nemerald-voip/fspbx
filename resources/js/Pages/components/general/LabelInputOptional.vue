@@ -6,7 +6,7 @@ const props = defineProps({
     target: String,
     style: {
         type: String,
-        default: 'block text-sm font-medium leading-6 text-gray-900'
+        default: 'block text-sm font-medium leading-6 text-heading'
     },
     label: String
 });

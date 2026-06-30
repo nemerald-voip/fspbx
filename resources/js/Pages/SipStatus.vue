@@ -6,7 +6,7 @@
             <template #title>SIP Status</template>
             <template #subtitle>
                 Current Sofia profiles, gateways, aliases, profile details, and switch status.
-                <span v-if="statusData.generated_at" class="ml-2 text-gray-500">
+                <span v-if="statusData.generated_at" class="ml-2 text-muted">
                     Updated {{ formatDate(statusData.generated_at) }}
                 </span>
             </template>
@@ -14,12 +14,12 @@
             <template #filters>
                 <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
                     <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                        <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                        <MagnifyingGlassIcon class="h-5 w-5 text-subtle" aria-hidden="true" />
                     </div>
                     <input
                         v-model="filterData.search"
                         type="text"
-                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600"
+                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-sm text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus"
                         placeholder="Search"
                         @keydown.enter="handleSearch"
                     />
@@ -31,36 +31,36 @@
                     <button
                         v-if="permissions.can_run_commands"
                         type="button"
-                        class="inline-flex items-center gap-1.5 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50"
+                        class="inline-flex items-center gap-1.5 rounded-md bg-surface px-2.5 py-1.5 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2 disabled:opacity-50"
                         :disabled="actionLoading"
                         @click="submitAction('cache-flush')"
                     >
-                        <ArchiveBoxXMarkIcon class="h-4 w-4 text-gray-500" />
+                        <ArchiveBoxXMarkIcon class="h-4 w-4 text-muted" />
                         Flush Cache
                     </button>
                     <button
                         v-if="permissions.can_run_commands"
                         type="button"
-                        class="inline-flex items-center gap-1.5 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50"
+                        class="inline-flex items-center gap-1.5 rounded-md bg-surface px-2.5 py-1.5 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2 disabled:opacity-50"
                         :disabled="actionLoading"
                         @click="submitAction('reloadacl')"
                     >
-                        <ShieldCheckIcon class="h-4 w-4 text-gray-500" />
+                        <ShieldCheckIcon class="h-4 w-4 text-muted" />
                         Reload ACL
                     </button>
                     <button
                         v-if="permissions.can_run_commands"
                         type="button"
-                        class="inline-flex items-center gap-1.5 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50"
+                        class="inline-flex items-center gap-1.5 rounded-md bg-surface px-2.5 py-1.5 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2 disabled:opacity-50"
                         :disabled="actionLoading"
                         @click="submitAction('reloadxml')"
                     >
-                        <CodeBracketIcon class="h-4 w-4 text-gray-500" />
+                        <CodeBracketIcon class="h-4 w-4 text-muted" />
                         Reload XML
                     </button>
                     <button
                         type="button"
-                        class="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:opacity-50"
+                        class="inline-flex items-center gap-1.5 rounded-md bg-accent px-2.5 py-1.5 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover disabled:opacity-50"
                         :disabled="loading"
                         @click="fetchData"
                     >
@@ -71,32 +71,32 @@
             </template>
 
             <template #table-header>
-                <TableColumnHeader class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">
+                <TableColumnHeader class="px-4 py-3.5 text-left text-sm font-semibold text-heading">
                     Name
                 </TableColumnHeader>
-                <TableColumnHeader header="Type" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Data" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="State" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Type" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+                <TableColumnHeader header="Data" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+                <TableColumnHeader header="State" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+                <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-heading" />
             </template>
 
             <template #table-body>
                 <tr v-for="row in filteredSummary" :key="row.id">
-                    <TableField class="px-4 py-2 text-sm text-gray-500">
+                    <TableField class="px-4 py-2 text-sm text-muted">
                         <a
                             v-if="row.edit_url"
                             :href="row.edit_url"
-                            class="font-medium text-gray-900 hover:text-blue-600"
+                            class="font-medium text-heading hover:text-info"
                         >
                             {{ row.name }}
                         </a>
-                        <span v-else class="font-medium text-gray-900">{{ row.name }}</span>
+                        <span v-else class="font-medium text-heading">{{ row.name }}</span>
                     </TableField>
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.type" />
-                    <TableField class="px-2 py-2 text-sm text-gray-500">
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted" :text="row.type" />
+                    <TableField class="px-2 py-2 text-sm text-muted">
                         <span class="break-all">{{ row.data || '-' }}</span>
                     </TableField>
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted">
                         <Badge
                             :text="row.state || '-'"
                             :backgroundColor="statusColor(row.state).backgroundColor"
@@ -104,12 +104,12 @@
                             :ringColor="statusColor(row.state).ringColor"
                         />
                     </TableField>
-                    <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
+                    <TableField class="whitespace-nowrap px-2 py-1 text-sm text-muted">
                         <template #action-buttons>
                             <button
                                 v-if="row.action && row.action.gateway"
                                 type="button"
-                                class="rounded-md bg-white px-2 py-1 text-xs font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50"
+                                class="rounded-md bg-surface px-2 py-1 text-xs font-semibold text-body shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2 disabled:opacity-50"
                                 :disabled="actionLoading"
                                 @click="submitAction(row.action.action, { profile: row.action.profile, gateway: row.action.gateway })"
                             >
@@ -122,9 +122,9 @@
 
             <template #empty>
                 <div v-if="!loading && filteredSummary.length === 0" class="my-5 text-center">
-                    <ServerStackIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No SIP status rows found</h3>
-                    <p class="mt-1 text-sm text-gray-500">Refresh the page or adjust your search.</p>
+                    <ServerStackIcon class="mx-auto h-12 w-12 text-subtle" />
+                    <h3 class="mt-2 text-sm font-semibold text-heading">No SIP status rows found</h3>
+                    <p class="mt-1 text-sm text-muted">Refresh the page or adjust your search.</p>
                 </div>
             </template>
 
@@ -136,19 +136,19 @@
         <section v-if="permissions.system_status_sofia_status_profile" class="px-4 sm:px-6 lg:px-8">
             <div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h2 class="text-lg font-semibold leading-6 text-gray-600">Sofia Status Profiles</h2>
+                    <h2 class="text-lg font-semibold leading-6 text-body">Sofia Status Profiles</h2>
                 </div>
                 <div class="flex gap-2">
                     <button
                         type="button"
-                        class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                        class="rounded-md bg-surface px-2.5 py-1.5 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2"
                         @click="expandAllProfiles"
                     >
                         Expand
                     </button>
                     <button
                         type="button"
-                        class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                        class="rounded-md bg-surface px-2.5 py-1.5 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2"
                         @click="collapseAllProfiles"
                     >
                         Collapse
@@ -160,16 +160,16 @@
                 <div
                     v-for="profile in statusData.profiles"
                     :key="profile.sip_profile_uuid"
-                    class="overflow-hidden rounded-lg bg-white shadow ring-1 ring-black ring-opacity-5"
+                    class="overflow-hidden rounded-lg bg-surface shadow ring-1 ring-black ring-opacity-5"
                 >
                     <div class="flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                         <button
                             type="button"
-                            class="flex min-w-0 items-center gap-2 text-left text-sm font-semibold text-gray-900"
+                            class="flex min-w-0 items-center gap-2 text-left text-sm font-semibold text-heading"
                             @click="toggleProfile(profile.sip_profile_name)"
                         >
-                            <ChevronDownIcon v-if="isProfileOpen(profile.sip_profile_name)" class="h-5 w-5 flex-none text-gray-500" />
-                            <ChevronRightIcon v-else class="h-5 w-5 flex-none text-gray-500" />
+                            <ChevronDownIcon v-if="isProfileOpen(profile.sip_profile_name)" class="h-5 w-5 flex-none text-muted" />
+                            <ChevronRightIcon v-else class="h-5 w-5 flex-none text-muted" />
                             <span class="truncate">{{ profile.sip_profile_name }}</span>
                             <Badge
                                 :text="profile.state"
@@ -183,7 +183,7 @@
                             <button
                                 v-if="permissions.can_run_commands"
                                 type="button"
-                                class="rounded-md bg-white px-2 py-1 text-xs font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50"
+                                class="rounded-md bg-surface px-2 py-1 text-xs font-semibold text-body shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2 disabled:opacity-50"
                                 :disabled="actionLoading"
                                 @click="submitAction('flush_inbound_reg', { profile: profile.sip_profile_name })"
                             >
@@ -191,14 +191,14 @@
                             </button>
                             <a
                                 :href="profile.registrations_url"
-                                class="rounded-md bg-white px-2 py-1 text-xs font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                                class="rounded-md bg-surface px-2 py-1 text-xs font-semibold text-body shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2"
                             >
                                 Registrations ({{ profile.registration_count }})
                             </a>
                             <button
                                 v-if="permissions.can_run_commands && profile.state === 'stopped'"
                                 type="button"
-                                class="rounded-md bg-white px-2 py-1 text-xs font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50"
+                                class="rounded-md bg-surface px-2 py-1 text-xs font-semibold text-body shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2 disabled:opacity-50"
                                 :disabled="actionLoading"
                                 @click="submitAction('start', { profile: profile.sip_profile_name })"
                             >
@@ -207,7 +207,7 @@
                             <button
                                 v-if="permissions.can_run_commands && profile.state === 'running'"
                                 type="button"
-                                class="rounded-md bg-white px-2 py-1 text-xs font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50"
+                                class="rounded-md bg-surface px-2 py-1 text-xs font-semibold text-body shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2 disabled:opacity-50"
                                 :disabled="actionLoading"
                                 @click="submitAction('stop', { profile: profile.sip_profile_name })"
                             >
@@ -216,7 +216,7 @@
                             <button
                                 v-if="permissions.can_run_commands"
                                 type="button"
-                                class="rounded-md bg-white px-2 py-1 text-xs font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50"
+                                class="rounded-md bg-surface px-2 py-1 text-xs font-semibold text-body shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2 disabled:opacity-50"
                                 :disabled="actionLoading"
                                 @click="submitAction('restart', { profile: profile.sip_profile_name })"
                             >
@@ -225,7 +225,7 @@
                             <button
                                 v-if="permissions.can_run_commands"
                                 type="button"
-                                class="rounded-md bg-white px-2 py-1 text-xs font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50"
+                                class="rounded-md bg-surface px-2 py-1 text-xs font-semibold text-body shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2 disabled:opacity-50"
                                 :disabled="actionLoading"
                                 @click="submitAction('rescan', { profile: profile.sip_profile_name })"
                             >
@@ -234,15 +234,15 @@
                         </div>
                     </div>
 
-                    <div v-if="isProfileOpen(profile.sip_profile_name)" class="border-t border-gray-200">
+                    <div v-if="isProfileOpen(profile.sip_profile_name)" class="border-t border-default">
                         <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200">
-                                <tbody class="divide-y divide-gray-100">
+                            <table class="min-w-full divide-y divide-default">
+                                <tbody class="divide-y divide-default">
                                     <tr v-for="detail in profile.details" :key="detail.label">
-                                        <td class="w-64 whitespace-nowrap bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
+                                        <td class="w-64 whitespace-nowrap bg-surface-2 px-4 py-2 text-sm font-medium text-body">
                                             {{ detail.label }}
                                         </td>
-                                        <td class="px-4 py-2 text-sm text-gray-600">
+                                        <td class="px-4 py-2 text-sm text-body">
                                             <span class="break-all">{{ detail.value || '-' }}</span>
                                         </td>
                                     </tr>
@@ -255,34 +255,34 @@
         </section>
 
         <section v-if="permissions.sip_status_switch_status" class="px-4 sm:px-6 lg:px-8">
-            <div class="overflow-hidden rounded-lg bg-white shadow ring-1 ring-black ring-opacity-5">
+            <div class="overflow-hidden rounded-lg bg-surface shadow ring-1 ring-black ring-opacity-5">
                 <button
                     type="button"
-                    class="flex w-full items-center justify-between px-4 py-3 text-left text-lg font-semibold leading-6 text-gray-600"
+                    class="flex w-full items-center justify-between px-4 py-3 text-left text-lg font-semibold leading-6 text-body"
                     @click="showSwitchStatus = !showSwitchStatus"
                 >
                     <span>Status</span>
-                    <ChevronDownIcon v-if="showSwitchStatus" class="h-5 w-5 text-gray-500" />
-                    <ChevronRightIcon v-else class="h-5 w-5 text-gray-500" />
+                    <ChevronDownIcon v-if="showSwitchStatus" class="h-5 w-5 text-muted" />
+                    <ChevronRightIcon v-else class="h-5 w-5 text-muted" />
                 </button>
-                <div v-if="showSwitchStatus" class="border-t border-gray-200 bg-gray-950 px-4 py-3">
+                <div v-if="showSwitchStatus" class="border-t border-default bg-gray-950 px-4 py-3">
                     <pre class="max-h-[36rem] overflow-auto whitespace-pre-wrap text-xs leading-5 text-gray-100">{{ statusData.switch_status || '-' }}</pre>
                 </div>
             </div>
         </section>
 
         <section v-if="permissions.can_manage_tls" class="px-4 sm:px-6 lg:px-8">
-            <div class="overflow-hidden rounded-lg bg-white shadow ring-1 ring-black ring-opacity-5">
-                <div class="border-b border-gray-200 px-4 py-3">
-                    <h2 class="text-lg font-semibold leading-6 text-gray-600">TLS Certificate (Let's Encrypt)</h2>
-                    <p class="mt-1 text-sm text-gray-500">
+            <div class="overflow-hidden rounded-lg bg-surface shadow ring-1 ring-black ring-opacity-5">
+                <div class="border-b border-default px-4 py-3">
+                    <h2 class="text-lg font-semibold leading-6 text-body">TLS Certificate (Let's Encrypt)</h2>
+                    <p class="mt-1 text-sm text-muted">
                         Issues a free Let's Encrypt certificate for FreeSWITCH (SIP-TLS / WSS), installs it to
-                        <code class="rounded bg-gray-100 px-1">/etc/freeswitch/tls/all.pem</code>, and hot-reloads it with
-                        <code class="rounded bg-gray-100 px-1">reloadcert</code> — no FreeSWITCH restart.
+                        <code class="rounded bg-surface-3 px-1">/etc/freeswitch/tls/all.pem</code>, and hot-reloads it with
+                        <code class="rounded bg-surface-3 px-1">reloadcert</code> — no FreeSWITCH restart.
                     </p>
-                    <ul class="mt-2 list-disc space-y-0.5 pl-5 text-xs text-gray-500">
+                    <ul class="mt-2 list-disc space-y-0.5 pl-5 text-xs text-muted">
                         <li><strong>Validation:</strong> HTTP-01 — a token is served on port 80 from the webroot below. Multiple hostnames (SANs) are supported for failover / dual-registration setups.</li>
-                        <li><strong>Phone trust:</strong> the issuing root CA is auto-pushed to Polycom phones (<code class="rounded bg-gray-100 px-1">customCaCert2</code>) so they trust the new cert after re-provisioning.</li>
+                        <li><strong>Phone trust:</strong> the issuing root CA is auto-pushed to Polycom phones (<code class="rounded bg-surface-3 px-1">customCaCert2</code>) so they trust the new cert after re-provisioning.</li>
                         <li><strong>Renewal:</strong> auto-renews when under 30 days remain and emails the ACME account address on success and failure.</li>
                         <li><strong>Multi-node:</strong> list the failover hostname first, then each node's direct hostname. The node the failover currently points to renews and replicates the cert to the other nodes (peers are auto-detected from the hostnames; each node skips itself). A failed replication fails the renewal so it retries — nodes never diverge.</li>
                     </ul>
@@ -290,10 +290,10 @@
 
                 <div class="space-y-5 px-4 py-4">
                     <!-- Current certificate status -->
-                    <div class="rounded-md bg-gray-50 p-3">
+                    <div class="rounded-md bg-surface-2 p-3">
                         <div class="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm">
                             <div class="flex items-center gap-2">
-                                <span class="font-medium text-gray-700">Status:</span>
+                                <span class="font-medium text-body">Status:</span>
                                 <Badge
                                     :text="tlsBadge.text"
                                     :backgroundColor="tlsBadge.backgroundColor"
@@ -302,48 +302,48 @@
                                 />
                             </div>
                             <div v-if="tlsCert.installed">
-                                <span class="font-medium text-gray-700">Issuer:</span>
-                                <span class="text-gray-600">{{ tlsCert.issuer || '-' }}</span>
+                                <span class="font-medium text-body">Issuer:</span>
+                                <span class="text-body">{{ tlsCert.issuer || '-' }}</span>
                             </div>
                             <div v-if="tlsCert.installed">
-                                <span class="font-medium text-gray-700">Expires:</span>
-                                <span class="text-gray-600">{{ formatDate(tlsCert.valid_to) }}</span>
-                                <span v-if="tlsCert.days_remaining !== null" class="text-gray-500">
+                                <span class="font-medium text-body">Expires:</span>
+                                <span class="text-body">{{ formatDate(tlsCert.valid_to) }}</span>
+                                <span v-if="tlsCert.days_remaining !== null" class="text-muted">
                                     ({{ tlsCert.days_remaining }} days)
                                 </span>
                             </div>
                             <div v-if="tlsCert.domains && tlsCert.domains.length">
-                                <span class="font-medium text-gray-700">Domains:</span>
-                                <span class="text-gray-600">{{ tlsCert.domains.join(', ') }}</span>
+                                <span class="font-medium text-body">Domains:</span>
+                                <span class="text-body">{{ tlsCert.domains.join(', ') }}</span>
                             </div>
                             <div v-if="tlsCert.installed && tlsCert.serial">
-                                <span class="font-medium text-gray-700">Serial:</span>
-                                <span class="break-all font-mono text-xs text-gray-600">{{ tlsCert.serial }}</span>
+                                <span class="font-medium text-body">Serial:</span>
+                                <span class="break-all font-mono text-xs text-body">{{ tlsCert.serial }}</span>
                             </div>
                         </div>
 
                         <!-- On-disk install integrity (all.pem + FreeSWITCH symlinks) -->
                         <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
-                            <span class="font-medium text-gray-700">Files:</span>
-                            <span :class="tlsFiles.all_pem ? 'text-emerald-700' : 'text-red-600'">
+                            <span class="font-medium text-body">Files:</span>
+                            <span :class="tlsFiles.all_pem ? 'text-success' : 'text-danger'">
                                 all.pem {{ tlsFiles.all_pem ? '✓' : '✗ missing' }}
                             </span>
-                            <span :class="tlsFiles.links_ok ? 'text-emerald-700' : 'text-red-600'">
+                            <span :class="tlsFiles.links_ok ? 'text-success' : 'text-danger'">
                                 symlinks {{ tlsFiles.links_ok ? '✓' : '✗' }}
                             </span>
-                            <span v-if="!tlsFiles.links_ok" class="text-gray-500">
+                            <span v-if="!tlsFiles.links_ok" class="text-muted">
                                 ({{ brokenLinks.join(', ') || 'check /etc/freeswitch/tls' }})
                             </span>
-                            <span class="text-gray-500">Verify: <code class="rounded bg-gray-100 px-1">openssl x509 -in /etc/freeswitch/tls/all.pem -noout -issuer -serial -dates</code></span>
+                            <span class="text-muted">Verify: <code class="rounded bg-surface-3 px-1">openssl x509 -in /etc/freeswitch/tls/all.pem -noout -issuer -serial -dates</code></span>
                         </div>
 
-                        <p v-if="tlsConfig.last_issued" class="mt-2 text-xs text-gray-500">
+                        <p v-if="tlsConfig.last_issued" class="mt-2 text-xs text-muted">
                             Last issued by FS PBX: {{ formatDate(tlsConfig.last_issued) }}
                         </p>
-                        <p v-if="tlsConfig.last_revoked" class="mt-1 text-xs text-gray-500">
+                        <p v-if="tlsConfig.last_revoked" class="mt-1 text-xs text-muted">
                             Last revoked: {{ formatDate(tlsConfig.last_revoked) }}
                         </p>
-                        <p v-if="tlsConfig.last_error" class="mt-2 text-xs text-red-600">
+                        <p v-if="tlsConfig.last_error" class="mt-2 text-xs text-danger">
                             Last error: {{ tlsConfig.last_error }}
                         </p>
                     </div>
@@ -357,8 +357,8 @@
                                     placeholder="pbx.example.com pbx01.example.com"
                                     autocomplete="off" :error="!!tlsErrors.domain" />
                             </div>
-                            <p v-if="tlsErrors.domain" class="mt-1 text-xs text-red-600">{{ tlsErrors.domain[0] }}</p>
-                            <p v-else class="mt-1 text-xs text-gray-500">Space/comma separated. For a cluster, list the failover/proxy hostname <strong>first</strong> (used to pick the active node), then each node's direct hostname. Defaults to this server's app URL host.</p>
+                            <p v-if="tlsErrors.domain" class="mt-1 text-xs text-danger">{{ tlsErrors.domain[0] }}</p>
+                            <p v-else class="mt-1 text-xs text-muted">Space/comma separated. For a cluster, list the failover/proxy hostname <strong>first</strong> (used to pick the active node), then each node's direct hostname. Defaults to this server's app URL host.</p>
                         </div>
                         <div>
                             <LabelInputRequired target="tls_email" label="ACME account email" />
@@ -366,8 +366,8 @@
                                 <InputField v-model="tlsConfig.account_email" type="email" name="tls_email"
                                     placeholder="admin@example.com" autocomplete="off" :error="!!tlsErrors.account_email" />
                             </div>
-                            <p v-if="tlsErrors.account_email" class="mt-1 text-xs text-red-600">{{ tlsErrors.account_email[0] }}</p>
-                            <p v-else class="mt-1 text-xs text-gray-500">Let's Encrypt account — also where renewal alert emails are sent.</p>
+                            <p v-if="tlsErrors.account_email" class="mt-1 text-xs text-danger">{{ tlsErrors.account_email[0] }}</p>
+                            <p v-else class="mt-1 text-xs text-muted">Let's Encrypt account — also where renewal alert emails are sent.</p>
                         </div>
                         <div>
                             <LabelInputRequired target="tls_webroot" label="ACME challenge webroot" />
@@ -375,8 +375,8 @@
                                 <InputField v-model="tlsConfig.webroot" type="text" name="tls_webroot"
                                     placeholder="/var/www/fspbx/public" autocomplete="off" :error="!!tlsErrors.webroot" />
                             </div>
-                            <p v-if="tlsErrors.webroot" class="mt-1 text-xs text-red-600">{{ tlsErrors.webroot[0] }}</p>
-                            <p v-else class="mt-1 text-xs text-gray-500">Document root served on port 80; tokens are written under <code class="rounded bg-gray-100 px-1">/.well-known/acme-challenge/</code>. Defaults to the app's public dir.</p>
+                            <p v-if="tlsErrors.webroot" class="mt-1 text-xs text-danger">{{ tlsErrors.webroot[0] }}</p>
+                            <p v-else class="mt-1 text-xs text-muted">Document root served on port 80; tokens are written under <code class="rounded bg-surface-3 px-1">/.well-known/acme-challenge/</code>. Defaults to the app's public dir.</p>
                         </div>
                         <div class="flex flex-col justify-center gap-3">
                             <Toggle v-model="tlsStaging" label="Use staging (test) directory" description="Avoid Let's Encrypt rate limits while testing. Staging certs are not trusted by clients." />
@@ -390,20 +390,20 @@
                                         placeholder="shared key for node-to-node cert push" autocomplete="new-password" :error="!!tlsErrors.push_secret" />
                                 </div>
                                 <button type="button" @click="showSecret = !showSecret"
-                                    class="inline-flex items-center rounded-md bg-white px-2 text-gray-500 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                                    class="inline-flex items-center rounded-md bg-surface px-2 text-muted shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2"
                                     :title="showSecret ? 'Hide' : 'Reveal'">
                                     <EyeSlashIcon v-if="showSecret" class="h-4 w-4" />
                                     <EyeIcon v-else class="h-4 w-4" />
                                 </button>
                                 <button type="button" @click="rotateSecret" :disabled="tlsLoading"
-                                    class="inline-flex items-center gap-1 rounded-md bg-white px-2.5 text-xs font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50"
+                                    class="inline-flex items-center gap-1 rounded-md bg-surface px-2.5 text-xs font-semibold text-body shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2 disabled:opacity-50"
                                     title="Generate a new secret">
                                     <ArrowPathIcon class="h-4 w-4" />
                                     Rotate
                                 </button>
                             </div>
-                            <p v-if="tlsErrors.push_secret" class="mt-1 text-xs text-red-600">{{ tlsErrors.push_secret[0] }}</p>
-                            <p v-else class="mt-1 text-xs text-gray-500">Required for multi-node — authorizes cert replication between nodes. Click Rotate to generate one.</p>
+                            <p v-if="tlsErrors.push_secret" class="mt-1 text-xs text-danger">{{ tlsErrors.push_secret[0] }}</p>
+                            <p v-else class="mt-1 text-xs text-muted">Required for multi-node — authorizes cert replication between nodes. Click Rotate to generate one.</p>
                         </div>
                     </div>
 
@@ -413,7 +413,7 @@
                             <template v-if="!confirmingRevoke">
                                 <button
                                     type="button"
-                                    class="inline-flex items-center gap-1.5 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-red-600 shadow-sm ring-1 ring-inset ring-red-300 hover:bg-red-50 disabled:opacity-50"
+                                    class="inline-flex items-center gap-1.5 rounded-md bg-surface px-2.5 py-1.5 text-sm font-semibold text-danger shadow-sm ring-1 ring-inset ring-danger hover:bg-danger-subtle disabled:opacity-50"
                                     :disabled="tlsLoading"
                                     @click="confirmingRevoke = true"
                                 >
@@ -422,10 +422,10 @@
                                 </button>
                             </template>
                             <template v-else>
-                                <span class="text-sm text-gray-600">Revoke &amp; replace with self-signed?</span>
+                                <span class="text-sm text-body">Revoke &amp; replace with self-signed?</span>
                                 <button
                                     type="button"
-                                    class="inline-flex items-center gap-1.5 rounded-md bg-red-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-red-500 disabled:opacity-50"
+                                    class="inline-flex items-center gap-1.5 rounded-md bg-danger-solid px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-danger-solid-hover disabled:opacity-50"
                                     :disabled="tlsLoading"
                                     @click="revokeTls"
                                 >
@@ -434,7 +434,7 @@
                                 </button>
                                 <button
                                     type="button"
-                                    class="inline-flex items-center rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50"
+                                    class="inline-flex items-center rounded-md bg-surface px-2.5 py-1.5 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2 disabled:opacity-50"
                                     :disabled="tlsLoading"
                                     @click="confirmingRevoke = false"
                                 >
@@ -447,7 +447,7 @@
                         <div class="flex flex-wrap items-center gap-2">
                             <button
                                 type="button"
-                                class="inline-flex items-center gap-1.5 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50"
+                                class="inline-flex items-center gap-1.5 rounded-md bg-surface px-2.5 py-1.5 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2 disabled:opacity-50"
                                 :disabled="tlsLoading"
                                 @click="saveTlsConfig"
                             >
@@ -455,7 +455,7 @@
                             </button>
                             <button
                                 type="button"
-                                class="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:opacity-50"
+                                class="inline-flex items-center gap-1.5 rounded-md bg-accent px-2.5 py-1.5 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover disabled:opacity-50"
                                 :disabled="tlsLoading"
                                 @click="issueTls"
                             >
@@ -795,32 +795,32 @@ const statusColor = (status) => {
 
     if (normalized.includes("running") || normalized.includes("reged") || normalized.includes("up")) {
         return {
-            backgroundColor: "bg-emerald-50",
-            textColor: "text-emerald-700",
-            ringColor: "ring-emerald-600/20",
+            backgroundColor: "bg-success-subtle",
+            textColor: "text-success",
+            ringColor: "ring-success/20",
         };
     }
 
     if (normalized.includes("down") || normalized.includes("fail") || normalized.includes("stopped")) {
         return {
-            backgroundColor: "bg-red-50",
-            textColor: "text-red-700",
-            ringColor: "ring-red-600/20",
+            backgroundColor: "bg-danger-subtle",
+            textColor: "text-danger",
+            ringColor: "ring-danger/20",
         };
     }
 
     if (normalized.includes("warn") || normalized.includes("expir")) {
         return {
-            backgroundColor: "bg-amber-50",
-            textColor: "text-amber-700",
-            ringColor: "ring-amber-600/20",
+            backgroundColor: "bg-warning-subtle",
+            textColor: "text-warning",
+            ringColor: "ring-warning/20",
         };
     }
 
     return {
-        backgroundColor: "bg-gray-50",
-        textColor: "text-gray-700",
-        ringColor: "ring-gray-600/20",
+        backgroundColor: "bg-surface-2",
+        textColor: "text-body",
+        ringColor: "ring-strong/20",
     };
 };
 

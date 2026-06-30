@@ -12,15 +12,15 @@
             <template #filters>
                 <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
                     <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                        <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                        <MagnifyingGlassIcon class="h-5 w-5 text-subtle" aria-hidden="true" />
                     </div>
                     <input type="text" v-model="filterData.search" name="mobile-search-active-conferences"
                         id="mobile-search-active-conferences"
-                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
+                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus sm:hidden"
                         placeholder="Search" @keydown.enter="handleSearchButtonClick" />
                     <input type="text" v-model="filterData.search" name="desktop-search-active-conferences"
                         id="desktop-search-active-conferences"
-                        class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
+                        class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus sm:block"
                         placeholder="Search" @keydown.enter="handleSearchButtonClick" />
                 </div>
             </template>
@@ -28,24 +28,24 @@
             <template #action>
                 <button :class="[
                     isRefreshing
-                        ? 'rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600'
-                        : 'rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50'
+                        ? 'rounded-md bg-accent px-2.5 py-1.5 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent'
+                        : 'rounded-md bg-surface px-2.5 py-1.5 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2'
                 ]" title="Auto refresh" @click="toggleRefreshing">
                     <Refresh class="h-5 w-5" :class="{ 'animate-spin': isRefreshing }" />
                 </button>
 
                 <button type="button" @click.prevent="handleRefreshButtonClick"
-                    class="ml-2 rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                    class="ml-2 rounded-md bg-accent px-2.5 py-1.5 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
                     Refresh
                 </button>
 
                 <a :href="routes.conference_centers"
-                    class="ml-2 sm:ml-4 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    class="ml-2 sm:ml-4 rounded-md bg-surface px-2.5 py-1.5 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2">
                     Conference Centers
                 </a>
 
                 <a :href="routes.conference_rooms"
-                    class="ml-2 sm:ml-4 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    class="ml-2 sm:ml-4 rounded-md bg-surface px-2.5 py-1.5 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2">
                     Conference Rooms
                 </a>
             </template>
@@ -57,58 +57,58 @@
             </template>
 
             <template #table-header>
-                <TableColumnHeader class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">
+                <TableColumnHeader class="px-4 py-3.5 text-left text-sm font-semibold text-heading">
                     <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('name')">
                         <span class="mr-2">Name</span>
-                        <ChevronUpIcon v-if="sortData.name === 'name' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
-                        <ChevronDownIcon v-else-if="sortData.name === 'name' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronUpIcon v-if="sortData.name === 'name' && sortData.order === 'asc'" class="h-4 w-4 text-muted" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'name' && sortData.order === 'desc'" class="h-4 w-4 text-muted" />
                     </div>
                 </TableColumnHeader>
 
-                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-heading">
                     <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('extension')">
                         <span class="mr-2">Extension</span>
-                        <ChevronUpIcon v-if="sortData.name === 'extension' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
-                        <ChevronDownIcon v-else-if="sortData.name === 'extension' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronUpIcon v-if="sortData.name === 'extension' && sortData.order === 'asc'" class="h-4 w-4 text-muted" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'extension' && sortData.order === 'desc'" class="h-4 w-4 text-muted" />
                     </div>
                 </TableColumnHeader>
 
-                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-heading">
                     <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('participant_pin')">
                         <span class="mr-2">Participant PIN</span>
-                        <ChevronUpIcon v-if="sortData.name === 'participant_pin' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
-                        <ChevronDownIcon v-else-if="sortData.name === 'participant_pin' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronUpIcon v-if="sortData.name === 'participant_pin' && sortData.order === 'asc'" class="h-4 w-4 text-muted" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'participant_pin' && sortData.order === 'desc'" class="h-4 w-4 text-muted" />
                     </div>
                 </TableColumnHeader>
 
-                <TableColumnHeader class="w-32 px-2 py-3.5 text-center text-sm font-semibold text-gray-900 [&>div]:justify-center">
+                <TableColumnHeader class="w-32 px-2 py-3.5 text-center text-sm font-semibold text-heading [&>div]:justify-center">
                     <div class="flex items-center justify-center cursor-pointer select-none" @click="handleSortRequest('member_count')">
                         <span class="mr-2">Members</span>
-                        <ChevronUpIcon v-if="sortData.name === 'member_count' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
-                        <ChevronDownIcon v-else-if="sortData.name === 'member_count' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronUpIcon v-if="sortData.name === 'member_count' && sortData.order === 'asc'" class="h-4 w-4 text-muted" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'member_count' && sortData.order === 'desc'" class="h-4 w-4 text-muted" />
                     </div>
                 </TableColumnHeader>
 
-                <TableColumnHeader header="Action" class="w-20 px-2 py-3.5 text-right text-sm font-semibold text-gray-900 [&>div]:justify-end" />
+                <TableColumnHeader header="Action" class="w-20 px-2 py-3.5 text-right text-sm font-semibold text-heading [&>div]:justify-end" />
             </template>
 
             <template #table-body>
                 <tr v-for="row in data.data" :key="row.full_name">
-                    <TableField class="whitespace-nowrap px-4 py-2 text-sm font-medium text-gray-900">
+                    <TableField class="whitespace-nowrap px-4 py-2 text-sm font-medium text-heading">
                         <a v-if="permissions.interactive_view" :href="toolUrl(routes.interactive, row.identifier)"
-                            class="text-blue-600 hover:text-blue-800">
+                            class="text-info hover:text-info">
                             {{ row.name || row.identifier }}
                         </a>
                         <span v-else>{{ row.name || row.identifier }}</span>
                     </TableField>
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.extension || '-'" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="formatPin(row.participant_pin)" />
-                    <TableField class="w-32 whitespace-nowrap px-2 py-2 text-center text-sm text-gray-500" :text="row.member_count" />
-                    <TableField class="w-20 whitespace-nowrap px-2 py-1 text-sm text-gray-500">
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted" :text="row.extension || '-'" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted" :text="formatPin(row.participant_pin)" />
+                    <TableField class="w-32 whitespace-nowrap px-2 py-2 text-center text-sm text-muted" :text="row.member_count" />
+                    <TableField class="w-20 whitespace-nowrap px-2 py-1 text-sm text-muted">
                         <template #action-buttons>
                             <div class="flex items-center justify-end whitespace-nowrap">
                                 <EyeIcon v-if="permissions.interactive_view" @click="goToInteractive(row.identifier)"
-                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer" />
                             </div>
                         </template>
                     </TableField>
@@ -117,9 +117,9 @@
 
             <template #empty>
                 <div v-if="!loading && data.data.length === 0" class="text-center my-5">
-                    <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No active conferences found</h3>
-                    <p class="mt-1 text-sm text-gray-500">
+                    <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-subtle" />
+                    <h3 class="mt-2 text-sm font-semibold text-heading">No active conferences found</h3>
+                    <p class="mt-1 text-sm text-muted">
                         Refresh the list or adjust your search.
                     </p>
                 </div>

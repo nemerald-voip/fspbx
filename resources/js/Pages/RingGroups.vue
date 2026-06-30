@@ -8,15 +8,15 @@
             <template #filters>
                 <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
                     <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                        <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                        <MagnifyingGlassIcon class="h-5 w-5 text-subtle" aria-hidden="true" />
                     </div>
                     <input type="text" v-model="filterData.search" name="mobile-search-candidate"
                         id="mobile-search-candidate"
-                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
+                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus sm:hidden"
                         placeholder="Search" @keydown.enter="handleSearchButtonClick" />
                     <input type="text" v-model="filterData.search" name="desktop-search-candidate"
                         id="desktop-search-candidate"
-                        class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
+                        class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus sm:block"
                         placeholder="Search" @keydown.enter="handleSearchButtonClick" />
                 </div>
             </template>
@@ -24,7 +24,7 @@
             <template #action>
                 <button v-if="page.props.auth.can.ring_group_create" type="button"
                     @click.prevent="handleCreateButtonClick()"
-                    class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                    class="rounded-md bg-accent px-2.5 py-1.5 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
                     Create
                 </button>
 
@@ -40,37 +40,37 @@
             <template #table-header>
 
                 <TableColumnHeader
-                    class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
+                    class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-heading items-center justify-start">
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
-                        class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                        class="h-4 w-4 rounded border-strong text-accent-fg">
 
                 <div class="ml-9 flex items-center cursor-pointer select-none"
                     @click="handleSortRequest('ring_group_name')">
                     <span class="mr-2">Name</span>
-                    <ChevronUpIcon v-if="sortData.name === 'ring_group_name' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
-                    <ChevronDownIcon v-else-if="sortData.name === 'ring_group_name' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                    <ChevronUpIcon v-if="sortData.name === 'ring_group_name' && sortData.order === 'asc'" class="h-4 w-4 text-muted" />
+                    <ChevronDownIcon v-else-if="sortData.name === 'ring_group_name' && sortData.order === 'desc'" class="h-4 w-4 text-muted" />
                 </div>
                             </TableColumnHeader>
 
-                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-heading">
                     <div class="flex items-center cursor-pointer select-none"
                         @click="handleSortRequest('ring_group_extension')">
                         <span class="mr-2">Extension</span>
-                        <ChevronUpIcon v-if="sortData.name === 'ring_group_extension' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
-                        <ChevronDownIcon v-else-if="sortData.name === 'ring_group_extension' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronUpIcon v-if="sortData.name === 'ring_group_extension' && sortData.order === 'asc'" class="h-4 w-4 text-muted" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'ring_group_extension' && sortData.order === 'desc'" class="h-4 w-4 text-muted" />
                     </div>
                 </TableColumnHeader>
-                                <TableColumnHeader header="Members" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                                <TableColumnHeader header="Members" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
 
-                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-heading">
                     <div class="flex items-center cursor-pointer select-none"
                         @click="handleSortRequest('ring_group_description')">
                         <span class="mr-2">Description</span>
-                        <ChevronUpIcon v-if="sortData.name === 'ring_group_description' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
-                        <ChevronDownIcon v-else-if="sortData.name === 'ring_group_description' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronUpIcon v-if="sortData.name === 'ring_group_description' && sortData.order === 'asc'" class="h-4 w-4 text-muted" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'ring_group_description' && sortData.order === 'desc'" class="h-4 w-4 text-muted" />
                     </div>
                 </TableColumnHeader>
-                                <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
+                                <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-heading" />
             </template>
 
             <template v-if="selectPageItems" v-slot:current-selection>
@@ -78,12 +78,12 @@
                     <div class="text-sm text-center m-2">
                         <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
                         <button v-if="!selectAll && selectedItems.length != data.total"
-                            class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
+                            class="text-info rounded py-2 px-2 hover:bg-info-subtle  hover:text-info focus:outline-none focus:ring-1 focus:bg-info-subtle focus:ring-focus transition duration-500 ease-in-out"
                             @click="handleSelectAll">
                             Select all {{ data.total }} items
                         </button>
                         <button v-if="selectAll"
-                            class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
+                            class="text-info rounded py-2 px-2 hover:bg-info-subtle  hover:text-info focus:outline-none focus:ring-1 focus:bg-info-subtle focus:ring-focus transition duration-500 ease-in-out"
                             @click="handleClearSelection">
                             Clear selection
                         </button>
@@ -93,29 +93,29 @@
 
             <template #table-body>
                 <tr v-for="row in data.data" :key="row.ring_group_uuid">
-                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500"
+                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-muted"
                         :text="row.ring_group_extension">
                         <div class="flex items-center">
                             <input v-if="row.ring_group_uuid" v-model="selectedItems" type="checkbox"
                                 name="action_box[]" :value="row.ring_group_uuid"
-                                class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                                class="h-4 w-4 rounded border-strong text-accent-fg">
                             <div class="ml-9"
-                                :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.ring_group_update, }"
+                                :class="{ 'cursor-pointer hover:text-heading': page.props.auth.can.ring_group_update, }"
                                 @click="page.props.auth.can.ring_group_update && handleEditButtonClick(row.ring_group_uuid)">
                                 <span class="flex flex-col lg:flex-row items-start gap-2">
                                     {{ row.ring_group_name }}
                                     <Badge v-if="row.ring_group_forward_enabled == 'true'" :text="'FWD'"
-                                        :backgroundColor="'bg-blue-100'" :textColor="'text-blue-800'"
-                                        ringColor="ring-blue-400/20" class="px-2 py-1 text-xs" />
+                                        :backgroundColor="'bg-info-subtle'" :textColor="'text-info'"
+                                        ringColor="ring-info/20" class="px-2 py-1 text-xs" />
                                 </span>
                             </div>
                         </div>
                     </TableField>
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted"
                         :text="row.ring_group_extension" />
 
-                    <TableField class="px-2 py-2 text-sm text-gray-500">
+                    <TableField class="px-2 py-2 text-sm text-muted">
                         <div class="flex flex-wrap gap-1">
                             <ejs-tooltip v-for="destination in row.destinations"
                                 :key="destination.ring_group_destination_uuid" :content="destination.extension?.suspended
@@ -125,20 +125,20 @@
                                             : 'Active Extension'
                                     " position="TopCenter">
                                 <Badge :text="destination.destination_number" :backgroundColor="destination.extension?.suspended
-                                        ? 'bg-red-50'                  // Use the palest red
+                                        ? 'bg-danger-subtle'                  // Use the palest red
                                         : destination.destination_enabled === false
-                                            ? 'bg-gray-50'              // Use the palest gray
-                                            : 'bg-blue-100'               // Soft blue for active
+                                            ? 'bg-surface-2'              // Use the palest gray
+                                            : 'bg-info-subtle'               // Soft blue for active
                                     " :textColor="destination.extension?.suspended
-                                            ? 'text-red-500'               // Softer red text
+                                            ? 'text-danger'               // Softer red text
                                             : destination.destination_enabled === false
-                                                ? 'text-gray-500'           // Lighter gray text
-                                                : 'text-blue-800'             // Darker blue for contrast
+                                                ? 'text-muted'           // Lighter gray text
+                                                : 'text-info'             // Darker blue for contrast
                                         " :ringColor="destination.extension?.suspended
-                                            ? 'ring-red-200/20'
+                                            ? 'ring-danger/20'
                                             : destination.destination_enabled === false
-                                                ? 'ring-gray-300/20'
-                                                : 'ring-blue-200/20'
+                                                ? 'ring-strong/20'
+                                                : 'ring-info/20'
                                         " :class="[
                                         'px-2 py-1 text-xs font-semibold',
                                         { 'opacity-75': destination.extension?.suspended || destination.destination_enabled === false }
@@ -147,18 +147,18 @@
                         </div>
                     </TableField>
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted"
                         :text="row.ring_group_description" />
 
 
-                    <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
+                    <TableField class="whitespace-nowrap px-2 py-1 text-sm text-muted">
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap justify-end">
                                 <ejs-tooltip v-if="page.props.auth.can.ring_group_update" :content="'Edit'"
                                     position='TopCenter' target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
                                         <PencilSquareIcon @click="handleEditButtonClick(row.ring_group_uuid)"
-                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer" />
 
                                     </div>
                                 </ejs-tooltip>
@@ -167,7 +167,7 @@
                                     position='TopCenter' target="#delete_tooltip_target">
                                     <div id="delete_tooltip_target">
                                         <TrashIcon @click="handleSingleItemDeleteRequest(row.ring_group_uuid)"
-                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
 
@@ -181,9 +181,9 @@
             <template #empty>
                 <!-- Conditional rendering for 'no records' message -->
                 <div v-if="data.data.length === 0" class="text-center my-5 ">
-                    <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
-                    <p class="mt-1 text-sm text-gray-500">
+                    <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-subtle" />
+                    <h3 class="mt-2 text-sm font-semibold text-heading">No results found</h3>
+                    <p class="mt-1 text-sm text-muted">
                         Adjust your search and try again.
                     </p>
                 </div>

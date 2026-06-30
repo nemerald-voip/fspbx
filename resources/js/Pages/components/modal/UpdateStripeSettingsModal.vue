@@ -3,7 +3,7 @@
         <Dialog as="div" class="relative z-10" @close="emit('close')">
             <TransitionChild as="div" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100"
                 leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0">
-                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+                <div class="fixed inset-0 bg-gray-500 dark:bg-gray-900 bg-opacity-75 transition-opacity" />
             </TransitionChild>
             <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
                 <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
@@ -14,20 +14,20 @@
                         leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
 
                         <DialogPanel
-                            class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-xl">
+                            class="relative transform overflow-hidden rounded-lg bg-surface text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-xl">
 
                             <!-- header -->
-                            <div class="flex items-start justify-between border-b border-gray-100 px-6 py-4">
+                            <div class="flex items-start justify-between border-b border-default px-6 py-4">
                                 <div class="flex items-center gap-3">
                                     <span class="flex h-9 w-9 items-center justify-center rounded-md bg-[#635bff]/10">
                                         <CreditCardIcon class="h-5 w-5 text-[#635bff]" />
                                     </span>
                                     <div>
-                                        <h3 class="text-base font-semibold text-gray-900">Stripe settings</h3>
-                                        <p class="text-xs text-gray-500">Connect your Stripe account for billing &amp; quotes.</p>
+                                        <h3 class="text-base font-semibold text-heading">Stripe settings</h3>
+                                        <p class="text-xs text-muted">Connect your Stripe account for billing &amp; quotes.</p>
                                     </div>
                                 </div>
-                                <button type="button" class="rounded-md p-1 text-gray-400 hover:bg-gray-100" @click="emit('close')">
+                                <button type="button" class="rounded-md p-1 text-subtle hover:bg-surface-3" @click="emit('close')">
                                     <XMarkIcon class="h-5 w-5" />
                                 </button>
                             </div>
@@ -44,8 +44,8 @@
 
                                 <!-- show secrets toggle -->
                                 <StaticElement name="reveal_secrets">
-                                    <label class="flex cursor-pointer items-center gap-2 text-xs font-medium text-gray-500">
-                                        <input type="checkbox" v-model="showSecrets" class="h-3.5 w-3.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                                    <label class="flex cursor-pointer items-center gap-2 text-xs font-medium text-muted">
+                                        <input type="checkbox" v-model="showSecrets" class="h-3.5 w-3.5 rounded border-strong text-accent-fg focus:ring-focus" />
                                         Show secret values
                                     </label>
                                 </StaticElement>
@@ -53,7 +53,7 @@
                                 <!-- TEST keys -->
                                 <StaticElement name="test_keys_heading" tag="p"
                                     content="Test API keys" :conditions="[['sandbox', 'true']]"
-                                    class="text-xs font-semibold uppercase tracking-wide text-gray-400" />
+                                    class="text-xs font-semibold uppercase tracking-wide text-subtle" />
                                 <TextElement name="sandbox_secret_key" label="Secret key"
                                     :input-type="showSecrets ? 'text' : 'password'" autocomplete="off" :floating="false"
                                     placeholder="sk_test_…" :description="hint('sandbox_secret_key', 'sk_test_…')"
@@ -64,7 +64,7 @@
                                 <!-- LIVE keys -->
                                 <StaticElement name="live_keys_heading" tag="p"
                                     content="Live API keys" :conditions="[['sandbox', 'false']]"
-                                    class="text-xs font-semibold uppercase tracking-wide text-gray-400" />
+                                    class="text-xs font-semibold uppercase tracking-wide text-subtle" />
                                 <TextElement name="live_mode_secret_key" label="Secret key"
                                     :input-type="showSecrets ? 'text' : 'password'" autocomplete="off" :floating="false"
                                     placeholder="sk_live_…" :description="hint('live_mode_secret_key', 'sk_live_…')"
@@ -74,18 +74,18 @@
 
                                 <!-- test connection -->
                                 <StaticElement name="test_connection">
-                                    <div class="space-y-2 rounded-md bg-gray-50 p-3 ring-1 ring-gray-200">
+                                    <div class="space-y-2 rounded-md bg-surface-2 p-3 ring-1 ring-strong">
                                         <div class="flex items-center gap-3">
                                             <button type="button" :disabled="testing"
-                                                class="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-white px-3 py-1.5 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50"
+                                                class="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-surface px-3 py-1.5 text-sm font-semibold text-body shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2 disabled:opacity-50"
                                                 @click="runTest">
                                                 <ArrowPathIcon v-if="testing" class="h-4 w-4 animate-spin" />
                                                 <BoltIcon v-else class="h-4 w-4" />
                                                 {{ testing ? 'Testing…' : 'Test connection' }}
                                             </button>
-                                            <span v-if="!testResult" class="text-xs text-gray-400">Verifies the key against Stripe before you save.</span>
+                                            <span v-if="!testResult" class="text-xs text-subtle">Verifies the key against Stripe before you save.</span>
                                         </div>
-                                        <div v-if="testResult" :class="['flex items-start gap-1.5 text-sm font-medium', testResult.ok ? 'text-green-600' : 'text-red-600']">
+                                        <div v-if="testResult" :class="['flex items-start gap-1.5 text-sm font-medium', testResult.ok ? 'text-success' : 'text-danger']">
                                             <CheckCircleIcon v-if="testResult.ok" class="mt-0.5 h-4 w-4 shrink-0" />
                                             <XCircleIcon v-else class="mt-0.5 h-4 w-4 shrink-0" />
                                             <span class="min-w-0 break-all">{{ testResult.message }}</span>
@@ -95,13 +95,13 @@
 
                                 <!-- webhook -->
                                 <StaticElement name="webhook_heading" tag="p" content="Webhook"
-                                    class="text-xs font-semibold uppercase tracking-wide text-gray-400" />
+                                    class="text-xs font-semibold uppercase tracking-wide text-subtle" />
                                 <StaticElement name="webhook_endpoint">
-                                    <div class="text-xs text-gray-500">
+                                    <div class="text-xs text-muted">
                                         Add this endpoint in Stripe → Developers → Webhooks:
                                         <div class="mt-1 flex items-center gap-2">
-                                            <code class="flex-1 truncate rounded bg-gray-100 px-2 py-1 text-gray-700">{{ webhookUrl }}</code>
-                                            <button type="button" class="rounded-md px-2 py-1 text-xs font-semibold text-indigo-600 ring-1 ring-inset ring-indigo-200 hover:bg-indigo-50" @click="copyWebhook">
+                                            <code class="flex-1 truncate rounded bg-surface-3 px-2 py-1 text-body">{{ webhookUrl }}</code>
+                                            <button type="button" class="rounded-md px-2 py-1 text-xs font-semibold text-accent-fg ring-1 ring-inset ring-accent hover:bg-accent-subtle" @click="copyWebhook">
                                                 {{ copied ? 'Copied' : 'Copy' }}
                                             </button>
                                         </div>

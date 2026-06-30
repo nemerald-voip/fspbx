@@ -3,7 +3,7 @@
         <Dialog as="div" class="relative z-10" @close="emit('close')">
             <TransitionChild as="div" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100"
                 leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0">
-                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+                <div class="fixed inset-0 bg-gray-500 dark:bg-gray-900 bg-opacity-75 transition-opacity" />
             </TransitionChild>
 
             <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
@@ -14,19 +14,19 @@
                         leave-from="opacity-100 sm:scale-100"
                         leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
                         <DialogPanel
-                            class="relative transform rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-5xl sm:p-6">
-                            <DialogTitle as="h3" class="mb-4 pr-8 text-base font-semibold leading-6 text-gray-900">
+                            class="relative transform rounded-lg bg-surface px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-5xl sm:p-6">
+                            <DialogTitle as="h3" class="mb-4 pr-8 text-base font-semibold leading-6 text-heading">
                                 {{ header }}
                             </DialogTitle>
 
                             <button type="button"
-                                class="absolute right-4 top-4 rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                                class="absolute right-4 top-4 rounded-md bg-surface text-subtle hover:text-muted focus:outline-none focus:ring-2 focus:ring-focus focus:ring-offset-2"
                                 @click="emit('close')">
                                 <span class="sr-only">Close</span>
                                 <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                             </button>
 
-                            <div v-if="loading" class="py-10 text-center text-sm text-gray-500">Loading...</div>
+                            <div v-if="loading" class="py-10 text-center text-sm text-muted">Loading...</div>
 
                             <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
                                 @error="handleError" @response="handleResponse" :display-errors="false"
@@ -68,7 +68,7 @@
                                         </div>
 
                                         <div
-                                            class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
+                                            class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-body bg-surface-2 px-4 py-6 sm:p-6">
                                             <FormElements>
                                                 <TextElement name="queue_name" label="Name" :floating="false"
                                                     :columns="{ sm: { container: 6 } }" />
@@ -99,48 +99,48 @@
                                                         :secondary="true" :conditions="[hasPlayableGreeting]"
                                                         :remove-classes="buttonIconClassOverrides">
                                                         <PlayCircleIcon
-                                                            class="h-8 w-8 shrink-0 rounded-full py-1 text-blue-400 ring-1 transition duration-500 ease-in-out hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                                            class="h-8 w-8 shrink-0 rounded-full py-1 text-info ring-1 transition duration-500 ease-in-out hover:bg-info-subtle hover:text-info active:bg-info-subtle active:duration-150 cursor-pointer" />
                                                     </ButtonElement>
                                                     <ButtonElement v-if="isAudioPlaying" @click="pauseGreeting"
                                                         name="pause_button" label="&nbsp;" :secondary="true"
                                                         :columns="{ container: 2 }"
                                                         :remove-classes="buttonIconClassOverrides">
                                                         <PauseCircleIcon
-                                                            class="h-8 w-8 shrink-0 rounded-full py-1 text-red-400 ring-1 transition duration-500 ease-in-out hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
+                                                            class="h-8 w-8 shrink-0 rounded-full py-1 text-danger ring-1 transition duration-500 ease-in-out hover:bg-danger-subtle hover:text-danger active:bg-danger-subtle active:duration-150 cursor-pointer" />
                                                     </ButtonElement>
                                                     <ButtonElement v-if="!isDownloading" @click="downloadGreeting"
                                                         name="download_button" label="&nbsp;" :secondary="true"
                                                         :columns="{ container: 2 }" :conditions="[hasPlayableGreeting]"
                                                         :remove-classes="buttonIconClassOverrides">
                                                         <CloudArrowDownIcon
-                                                            class="h-8 w-8 shrink-0 rounded-full py-1 text-blue-400 ring-1 transition duration-500 ease-in-out hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                                            class="h-8 w-8 shrink-0 rounded-full py-1 text-info ring-1 transition duration-500 ease-in-out hover:bg-info-subtle hover:text-info active:bg-info-subtle active:duration-150 cursor-pointer" />
                                                     </ButtonElement>
                                                     <ButtonElement v-if="isDownloading" name="download_spinner_button"
                                                         label="&nbsp;" :secondary="true" :columns="{ container: 2 }"
                                                         :remove-classes="buttonIconClassOverrides">
                                                         <Spinner :show="true"
-                                                            class="ml-0 mr-0 h-8 w-8 shrink-0 rounded-full py-1 text-blue-400 ring-1 transition duration-500 ease-in-out" />
+                                                            class="ml-0 mr-0 h-8 w-8 shrink-0 rounded-full py-1 text-info ring-1 transition duration-500 ease-in-out" />
                                                     </ButtonElement>
                                                     <ButtonElement @click="editGreeting" name="edit_button"
                                                         label="&nbsp;" :secondary="true" :columns="{ container: 2 }"
                                                         :conditions="[hasPlayableGreeting]"
                                                         :remove-classes="buttonIconClassOverrides">
                                                         <PencilSquareIcon
-                                                            class="h-8 w-8 shrink-0 rounded-full py-1 text-blue-400 ring-1 transition duration-500 ease-in-out hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                                            class="h-8 w-8 shrink-0 rounded-full py-1 text-info ring-1 transition duration-500 ease-in-out hover:bg-info-subtle hover:text-info active:bg-info-subtle active:duration-150 cursor-pointer" />
                                                     </ButtonElement>
                                                     <ButtonElement @click="deleteGreeting" name="delete_button"
                                                         label="&nbsp;" :secondary="true" :columns="{ container: 2 }"
                                                         :conditions="[hasPlayableGreeting]"
                                                         :remove-classes="buttonIconClassOverrides">
                                                         <TrashIcon
-                                                            class="h-8 w-8 shrink-0 rounded-full py-1 text-red-400 ring-1 transition duration-500 ease-in-out hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
+                                                            class="h-8 w-8 shrink-0 rounded-full py-1 text-danger ring-1 transition duration-500 ease-in-out hover:bg-danger-subtle hover:text-danger active:bg-danger-subtle active:duration-150 cursor-pointer" />
                                                     </ButtonElement>
                                                     <ButtonElement @click="handleNewGreetingButtonClick"
                                                         name="add_button" label="&nbsp;" :secondary="true"
                                                         :columns="{ container: 2 }"
                                                         :remove-classes="buttonIconClassOverrides">
                                                         <PlusIcon
-                                                            class="h-8 w-8 shrink-0 rounded-full py-1 text-blue-400 ring-1 transition duration-500 ease-in-out hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                                            class="h-8 w-8 shrink-0 rounded-full py-1 text-info ring-1 transition duration-500 ease-in-out hover:bg-info-subtle hover:text-info active:bg-info-subtle active:duration-150 cursor-pointer" />
                                                     </ButtonElement>
                                                 </GroupElement>
 
@@ -177,7 +177,7 @@
 
                                                 <ListElement name="tiers" :initial="0" :sort="true" size="sm"
                                                     :controls="{ add: false, remove: true, sort: true }"
-                                                    :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-sm' } }">
+                                                    :add-classes="{ ListElement: { listItem: 'bg-surface p-4 mb-4 rounded-lg shadow-sm' } }">
                                                     <template #default="{ index }">
                                                         <ObjectElement :name="index">
                                                             <HiddenElement name="call_center_agent_uuid" :meta="true" />

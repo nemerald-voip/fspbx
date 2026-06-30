@@ -3,24 +3,24 @@
     <!-- Mobile -->
     <div class="grid grid-cols-1 sm:hidden">
         <select v-model="activeTab" aria-label="Select a tab"
-            class="col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-2 pr-8 pl-3 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 dark:bg-white/5 dark:text-gray-100 dark:outline-white/10 dark:*:bg-gray-800 dark:focus:outline-indigo-500">
+            class="col-start-1 row-start-1 w-full appearance-none rounded-md bg-surface py-2 pr-8 pl-3 text-base text-heading outline-1 -outline-offset-1 outline-strong focus:outline-2 focus:-outline-offset-2 focus:outline-accent dark:bg-white/5 dark:text-gray-100 dark:outline-white/10 dark:*:bg-gray-800 dark:focus:outline-accent">
             <option v-for="tab in tabs" :key="tab.id" :value="tab.id">
                 {{ tab.name }}
             </option>
         </select>
         <ChevronDownIcon
-            class="pointer-events-none col-start-1 row-start-1 mr-2 size-5 self-center justify-self-end fill-gray-500 dark:fill-gray-400"
+            class="pointer-events-none col-start-1 row-start-1 mr-2 size-5 self-center justify-self-end fill-muted dark:fill-gray-400"
             aria-hidden="true" />
     </div>
 
     <!-- Desktop -->
     <div class="hidden sm:block">
-        <div class="border-b border-gray-200 ">
+        <div class="border-b border-default ">
             <nav class="-mb-px flex space-x-8" aria-label="Tabs">
                 <a v-for="tab in tabs" :key="tab.id" href="#" @click.prevent="setTab(tab.id)" :class="[
                     activeTab === tab.id
-                        ? '!border-indigo-600 !text-indigo-600 '
-                        : 'border-transparent !text-gray-500 hover:!border-gray-300 hover:!text-gray-700',
+                        ? '!border-accent !text-accent-fg '
+                        : 'border-transparent !text-muted hover:!border-strong hover:!text-body',
                     'border-b-2 px-1 py-4 text-sm font-medium whitespace-nowrap'
                 ]" :aria-current="activeTab === tab.id ? 'page' : undefined">
                     {{ tab.name }}
@@ -35,28 +35,28 @@
         <div class="flex flex-col sm:flex-row sm:flex-wrap">
             <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
                 <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                    <MagnifyingGlassIcon class="h-5 w-5 text-subtle" aria-hidden="true" />
                 </div>
                 <input type="text" v-model="filterData.search" name="mobile-search-candidate"
                     id="mobile-search-candidate"
-                    class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
+                    class="block w-full rounded-md border-0 py-1.5 pl-10 text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus sm:hidden"
                     placeholder="Search" @keydown.enter="handleSearchButtonClick" />
                 <input type="text" v-model="filterData.search" name="desktop-search-candidate"
                     id="desktop-search-candidate"
-                    class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
+                    class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus sm:block"
                     placeholder="Search" @keydown.enter="handleSearchButtonClick" />
             </div>
             <div class="relative">
                 <div class="flex justify-between">
 
                     <button type="button" @click.prevent="handleSearchButtonClick"
-                        class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500
-                                focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                        class="rounded-md bg-accent px-2.5 py-1.5 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover
+                                focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
                         Search
                     </button>
 
                     <button type="button" @click.prevent="handleFiltersReset"
-                        class="rounded-md bg-white px-2.5 py-1.5 ml-2  sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                        class="rounded-md bg-surface px-2.5 py-1.5 ml-2  sm:ml-4 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2">
                         Reset
                     </button>
                 </div>
@@ -65,65 +65,65 @@
 
         <div class="mt-4">
             <button v-if="activeTab != 'default'" type="button" @click.prevent="handleCreateButtonClick()"
-                class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                class="rounded-md bg-accent px-2.5 py-1.5 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
                 Create
             </button>
         </div>
 
         <div class="mt-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
             <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-                <Paginator class="border border-gray-200" :previous="data.prev_page_url" :next="data.next_page_url"
+                <Paginator class="border border-default" :previous="data.prev_page_url" :next="data.next_page_url"
                     :from="data.from" :to="data.to" :total="data.total" :currentPage="data.current_page"
                     :lastPage="data.last_page" :links="data.links" @pagination-change-page="renderRequestedPage" />
-                <div class="overflow-hidden-t border-l border-r border-gray-200">
-                    <table class="min-w-full divide-y divide-gray-200 mb-4">
-                        <thead class="bg-gray-100">
+                <div class="overflow-hidden-t border-l border-r border-default">
+                    <table class="min-w-full divide-y divide-default mb-4">
+                        <thead class="bg-surface-3">
                             <tr>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Vendor</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Template Name
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-heading">Vendor</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-heading">Template Name
                                 </th>
                                 <th v-if="activeTab === 'default'"
-                                    class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Version</th>
+                                    class="px-6 py-3 text-left text-sm font-semibold text-heading">Version</th>
 
                                 <th v-if="activeTab != 'default'"
-                                    class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Revision</th>
+                                    class="px-6 py-3 text-left text-sm font-semibold text-heading">Revision</th>
 
                                 <th v-if="activeTab != 'default'"
-                                    class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Base Template</th>
+                                    class="px-6 py-3 text-left text-sm font-semibold text-heading">Base Template</th>
 
                                 <th v-if="activeTab != 'default'"
-                                    class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Base Version</th>
+                                    class="px-6 py-3 text-left text-sm font-semibold text-heading">Base Version</th>
 
                                 <th
-                                    class="relative px-6 py-3 text-left text-sm font-medium text-gray-500">
+                                    class="relative px-6 py-3 text-left text-sm font-medium text-muted">
                                     <span class="sr-only">Actions</span>
                                 </th>
                             </tr>
                         </thead>
                         <tbody v-if="!isTemplatesLoading && data.data?.length"
-                            class="divide-y divide-gray-200 bg-white">
+                            class="divide-y divide-default bg-surface">
                             <tr v-for="template in data.data" :key="template.template_uuid">
-                                <td class="whitespace-nowrap px-6 py-2 text-sm font-medium text-gray-900 capitalize">
+                                <td class="whitespace-nowrap px-6 py-2 text-sm font-medium text-heading capitalize">
                                     {{ template.vendor }}
                                 </td>
 
-                                <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
+                                <td class="whitespace-nowrap px-6 py-2 text-sm text-muted">
                                     {{ template.name }}
                                 </td>
                                 <td v-if="activeTab === 'default'"
-                                    class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
+                                    class="whitespace-nowrap px-6 py-2 text-sm text-muted">
                                     {{ template.version }}
                                 </td>
                                 <td v-if="activeTab != 'default'"
-                                    class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
+                                    class="whitespace-nowrap px-6 py-2 text-sm text-muted">
                                     {{ template.revision }}
                                 </td>
                                 <td v-if="activeTab != 'default'"
-                                    class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
+                                    class="whitespace-nowrap px-6 py-2 text-sm text-muted">
                                     {{ template.base_template }}
                                 </td>
                                 <td v-if="activeTab != 'default'"
-                                    class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
+                                    class="whitespace-nowrap px-6 py-2 text-sm text-muted">
                                     {{ template.base_version }}
                                 </td>
                                 <td 
@@ -133,7 +133,7 @@
                                             target="#destination_tooltip_target">
                                             <div id="destination_tooltip_target">
                                                 <PencilSquareIcon @click="handleEditButtonClick(template.template_uuid)"
-                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer" />
 
                                             </div>
                                         </ejs-tooltip>
@@ -143,7 +143,7 @@
                                             <div id="delete_tooltip_target">
                                                 <TrashIcon
                                                     @click="handleSingleItemDeleteRequest(template.template_uuid)"
-                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer" />
                                             </div>
                                         </ejs-tooltip>
 
@@ -152,7 +152,7 @@
                                             target="#view_tooltip_target">
                                             <div id="view_tooltip_target">
                                                 <MagnifyingGlassIcon @click="handleViewButtonClick(template.template_uuid)"
-                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer" />
 
                                             </div>
                                         </ejs-tooltip>
@@ -165,21 +165,21 @@
 
                     <!-- Empty State -->
                     <div v-if="!isTemplatesLoading && data.data?.length === 0" class="text-center my-5">
-                        <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                        <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
-                        <!-- <p class="mt-1 text-sm text-gray-500">
+                        <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-subtle" />
+                        <h3 class="mt-2 text-sm font-semibold text-heading">No results found</h3>
+                        <!-- <p class="mt-1 text-sm text-muted">
                 Adjust your search and try again.
               </p> -->
                     </div>
 
                     <!-- Loading -->
-                    <div v-if="isTemplatesLoading" class="text-center my-5 text-sm text-gray-500">
+                    <div v-if="isTemplatesLoading" class="text-center my-5 text-sm text-muted">
                         <div class="animate-pulse flex space-x-4">
                             <div class="flex-1 space-y-6 py-1">
-                                <div class="h-2 bg-slate-200 rounded"></div>
-                                <div class="h-2 bg-slate-200 rounded"></div>
-                                <div class="h-2 bg-slate-200 rounded"></div>
-                                <div class="h-2 bg-slate-200 rounded"></div>
+                                <div class="h-2 bg-surface-3 rounded"></div>
+                                <div class="h-2 bg-surface-3 rounded"></div>
+                                <div class="h-2 bg-surface-3 rounded"></div>
+                                <div class="h-2 bg-surface-3 rounded"></div>
                             </div>
                         </div>
                     </div>

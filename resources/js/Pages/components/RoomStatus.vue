@@ -4,28 +4,28 @@
         <div class="flex flex-col sm:flex-row sm:flex-wrap">
             <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
                 <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                    <MagnifyingGlassIcon class="h-5 w-5 text-subtle" aria-hidden="true" />
                 </div>
                 <input type="text" v-model="filterData.search" name="mobile-search-candidate"
                     id="mobile-search-candidate"
-                    class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
+                    class="block w-full rounded-md border-0 py-1.5 pl-10 text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus sm:hidden"
                     placeholder="Search" @keydown.enter="handleSearchButtonClick" />
                 <input type="text" v-model="filterData.search" name="desktop-search-candidate"
                     id="desktop-search-candidate"
-                    class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
+                    class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus sm:block"
                     placeholder="Search" @keydown.enter="handleSearchButtonClick" />
             </div>
             <div class="relative">
                 <div class="flex justify-between">
 
                     <button type="button" @click.prevent="handleSearchButtonClick"
-                        class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500
-                                focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                        class="rounded-md bg-accent px-2.5 py-1.5 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover
+                                focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
                         Search
                     </button>
 
                     <button type="button" @click.prevent="handleFiltersReset"
-                        class="rounded-md bg-white px-2.5 py-1.5 ml-2  sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                        class="rounded-md bg-surface px-2.5 py-1.5 ml-2  sm:ml-4 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2">
                         Reset
                     </button>
                 </div>
@@ -34,34 +34,34 @@
 
         <div class="mt-4">
             <button type="button" @click.prevent="handleManageCodesButtonClick()"
-                class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                class="rounded-md bg-accent px-2.5 py-1.5 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
                 Housekeeping Codes
             </button>
         </div>
 
         <div class="mt-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
             <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-                <Paginator class="border border-gray-200" :previous="data.prev_page_url" :next="data.next_page_url"
+                <Paginator class="border border-default" :previous="data.prev_page_url" :next="data.next_page_url"
                     :from="data.from" :to="data.to" :total="data.total" :currentPage="data.current_page"
                     :lastPage="data.last_page" :links="data.links" @pagination-change-page="renderRequestedPage" />
-                <div class="overflow-hidden-t border-l border-r border-gray-200">
-                    <table class="min-w-full divide-y divide-gray-200 mb-4">
-                        <thead class="bg-gray-100">
+                <div class="overflow-hidden-t border-l border-r border-default">
+                    <table class="min-w-full divide-y divide-default mb-4">
+                        <thead class="bg-surface-3">
                             <tr>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Room</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Occupancy</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Housekeeping</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Guest</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Arrival</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Departure</th>
-                                <th class="relative px-6 py-3 text-left text-sm font-medium text-gray-500">
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-heading">Room</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-heading">Occupancy</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-heading">Housekeeping</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-heading">Guest</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-heading">Arrival</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-heading">Departure</th>
+                                <th class="relative px-6 py-3 text-left text-sm font-medium text-muted">
                                     <span class="sr-only">Actions</span>
                                 </th>
                             </tr>
                         </thead>
-                        <tbody v-if="!isRoomsLoading && data.data?.length" class="divide-y divide-gray-200 bg-white">
+                        <tbody v-if="!isRoomsLoading && data.data?.length" class="divide-y divide-default bg-surface">
                             <tr v-for="row in data.data" :key="row.uuid">
-                                <td class="whitespace-nowrap px-6 py-2 text-sm font-medium text-gray-900 capitalize">
+                                <td class="whitespace-nowrap px-6 py-2 text-sm font-medium text-heading capitalize">
                                     {{ row.room_name }}
                                 </td>
                                 <td class="whitespace-nowrap px-6 py-2 text-sm">
@@ -91,16 +91,16 @@
                                     }}
                                 </td>
 
-                                <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-800">
+                                <td class="whitespace-nowrap px-6 py-2 text-sm text-heading">
                                     <span v-if="row.status?.guest_last_name || row.status?.guest_first_name">
                                         {{ [row.status?.guest_first_name, row.status?.guest_last_name].filter(Boolean).join(' ') }}
                                     </span>
                                     <span v-else>—</span>
                                 </td>
-                                <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
+                                <td class="whitespace-nowrap px-6 py-2 text-sm text-muted">
                                     {{ row.status?.arrival_date_formatted ?? '—' }}
                                 </td>
-                                <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
+                                <td class="whitespace-nowrap px-6 py-2 text-sm text-muted">
                                     {{ row.status?.departure_date_formatted ?? '—' }}
                                 </td>
 
@@ -111,7 +111,7 @@
                                             <div id="rs_edit_tt">
                                                 <ArrowRightEndOnRectangleIcon
                                                     @click="handleCheckInButtonClick(row.uuid)"
-                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-green-400 hover:bg-green-200 hover:text-green-600 active:bg-green-300 active:duration-150 cursor-pointer" />
+                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-success hover:bg-success-subtle hover:text-success active:bg-success-subtle active:duration-150 cursor-pointer" />
                                             </div>
                                         </ejs-tooltip>
 
@@ -120,7 +120,7 @@
                                             <div id="rs_edit_tt">
                                                 <ArrowRightStartOnRectangleIcon
                                                     @click="handleCheckOutButtonClick(row.uuid)"
-                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-amber-400 hover:bg-amber-200 hover:text-amber-600 active:bg-amber-300 active:duration-150 cursor-pointer" />
+                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-warning hover:bg-warning-subtle hover:text-warning active:bg-warning-subtle active:duration-150 cursor-pointer" />
                                             </div>
                                         </ejs-tooltip>
 
@@ -133,21 +133,21 @@
 
                     <!-- Empty State -->
                     <div v-if="!isRoomsLoading && data.data?.length === 0" class="text-center my-5">
-                        <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                        <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
-                        <!-- <p class="mt-1 text-sm text-gray-500">
+                        <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-subtle" />
+                        <h3 class="mt-2 text-sm font-semibold text-heading">No results found</h3>
+                        <!-- <p class="mt-1 text-sm text-muted">
                 Adjust your search and try again.
               </p> -->
                     </div>
 
                     <!-- Loading -->
-                    <div v-if="isRoomsLoading" class="text-center my-5 text-sm text-gray-500">
+                    <div v-if="isRoomsLoading" class="text-center my-5 text-sm text-muted">
                         <div class="animate-pulse flex space-x-4">
                             <div class="flex-1 space-y-6 py-1">
-                                <div class="h-2 bg-slate-200 rounded"></div>
-                                <div class="h-2 bg-slate-200 rounded"></div>
-                                <div class="h-2 bg-slate-200 rounded"></div>
-                                <div class="h-2 bg-slate-200 rounded"></div>
+                                <div class="h-2 bg-surface-3 rounded"></div>
+                                <div class="h-2 bg-surface-3 rounded"></div>
+                                <div class="h-2 bg-surface-3 rounded"></div>
+                                <div class="h-2 bg-surface-3 rounded"></div>
                             </div>
                         </div>
                     </div>

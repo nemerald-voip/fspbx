@@ -3,7 +3,7 @@
         <Dialog as="div" class="relative z-10">
             <TransitionChild as="div" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100"
                 leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0">
-                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+                <div class="fixed inset-0 bg-gray-500 dark:bg-gray-900 bg-opacity-75 transition-opacity" />
             </TransitionChild>
             <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
                 <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
@@ -14,11 +14,11 @@
                         leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
 
                         <DialogPanel
-                            class="relative transform  rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-xl sm:p-6">
+                            class="relative transform  rounded-lg bg-surface px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-xl sm:p-6">
 
                             <div class="absolute right-0 top-0 pr-4 pt-4 sm:block">
                                 <button type="button"
-                                    class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                                    class="rounded-md bg-surface text-subtle hover:text-muted focus:outline-none focus:ring-2 focus:ring-focus focus:ring-offset-2"
                                     @click="emit('close')">
                                     <span class="sr-only">Close</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
@@ -28,7 +28,7 @@
                             <div v-if="loading" class="w-full h-full">
                                 <div class="flex justify-center items-center space-x-3">
                                     <div>
-                                        <svg class="animate-spin  h-10 w-10 text-blue-600"
+                                        <svg class="animate-spin  h-10 w-10 text-info"
                                             xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
                                                 stroke-width="4">
@@ -38,7 +38,7 @@
                                             </path>
                                         </svg>
                                     </div>
-                                    <div class="text-lg text-blue-600 m-auto">Loading...</div>
+                                    <div class="text-lg text-info m-auto">Loading...</div>
                                 </div>
                             </div>
 
@@ -61,25 +61,25 @@
                                             <div class="mb-1">
 
                                                 <!-- The Label -->
-                                                <div class="text-sm font-medium text-gray-600 mb-1">
+                                                <div class="text-sm font-medium text-body mb-1">
                                                     Unique ID
                                                 </div>
 
                                                 <!-- The Value & Copy Button Row -->
                                                 <div class="flex items-center group">
                                                     <!-- The ID Text -->
-                                                    <span class="text-sm text-gray-900 select-all font-normal">
+                                                    <span class="text-sm text-heading select-all font-normal">
                                                         {{ options.item.domain_uuid }}
                                                     </span>
 
                                                     <!-- Subtle Copy Button -->
                                                     <button type="button"
                                                         @click="handleCopyToClipboard(options.item.domain_uuid)"
-                                                        class="ml-2 p-1 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
+                                                        class="ml-2 p-1 rounded-full text-subtle hover:text-info hover:bg-info-subtle transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
                                                         title="Copy to clipboard">
                                                         <!-- Small Copy Icon -->
                                                         <ClipboardDocumentIcon
-                                                            class="h-4 w-4 text-gray-500 hover:text-gray-900  cursor-pointer" />
+                                                            class="h-4 w-4 text-muted hover:text-heading  cursor-pointer" />
                                                     </button>
                                                 </div>
 

@@ -5,18 +5,18 @@
     ]
         ">
         <span class="flex flex-grow flex-col">
-            <SwitchLabel as="span" class="text-sm font-medium leading-6 text-gray-900" passive>
+            <SwitchLabel as="span" class="text-sm font-medium leading-6 text-heading" passive>
                 {{ label }}</SwitchLabel>
-            <SwitchDescription as="span" class="text-sm text-gray-500">
+            <SwitchDescription as="span" class="text-sm text-muted">
                 {{ description }}
             </SwitchDescription>
         </span>
         <Switch v-model="model" :disabled="disabled"
-            :class="[model ? 'bg-indigo-600' : 'bg-gray-200', 
+            :class="[model ? 'bg-accent' : 'bg-surface-3', 
                 disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
-                'relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2']">
+                'relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-focus focus:ring-offset-2']">
             <span aria-hidden="true"
-                :class="[model ? 'translate-x-5' : 'translate-x-0', 'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out']" />
+                :class="[model ? 'translate-x-5' : 'translate-x-0', 'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-surface shadow ring-0 transition duration-200 ease-in-out']" />
         </Switch>
     </SwitchGroup>
 </template>

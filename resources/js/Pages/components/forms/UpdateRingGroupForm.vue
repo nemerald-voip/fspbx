@@ -68,7 +68,7 @@
                     </div>
 
                     <div
-                        class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
+                        class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-body bg-surface-2 px-4 py-6 sm:p-6">
                         <FormElements>
 
                             <HiddenElement name="ring_group_uuid" :meta="true" />
@@ -78,21 +78,21 @@
                                 :conditions="[() => localOptions.permissions.is_superadmin]">
 
                                 <div class="mb-1">
-                                    <div class="text-sm font-medium text-gray-600 mb-1">
+                                    <div class="text-sm font-medium text-body mb-1">
                                         Unique ID
                                     </div>
 
                                     <div class="flex items-center group">
-                                        <span class="text-sm text-gray-900 select-all font-normal">
+                                        <span class="text-sm text-heading select-all font-normal">
                                             {{ localOptions.ring_group.ring_group_uuid }}
                                         </span>
 
                                         <button type="button"
                                             @click="handleCopyToClipboard(localOptions.ring_group.ring_group_uuid)"
-                                            class="ml-2 p-1 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
+                                            class="ml-2 p-1 rounded-full text-subtle hover:text-info hover:bg-info-subtle transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
                                             title="Copy to clipboard">
                                             <ClipboardDocumentIcon
-                                                class="h-4 w-4 text-gray-500 hover:text-gray-900  cursor-pointer" />
+                                                class="h-4 w-4 text-muted hover:text-heading  cursor-pointer" />
                                         </button>
                                     </div>
                                 </div>
@@ -125,14 +125,14 @@
                                     :conditions="[hasPlayableGreeting]"
                                     :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                     <PlayCircleIcon
-                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-info hover:bg-info-subtle hover:text-info active:bg-info-subtle active:duration-150 cursor-pointer" />
                                 </ButtonElement>
 
                                 <ButtonElement v-if="isAudioPlaying" @click="pauseGreeting" name="pause_button"
                                     label="&nbsp;" :secondary="true" :columns="{ container: 2 }"
                                     :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                     <PauseCircleIcon
-                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
+                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-danger hover:bg-danger-subtle hover:text-danger active:bg-danger-subtle active:duration-150 cursor-pointer" />
                                 </ButtonElement>
 
                                 <ButtonElement v-if="!isDownloading" @click="downloadGreeting" name="download_button"
@@ -140,35 +140,35 @@
                                     :conditions="[hasPlayableGreeting]"
                                     :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                     <CloudArrowDownIcon
-                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-info hover:bg-info-subtle hover:text-info active:bg-info-subtle active:duration-150 cursor-pointer" />
                                 </ButtonElement>
 
                                 <ButtonElement v-if="isDownloading" name="download_spinner_button" label="&nbsp;"
                                     :secondary="true" :columns="{ container: 2 }"
                                     :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                     <Spinner :show="true"
-                                        class="h-8 w-8 ml-0 mr-0 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                        class="h-8 w-8 ml-0 mr-0 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-info hover:bg-info-subtle hover:text-info active:bg-info-subtle active:duration-150 cursor-pointer" />
                                 </ButtonElement>
 
                                 <ButtonElement @click="editGreeting" name="edit_button" label="&nbsp;" :secondary="true"
                                     :columns="{ container: 2 }" :conditions="[hasPlayableGreeting]"
                                     :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                     <PencilSquareIcon
-                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-info hover:bg-info-subtle hover:text-info active:bg-info-subtle active:duration-150 cursor-pointer" />
                                 </ButtonElement>
 
                                 <ButtonElement @click="deleteGreeting" name="delete_button" label="&nbsp;"
                                     :secondary="true" :columns="{ container: 2 }" :conditions="[hasPlayableGreeting]"
                                     :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                     <TrashIcon
-                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
+                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-danger hover:bg-danger-subtle hover:text-danger active:bg-danger-subtle active:duration-150 cursor-pointer" />
                                 </ButtonElement>
 
                                 <ButtonElement @click="handleNewGreetingButtonClick" name="add_button" label="&nbsp;"
                                     :secondary="true" :columns="{ container: 2 }"
                                     :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                     <PlusIcon
-                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-info hover:bg-info-subtle hover:text-info active:bg-info-subtle active:duration-150 cursor-pointer" />
                                 </ButtonElement>
                             </GroupElement>
 
@@ -209,7 +209,7 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
 
                             <ListElement name="members" :sort="true"
                                 :controls="{ add: false, remove: localOptions.permissions.destination_delete, sort: localOptions.permissions.destination_update }"
-                                :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }"
+                                :add-classes="{ ListElement: { listItem: 'bg-surface p-4 mb-4 rounded-lg shadow-md' } }"
                                 :conditions="[() => localOptions.permissions.destination_view]">
                                 <template #default="{ index }">
                                     <ObjectElement :name="index">
@@ -224,7 +224,7 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
                                                 if (isSusp) {
                                                     html += `
                                                         <span class='ml-2 px-2 py-0.5 text-xs rounded font-semibold
-                                                                    bg-red-50 text-red-400 ring-1 ring-red-200/20'>
+                                                                    bg-danger-subtle text-danger ring-1 ring-danger/20'>
                                                             Suspended
                                                         </span>`;
                                                 }

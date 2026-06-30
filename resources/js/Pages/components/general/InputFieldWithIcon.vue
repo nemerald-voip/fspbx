@@ -39,13 +39,13 @@ const emit = defineEmits(['update:modelValue']);
 
 // Compute the classes based on the state
 const inputClass = computed(() => {
-    let baseClasses = 'block w-full rounded-md border-0 py-1.5 pr-9 text-gray-900 shadow-sm ring-1 ring-inset placeholder:text-gray-400 focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6';
+    let baseClasses = 'block w-full rounded-md border-0 py-1.5 pr-9 text-heading shadow-sm ring-1 ring-inset placeholder:text-subtle focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6';
     if (props.error) {
-        return `${baseClasses} text-red-900 ring-red-600`; // Apply red ring if there's an error
+        return `${baseClasses} text-danger ring-danger`; // Apply red ring if there's an error
     }
     if(props.disabled) {
-        return `${baseClasses} text-gray-900 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 disabled:ring-gray-200`; // Apply disabled class
+        return `${baseClasses} text-heading disabled:cursor-not-allowed disabled:bg-surface-2 disabled:text-muted disabled:ring-strong`; // Apply disabled class
     }
-    return `${baseClasses} text-gray-900  ring-gray-300`;  // Default ring color when no error
+    return `${baseClasses} text-heading  ring-strong`;  // Default ring color when no error
 });
 </script>

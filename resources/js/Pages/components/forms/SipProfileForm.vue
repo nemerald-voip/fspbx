@@ -3,14 +3,14 @@
         <template #modal-body>
             <div class="flex h-[72vh] flex-col">
                 <!-- Tabs -->
-                <div class="border-b border-gray-200">
+                <div class="border-b border-default">
                     <nav class="-mb-px flex gap-6" aria-label="Tabs">
                         <button
                             v-for="tab in tabs"
                             :key="tab.id"
                             type="button"
                             :class="[
-                                activeTab === tab.id ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700',
+                                activeTab === tab.id ? 'border-accent text-accent-fg' : 'border-transparent text-muted hover:border-strong hover:text-body',
                                 'flex items-center gap-2 whitespace-nowrap border-b-2 px-1 pb-3 pt-1 text-sm font-medium',
                             ]"
                             @click="activeTab = tab.id"
@@ -18,7 +18,7 @@
                             {{ tab.label }}
                             <span
                                 v-if="tab.count !== null"
-                                :class="[activeTab === tab.id ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-600', 'rounded-full px-2 py-0.5 text-xs font-semibold']"
+                                :class="[activeTab === tab.id ? 'bg-accent-subtle text-accent-fg' : 'bg-surface-3 text-body', 'rounded-full px-2 py-0.5 text-xs font-semibold']"
                             >
                                 {{ tab.count }}
                             </span>
@@ -29,19 +29,19 @@
                 <!-- ── Profile ─────────────────────────────────────────── -->
                 <div v-show="activeTab === 'profile'" class="grid grid-cols-1 gap-4 overflow-y-auto py-5 md:grid-cols-2">
                     <div>
-                        <label class="block text-sm font-medium text-gray-900">Name <span class="text-red-500">*</span></label>
+                        <label class="block text-sm font-medium text-heading">Name <span class="text-danger">*</span></label>
                         <input v-model.trim="form.sip_profile_name" type="text" placeholder="internal" :class="inputClass(fieldError('sip_profile_name'))" />
-                        <p v-if="fieldError('sip_profile_name')" class="mt-1 text-xs text-red-600">{{ fieldError('sip_profile_name') }}</p>
+                        <p v-if="fieldError('sip_profile_name')" class="mt-1 text-xs text-danger">{{ fieldError('sip_profile_name') }}</p>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-900">Hostname</label>
+                        <label class="block text-sm font-medium text-heading">Hostname</label>
                         <input v-model.trim="form.sip_profile_hostname" type="text" placeholder="Optional" :class="inputClass(fieldError('sip_profile_hostname'))" />
-                        <p class="mt-1 text-xs text-gray-500">Optional. Limit this profile to a specific FreeSWITCH hostname.</p>
+                        <p class="mt-1 text-xs text-muted">Optional. Limit this profile to a specific FreeSWITCH hostname.</p>
                     </div>
                     <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-900">Description <span class="text-red-500">*</span></label>
+                        <label class="block text-sm font-medium text-heading">Description <span class="text-danger">*</span></label>
                         <textarea v-model="form.sip_profile_description" rows="2" :class="inputClass(fieldError('sip_profile_description'))"></textarea>
-                        <p v-if="fieldError('sip_profile_description')" class="mt-1 text-xs text-red-600">{{ fieldError('sip_profile_description') }}</p>
+                        <p v-if="fieldError('sip_profile_description')" class="mt-1 text-xs text-danger">{{ fieldError('sip_profile_description') }}</p>
                     </div>
                     <div class="md:col-span-2">
                         <Toggle v-model="enabledModel" label="Enabled" description="Include this profile when Sofia configuration is generated." />
@@ -51,25 +51,25 @@
                 <!-- ── Settings ────────────────────────────────────────── -->
                 <div v-show="activeTab === 'settings'" class="flex min-h-0 flex-1 gap-4 py-4">
                     <!-- Sidebar -->
-                    <aside class="flex w-52 shrink-0 flex-col overflow-y-auto border-r border-gray-200 pr-3">
+                    <aside class="flex w-52 shrink-0 flex-col overflow-y-auto border-r border-default pr-3">
                         <nav class="space-y-0.5">
                             <button type="button" :class="categoryClass('all')" @click="activeGroup = 'all'">
                                 <span>All</span>
-                                <span class="text-xs text-gray-400">{{ settings.length }}</span>
+                                <span class="text-xs text-subtle">{{ settings.length }}</span>
                             </button>
                             <button v-for="group in sidebarGroups" :key="group.name" type="button" :class="categoryClass(group.name)" @click="activeGroup = group.name">
                                 <span class="truncate">{{ group.name }}</span>
-                                <span class="text-xs text-gray-400">{{ group.count }}</span>
+                                <span class="text-xs text-subtle">{{ group.count }}</span>
                             </button>
                         </nav>
 
-                        <div v-if="mode === 'create' && childPermissions.setting_create" class="mt-4 border-t border-gray-200 pt-3">
-                            <p class="mb-1.5 px-2 text-xs font-semibold uppercase tracking-wide text-gray-400">Templates</p>
+                        <div v-if="mode === 'create' && childPermissions.setting_create" class="mt-4 border-t border-default pt-3">
+                            <p class="mb-1.5 px-2 text-xs font-semibold uppercase tracking-wide text-subtle">Templates</p>
                             <button
                                 v-for="(tpl, id) in templates"
                                 :key="id"
                                 type="button"
-                                class="block w-full rounded-md px-2 py-1.5 text-left text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                                class="block w-full rounded-md px-2 py-1.5 text-left text-sm text-body hover:bg-surface-3 hover:text-heading"
                                 :title="tpl.description"
                                 @click="applyTemplate(id)"
                             >
@@ -83,19 +83,19 @@
                         <div class="flex items-center gap-3">
                             <div class="relative flex-1">
                                 <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                                    <MagnifyingGlassIcon class="h-4 w-4 text-gray-400" />
+                                    <MagnifyingGlassIcon class="h-4 w-4 text-subtle" />
                                 </div>
                                 <input
                                     v-model="settingSearch"
                                     type="text"
                                     placeholder="Filter by name, value or note"
-                                    class="block w-full rounded-md border-0 py-1.5 pl-9 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600"
+                                    class="block w-full rounded-md border-0 py-1.5 pl-9 text-sm text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus"
                                 />
                             </div>
                             <button
                                 v-if="childPermissions.setting_create"
                                 type="button"
-                                class="inline-flex shrink-0 items-center gap-1 rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
+                                class="inline-flex shrink-0 items-center gap-1 rounded-md bg-accent px-2.5 py-1.5 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover"
                                 @click="addSetting"
                             >
                                 <PlusIcon class="h-4 w-4" /> Add setting
@@ -103,26 +103,26 @@
                         </div>
 
                         <div ref="settingsScroll" class="mt-3 flex-1 space-y-5 overflow-y-auto pr-1">
-                            <div v-if="settings.length === 0" class="rounded-md border border-dashed border-gray-300 px-3 py-12 text-center text-sm text-gray-500">
+                            <div v-if="settings.length === 0" class="rounded-md border border-dashed border-strong px-3 py-12 text-center text-sm text-muted">
                                 No settings yet. Use “Add setting”{{ mode === 'create' ? ' or pick a template' : '' }}.
                             </div>
-                            <div v-else-if="renderGroups.length === 0" class="rounded-md border border-dashed border-gray-300 px-3 py-12 text-center text-sm text-gray-500">
+                            <div v-else-if="renderGroups.length === 0" class="rounded-md border border-dashed border-strong px-3 py-12 text-center text-sm text-muted">
                                 No settings match “{{ settingSearch }}”.
                             </div>
 
-                            <section v-for="group in renderGroups" :key="group.name" :class="group.pinned ? 'rounded-lg bg-indigo-50/50 p-2 ring-1 ring-indigo-100' : ''">
+                            <section v-for="group in renderGroups" :key="group.name" :class="group.pinned ? 'rounded-lg bg-accent/50 p-2 ring-1 ring-accent' : ''">
                                 <h4
                                     class="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide"
-                                    :class="group.pinned ? 'text-indigo-600' : 'text-gray-500'"
+                                    :class="group.pinned ? 'text-accent-fg' : 'text-muted'"
                                 >
                                     {{ group.name }}
                                     <span
                                         class="rounded-full px-1.5 py-0.5 text-[10px] font-medium"
-                                        :class="group.pinned ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-500'"
+                                        :class="group.pinned ? 'bg-accent-subtle text-accent-fg' : 'bg-surface-3 text-muted'"
                                     >
                                         {{ group.rows.length }}
                                     </span>
-                                    <span v-if="group.pinned" class="font-normal normal-case tracking-normal text-indigo-400">· stays here until saved</span>
+                                    <span v-if="group.pinned" class="font-normal normal-case tracking-normal text-accent-fg">· stays here until saved</span>
                                 </h4>
                                 <div class="space-y-2">
                                     <SipSettingRow
@@ -143,11 +143,11 @@
                 <!-- ── Domains ─────────────────────────────────────────── -->
                 <div v-show="activeTab === 'domains'" class="flex min-h-0 flex-1 flex-col py-4">
                     <div class="flex items-center justify-between gap-3">
-                        <p class="text-xs text-gray-500">Optional domain aliases included in the generated profile.</p>
+                        <p class="text-xs text-muted">Optional domain aliases included in the generated profile.</p>
                         <button
                             v-if="childPermissions.domain_create"
                             type="button"
-                            class="inline-flex items-center gap-1 rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
+                            class="inline-flex items-center gap-1 rounded-md bg-accent px-2.5 py-1.5 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover"
                             @click="addDomain"
                         >
                             <PlusIcon class="h-4 w-4" /> Add domain
@@ -155,29 +155,29 @@
                     </div>
 
                     <div class="mt-3 flex-1 space-y-2 overflow-y-auto pr-1">
-                        <div v-if="domains.length === 0" class="rounded-md border border-dashed border-gray-300 px-3 py-12 text-center text-sm text-gray-500">
+                        <div v-if="domains.length === 0" class="rounded-md border border-dashed border-strong px-3 py-12 text-center text-sm text-muted">
                             No domains.
                         </div>
-                        <div v-for="(domain, index) in domains" :key="domain.local_key" class="grid grid-cols-12 items-center gap-2 rounded-md border border-gray-200 bg-white px-2.5 py-2">
+                        <div v-for="(domain, index) in domains" :key="domain.local_key" class="grid grid-cols-12 items-center gap-2 rounded-md border border-default bg-surface px-2.5 py-2">
                             <div class="col-span-12 sm:col-span-6">
-                                <input v-model.trim="domain.sip_profile_domain_name" :disabled="!canEditDomain(domain)" placeholder="domain name" class="block w-full rounded-md border-0 py-1.5 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 disabled:bg-gray-50 disabled:text-gray-500" />
+                                <input v-model.trim="domain.sip_profile_domain_name" :disabled="!canEditDomain(domain)" placeholder="domain name" class="block w-full rounded-md border-0 py-1.5 text-sm text-heading ring-1 ring-inset ring-strong focus:ring-2 focus:ring-inset focus:ring-focus disabled:bg-surface-2 disabled:text-muted" />
                             </div>
                             <div class="col-span-5 sm:col-span-2">
-                                <select v-model="domain.sip_profile_domain_alias" :disabled="!canEditDomain(domain)" class="block w-full rounded-md border-0 py-1.5 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 disabled:bg-gray-50 disabled:text-gray-500">
+                                <select v-model="domain.sip_profile_domain_alias" :disabled="!canEditDomain(domain)" class="block w-full rounded-md border-0 py-1.5 text-sm text-heading ring-1 ring-inset ring-strong focus:ring-2 focus:ring-inset focus:ring-focus disabled:bg-surface-2 disabled:text-muted">
                                     <option value="">Alias…</option>
                                     <option value="true">True</option>
                                     <option value="false">False</option>
                                 </select>
                             </div>
                             <div class="col-span-5 sm:col-span-3">
-                                <select v-model="domain.sip_profile_domain_parse" :disabled="!canEditDomain(domain)" class="block w-full rounded-md border-0 py-1.5 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 disabled:bg-gray-50 disabled:text-gray-500">
+                                <select v-model="domain.sip_profile_domain_parse" :disabled="!canEditDomain(domain)" class="block w-full rounded-md border-0 py-1.5 text-sm text-heading ring-1 ring-inset ring-strong focus:ring-2 focus:ring-inset focus:ring-focus disabled:bg-surface-2 disabled:text-muted">
                                     <option value="">Parse…</option>
                                     <option value="true">True</option>
                                     <option value="false">False</option>
                                 </select>
                             </div>
                             <div class="col-span-2 flex justify-end sm:col-span-1">
-                                <button v-if="canRemoveDomain(domain)" type="button" class="rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-red-600" title="Remove" @click="removeDomain(index)">
+                                <button v-if="canRemoveDomain(domain)" type="button" class="rounded-full p-1.5 text-subtle hover:bg-surface-3 hover:text-danger" title="Remove" @click="removeDomain(index)">
                                     <TrashIcon class="h-4 w-4" />
                                 </button>
                             </div>
@@ -186,15 +186,15 @@
                 </div>
 
                 <!-- Footer -->
-                <div class="flex items-center justify-between border-t border-gray-200 pt-4">
-                    <p v-if="hasErrors" class="text-sm text-red-600">Please fix the highlighted fields.</p>
+                <div class="flex items-center justify-between border-t border-default pt-4">
+                    <p v-if="hasErrors" class="text-sm text-danger">Please fix the highlighted fields.</p>
                     <span v-else></span>
                     <div class="flex items-center gap-2">
-                        <button type="button" class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50" @click="emit('close')">Cancel</button>
+                        <button type="button" class="rounded-md bg-surface px-3 py-2 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2" @click="emit('close')">Cancel</button>
                         <button
                             type="button"
                             :disabled="saving"
-                            class="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:opacity-60"
+                            class="inline-flex items-center gap-2 rounded-md bg-accent px-3 py-2 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover disabled:opacity-60"
                             @click="save"
                         >
                             {{ saving ? "Saving…" : "Save" }}
@@ -381,15 +381,15 @@ function applyTemplate(templateId) {
 function categoryClass(group) {
     const active = settingSearch.value.trim() === "" && activeGroup.value === group;
     return [
-        active ? "bg-indigo-50 text-indigo-700" : "text-gray-700 hover:bg-gray-100",
+        active ? "bg-accent-subtle text-accent-fg" : "text-body hover:bg-surface-3",
         "flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left text-sm font-medium",
     ];
 }
 
 function inputClass(error) {
     return [
-        "mt-1 block w-full rounded-md border-0 py-1.5 text-sm text-gray-900 shadow-sm ring-1 ring-inset placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600",
-        error ? "ring-red-400" : "ring-gray-300",
+        "mt-1 block w-full rounded-md border-0 py-1.5 text-sm text-heading shadow-sm ring-1 ring-inset placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus",
+        error ? "ring-danger" : "ring-strong",
     ];
 }
 

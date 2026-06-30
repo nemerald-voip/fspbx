@@ -8,12 +8,12 @@
             <template #filters>
                 <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
                     <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                        <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                        <MagnifyingGlassIcon class="h-5 w-5 text-subtle" aria-hidden="true" />
                     </div>
                     <input
                         v-model="filterData.search"
                         type="text"
-                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600"
+                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-sm text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus"
                         placeholder="Search"
                         @keydown.enter="handleSearch"
                     />
@@ -24,7 +24,7 @@
                 <button
                     v-if="permissions.recording_create"
                     type="button"
-                    class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
+                    class="rounded-md bg-accent px-2.5 py-1.5 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover"
                     @click="openNewRecordingModal"
                 >
                     New Recording
@@ -49,41 +49,41 @@
             </template>
 
             <template #table-header>
-                <TableColumnHeader class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900" :sortable="false">
+                <TableColumnHeader class="px-4 py-3.5 text-left text-sm font-semibold text-heading" :sortable="false">
                     <div class="flex items-center">
                         <input
                             v-model="selectPageItems"
                             type="checkbox"
-                            class="h-4 w-4 rounded border-gray-300 text-indigo-600"
+                            class="h-4 w-4 rounded border-strong text-accent-fg"
                             @click.stop
                         >
                         <button class="ml-9 flex items-center" @click="setSort('recording_name')">
                             <span class="mr-2">Name</span>
-                            <ChevronUpIcon v-if="sortData.name === 'recording_name' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
-                            <ChevronDownIcon v-else-if="sortData.name === 'recording_name' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                            <ChevronUpIcon v-if="sortData.name === 'recording_name' && sortData.order === 'asc'" class="h-4 w-4 text-muted" />
+                            <ChevronDownIcon v-else-if="sortData.name === 'recording_name' && sortData.order === 'desc'" class="h-4 w-4 text-muted" />
                         </button>
                     </div>
                 </TableColumnHeader>
 
-                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-heading">
                     <button class="flex items-center" @click="setSort('recording_filename')">
                         <span class="mr-2">File</span>
-                        <ChevronUpIcon v-if="sortData.name === 'recording_filename' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
-                        <ChevronDownIcon v-else-if="sortData.name === 'recording_filename' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronUpIcon v-if="sortData.name === 'recording_filename' && sortData.order === 'asc'" class="h-4 w-4 text-muted" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'recording_filename' && sortData.order === 'desc'" class="h-4 w-4 text-muted" />
                     </button>
                 </TableColumnHeader>
 
-                <TableColumnHeader header="Description" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Description" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
 
-                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-heading">
                     <button class="flex items-center" @click="setSort('insert_date')">
                         <span class="mr-2">Created</span>
-                        <ChevronUpIcon v-if="sortData.name === 'insert_date' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
-                        <ChevronDownIcon v-else-if="sortData.name === 'insert_date' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronUpIcon v-if="sortData.name === 'insert_date' && sortData.order === 'asc'" class="h-4 w-4 text-muted" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'insert_date' && sortData.order === 'desc'" class="h-4 w-4 text-muted" />
                     </button>
                 </TableColumnHeader>
 
-                <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-heading" />
             </template>
 
             <template v-if="selectPageItems" #current-selection>
@@ -92,14 +92,14 @@
                         <span class="font-semibold">{{ selectedItems.length }}</span> items are selected.
                         <button
                             v-if="!selectAll && selectedItems.length !== data.total"
-                            class="rounded px-2 py-2 text-blue-500 transition duration-500 ease-in-out hover:bg-blue-200 hover:text-blue-500 focus:bg-blue-200 focus:outline-none focus:ring-1 focus:ring-blue-300"
+                            class="rounded px-2 py-2 text-info transition duration-500 ease-in-out hover:bg-info-subtle hover:text-info focus:bg-info-subtle focus:outline-none focus:ring-1 focus:ring-focus"
                             @click="handleSelectAll"
                         >
                             Select all {{ data.total }} items
                         </button>
                         <button
                             v-if="selectAll"
-                            class="rounded px-2 py-2 text-blue-500 transition duration-500 ease-in-out hover:bg-blue-200 hover:text-blue-500 focus:bg-blue-200 focus:outline-none focus:ring-1 focus:ring-blue-300"
+                            class="rounded px-2 py-2 text-info transition duration-500 ease-in-out hover:bg-info-subtle hover:text-info focus:bg-info-subtle focus:outline-none focus:ring-1 focus:ring-focus"
                             @click="handleClearSelection"
                         >
                             Clear selection
@@ -110,38 +110,38 @@
 
             <template #table-body>
                 <tr v-for="row in data.data" :key="row.recording_uuid">
-                    <TableField class="px-4 py-2 text-sm text-gray-500">
+                    <TableField class="px-4 py-2 text-sm text-muted">
                         <div class="flex items-center">
-                            <input v-model="selectedItems" type="checkbox" :value="row.recording_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                            <input v-model="selectedItems" type="checkbox" :value="row.recording_uuid" class="h-4 w-4 rounded border-strong text-accent-fg">
                             <div
                                 class="ml-9"
-                                :class="{ 'cursor-pointer hover:text-gray-900': permissions.recording_update }"
+                                :class="{ 'cursor-pointer hover:text-heading': permissions.recording_update }"
                                 @click="permissions.recording_update && openEditModal(row)"
                             >
-                                <span class="font-medium text-gray-900">{{ row.recording_name }}</span>
+                                <span class="font-medium text-heading">{{ row.recording_name }}</span>
                             </div>
                         </div>
                     </TableField>
 
-                    <TableField class="px-2 py-2 text-sm text-gray-500">
+                    <TableField class="px-2 py-2 text-sm text-muted">
                         <span class="break-all">{{ row.recording_filename }}</span>
                     </TableField>
 
-                    <TableField class="px-2 py-2 text-sm text-gray-500">
+                    <TableField class="px-2 py-2 text-sm text-muted">
                         {{ row.recording_description || '-' }}
                     </TableField>
 
-                    <TableField class="px-2 py-2 text-sm text-gray-500">
+                    <TableField class="px-2 py-2 text-sm text-muted">
                         {{ formatDate(row.insert_date) }}
                     </TableField>
 
-                    <TableField class="px-2 py-1 text-sm text-gray-500">
+                    <TableField class="px-2 py-1 text-sm text-muted">
                         <template #action-buttons>
                             <div class="flex items-center justify-end gap-1">
                                 <button
                                     v-if="row.file_exists && permissions.recording_play"
                                     type="button"
-                                    class="rounded-full p-2 text-blue-500 transition hover:bg-blue-200 hover:text-blue-700"
+                                    class="rounded-full p-2 text-info transition hover:bg-info-subtle hover:text-info"
                                     @click="openPlayerModal(row)"
                                 >
                                     <PlayCircleIcon class="h-5 w-5" />
@@ -149,7 +149,7 @@
                                 <button
                                     v-if="permissions.recording_download && row.download_url"
                                     type="button"
-                                    class="rounded-full p-2 text-gray-400 transition hover:bg-gray-200 hover:text-gray-600"
+                                    class="rounded-full p-2 text-subtle transition hover:bg-surface-3 hover:text-body"
                                     @click="downloadFile(row.download_url)"
                                 >
                                     <ArrowDownTrayIcon class="h-5 w-5" />
@@ -157,7 +157,7 @@
                                 <button
                                     v-if="permissions.recording_update"
                                     type="button"
-                                    class="rounded-full p-2 text-gray-400 transition hover:bg-gray-200 hover:text-gray-600"
+                                    class="rounded-full p-2 text-subtle transition hover:bg-surface-3 hover:text-body"
                                     @click="openEditModal(row)"
                                 >
                                     <PencilSquareIcon class="h-5 w-5" />
@@ -165,7 +165,7 @@
                                 <button
                                     v-if="permissions.recording_destroy"
                                     type="button"
-                                    class="rounded-full p-2 text-gray-400 transition hover:bg-gray-200 hover:text-gray-600"
+                                    class="rounded-full p-2 text-subtle transition hover:bg-surface-3 hover:text-body"
                                     @click="confirmSingleDelete(row.recording_uuid)"
                                 >
                                     <TrashIcon class="h-5 w-5" />
@@ -178,9 +178,9 @@
 
             <template #empty>
                 <div v-if="!loading && data.data.length === 0" class="text-center my-5">
-                    <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
-                    <p class="mt-1 text-sm text-gray-500">Adjust your search and try again.</p>
+                    <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-subtle" />
+                    <h3 class="mt-2 text-sm font-semibold text-heading">No results found</h3>
+                    <p class="mt-1 text-sm text-muted">Adjust your search and try again.</p>
                 </div>
             </template>
 
@@ -223,20 +223,20 @@
         <template #modal-body>
             <form class="space-y-4" @submit.prevent="submitEdit">
                 <div>
-                    <label class="block text-sm font-medium text-gray-900">Name</label>
-                    <input v-model="editForm.greeting_name" type="text" class="mt-2 block w-full rounded-md border-0 py-2 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600">
-                    <p v-if="formErrors.greeting_name" class="mt-2 text-sm text-red-600">{{ formErrors.greeting_name[0] }}</p>
+                    <label class="block text-sm font-medium text-heading">Name</label>
+                    <input v-model="editForm.greeting_name" type="text" class="mt-2 block w-full rounded-md border-0 py-2 text-sm text-heading ring-1 ring-inset ring-strong focus:ring-2 focus:ring-inset focus:ring-focus">
+                    <p v-if="formErrors.greeting_name" class="mt-2 text-sm text-danger">{{ formErrors.greeting_name[0] }}</p>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-900">Description</label>
-                    <textarea v-model="editForm.greeting_description" rows="3" class="mt-2 block w-full rounded-md border-0 py-2 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600"></textarea>
-                    <p v-if="formErrors.greeting_description" class="mt-2 text-sm text-red-600">{{ formErrors.greeting_description[0] }}</p>
+                    <label class="block text-sm font-medium text-heading">Description</label>
+                    <textarea v-model="editForm.greeting_description" rows="3" class="mt-2 block w-full rounded-md border-0 py-2 text-sm text-heading ring-1 ring-inset ring-strong focus:ring-2 focus:ring-inset focus:ring-focus"></textarea>
+                    <p v-if="formErrors.greeting_description" class="mt-2 text-sm text-danger">{{ formErrors.greeting_description[0] }}</p>
                 </div>
 
                 <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50" @click="closeModals">Cancel</button>
-                    <button type="submit" class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50" :disabled="formSubmitting">
+                    <button type="button" class="rounded-md bg-surface px-3 py-2 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2" @click="closeModals">Cancel</button>
+                    <button type="submit" class="rounded-md bg-accent px-3 py-2 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-50" :disabled="formSubmitting">
                         Save
                     </button>
                 </div>
@@ -253,10 +253,10 @@
     >
         <template #modal-body>
             <div class="space-y-4">
-                <div class="text-sm text-gray-500">
-                    <div><span class="font-medium text-gray-700">File:</span> {{ selectedRecording?.recording_filename }}</div>
+                <div class="text-sm text-muted">
+                    <div><span class="font-medium text-body">File:</span> {{ selectedRecording?.recording_filename }}</div>
                     <div v-if="selectedRecording?.recording_description">
-                        <span class="font-medium text-gray-700">Description:</span> {{ selectedRecording.recording_description }}
+                        <span class="font-medium text-body">Description:</span> {{ selectedRecording.recording_description }}
                     </div>
                 </div>
 

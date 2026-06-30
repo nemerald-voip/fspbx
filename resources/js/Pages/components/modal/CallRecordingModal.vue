@@ -3,7 +3,7 @@
         <Dialog as="div" class="relative z-10">
             <TransitionChild as="div" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100"
                 leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0">
-                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+                <div class="fixed inset-0 bg-gray-500 dark:bg-gray-900 bg-opacity-75 transition-opacity" />
             </TransitionChild>
             <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
                 <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
@@ -14,11 +14,11 @@
                         leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
 
                         <DialogPanel
-                            class="relative transform  rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-5xl sm:p-6">
+                            class="relative transform  rounded-lg bg-surface px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-5xl sm:p-6">
 
                             <div class="absolute right-0 top-0 pr-4 pt-4 sm:block">
                                 <button type="button"
-                                    class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                                    class="rounded-md bg-surface text-subtle hover:text-muted focus:outline-none focus:ring-2 focus:ring-focus focus:ring-offset-2"
                                     @click="emit('close')">
                                     <span class="sr-only">Close</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
@@ -28,7 +28,7 @@
                             <div v-if="loading" class="w-full h-full">
                                 <div class="flex justify-center items-center space-x-3">
                                     <div>
-                                        <svg class="animate-spin  h-10 w-10 text-blue-600"
+                                        <svg class="animate-spin  h-10 w-10 text-info"
                                             xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
                                                 stroke-width="4">
@@ -38,7 +38,7 @@
                                             </path>
                                         </svg>
                                     </div>
-                                    <div class="text-lg text-blue-600 m-auto">Loading...</div>
+                                    <div class="text-lg text-info m-auto">Loading...</div>
                                 </div>
                             </div>
 
@@ -46,34 +46,34 @@
                                 <div>
                                     <div class="space-y-1">
                                         <!-- Title -->
-                                        <h1 class="text-2xl font-bold text-gray-600">
+                                        <h1 class="text-2xl font-bold text-body">
                                             {{ capitalizeFirstLetter(recordingOptions?.item?.direction) }} Call
                                         </h1>
 
                                         <!-- When -->
-                                        <p class="text-sm text-gray-500">
+                                        <p class="text-sm text-muted">
                                             On {{ recordingOptions?.item?.start_date }} at {{
                                                 recordingOptions?.item?.start_time }}
                                         </p>
 
                                         <!-- Parties -->
-                                        <dl class="text-sm text-gray-700">
+                                        <dl class="text-sm text-body">
                                             <div class="flex gap-2">
-                                                <dt class="font-medium text-gray-500 w-12">From:</dt>
+                                                <dt class="font-medium text-muted w-12">From:</dt>
                                                 <dd class="flex-1">
                                                     <span v-if="recordingOptions?.item?.direction === 'outbound'">
                                                         <!-- extension name if present, else caller name -->
                                                         {{ recordingOptions?.item?.extension?.name_formatted ||
                                                             recordingOptions?.item?.caller_id_name }}
                                                         <span v-if="recordingOptions.item?.caller_id_number_formatted"
-                                                            class="text-gray-500">
+                                                            class="text-muted">
                                                             - {{ recordingOptions?.item?.caller_id_number_formatted }}
                                                         </span>
                                                     </span>
                                                     <span v-else>
                                                         {{ recordingOptions?.item?.caller_id_name }}
                                                         <span v-if="recordingOptions?.item?.caller_id_number_formatted"
-                                                            class="text-gray-500">
+                                                            class="text-muted">
                                                             - {{ recordingOptions?.item?.caller_id_number_formatted }}
                                                         </span>
                                                     </span>
@@ -81,7 +81,7 @@
                                             </div>
 
                                             <div class="flex gap-2">
-                                                <dt class="font-medium text-gray-500 w-12">To:</dt>
+                                                <dt class="font-medium text-muted w-12">To:</dt>
                                                 <dd class="flex-1">
                                                     <span v-if="recordingOptions?.item?.direction === 'outbound'">
                                                         {{ recordingOptions.item?.caller_destination_formatted }}
@@ -104,10 +104,10 @@
 
                                 <!-- State 1: Feature is NOT ENABLED for the account -->
                                 <div v-if="!recordingOptions?.isCallTranscriptionServiceEnabled"
-                                    class="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-6">
+                                    class="mt-6 rounded-lg border border-info bg-info-subtle p-6">
                                     <div class="flex items-start gap-4">
                                         <div class="shrink-0">
-                                            <svg class="h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg"
+                                            <svg class="h-6 w-6 text-info" xmlns="http://www.w3.org/2000/svg"
                                                 fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                                                 stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -115,9 +115,9 @@
                                             </svg>
                                         </div>
                                         <div class="flex-1">
-                                            <h3 class="text-base font-semibold text-blue-800">Unlock AI-Powered Insights
+                                            <h3 class="text-base font-semibold text-info">Unlock AI-Powered Insights
                                             </h3>
-                                            <p class="mt-1 text-sm text-blue-700">
+                                            <p class="mt-1 text-sm text-info">
                                                 Enhance your call analysis with automated transcripts and summaries.
                                                 This feature is not currently active for your account.
                                             </p>
@@ -131,18 +131,18 @@
 
                                 <!-- State 2: Feature IS ENABLED and user HAS PERMISSION to view it -->
                                 <div v-else-if="recordingOptions?.isCallTranscriptionServiceEnabled && recordingOptions?.permissions?.transcription_view"
-                                    class="mt-6 rounded-lg border bg-slate-50 p-4">
+                                    class="mt-6 rounded-lg border bg-surface-2 p-4">
                                     <div class="flex flex-wrap items-center justify-between gap-4">
                                         <!-- Left Side: Title and Description -->
                                         <div class="flex items-start gap-4">
                                             <div
-                                                class="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-indigo-200 bg-indigo-100">
-                                                <SparklesIcon class="h-6 w-6 text-indigo-600" />
+                                                class="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-accent bg-accent-subtle">
+                                                <SparklesIcon class="h-6 w-6 text-accent-fg" />
                                             </div>
                                             <div>
-                                                <h3 class="text-base font-semibold text-gray-800">AI Voice Transcription
+                                                <h3 class="text-base font-semibold text-heading">AI Voice Transcription
                                                 </h3>
-                                                <p class="text-sm text-gray-500">Generate a searchable text version of
+                                                <p class="text-sm text-muted">Generate a searchable text version of
                                                     this audio.</p>
                                             </div>
                                         </div>
@@ -154,7 +154,7 @@
                                                 v-if="showTranscribeBtn && recordingOptions?.permissions?.transcription_create"
                                                 type="button" @click="requestTranscription"
                                                 :disabled="isRequestingTranscription"
-                                                class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:cursor-not-allowed disabled:opacity-50">
+                                                class="inline-flex items-center justify-center rounded-md bg-accent px-3 py-2 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50">
                                                 <svg v-if="isRequestingTranscription" class="mr-2 h-5 w-5 animate-spin"
                                                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                                     <circle class="opacity-25" cx="12" cy="12" r="10"
@@ -170,16 +170,16 @@
                                             <!-- Status pill shows after request OR if API already returns a status -->
                                             <div v-else-if="displayStatus"
                                                 class="inline-flex items-center gap-2 rounded-full px-3 ring-1" :class="{
-                                                    'bg-yellow-50 text-yellow-600 ring-yellow-200': displayStatus === 'pending' || displayStatus === 'queued',
-                                                    'bg-sky-50 text-sky-600 ring-sky-200': displayStatus === 'processing',
-                                                    'bg-emerald-50 text-emerald-600 ring-emerald-200': displayStatus === 'completed',
-                                                    'bg-rose-50 text-rose-600 ring-rose-200': displayStatus === 'failed'
+                                                    'bg-warning-subtle text-warning ring-warning': displayStatus === 'pending' || displayStatus === 'queued',
+                                                    'bg-info-subtle text-info ring-info': displayStatus === 'processing',
+                                                    'bg-success-subtle text-success ring-success': displayStatus === 'completed',
+                                                    'bg-danger-subtle text-danger ring-danger': displayStatus === 'failed'
                                                 }">
                                                 <span class="h-2 w-2 rounded-full" :class="{
-                                                    'bg-yellow-500': displayStatus === 'pending' || displayStatus === 'queued',
-                                                    'bg-sky-500': displayStatus === 'processing',
-                                                    'bg-emerald-500': displayStatus === 'completed',
-                                                    'bg-rose-500': displayStatus === 'failed'
+                                                    'bg-warning': displayStatus === 'pending' || displayStatus === 'queued',
+                                                    'bg-info': displayStatus === 'processing',
+                                                    'bg-success': displayStatus === 'completed',
+                                                    'bg-danger': displayStatus === 'failed'
                                                 }"></span>
                                                 <span class="font-medium capitalize">{{ displayStatus }}</span>
                                             </div>
@@ -193,7 +193,7 @@
                                                 v-if="showRegenerateBtn && recordingOptions?.permissions?.transcription_create"
                                                 type="button" @click="regenerateTranscription"
                                                 :disabled="isRegenerating"
-                                                class="inline-flex items-center text-sm/6 font-medium text-indigo-600 hover:text-indigo-500">
+                                                class="inline-flex items-center text-sm/6 font-medium text-accent-fg hover:text-accent-fg">
                                                 <ArrowPathIcon
                                                     :class="['h-4 w-4', isRegenerating ? 'animate-spin' : '']" />
                                                 <span class="ml-1">{{ isRegenerating ? 'Regenerating…' : 'Regenerate'
@@ -208,21 +208,21 @@
 
                                     <!-- State 1: Initial Placeholder (Before transcription is requested) -->
                                     <div v-if="recordingOptions?.isCallTranscriptionServiceEnabled && !hasTranscript && !transcriptRequested"
-                                        class="mt-6 rounded-lg border-2 border-dashed border-gray-300 p-12 text-center">
-                                        <ClipboardDocumentListIcon class="mx-auto h-12 w-12 text-gray-400" />
-                                        <h3 class="mt-2 text-sm font-semibold text-gray-900">Transcript not yet
+                                        class="mt-6 rounded-lg border-2 border-dashed border-strong p-12 text-center">
+                                        <ClipboardDocumentListIcon class="mx-auto h-12 w-12 text-subtle" />
+                                        <h3 class="mt-2 text-sm font-semibold text-heading">Transcript not yet
                                             generated</h3>
                                         <p v-if="recordingOptions?.permissions?.transcription_create"
-                                            class="mt-1 text-sm text-gray-500">
+                                            class="mt-1 text-sm text-muted">
                                             Click the "Transcribe" button above to generate the transcript.
                                         </p>
                                     </div>
 
                                     <div v-else-if="!hasTranscript && transcriptRequested"
-                                        class="mt-6 flex flex-col items-center justify-center rounded-lg border border-gray-200 bg-gray-50 p-12 text-center">
+                                        class="mt-6 flex flex-col items-center justify-center rounded-lg border border-default bg-surface-2 p-12 text-center">
 
                                         <!-- Spinner -->
-                                        <!-- <svg class="h-10 w-10 animate-spin text-indigo-600"
+                                        <!-- <svg class="h-10 w-10 animate-spin text-accent-fg"
                                             xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
                                                 stroke-width="4"></circle>
@@ -230,13 +230,13 @@
                                                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
                                             </path>
                                         </svg> -->
-                                        <p class="mt-4 text-sm font-semibold text-indigo-600">Transcription in progress.
+                                        <p class="mt-4 text-sm font-semibold text-accent-fg">Transcription in progress.
                                             Click Refresh to check status.</p>
 
                                         <!-- START: REFRESH BUTTON -->
                                         <button type="button" @click="refreshStatus" :disabled="!canRefresh"
-                                            class="mt-6 inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50">
-                                            <ArrowPathIcon class="-ml-0.5 mr-1.5 h-5 w-5 text-gray-400"
+                                            class="mt-6 inline-flex items-center rounded-md bg-surface px-3 py-2 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-50">
+                                            <ArrowPathIcon class="-ml-0.5 mr-1.5 h-5 w-5 text-subtle"
                                                 :class="{ 'animate-spin': !canRefresh }" />
                                             <span v-if="canRefresh">Refresh Status</span>
                                             <span v-else>Refresh in {{ cooldownSeconds }}s</span>
@@ -254,7 +254,7 @@
                                             <div class="sm:hidden">
                                                 <div class="relative">
                                                     <select v-model="selectedTabIndex" aria-label="Select a tab"
-                                                        class="block w-full appearance-none rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-base text-gray-900 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500">
+                                                        class="block w-full appearance-none rounded-md border border-strong bg-surface py-2 pl-3 pr-10 text-base text-heading focus:border-accent focus:outline-none focus:ring-focus">
                                                         <option v-for="(tab, index) in TABS" :key="tab.key"
                                                             :value="index">
                                                             {{ tab.label }}
@@ -262,7 +262,7 @@
                                                     </select>
                                                     <div
                                                         class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                                                        <ChevronDownIcon class="h-5 w-5 text-gray-400"
+                                                        <ChevronDownIcon class="h-5 w-5 text-subtle"
                                                             aria-hidden="true" />
                                                     </div>
                                                 </div>
@@ -276,10 +276,10 @@
                                                         as="template">
                                                         <button :class="[
                                                             'rounded-md px-3 py-2 text-sm font-medium transition-all duration-200',
-                                                            'focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2',
+                                                            'focus:outline-none focus:ring-2 focus:ring-focus focus:ring-offset-2',
                                                             selected
-                                                                ? 'bg-indigo-100 text-indigo-700'
-                                                                : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700',
+                                                                ? 'bg-accent-subtle text-accent-fg'
+                                                                : 'text-muted hover:bg-surface-3 hover:text-body',
                                                         ]">
                                                             {{ tab.label }}
                                                         </button>
@@ -291,7 +291,7 @@
                                             <TabPanels class="mt-4 p-4">
                                                 <!-- Transcript Panel -->
                                                 <TabPanel :key="TABS[0].key"
-                                                    class="rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                                                    class="rounded-lg focus:outline-none focus:ring-2 focus:ring-focus focus:ring-offset-2">
                                                     <!-- Paste your existing transcript rendering logic here -->
                                                     <div class="space-y-6" v-if="Array.isArray(grouped) && grouped.length">
                                                         <div v-for="(g, i) in grouped" :key="i"
@@ -307,7 +307,7 @@
                                                                         Speaker {{ g.speaker }}
                                                                     </p>
                                                                 </div>
-                                                                <p class="mt-1 leading-relaxed text-gray-700">
+                                                                <p class="mt-1 leading-relaxed text-body">
                                                                     {{g.chunks.map(c => c.text).join(' ')}}
                                                                 </p>
                                                             </div>
@@ -322,17 +322,17 @@
 
                                                 <!-- Summary Panel -->
                                                 <TabPanel :key="TABS[1].key"
-                                                    class="rounded-lg p-0.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:p-2">
+                                                    class="rounded-lg p-0.5 focus:outline-none focus:ring-2 focus:ring-focus focus:ring-offset-2 sm:p-2">
                                                     <!-- Summary State: Completed -->
                                                     <div v-if="hasSummary" class="space-y-8">
                                                         <!-- Overall Summary -->
                                                         <div class="space-y-3">
                                                             <h3
-                                                                class="flex items-center gap-2 text-base font-semibold text-gray-800">
-                                                                <DocumentTextIcon class="h-6 w-6 text-gray-500" />
+                                                                class="flex items-center gap-2 text-base font-semibold text-heading">
+                                                                <DocumentTextIcon class="h-6 w-6 text-muted" />
                                                                 <span>Call Summary</span>
                                                             </h3>
-                                                            <p class="text-gray-700 leading-relaxed">
+                                                            <p class="text-body leading-relaxed">
                                                                 {{ recordingOptions?.transcription?.summary }}
                                                             </p>
                                                         </div>
@@ -340,12 +340,12 @@
                                                         <!-- Key Points -->
                                                         <div class="space-y-3">
                                                             <h3
-                                                                class="flex items-center gap-2 text-base font-semibold text-gray-800">
-                                                                <LightBulbIcon class="h-6 w-6 text-yellow-500" />
+                                                                class="flex items-center gap-2 text-base font-semibold text-heading">
+                                                                <LightBulbIcon class="h-6 w-6 text-warning" />
                                                                 <span>Key Points</span>
                                                             </h3>
                                                             <ul
-                                                                class="list-disc space-y-2 pl-6 text-gray-700 marker:text-gray-400">
+                                                                class="list-disc space-y-2 pl-6 text-body marker:text-subtle">
                                                                 <li v-for="(point, i) in recordingOptions?.transcription?.key_points"
                                                                     :key="`kp-${i}`">{{ point }}</li>
                                                             </ul>
@@ -354,17 +354,17 @@
                                                         <!-- Action Items -->
                                                         <div class="space-y-3">
                                                             <h3
-                                                                class="flex items-center gap-2 text-base font-semibold text-gray-800">
-                                                                <CheckCircleIcon class="h-6 w-6 text-green-500" />
+                                                                class="flex items-center gap-2 text-base font-semibold text-heading">
+                                                                <CheckCircleIcon class="h-6 w-6 text-success" />
                                                                 <span>Action Items</span>
                                                             </h3>
-                                                            <ul class="space-y-2 text-gray-700">
+                                                            <ul class="space-y-2 text-body">
                                                                 <li v-for="(item, i) in recordingOptions?.transcription?.action_items"
                                                                     :key="`ai-${i}`"
-                                                                    class="rounded-md border border-gray-200 bg-gray-50 p-3">
-                                                                    <p class="font-medium text-gray-800">{{
+                                                                    class="rounded-md border border-default bg-surface-2 p-3">
+                                                                    <p class="font-medium text-heading">{{
                                                                         item.description }}</p>
-                                                                    <p v-if="item.owner" class="text-xs text-gray-500">
+                                                                    <p v-if="item.owner" class="text-xs text-muted">
                                                                         Owner: {{
                                                                             item.owner }}</p>
                                                                 </li>
@@ -374,12 +374,12 @@
                                                         <!-- Decisions Made -->
                                                         <div class="space-y-3">
                                                             <h3
-                                                                class="flex items-center gap-2 text-base font-semibold text-gray-800">
-                                                                <ScaleIcon class="h-6 w-6 text-blue-500" />
+                                                                class="flex items-center gap-2 text-base font-semibold text-heading">
+                                                                <ScaleIcon class="h-6 w-6 text-info" />
                                                                 <span>Decisions Made</span>
                                                             </h3>
                                                             <ul
-                                                                class="list-disc space-y-2 pl-6 text-gray-700 marker:text-gray-400">
+                                                                class="list-disc space-y-2 pl-6 text-body marker:text-subtle">
                                                                 <li v-for="(decision, i) in recordingOptions?.transcription?.decisions_made"
                                                                     :key="`dm-${i}`">{{ decision }}</li>
                                                             </ul>
@@ -388,13 +388,13 @@
                                                         <!-- Sentiment -->
                                                         <div class="space-y-3">
                                                             <h3
-                                                                class="flex items-center gap-2 text-base font-semibold text-gray-800">
+                                                                class="flex items-center gap-2 text-base font-semibold text-heading">
                                                                 <ChatBubbleBottomCenterTextIcon
-                                                                    class="h-6 w-6 text-sky-500" />
+                                                                    class="h-6 w-6 text-info" />
                                                                 <span>Overall Sentiment</span>
                                                             </h3>
                                                             <p
-                                                                class="inline-flex items-center rounded-full bg-sky-100 px-3 py-1 text-sm font-medium capitalize text-sky-800">
+                                                                class="inline-flex items-center rounded-full bg-info-subtle px-3 py-1 text-sm font-medium capitalize text-info">
                                                                 {{ recordingOptions?.transcription?.sentiment_overall }}
                                                             </p>
                                                         </div>
@@ -403,8 +403,8 @@
 
                                                     <!-- Summary State: In Progress -->
                                                     <div v-else-if="(displaySummaryStatus === 'queued' || displaySummaryStatus === 'processing') || (summaryRequested && displaySummaryStatus !== 'completed' && displaySummaryStatus !== 'failed')"
-                                                        class="flex flex-col items-center justify-center rounded-lg border border-gray-200 bg-gray-50 p-12 text-center">
-                                                        <!-- <svg class="h-10 w-10 animate-spin text-indigo-600"
+                                                        class="flex flex-col items-center justify-center rounded-lg border border-default bg-surface-2 p-12 text-center">
+                                                        <!-- <svg class="h-10 w-10 animate-spin text-accent-fg"
                                                             xmlns="http://www.w3.org/2000/svg" fill="none"
                                                             viewBox="0 0 24 24">
                                                             <circle class="opacity-25" cx="12" cy="12" r="10"
@@ -413,19 +413,19 @@
                                                                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
                                                             </path>
                                                         </svg> -->
-                                                        <p class="mt-4 text-sm font-semibold text-indigo-600">
+                                                        <p class="mt-4 text-sm font-semibold text-accent-fg">
                                                             Generating AI summary...
                                                         </p>
-                                                        <p class="mt-1 text-sm text-gray-500">
+                                                        <p class="mt-1 text-sm text-muted">
                                                             You can check the progress by clicking Refresh.
                                                         </p>
 
                                                         <!-- START: REFRESH BUTTON -->
                                                         <button type="button" @click="refreshStatus"
                                                             :disabled="!canRefresh"
-                                                            class="mt-6 inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50">
+                                                            class="mt-6 inline-flex items-center rounded-md bg-surface px-3 py-2 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-50">
                                                             <ArrowPathIcon
-                                                                class="-ml-0.5 mr-1.5 h-5 w-5 text-gray-400"
+                                                                class="-ml-0.5 mr-1.5 h-5 w-5 text-subtle"
                                                                 :class="{ 'animate-spin': !canRefresh }" />
                                                             <span v-if="canRefresh">Refresh Status</span>
                                                             <span v-else>Refresh in {{ cooldownSeconds }}s</span>
@@ -435,18 +435,18 @@
 
                                                     <!-- Summary State: Failed -->
                                                     <div v-else-if="displaySummaryStatus === 'failed' && !summaryRequested"
-                                                        class="rounded-lg border-2 border-dashed border-rose-300 bg-rose-50 p-12 text-center">
+                                                        class="rounded-lg border-2 border-dashed border-danger bg-danger-subtle p-12 text-center">
                                                         <ExclamationTriangleIcon
-                                                            class="mx-auto h-12 w-12 text-rose-400" />
-                                                        <h3 class="mt-2 text-sm font-semibold text-rose-900">
+                                                            class="mx-auto h-12 w-12 text-danger" />
+                                                        <h3 class="mt-2 text-sm font-semibold text-danger">
                                                             Summary Generation Failed
                                                         </h3>
-                                                        <p class="mt-1 text-sm text-rose-700">
+                                                        <p class="mt-1 text-sm text-danger">
                                                             We were unable to generate a summary for this call.
                                                         </p>
                                                         <button type="button" @click="regenerateSummary"
                                                             :disabled="isRegeneratingSummary"
-                                                            class="mt-4 inline-flex items-center rounded-md bg-rose-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-rose-500 disabled:opacity-50">
+                                                            class="mt-4 inline-flex items-center rounded-md bg-danger-solid px-3 py-2 text-sm font-semibold text-on-accent shadow-sm hover:bg-danger-solid-hover disabled:opacity-50">
                                                             <ArrowPathIcon class="-ml-0.5 mr-1.5 h-5 w-5"
                                                                 :class="{ 'animate-spin': isRegeneratingSummary }" />
                                                             {{ isRegeneratingSummary ? 'Retrying...' : 'Retry' }}
@@ -455,12 +455,12 @@
 
                                                     <!-- Summary State: Not Yet Generated -->
                                                     <div v-else
-                                                        class="rounded-lg border-2 border-dashed border-gray-300 p-12 text-center">
-                                                        <SparklesIcon class="mx-auto h-12 w-12 text-gray-400" />
-                                                        <h3 class="mt-2 text-sm font-semibold text-gray-900">
+                                                        class="rounded-lg border-2 border-dashed border-strong p-12 text-center">
+                                                        <SparklesIcon class="mx-auto h-12 w-12 text-subtle" />
+                                                        <h3 class="mt-2 text-sm font-semibold text-heading">
                                                             AI Summary is available
                                                         </h3>
-                                                        <p class="mt-1 text-sm text-gray-500">
+                                                        <p class="mt-1 text-sm text-muted">
                                                             Summary generation is part of the transcription process.
                                                         </p>
                                                     </div>
@@ -471,8 +471,8 @@
                                         </TabGroup>
                                     </div>
                                     <div v-else-if="recordingOptions?.isCallTranscriptionServiceEnabled && !recordingOptions?.permissions?.transcription_read"
-                                        class="mt-6 rounded-lg border-2 border-dashed border-gray-300 p-12 text-center">
-                                        <p class="text-sm font-medium text-gray-700">You do not have permission to view
+                                        class="mt-6 rounded-lg border-2 border-dashed border-strong p-12 text-center">
+                                        <p class="text-sm font-medium text-body">You do not have permission to view
                                             transcript content.</p>
                                     </div>
 
@@ -691,61 +691,61 @@ onUnmounted(() => {
 
 const SPEAKER_PALETTES = [
     { // A
-        timeChip: 'bg-indigo-50 text-indigo-600',
-        avatar: 'bg-indigo-100 text-indigo-600',
-        name: 'text-indigo-600',
+        timeChip: 'bg-accent-subtle text-accent-fg',
+        avatar: 'bg-accent-subtle text-accent-fg',
+        name: 'text-accent-fg',
     },
     { // B
-        timeChip: 'bg-emerald-50 text-emerald-600',
-        avatar: 'bg-emerald-100 text-emerald-600',
-        name: 'text-emerald-600',
+        timeChip: 'bg-success-subtle text-success',
+        avatar: 'bg-success-subtle text-success',
+        name: 'text-success',
     },
     { // C
-        timeChip: 'bg-amber-50 text-amber-700',
-        avatar: 'bg-amber-100 text-amber-600',
-        name: 'text-amber-600',
+        timeChip: 'bg-amber-50 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300',
+        avatar: 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300',
+        name: 'text-amber-700 dark:text-amber-300',
     },
     { // D
-        timeChip: 'bg-fuchsia-50 text-fuchsia-600',
-        avatar: 'bg-fuchsia-100 text-fuchsia-600',
-        name: 'text-fuchsia-600',
+        timeChip: 'bg-fuchsia-50 dark:bg-fuchsia-900/40 text-fuchsia-600 dark:text-fuchsia-300',
+        avatar: 'bg-fuchsia-100 dark:bg-fuchsia-900/40 text-fuchsia-600 dark:text-fuchsia-300',
+        name: 'text-fuchsia-600 dark:text-fuchsia-300',
     },
     { // E
-        timeChip: 'bg-sky-50 text-sky-600',
-        avatar: 'bg-sky-100 text-sky-600',
-        name: 'text-sky-600',
+        timeChip: 'bg-sky-50 dark:bg-sky-900/40 text-sky-600 dark:text-sky-300',
+        avatar: 'bg-sky-100 dark:bg-sky-900/40 text-sky-600 dark:text-sky-300',
+        name: 'text-sky-600 dark:text-sky-300',
     },
     { // F
-        timeChip: 'bg-rose-50 text-rose-600',
-        avatar: 'bg-rose-100 text-rose-600',
-        name: 'text-rose-600',
+        timeChip: 'bg-danger-subtle text-danger',
+        avatar: 'bg-danger-subtle text-danger',
+        name: 'text-danger',
     },
     { // G
-        timeChip: 'bg-violet-50 text-violet-600',
-        avatar: 'bg-violet-100 text-violet-600',
-        name: 'text-violet-600',
+        timeChip: 'bg-violet-50 dark:bg-violet-900/40 text-violet-600 dark:text-violet-300',
+        avatar: 'bg-violet-100 dark:bg-violet-900/40 text-violet-600 dark:text-violet-300',
+        name: 'text-violet-600 dark:text-violet-300',
     },
     { // H
-        timeChip: 'bg-lime-50 text-lime-700',
-        avatar: 'bg-lime-100 text-lime-600',
-        name: 'text-lime-600',
+        timeChip: 'bg-lime-50 dark:bg-lime-900/40 text-lime-700 dark:text-lime-300',
+        avatar: 'bg-lime-100 dark:bg-lime-900/40 text-lime-600 dark:text-lime-300',
+        name: 'text-lime-600 dark:text-lime-300',
     },
     { // I
-        timeChip: 'bg-cyan-50 text-cyan-600',
-        avatar: 'bg-cyan-100 text-cyan-600',
-        name: 'text-cyan-600',
+        timeChip: 'bg-cyan-50 dark:bg-cyan-900/40 text-cyan-600 dark:text-cyan-300',
+        avatar: 'bg-cyan-100 dark:bg-cyan-900/40 text-cyan-600 dark:text-cyan-300',
+        name: 'text-cyan-600 dark:text-cyan-300',
     },
     { // J
-        timeChip: 'bg-orange-50 text-orange-700',
-        avatar: 'bg-orange-100 text-orange-600',
-        name: 'text-orange-600',
+        timeChip: 'bg-orange-50 dark:bg-orange-900/40 text-orange-600 dark:text-orange-300',
+        avatar: 'bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-300',
+        name: 'text-orange-600 dark:text-orange-300',
     },
 ]
 
 const DEFAULT_PALETTE = {
-    timeChip: 'bg-slate-100 text-slate-700',
-    avatar: 'bg-slate-100 text-slate-600',
-    name: 'text-slate-600',
+    timeChip: 'bg-surface-3 text-body',
+    avatar: 'bg-surface-3 text-body',
+    name: 'text-body',
 }
 
 const TABS = [

@@ -7,7 +7,7 @@
                 @response="handleResponse" :display-errors="false">
 
                 <template #empty>
-                    <div class="space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
+                    <div class="space-y-6 text-body bg-surface-2 px-4 py-6 sm:p-6">
                         <FormElements>
 
                             <HiddenElement name="domain_uuid" :meta="true" />
@@ -16,13 +16,13 @@
                             <StaticElement name="h_general" tag="h4" content="AssemblyAI General & Language Settings" />
 
                             <StaticElement v-if="isInheriting" name="inherited_notice" tag="div" :add-classes="{
-                                StaticElement: { container: 'rounded-md border border-yellow-200 bg-yellow-50 p-3' }
+                                StaticElement: { container: 'rounded-md border border-warning bg-warning-subtle p-3' }
                             }" :columns="{ lg: { container: 5 } }">
                                 <template #default>
                                     <div class="flex items-start gap-3" role="status" aria-live="polite">
-                                        <ExclamationTriangleIcon class="size-5 text-yellow-500 shrink-0"
+                                        <ExclamationTriangleIcon class="size-5 text-warning shrink-0"
                                             aria-hidden="true" />
-                                        <div class="text-sm text-yellow-900">
+                                        <div class="text-sm text-warning">
                                             <p class="font-medium">
                                                 No custom options set. Your account is using the system defaults.
                                             </p>
@@ -73,14 +73,14 @@
                                 :conditions="[() => !canEdit ]" 
                                 :add-classes="{
                                     ElementLayout: {
-                                        innerWrapper: 'relative mt-2 rounded-lg border border-gray-200 bg-gray-50/60 p-4 lg:p-5 pl-5',
+                                        innerWrapper: 'relative mt-2 rounded-lg border border-default bg-surface-2/60 p-4 lg:p-5 pl-5',
                                     }
                                 }">
                                 <StaticElement name="ldo_header" tag="h4"
                                     content="Language Detection Options (Optional)" />
 
                                 <StaticElement name="ldo_stripe" :content="''"
-                                    :add-classes="{ StaticElement: { container: 'pointer-events-none absolute left-0 top-0 h-full w-1 rounded-l-lg bg-indigo-500' } }" />
+                                    :add-classes="{ StaticElement: { container: 'pointer-events-none absolute left-0 top-0 h-full w-1 rounded-l-lg bg-accent' } }" />
 
                                 <TextElement name="expected_languages" label="Expected Languages"
                                     :columns="{ lg: { wrapper: 6 } }" />
@@ -109,7 +109,7 @@
                                 :conditions="[() => !canEdit ]" 
                                 :add-classes="{
                                 ElementLayout: {
-                                    innerWrapper: 'relative mt-2 rounded-lg border border-gray-200 bg-gray-50/60 p-4 lg:p-5 pl-5',
+                                    innerWrapper: 'relative mt-2 rounded-lg border border-default bg-surface-2/60 p-4 lg:p-5 pl-5',
                                 }
                             }">
 
@@ -117,7 +117,7 @@
                                     content="Speaker Diarization Options (Optional)" :conditions="[() => !canEdit ]" />
 
                                 <StaticElement name="sd_stripe" :content="''"
-                                    :add-classes="{ StaticElement: { container: 'pointer-events-none absolute left-0 top-0 h-full w-1 rounded-l-lg bg-indigo-500' } }" 
+                                    :add-classes="{ StaticElement: { container: 'pointer-events-none absolute left-0 top-0 h-full w-1 rounded-l-lg bg-accent' } }" 
                                     :conditions="[() => !canEdit ]" />
 
                                 <TextElement name="min_speakers_expected" label="Minimum Speakers Expected"
@@ -150,12 +150,12 @@
 
                             <ListElement name="custom_spelling" :initial="0"
                                 :conditions="[() => !canEdit ]" 
-                                :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }">
+                                :add-classes="{ ListElement: { listItem: 'bg-surface p-4 mb-4 rounded-lg shadow-md' } }">
                                 <template #label="{ el$ }">
                                     <ElementLabel :for="el$._id" class="flex items-center gap-1">
-                                        <span class="text-lg font-semibold text-gray-600">Custom Spelling
+                                        <span class="text-lg font-semibold text-body">Custom Spelling
                                         </span>
-                                        <span class="text-sm font-medium text-gray-500"> (Optional)</span>
+                                        <span class="text-sm font-medium text-muted"> (Optional)</span>
                                     </ElementLabel>
                                 </template>
 
@@ -269,13 +269,13 @@
                                 :conditions="[() => !canEdit ]" 
                                 :add-classes="{
                                     ElementLayout: {
-                                        innerWrapper: 'relative mt-2 rounded-lg border border-gray-200 bg-gray-50/60 p-4 lg:p-5 pl-5',
+                                        innerWrapper: 'relative mt-2 rounded-lg border border-default bg-surface-2/60 p-4 lg:p-5 pl-5',
                                     }
                                 }">
                                 <StaticElement name="pii_header" tag="h4" content="Redacted Audio Options (Optional)" />
 
                                 <StaticElement name="pii_stripe" :content="''"
-                                    :add-classes="{ StaticElement: { container: 'pointer-events-none absolute left-0 top-0 h-full w-1 rounded-l-lg bg-indigo-500' } }" />
+                                    :add-classes="{ StaticElement: { container: 'pointer-events-none absolute left-0 top-0 h-full w-1 rounded-l-lg bg-accent' } }" />
 
                                 <ToggleElement name="return_redacted_no_speech_audio"
                                     text="Return redacted audio even when there is no speech"

@@ -7,21 +7,21 @@
                         <HiddenElement v-if="recordUuid" :name="recordUuidField" :meta="true" />
                         <StaticElement v-if="recordUuid" name="setting_uuid_clean">
                             <div class="mb-1">
-                                <div class="text-sm font-medium text-gray-600 mb-1">
+                                <div class="text-sm font-medium text-body mb-1">
                                     Unique ID
                                 </div>
 
                                 <div class="flex items-center group">
-                                    <span class="text-sm text-gray-900 select-all font-normal">
+                                    <span class="text-sm text-heading select-all font-normal">
                                         {{ recordUuid }}
                                     </span>
 
                                     <button type="button"
                                         @click="handleCopyToClipboard(recordUuid)"
-                                        class="ml-2 p-1 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
+                                        class="ml-2 p-1 rounded-full text-subtle hover:text-info hover:bg-info-subtle transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
                                         title="Copy to clipboard">
                                         <ClipboardDocumentIcon
-                                            class="h-4 w-4 text-gray-500 hover:text-gray-900 cursor-pointer" />
+                                            class="h-4 w-4 text-muted hover:text-heading cursor-pointer" />
                                     </button>
                                 </div>
                             </div>
