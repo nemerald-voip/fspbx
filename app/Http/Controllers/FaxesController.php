@@ -1047,6 +1047,26 @@ class FaxesController extends Controller
             ->where('default_setting_enabled', 'true')
             ->get();
 
+        $settings = $settings
+            ->reject(function ($setting) {
+                $value = trim((string) $setting->default_setting_value);
+                $value = Str::startsWith($value, 'inbound:') ? substr($value, 8) : $value;
+
+                return $value === 'fax_enable_t38_request=false';
+            })
+            ->values();
+
+        if (! $settings->contains(function ($setting) {
+            $value = trim((string) $setting->default_setting_value);
+            $value = Str::startsWith($value, 'inbound:') ? substr($value, 8) : $value;
+
+            return $value === 'fax_enable_t38_request=true';
+        })) {
+            $settings->push((object) [
+                'default_setting_value' => 'fax_enable_t38_request=true',
+            ]);
+        }
+
         $last_fax = 'last_fax=${caller_id_number}-${strftime(%Y-%m-%d-%H-%M-%S)}';
         $rxfax_data = Storage::disk('fax')->path(
             $fax->accountcode . '/' . $fax->fax_extension . '/inbox/' . $fax->forward_prefix . '${last_fax}.tif'
