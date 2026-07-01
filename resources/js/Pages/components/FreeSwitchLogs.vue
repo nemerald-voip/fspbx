@@ -5,7 +5,7 @@
                 <input
                     v-model="filterData.seed_uuid"
                     type="search"
-                    class="block w-full rounded-md border-0 py-2 pl-3 pr-3 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600"
+                    class="block w-full rounded-md border-0 py-2 pl-3 pr-3 text-sm text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus"
                     placeholder="Call UUID or SIP Call-ID"
                     @keydown.enter="handleSearchButtonClick"
                 />
@@ -13,12 +13,12 @@
 
             <div class="relative lg:col-span-3">
                 <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                    <MagnifyingGlassIcon class="h-5 w-5 text-subtle" aria-hidden="true" />
                 </div>
                 <input
                     v-model="filterData.search"
                     type="search"
-                    class="block w-full rounded-md border-0 py-2 pl-10 pr-3 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600"
+                    class="block w-full rounded-md border-0 py-2 pl-10 pr-3 text-sm text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus"
                     placeholder="Contains"
                     @keydown.enter="handleSearchButtonClick"
                 />
@@ -27,7 +27,7 @@
             <div class="relative lg:col-span-2">
                 <select
                     v-model="filterData.log_file"
-                    class="block w-full rounded-md border-0 py-2 pl-3 pr-10 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600"
+                    class="block w-full rounded-md border-0 py-2 pl-3 pr-10 text-sm text-heading ring-1 ring-inset ring-strong focus:ring-2 focus:ring-inset focus:ring-focus"
                 >
                     <option v-for="file in fileOptions" :key="file.value" :value="file.value">
                         {{ file.label }}
@@ -38,7 +38,7 @@
             <div class="relative lg:col-span-2">
                 <select
                     v-model="filterData.level"
-                    class="block w-full rounded-md border-0 py-2 pl-3 pr-10 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600"
+                    class="block w-full rounded-md border-0 py-2 pl-3 pr-10 text-sm text-heading ring-1 ring-inset ring-strong focus:ring-2 focus:ring-inset focus:ring-focus"
                 >
                     <option value="all">All levels</option>
                     <option value="debug">Debug</option>
@@ -55,7 +55,7 @@
                 <button
                     type="button"
                     @click.prevent="handleSearchButtonClick"
-                    class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                    class="inline-flex items-center rounded-md bg-accent px-3 py-2 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
                 >
                     Search
                 </button>
@@ -63,7 +63,7 @@
                 <button
                     type="button"
                     @click.prevent="handleFiltersReset"
-                    class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                    class="inline-flex items-center rounded-md bg-surface px-3 py-2 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2"
                 >
                     Reset
                 </button>
@@ -71,21 +71,21 @@
         </div>
 
         <div class="mt-3 flex flex-wrap items-center gap-3">
-            <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+            <label class="inline-flex items-center gap-2 text-sm text-body">
                 <input
                     v-model="filterData.whole_call"
                     type="checkbox"
-                    class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+                    class="h-4 w-4 rounded border-strong text-accent-fg focus:ring-focus"
                 />
                 Whole call
             </label>
 
-            <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+            <label class="inline-flex items-center gap-2 text-sm text-body">
                 <span>Padding</span>
                 <select
                     v-model.number="filterData.correlation_padding_minutes"
                     :disabled="!filterData.whole_call"
-                    class="block rounded-md border-0 py-1.5 pl-3 pr-8 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 disabled:bg-gray-100 disabled:text-gray-400"
+                    class="block rounded-md border-0 py-1.5 pl-3 pr-8 text-sm text-heading ring-1 ring-inset ring-strong focus:ring-2 focus:ring-inset focus:ring-focus disabled:bg-surface-3 disabled:text-subtle"
                 >
                     <option :value="1">1 min</option>
                     <option :value="5">5 min</option>
@@ -95,45 +95,45 @@
                 </select>
             </label>
 
-            <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+            <label class="inline-flex items-center gap-2 text-sm text-body">
                 <span>Read</span>
                 <input
                     v-model.number="filterData.size_kb"
                     type="number"
                     min="1"
                     max="10240"
-                    class="block w-24 rounded-md border-0 py-1.5 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600"
+                    class="block w-24 rounded-md border-0 py-1.5 text-sm text-heading ring-1 ring-inset ring-strong focus:ring-2 focus:ring-inset focus:ring-focus"
                 />
                 <span>KB</span>
             </label>
 
-            <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+            <label class="inline-flex items-center gap-2 text-sm text-body">
                 <span>Rows</span>
                 <input
                     v-model.number="filterData.max_lines"
                     type="number"
                     min="1"
                     max="5000"
-                    class="block w-24 rounded-md border-0 py-1.5 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600"
+                    class="block w-24 rounded-md border-0 py-1.5 text-sm text-heading ring-1 ring-inset ring-strong focus:ring-2 focus:ring-inset focus:ring-focus"
                 />
             </label>
 
             <select
                 v-model="filterData.sort"
-                class="block rounded-md border-0 py-1.5 pl-3 pr-10 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600"
+                class="block rounded-md border-0 py-1.5 pl-3 pr-10 text-sm text-heading ring-1 ring-inset ring-strong focus:ring-2 focus:ring-inset focus:ring-focus"
             >
                 <option value="asc">Oldest first</option>
                 <option value="desc">Newest first</option>
             </select>
 
             <div v-if="permissions?.log_view && routes?.freeswitch_sip_trace" class="ml-auto flex flex-wrap items-center gap-2">
-                <span class="text-sm font-medium text-gray-700">SIP packets</span>
+                <span class="text-sm font-medium text-body">SIP packets</span>
                 <button
                     type="button"
                     :disabled="isSipTraceLoading"
                     @click="setSipTrace(true)"
-                    class="inline-flex items-center gap-1.5 rounded-md bg-white px-2.5 py-1.5 text-xs font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-                    :class="{ 'bg-indigo-50 text-indigo-700 ring-indigo-200': sipTraceEnabled === true }"
+                    class="inline-flex items-center gap-1.5 rounded-md bg-surface px-2.5 py-1.5 text-xs font-semibold text-body shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    :class="{ 'bg-accent-subtle text-accent-fg ring-accent': sipTraceEnabled === true }"
                 >
                     <SignalIcon class="h-4 w-4" aria-hidden="true" />
                     Enable
@@ -142,8 +142,8 @@
                     type="button"
                     :disabled="isSipTraceLoading"
                     @click="setSipTrace(false)"
-                    class="inline-flex items-center gap-1.5 rounded-md bg-white px-2.5 py-1.5 text-xs font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-                    :class="{ 'bg-gray-100 text-gray-900 ring-gray-300': sipTraceEnabled === false }"
+                    class="inline-flex items-center gap-1.5 rounded-md bg-surface px-2.5 py-1.5 text-xs font-semibold text-body shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    :class="{ 'bg-surface-3 text-heading ring-strong': sipTraceEnabled === false }"
                 >
                     <NoSymbolIcon class="h-4 w-4" aria-hidden="true" />
                     Disable
@@ -151,19 +151,19 @@
             </div>
         </div>
 
-        <div v-if="meta.errors?.length" class="mt-4 rounded-md bg-rose-50 p-4 text-sm text-rose-700 ring-1 ring-inset ring-rose-200">
+        <div v-if="meta.errors?.length" class="mt-4 rounded-md bg-danger-subtle p-4 text-sm text-danger ring-1 ring-inset ring-danger">
             <div v-for="error in meta.errors" :key="error">{{ error }}</div>
         </div>
 
-        <div v-if="hasCorrelation" class="mt-4 rounded-md bg-white p-4 ring-1 ring-gray-200">
+        <div v-if="hasCorrelation" class="mt-4 rounded-md bg-surface p-4 ring-1 ring-strong">
             <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div>
-                    <p class="text-sm font-semibold text-gray-900">Included identifiers</p>
-                    <p v-if="correlation.time_window" class="mt-1 text-sm text-gray-500">
+                    <p class="text-sm font-semibold text-heading">Included identifiers</p>
+                    <p v-if="correlation.time_window" class="mt-1 text-sm text-muted">
                         {{ formatWindow(correlation.time_window) }}
                     </p>
                 </div>
-                <div class="text-sm text-gray-500">
+                <div class="text-sm text-muted">
                     {{ correlation.cdrs?.length || 0 }} related CDR{{ (correlation.cdrs?.length || 0) === 1 ? '' : 's' }}
                 </div>
             </div>
@@ -174,17 +174,17 @@
                     :key="id"
                     type="button"
                     @click="copyToClipboard(id)"
-                    class="max-w-full truncate rounded-md bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700 ring-1 ring-inset ring-gray-200 hover:bg-gray-200"
+                    class="max-w-full truncate rounded-md bg-surface-3 px-2.5 py-1 text-xs font-medium text-body ring-1 ring-inset ring-strong hover:bg-surface-3"
                 >
                     {{ id }}
                 </button>
             </div>
         </div>
 
-        <div class="mt-4 overflow-hidden rounded-md bg-white ring-1 ring-gray-200">
-            <div class="flex flex-col gap-3 border-b border-gray-200 px-4 py-3 text-sm text-gray-500 sm:flex-row sm:items-center sm:justify-between">
+        <div class="mt-4 overflow-hidden rounded-md bg-surface ring-1 ring-strong">
+            <div class="flex flex-col gap-3 border-b border-default px-4 py-3 text-sm text-muted sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <span class="font-medium text-gray-900">{{ meta.matched_lines || 0 }}</span>
+                    <span class="font-medium text-heading">{{ meta.matched_lines || 0 }}</span>
                     matched line{{ (meta.matched_lines || 0) === 1 ? '' : 's' }}
                     <span v-if="meta.truncated_matches">, showing latest {{ filterData.max_lines }}</span>
                 </div>
@@ -198,7 +198,7 @@
                         :disabled="isDataLoading || lines.length === 0"
                         title="Copy shown log"
                         @click="copyVisibleLog"
-                        class="inline-flex items-center gap-1.5 rounded-md bg-white px-2.5 py-1.5 text-xs font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                        class="inline-flex items-center gap-1.5 rounded-md bg-surface px-2.5 py-1.5 text-xs font-semibold text-body shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         <ClipboardDocumentIcon class="h-4 w-4" aria-hidden="true" />
                         {{ copiedLog ? 'Copied' : 'Copy shown log' }}
@@ -208,16 +208,16 @@
 
             <div v-if="isDataLoading" class="p-6">
                 <div class="animate-pulse space-y-3">
-                    <div class="h-2 rounded bg-slate-200"></div>
-                    <div class="h-2 rounded bg-slate-200"></div>
-                    <div class="h-2 rounded bg-slate-200"></div>
-                    <div class="h-2 rounded bg-slate-200"></div>
+                    <div class="h-2 rounded bg-surface-3"></div>
+                    <div class="h-2 rounded bg-surface-3"></div>
+                    <div class="h-2 rounded bg-surface-3"></div>
+                    <div class="h-2 rounded bg-surface-3"></div>
                 </div>
             </div>
 
             <div v-else-if="lines.length === 0" class="p-8 text-center">
-                <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
+                <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-subtle" />
+                <h3 class="mt-2 text-sm font-semibold text-heading">No results found</h3>
             </div>
 
             <div v-else class="max-h-[68vh] overflow-auto bg-gray-950">
@@ -369,30 +369,30 @@ const setSipTrace = async (enabled) => {
 
 const lineTextClass = (level) => {
     const classes = {
-        debug: 'text-sky-400/75',
-        info: 'text-emerald-300/80',
-        notice: 'text-cyan-300/80',
-        warning: 'text-amber-300',
-        err: 'text-red-300',
-        crit: 'text-red-200',
-        alert: 'text-red-200',
+        debug: 'text-info/75',
+        info: 'text-success/80',
+        notice: 'text-info/80',
+        warning: 'text-warning',
+        err: 'text-danger',
+        crit: 'text-danger',
+        alert: 'text-danger',
     }
 
-    return classes[level] || 'text-gray-300'
+    return classes[level] || 'text-subtle'
 }
 
 const levelBadgeClass = (level) => {
     const classes = {
-        debug: 'bg-sky-900/30 text-sky-300/80',
-        info: 'bg-emerald-900/30 text-emerald-300/80',
-        notice: 'bg-cyan-900/30 text-cyan-300/80',
-        warning: 'bg-amber-900/35 text-amber-200',
-        err: 'bg-red-900/40 text-red-200',
-        crit: 'bg-red-900/50 text-red-100',
-        alert: 'bg-red-900/50 text-red-100',
+        debug: 'bg-info/30 text-info/80',
+        info: 'bg-success/30 text-success/80',
+        notice: 'bg-info/30 text-info/80',
+        warning: 'bg-warning/35 text-warning',
+        err: 'bg-danger/40 text-danger',
+        crit: 'bg-danger/50 text-danger',
+        alert: 'bg-danger/50 text-danger',
     }
 
-    return classes[level] || 'bg-gray-800 text-gray-300'
+    return classes[level] || 'bg-gray-800 text-subtle'
 }
 
 const formatBytes = (bytes) => {

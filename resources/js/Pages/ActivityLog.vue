@@ -8,15 +8,15 @@
             <template #filters>
                 <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
                     <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                        <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                        <MagnifyingGlassIcon class="h-5 w-5 text-subtle" aria-hidden="true" />
                     </div>
                     <input type="text" v-model="filterData.search" name="mobile-search-candidate"
                         id="mobile-search-candidate"
-                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
+                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus sm:hidden"
                         placeholder="Search" @keydown.enter="handleSearchButtonClick" />
                     <input type="text" v-model="filterData.search" name="desktop-search-candidate"
                         id="desktop-search-candidate"
-                        class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
+                        class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus sm:block"
                         placeholder="Search" @keydown.enter="handleSearchButtonClick" />
                 </div>
             </template>
@@ -24,13 +24,13 @@
             <template #action>
                 <button v-if="!showGlobal && page.props.auth.can.device_view_global" type="button"
                     @click.prevent="handleShowGlobal()"
-                    class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    class="rounded-md bg-surface px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2">
                     Show global
                 </button>
 
                 <button v-if="showGlobal && page.props.auth.can.device_view_global" type="button"
                     @click.prevent="handleShowLocal()"
-                    class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    class="rounded-md bg-surface px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2">
                     Show local
                 </button>
             </template>
@@ -44,25 +44,25 @@
 
 
                 <TableColumnHeader header=""
-                    class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
+                    class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-heading items-center justify-start">
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
-                        class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                        class="h-4 w-4 rounded border-strong text-accent-fg">
                     <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
                         :has-selected-items="selectedItems.length > 0" />
                     <span class="pl-4">Date of change</span>
                 </TableColumnHeader>
 
-                <TableColumnHeader header="Log Name" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Log Name" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
 
                 <TableColumnHeader v-if="showGlobal" header="Domain"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
 
-                <TableColumnHeader header="User" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="User" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
 
-                <TableColumnHeader header="Event" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Properties" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Event" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+                <TableColumnHeader header="Properties" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
 
-                <TableColumnHeader header="Action" class="px-2 py-3.5 text-sm font-semibold text-center text-gray-900" />
+                <TableColumnHeader header="Action" class="px-2 py-3.5 text-sm font-semibold text-center text-heading" />
             </template>
 
             <template v-if="selectPageItems" v-slot:current-selection>
@@ -70,12 +70,12 @@
                     <div class="text-sm text-center m-2">
                         <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
                         <button v-if="!selectAll && selectedItems.length != data.total"
-                            class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
+                            class="text-info rounded py-2 px-2 hover:bg-info-subtle  hover:text-info focus:outline-none focus:ring-1 focus:bg-info-subtle focus:ring-focus transition duration-500 ease-in-out"
                             @click="handleSelectAll">
                             Select all {{ data.total }} items
                         </button>
                         <button v-if="selectAll"
-                            class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
+                            class="text-info rounded py-2 px-2 hover:bg-info-subtle  hover:text-info focus:outline-none focus:ring-1 focus:bg-info-subtle focus:ring-focus transition duration-500 ease-in-out"
                             @click="handleClearSelection">
                             Clear selection
                         </button>
@@ -85,19 +85,19 @@
 
             <template #table-body>
                 <tr v-for="row in data.data" :key="row.id">
-                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500" :text="row.log_name">
+                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-muted" :text="row.log_name">
                         <div class="flex items-center">
                             <input v-if="row.id" v-model="selectedItems" type="checkbox" name="action_box[]" :value="row.id"
-                                class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                                class="h-4 w-4 rounded border-strong text-accent-fg">
                             <div class="ml-9">
                                 {{ row.created_at_formatted }}
                             </div>
                         </div>
                     </TableField>
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.log_name" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted" :text="row.log_name" />
 
-                    <TableField v-if="showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                    <TableField v-if="showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-muted"
                         :text="row.domain?.domain_description">
                         <ejs-tooltip :content="row.domain?.domain_name" position='TopLeft' target="#domain_tooltip_target">
                             <div id="domain_tooltip_target">
@@ -106,25 +106,25 @@
                         </ejs-tooltip>
                     </TableField>
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
-                            <div class="font-medium text-gray-900">{{ formatUserName(row.causer) }}</div>
-                            <div class="mt-1 text-gray-500">{{ row.causer?.user_email }}</div>
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted">
+                            <div class="font-medium text-heading">{{ formatUserName(row.causer) }}</div>
+                            <div class="mt-1 text-muted">{{ row.causer?.user_email }}</div>
                     </TableField>
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.description" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" v-html="formatProperties(row)" />
-                    <!-- <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.properties"/> -->
-                    <!-- <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted" :text="row.description" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted" v-html="formatProperties(row)" />
+                    <!-- <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted" :text="row.properties"/> -->
+                    <!-- <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted"
                         :text="row.lines[0]?.extension?.name_formatted" /> -->
 
-                    <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
+                    <TableField class="whitespace-nowrap px-2 py-1 text-sm text-muted">
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap justify-center">
                                 <ejs-tooltip v-if="page.props.auth.can.device_update" :content="'Edit'" position='TopCenter'
                                     target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
                                         <PencilSquareIcon @click="handleEditRequest(row.device_uuid)"
-                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer" />
 
                                     </div>
                                 </ejs-tooltip>
@@ -134,7 +134,7 @@
                                     position='TopCenter' target="#delete_tooltip_target">
                                     <div id="delete_tooltip_target">
                                         <TrashIcon @click="handleSingleItemDeleteRequest(row.destroy_route)"
-                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
                             </div>
@@ -145,9 +145,9 @@
             <template #empty>
                 <!-- Conditional rendering for 'no records' message -->
                 <div v-if="data.data.length === 0" class="text-center my-5 ">
-                    <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
-                    <p class="mt-1 text-sm text-gray-500">
+                    <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-subtle" />
+                    <h3 class="mt-2 text-sm font-semibold text-heading">No results found</h3>
+                    <p class="mt-1 text-sm text-muted">
                         Adjust your search and try again.
                     </p>
                 </div>
@@ -613,7 +613,7 @@ const formatProperties = (item) => {
         if (item.properties.attributes && item.properties.old) {
             Object.keys(item.properties.attributes).forEach(key => {
                 if (item.properties.old[key] !== item.properties.attributes[key]) {
-                    formattedProperties.push(`Changed <strong>${key.replace(/_/g, ' ')}</strong> from <span class="text-red-500">${item.properties.old[key]}</span> to <span class="text-green-500">${item.properties.attributes[key]}</span>.<br>`);
+                    formattedProperties.push(`Changed <strong>${key.replace(/_/g, ' ')}</strong> from <span class="text-danger">${item.properties.old[key]}</span> to <span class="text-success">${item.properties.attributes[key]}</span>.<br>`);
                 }
             });
         }

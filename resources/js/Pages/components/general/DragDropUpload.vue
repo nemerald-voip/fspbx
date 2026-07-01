@@ -2,7 +2,7 @@
     <!-- Drag and drop area -->
     <div 
       class="border-2 border-dashed rounded-lg p-6 min-h-32 flex flex-col items-center justify-center text-center cursor-pointer"
-      :class="isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300'"
+      :class="isDragging ? 'border-info bg-info-subtle' : 'border-strong'"
       @click="browseFile"
       @dragenter.prevent="isDragging = true"
       @dragover.prevent
@@ -18,16 +18,16 @@
         @change="handleFileSelect"
       />
       <!-- Prompt text when no file is selected -->
-      <p v-if="!fileName" class="text-gray-600">
-        <span class="font-semibold text-gray-700">Drag & drop</span> an Excel/CSV file here, or <span class="text-blue-600 underline">browse</span>
+      <p v-if="!fileName" class="text-body">
+        <span class="font-semibold text-body">Drag & drop</span> an Excel/CSV file here, or <span class="text-info underline">browse</span>
       </p>
       <!-- Display selected file name -->
-      <p v-else class="text-gray-700">
+      <p v-else class="text-body">
         Selected file: <span class="font-medium">{{ fileName }}</span>
       </p>
     </div>
     <!-- Error message display -->
-    <p v-if="error" class="mt-2 text-red-600 text-sm">{{ error }}</p>
+    <p v-if="error" class="mt-2 text-danger text-sm">{{ error }}</p>
   </template>
   
   <script setup>

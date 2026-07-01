@@ -7,7 +7,7 @@
                 @response="handleResponse" :display-errors="false">
 
                 <template #empty>
-                    <div class="space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
+                    <div class="space-y-6 text-body bg-surface-2 px-4 py-6 sm:p-6">
                         <FormElements>
 
                             <HiddenElement name="domain_uuid" :meta="true" />
@@ -16,13 +16,13 @@
                             <StaticElement name="header" tag="h4" :content="'Call Transcription Options'" />
 
                             <StaticElement v-if="isInheriting" name="inherited_notice" tag="div" :add-classes="{
-                                StaticElement: { container: 'rounded-md border border-yellow-200 bg-yellow-50 p-3' }
+                                StaticElement: { container: 'rounded-md border border-warning bg-warning-subtle p-3' }
                             }" :columns="{ lg: { container: 5 } }">
                                 <template #default>
                                     <div class="flex items-start gap-3" role="status" aria-live="polite">
-                                        <ExclamationTriangleIcon class="size-5 text-yellow-500 shrink-0"
+                                        <ExclamationTriangleIcon class="size-5 text-warning shrink-0"
                                             aria-hidden="true" />
-                                        <div class="text-sm text-yellow-900">
+                                        <div class="text-sm text-warning">
                                             <p class="font-medium">No custom options set. Your account is using the
                                                 system defaults.</p>
 

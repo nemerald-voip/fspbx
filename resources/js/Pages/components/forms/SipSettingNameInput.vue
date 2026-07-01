@@ -8,8 +8,8 @@
             placeholder="parameter-name"
             spellcheck="false"
             autocomplete="off"
-            class="block w-full rounded-md border-0 py-1.5 pr-8 font-mono text-sm text-gray-900 ring-1 ring-inset focus:ring-2 focus:ring-inset focus:ring-indigo-600 disabled:bg-gray-50 disabled:text-gray-500"
-            :class="error ? 'ring-red-400' : 'ring-gray-300'"
+            class="block w-full rounded-md border-0 py-1.5 pr-8 font-mono text-sm text-heading ring-1 ring-inset focus:ring-2 focus:ring-inset focus:ring-focus disabled:bg-surface-2 disabled:text-muted"
+            :class="error ? 'ring-danger' : 'ring-strong'"
             @input="onInput"
             @focus="onFocus"
             @blur="open = false"
@@ -21,7 +21,7 @@
         <button
             type="button"
             :disabled="disabled"
-            class="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-400 hover:text-gray-600 disabled:opacity-50"
+            class="absolute inset-y-0 right-0 flex items-center pr-2 text-subtle hover:text-body disabled:opacity-50"
             tabindex="-1"
             @mousedown.prevent="toggle"
         >
@@ -31,22 +31,22 @@
         <Teleport to="body">
             <div
                 v-if="open && groups.length"
-                class="z-50 max-h-72 overflow-auto rounded-md bg-white py-1 text-sm shadow-lg ring-1 ring-black/5"
+                class="z-50 max-h-72 overflow-auto rounded-md bg-surface py-1 text-sm shadow-lg ring-1 ring-black/5"
                 :style="menuStyle"
             >
                 <template v-for="group in groups" :key="group.name">
-                    <div class="px-3 pb-0.5 pt-2 text-xs font-semibold uppercase tracking-wide text-gray-400">{{ group.name }}</div>
+                    <div class="px-3 pb-0.5 pt-2 text-xs font-semibold uppercase tracking-wide text-subtle">{{ group.name }}</div>
                     <button
                         v-for="opt in group.items"
                         :key="opt.name"
                         type="button"
                         class="flex w-full items-center justify-between gap-2 px-3 py-1.5 text-left"
-                        :class="opt.name === highlighted ? 'bg-indigo-50 text-indigo-700' : 'text-gray-900 hover:bg-gray-50'"
+                        :class="opt.name === highlighted ? 'bg-accent-subtle text-accent-fg' : 'text-heading hover:bg-surface-2'"
                         @mousemove="highlighted = opt.name"
                         @mousedown.prevent="select(opt.name)"
                     >
                         <span class="font-mono">{{ opt.name }}</span>
-                        <CheckIcon v-if="opt.name === modelValue" class="h-4 w-4 shrink-0 text-indigo-600" />
+                        <CheckIcon v-if="opt.name === modelValue" class="h-4 w-4 shrink-0 text-accent-fg" />
                     </button>
                 </template>
             </div>

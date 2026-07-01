@@ -1,29 +1,29 @@
 <template>
-    <div class="min-h-screen bg-gray-50">
+    <div class="min-h-screen bg-surface-2">
         <div class="mx-auto max-w-3xl px-4 py-6 sm:px-6 lg:px-8">
             <div class="mb-6">
-                <h1 class="text-2xl font-bold text-gray-900">Caller ID</h1>
-                <p class="mt-1 text-sm text-gray-500">
+                <h1 class="text-2xl font-bold text-heading">Caller ID</h1>
+                <p class="mt-1 text-sm text-muted">
                     Choose which phone number should be used as your outbound caller ID.
                 </p>
             </div>
 
-            <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-                <div class="border-b border-gray-200 px-4 py-4 sm:px-6">
-                    <h2 class="text-sm font-semibold text-gray-900">Available Numbers</h2>
+            <div class="overflow-hidden rounded-xl border border-default bg-surface shadow-sm">
+                <div class="border-b border-default px-4 py-4 sm:px-6">
+                    <h2 class="text-sm font-semibold text-heading">Available Numbers</h2>
                 </div>
 
-                <div v-if="items.length" class="divide-y divide-gray-200">
+                <div v-if="items.length" class="divide-y divide-default">
                     <div
                         v-for="item in items"
                         :key="item.destination_uuid"
                         class="flex items-center justify-between gap-4 px-4 py-4 sm:px-6"
                     >
                         <div class="min-w-0">
-                            <div class="truncate text-sm font-medium text-gray-900">
+                            <div class="truncate text-sm font-medium text-heading">
                                 {{ item.destination_description }}
                             </div>
-                            <div class="mt-1 text-sm text-gray-500">
+                            <div class="mt-1 text-sm text-muted">
                                 {{ item.destination_number }}
                             </div>
                         </div>
@@ -34,15 +34,15 @@
                                 :disabled="savingUuid === item.destination_uuid"
                                 @click="toggleCallerId(item)"
                                 :class="[
-                                    item.isCallerID ? 'bg-emerald-600' : 'bg-gray-200',
+                                    item.isCallerID ? 'bg-success' : 'bg-surface-3',
                                     savingUuid === item.destination_uuid ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer',
-                                    'relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2'
+                                    'relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-focus focus:ring-offset-2'
                                 ]"
                             >
                                 <span
                                     :class="[
                                         item.isCallerID ? 'translate-x-6' : 'translate-x-1',
-                                        'inline-block h-4 w-4 transform rounded-full bg-white transition duration-200'
+                                        'inline-block h-4 w-4 transform rounded-full bg-surface transition duration-200'
                                     ]"
                                 />
                             </button>
@@ -51,7 +51,7 @@
                 </div>
 
                 <div v-else class="px-6 py-10 text-center">
-                    <p class="text-sm text-gray-500">No caller ID numbers are available.</p>
+                    <p class="text-sm text-muted">No caller ID numbers are available.</p>
                 </div>
             </div>
         </div>

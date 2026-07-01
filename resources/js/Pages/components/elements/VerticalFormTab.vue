@@ -23,8 +23,8 @@ export default {
             merge: false,
             defaultClasses: {
                 container: 'cursor-pointer',
-                wrapper: 'mb-1 hover:bg-gray-200 hover:text-gray-900 group flex items-center rounded-md px-3 py-2',
-                wrapper_active: 'bg-gray-200 text-indigo-700 hover:bg-indigo-100 hover:text-indigo-700',
+                wrapper: 'mb-1 hover:bg-surface-3 hover:text-heading group flex items-center rounded-md px-3 py-2',
+                wrapper_active: 'bg-surface-3 text-accent-fg hover:bg-accent-subtle hover:text-accent-fg',
                 wrapper_inactive: 'border-transparent',
                 wrapper_valid: '',
                 wrapper_invalid: 'form-color-danger form-border-color-danger',

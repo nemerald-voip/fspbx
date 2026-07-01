@@ -2,32 +2,32 @@
     <TransitionRoot as="template" :show="show">
         <Dialog as="div" class="relative z-10">
             <TransitionChild as="template" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100" leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0">
-                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+                <div class="fixed inset-0 bg-gray-500 dark:bg-gray-900 bg-opacity-75 transition-opacity" />
             </TransitionChild>
             <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
                 <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
                     <TransitionChild as="template" enter="ease-out duration-300" enter-from="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" enter-to="opacity-100 translate-y-0 sm:scale-100" leave="ease-in duration-200" leave-from="opacity-100 translate-y-0 sm:scale-100" leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
-                        <DialogPanel class="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+                        <DialogPanel class="relative transform overflow-hidden rounded-lg bg-surface px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
                             <div class="sm:flex sm:items-start">
-                                <div :class="`mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-${color}-100 sm:mx-0 sm:h-10 sm:w-10`">
-                                    <ExclamationTriangleIcon :class="`h-6 w-6 text-${color}-600`" aria-hidden="true" />
+                                <div :class="['mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full sm:mx-0 sm:h-10 sm:w-10', tokens.circle]">
+                                    <ExclamationTriangleIcon :class="['h-6 w-6', tokens.icon]" aria-hidden="true" />
                                 </div>
                                 <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
-                                    <DialogTitle as="h3" class="text-base font-semibold leading-6 text-gray-900">{{ header }}</DialogTitle>
+                                    <DialogTitle as="h3" class="text-base font-semibold leading-6 text-heading">{{ header }}</DialogTitle>
                                     
                                     <div class="mt-2 text-left">
                                         <slot>
-                                            <p class="text-sm text-gray-500">{{ text }}</p>
+                                            <p class="text-sm text-muted">{{ text }}</p>
                                         </slot>
                                     </div>
                                     </div>
                             </div>
                             <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
-                                <button type="button" :class="`inline-flex w-full justify-center rounded-md bg-${color}-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-${color}-500 sm:ml-3 sm:w-auto focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-${color}-500`" @click="emit('confirm')">
+                                <button type="button" :class="['inline-flex w-full justify-center rounded-md px-3 py-2 text-sm font-semibold text-on-accent shadow-sm disabled:opacity-50 sm:ml-3 sm:w-auto focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2', tokens.btn]" @click="emit('confirm')">
                                     {{ confirmButtonLabel }}
                                     <Spinner class="ml-1" :show="loading" />
                                 </button>
-                                <button type="button" class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto" @click="emit('close')" >{{ cancelButtonLabel }}</button>
+                                <button type="button" class="mt-3 inline-flex w-full justify-center rounded-md bg-surface px-3 py-2 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2 sm:mt-0 sm:w-auto" @click="emit('close')" >{{ cancelButtonLabel }}</button>
                             </div>
                         </DialogPanel>
                     </TransitionChild>
@@ -38,6 +38,7 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 import Spinner from "@generalComponents/Spinner.vue";
@@ -56,4 +57,16 @@ const props = defineProps({
         default: 'red', // Default color is red
     },
 });
+
+// Map the legacy `color` prop to semantic theme tokens so the dialog
+// renders correctly in both light and dark mode.
+const colorTokenMap = {
+    red: { circle: 'bg-danger-subtle', icon: 'text-danger', btn: 'bg-danger-solid hover:bg-danger-solid-hover' },
+    green: { circle: 'bg-success-subtle', icon: 'text-success', btn: 'bg-success-solid hover:bg-success-solid-hover' },
+    blue: { circle: 'bg-info-subtle', icon: 'text-info', btn: 'bg-info-solid hover:bg-info-solid-hover' },
+    yellow: { circle: 'bg-warning-subtle', icon: 'text-warning', btn: 'bg-warning-solid hover:bg-warning-solid-hover' },
+    indigo: { circle: 'bg-accent-subtle', icon: 'text-accent-fg', btn: 'bg-accent hover:bg-accent-hover' },
+};
+
+const tokens = computed(() => colorTokenMap[props.color] || colorTokenMap.red);
 </script>

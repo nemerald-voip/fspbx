@@ -3,15 +3,15 @@
         <aside class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
             <nav class="space-y-1">
                 <a v-for="item in options.navigation" :key="item.name" href="#"
-                    :class="[activeTab === item.slug ? 'bg-gray-200 text-indigo-700 hover:bg-gray-100 hover:text-indigo-700' : 'text-gray-900 hover:bg-gray-200 hover:text-gray-900', 'group flex items-center rounded-md px-3 py-2 text-sm font-medium']"
+                    :class="[activeTab === item.slug ? 'bg-surface-3 text-accent-fg hover:bg-surface-3 hover:text-accent-fg' : 'text-heading hover:bg-surface-3 hover:text-heading', 'group flex items-center rounded-md px-3 py-2 text-sm font-medium']"
                     @click.prevent="setActiveTab(item.slug)" :aria-current="item.current ? 'page' : undefined">
                     <component :is="iconComponents[item.icon]"
-                        :class="[item.current ? 'text-indigo-500 group-hover:text-indigo-500' : 'text-gray-400 group-hover:text-gray-500', '-ml-1 mr-3 h-6 w-6 flex-shrink-0']"
+                        :class="[item.current ? 'text-accent-fg group-hover:text-accent-fg' : 'text-subtle group-hover:text-muted', '-ml-1 mr-3 h-6 w-6 flex-shrink-0']"
                         aria-hidden="true" />
                     <span class="truncate">{{ item.name }}</span>
                     <ExclamationCircleIcon v-if="((errors?.organization_name || errors?.organization_domain || errors?.region || errors?.package) && item.slug === 'organization') ||
                         (errors?.voicemail_alternate_greet_id && item.slug === 'advanced')"
-                        class="ml-2 h-5 w-5 text-red-500" aria-hidden="true" />
+                        class="ml-2 h-5 w-5 text-danger" aria-hidden="true" />
 
                 </a>
             </nav>
@@ -21,13 +21,13 @@
             <form @submit.prevent="submitForm">
                 <div v-if="activeTab === 'organization'">
                     <div class="shadow sm:rounded-md">
-                        <div class="space-y-6 bg-gray-50 px-4 py-6 sm:p-6">
+                        <div class="space-y-6 bg-surface-2 px-4 py-6 sm:p-6">
                             <div class="flex justify-between items-center">
-                                <h3 class="text-base font-semibold leading-6 text-gray-900">Organization Details</h3>
+                                <h3 class="text-base font-semibold leading-6 text-heading">Organization Details</h3>
 
                                 <!-- <Toggle label="Status" v-model="" /> -->
 
-                                <!-- <p class="mt-1 text-sm text-gray-500"></p> -->
+                                <!-- <p class="mt-1 text-sm text-muted"></p> -->
                             </div>
 
                             <div class="grid grid-cols-6 gap-6">
@@ -36,7 +36,7 @@
                                         class="truncate" />
                                     <InputField v-model="form.organization_name" type="text" name="organization_name"
                                         id="organization_name" class="mt-2" :error="!!errors?.organization_name" />
-                                    <div v-if="errors?.organization_name" class="mt-2 text-xs text-red-600">
+                                    <div v-if="errors?.organization_name" class="mt-2 text-xs text-danger">
                                         {{ errors.organization_name[0] }}
                                     </div>
                                 </div>
@@ -47,7 +47,7 @@
                                     <InputField v-model="form.organization_domain" type="text" name="organization_domain"
                                         id="organization_domain" class="mt-2" :error="!!errors?.organization_domain"
                                         disabled />
-                                    <div v-if="errors?.organization_domain" class="mt-2 text-xs text-red-600">
+                                    <div v-if="errors?.organization_domain" class="mt-2 text-xs text-danger">
                                         {{ errors.organization_domain[0] }}
                                     </div>
                                 </div>
@@ -58,10 +58,10 @@
                                     <ComboBox :options="options.regions" :search="true" :placeholder="'Select region'"
                                         :error="errors?.region && errors.region.length > 0" :selectedItem="form.region"
                                         @update:model-value="handleUpdateRegionField" disabled />
-                                    <div v-if="errors?.region" class="mt-2 text-xs text-red-600">
+                                    <div v-if="errors?.region" class="mt-2 text-xs text-danger">
                                         {{ errors.region[0] }}
                                     </div>
-                                    <!-- <p class="mt-3 text-sm leading-6 text-gray-600">Choose the region closest to your users
+                                    <!-- <p class="mt-3 text-sm leading-6 text-body">Choose the region closest to your users
                                         location. You won't be able to change it later.</p> -->
 
                                 </div>
@@ -72,15 +72,15 @@
                                     <ComboBox :options="options.packages" :search="true" :placeholder="'Select package'"
                                         :error="errors?.package && errors.package.length > 0" :selectedItem="form.package"
                                         @update:model-value="handleUpdatePackageField" />
-                                    <div v-if="errors?.package" class="mt-2 text-xs text-red-600">
+                                    <div v-if="errors?.package" class="mt-2 text-xs text-danger">
                                         {{ errors.package[0] }}
                                     </div>
-                                    <p class="mt-3 text-sm leading-6 text-gray-600">Choose a package to set available
+                                    <p class="mt-3 text-sm leading-6 text-body">Choose a package to set available
                                         features.</p>
 
                                 </div>
 
-                                <div class="divide-y divide-gray-200 col-span-6">
+                                <div class="divide-y divide-default col-span-6">
 
                                     <Toggle label="Secure User Credentials"
                                         description="When enabled, users will receive a one-time link to access their app password instead of plain text."
@@ -93,10 +93,10 @@
                             </div>
 
                         </div>
-                        <div class="bg-gray-50 px-4 py-3 text-right sm:px-6">
+                        <div class="bg-surface-2 px-4 py-3 text-right sm:px-6">
 
                             <button type="submit"
-                                class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
+                                class="inline-flex justify-center rounded-md bg-accent px-3 py-2 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:col-start-2"
                                 ref="saveButtonRef" :disabled="isSubmitting">
                                 <Spinner :show="isSubmitting" />
                                 Save
@@ -108,10 +108,10 @@
 
             <div v-if="activeTab === 'connections'" action="#" method="POST">
                 <div class="shadow sm:rounded-md">
-                    <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
+                    <div class="space-y-6 bg-surface-3 px-4 py-6 sm:p-6">
                         <!-- <div>
-                            <h3 class="text-base font-semibold leading-6 text-gray-900">Keys</h3>
-                            <p class="mt-1 text-sm text-gray-500">Ensure calls are routed to the right team every time.
+                            <h3 class="text-base font-semibold leading-6 text-heading">Keys</h3>
+                            <p class="mt-1 text-sm text-muted">Ensure calls are routed to the right team every time.
                                 Select a routing option below to fit your business needs.</p>
                         </div> -->
 
@@ -126,11 +126,11 @@
 
                         </div>
 
-                        <div class="bg-gray-100 px-4 py-3 text-right sm:px-6">
+                        <div class="bg-surface-3 px-4 py-3 text-right sm:px-6">
 
                             <button @click.prevent="handleFinishButtonClick()"
-                                class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2 
-                                disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-indigo-300 disabled:text-indigo-500" :disabled="connections.length == 0">
+                                class="inline-flex justify-center rounded-md bg-accent px-3 py-2 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:col-start-2 
+                                disabled:opacity-50 disabled:cursor-not-allowed" :disabled="connections.length == 0">
                                 Close
                             </button>
                         </div>
@@ -142,22 +142,22 @@
 
             <div v-if="activeTab === 'users'">
                 <div class="shadow sm:rounded-md">
-                    <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
+                    <div class="space-y-6 bg-surface-3 px-4 py-6 sm:p-6">
                         <div>
-                            <h3 class="text-base font-semibold leading-6 text-gray-900">Users</h3>
-                            <p class="mt-1 text-sm text-gray-500">
+                            <h3 class="text-base font-semibold leading-6 text-heading">Users</h3>
+                            <p class="mt-1 text-sm text-muted">
                                 Sync users from Ringotel to ensure your local system stays up-to-date with the latest
                                 organizational data. Click the
                                 <strong>Sync Users</strong> button to initiate the process.
                             </p>
-                            <div class="rounded-md bg-yellow-100 p-4 mt-4">
+                            <div class="rounded-md bg-warning-subtle p-4 mt-4">
                                 <div class="flex">
                                     <div class="shrink-0">
-                                        <ExclamationTriangleIcon class="size-5 text-yellow-500" aria-hidden="true" />
+                                        <ExclamationTriangleIcon class="size-5 text-warning" aria-hidden="true" />
                                     </div>
                                     <div class="ml-3">
-                                        <h3 class="text-sm font-medium text-yellow-800">Important Notice</h3>
-                                        <div class="mt-2 text-sm text-yellow-700">
+                                        <h3 class="text-sm font-medium text-warning">Important Notice</h3>
+                                        <div class="mt-2 text-sm text-warning">
                                             <p>
                                                 Syncing will replace all current user data in your system with the latest
                                                 user data from the cloud.
@@ -170,10 +170,10 @@
 
 
 
-                        <div class="bg-gray-100 px-4 py-3 text-right sm:px-6">
+                        <div class="bg-surface-3 px-4 py-3 text-right sm:px-6">
 
                             <button @click.prevent="handleSyncButtonClick()"
-                                class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
+                                class="inline-flex justify-center rounded-md bg-accent px-3 py-2 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:col-start-2"
                                  :disabled="ringotelSyncUsersSubmiting">
                                 <Spinner :show="ringotelSyncUsersSubmiting" />
                                 Sync Users

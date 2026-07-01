@@ -4,24 +4,24 @@
 
 
             <ListboxButton :class="inputClass">
-                <span :class="{ 'text-gray-400': !currentItem }" class="block truncate">
+                <span :class="{ 'text-subtle': !currentItem }" class="block truncate">
                     {{ currentItem ? currentItem.name : placeholder }}
                 </span>
                 <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                    <ChevronUpDownIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                    <ChevronUpDownIcon class="h-5 w-5 text-subtle" aria-hidden="true" />
                 </span>
             </ListboxButton>
 
             <div class="absolute inset-y-0 right-0 flex items-center pr-7">
                 <div v-if="true">
                     <UndoIcon v-if="showUndo" @click="undoValue"
-                        class="h-8 w-8 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
+                        class="h-8 w-8 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer"
                         aria-hidden="true" />
                 </div>
 
                 <div v-if="(currentItem != '' && currentItem != null) || showClear" class="">
                     <XMarkIcon @click="clearValue"
-                        class="h-8 w-8 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
+                        class="h-8 w-8 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer"
                         aria-hidden="true" />
                 </div>
 
@@ -30,14 +30,14 @@
             <transition leave-active-class="transition duration-100 ease-in" leave-from-class="opacity-100"
                 leave-to-class="opacity-0">
                 <ListboxOptions
-                    class="absolute z-10 mt-1 px-2 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm">
+                    class="absolute z-10 mt-1 px-2 max-h-60 w-full overflow-auto rounded-md bg-surface py-1 text-base shadow-lg ring-1 ring-black/5 dark:ring-white/10 focus:outline-none sm:text-sm">
                     <input v-if="search" v-model="searchKeyword"
-                        class="w-full rounded-md border-0 py-1.5 pl-10 shadow-md mb-1 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600"
+                        class="w-full rounded-md border-0 py-1.5 pl-10 shadow-md mb-1 text-sm leading-6 text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus"
                         placeholder="Search" type="search" />
 
                     <ListboxOption v-if="props.allowEmpty" v-slot="{ active, selected }" :value="null" as="template">
                         <li :class="[
-                                active ? 'bg-blue-100 text-blue-800' : 'text-gray-900',
+                                active ? 'bg-info-subtle text-info' : 'text-heading',
                                 'relative cursor-default select-none py-2 pl-10 pr-4',
                             ]">
                             <span :class="[
@@ -50,7 +50,7 @@
                     <ListboxOption v-slot="{ active, selected }" v-for="item in filteredOptions" :key="item.value"
                         :value="item" as="template">
                         <li :class="[
-                                active ? 'bg-blue-100 text-blue-800' : 'text-gray-900',
+                                active ? 'bg-info-subtle text-info' : 'text-heading',
                                 'relative cursor-default select-none py-2 pl-10 pr-4',
                             ]">
                             <span :class="[
@@ -58,7 +58,7 @@
                                 'block truncate',
                             ]">{{ item.name }}</span>
                             <span v-if="selected"
-                                class="absolute inset-y-0 left-0 flex items-center pl-3 text-blue-600">
+                                class="absolute inset-y-0 left-0 flex items-center pl-3 text-info">
                                 <CheckIcon class="h-5 w-5" aria-hidden="true" />
                             </span>
                         </li>
@@ -131,14 +131,14 @@ const filteredOptions = computed(() => {
 
 // Compute the classes based on the error state
 const inputClass = computed(() => {
-    let baseClasses = 'relative w-full cursor-default rounded-md bg-white py-2 pl-3 pr-10 text-left ring-1 ring-inset focus:outline-none focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-blue-600 sm:text-sm';
+    let baseClasses = 'relative w-full cursor-default rounded-md bg-surface py-2 pl-3 pr-10 text-left ring-1 ring-inset focus:outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-info sm:text-sm';
     if (props.error) {
-        return `${baseClasses} ring-red-600`; // Apply red ring if there's an error
+        return `${baseClasses} ring-danger`; // Apply red ring if there's an error
     }
     if (props.disabled) {
         return `${baseClasses} disabled:opacity-50`; // Apply disabled class
     }
-    return `${baseClasses} ring-gray-300`;  // Default ring color when no error
+    return `${baseClasses} ring-strong`;  // Default ring color when no error
 });
 
 </script>

@@ -3,7 +3,7 @@
         <Dialog as="div" class="relative z-10" @close="emit('close')">
             <TransitionChild as="div" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100"
                 leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0">
-                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+                <div class="fixed inset-0 bg-gray-500 dark:bg-gray-900 bg-opacity-75 transition-opacity" />
             </TransitionChild>
 
             <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
@@ -15,11 +15,11 @@
                         leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
 
                         <DialogPanel
-                            class="relative transform rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-5xl sm:p-6">
+                            class="relative transform rounded-lg bg-surface px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-5xl sm:p-6">
 
                             <!-- Close Button -->
                             <div class="absolute right-0 top-0 pr-4 pt-4">
-                                <button type="button" class="rounded-md bg-white text-gray-400 hover:text-gray-500"
+                                <button type="button" class="rounded-md bg-surface text-subtle hover:text-muted"
                                     @click="emit('close')">
                                     <XMarkIcon class="h-6 w-6" />
                                 </button>
@@ -27,23 +27,23 @@
 
                             <!-- Header -->
                             <div class="mb-6">
-                                <h1 class="text-2xl font-bold text-gray-900">Voicemail Message</h1>
-                                <p class="text-sm text-gray-500">{{ item?.start_date }}</p>
+                                <h1 class="text-2xl font-bold text-heading">Voicemail Message</h1>
+                                <p class="text-sm text-muted">{{ item?.start_date }}</p>
 
                                 <dl class="mt-4 grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-2 text-sm">
                                     <div class="flex gap-2">
-                                        <dt class="font-medium text-gray-500">From:</dt>
-                                        <dd class="text-gray-900 font-semibold">{{ item?.caller_id_name }} ({{ item?.caller_id_number_formatted }})</dd>
+                                        <dt class="font-medium text-muted">From:</dt>
+                                        <dd class="text-heading font-semibold">{{ item?.caller_id_name }} ({{ item?.caller_id_number_formatted }})</dd>
                                     </div>
                                     <div class="flex gap-2">
-                                        <dt class="font-medium text-gray-500">To:</dt>
-                                        <dd class="text-gray-900">Extension {{ item?.caller_destination_formatted }}</dd>
+                                        <dt class="font-medium text-muted">To:</dt>
+                                        <dd class="text-heading">Extension {{ item?.caller_destination_formatted }}</dd>
                                     </div>
                                 </dl>
                             </div>
 
                             <!-- Player Area -->
-                            <div v-if="loading" class="py-12 flex justify-center items-center gap-3 text-blue-600">
+                            <div v-if="loading" class="py-12 flex justify-center items-center gap-3 text-info">
                                 <Spinner :show="true" class="h-8 w-8" />
                                 <span>Loading audio...</span>
                             </div>
@@ -57,9 +57,9 @@
                                 />
 
                                 <!-- Transcription Block -->
-                                <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
-                                    <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Transcription</h3>
-                                    <p class="text-gray-700 leading-relaxed italic">
+                                <div class="rounded-lg border border-default bg-surface-2 p-4">
+                                    <h3 class="text-xs font-semibold uppercase tracking-wider text-muted mb-2">Transcription</h3>
+                                    <p class="text-body leading-relaxed italic">
                                         {{ item?.transcription || 'No transcription available for this message.' }}
                                     </p>
                                 </div>

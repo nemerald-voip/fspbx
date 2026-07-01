@@ -1,7 +1,7 @@
 <template>
     <ListElement :name="name" :sort="true" size="sm"
         :controls="{ add: true, remove: true, sort: true }"
-        :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }">
+        :add-classes="{ ListElement: { listItem: 'bg-surface p-4 mb-4 rounded-lg shadow-md' } }">
         <template #default="{ index }">
             <ObjectElement :name="index">
                 <HiddenElement name="key_area" :meta="true" :default="area" />

@@ -3,7 +3,7 @@
         <Dialog as="div" class="relative z-10" @close="handleClose">
             <TransitionChild as="div" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100"
                 leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0">
-                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+                <div class="fixed inset-0 bg-gray-500 dark:bg-gray-900 bg-opacity-75 transition-opacity" />
             </TransitionChild>
 
             <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
@@ -13,21 +13,21 @@
                         enter-to="opacity-100 translate-y-0 sm:scale-100" leave="ease-in duration-200"
                         leave-from="opacity-100 translate-y-0 sm:scale-100"
                         leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
-                        <DialogPanel class="relative w-full max-w-6xl transform overflow-visible rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:p-6">
-                            <DialogTitle as="h3" class="mb-5 pr-10 text-base font-semibold leading-6 text-gray-900">
+                        <DialogPanel class="relative w-full max-w-6xl transform overflow-visible rounded-lg bg-surface px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:p-6">
+                            <DialogTitle as="h3" class="mb-5 pr-10 text-base font-semibold leading-6 text-heading">
                                 {{ header }}
                             </DialogTitle>
 
                             <div class="absolute right-0 top-0 pr-4 pt-4 sm:block">
                                 <button type="button"
-                                    class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                                    class="rounded-md bg-surface text-subtle hover:text-muted focus:outline-none focus:ring-2 focus:ring-focus focus:ring-offset-2"
                                     @click="handleClose">
                                     <span class="sr-only">Close</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
 
-                            <div v-if="loading" class="w-full py-10 text-center text-sm text-gray-500">Loading...</div>
+                            <div v-if="loading" class="w-full py-10 text-center text-sm text-muted">Loading...</div>
 
                             <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
                                 @error="handleError" @response="handleResponse" :display-errors="false"
@@ -62,7 +62,7 @@
                                             </FormTabs>
                                         </div>
 
-                                        <div class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
+                                        <div class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-body bg-surface-2 px-4 py-6 sm:p-6">
                                             <FormElements>
                                                 <StaticElement name="schedule_header" tag="h4" content="Schedule"
                                                     description="Give this schedule a name, pick the time zone for its announcement times, and choose the recording to play." />
@@ -92,7 +92,7 @@
                                                         :conditions="[hasPlayableRecording]"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                                         <PlayCircleIcon
-                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-info hover:bg-info-subtle hover:text-info active:bg-info-subtle active:duration-150 cursor-pointer" />
                                                     </ButtonElement>
 
                                                     <ButtonElement v-if="isRecordingPlaying" @click="pauseRecording"
@@ -100,7 +100,7 @@
                                                         :columns="{ container: 2 }"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                                         <PauseCircleIcon
-                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
+                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-danger hover:bg-danger-subtle hover:text-danger active:bg-danger-subtle active:duration-150 cursor-pointer" />
                                                     </ButtonElement>
 
                                                     <ButtonElement v-if="!isRecordingDownloading" @click="downloadRecording"
@@ -109,14 +109,14 @@
                                                         :conditions="[hasPlayableRecording]"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                                         <CloudArrowDownIcon
-                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-info hover:bg-info-subtle hover:text-info active:bg-info-subtle active:duration-150 cursor-pointer" />
                                                     </ButtonElement>
 
                                                     <ButtonElement v-if="isRecordingDownloading" name="download_spinner_button"
                                                         label="&nbsp;" :secondary="true" :columns="{ container: 2 }"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                                         <Spinner :show="true"
-                                                            class="h-8 w-8 ml-0 mr-0 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400" />
+                                                            class="h-8 w-8 ml-0 mr-0 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-info" />
                                                     </ButtonElement>
 
                                                     <ButtonElement @click="editRecording" name="edit_button"
@@ -124,7 +124,7 @@
                                                         :conditions="[hasPlayableRecording]"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                                         <PencilSquareIcon
-                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-info hover:bg-info-subtle hover:text-info active:bg-info-subtle active:duration-150 cursor-pointer" />
                                                     </ButtonElement>
 
                                                     <ButtonElement @click="deleteRecording" name="delete_button"
@@ -132,7 +132,7 @@
                                                         :conditions="[hasPlayableRecording]"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                                         <TrashIcon
-                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
+                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-danger hover:bg-danger-subtle hover:text-danger active:bg-danger-subtle active:duration-150 cursor-pointer" />
                                                     </ButtonElement>
 
                                                     <ButtonElement @click="showNewRecordingModal = true"
@@ -140,12 +140,12 @@
                                                         :columns="{ container: 2 }"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                                         <PlusIcon
-                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-info hover:bg-info-subtle hover:text-info active:bg-info-subtle active:duration-150 cursor-pointer" />
                                                     </ButtonElement>
                                                 </GroupElement>
                                                 <StaticElement name="extensions_header" tag="h4" content="Extensions"
                                                     description="Choose which extensions play this schedule. Search to add an extension; remove the tag to take it out of the schedule."
-                                                    :add-classes="{ StaticElement: { container: 'border-t border-gray-200 pt-6' } }" />
+                                                    :add-classes="{ StaticElement: { container: 'border-t border-default pt-6' } }" />
                                                 <TagsElement name="selectedExtensions" :close-on-select="false"
                                                     :items="extensionOptions" :search="true" :native="false"
                                                     label="Add Extension" input-type="search" autocomplete="off"
@@ -158,7 +158,7 @@
                                                     :columns="{ container: 12 }" />
                                                 <StaticElement name="activation_header" tag="h4" content="When it runs"
                                                     description="Optionally limit this schedule to a date range. Leave both blank to run indefinitely."
-                                                    :add-classes="{ StaticElement: { container: 'border-t border-gray-200 pt-6' } }" />
+                                                    :add-classes="{ StaticElement: { container: 'border-t border-default pt-6' } }" />
                                                 <DateElement name="starts_on" label="Starts" :time="false"
                                                     :floating="false" :columns="{ sm: { container: 6 } }" />
                                                 <DateElement name="ends_on" label="Ends" :time="false"
@@ -166,9 +166,9 @@
 
                                                 <StaticElement name="events_header" tag="h4" content="Events"
                                                     description="Each row is one announcement time. Choose the time of day and the weekdays it should play."
-                                                    :add-classes="{ StaticElement: { container: 'border-t border-gray-200 pt-6' } }" />
+                                                    :add-classes="{ StaticElement: { container: 'border-t border-default pt-6' } }" />
                                                 <ListElement name="events" :sort="true" :initial="1" label="Events"
-                                                    :add-classes="{ ListElement: { listItem: 'bg-white p-3 sm:p-4 mb-4 rounded-lg shadow-md' } }">
+                                                    :add-classes="{ ListElement: { listItem: 'bg-surface p-3 sm:p-4 mb-4 rounded-lg shadow-md' } }">
                                                     <template #default="{ index }">
                                                         <ObjectElement :name="index">
                                                             <DateElement name="time_of_day" label="Time"
@@ -186,7 +186,7 @@
                                                 <StaticElement name="exclusions_header" tag="h4" content="Exclusions"
                                                     description="Use exclusions for holidays and other special dates. On these dates, this schedule will not play." />
                                                 <ListElement name="exceptions" :sort="true" label="Exclusions"
-                                                    :add-classes="{ ListElement: { listItem: 'bg-white p-3 sm:p-4 mb-4 rounded-lg shadow-md' } }">
+                                                    :add-classes="{ ListElement: { listItem: 'bg-surface p-3 sm:p-4 mb-4 rounded-lg shadow-md' } }">
                                                     <template #default="{ index }">
                                                         <ObjectElement :name="index">
                                                             <DateElement name="exception_date" label="Date"

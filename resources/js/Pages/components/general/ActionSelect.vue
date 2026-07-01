@@ -1,19 +1,19 @@
 <template>
     <div class="grid grid-cols-12 gap-6">
         <template v-for="(option, index) in routingOptions" :key="index">
-            <div class="pt-2 text-sm font-medium leading-6 text-gray-900">
+            <div class="pt-2 text-sm font-medium leading-6 text-heading">
                 {{ index + 1 }}
             </div>
 
             <div class="col-span-10 flex flex-col sm:flex-row gap-x-2 gap-y-1 justify-between flex-auto">
-                <div class=" basis-2/4 text-sm font-medium leading-6 text-gray-900">
+                <div class=" basis-2/4 text-sm font-medium leading-6 text-heading">
                     <ComboBox :options="routingTypes" :search="true" :placeholder="'Choose type'"
                         :selectedItem="routingOptions[index].type"
                         @update:model-value="(value) => fetchRoutingTypeOptions(value, index)" />
                 </div>
 
                 <div v-if="routingOptions[index].typeOptions"
-                    class=" basis-2/4 text-sm font-medium leading-6 text-gray-900">
+                    class=" basis-2/4 text-sm font-medium leading-6 text-heading">
                     <ComboBox :options="routingOptions[index].typeOptions" :selectedItem="routingOptions[index].option"
                         :search="true" :placeholder="'Choose option'" :key="`combobox-${index}-${Math.random()}`"
                         @update:model-value="(value) => updateRoutingOptions(value, index)" :disabled="routingOptions[index].optionDisabled" />
@@ -22,14 +22,14 @@
             </div>
 
 
-            <div class="text-sm font-medium leading-6 text-gray-900">
+            <div class="text-sm font-medium leading-6 text-heading">
                 <Menu as="div" class="relative inline-block text-left">
                     <div>
                         <MenuButton
-                            class="flex items-center rounded-full bg-gray-100 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100">
+                            class="flex items-center rounded-full bg-surface-3 text-subtle hover:text-body focus:outline-none focus:ring-2 focus:ring-focus focus:ring-offset-2">
                             <span class="sr-only">Open options</span>
                             <EllipsisVerticalIcon
-                                class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-500 hover:bg-gray-200 hover:text-gray-900 active:bg-gray-300 active:duration-150 cursor-pointer"
+                                class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-muted hover:bg-surface-3 hover:text-heading active:bg-surface-3 active:duration-150 cursor-pointer"
                                 aria-hidden="true" />
                         </MenuButton>
                     </div>
@@ -39,11 +39,11 @@
                         leave-active-class="transition ease-in duration-75"
                         leave-from-class="transform opacity-100 scale-100" leave-to-class="transform opacity-0 scale-95">
                         <MenuItems
-                            class="absolute right-0 z-10 mt-2 w-36 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                            class="absolute right-0 z-10 mt-2 w-36 origin-top-right rounded-md bg-surface shadow-lg ring-1 ring-black/5 dark:ring-white/10 focus:outline-none">
                             <div class="py-1">
                                 <MenuItem v-slot="{ active }">
                                 <a href="#" @click.prevent="removeRoutingOption(index)"
-                                    :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm']">Delete</a>
+                                    :class="[active ? 'bg-surface-3 text-heading' : 'text-body', 'block px-4 py-2 text-sm']">Delete</a>
                                 </MenuItem>
 
                             </div>
@@ -56,7 +56,7 @@
         </template>
 
         <div v-if="routingOptions.length < maxRouteLimit"
-            class="col-span-full flex justify-center bg-gray-100 px-4 py-4 text-center text-sm font-medium text-indigo-500 hover:text-indigo-700 sm:rounded-b-lg">
+            class="col-span-full flex justify-center bg-surface-3 px-4 py-4 text-center text-sm font-medium text-accent-fg hover:text-accent-fg sm:rounded-b-lg">
             <button href="#" @click.prevent="addRoutingOption" class="flex items-center gap-2">
                 <PlusIcon class="h-6 w-6 text-black-500 hover:text-black-900 active:h-8 active:w-8 " />
                 <span>

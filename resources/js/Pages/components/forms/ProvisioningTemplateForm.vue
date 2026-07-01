@@ -1,5 +1,5 @@
 <template>
-    <div class="flex h-full min-h-0 flex-col bg-white">
+    <div class="flex h-full min-h-0 flex-col bg-surface">
         <!-- Metadata fields -->
         <Vueform ref="form$" :endpoint="submitForm" @success="handleSuccess" @error="handleError"
             @response="handleResponse" :display-errors="false" :default="defaultValues" class="flex-none">
@@ -27,7 +27,7 @@
         <!-- Editor toolbar -->
         <div class="mt-3 mb-2 flex flex-none items-center gap-2">
             <select v-model="editorLang"
-                class="rounded-md border-gray-300 py-1 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                class="rounded-md border-strong py-1 text-sm shadow-sm focus:border-accent focus:ring-focus">
                 <option value="php_laravel_blade">Blade</option>
                 <option value="xml">XML</option>
                 <option value="yaml">YAML</option>
@@ -35,7 +35,7 @@
                 <option value="php">PHP</option>
             </select>
             <select v-model="editorTheme"
-                class="rounded-md border-gray-300 py-1 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                class="rounded-md border-strong py-1 text-sm shadow-sm focus:border-accent focus:ring-focus">
                 <option value="chrome">Light</option>
                 <option value="one_dark">Dark</option>
             </select>
@@ -43,11 +43,11 @@
 
         <!-- Editor fills remaining vertical space -->
         <div
-            class="editor-wrapper relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-gray-200 shadow-sm">
+            class="editor-wrapper relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-default shadow-sm">
             <div v-if="isLoadingTemplate"
                 class="absolute inset-0 z-10 flex items-center justify-center bg-white/60 backdrop-blur-[1px]">
                 <Spinner :show="true" />
-                <span class="ml-2 text-sm text-gray-600">Loading template…</span>
+                <span class="ml-2 text-sm text-body">Loading template…</span>
             </div>
             <AceEditor v-model="contentValue" :lang="editorLang" :theme="editorTheme"
                 :options="{ fontSize: 16, tabSize: 4, readOnly: isLoadingTemplate || readOnly }" height="100%"
@@ -58,12 +58,12 @@
         <div class="mt-4 flex-none border-t pt-4">
             <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
                 <button type="button"
-                    class="inline-flex justify-center rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:min-w-24"
+                    class="inline-flex justify-center rounded-md bg-surface px-4 py-2 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2 sm:min-w-24"
                     @click="emit('cancel')">
                     Cancel
                 </button>
                 <button v-if="!readOnly" type="button" @click="triggerSubmit" :disabled="isSubmitting"
-                    class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:opacity-60 sm:min-w-24">
+                    class="inline-flex items-center justify-center rounded-md bg-accent px-4 py-2 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover disabled:opacity-60 sm:min-w-24">
                     <Spinner :show="isSubmitting" />
                     Save
                 </button>

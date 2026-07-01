@@ -3,7 +3,7 @@
         <Dialog as="div" class="relative z-10" @close="emit('close')">
             <TransitionChild as="template" enter="ease-out duration-200" enter-from="opacity-0" enter-to="opacity-100"
                 leave="ease-in duration-150" leave-from="opacity-100" leave-to="opacity-0">
-                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+                <div class="fixed inset-0 bg-gray-500 dark:bg-gray-900 bg-opacity-75 transition-opacity" />
             </TransitionChild>
 
             <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
@@ -14,18 +14,18 @@
                         leave-from="opacity-100 translate-y-0 sm:scale-100"
                         leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
                         <DialogPanel
-                            class="relative flex max-h-[85vh] w-full transform flex-col overflow-hidden rounded-2xl bg-white text-left shadow-2xl ring-1 ring-black/5 transition-all sm:my-8 sm:max-w-3xl">
-                            <div class="flex items-start justify-between gap-4 border-b border-gray-100 bg-gradient-to-br from-indigo-50/80 to-white px-5 py-5 sm:px-6">
+                            class="relative flex max-h-[85vh] w-full transform flex-col overflow-hidden rounded-2xl bg-surface text-left shadow-2xl ring-1 ring-black/5 dark:ring-white/10 transition-all sm:my-8 sm:max-w-3xl">
+                            <div class="flex items-start justify-between gap-4 border-b border-default bg-gradient-to-br from-accent/80 to-white px-5 py-5 sm:px-6">
                                 <div class="flex min-w-0 items-center gap-3">
-                                    <div class="flex h-11 w-11 flex-none items-center justify-center rounded-xl bg-indigo-600/10 ring-1 ring-inset ring-indigo-600/20">
-                                        <UsersIcon class="h-6 w-6 text-indigo-600" aria-hidden="true" />
+                                    <div class="flex h-11 w-11 flex-none items-center justify-center rounded-xl bg-accent/10 ring-1 ring-inset ring-accent/20">
+                                        <UsersIcon class="h-6 w-6 text-accent-fg" aria-hidden="true" />
                                     </div>
                                     <div class="min-w-0">
-                                        <DialogTitle as="h3" class="truncate text-base font-semibold leading-6 text-gray-900">
+                                        <DialogTitle as="h3" class="truncate text-base font-semibold leading-6 text-heading">
                                             {{ group?.group_name }}
                                         </DialogTitle>
-                                        <p class="mt-0.5 flex items-center gap-1.5 text-sm text-gray-500">
-                                            <span class="inline-flex items-center rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700 ring-1 ring-inset ring-indigo-600/10">
+                                        <p class="mt-0.5 flex items-center gap-1.5 text-sm text-muted">
+                                            <span class="inline-flex items-center rounded-full bg-accent-subtle px-2 py-0.5 text-xs font-medium text-accent-fg ring-1 ring-inset ring-accent/10">
                                                 {{ members.length }}
                                             </span>
                                             member{{ members.length === 1 ? '' : 's' }}
@@ -33,7 +33,7 @@
                                     </div>
                                 </div>
                                 <button type="button"
-                                    class="flex-none rounded-lg p-1 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                                    class="flex-none rounded-lg p-1 text-subtle transition hover:bg-surface-3 hover:text-body focus:outline-none focus:ring-2 focus:ring-focus focus:ring-offset-2"
                                     @click="emit('close')">
                                     <span class="sr-only">Close</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
@@ -42,7 +42,7 @@
 
                             <div class="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-5 py-5 sm:px-6">
                                 <div v-if="permissions.add && availableUsers.length"
-                                    class="rounded-xl bg-gray-50 p-4 ring-1 ring-inset ring-gray-200">
+                                    class="rounded-xl bg-surface-2 p-4 ring-1 ring-inset ring-strong">
                                     <Vueform :key="addFormKey" ref="addMemberForm$" :endpoint="submitAddMember"
                                         @success="handleAddSuccess" @error="handleAddError" @response="handleAddResponse"
                                         :display-errors="false" size="sm">
@@ -57,16 +57,16 @@
                                 </div>
 
                                 <p v-else-if="permissions.add"
-                                    class="rounded-xl bg-gray-50 px-4 py-3 text-sm text-gray-500 ring-1 ring-inset ring-gray-200">
+                                    class="rounded-xl bg-surface-2 px-4 py-3 text-sm text-muted ring-1 ring-inset ring-strong">
                                     All available users are already members of this group.
                                 </p>
 
                                 <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                                     <div class="relative sm:w-72">
                                         <MagnifyingGlassIcon
-                                            class="pointer-events-none absolute inset-y-0 left-3 my-auto h-4 w-4 text-gray-400" />
+                                            class="pointer-events-none absolute inset-y-0 left-3 my-auto h-4 w-4 text-subtle" />
                                         <input v-model="search" type="text" placeholder="Search members"
-                                            class="block w-full rounded-lg border-0 py-2 pl-9 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 transition placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600" />
+                                            class="block w-full rounded-lg border-0 py-2 pl-9 text-sm text-heading ring-1 ring-inset ring-strong transition placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus" />
                                     </div>
 
                                     <Transition enter-active-class="transition duration-150 ease-out"
@@ -74,50 +74,50 @@
                                         leave-active-class="transition duration-100 ease-in"
                                         leave-from-class="opacity-100 scale-100" leave-to-class="opacity-0 scale-95">
                                         <button v-if="permissions.delete && selectedItems.length" type="button"
-                                            class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-white px-3 py-2 text-sm font-medium text-red-700 shadow-sm ring-1 ring-inset ring-red-200 transition hover:bg-red-50"
+                                            class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-surface px-3 py-2 text-sm font-medium text-danger shadow-sm ring-1 ring-inset ring-danger transition hover:bg-danger-subtle"
                                             @click="showRemoveConfirmation = true">
                                             <TrashIcon class="h-4 w-4" />
                                             Remove
-                                            <span class="inline-flex items-center rounded-full bg-red-100 px-1.5 text-xs font-semibold">{{ selectedItems.length }}</span>
+                                            <span class="inline-flex items-center rounded-full bg-danger-subtle px-1.5 text-xs font-semibold">{{ selectedItems.length }}</span>
                                         </button>
                                     </Transition>
                                 </div>
 
-                                <div class="overflow-hidden rounded-xl ring-1 ring-gray-200">
+                                <div class="overflow-hidden rounded-xl ring-1 ring-strong">
                                     <div v-if="loading" class="px-4 py-16">
                                         <Loading :show="true" :absolute="false" />
                                     </div>
 
                                     <template v-else-if="filteredMembers.length">
                                         <div v-if="permissions.delete"
-                                            class="flex items-center gap-3 border-b border-gray-100 bg-gray-50 px-4 py-2.5">
+                                            class="flex items-center gap-3 border-b border-default bg-surface-2 px-4 py-2.5">
                                             <input type="checkbox" :checked="allVisibleSelected"
-                                                class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+                                                class="h-4 w-4 rounded border-strong text-accent-fg focus:ring-focus"
                                                 @change="toggleSelectAllVisible" />
-                                            <span class="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                            <span class="text-xs font-semibold uppercase tracking-wide text-muted">
                                                 {{ selectedItems.length ? `${selectedItems.length} selected` : 'Select all' }}
                                             </span>
                                         </div>
 
-                                        <ul role="list" class="divide-y divide-gray-100">
+                                        <ul role="list" class="divide-y divide-default">
                                             <li v-for="member in filteredMembers" :key="member.user_group_uuid"
                                                 class="flex items-center gap-3 px-4 py-3 transition-colors"
-                                                :class="selectedItems.includes(member.user_group_uuid) ? 'bg-indigo-50/60' : 'hover:bg-gray-50'">
+                                                :class="selectedItems.includes(member.user_group_uuid) ? 'bg-accent/60' : 'hover:bg-surface-2'">
                                                 <input v-if="permissions.delete" v-model="selectedItems" type="checkbox"
                                                     :value="member.user_group_uuid"
-                                                    class="h-4 w-4 flex-none rounded border-gray-300 text-indigo-600 focus:ring-indigo-600" />
+                                                    class="h-4 w-4 flex-none rounded border-strong text-accent-fg focus:ring-focus" />
 
-                                                <span class="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 text-xs font-semibold text-white">
+                                                <span class="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-gradient-to-br from-accent to-accent text-xs font-semibold text-on-accent">
                                                     {{ initials(member.username) }}
                                                 </span>
 
                                                 <div class="min-w-0 flex-1">
-                                                    <p class="truncate text-sm font-medium text-gray-900">{{ member.username }}</p>
-                                                    <p v-if="member.user_email" class="truncate text-xs text-gray-500">{{ member.user_email }}</p>
+                                                    <p class="truncate text-sm font-medium text-heading">{{ member.username }}</p>
+                                                    <p v-if="member.user_email" class="truncate text-xs text-muted">{{ member.user_email }}</p>
                                                 </div>
 
                                                 <span v-if="permissions.show_domain"
-                                                    class="flex-none rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">
+                                                    class="flex-none rounded-md bg-surface-3 px-2 py-1 text-xs font-medium text-body">
                                                     {{ member.domain_name || 'Global' }}
                                                 </span>
                                             </li>
@@ -125,11 +125,11 @@
                                     </template>
 
                                     <div v-else class="px-4 py-16 text-center">
-                                        <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
-                                            <UsersIcon class="h-6 w-6 text-gray-400" />
+                                        <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-surface-3">
+                                            <UsersIcon class="h-6 w-6 text-subtle" />
                                         </div>
-                                        <p class="mt-3 text-sm font-medium text-gray-900">No members found</p>
-                                        <p class="mt-1 text-xs text-gray-500">Add a user to this group or adjust your search.</p>
+                                        <p class="mt-3 text-sm font-medium text-heading">No members found</p>
+                                        <p class="mt-1 text-xs text-muted">Add a user to this group or adjust your search.</p>
                                     </div>
                                 </div>
                             </div>

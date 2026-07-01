@@ -3,13 +3,13 @@
         <div class="sm:flex sm:items-center">
             <div class="sm:flex-auto">
                 <div v-if="$slots.title">
-                    <div class="mt-3 text-lg font-semibold leading-6 text-gray-600">
+                    <div class="mt-3 text-lg font-semibold leading-6 text-body">
                         <slot name="title"></slot>
                     </div>
                 </div>
 
                 <div v-if="$slots.subtitle">
-                    <p class="mt-2 text-sm text-gray-700">
+                    <p class="mt-2 text-sm text-body">
                         <slot name="subtitle"></slot>
                     </p>
                 </div>
@@ -30,13 +30,13 @@
                         <div class="flex justify-between">
 
                             <button type="button" @click.prevent="$emit('search-action')"
-                                class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500
-                                focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                                class="rounded-md bg-accent px-2.5 py-1.5 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover disabled:opacity-50
+                                focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
                                 Search
                             </button>
 
                             <button type="button" @click.prevent="$emit('reset-filters')"
-                                class="rounded-md bg-white px-2.5 py-1.5 ml-2  sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                                class="rounded-md bg-surface px-2.5 py-1.5 ml-2  sm:ml-4 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2">
                                 Reset
                             </button>
                         </div>
@@ -51,16 +51,16 @@
 
             <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
                 <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-                    <div class="relative overflow-visible shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
+                    <div class="relative overflow-visible shadow ring-1 ring-black/5 dark:ring-white/10 sm:rounded-lg">
                         <slot name="navigation"></slot>
                         
                         <!-- <slot name="current-selection"></slot> -->
                         
                         <slot name="loading"></slot>
-                        <!-- <div class="absolute w-full h-full bg-gray-500 bg-opacity-30"></div> -->
-                        <table class="min-w-full divide-y divide-gray-300">
+                        <!-- <div class="absolute w-full h-full bg-gray-500 dark:bg-gray-900 bg-opacity-30"></div> -->
+                        <table class="min-w-full divide-y divide-strong">
                             
-                            <thead class="bg-gray-50">
+                            <thead class="bg-surface-2">
                                 <tr>
                                     <slot name="table-header"></slot>
 
@@ -69,7 +69,7 @@
                             
                             <slot name="current-selection"></slot>
 
-                            <tbody class="divide-y divide-gray-200 bg-white">
+                            <tbody class="divide-y divide-default bg-surface">
                                 <slot name="table-body"></slot>
                             </tbody>
                         </table>
@@ -79,7 +79,7 @@
                         
 
                     </div>
-                    <div class="pb-20 bg-gray-100"></div>
+                    <div class="pb-20 bg-surface-3"></div>
                 </div>
             </div>
         </div>

@@ -7,14 +7,14 @@
                 </div>
                 <div v-else>
                     <div v-if="status == true" class="shrink-0">
-                        <CheckCircleIcon class="size-6 text-green-400" aria-hidden="true" />
+                        <CheckCircleIcon class="size-6 text-success" aria-hidden="true" />
                     </div>
                     <div v-else class="shrink-0">
-                        <ExclamationCircleIcon class="size-6 text-rose-400" aria-hidden="true" />
+                        <ExclamationCircleIcon class="size-6 text-danger" aria-hidden="true" />
                     </div>
                 </div>
                 <div class="ml-3 w-0 flex-1 pt-0.5">
-                    <p class="text-sm font-medium text-gray-900">Emergency Call monitoring service</p>
+                    <p class="text-sm font-medium text-heading">Emergency Call monitoring service</p>
                 </div>
 
             </div>
@@ -23,14 +23,14 @@
         <!-- <div class="col-span-6 sm:col-span-3">
             <button v-if="status == true" type="button"
                 @click="stopService"
-                class="inline-flex items-center gap-x-1.5 rounded-md bg-rose-600 px-4 py-1 text-sm font-semibold text-white shadow-sm hover:bg-rose-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:rose-indigo-600">
+                class="inline-flex items-center gap-x-1.5 rounded-md bg-danger px-4 py-1 text-sm font-semibold text-white shadow-sm hover:bg-danger focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:rose-indigo-600">
                 <XMarkIcon class="-ml-0.5 size-5" aria-hidden="true" />
                 Stop
             </button>
 
             <button v-else type="button"
                 @click="startService"
-                class="inline-flex items-center gap-x-1.5 rounded-md bg-green-600 px-4 py-1 text-sm font-semibold text-white shadow-sm hover:bg-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600">
+                class="inline-flex items-center gap-x-1.5 rounded-md bg-success px-4 py-1 text-sm font-semibold text-white shadow-sm hover:bg-success focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-success">
                 <PlayIcon class="-ml-0.5 size-5" aria-hidden="true" />
                 Start
             </button>

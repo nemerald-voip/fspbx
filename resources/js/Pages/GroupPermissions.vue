@@ -4,19 +4,19 @@
     <div class="m-3 space-y-4">
         <header class="flex flex-wrap items-end justify-between gap-3">
             <div>
-                <p class="text-xs font-medium uppercase text-indigo-600">Group access</p>
-                <h1 class="mt-1 text-2xl font-semibold text-gray-900">Permissions: {{ group.group_name }}</h1>
-                <p v-if="group.group_description" class="mt-1 text-sm text-gray-500">{{ group.group_description }}</p>
-                <p v-else class="mt-1 text-sm text-gray-500">Manage assigned permissions for this group.</p>
+                <p class="text-xs font-medium uppercase text-accent-fg">Group access</p>
+                <h1 class="mt-1 text-2xl font-semibold text-heading">Permissions: {{ group.group_name }}</h1>
+                <p v-if="group.group_description" class="mt-1 text-sm text-muted">{{ group.group_description }}</p>
+                <p v-else class="mt-1 text-sm text-muted">Manage assigned permissions for this group.</p>
             </div>
             <div class="flex flex-wrap gap-2">
-                <a :href="routes.groups" class="inline-flex items-center gap-1.5 rounded-md bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                <a :href="routes.groups" class="inline-flex items-center gap-1.5 rounded-md bg-surface px-3 py-1.5 text-sm font-medium text-body shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2">
                     <ArrowUturnLeftIcon class="h-4 w-4" /> Groups
                 </a>
-                <button v-if="permissions.members" type="button" class="inline-flex items-center gap-1.5 rounded-md bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50" @click="showMembersModal = true">
+                <button v-if="permissions.members" type="button" class="inline-flex items-center gap-1.5 rounded-md bg-surface px-3 py-1.5 text-sm font-medium text-body shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2" @click="showMembersModal = true">
                     <UsersIcon class="h-4 w-4" /> Members
                 </button>
-                <button v-if="permissions.reload" type="button" class="inline-flex items-center gap-1.5 rounded-md bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50" @click="reloadPermissions">
+                <button v-if="permissions.reload" type="button" class="inline-flex items-center gap-1.5 rounded-md bg-surface px-3 py-1.5 text-sm font-medium text-body shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2" @click="reloadPermissions">
                     <ArrowPathIcon class="h-4 w-4" /> Reload
                 </button>
             </div>
@@ -31,22 +31,22 @@
 
         <div class="flex flex-col gap-4 lg:flex-row">
             <aside class="lg:w-72 lg:shrink-0">
-                <div class="rounded-lg bg-white p-3 shadow-sm ring-1 ring-gray-200">
+                <div class="rounded-lg bg-surface p-3 shadow-sm ring-1 ring-strong">
                     <div class="relative mb-3">
-                        <MagnifyingGlassIcon class="pointer-events-none absolute inset-y-0 left-3 my-auto h-4 w-4 text-gray-400" />
-                        <input v-model="filterData.search" type="text" placeholder="Search permissions..." class="block w-full rounded-md border-0 py-1.5 pl-9 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600" />
+                        <MagnifyingGlassIcon class="pointer-events-none absolute inset-y-0 left-3 my-auto h-4 w-4 text-subtle" />
+                        <input v-model="filterData.search" type="text" placeholder="Search permissions..." class="block w-full rounded-md border-0 py-1.5 pl-9 text-sm text-heading ring-1 ring-inset ring-strong focus:ring-2 focus:ring-inset focus:ring-focus" />
                     </div>
 
                     <div class="mb-3">
-                        <label class="block text-xs font-medium text-gray-500">Assignment</label>
-                        <select v-model="filterData.assignment" class="mt-1 block w-full rounded-md border-0 py-1.5 pl-2 pr-8 text-sm text-gray-900 ring-1 ring-inset ring-gray-300">
+                        <label class="block text-xs font-medium text-muted">Assignment</label>
+                        <select v-model="filterData.assignment" class="mt-1 block w-full rounded-md border-0 py-1.5 pl-2 pr-8 text-sm text-heading ring-1 ring-inset ring-strong">
                             <option value="all">Any assignment</option>
                             <option value="assigned">Assigned</option>
                             <option value="unassigned">Unassigned</option>
                         </select>
                     </div>
 
-                    <p class="px-1 pb-1 text-xs font-medium uppercase text-gray-400">Applications</p>
+                    <p class="px-1 pb-1 text-xs font-medium uppercase text-subtle">Applications</p>
                     <nav class="max-h-[60vh] space-y-0.5 overflow-y-auto">
                         <button type="button" :class="applicationButtonClass('')" @click="selectedApplication = ''">
                             <span class="min-w-0 flex-1 truncate">All</span>
@@ -56,26 +56,26 @@
                             <span class="min-w-0 flex-1 truncate">{{ application.label }}</span>
                             <span :class="applicationBadgeClass(application.value)">{{ application.count }}</span>
                         </button>
-                        <p v-if="!applicationsWithCounts.length" class="px-3 py-2 text-xs text-gray-400">No matching applications</p>
+                        <p v-if="!applicationsWithCounts.length" class="px-3 py-2 text-xs text-subtle">No matching applications</p>
                     </nav>
                 </div>
             </aside>
 
             <section class="min-w-0 flex-1">
-                <div class="rounded-lg bg-white shadow-sm ring-1 ring-gray-200">
-                    <header class="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 px-4 py-3">
+                <div class="rounded-lg bg-surface shadow-sm ring-1 ring-strong">
+                    <header class="flex flex-wrap items-center justify-between gap-3 border-b border-default px-4 py-3">
                         <div>
-                            <h2 class="text-base font-semibold text-gray-900">{{ selectedApplicationLabel }}</h2>
-                            <p class="text-xs text-gray-500">{{ displayedRows.length }} permission{{ displayedRows.length === 1 ? '' : 's' }} shown</p>
+                            <h2 class="text-base font-semibold text-heading">{{ selectedApplicationLabel }}</h2>
+                            <p class="text-xs text-muted">{{ displayedRows.length }} permission{{ displayedRows.length === 1 ? '' : 's' }} shown</p>
                         </div>
                         <div class="flex flex-wrap items-center gap-2">
-                            <button v-if="displayedRows.length" type="button" class="text-xs text-gray-500 hover:text-gray-900" @click="toggleSelectAllVisible">
+                            <button v-if="displayedRows.length" type="button" class="text-xs text-muted hover:text-heading" @click="toggleSelectAllVisible">
                                 {{ allVisibleSelected ? 'Clear selection' : 'Select visible' }}
                             </button>
-                            <div v-if="selectedItems.length" class="flex flex-wrap items-center gap-1 rounded-md bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700">
+                            <div v-if="selectedItems.length" class="flex flex-wrap items-center gap-1 rounded-md bg-accent-subtle px-2 py-1 text-xs font-medium text-accent-fg">
                                 <span>{{ selectedItems.length }} selected</span>
-                                <button v-if="permissions.assign" type="button" class="rounded px-1.5 py-0.5 hover:bg-indigo-100" @click="setAssignments(selectedItems, true)">Assign</button>
-                                <button v-if="permissions.remove" type="button" class="rounded px-1.5 py-0.5 hover:bg-indigo-100" @click="setAssignments(selectedItems, false)">Unassign</button>
+                                <button v-if="permissions.assign" type="button" class="rounded px-1.5 py-0.5 hover:bg-accent-subtle" @click="setAssignments(selectedItems, true)">Assign</button>
+                                <button v-if="permissions.remove" type="button" class="rounded px-1.5 py-0.5 hover:bg-accent-subtle" @click="setAssignments(selectedItems, false)">Unassign</button>
                             </div>
                         </div>
                     </header>
@@ -84,33 +84,33 @@
                         <Loading :show="true" :absolute="false" />
                     </div>
 
-                    <div v-else-if="sectionedRows.length" class="divide-y divide-gray-100">
-                        <section v-for="section in sectionedRows" :key="section.application" class="divide-y divide-gray-100">
-                            <header class="bg-gray-50 px-4 py-2">
+                    <div v-else-if="sectionedRows.length" class="divide-y divide-default">
+                        <section v-for="section in sectionedRows" :key="section.application" class="divide-y divide-default">
+                            <header class="bg-surface-2 px-4 py-2">
                                 <div class="flex items-center justify-between gap-3">
-                                    <h3 class="text-sm font-semibold text-gray-900">{{ section.application }}</h3>
+                                    <h3 class="text-sm font-semibold text-heading">{{ section.application }}</h3>
                                     <div class="flex items-center gap-3">
-                                        <span class="text-xs text-gray-500">{{ section.assigned }} of {{ section.rows.length }}</span>
+                                        <span class="text-xs text-muted">{{ section.assigned }} of {{ section.rows.length }}</span>
                                         <button
                                             v-if="canToggleSection"
                                             type="button"
                                             role="switch"
                                             :aria-checked="section.state === 'all'"
                                             :title="sectionToggleTitle(section)"
-                                            :class="['relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1', sectionTrackClass(section)]"
+                                            :class="['relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition focus:outline-none focus:ring-2 focus:ring-focus focus:ring-offset-1', sectionTrackClass(section)]"
                                             @click="toggleSection(section)"
                                         >
-                                            <span :class="['inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition', sectionThumbClass(section)]" />
+                                            <span :class="['inline-block h-3.5 w-3.5 transform rounded-full bg-surface shadow transition', sectionThumbClass(section)]" />
                                         </button>
                                     </div>
                                 </div>
                             </header>
 
-                            <div class="grid grid-cols-1 gap-px bg-gray-100 md:grid-cols-2 xl:grid-cols-3">
-                                <div v-for="row in section.rows" :key="row.permission_name" class="flex items-center gap-3 bg-white px-4 py-2.5 transition hover:bg-gray-50">
-                                    <input v-model="selectedItems" type="checkbox" :value="row.permission_name" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600" />
+                            <div class="grid grid-cols-1 gap-px bg-surface-3 md:grid-cols-2 xl:grid-cols-3">
+                                <div v-for="row in section.rows" :key="row.permission_name" class="flex items-center gap-3 bg-surface px-4 py-2.5 transition hover:bg-surface-2">
+                                    <input v-model="selectedItems" type="checkbox" :value="row.permission_name" class="h-4 w-4 rounded border-strong text-accent-fg focus:ring-focus" />
 
-                                    <h4 class="min-w-0 flex-1 truncate text-sm font-medium text-gray-900" :title="row.permission_name">
+                                    <h4 class="min-w-0 flex-1 truncate text-sm font-medium text-heading" :title="row.permission_name">
                                         {{ formatPermissionLabel(row.permission_name) }}
                                     </h4>
 
@@ -120,17 +120,17 @@
                                         role="switch"
                                         :aria-checked="row.assigned"
                                         :title="row.assigned ? 'Unassign permission' : 'Assign permission'"
-                                        :class="['relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1', row.assigned ? 'bg-indigo-600' : 'bg-gray-200']"
+                                        :class="['relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition focus:outline-none focus:ring-2 focus:ring-focus focus:ring-offset-1', row.assigned ? 'bg-accent' : 'bg-surface-3']"
                                         @click="setAssignments([row.permission_name], !row.assigned)"
                                     >
-                                        <span :class="['inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition', row.assigned ? 'translate-x-[18px]' : 'translate-x-0.5']" />
+                                        <span :class="['inline-block h-3.5 w-3.5 transform rounded-full bg-surface shadow transition', row.assigned ? 'translate-x-[18px]' : 'translate-x-0.5']" />
                                     </button>
                                     <span
                                         v-else
                                         :title="row.assigned ? 'Assigned' : 'Unassigned'"
-                                        :class="['relative inline-flex h-5 w-9 shrink-0 items-center rounded-full opacity-60', row.assigned ? 'bg-indigo-600' : 'bg-gray-200']"
+                                        :class="['relative inline-flex h-5 w-9 shrink-0 items-center rounded-full opacity-60', row.assigned ? 'bg-accent' : 'bg-surface-3']"
                                     >
-                                        <span :class="['inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow', row.assigned ? 'translate-x-[18px]' : 'translate-x-0.5']" />
+                                        <span :class="['inline-block h-3.5 w-3.5 transform rounded-full bg-surface shadow', row.assigned ? 'translate-x-[18px]' : 'translate-x-0.5']" />
                                     </span>
                                 </div>
                             </div>
@@ -138,9 +138,9 @@
                     </div>
 
                     <div v-else class="px-4 py-12 text-center">
-                        <p class="text-sm font-medium text-gray-900">No permissions match your filters</p>
-                        <p class="mt-1 text-xs text-gray-500">Try clearing search or assignment filters.</p>
-                        <button type="button" class="mt-3 rounded-md bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50" @click="handleFiltersReset">Reset filters</button>
+                        <p class="text-sm font-medium text-heading">No permissions match your filters</p>
+                        <p class="mt-1 text-xs text-muted">Try clearing search or assignment filters.</p>
+                        <button type="button" class="mt-3 rounded-md bg-surface px-3 py-1.5 text-xs font-medium text-body shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2" @click="handleFiltersReset">Reset filters</button>
                     </div>
                 </div>
             </section>
@@ -164,14 +164,14 @@ import { ArrowPathIcon, ArrowUturnLeftIcon, MagnifyingGlassIcon, UsersIcon } fro
 
 const StatTile = (props) => {
     const toneMap = {
-        gray: 'text-gray-900',
-        green: 'text-green-600',
-        rose: 'text-rose-600',
-        indigo: 'text-indigo-600',
+        gray: 'text-heading',
+        green: 'text-success',
+        rose: 'text-danger',
+        indigo: 'text-accent-fg',
     }
 
-    return h('div', { class: 'rounded-lg bg-white p-3 shadow-sm ring-1 ring-gray-200' }, [
-        h('p', { class: 'text-xs text-gray-500' }, props.label),
+    return h('div', { class: 'rounded-lg bg-surface p-3 shadow-sm ring-1 ring-strong' }, [
+        h('p', { class: 'text-xs text-muted' }, props.label),
         h('p', { class: ['mt-0.5 text-xl font-semibold', toneMap[props.tone] || toneMap.gray] }, String(props.value ?? 0)),
     ])
 }
@@ -361,7 +361,7 @@ const applicationButtonClass = (value) => {
 
     return [
         'flex w-full items-center justify-between gap-2 rounded-md px-3 py-1.5 text-left text-sm transition',
-        active ? 'bg-indigo-50 font-semibold text-indigo-700' : 'text-gray-700 hover:bg-gray-50',
+        active ? 'bg-accent-subtle font-semibold text-accent-fg' : 'text-body hover:bg-surface-2',
     ]
 }
 
@@ -370,7 +370,7 @@ const applicationBadgeClass = (value) => {
 
     return [
         'inline-flex min-w-6 shrink-0 items-center justify-center rounded-full px-1.5 py-0.5 text-[11px] font-medium tabular-nums',
-        active ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-600',
+        active ? 'bg-accent-subtle text-accent-fg' : 'bg-surface-3 text-body',
     ]
 }
 
@@ -392,9 +392,9 @@ const sectionToggleTitle = (section) => {
 }
 
 const sectionTrackClass = (section) => {
-    if (section.state === 'all') return 'bg-indigo-600'
-    if (section.state === 'some') return 'bg-indigo-300'
-    return 'bg-gray-200'
+    if (section.state === 'all') return 'bg-accent'
+    if (section.state === 'some') return 'bg-accent'
+    return 'bg-surface-3'
 }
 
 const sectionThumbClass = (section) => {

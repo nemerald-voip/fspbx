@@ -4,10 +4,10 @@
 
 
     <div class="mt-6 px-10">
-        <!-- <h3 class="text-base font-semibold text-gray-900">Last 30 days</h3> -->
+        <!-- <h3 class="text-base font-semibold text-heading">Last 30 days</h3> -->
         <div class="sm:flex sm:items-center sm:justify-between">
             <div>
-                <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
+                <h2 class="text-2xl font-bold leading-7 text-heading sm:truncate sm:text-3xl sm:tracking-tight">
                     Fax Dashboard
                 </h2>
             </div>
@@ -23,7 +23,7 @@
                 </div>
 
                 <button type="button" @click.prevent="handleNewFaxButtonClick()"
-                    class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                    class="inline-flex items-center justify-center rounded-md bg-accent px-3 py-2 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
                     <DocumentPlusIcon class="-ml-0.5 mr-1.5 h-5 w-5" aria-hidden="true" />
                     Send New Fax
                 </button>
@@ -32,16 +32,16 @@
 
 <dl class="mt-5 flex flex-wrap gap-5">
     <div v-for="item in stats" :key="item.name"
-        class="group relative flex-1 min-w-[240px] overflow-hidden rounded-xl bg-white px-4 py-5 shadow-sm ring-1 ring-gray-200 transition-all duration-200 hover:-translate-y-1 hover:shadow-md sm:p-6">
+        class="group relative flex-1 min-w-[240px] overflow-hidden rounded-xl bg-surface px-4 py-5 shadow-sm ring-1 ring-strong transition-all duration-200 hover:-translate-y-1 hover:shadow-md sm:p-6">
         
-        <dt class="truncate text-sm font-medium text-gray-500 transition-colors duration-200 group-hover:text-indigo-600">
+        <dt class="truncate text-sm font-medium text-muted transition-colors duration-200 group-hover:text-accent-fg">
             {{ item.name }}
         </dt>
-        <dd class="mt-2 text-3xl font-bold tracking-tight text-gray-900">
+        <dd class="mt-2 text-3xl font-bold tracking-tight text-heading">
             {{ item.stat }}
         </dd>
         
-        <div class="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-gray-50 transition-colors duration-200 group-hover:bg-indigo-50"></div>
+        <div class="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-surface-2 transition-colors duration-200 group-hover:bg-accent-subtle"></div>
     </div>
 </dl>
     </div>
@@ -56,21 +56,21 @@
                 <template #table-header>
                     <!-- Checkbox + From column -->
                     <TableColumnHeader
-                        class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
+                        class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-heading items-center justify-start">
 
                         <span class="pl-2">From</span>
                     </TableColumnHeader>
 
                     <!-- To column -->
-                    <TableColumnHeader header="To" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader header="To" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
 
                     <!-- Date column -->
                     <TableColumnHeader header="Date"
-                        class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                        class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
 
                     <!-- Status column -->
                     <TableColumnHeader header="Status"
-                        class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                        class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
 
 
                 </template>
@@ -78,7 +78,7 @@
                 <template #table-body>
                     <tr v-for="row in recentOutboundFaxes.data" :key="row.outbound_fax_uuid">
                         <!-- Checkbox + From -->
-                        <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500">
+                        <TableField class="whitespace-nowrap px-4 py-2 text-sm text-muted">
                             <div class="flex items-center">
                                 <div class="ml-2">
                                     {{ row.source_formatted ?? row.source ?? '' }}
@@ -87,12 +87,12 @@
                         </TableField>
 
                         <!-- To -->
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted">
                             {{ row.destination_formatted ?? row.destination ?? '' }}
                         </TableField>
 
                         <!-- Date -->
-                        <TableField class="px-2 py-2 text-sm text-gray-500">
+                        <TableField class="px-2 py-2 text-sm text-muted">
                             {{ row.fax_date_formatted }}
                         </TableField>
 
@@ -115,9 +115,9 @@
                     <!-- Conditional rendering for 'no records' message -->
                     <div v-if="!recentOutboundLoading && recentOutboundFaxes?.data?.length === 0"
                         class="text-center my-5 ">
-                        <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                        <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
-                        <!-- <p class="mt-1 text-sm text-gray-500">
+                        <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-subtle" />
+                        <h3 class="mt-2 text-sm font-semibold text-heading">No results found</h3>
+                        <!-- <p class="mt-1 text-sm text-muted">
                             Adjust your search and try again.
                         </p> -->
                     </div>
@@ -139,28 +139,28 @@
 
                 <template #table-header>
                     <TableColumnHeader
-                        class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
+                        class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-heading items-center justify-start">
                         <span class="pl-2">From</span>
                     </TableColumnHeader>
-                    <TableColumnHeader header="To" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader header="To" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
                     <TableColumnHeader header="Date"
-                        class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                        class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
                 </template>
 
                 <template #table-body>
                     <tr v-for="row in recentInboundFaxes.data" :key="row.fax_log_uuid">
                         <!-- From -->
-                        <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500">
+                        <TableField class="whitespace-nowrap px-4 py-2 text-sm text-muted">
                             {{ row.source_formatted ?? row.source ?? '' }}
                         </TableField>
 
                         <!-- To -->
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted">
                             {{ row.destination_formatted ?? row.destination ?? '' }}
                         </TableField>
 
                         <!-- Date -->
-                        <TableField class="px-2 py-2 text-sm text-gray-500">
+                        <TableField class="px-2 py-2 text-sm text-muted">
                             {{ row.fax_date_formatted }}
                         </TableField>
                     </tr>
@@ -174,9 +174,9 @@
                     <!-- Conditional rendering for 'no records' message -->
                     <div v-if="!recentInboundLoading && recentInboundFaxes?.data?.length === 0"
                         class="text-center my-5 ">
-                        <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                        <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
-                        <!-- <p class="mt-1 text-sm text-gray-500">
+                        <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-subtle" />
+                        <h3 class="mt-2 text-sm font-semibold text-heading">No results found</h3>
+                        <!-- <p class="mt-1 text-sm text-muted">
                             Adjust your search and try again.
                         </p> -->
                     </div>
@@ -202,15 +202,15 @@
 
                 <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
                     <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                        <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                        <MagnifyingGlassIcon class="h-5 w-5 text-subtle" aria-hidden="true" />
                     </div>
                     <input type="text" v-model="filterData.search" name="mobile-search-candidate"
                         id="mobile-search-candidate"
-                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
+                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus sm:hidden"
                         placeholder="Search" @keydown.enter="handleSearchButtonClick" />
                     <input type="text" v-model="filterData.search" name="desktop-search-candidate"
                         id="desktop-search-candidate"
-                        class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
+                        class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus sm:block"
                         placeholder="Search" @keydown.enter="handleSearchButtonClick" />
                 </div>
             </template>
@@ -218,7 +218,7 @@
             <template #action>
                 <button v-if="permissions.fax_server_create" type="button"
                     @click.prevent="handleCreateButtonClick()"
-                    class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                    class="rounded-md bg-accent px-2.5 py-1.5 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
                     Create Fax Server
                 </button>
 
@@ -236,64 +236,64 @@
             <template #table-header>
                 <!-- Checkbox + Name column -->
                 <TableColumnHeader
-                    class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
+                    class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-heading items-center justify-start">
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
-                        class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                        class="h-4 w-4 rounded border-strong text-accent-fg">
                     <div class="pl-4 flex items-center cursor-pointer select-none"
                         @click="handleSortRequest('fax_name')">
                         <span class="mr-2">Name</span>
                         <ChevronUpIcon v-if="sortData.name === 'fax_name' && sortData.order === 'asc'"
-                            class="h-4 w-4 text-gray-500" />
+                            class="h-4 w-4 text-muted" />
                         <ChevronDownIcon v-else-if="sortData.name === 'fax_name' && sortData.order === 'desc'"
-                            class="h-4 w-4 text-gray-500" />
+                            class="h-4 w-4 text-muted" />
                     </div>
                 </TableColumnHeader>
 
                 <!-- Extension -->
                 <TableColumnHeader
-                    class="hidden lg:table-cell px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    class="hidden lg:table-cell px-2 py-3.5 text-left text-sm font-semibold text-heading">
                     <div class="flex items-center cursor-pointer select-none"
                         @click="handleSortRequest('fax_extension')">
                         <span class="mr-2">Extension</span>
                         <ChevronUpIcon v-if="sortData.name === 'fax_extension' && sortData.order === 'asc'"
-                            class="h-4 w-4 text-gray-500" />
+                            class="h-4 w-4 text-muted" />
                         <ChevronDownIcon v-else-if="sortData.name === 'fax_extension' && sortData.order === 'desc'"
-                            class="h-4 w-4 text-gray-500" />
+                            class="h-4 w-4 text-muted" />
                     </div>
                 </TableColumnHeader>
 
                 <!-- Caller ID -->
                 <TableColumnHeader
-                    class="hidden lg:table-cell px-2 py-3.5 text-left text-sm font-semibold text-gray-900 min-w-32">
+                    class="hidden lg:table-cell px-2 py-3.5 text-left text-sm font-semibold text-heading min-w-32">
                     <div class="flex items-center cursor-pointer select-none"
                         @click="handleSortRequest('fax_caller_id_number')">
                         <span class="mr-2 whitespace-nowrap">Caller ID</span>
                         <ChevronUpIcon
                             v-if="sortData.name === 'fax_caller_id_number' && sortData.order === 'asc'"
-                            class="h-4 w-4 text-gray-500" />
+                            class="h-4 w-4 text-muted" />
                         <ChevronDownIcon
                             v-else-if="sortData.name === 'fax_caller_id_number' && sortData.order === 'desc'"
-                            class="h-4 w-4 text-gray-500" />
+                            class="h-4 w-4 text-muted" />
                     </div>
                 </TableColumnHeader>
 
                 <!-- Email column -->
-                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-heading">
                     <div class="flex items-center cursor-pointer select-none"
                         @click="handleSortRequest('fax_email')">
                         <span class="mr-2">Email</span>
                         <ChevronUpIcon v-if="sortData.name === 'fax_email' && sortData.order === 'asc'"
-                            class="h-4 w-4 text-gray-500" />
+                            class="h-4 w-4 text-muted" />
                         <ChevronDownIcon v-else-if="sortData.name === 'fax_email' && sortData.order === 'desc'"
-                            class="h-4 w-4 text-gray-500" />
+                            class="h-4 w-4 text-muted" />
                     </div>
                 </TableColumnHeader>
 
                 <!-- Tools column -->
-                <TableColumnHeader header="Tools" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Tools" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
 
                 <!-- Actions column -->
-                <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-heading" />
             </template>
 
             <template v-if="selectPageItems" v-slot:current-selection>
@@ -301,12 +301,12 @@
                     <div class="text-sm text-center m-2">
                         <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
                         <button v-if="!selectAll && selectedItems.length != data.total"
-                            class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
+                            class="text-info rounded py-2 px-2 hover:bg-info-subtle  hover:text-info focus:outline-none focus:ring-1 focus:bg-info-subtle focus:ring-focus transition duration-500 ease-in-out"
                             @click="handleSelectAll">
                             Select all {{ data.total }} items
                         </button>
                         <button v-if="selectAll"
-                            class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
+                            class="text-info rounded py-2 px-2 hover:bg-info-subtle  hover:text-info focus:outline-none focus:ring-1 focus:bg-info-subtle focus:ring-focus transition duration-500 ease-in-out"
                             @click="handleClearSelection">
                             Clear selection
                         </button>
@@ -319,13 +319,13 @@
             <template #table-body>
                 <tr v-for="row in data.data" :key="row.fax_uuid">
                     <!-- Checkbox + Name -->
-                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500"
+                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-muted"
                         :text="row.ring_group_extension">
                         <div class="flex items-center">
                             <input v-if="row.fax_uuid" v-model="selectedItems" type="checkbox" name="action_box[]"
-                                :value="row.fax_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                                :value="row.fax_uuid" class="h-4 w-4 rounded border-strong text-accent-fg">
                             <div class="ml-4"
-                                :class="{ 'cursor-pointer hover:text-gray-900': permissions.fax_server_update, }"
+                                :class="{ 'cursor-pointer hover:text-heading': permissions.fax_server_update, }"
                                 @click="permissions.fax_server_update && handleEditButtonClick(row.fax_uuid)">
                                 <span class="flex items-center">
                                     {{ row.fax_name }}
@@ -335,20 +335,20 @@
                     </TableField>
 
                     <!-- Extension -->
-                    <TableField class="hidden lg:table-cell px-2 py-2 text-sm text-gray-500"
+                    <TableField class="hidden lg:table-cell px-2 py-2 text-sm text-muted"
                         :text="row.fax_extension" />
 
                     <!-- Caller ID -->
-                    <TableField class="hidden lg:table-cell px-2 py-2 text-sm text-gray-500 whitespace-nowrap min-w-32"
+                    <TableField class="hidden lg:table-cell px-2 py-2 text-sm text-muted whitespace-nowrap min-w-32"
                         :text="row.fax_caller_id_number_formatted" />
 
                     <TableField class="px-2 py-2 text-sm">
                         <div class="flex max-w-2xl flex-wrap gap-1">
                             <Badge v-for="(email, i) in visibleFaxEmails(row)" :key="`${email}-${i}`" :text="email"
-                                backgroundColor="bg-gray-100" textColor="text-gray-700"
-                                ringColor="ring-gray-400/20" class="px-2 py-1 text-xs font-semibold" />
+                                backgroundColor="bg-surface-3" textColor="text-body"
+                                ringColor="ring-strong/20" class="px-2 py-1 text-xs font-semibold" />
                             <button v-if="hiddenFaxEmailCount(row) > 0" type="button"
-                                class="inline-flex items-center rounded-md bg-indigo-50 px-2 py-1 text-xs font-semibold text-indigo-700 ring-1 ring-inset ring-indigo-200 hover:bg-indigo-100"
+                                class="inline-flex items-center rounded-md bg-accent-subtle px-2 py-1 text-xs font-semibold text-accent-fg ring-1 ring-inset ring-accent hover:bg-accent-subtle"
                                 @click="toggleEmailExpansion(row.fax_uuid)">
                                 {{ isEmailExpanded(row.fax_uuid) ? 'Show less' : `+${hiddenFaxEmailCount(row)} more` }}
                             </button>
@@ -360,7 +360,7 @@
                     <TableField class="px-2 py-2 text-sm flex-col sm:flex-row gap-2">
                         <template v-if="permissions.fax_send">
                             <button @click.prevent="handleNewFaxButtonClick()"
-                                class="inline-flex items-center px-2 py-1 rounded text-gray-700 hover:bg-gray-100 transition text-xs font-medium"
+                                class="inline-flex items-center px-2 py-1 rounded text-body hover:bg-surface-3 transition text-xs font-medium"
                                 title="New Fax">
                                 <DocumentPlusIcon class="w-4 h-4 mr-1" />
                                 <span class="text-nowrap">New Fax</span>
@@ -369,7 +369,7 @@
 
                         <template v-if="permissions.fax_inbox_view">
                             <a :href="`/fax/${row.fax_uuid}/inbox`"
-                                class="inline-flex items-center px-2 py-1 rounded text-gray-700 hover:bg-gray-100 transition text-xs font-medium"
+                                class="inline-flex items-center px-2 py-1 rounded text-body hover:bg-surface-3 transition text-xs font-medium"
                                 title="Inbox">
                                 <EnvelopeIcon class="w-4 h-4 mr-1" />
                                 Inbox
@@ -378,7 +378,7 @@
 
                         <template v-if="permissions.fax_sent_view">
                             <a :href="`/fax/${row.fax_uuid}/sent`"
-                                class="inline-flex items-center px-2 py-1 rounded text-gray-700 hover:bg-gray-100 transition text-xs font-medium"
+                                class="inline-flex items-center px-2 py-1 rounded text-body hover:bg-surface-3 transition text-xs font-medium"
                                 title="Sent">
                                 <DocumentArrowUpIcon class="w-4 h-4 mr-1" />
                                 Sent
@@ -387,7 +387,7 @@
 
                         <template v-if="permissions.fax_log_view">
                             <a :href="`/fax/${row.fax_uuid}/log`"
-                                class="inline-flex items-center px-2 py-1 rounded text-gray-700 hover:bg-gray-100 transition text-xs font-medium"
+                                class="inline-flex items-center px-2 py-1 rounded text-body hover:bg-surface-3 transition text-xs font-medium"
                                 title="Logs">
                                 <DocumentTextIcon class="w-4 h-4 mr-1" />
                                 Logs
@@ -396,7 +396,7 @@
                     </TableField>
 
                     <!-- Action buttons -->
-                    <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
+                    <TableField class="whitespace-nowrap px-2 py-1 text-sm text-muted">
 
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap justify-end">
@@ -404,7 +404,7 @@
                                     position='TopCenter' target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
                                         <PencilSquareIcon @click="handleEditButtonClick(row.fax_uuid)"
-                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer" />
 
                                     </div>
                                 </ejs-tooltip>
@@ -413,7 +413,7 @@
                                     position='TopCenter' target="#delete_tooltip_target">
                                     <div id="delete_tooltip_target">
                                         <TrashIcon @click="handleSingleItemDeleteRequest(row.fax_uuid)"
-                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
                             </div>
@@ -427,9 +427,9 @@
             <template #empty>
                 <!-- Conditional rendering for 'no records' message -->
                 <div v-if="data.data.length === 0" class="text-center my-5 ">
-                    <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
-                    <p class="mt-1 text-sm text-gray-500">
+                    <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-subtle" />
+                    <h3 class="mt-2 text-sm font-semibold text-heading">No results found</h3>
+                    <p class="mt-1 text-sm text-muted">
                         Adjust your search and try again.
                     </p>
                 </div>
@@ -913,39 +913,39 @@ const determineColor = (status) => {
     switch (status) {
         case 'sent':
             return {
-                backgroundColor: 'bg-green-50',
-                textColor: 'text-green-700',
-                ringColor: 'ring-green-600/20'
+                backgroundColor: 'bg-success-subtle',
+                textColor: 'text-success',
+                ringColor: 'ring-success/20'
             };
         case 'sending':
             return {
-                backgroundColor: 'bg-blue-50',
-                textColor: 'text-blue-700',
-                ringColor: 'ring-blue-600/20'
+                backgroundColor: 'bg-info-subtle',
+                textColor: 'text-info',
+                ringColor: 'ring-info/20'
             };
         case 'trying':
             return {
-                backgroundColor: 'bg-cyan-50',
-                textColor: 'text-cyan-700',
-                ringColor: 'ring-cyan-600/20'
+                backgroundColor: 'bg-info-subtle',
+                textColor: 'text-info',
+                ringColor: 'ring-info/20'
             };
         case 'busy':
             return {
-                backgroundColor: 'bg-amber-50',
-                textColor: 'text-amber-700',
-                ringColor: 'ring-amber-600/20'
+                backgroundColor: 'bg-warning-subtle',
+                textColor: 'text-warning',
+                ringColor: 'ring-warning/20'
             };
         case 'failed':
             return {
-                backgroundColor: 'bg-rose-50',
-                textColor: 'text-rose-700',
-                ringColor: 'ring-rose-600/20'
+                backgroundColor: 'bg-danger-subtle',
+                textColor: 'text-danger',
+                ringColor: 'ring-danger/20'
             };
         default:
             return {
-                backgroundColor: 'bg-yellow-50',
-                textColor: 'text-yellow-700',
-                ringColor: 'ring-yellow-600/20'
+                backgroundColor: 'bg-warning-subtle',
+                textColor: 'text-warning',
+                ringColor: 'ring-warning/20'
             };
     }
 };

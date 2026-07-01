@@ -1,17 +1,17 @@
 <template>
     <div
-        class="group relative flex h-full overflow-hidden rounded-lg bg-white ring-1 ring-gray-200 transition duration-150 hover:-translate-y-0.5 hover:shadow-md hover:ring-cyan-200">
+        class="group relative flex h-full overflow-hidden rounded-lg bg-surface ring-1 ring-strong transition duration-150 hover:-translate-y-0.5 hover:shadow-md hover:ring-info/40">
         <div class="grid min-h-24 flex-1 grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-3 p-4">
             <a :href="card.href || '#'" @click="handleCardClick"
-                class="row-span-2 min-w-0 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2 before:absolute before:inset-0 before:content-['']">
+                class="row-span-2 min-w-0 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 before:absolute before:inset-0 before:content-['']">
                 <dl class="min-w-0">
-                    <dt class="truncate text-base font-medium leading-5 text-gray-500 group-hover:text-gray-700">{{
+                    <dt class="truncate text-base font-medium leading-5 text-muted group-hover:text-body">{{
                         card.name }}</dt>
                     <dd class="mt-3 min-h-8">
                         <div v-if="displayValue === null" class="animate-pulse">
-                            <div class="h-7 w-14 rounded bg-slate-200"></div>
+                            <div class="h-7 w-14 rounded bg-surface-3"></div>
                         </div>
-                        <div v-else class="text-3xl font-semibold leading-none tracking-tight text-gray-600">{{ displayValue }}</div>
+                        <div v-else class="text-3xl font-semibold leading-none tracking-tight text-body">{{ displayValue }}</div>
                     </dd>
                 </dl>
             </a>
@@ -22,7 +22,7 @@
             </span>
 
             <a v-if="card.alt_href" :href="card.alt_href"
-                class="relative z-10 self-end whitespace-nowrap rounded-md px-2 py-1 text-sm font-medium text-cyan-700 transition hover:bg-cyan-50 hover:text-cyan-900 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2">
+                class="relative z-10 self-end whitespace-nowrap rounded-md px-2 py-1 text-sm font-medium text-info transition hover:bg-info-subtle hover:underline focus:outline-none focus:ring-2 focus:ring-focus focus:ring-offset-2">
                 {{ card.alt_link_label }}
             </a>
         </div>
@@ -78,26 +78,26 @@ const iconMap = {
 }
 
 const styleMap = {
-    UsersIcon: { bgColor: 'bg-teal-50', textColor: 'text-teal-700', hoverTextColor: 'group-hover:text-teal-900' },
-    UserGroupIcon: { bgColor: 'bg-purple-50', textColor: 'text-purple-700', hoverTextColor: 'group-hover:text-purple-900' },
-    ContactPhoneIcon: { bgColor: 'bg-sky-50', textColor: 'text-sky-700', hoverTextColor: 'group-hover:text-sky-900' },
-    VoicemailIcon: { bgColor: 'bg-fuchsia-50', textColor: 'text-fuchsia-700', hoverTextColor: 'group-hover:text-fuchsia-900' },
-    CalendarDaysIcon: { bgColor: 'bg-rose-50', textColor: 'text-rose-700', hoverTextColor: 'group-hover:text-rose-900' },
-    FaxIcon: { bgColor: 'bg-indigo-50', textColor: 'text-indigo-700', hoverTextColor: 'group-hover:text-indigo-900' },
-    CallHistoryIcon: { bgColor: 'bg-red-50', textColor: 'text-red-700', hoverTextColor: 'group-hover:text-red-900' },
-    DevicesIcon: { bgColor: 'bg-lime-50', textColor: 'text-lime-700', hoverTextColor: 'group-hover:text-lime-900' },
-    DialpadIcon: { bgColor: 'bg-green-50', textColor: 'text-green-700', hoverTextColor: 'group-hover:text-green-900' },
-    AlternativeRouteIcon: { bgColor: 'bg-cyan-50', textColor: 'text-cyan-700', hoverTextColor: 'group-hover:text-cyan-900' },
-    IvrIcon: { bgColor: 'bg-blue-50', textColor: 'text-blue-700', hoverTextColor: 'group-hover:text-blue-900' },
-    SupportAgent: { bgColor: 'bg-orange-50', textColor: 'text-orange-700', hoverTextColor: 'group-hover:text-orange-900' },
-    HeartIcon: { bgColor: 'bg-rose-50', textColor: 'text-rose-700', hoverTextColor: 'group-hover:text-rose-900' },
-    ClockIcon: { bgColor: 'bg-blue-50', textColor: 'text-blue-700', hoverTextColor: 'group-hover:text-blue-900' },
+    UsersIcon: { bgColor: 'bg-teal-50 dark:bg-teal-900/40', textColor: 'text-teal-700 dark:text-teal-300', hoverTextColor: 'group-hover:text-teal-900 dark:group-hover:text-teal-300' },
+    UserGroupIcon: { bgColor: 'bg-purple-50 dark:bg-purple-900/40', textColor: 'text-purple-700 dark:text-purple-300', hoverTextColor: 'group-hover:text-purple-900 dark:group-hover:text-purple-300' },
+    ContactPhoneIcon: { bgColor: 'bg-sky-50 dark:bg-sky-900/40', textColor: 'text-sky-700 dark:text-sky-300', hoverTextColor: 'group-hover:text-sky-900 dark:group-hover:text-sky-300' },
+    VoicemailIcon: { bgColor: 'bg-fuchsia-50 dark:bg-fuchsia-900/40', textColor: 'text-fuchsia-700 dark:text-fuchsia-300', hoverTextColor: 'group-hover:text-fuchsia-900 dark:group-hover:text-fuchsia-300' },
+    CalendarDaysIcon: { bgColor: 'bg-rose-50 dark:bg-rose-900/40', textColor: 'text-rose-700 dark:text-rose-300', hoverTextColor: 'group-hover:text-rose-900 dark:group-hover:text-rose-300' },
+    FaxIcon: { bgColor: 'bg-violet-50 dark:bg-violet-900/40', textColor: 'text-violet-700 dark:text-violet-300', hoverTextColor: 'group-hover:text-violet-900 dark:group-hover:text-violet-300' },
+    CallHistoryIcon: { bgColor: 'bg-orange-50 dark:bg-orange-900/40', textColor: 'text-orange-700 dark:text-orange-300', hoverTextColor: 'group-hover:text-orange-900 dark:group-hover:text-orange-300' },
+    DevicesIcon: { bgColor: 'bg-lime-50 dark:bg-lime-900/40', textColor: 'text-lime-700 dark:text-lime-300', hoverTextColor: 'group-hover:text-lime-900 dark:group-hover:text-lime-300' },
+    DialpadIcon: { bgColor: 'bg-emerald-50 dark:bg-emerald-900/40', textColor: 'text-emerald-700 dark:text-emerald-300', hoverTextColor: 'group-hover:text-emerald-900 dark:group-hover:text-emerald-300' },
+    AlternativeRouteIcon: { bgColor: 'bg-cyan-50 dark:bg-cyan-900/40', textColor: 'text-cyan-700 dark:text-cyan-300', hoverTextColor: 'group-hover:text-cyan-900 dark:group-hover:text-cyan-300' },
+    IvrIcon: { bgColor: 'bg-blue-50 dark:bg-blue-900/40', textColor: 'text-blue-700 dark:text-blue-300', hoverTextColor: 'group-hover:text-blue-900 dark:group-hover:text-blue-300' },
+    SupportAgent: { bgColor: 'bg-amber-50 dark:bg-amber-900/40', textColor: 'text-amber-700 dark:text-amber-300', hoverTextColor: 'group-hover:text-amber-900 dark:group-hover:text-amber-300' },
+    HeartIcon: { bgColor: 'bg-pink-50 dark:bg-pink-900/40', textColor: 'text-pink-700 dark:text-pink-300', hoverTextColor: 'group-hover:text-pink-900 dark:group-hover:text-pink-300' },
+    ClockIcon: { bgColor: 'bg-indigo-50 dark:bg-indigo-900/40', textColor: 'text-indigo-700 dark:text-indigo-300', hoverTextColor: 'group-hover:text-indigo-900 dark:group-hover:text-indigo-300' },
 };
 
 // Computed property to get the correct icon component
 const iconComponent = computed(() => iconMap[props.card.icon]);
 
-const iconStyles = computed(() => styleMap[props.card.icon] || { bgColor: 'bg-gray-50', textColor: 'text-gray-700' });
+const iconStyles = computed(() => styleMap[props.card.icon] || { bgColor: 'bg-surface-2', textColor: 'text-body' });
 
 const displayValue = computed(() => props.card.count_label ?? props.count ?? null);
 

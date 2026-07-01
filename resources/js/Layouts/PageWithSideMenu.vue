@@ -6,15 +6,15 @@
                 <!-- Sidebar -->
                 <aside :class="isNavCollapsed ? 'w-14' : 'w-64'"
                     class="relative z-10 flex flex-col flex-none transition-[width] duration-300 ease-in-out">
-                    <div class="flex grow flex-col gap-y-5 border-r border-gray-200 bg-white"
+                    <div class="flex grow flex-col gap-y-5 border-r border-default bg-surface"
                         :class="isNavCollapsed ? 'overflow-visible px-2.5' : 'overflow-y-auto px-4'">
 
                         <!-- Header -->
                         <div class="flex h-16 items-center">
                             <div :class="['flex flex-1 items-center', isNavCollapsed ? 'justify-center' : 'gap-x-3']">
                                 <component :is="props.headerIcon"
-                                    class="size-7 text-indigo-600 shrink-0" />
-                                <span v-show="!isNavCollapsed" class="font-semibold text-gray-800 truncate">
+                                    class="size-7 text-accent-fg shrink-0" />
+                                <span v-show="!isNavCollapsed" class="font-semibold text-heading truncate">
                                     {{ title }}
                                 </span>
                             </div>
@@ -29,17 +29,17 @@
                                             <!-- Item WITHOUT children -->
                                             <div v-if="!item.children" class="relative group">
                                                 <button type="button" @click="select(item.key)" :class="[
-                                                    isActive(item.key) ? 'bg-gray-100' : 'hover:bg-gray-100',
-                                                    'flex items-center w-full text-left rounded-md p-2 text-sm/6 font-semibold text-gray-700',
+                                                    isActive(item.key) ? 'bg-accent-subtle text-accent-fg' : 'text-body hover:bg-surface-3',
+                                                    'flex items-center w-full text-left rounded-md p-2 text-sm/6 font-semibold',
                                                     isNavCollapsed ? 'justify-center' : 'gap-x-3'
                                                 ]">
                                                     <component :is="item.icon" class="size-6 shrink-0"
-                                                        :class="isActive(item.key) ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600'" />
+                                                        :class="isActive(item.key) ? 'text-accent-fg' : 'text-subtle group-hover:text-accent-fg'" />
                                                     <span class="truncate" v-show="!isNavCollapsed">{{ item.name
                                                     }}</span>
                                                 </button>
                                                 <span v-if="isNavCollapsed"
-                                                    class="absolute left-full top-1/2 -translate-y-1/2 ml-4 w-auto min-w-max scale-0 rounded bg-gray-900 p-2 text-xs font-bold text-white transition-all group-hover:scale-100 origin-left z-30">
+                                                    class="absolute left-full top-1/2 -translate-y-1/2 ml-4 w-auto min-w-max scale-0 rounded bg-gray-900 dark:bg-gray-700 p-2 text-xs font-bold text-white transition-all group-hover:scale-100 origin-left z-30">
                                                     {{ item.name }}
                                                 </span>
                                             </div>
@@ -50,21 +50,21 @@
                                                 <Disclosure as="div" v-if="!isNavCollapsed" v-slot="{ open }"
                                                     :default-open="parentHasActiveChild(item)">
                                                     <DisclosureButton
-                                                        :class="[parentHasActiveChild(item) ? 'bg-gray-100' : 'hover:bg-gray-100', 'flex w-full items-center gap-x-3 rounded-md p-2 text-left text-sm/6 font-semibold text-gray-700']">
+                                                        :class="[parentHasActiveChild(item) ? 'bg-accent-subtle text-accent-fg' : 'text-body hover:bg-surface-3', 'flex w-full items-center gap-x-3 rounded-md p-2 text-left text-sm/6 font-semibold']">
                                                         <component :is="item.icon" class="size-6 shrink-0"
-                                                            :class="parentHasActiveChild(item) ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600'" />
+                                                            :class="parentHasActiveChild(item) ? 'text-accent-fg' : 'text-subtle group-hover:text-accent-fg'" />
                                                         <span class="truncate">{{ item.name }}</span>
                                                         <ChevronRightIcon
-                                                            :class="[open ? 'rotate-90 text-gray-500' : 'text-gray-400', 'ml-auto size-5 shrink-0']" />
+                                                            :class="[open ? 'rotate-90 text-muted' : 'text-subtle', 'ml-auto size-5 shrink-0']" />
                                                     </DisclosureButton>
                                                     <DisclosurePanel as="ul" class="mt-1 pl-6">
                                         <li v-for="sub in item.children" :key="sub.key">
                                             <button type="button" @click="select(sub.key)" :class="[
-                                                isActive(sub.key) ? 'bg-gray-100' : 'hover:bg-gray-100',
-                                                'group flex w-full items-center gap-x-3 rounded-md py-2 px-3 text-sm/6 font-semibold text-gray-700'
+                                                isActive(sub.key) ? 'bg-accent-subtle text-accent-fg' : 'text-body hover:bg-surface-3',
+                                                'group flex w-full items-center gap-x-3 rounded-md py-2 px-3 text-sm/6 font-semibold'
                                             ]">
                                                 <component v-if="sub.icon" :is="sub.icon" class="size-5 shrink-0"
-                                                    :class="isActive(sub.key) ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600'" />
+                                                    :class="isActive(sub.key) ? 'text-accent-fg' : 'text-subtle group-hover:text-accent-fg'" />
                                                 <span class="truncate">{{ sub.name }}</span>
                                             </button>
                                         </li>
@@ -74,25 +74,25 @@
                                         <!-- Collapsed -->
                                         <div v-else class="relative group">
                                             <div
-                                                :class="[parentHasActiveChild(item) ? 'bg-gray-100' : '', 'flex items-center justify-center rounded-md p-2']">
+                                                :class="[parentHasActiveChild(item) ? 'bg-accent-subtle' : '', 'flex items-center justify-center rounded-md p-2']">
                                                 <component :is="item.icon" class="size-6 shrink-0"
-                                                    :class="parentHasActiveChild(item) ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600'" />
+                                                    :class="parentHasActiveChild(item) ? 'text-accent-fg' : 'text-subtle group-hover:text-accent-fg'" />
                                             </div>
                                             <div class="absolute left-full top-0 h-full w-4" />
                                             <div
-                                                class="absolute left-full top-0 ml-4 w-auto min-w-max scale-0 rounded-md bg-white shadow-lg ring-1 ring-gray-900/5 transition-transform group-hover:scale-100 origin-left z-30">
+                                                class="absolute left-full top-0 ml-4 w-auto min-w-max scale-0 rounded-md bg-surface shadow-lg ring-1 ring-default transition-transform group-hover:scale-100 origin-left z-30">
                                                 <div class="p-2">
-                                                    <p class="px-2 py-1 text-sm font-semibold text-gray-800">{{
+                                                    <p class="px-2 py-1 text-sm font-semibold text-heading">{{
                                                         item.name }}</p>
                                                     <ul role="list" class="mt-1 space-y-1">
                                                         <li v-for="sub in item.children" :key="sub.key">
                                                             <button type="button" @click="select(sub.key)" :class="[
-                                                                isActive(sub.key) ? 'bg-gray-100 text-indigo-600' : 'hover:bg-gray-100 text-gray-700',
+                                                                isActive(sub.key) ? 'bg-accent-subtle text-accent-fg' : 'hover:bg-surface-3 text-body',
                                                                 'group flex w-full items-center gap-x-3 rounded-md p-2 text-left text-sm/6 font-semibold'
                                                             ]">
                                                                 <component v-if="sub.icon" :is="sub.icon"
                                                                     class="size-5 shrink-0"
-                                                                    :class="isActive(sub.key) ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600'" />
+                                                                    :class="isActive(sub.key) ? 'text-accent-fg' : 'text-subtle group-hover:text-accent-fg'" />
                                                                 <span class="truncate">{{ sub.name }}</span>
                                                             </button>
                                                         </li>
@@ -118,16 +118,16 @@
                     <li>
                         <button type="button" @click="toggleNav"
                             :aria-label="isNavCollapsed ? 'Open sidebar' : 'Collapse sidebar'"
-                            class="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white p-1.5 text-gray-600 hover:text-indigo-600 hover:border-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            class="inline-flex items-center justify-center rounded-md border border-strong bg-surface p-1.5 text-body hover:text-accent-fg hover:border-accent focus:outline-none focus:ring-2 focus:ring-focus">
                             <ChevronDoubleLeftIcon v-if="!isNavCollapsed" class="size-4" />
                             <ChevronDoubleLeftIcon v-else class="size-4 rotate-180" />
                         </button>
                     </li>
-                    <li role="separator" aria-hidden="true" class="h-5 border-l border-gray-400 mx-2"></li>
+                    <li role="separator" aria-hidden="true" class="h-5 border-l border-strong mx-2"></li>
                     <li v-for="(page, i) in pages" :key="page.name">
                         <div class="flex items-center">
-                            <ChevronRightIcon v-if="i > 0" class="size-5 shrink-0 text-gray-400" aria-hidden="true" />
-                            <a :href="page.href" class="ml-4 text-sm font-medium text-gray-500 hover:text-gray-700"
+                            <ChevronRightIcon v-if="i > 0" class="size-5 shrink-0 text-subtle" aria-hidden="true" />
+                            <a :href="page.href" class="ml-4 text-sm font-medium text-muted hover:text-body"
                                 :aria-current="page.current ? 'page' : undefined">{{ page.name }}</a>
                         </div>
                     </li>
@@ -135,7 +135,7 @@
             </nav>
 
             <!-- Content wrapper (everything BELOW breadcrumbs) -->
-            <div class="flex-1 shadow md:rounded-md text-gray-600 bg-gray-50 px-4 py-6 md:p-6">
+            <div class="flex-1 shadow md:rounded-md text-body bg-surface-2 px-4 py-6 md:p-6">
                 <!-- inject any child content -->
                 <slot :selected-menu-option="selectedMenuOption"></slot>
             </div>

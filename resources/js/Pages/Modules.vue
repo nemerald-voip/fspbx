@@ -12,12 +12,12 @@
             <template #filters>
                 <div class="relative mb-2 min-w-64 focus-within:z-10 sm:mr-4">
                     <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                        <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                        <MagnifyingGlassIcon class="h-5 w-5 text-subtle" aria-hidden="true" />
                     </div>
                     <input
                         v-model="filterData.search"
                         type="text"
-                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600"
+                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus"
                         placeholder="Search"
                         @keydown.enter="fetchData(1)"
                     />
@@ -26,7 +26,7 @@
                 <div class="relative mb-2 min-w-44 sm:mr-4">
                     <select
                         v-model="filterData.module_enabled"
-                        class="block w-full rounded-md border-0 py-1.5 pl-3 pr-8 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600"
+                        class="block w-full rounded-md border-0 py-1.5 pl-3 pr-8 text-sm leading-6 text-heading ring-1 ring-inset ring-strong focus:ring-2 focus:ring-inset focus:ring-focus"
                         @change="fetchData(1)"
                     >
                         <option value="">All autoload states</option>
@@ -40,19 +40,19 @@
                 <div class="flex flex-wrap items-center justify-end gap-2">
                     <button
                         type="button"
-                        class="inline-flex items-center gap-1 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+                        class="inline-flex items-center gap-1 rounded-md bg-surface px-2.5 py-1.5 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-60"
                         title="Refresh"
                         :disabled="loading"
                         @click="refreshData"
                     >
-                        <ArrowPathIcon class="h-4 w-4 text-gray-500" :class="{ 'animate-spin': loading }" />
+                        <ArrowPathIcon class="h-4 w-4 text-muted" :class="{ 'animate-spin': loading }" />
                         Refresh
                     </button>
 
                     <a
                         v-if="permissions.create"
                         :href="routes.legacy_add"
-                        class="inline-flex items-center gap-1 rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
+                        class="inline-flex items-center gap-1 rounded-md bg-accent px-2.5 py-1.5 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover"
                     >
                         <PlusIcon class="h-4 w-4" />
                         Add
@@ -78,33 +78,33 @@
             </template>
 
             <template #table-header>
-                <TableColumnHeader class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">
+                <TableColumnHeader class="px-4 py-3.5 text-left text-sm font-semibold text-heading">
                     <div class="flex items-center">
                         <input
                             v-if="hasSelectableActions"
                             v-model="selectPageItems"
                             type="checkbox"
                             :disabled="pageItems.length === 0"
-                            class="h-4 w-4 rounded border-gray-300 text-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
+                            class="h-4 w-4 rounded border-strong text-accent-fg disabled:cursor-not-allowed disabled:opacity-50"
                         />
                         <button class="flex items-center" :class="{ 'ml-4': hasSelectableActions }" @click="setSort('module_label')">
                             <span class="mr-2">Module</span>
-                            <ChevronUpIcon v-if="sortData.name === 'module_label' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
-                            <ChevronDownIcon v-else-if="sortData.name === 'module_label' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                            <ChevronUpIcon v-if="sortData.name === 'module_label' && sortData.order === 'asc'" class="h-4 w-4 text-muted" />
+                            <ChevronDownIcon v-else-if="sortData.name === 'module_label' && sortData.order === 'desc'" class="h-4 w-4 text-muted" />
                         </button>
                     </div>
                 </TableColumnHeader>
-                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-heading">
                     <button class="flex items-center" @click="setSort('module_category')">
                         <span class="mr-2">Category</span>
-                        <ChevronUpIcon v-if="sortData.name === 'module_category' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
-                        <ChevronDownIcon v-else-if="sortData.name === 'module_category' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronUpIcon v-if="sortData.name === 'module_category' && sortData.order === 'asc'" class="h-4 w-4 text-muted" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'module_category' && sortData.order === 'desc'" class="h-4 w-4 text-muted" />
                     </button>
                 </TableColumnHeader>
-                <TableColumnHeader header="Runtime" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Autoload" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Description" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader v-if="hasRowActions" header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Runtime" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+                <TableColumnHeader header="Autoload" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+                <TableColumnHeader header="Description" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+                <TableColumnHeader v-if="hasRowActions" header="" class="px-2 py-3.5 text-right text-sm font-semibold text-heading" />
             </template>
 
             <template v-if="selectPageItems" #current-selection>
@@ -113,14 +113,14 @@
                         <span class="font-semibold">{{ selectedItems.length }}</span> modules are selected.
                         <button
                             v-if="!selectAll && selectedItems.length !== data.total"
-                            class="rounded px-2 py-2 text-blue-500 transition duration-500 ease-in-out hover:bg-blue-200 hover:text-blue-500 focus:bg-blue-200 focus:outline-none focus:ring-1 focus:ring-blue-300"
+                            class="rounded px-2 py-2 text-info transition duration-500 ease-in-out hover:bg-info-subtle hover:text-info focus:bg-info-subtle focus:outline-none focus:ring-1 focus:ring-focus"
                             @click="selectAllMatching"
                         >
                             Select all {{ data.total }} modules
                         </button>
                         <button
                             v-if="selectAll"
-                            class="rounded px-2 py-2 text-blue-500 transition duration-500 ease-in-out hover:bg-blue-200 hover:text-blue-500 focus:bg-blue-200 focus:outline-none focus:ring-1 focus:ring-blue-300"
+                            class="rounded px-2 py-2 text-info transition duration-500 ease-in-out hover:bg-info-subtle hover:text-info focus:bg-info-subtle focus:outline-none focus:ring-1 focus:ring-focus"
                             @click="clearSelection"
                         >
                             Clear selection
@@ -131,55 +131,55 @@
 
             <template #table-body>
                 <tr v-for="row in data.data" :key="row.module_uuid">
-                    <TableField class="px-4 py-2 text-sm text-gray-500">
+                    <TableField class="px-4 py-2 text-sm text-muted">
                         <div class="flex items-center">
                             <input
                                 v-if="hasSelectableActions"
                                 v-model="selectedItems"
                                 type="checkbox"
                                 :value="row.module_uuid"
-                                class="h-4 w-4 rounded border-gray-300 text-indigo-600"
+                                class="h-4 w-4 rounded border-strong text-accent-fg"
                             />
                             <div class="min-w-0" :class="{ 'ml-4': hasSelectableActions }">
                                 <a
                                     v-if="permissions.update"
                                     :href="row.edit_url"
-                                    class="font-medium text-gray-900 hover:text-indigo-600"
+                                    class="font-medium text-heading hover:text-accent-fg"
                                 >
                                     {{ row.module_label }}
                                 </a>
-                                <div v-else class="font-medium text-gray-900">{{ row.module_label }}</div>
-                                <div class="mt-1 truncate text-xs text-gray-400">{{ row.module_name }}</div>
+                                <div v-else class="font-medium text-heading">{{ row.module_label }}</div>
+                                <div class="mt-1 truncate text-xs text-subtle">{{ row.module_name }}</div>
                             </div>
                         </div>
                     </TableField>
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted">
                         <Badge :text="row.module_category" v-bind="categoryBadge" />
                     </TableField>
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted">
                         <Badge :text="runtimeLabel(row.status)" v-bind="runtimeBadge(row.status)" />
                     </TableField>
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted">
                         <button v-if="permissions.update" type="button" @click="confirmAction('toggle', [row.module_uuid])">
                             <Badge :text="row.module_enabled === 'true' ? 'Enabled' : 'Disabled'" v-bind="enabledBadge(row.module_enabled)" />
                         </button>
                         <Badge v-else :text="row.module_enabled === 'true' ? 'Enabled' : 'Disabled'" v-bind="enabledBadge(row.module_enabled)" />
                     </TableField>
 
-                    <TableField class="max-w-xl px-2 py-2 text-sm text-gray-500">
+                    <TableField class="max-w-xl px-2 py-2 text-sm text-muted">
                         <span class="line-clamp-2">{{ row.module_description || "No description" }}</span>
                     </TableField>
 
-                    <TableField v-if="hasRowActions" class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
+                    <TableField v-if="hasRowActions" class="whitespace-nowrap px-2 py-1 text-sm text-muted">
                         <template #action-buttons>
                             <div class="flex items-center justify-end gap-1">
                                 <button
                                     v-if="permissions.update && row.status === 'stopped'"
                                     type="button"
-                                    class="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-green-600 disabled:cursor-not-allowed disabled:opacity-40"
+                                    class="rounded-full p-2 text-subtle transition hover:bg-surface-3 hover:text-success disabled:cursor-not-allowed disabled:opacity-40"
                                     title="Start"
                                     :disabled="!row.can_control_runtime"
                                     @click="confirmAction('start', [row.module_uuid])"
@@ -189,7 +189,7 @@
                                 <button
                                     v-if="permissions.update && row.status === 'running'"
                                     type="button"
-                                    class="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-amber-600 disabled:cursor-not-allowed disabled:opacity-40"
+                                    class="rounded-full p-2 text-subtle transition hover:bg-surface-3 hover:text-warning disabled:cursor-not-allowed disabled:opacity-40"
                                     title="Stop"
                                     :disabled="!row.can_control_runtime"
                                     @click="confirmAction('stop', [row.module_uuid])"
@@ -199,7 +199,7 @@
                                 <a
                                     v-if="permissions.update"
                                     :href="row.edit_url"
-                                    class="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+                                    class="rounded-full p-2 text-subtle transition hover:bg-surface-3 hover:text-body"
                                     title="Edit"
                                 >
                                     <PencilSquareIcon class="h-5 w-5" />
@@ -207,7 +207,7 @@
                                 <button
                                     v-if="permissions.destroy"
                                     type="button"
-                                    class="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-red-600"
+                                    class="rounded-full p-2 text-subtle transition hover:bg-surface-3 hover:text-danger"
                                     title="Delete"
                                     @click="confirmAction('delete', [row.module_uuid])"
                                 >
@@ -220,7 +220,7 @@
             </template>
 
             <template #empty>
-                <div v-if="!loading && data.data.length === 0" class="px-6 py-8 text-center text-sm text-gray-500">
+                <div v-if="!loading && data.data.length === 0" class="px-6 py-8 text-center text-sm text-muted">
                     No modules found.
                 </div>
             </template>
@@ -317,9 +317,9 @@ const selectPageItems = computed({
 });
 
 const categoryBadge = {
-    backgroundColor: "bg-slate-50",
-    textColor: "text-slate-700",
-    ringColor: "ring-slate-600/20",
+    backgroundColor: "bg-surface-2",
+    textColor: "text-body",
+    ringColor: "ring-strong/20",
 };
 
 const bulkActions = computed(() => {
@@ -525,16 +525,16 @@ function runtimeLabel(status) {
 
 function runtimeBadge(status) {
     return {
-        running: { backgroundColor: "bg-emerald-50", textColor: "text-emerald-700", ringColor: "ring-emerald-600/20" },
-        stopped: { backgroundColor: "bg-rose-50", textColor: "text-rose-700", ringColor: "ring-rose-600/20" },
-        unknown: { backgroundColor: "bg-gray-50", textColor: "text-gray-600", ringColor: "ring-gray-500/20" },
-    }[status] || { backgroundColor: "bg-gray-50", textColor: "text-gray-600", ringColor: "ring-gray-500/20" };
+        running: { backgroundColor: "bg-success-subtle", textColor: "text-success", ringColor: "ring-success/20" },
+        stopped: { backgroundColor: "bg-danger-subtle", textColor: "text-danger", ringColor: "ring-danger/20" },
+        unknown: { backgroundColor: "bg-surface-2", textColor: "text-body", ringColor: "ring-strong/20" },
+    }[status] || { backgroundColor: "bg-surface-2", textColor: "text-body", ringColor: "ring-strong/20" };
 }
 
 function enabledBadge(enabled) {
     return enabled === "true"
-        ? { backgroundColor: "bg-blue-50", textColor: "text-blue-700", ringColor: "ring-blue-600/20" }
-        : { backgroundColor: "bg-gray-50", textColor: "text-gray-600", ringColor: "ring-gray-500/20" };
+        ? { backgroundColor: "bg-info-subtle", textColor: "text-info", ringColor: "ring-info/20" }
+        : { backgroundColor: "bg-surface-2", textColor: "text-body", ringColor: "ring-strong/20" };
 }
 
 function showNotification(type, messages = null) {

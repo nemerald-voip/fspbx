@@ -1,5 +1,5 @@
 <template>
-    <VAceEditor v-model:value="modelValue" @init="editorInit" :lang="lang" :theme="theme" :options="editorOptions"
+    <VAceEditor v-model:value="modelValue" @init="editorInit" :lang="lang" :theme="effectiveTheme" :options="editorOptions"
         :style="editorStyle" />
 </template>
 
@@ -7,6 +7,7 @@
 import { ref, watch, computed } from 'vue'
 import { VAceEditor } from 'vue3-ace-editor'
 import ace from 'ace-builds'
+import { useTheme } from '../../../composables/useTheme'
 
 // If you prefer serving ACE assets yourself, you can also set a basePath:
 // ace.config.set('basePath', '/ace'); // make sure assets are available at this path
@@ -93,6 +94,10 @@ const editorStyle = computed(() => ({
     height: typeof props.height === 'number' ? `${props.height}px` : props.height,
     width: '100%',
 }))
+
+// Use a dark ACE theme when the app is in dark mode; otherwise the caller's theme.
+const { isDark } = useTheme()
+const effectiveTheme = computed(() => (isDark.value ? 'one_dark' : props.theme))
 
 
 // Sync prop → local

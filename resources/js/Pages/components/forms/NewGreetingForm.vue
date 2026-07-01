@@ -3,7 +3,7 @@
         <Dialog as="div" class="relative z-50" @close="closeModal">
             <TransitionChild as="div" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100"
                 leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0">
-                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+                <div class="fixed inset-0 bg-gray-500 dark:bg-gray-900 bg-opacity-75 transition-opacity" />
             </TransitionChild>
             <div class="fixed inset-0 z-50 w-screen overflow-y-auto">
                 <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
@@ -14,16 +14,16 @@
                         leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
 
                         <DialogPanel
-                            class="relative transform rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl sm:p-6">
+                            class="relative transform rounded-lg bg-surface px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl sm:p-6">
 
-                            <DialogTitle as="h3" class="mb-4 pr-8 text-base font-semibold leading-6 text-gray-900">
+                            <DialogTitle as="h3" class="mb-4 pr-8 text-base font-semibold leading-6 text-heading">
                                 {{ header || title }}
                             </DialogTitle>
-                            <p class="mt-1 mb-6 text-sm text-gray-500">Select a method for creating a new greeting.</p>
+                            <p class="mt-1 mb-6 text-sm text-muted">Select a method for creating a new greeting.</p>
 
                             <div class="absolute right-0 top-0 pr-4 pt-4 sm:block">
                                 <button type="button"
-                                    class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                                    class="rounded-md bg-surface text-subtle hover:text-muted focus:outline-none focus:ring-2 focus:ring-focus focus:ring-offset-2"
                                     @click="closeModal">
                                     <span class="sr-only">Close</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
@@ -80,7 +80,7 @@
                                     <div class="flex items-center gap-2">
                                         <audio controls controlsList="nodownload" :src="audioUrl" class="h-10 min-w-0 flex-1"></audio>
                                         <button type="button" @click="downloadDraftGreeting" :disabled="isDownloading"
-                                            class="grid h-10 w-10 flex-none place-items-center rounded-md text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                            class="grid h-10 w-10 flex-none place-items-center rounded-md text-subtle transition hover:bg-surface-3 hover:text-body focus:outline-none focus:ring-2 focus:ring-focus focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                             title="Download draft recording" aria-label="Download draft recording">
                                             <DownloadIcon class="h-5 w-5" :class="{ 'animate-pulse': isDownloading }" aria-hidden="true" />
                                         </button>
@@ -99,9 +99,9 @@
                                     description="Supported formats: WAV, MP3, or M4A" :upload-temp-endpoint="false"
                                     :remove-temp-endpoint="false" :remove-endpoint="false" :drop="true" :add-classes="{
                                         FilePreview: {
-                                            wrapper: 'bg-teal-50 border border-teal-200 rounded-md p-2 mt-3 shadow-sm',
-                                            filenameStatic: 'font-semibold text-teal-700 truncate',
-                                            remove: 'bg-teal-200 hover:bg-teal-300 text-teal-800 rounded-full p-1 ml-4'
+                                            wrapper: 'bg-teal-50 dark:bg-teal-900/40 border border-teal-200 dark:border-teal-700 rounded-md p-2 mt-3 shadow-sm',
+                                            filenameStatic: 'font-semibold text-teal-700 dark:text-teal-300 truncate',
+                                            remove: 'bg-teal-200 dark:bg-teal-800 hover:bg-teal-300 dark:hover:bg-teal-800 text-teal-800 dark:text-teal-300 rounded-full p-1 ml-4'
                                         }
                                     }" @change="handleVueformFileUpload" :columns="{ container: 12, sm: 8 }"
                                     :error="errors?.file ? errors.file[0] : null"
@@ -118,10 +118,10 @@
                                 <StaticElement name="phone_instructions" :columns="12"
                                     :conditions="[['greeting_method', '==', 'phone-call']]">
                                     <div class="mt-3">
-                                        <p class="text-sm text-gray-500">
+                                        <p class="text-sm text-muted">
                                             To record a new greeting using your phone, follow these steps:
                                         </p>
-                                        <ul class="mt-2 text-sm text-gray-500 list-disc pl-5">
+                                        <ul class="mt-2 text-sm text-muted list-disc pl-5">
                                             <li v-for="(instruction, index) in phone_call_instructions" :key="index"
                                                 v-html="instruction" />
                                         </ul>
@@ -130,13 +130,13 @@
 
                                 <!-- Server Error Alert -->
                                 <StaticElement name="server_error" v-if="errors?.server" :columns="12">
-                                    <div class="rounded-md bg-red-50 p-4 mt-4">
+                                    <div class="rounded-md bg-danger-subtle p-4 mt-4">
                                         <div class="flex">
                                             <div class="flex-shrink-0">
-                                                <XCircleIcon class="h-5 w-5 text-red-400" aria-hidden="true" />
+                                                <XCircleIcon class="h-5 w-5 text-danger" aria-hidden="true" />
                                             </div>
                                             <div class="ml-3">
-                                                <h3 class="text-sm font-medium text-red-800">{{ errors.server[0] }}
+                                                <h3 class="text-sm font-medium text-danger">{{ errors.server[0] }}
                                                 </h3>
                                             </div>
                                         </div>
@@ -145,13 +145,13 @@
 
                                 <!-- Success Message Alert -->
                                 <StaticElement name="success_message" v-if="successMessage" :columns="12">
-                                    <div class="rounded-md bg-green-50 p-4 mt-4">
+                                    <div class="rounded-md bg-success-subtle p-4 mt-4">
                                         <div class="flex">
                                             <div class="flex-shrink-0">
-                                                <CheckCircleIcon class="h-5 w-5 text-green-400" aria-hidden="true" />
+                                                <CheckCircleIcon class="h-5 w-5 text-success" aria-hidden="true" />
                                             </div>
                                             <div class="ml-3">
-                                                <h3 class="text-sm font-medium text-green-800">{{ successMessage }}
+                                                <h3 class="text-sm font-medium text-success">{{ successMessage }}
                                                 </h3>
                                             </div>
                                         </div>

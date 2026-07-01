@@ -2,13 +2,13 @@
     <MainLayout />
 
     <div class="m-3">
-        <div class="mb-3 flex items-center gap-2 text-sm text-gray-500">
-            <a :href="routes.back" class="inline-flex items-center gap-1 text-indigo-600 hover:underline">
+        <div class="mb-3 flex items-center gap-2 text-sm text-muted">
+            <a :href="routes.back" class="inline-flex items-center gap-1 text-accent-fg hover:underline">
                 <ArrowLeftIcon class="h-4 w-4" />
                 Basic Dialer
             </a>
-            <span class="text-gray-300">/</span>
-            <span class="text-gray-700">Contact Lists</span>
+            <span class="text-subtle">/</span>
+            <span class="text-body">Contact Lists</span>
         </div>
 
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
@@ -19,22 +19,22 @@
             <template #filters>
                 <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
                     <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                        <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                        <MagnifyingGlassIcon class="h-5 w-5 text-subtle" aria-hidden="true" />
                     </div>
                     <input type="text" v-model="filterData.search" name="mobile-search-contact-lists"
                         id="mobile-search-contact-lists"
-                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
+                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus sm:hidden"
                         placeholder="Search" @keydown.enter="handleSearchButtonClick" />
                     <input type="text" v-model="filterData.search" name="desktop-search-contact-lists"
                         id="desktop-search-contact-lists"
-                        class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
+                        class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus sm:block"
                         placeholder="Search" @keydown.enter="handleSearchButtonClick" />
                 </div>
             </template>
 
             <template #action>
                 <button v-if="permissions.create" type="button" @click.prevent="handleCreateButtonClick"
-                    class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                    class="rounded-md bg-accent px-2.5 py-1.5 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
                     Create
                 </button>
             </template>
@@ -48,22 +48,22 @@
 
             <template #table-header>
                 <TableColumnHeader
-                    class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
+                    class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-heading items-center justify-start">
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
-                        class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                        class="h-4 w-4 rounded border-strong text-accent-fg">
                     <div class="pl-4 flex items-center cursor-pointer select-none" @click="handleSortRequest('name')">
                         <span class="mr-2">Name</span>
                         <ChevronUpIcon v-if="sortData.name === 'name' && sortData.order === 'asc'"
-                            class="h-4 w-4 text-gray-500" />
+                            class="h-4 w-4 text-muted" />
                         <ChevronDownIcon v-else-if="sortData.name === 'name' && sortData.order === 'desc'"
-                            class="h-4 w-4 text-gray-500" />
+                            class="h-4 w-4 text-muted" />
                     </div>
                 </TableColumnHeader>
-                <TableColumnHeader header="Enabled" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Contacts" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Campaigns" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Description" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Enabled" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+                <TableColumnHeader header="Contacts" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+                <TableColumnHeader header="Campaigns" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+                <TableColumnHeader header="Description" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+                <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-heading" />
             </template>
 
             <template v-if="selectPageItems" v-slot:current-selection>
@@ -71,12 +71,12 @@
                     <div class="text-sm text-center m-2">
                         <span class="font-semibold">{{ selectedItems.length }}</span> items are selected.
                         <button v-if="!selectAll && selectedItems.length !== data.total"
-                            class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
+                            class="text-info rounded py-2 px-2 hover:bg-info-subtle hover:text-info focus:outline-none focus:ring-1 focus:bg-info-subtle focus:ring-focus transition duration-500 ease-in-out"
                             @click="handleSelectAll">
                             Select all {{ data.total }} items
                         </button>
                         <button v-if="selectAll"
-                            class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
+                            class="text-info rounded py-2 px-2 hover:bg-info-subtle hover:text-info focus:outline-none focus:ring-1 focus:bg-info-subtle focus:ring-focus transition duration-500 ease-in-out"
                             @click="handleClearSelection">
                             Clear selection
                         </button>
@@ -86,35 +86,35 @@
 
             <template #table-body>
                 <tr v-for="row in data.data" :key="row.basic_dialer_contact_list_uuid">
-                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500" :text="row.name">
+                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-muted" :text="row.name">
                         <div class="flex items-center">
                             <input v-model="selectedItems" type="checkbox" name="action_box[]"
                                 :value="row.basic_dialer_contact_list_uuid"
-                                class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                            <div class="ml-4" :class="{ 'cursor-pointer hover:text-gray-900': permissions.update }"
+                                class="h-4 w-4 rounded border-strong text-accent-fg">
+                            <div class="ml-4" :class="{ 'cursor-pointer hover:text-heading': permissions.update }"
                                 @click="permissions.update && handleEditButtonClick(row.basic_dialer_contact_list_uuid)">
                                 {{ row.name }}
                             </div>
                         </div>
                     </TableField>
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted">
                         <Badge :text="row.enabled ? 'True' : 'False'" v-bind="enabledBadgeProps(row.enabled)" />
                     </TableField>
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted"
                         :text="row.contacts_count ?? 0" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted"
                         :text="row.campaigns_count ?? 0" />
-                    <TableField class="px-2 py-2 text-sm text-gray-500" :text="row.description" />
-                    <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
+                    <TableField class="px-2 py-2 text-sm text-muted" :text="row.description" />
+                    <TableField class="whitespace-nowrap px-2 py-1 text-sm text-muted">
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap justify-end">
                                 <PencilSquareIcon v-if="permissions.update"
                                     @click="handleEditButtonClick(row.basic_dialer_contact_list_uuid)"
-                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
+                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer"
                                     title="Edit" />
                                 <TrashIcon v-if="permissions.destroy"
                                     @click="handleSingleItemDeleteRequest(row.basic_dialer_contact_list_uuid)"
-                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
+                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer"
                                     title="Delete" />
                             </div>
                         </template>
@@ -124,9 +124,9 @@
 
             <template #empty>
                 <div v-if="data.data.length === 0" class="text-center my-5">
-                    <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
-                    <p class="mt-1 text-sm text-gray-500">Adjust your search and try again.</p>
+                    <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-subtle" />
+                    <h3 class="mt-2 text-sm font-semibold text-heading">No results found</h3>
+                    <p class="mt-1 text-sm text-muted">Adjust your search and try again.</p>
                 </div>
             </template>
 
@@ -385,6 +385,6 @@ const handleErrorResponse = (error) => {
 };
 
 const enabledBadgeProps = (enabled) => enabled
-    ? { backgroundColor: "bg-green-50", textColor: "text-green-700", ringColor: "ring-green-600/20" }
-    : { backgroundColor: "bg-gray-50", textColor: "text-gray-700", ringColor: "ring-gray-600/20" };
+    ? { backgroundColor: "bg-success-subtle", textColor: "text-success", ringColor: "ring-success/20" }
+    : { backgroundColor: "bg-surface-2", textColor: "text-body", ringColor: "ring-strong/20" };
 </script>

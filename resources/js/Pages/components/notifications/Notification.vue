@@ -9,19 +9,19 @@
                     leave-active-class="transition ease-in duration-100" leave-from-class="opacity-100"
                     leave-to-class="opacity-0">
                     <div v-if="isVisible"
-                        class="pointer-events-auto w-full max-w-sm overflow-hidden rounded-lg bg-gray-50 shadow-lg ring-1 ring-black ring-opacity-5">
+                        class="pointer-events-auto w-full max-w-sm overflow-hidden rounded-lg bg-surface-2 shadow-lg ring-1 ring-black/5 dark:ring-white/10">
                         <div class="p-4">
                             <div class="flex items-start">
                                 <div v-if="type == 'success'" class="flex-shrink-0">
-                                    <CheckCircleIcon class="h-6 w-6 text-green-400" aria-hidden="true" />
+                                    <CheckCircleIcon class="h-6 w-6 text-success" aria-hidden="true" />
                                 </div>
                                 <div v-if="type == 'error'" class="flex-shrink-0">
-                                    <XCircleIcon class="h-6 w-6 text-red-400" aria-hidden="true" />
+                                    <XCircleIcon class="h-6 w-6 text-danger" aria-hidden="true" />
                                 </div>
                                 <div class="ml-3 w-0 flex-1 pt-0.5">
-                                    <p v-if="type == 'success'" class="text-sm font-medium text-gray-900 mb-1">Success!</p>
-                                    <p v-if="type == 'error'" class="text-sm font-medium text-gray-900 mb-1">Error!</p>
-                                    <div v-if="messages && Object.keys(messages).length > 0" class="text-sm text-gray-500">
+                                    <p v-if="type == 'success'" class="text-sm font-medium text-heading mb-1">Success!</p>
+                                    <p v-if="type == 'error'" class="text-sm font-medium text-heading mb-1">Error!</p>
+                                    <div v-if="messages && Object.keys(messages).length > 0" class="text-sm text-muted">
                                         <ul role="list" class="list-disc space-y-1 pl-5">
                                             <li v-for="(message, index) in messages" :key="index">
                                                 <span>{{ message[0] }}</span>
@@ -31,7 +31,7 @@
                                 </div>
                                 <div class="ml-4 flex flex-shrink-0">
                                     <button type="button" @click="closeNotification"
-                                        class="inline-flex rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                                        class="inline-flex rounded-md bg-surface-2 text-subtle hover:text-muted focus:outline-none focus:ring-2 focus:ring-focus focus:ring-offset-2">
                                         <span class="sr-only">Close</span>
                                         <XMarkIcon class="h-5 w-5" aria-hidden="true" />
                                     </button>

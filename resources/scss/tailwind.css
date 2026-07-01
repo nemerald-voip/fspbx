@@ -3,6 +3,91 @@
 @tailwind utilities;
 
 
+/* =====================================================================
+   Dark Mode — Semantic Color Tokens
+   See documentation/dark-mode-palette.md
+   Light (:root) values match the current UI exactly (no visual change).
+   Dark (.dark) uses a 3-level elevation model: gray-950 -> 900 -> 800.
+   ===================================================================== */
+/* Values are space-separated RGB channels so Tailwind opacity modifiers work
+   (bg-danger/15, ring-success/20, bg-surface/50, ...). Config wraps each in
+   rgb(var(--x) / <alpha-value>). --color-overlay keeps a baked-in alpha. */
+:root {
+    /* surfaces */
+    --color-bg: 243 244 246;      /* gray-100  page background      */
+    --color-surface: 255 255 255; /* white     cards/modals/sidebar */
+    --color-surface-2: 249 250 251; /* gray-50 content card/headers */
+    --color-surface-3: 243 244 246; /* gray-100 hover/active rows   */
+    --color-overlay: rgba(107, 114, 128, 0.75); /* modal backdrop   */
+
+    /* text */
+    --color-text-heading: 17 24 39;  /* gray-900 */
+    --color-text-body: 55 65 81;     /* gray-700 */
+    --color-text-muted: 107 114 128; /* gray-500 */
+    --color-text-subtle: 156 163 175;/* gray-400 */
+    --color-on-accent: 255 255 255;
+
+    /* borders / focus */
+    --color-border-default: 229 231 235; /* gray-200 */
+    --color-border-strong: 209 213 219;  /* gray-300 */
+    --color-focus: 99 102 241;           /* indigo-500 */
+
+    /* accent (indigo brand) */
+    --color-accent: 79 70 229;       /* indigo-600  button fill   */
+    --color-accent-hover: 67 56 202; /* indigo-700  button hover  */
+    --color-accent-fg: 79 70 229;    /* indigo-600  links/icons   */
+
+    /* status (text/icon + -subtle backgrounds) */
+    --color-success: 22 163 74;  /* green-600 */
+    --color-danger: 220 38 38;   /* red-600 */
+    --color-warning: 217 119 6;  /* amber-600 */
+    --color-info: 37 99 235;     /* blue-600 */
+
+    /* SOLID action-button fills — kept dark enough in BOTH themes for white
+       text (the DEFAULT status tokens lighten in dark and fail on white). */
+    --color-success-solid: 22 163 74;        /* green-600 */
+    --color-success-solid-hover: 21 128 61;  /* green-700 */
+    --color-danger-solid: 220 38 38;         /* red-600 */
+    --color-danger-solid-hover: 185 28 28;   /* red-700 */
+    --color-warning-solid: 217 119 6;        /* amber-600 */
+    --color-warning-solid-hover: 180 83 9;   /* amber-700 */
+    --color-info-solid: 37 99 235;           /* blue-600 */
+    --color-info-solid-hover: 29 78 216;     /* blue-700 */
+}
+
+.dark {
+    /* surfaces */
+    --color-bg: 3 7 18;          /* gray-950 */
+    --color-surface: 17 24 39;   /* gray-900 */
+    --color-surface-2: 31 41 55; /* gray-800 */
+    --color-surface-3: 55 65 81; /* gray-700 */
+    --color-overlay: rgba(0, 0, 0, 0.70);
+
+    /* text */
+    --color-text-heading: 255 255 255;
+    --color-text-body: 243 244 246;  /* gray-100 */
+    --color-text-muted: 156 163 175; /* gray-400 */
+    --color-text-subtle: 107 114 128;/* gray-500 */
+    --color-on-accent: 255 255 255;
+
+    /* borders / focus */
+    --color-border-default: 55 65 81; /* gray-700 */
+    --color-border-strong: 75 85 99;  /* gray-600 */
+    --color-focus: 129 140 248;       /* indigo-400 */
+
+    /* accent */
+    --color-accent: 99 102 241;      /* indigo-500 */
+    --color-accent-hover: 79 70 229; /* indigo-600 */
+    --color-accent-fg: 129 140 248;  /* indigo-400 */
+
+    /* status (lighter on dark surfaces) */
+    --color-success: 74 222 128; /* green-400 */
+    --color-danger: 248 113 113; /* red-400 */
+    --color-warning: 251 191 36; /* amber-400 */
+    --color-info: 96 165 250;    /* blue-400 */
+}
+
+
 .multiselect {
     color: inherit !important;
 }
@@ -82,5 +167,158 @@
 
     --vf-font-size: 0.875rem;
     /* --vf-font-size-small: 0.575rem; */
+}
+
+/* Dark safety-net for form controls: @tailwindcss/forms defaults inputs to a
+   white background in the base layer, which is invisible in dark mode. This
+   gives any background-less control a readable dark background. Explicit bg-*
+   utilities live in @layer utilities and still win over this. */
+@layer base {
+    /* Tell the UA to render native chrome (scrollbars, select popups, date
+       spinners) in dark; color-scheme inherits from the root. */
+    .dark {
+        color-scheme: dark;
+    }
+
+    .dark [type='text'],
+    .dark [type='email'],
+    .dark [type='url'],
+    .dark [type='password'],
+    .dark [type='number'],
+    .dark [type='date'],
+    .dark [type='datetime-local'],
+    .dark [type='month'],
+    .dark [type='search'],
+    .dark [type='tel'],
+    .dark [type='time'],
+    .dark [type='week'],
+    .dark textarea,
+    .dark select {
+        background-color: rgb(var(--color-surface));
+        color: rgb(var(--color-text-body));
+        border-color: rgb(var(--color-border-default));
+    }
+
+    /* Native checkbox/radio default to white; give them a dark box. (Checked
+       state uses currentColor via @tailwindcss/forms and is unaffected.) */
+    .dark [type='checkbox'],
+    .dark [type='radio'] {
+        background-color: rgb(var(--color-surface));
+        border-color: rgb(var(--color-border-strong));
+    }
+
+    /* Disabled controls: distinct from enabled in dark. */
+    .dark [type='text']:disabled,
+    .dark [type='email']:disabled,
+    .dark [type='url']:disabled,
+    .dark [type='password']:disabled,
+    .dark [type='number']:disabled,
+    .dark [type='search']:disabled,
+    .dark [type='tel']:disabled,
+    .dark textarea:disabled,
+    .dark select:disabled {
+        background-color: rgb(var(--color-surface-2));
+        color: rgb(var(--color-text-muted));
+    }
+
+    /* Autofilled fields: the UA paints its own (light) background that
+       background-color can't override — repaint via an inset shadow. */
+    .dark input:-webkit-autofill,
+    .dark input:-webkit-autofill:hover,
+    .dark input:-webkit-autofill:focus,
+    .dark textarea:-webkit-autofill,
+    .dark select:-webkit-autofill {
+        -webkit-box-shadow: 0 0 0 1000px rgb(var(--color-surface)) inset;
+        -webkit-text-fill-color: rgb(var(--color-text-body));
+        caret-color: rgb(var(--color-text-body));
+    }
+}
+
+/* Focus-ring offset defaults to white (set by Tailwind on every element), which
+   shows a white halo on dark surfaces. Re-point it to the surface color. Uses
+   the universal selector because the default is set on `*`, defeating inheritance. */
+.dark, .dark :before, .dark :after, .dark * {
+    --tw-ring-offset-color: rgb(var(--color-surface));
+}
+
+/* ---------------------------------------------------------------------------
+   Third-party widget dark styling (libs that don't read Tailwind utilities).
+   Token vars hold RGB channels, so raw CSS must wrap them in rgb(...).
+   --------------------------------------------------------------------------- */
+
+/* vue-multiselect */
+.dark .multiselect__tags {
+    background: rgb(var(--color-surface));
+    border-color: rgb(var(--color-border-default)) !important;
+}
+.dark .multiselect__input,
+.dark .multiselect__single {
+    background: transparent;
+    color: rgb(var(--color-text-body));
+}
+.dark .multiselect__content-wrapper {
+    background: rgb(var(--color-surface));
+    border-color: rgb(var(--color-border-default));
+}
+.dark .multiselect__option {
+    color: rgb(var(--color-text-body));
+}
+.dark .multiselect__option--highlight,
+.dark .multiselect__option--highlight:after {
+    background-color: rgb(var(--color-surface-3)) !important;
+    color: rgb(var(--color-text-heading)) !important;
+}
+.dark .multiselect__option--selected,
+.dark .multiselect__option--selected:after {
+    background-color: rgb(var(--color-surface-2)) !important;
+    color: rgb(var(--color-text-heading)) !important;
+}
+.dark .multiselect--disabled,
+.dark .multiselect__option--disabled {
+    background: rgb(var(--color-surface-2)) !important;
+    color: rgb(var(--color-text-muted)) !important;
+}
+.dark .multiselect__tag {
+    background-color: rgb(var(--color-accent)) !important;
+    color: rgb(var(--color-on-accent)) !important;
+}
+.dark .multiselect__placeholder {
+    color: rgb(var(--color-text-subtle));
+}
+.dark .multiselect__select:before {
+    border-color: rgb(var(--color-text-subtle)) transparent transparent;
+}
+.dark .multiselect__spinner {
+    background: rgb(var(--color-surface));
+}
+
+/* @vuepic/vue-datepicker — drive its theme vars from our tokens in dark.
+   (Components also pass :dark, this keeps the palette consistent.) */
+.dark .dp__theme_dark,
+.dark .dp__main {
+    --dp-background-color: rgb(var(--color-surface));
+    --dp-text-color: rgb(var(--color-text-body));
+    --dp-hover-color: rgb(var(--color-surface-3));
+    --dp-hover-text-color: rgb(var(--color-text-heading));
+    --dp-primary-color: rgb(var(--color-accent));
+    --dp-primary-text-color: rgb(var(--color-on-accent));
+    --dp-border-color: rgb(var(--color-border-default));
+    --dp-menu-border-color: rgb(var(--color-border-default));
+    --dp-icon-color: rgb(var(--color-text-subtle));
+    --dp-secondary-color: rgb(var(--color-text-muted));
+}
+
+/* Vueform dark overrides. The block above sets these vars on `*`, which
+   defeats normal inheritance, so dark must also target `.dark *` to win. */
+.dark, .dark :before, .dark :after, .dark * {
+    --vf-primary: #6366F1;
+    --vf-primary-darker: #818cf8;
+    --vf-bg-input: #111827;            /* gray-900 — match native input bg */
+    --vf-color-input: #f3f4f6;         /* gray-100 */
+    --vf-border-color-input: #374151;  /* gray-700 */
+    --vf-bg-disabled: #1f2937;         /* gray-800 */
+    --vf-color-disabled: #6b7280;      /* gray-500 */
+    --vf-bg-selected: #374151;         /* gray-700 — selected option (was light) */
+    --vf-bg-passive: #374151;          /* gray-700 — toggle off-track/rail (was light) */
 }
 

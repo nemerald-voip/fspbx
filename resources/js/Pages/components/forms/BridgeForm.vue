@@ -3,7 +3,7 @@
         <Dialog as="div" class="relative z-10" @close="emit('close')">
             <TransitionChild as="div" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100"
                 leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0">
-                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+                <div class="fixed inset-0 bg-gray-500 dark:bg-gray-900 bg-opacity-75 transition-opacity" />
             </TransitionChild>
 
             <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
@@ -14,14 +14,14 @@
                         leave-from="opacity-100 translate-y-0 sm:scale-100"
                         leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
                         <DialogPanel
-                            class="relative transform rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-5xl sm:p-6">
-                            <DialogTitle as="h3" class="mb-4 pr-8 text-base font-semibold leading-6 text-gray-900">
+                            class="relative transform rounded-lg bg-surface px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-5xl sm:p-6">
+                            <DialogTitle as="h3" class="mb-4 pr-8 text-base font-semibold leading-6 text-heading">
                                 {{ header }}
                             </DialogTitle>
 
                             <div class="absolute right-0 top-0 pr-4 pt-4 sm:block">
                                 <button type="button"
-                                    class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                                    class="rounded-md bg-surface text-subtle hover:text-muted focus:outline-none focus:ring-2 focus:ring-focus focus:ring-offset-2"
                                     @click="emit('close')">
                                     <span class="sr-only">Close</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
@@ -30,14 +30,14 @@
 
                             <div v-if="loading" class="w-full h-full py-10">
                                 <div class="flex justify-center items-center space-x-3">
-                                    <svg class="animate-spin h-10 w-10 text-blue-600"
+                                    <svg class="animate-spin h-10 w-10 text-info"
                                         xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
                                             stroke-width="4" />
                                         <path class="opacity-75" fill="currentColor"
                                             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                     </svg>
-                                    <div class="text-lg text-blue-600 m-auto">Loading...</div>
+                                    <div class="text-lg text-info m-auto">Loading...</div>
                                 </div>
                             </div>
 
@@ -74,7 +74,7 @@
                                         </div>
 
                                         <div
-                                            class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
+                                            class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-body bg-surface-2 px-4 py-6 sm:p-6">
                                             <FormElements>
                                                 <HiddenElement name="bridge_uuid" :meta="true" />
 
@@ -84,21 +84,21 @@
                                                 <StaticElement name="bridge_uuid_clean"
                                                     :conditions="[() => props.options?.item?.bridge_uuid]">
                                                     <div class="mb-1">
-                                                        <div class="text-sm font-medium text-gray-600 mb-1">
+                                                        <div class="text-sm font-medium text-body mb-1">
                                                             Unique ID
                                                         </div>
 
                                                         <div class="flex items-center group">
-                                                            <span class="text-sm text-gray-900 select-all font-normal">
+                                                            <span class="text-sm text-heading select-all font-normal">
                                                                 {{ props.options?.item?.bridge_uuid }}
                                                             </span>
 
                                                             <button type="button"
                                                                 @click="handleCopyToClipboard(props.options?.item?.bridge_uuid)"
-                                                                class="ml-2 p-1 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
+                                                                class="ml-2 p-1 rounded-full text-subtle hover:text-info hover:bg-info-subtle transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
                                                                 title="Copy to clipboard">
                                                                 <ClipboardDocumentIcon
-                                                                    class="h-4 w-4 text-gray-500 hover:text-gray-900 cursor-pointer" />
+                                                                    class="h-4 w-4 text-muted hover:text-heading cursor-pointer" />
                                                             </button>
                                                         </div>
                                                     </div>

@@ -2,7 +2,7 @@
     <Menu as="div" class="">
         <div>
             <MenuButton ref="trigger"
-                class="flex items-center rounded py-2 hover:bg-gray-200 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-1 focus:bg-gray-200 focus:ring-gray-300 transition duration-500 ease-in-out">
+                class="flex items-center rounded py-2 hover:bg-surface-3 text-subtle hover:text-body focus:outline-none focus:ring-1 focus:bg-surface-3 focus:ring-strong transition duration-500 ease-in-out">
                 <span class="sr-only">Open options</span>
                 <EllipsisVerticalIcon class="h-5 w-5" aria-hidden="true" />
             </MenuButton>
@@ -16,7 +16,7 @@
             leave-from-class="transform opacity-100 scale-100"
             leave-to-class="transform opacity-0 scale-95">
             <MenuItems ref="container"
-                class="z-50 w-56 origin-top-right rounded-md bg-white py-2 shadow-xl ring-1 ring-gray-900/5 focus:outline-none">
+                class="z-50 w-56 origin-top-right rounded-md bg-surface py-2 shadow-xl ring-1 ring-default focus:outline-none">
                 <div v-for="(group, idx) in actions" :key="group.category">
                     <!-- Dynamic category name -->
                     <div class="px-4 py-3">
@@ -29,17 +29,17 @@
                                 @click="$emit('advancedAction', action.id)"
                                 :class="[
                                     'group flex items-center px-8 py-2 text-sm min-w-full transition',
-                                    active ? 'bg-gray-100 text-gray-900' : 'text-gray-500'
+                                    active ? 'bg-surface-3 text-heading' : 'text-muted'
                                 ]"
                             >
                                 <component :is="getIconComponent(action.icon)"
-                                    class="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500"
+                                    class="mr-3 h-5 w-5 text-subtle group-hover:text-muted"
                                     aria-hidden="true" />
                                 {{ action.label }}
                             </button>
                         </MenuItem>
                     </div>
-                    <div v-if="idx !== actions.length - 1" class="border-t border-gray-100 my-1"></div>
+                    <div v-if="idx !== actions.length - 1" class="border-t border-default my-1"></div>
                 </div>
             </MenuItems>
         </transition>

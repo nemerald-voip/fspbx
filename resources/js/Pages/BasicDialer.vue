@@ -5,37 +5,37 @@
         <div class="px-4 sm:px-6 lg:px-8">
             <div class="mb-6 mt-2 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                    <p class="text-xs font-semibold uppercase tracking-wide text-indigo-600">Outbound Dialer</p>
-                    <h1 class="mt-1 text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl">Basic Dialer</h1>
-                    <p class="mt-1 text-sm text-gray-500">Lightweight outbound campaigns and reusable contact lists.</p>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-accent-fg">Outbound Dialer</p>
+                    <h1 class="mt-1 text-2xl font-semibold tracking-tight text-heading sm:text-3xl">Basic Dialer</h1>
+                    <p class="mt-1 text-sm text-muted">Lightweight outbound campaigns and reusable contact lists.</p>
                 </div>
             </div>
         </div>
 
-        <div class="mb-6 border-b border-gray-200 px-4 sm:px-6 lg:px-8">
+        <div class="mb-6 border-b border-default px-4 sm:px-6 lg:px-8">
             <nav class="-mb-px flex gap-0.5 overflow-x-auto sm:gap-2" aria-label="Tabs">
                 <button v-for="tab in tabs" :key="tab.id" type="button"
                     :class="[
                         'group relative -mb-px inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-t-lg px-3 py-2.5 text-sm font-semibold tracking-tight transition-colors sm:gap-2.5 sm:px-6 sm:py-3.5 sm:text-base',
                         activeTab === tab.id
-                            ? 'text-indigo-700'
-                            : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
+                            ? 'text-accent-fg'
+                            : 'text-muted hover:bg-surface-3 hover:text-heading'
                     ]"
                     @click="switchTab(tab.id)">
                     <component :is="tab.icon" class="h-4 w-4 sm:h-5 sm:w-5"
-                        :class="activeTab === tab.id ? 'text-indigo-600' : 'text-gray-400 group-hover:text-gray-600'" />
+                        :class="activeTab === tab.id ? 'text-accent-fg' : 'text-subtle group-hover:text-body'" />
                     <span>{{ tab.label }}</span>
                     <span v-if="tab.count !== undefined && tab.count !== null"
                         :class="[
                             'ml-0.5 rounded-full px-2 py-0.5 text-xs font-semibold sm:ml-1 sm:px-2.5',
                             activeTab === tab.id
-                                ? 'bg-indigo-100 text-indigo-700'
-                                : 'bg-gray-100 text-gray-600 group-hover:bg-gray-200'
+                                ? 'bg-accent-subtle text-accent-fg'
+                                : 'bg-surface-3 text-body group-hover:bg-surface-3'
                         ]">
                         {{ tab.count }}
                     </span>
                     <span v-if="activeTab === tab.id"
-                        class="absolute inset-x-2 -bottom-px h-[3px] rounded-full bg-indigo-600 sm:inset-x-3"></span>
+                        class="absolute inset-x-2 -bottom-px h-[3px] rounded-full bg-accent sm:inset-x-3"></span>
                 </button>
             </nav>
         </div>
@@ -55,22 +55,22 @@
             <template #filters>
                 <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
                     <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                        <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                        <MagnifyingGlassIcon class="h-5 w-5 text-subtle" aria-hidden="true" />
                     </div>
                     <input type="text" v-model="filterData.search" name="mobile-search-basic-dialer"
                         id="mobile-search-basic-dialer"
-                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
+                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus sm:hidden"
                         placeholder="Search" @keydown.enter="handleSearchButtonClick" />
                     <input type="text" v-model="filterData.search" name="desktop-search-basic-dialer"
                         id="desktop-search-basic-dialer"
-                        class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
+                        class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus sm:block"
                         placeholder="Search" @keydown.enter="handleSearchButtonClick" />
                 </div>
             </template>
 
             <template #action>
                 <button v-if="permissions.create" type="button" @click.prevent="handleCreateButtonClick"
-                    class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                    class="rounded-md bg-accent px-2.5 py-1.5 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
                     Create
                 </button>
             </template>
@@ -85,43 +85,43 @@
             <template #table-header>
                 <template v-if="activeTab === 'campaigns'">
                     <TableColumnHeader
-                        class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
+                        class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-heading items-center justify-start">
                         <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
-                            class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                            class="h-4 w-4 rounded border-strong text-accent-fg">
                         <div class="pl-4 flex items-center cursor-pointer select-none" @click="handleSortRequest('name')">
                             <span class="mr-2">Name</span>
                             <ChevronUpIcon v-if="sortData.name === 'name' && sortData.order === 'asc'"
-                                class="h-4 w-4 text-gray-500" />
+                                class="h-4 w-4 text-muted" />
                             <ChevronDownIcon v-else-if="sortData.name === 'name' && sortData.order === 'desc'"
-                                class="h-4 w-4 text-gray-500" />
+                                class="h-4 w-4 text-muted" />
                         </div>
                     </TableColumnHeader>
-                    <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="List" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="Recipients" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="Destination" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="Pacing" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+                    <TableColumnHeader header="List" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+                    <TableColumnHeader header="Recipients" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+                    <TableColumnHeader header="Destination" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+                    <TableColumnHeader header="Pacing" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+                    <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-heading" />
                 </template>
 
                 <template v-else>
                     <TableColumnHeader
-                        class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
+                        class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-heading items-center justify-start">
                         <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
-                            class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                            class="h-4 w-4 rounded border-strong text-accent-fg">
                         <div class="pl-4 flex items-center cursor-pointer select-none" @click="handleSortRequest('name')">
                             <span class="mr-2">Name</span>
                             <ChevronUpIcon v-if="sortData.name === 'name' && sortData.order === 'asc'"
-                                class="h-4 w-4 text-gray-500" />
+                                class="h-4 w-4 text-muted" />
                             <ChevronDownIcon v-else-if="sortData.name === 'name' && sortData.order === 'desc'"
-                                class="h-4 w-4 text-gray-500" />
+                                class="h-4 w-4 text-muted" />
                         </div>
                     </TableColumnHeader>
-                    <TableColumnHeader header="Enabled" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="Contacts" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="Campaigns" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="Description" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader header="Enabled" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+                    <TableColumnHeader header="Contacts" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+                    <TableColumnHeader header="Campaigns" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+                    <TableColumnHeader header="Description" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+                    <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-heading" />
                 </template>
             </template>
 
@@ -130,12 +130,12 @@
                     <div class="text-sm text-center m-2">
                         <span class="font-semibold">{{ selectedItems.length }}</span> items are selected.
                         <button v-if="!selectAll && selectedItems.length !== data.total"
-                            class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
+                            class="text-info rounded py-2 px-2 hover:bg-info-subtle hover:text-info focus:outline-none focus:ring-1 focus:bg-info-subtle focus:ring-focus transition duration-500 ease-in-out"
                             @click="handleSelectAll">
                             Select all {{ data.total }} items
                         </button>
                         <button v-if="selectAll"
-                            class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
+                            class="text-info rounded py-2 px-2 hover:bg-info-subtle hover:text-info focus:outline-none focus:ring-1 focus:bg-info-subtle focus:ring-focus transition duration-500 ease-in-out"
                             @click="handleClearSelection">
                             Clear selection
                         </button>
@@ -146,56 +146,56 @@
             <template #table-body>
                 <template v-if="activeTab === 'campaigns'">
                     <tr v-for="row in data.data" :key="row.basic_dialer_campaign_uuid">
-                        <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500" :text="row.name">
+                        <TableField class="whitespace-nowrap px-4 py-2 text-sm text-muted" :text="row.name">
                             <div class="flex items-center">
                                 <input v-model="selectedItems" type="checkbox" name="action_box[]"
                                     :value="row.basic_dialer_campaign_uuid"
-                                    class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                                <div class="ml-4" :class="{ 'cursor-pointer hover:text-gray-900': permissions.update }"
+                                    class="h-4 w-4 rounded border-strong text-accent-fg">
+                                <div class="ml-4" :class="{ 'cursor-pointer hover:text-heading': permissions.update }"
                                     @click="permissions.update && handleEditButtonClick(row.basic_dialer_campaign_uuid)">
                                     {{ row.name }}
                                 </div>
                             </div>
                         </TableField>
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted">
                             <Badge :text="row.status" v-bind="statusBadgeProps(row.status)" />
                         </TableField>
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted"
                             :text="row.contact_list?.name || '-'" />
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted">
                             {{ row.recipients_count ?? 0 }}
-                            <span class="text-gray-400">/ {{ row.pending_recipients_count ?? 0 }} pending</span>
+                            <span class="text-subtle">/ {{ row.pending_recipients_count ?? 0 }} pending</span>
                         </TableField>
-                        <TableField class="px-2 py-2 text-sm text-gray-500"
+                        <TableField class="px-2 py-2 text-sm text-muted"
                             :text="row.destination_label || row.destination_type || '-'" />
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted"
                             :text="`${row.max_concurrent_calls || 1} at a time, ${row.seconds_between_calls || 0}s gap`" />
-                        <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
+                        <TableField class="whitespace-nowrap px-2 py-1 text-sm text-muted">
                             <template #action-buttons>
                                 <div class="flex items-center whitespace-nowrap justify-end">
                                     <EyeIcon v-if="activeTab === 'campaigns'"
                                         @click="handleStatusButtonClick(row.basic_dialer_campaign_uuid)"
-                                        class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
+                                        class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer"
                                         title="Status" />
                                     <PlayIcon v-if="permissions.start && ['draft', 'paused', 'stopped'].includes(row.status)"
                                         @click="executeCampaignAction('start', row.basic_dialer_campaign_uuid)"
-                                        class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
+                                        class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer"
                                         title="Start" />
                                     <PauseCircleIcon v-if="permissions.start && row.status === 'running'"
                                         @click="executeCampaignAction('pause', row.basic_dialer_campaign_uuid)"
-                                        class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
+                                        class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer"
                                         title="Pause" />
                                     <StopIcon v-if="permissions.start && ['running', 'paused'].includes(row.status)"
                                         @click="executeCampaignAction('stop', row.basic_dialer_campaign_uuid)"
-                                        class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
+                                        class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer"
                                         title="Stop" />
                                     <PencilSquareIcon v-if="permissions.update"
                                         @click="handleEditButtonClick(row.basic_dialer_campaign_uuid)"
-                                        class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
+                                        class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer"
                                         title="Edit" />
                                     <TrashIcon v-if="permissions.destroy"
                                         @click="handleSingleItemDeleteRequest(row.basic_dialer_campaign_uuid)"
-                                        class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
+                                        class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer"
                                         title="Delete" />
                                 </div>
                             </template>
@@ -205,35 +205,35 @@
 
                 <template v-else>
                     <tr v-for="row in data.data" :key="row.basic_dialer_contact_list_uuid">
-                        <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500" :text="row.name">
+                        <TableField class="whitespace-nowrap px-4 py-2 text-sm text-muted" :text="row.name">
                             <div class="flex items-center">
                                 <input v-model="selectedItems" type="checkbox" name="action_box[]"
                                     :value="row.basic_dialer_contact_list_uuid"
-                                    class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                                <div class="ml-4" :class="{ 'cursor-pointer hover:text-gray-900': permissions.update }"
+                                    class="h-4 w-4 rounded border-strong text-accent-fg">
+                                <div class="ml-4" :class="{ 'cursor-pointer hover:text-heading': permissions.update }"
                                     @click="permissions.update && handleEditButtonClick(row.basic_dialer_contact_list_uuid)">
                                     {{ row.name }}
                                 </div>
                             </div>
                         </TableField>
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted">
                             <Badge :text="row.enabled ? 'True' : 'False'" v-bind="enabledBadgeProps(row.enabled)" />
                         </TableField>
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted"
                             :text="row.contacts_count ?? 0" />
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted"
                             :text="row.campaigns_count ?? 0" />
-                        <TableField class="px-2 py-2 text-sm text-gray-500" :text="row.description" />
-                        <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
+                        <TableField class="px-2 py-2 text-sm text-muted" :text="row.description" />
+                        <TableField class="whitespace-nowrap px-2 py-1 text-sm text-muted">
                             <template #action-buttons>
                                 <div class="flex items-center whitespace-nowrap justify-end">
                                     <PencilSquareIcon v-if="permissions.update"
                                         @click="handleEditButtonClick(row.basic_dialer_contact_list_uuid)"
-                                        class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
+                                        class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer"
                                         title="Edit" />
                                     <TrashIcon v-if="permissions.destroy"
                                         @click="handleSingleItemDeleteRequest(row.basic_dialer_contact_list_uuid)"
-                                        class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
+                                        class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer"
                                         title="Delete" />
                                 </div>
                             </template>
@@ -244,9 +244,9 @@
 
             <template #empty>
                 <div v-if="data.data.length === 0" class="text-center my-5">
-                    <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
-                    <p class="mt-1 text-sm text-gray-500">Adjust your search and try again.</p>
+                    <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-subtle" />
+                    <h3 class="mt-2 text-sm font-semibold text-heading">No results found</h3>
+                    <p class="mt-1 text-sm text-muted">Adjust your search and try again.</p>
                 </div>
             </template>
 
@@ -645,22 +645,22 @@ const handleErrorResponse = (error) => {
 
 const enabledBadgeProps = (enabled) => enabled
     ? {
-        backgroundColor: "bg-green-50",
-        textColor: "text-green-700",
-        ringColor: "ring-green-600/20",
+        backgroundColor: "bg-success-subtle",
+        textColor: "text-success",
+        ringColor: "ring-success/20",
     }
     : {
-        backgroundColor: "bg-gray-50",
-        textColor: "text-gray-700",
-        ringColor: "ring-gray-600/20",
+        backgroundColor: "bg-surface-2",
+        textColor: "text-body",
+        ringColor: "ring-strong/20",
     };
 
 const statusBadgeProps = (status) => {
     if (status === "running") {
         return {
-            backgroundColor: "bg-blue-50",
-            textColor: "text-blue-700",
-            ringColor: "ring-blue-600/20",
+            backgroundColor: "bg-info-subtle",
+            textColor: "text-info",
+            ringColor: "ring-info/20",
         };
     }
 
@@ -670,24 +670,24 @@ const statusBadgeProps = (status) => {
 
     if (status === "paused") {
         return {
-            backgroundColor: "bg-yellow-50",
-            textColor: "text-yellow-700",
-            ringColor: "ring-yellow-600/20",
+            backgroundColor: "bg-warning-subtle",
+            textColor: "text-warning",
+            ringColor: "ring-warning/20",
         };
     }
 
     if (status === "stopped") {
         return {
-            backgroundColor: "bg-red-50",
-            textColor: "text-red-700",
-            ringColor: "ring-red-600/20",
+            backgroundColor: "bg-danger-subtle",
+            textColor: "text-danger",
+            ringColor: "ring-danger/20",
         };
     }
 
     return {
-        backgroundColor: "bg-gray-50",
-        textColor: "text-gray-700",
-        ringColor: "ring-gray-600/20",
+        backgroundColor: "bg-surface-2",
+        textColor: "text-body",
+        ringColor: "ring-strong/20",
     };
 };
 </script>

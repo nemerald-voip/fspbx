@@ -12,12 +12,12 @@
             <template #filters>
                 <div class="relative mb-2 min-w-64 focus-within:z-10 sm:mr-4">
                     <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                        <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                        <MagnifyingGlassIcon class="h-5 w-5 text-subtle" aria-hidden="true" />
                     </div>
                     <input
                         v-model="filterData.search"
                         type="text"
-                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600"
+                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus"
                         placeholder="Search"
                         @keydown.enter="fetchData(1)"
                     />
@@ -26,7 +26,7 @@
                 <div class="relative mb-2 min-w-40 sm:mr-4">
                     <select
                         v-model="filterData.sip_profile_enabled"
-                        class="block w-full rounded-md border-0 py-1.5 pl-3 pr-8 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600"
+                        class="block w-full rounded-md border-0 py-1.5 pl-3 pr-8 text-sm leading-6 text-heading ring-1 ring-inset ring-strong focus:ring-2 focus:ring-inset focus:ring-focus"
                         @change="fetchData(1)"
                     >
                         <option value="">All states</option>
@@ -41,7 +41,7 @@
                     <button
                         v-if="permissions.create"
                         type="button"
-                        class="inline-flex items-center gap-1 rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
+                        class="inline-flex items-center gap-1 rounded-md bg-accent px-2.5 py-1.5 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover"
                         @click="openCreateModal"
                     >
                         <PlusIcon class="h-4 w-4" />
@@ -68,34 +68,34 @@
             </template>
 
             <template #table-header>
-                <TableColumnHeader class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">
+                <TableColumnHeader class="px-4 py-3.5 text-left text-sm font-semibold text-heading">
                     <div class="flex items-center">
                         <input
                             v-if="hasSelectableActions"
                             v-model="selectPageItems"
                             type="checkbox"
                             :disabled="pageItems.length === 0"
-                            class="h-4 w-4 rounded border-gray-300 text-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
+                            class="h-4 w-4 rounded border-strong text-accent-fg disabled:cursor-not-allowed disabled:opacity-50"
                         />
                         <button class="flex items-center" :class="{ 'ml-4': hasSelectableActions }" @click="setSort('sip_profile_name')">
                             <span class="mr-2">Profile</span>
-                            <ChevronUpIcon v-if="sortData.name === 'sip_profile_name' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
-                            <ChevronDownIcon v-else-if="sortData.name === 'sip_profile_name' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                            <ChevronUpIcon v-if="sortData.name === 'sip_profile_name' && sortData.order === 'asc'" class="h-4 w-4 text-muted" />
+                            <ChevronDownIcon v-else-if="sortData.name === 'sip_profile_name' && sortData.order === 'desc'" class="h-4 w-4 text-muted" />
                         </button>
                     </div>
                 </TableColumnHeader>
-                <TableColumnHeader header="Bindings" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="State" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Config" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                <TableColumnHeader header="Bindings" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+                <TableColumnHeader header="State" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+                <TableColumnHeader header="Config" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-heading">
                     <button class="flex items-center" @click="setSort('sip_profile_hostname')">
                         <span class="mr-2">Hostname</span>
-                        <ChevronUpIcon v-if="sortData.name === 'sip_profile_hostname' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
-                        <ChevronDownIcon v-else-if="sortData.name === 'sip_profile_hostname' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronUpIcon v-if="sortData.name === 'sip_profile_hostname' && sortData.order === 'asc'" class="h-4 w-4 text-muted" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'sip_profile_hostname' && sortData.order === 'desc'" class="h-4 w-4 text-muted" />
                     </button>
                 </TableColumnHeader>
-                <TableColumnHeader header="Description" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader v-if="hasRowActions" header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Description" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+                <TableColumnHeader v-if="hasRowActions" header="" class="px-2 py-3.5 text-right text-sm font-semibold text-heading" />
             </template>
 
             <template v-if="selectPageItems" #current-selection>
@@ -104,14 +104,14 @@
                         <span class="font-semibold">{{ selectedItems.length }}</span> SIP profiles are selected.
                         <button
                             v-if="!selectAll && selectedItems.length !== data.total"
-                            class="rounded px-2 py-2 text-blue-500 transition duration-500 ease-in-out hover:bg-blue-200 hover:text-blue-500 focus:bg-blue-200 focus:outline-none focus:ring-1 focus:ring-blue-300"
+                            class="rounded px-2 py-2 text-info transition duration-500 ease-in-out hover:bg-info-subtle hover:text-info focus:bg-info-subtle focus:outline-none focus:ring-1 focus:ring-focus"
                             @click="selectAllMatching"
                         >
                             Select all {{ data.total }} SIP profiles
                         </button>
                         <button
                             v-if="selectAll"
-                            class="rounded px-2 py-2 text-blue-500 transition duration-500 ease-in-out hover:bg-blue-200 hover:text-blue-500 focus:bg-blue-200 focus:outline-none focus:ring-1 focus:ring-blue-300"
+                            class="rounded px-2 py-2 text-info transition duration-500 ease-in-out hover:bg-info-subtle hover:text-info focus:bg-info-subtle focus:outline-none focus:ring-1 focus:ring-focus"
                             @click="clearSelection"
                         >
                             Clear selection
@@ -122,14 +122,14 @@
 
             <template #table-body>
                 <tr v-for="row in data.data" :key="row.sip_profile_uuid">
-                    <TableField class="px-4 py-2 text-sm text-gray-500">
+                    <TableField class="px-4 py-2 text-sm text-muted">
                         <div class="flex items-center">
                             <input
                                 v-if="hasSelectableActions"
                                 v-model="selectedItems"
                                 type="checkbox"
                                 :value="row.sip_profile_uuid"
-                                class="h-4 w-4 rounded border-gray-300 text-indigo-600"
+                                class="h-4 w-4 rounded border-strong text-accent-fg"
                             />
                             <button
                                 type="button"
@@ -137,59 +137,59 @@
                                 :class="{ 'ml-4': hasSelectableActions, 'cursor-pointer': permissions.update }"
                                 @click="permissions.update && openEditModal(row)"
                             >
-                                <span class="block font-medium text-gray-900" :class="{ 'hover:text-indigo-600': permissions.update }">
+                                <span class="block font-medium text-heading" :class="{ 'hover:text-accent-fg': permissions.update }">
                                     {{ row.sip_profile_name }}
                                 </span>
-                                <span v-if="row.context" class="mt-1 block truncate text-xs text-gray-400">context: {{ row.context }}</span>
+                                <span v-if="row.context" class="mt-1 block truncate text-xs text-subtle">context: {{ row.context }}</span>
                             </button>
                         </div>
                     </TableField>
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted">
                         <div class="space-y-1">
-                            <div class="flex items-center gap-1.5 font-mono text-xs text-gray-700">
-                                <span class="w-8 font-sans text-[10px] uppercase tracking-wide text-gray-400">SIP</span>
-                                {{ row.sip_ip || "—" }}<span class="text-gray-400">:</span>{{ row.sip_port || "5060" }}
+                            <div class="flex items-center gap-1.5 font-mono text-xs text-body">
+                                <span class="w-8 font-sans text-[10px] uppercase tracking-wide text-subtle">SIP</span>
+                                {{ row.sip_ip || "—" }}<span class="text-subtle">:</span>{{ row.sip_port || "5060" }}
                             </div>
                             <div
                                 v-if="row.tls_enabled"
-                                class="flex items-center gap-1.5 font-mono text-xs text-emerald-700"
+                                class="flex items-center gap-1.5 font-mono text-xs text-success"
                                 :title="row.tls_value && row.tls_value.startsWith('$') ? `TLS gated by ${row.tls_value}` : 'TLS enabled'"
                             >
-                                <span class="w-8 font-sans text-[10px] uppercase tracking-wide text-emerald-500">TLS</span>
-                                {{ row.sip_ip || "—" }}<span class="text-emerald-400">:</span>{{ row.tls_port || "5061" }}
+                                <span class="w-8 font-sans text-[10px] uppercase tracking-wide text-success">TLS</span>
+                                {{ row.sip_ip || "—" }}<span class="text-success">:</span>{{ row.tls_port || "5061" }}
                             </div>
                         </div>
                     </TableField>
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted">
                         <button v-if="permissions.update" type="button" @click="confirmAction('toggle', [row.sip_profile_uuid])">
                             <Badge :text="row.sip_profile_enabled === 'true' ? 'Enabled' : 'Disabled'" v-bind="enabledBadge(row.sip_profile_enabled)" />
                         </button>
                         <Badge v-else :text="row.sip_profile_enabled === 'true' ? 'Enabled' : 'Disabled'" v-bind="enabledBadge(row.sip_profile_enabled)" />
                     </TableField>
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted">
                         <div class="flex flex-wrap gap-1.5">
                             <Badge :text="`${row.settings_count} settings`" v-bind="countBadge" />
                         </div>
                     </TableField>
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted">
                         {{ row.sip_profile_hostname || "—" }}
                     </TableField>
 
-                    <TableField class="max-w-xl px-2 py-2 text-sm text-gray-500">
+                    <TableField class="max-w-xl px-2 py-2 text-sm text-muted">
                         <span class="line-clamp-2">{{ row.sip_profile_description || "No description" }}</span>
                     </TableField>
 
-                    <TableField v-if="hasRowActions" class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
+                    <TableField v-if="hasRowActions" class="whitespace-nowrap px-2 py-1 text-sm text-muted">
                         <template #action-buttons>
                             <div class="flex items-center justify-end gap-1">
                                 <button
                                     v-if="permissions.update"
                                     type="button"
-                                    class="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+                                    class="rounded-full p-2 text-subtle transition hover:bg-surface-3 hover:text-body"
                                     title="Edit"
                                     @click="openEditModal(row)"
                                 >
@@ -198,7 +198,7 @@
                                 <button
                                     v-if="permissions.create"
                                     type="button"
-                                    class="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+                                    class="rounded-full p-2 text-subtle transition hover:bg-surface-3 hover:text-body"
                                     title="Clone"
                                     @click="cloneProfile(row)"
                                 >
@@ -207,7 +207,7 @@
                                 <button
                                     v-if="permissions.destroy"
                                     type="button"
-                                    class="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-red-600"
+                                    class="rounded-full p-2 text-subtle transition hover:bg-surface-3 hover:text-danger"
                                     title="Delete"
                                     @click="confirmAction('delete', [row.sip_profile_uuid])"
                                 >
@@ -220,7 +220,7 @@
             </template>
 
             <template #empty>
-                <div v-if="!loading && data.data.length === 0" class="px-6 py-8 text-center text-sm text-gray-500">
+                <div v-if="!loading && data.data.length === 0" class="px-6 py-8 text-center text-sm text-muted">
                     No SIP profiles found.
                 </div>
             </template>
@@ -336,7 +336,7 @@ const selectPageItems = computed({
     },
 });
 
-const countBadge = { backgroundColor: "bg-slate-50", textColor: "text-slate-700", ringColor: "ring-slate-600/20" };
+const countBadge = { backgroundColor: "bg-surface-2", textColor: "text-body", ringColor: "ring-strong/20" };
 const bulkActions = computed(() => {
     const actions = [];
 
@@ -528,8 +528,8 @@ function closeConfirmation() {
 
 function enabledBadge(enabled) {
     return enabled === "true"
-        ? { backgroundColor: "bg-green-50", textColor: "text-green-700", ringColor: "ring-green-600/20" }
-        : { backgroundColor: "bg-gray-50", textColor: "text-gray-600", ringColor: "ring-gray-500/20" };
+        ? { backgroundColor: "bg-success-subtle", textColor: "text-success", ringColor: "ring-success/20" }
+        : { backgroundColor: "bg-surface-2", textColor: "text-body", ringColor: "ring-strong/20" };
 }
 
 function showNotification(type, messages = null) {

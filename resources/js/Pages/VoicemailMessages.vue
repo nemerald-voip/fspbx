@@ -4,13 +4,13 @@
     <div class="m-3">
 <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
             <template #title>
-                <h1 class="text-xl font-bold text-gray-900 flex items-center">
+                <h1 class="text-xl font-bold text-heading flex items-center">
                     Voicemail messages
                     <span v-if="props.mailbox_label" class="flex items-center">
-                        <svg class="mx-3 h-5 w-5 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg class="mx-3 h-5 w-5 text-subtle" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                         </svg>
-                        <span class="font-medium text-gray-500">{{ props.mailbox_label }}</span>
+                        <span class="font-medium text-muted">{{ props.mailbox_label }}</span>
                     </span>
                 </h1>
             </template>
@@ -18,15 +18,15 @@
             <template #filters>
                 <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
                     <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                        <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                        <MagnifyingGlassIcon class="h-5 w-5 text-subtle" aria-hidden="true" />
                     </div>
                     <input type="text" v-model="filterData.search" name="mobile-search-candidate"
                         id="mobile-search-candidate"
-                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
+                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus sm:hidden"
                         placeholder="Search" />
                     <input type="text" v-model="filterData.search" name="desktop-search-candidate"
                         id="desktop-search-candidate"
-                        class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
+                        class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus sm:block"
                         placeholder="Search" />
                 </div>
 
@@ -48,25 +48,25 @@
 
             <template #table-header>
                 <TableColumnHeader
-                    class="hidden lg:table-cell whitespace-nowrap px-4 py-1.5 lg:min-w-[300px] text-left text-sm font-semibold text-gray-900">
+                    class="hidden lg:table-cell whitespace-nowrap px-4 py-1.5 lg:min-w-[300px] text-left text-sm font-semibold text-heading">
                     <div class="flex items-center justify-start">
                         <input type="checkbox" v-model="selectPageItems"
-                            class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                            class="h-4 w-4 rounded border-strong text-accent-fg">
                         <span class="pl-4">Caller ID</span>
                     </div>
                 </TableColumnHeader>
 
-                <TableColumnHeader class="hidden lg:table-cell lg:min-w-[150px] px-4 py-3.5 text-sm font-semibold text-gray-900">
+                <TableColumnHeader class="hidden lg:table-cell lg:min-w-[150px] px-4 py-3.5 text-sm font-semibold text-heading">
                     <div class="flex items-center justify-center w-full">
                         Status
                     </div>
                 </TableColumnHeader>
                 
                 <TableColumnHeader header="Date"
-                    class="hidden lg:table-cell whitespace-nowrap px-4 py-3.5 lg:min-w-[220px] text-left text-sm font-semibold text-gray-900" />
+                    class="hidden lg:table-cell whitespace-nowrap px-4 py-3.5 lg:min-w-[220px] text-left text-sm font-semibold text-heading" />
                 
                 <TableColumnHeader header="Transcription"
-                    class="hidden lg:table-cell w-full px-4 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    class="hidden lg:table-cell w-full px-4 py-3.5 text-left text-sm font-semibold text-heading" />
                 
                 <TableColumnHeader header="" class="hidden lg:table-cell px-2 py-3.5" />
             </template>
@@ -76,12 +76,12 @@
                     <div class="text-sm text-center m-2">
                         <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
                         <button v-if="!selectAll && selectedItems.length != data.total"
-                            class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
+                            class="text-info rounded py-2 px-2 hover:bg-info-subtle  hover:text-info focus:outline-none focus:ring-1 focus:bg-info-subtle focus:ring-focus transition duration-500 ease-in-out"
                             @click="handleSelectAll">
                             Select all {{ data.total }} items
                         </button>
                         <button v-if="selectAll"
-                            class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
+                            class="text-info rounded py-2 px-2 hover:bg-info-subtle  hover:text-info focus:outline-none focus:ring-1 focus:bg-info-subtle focus:ring-focus transition duration-500 ease-in-out"
                             @click="handleClearSelection">
                             Clear selection
                         </button>
@@ -90,13 +90,13 @@
             </template>
 
             <template #table-body>
-                <tr class="block lg:hidden bg-gray-50 border-b border-gray-200 mb-4 rounded-t-lg">
+                <tr class="block lg:hidden bg-surface-2 border-b border-default mb-4 rounded-t-lg">
                     <td class="block p-3">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-3">
                                 <input type="checkbox" v-model="selectPageItems"
-                                    class="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                                <span class="text-sm font-semibold text-gray-900">
+                                    class="h-5 w-5 rounded border-strong text-accent-fg focus:ring-focus">
+                                <span class="text-sm font-semibold text-heading">
                                     {{ selectPageItems ? 'Deselect All' : 'Select All' }}
                                 </span>
                             </div>
@@ -109,17 +109,17 @@
                     </td>
                 </tr>
                 <tr v-for="row in data.data" :key="row.voicemail_message_uuid"
-                    class="block lg:table-row border-b lg:border-none mb-4 lg:mb-0 bg-white shadow-sm lg:shadow-none rounded-lg lg:rounded-none p-4 lg:p-0">
+                    class="block lg:table-row border-b lg:border-none mb-4 lg:mb-0 bg-surface shadow-sm lg:shadow-none rounded-lg lg:rounded-none p-4 lg:p-0">
 
                     <TableField
-                        class="block lg:table-cell whitespace-nowrap px-0 lg:px-4 py-2 lg:min-w-[300px] text-sm text-gray-500">
+                        class="block lg:table-cell whitespace-nowrap px-0 lg:px-4 py-2 lg:min-w-[300px] text-sm text-muted">
                         <div class="flex items-start lg:items-center">
                             <input v-if="row.voicemail_message_uuid" v-model="selectedItems" type="checkbox"
                                 :value="row.voicemail_message_uuid"
-                                class="h-5 w-5 lg:h-4 lg:w-4 mt-1 lg:mt-0 rounded border-gray-300 text-indigo-600">
+                                class="h-5 w-5 lg:h-4 lg:w-4 mt-1 lg:mt-0 rounded border-strong text-accent-fg">
 
                             <div class="ml-4 flex-1 min-w-0 text-sm"
-                                :class="[row.message_status !== 'saved' ? 'font-bold text-gray-900' : 'text-gray-700']">
+                                :class="[row.message_status !== 'saved' ? 'font-bold text-heading' : 'text-body']">
                                 <div class="flex flex-col min-w-0">
                                     <span class="truncate">{{ row.caller_id_name }}</span>
                                     <span class="text-xs opacity-70 truncate">{{ row.caller_id_number }}</span>
@@ -128,40 +128,40 @@
                         </div>
                     </TableField>
 
-                    <TableField class="block lg:table-cell lg:min-w-[150px] px-0 lg:px-4 py-2 text-sm align-middle border-t border-gray-100 lg:border-none mt-2 lg:mt-0 pt-2 lg:pt-0">
-                        <span class="lg:hidden font-semibold text-gray-400 uppercase text-[10px] block mb-1">Status:</span>
+                    <TableField class="block lg:table-cell lg:min-w-[150px] px-0 lg:px-4 py-2 text-sm align-middle border-t border-default lg:border-none mt-2 lg:mt-0 pt-2 lg:pt-0">
+                        <span class="lg:hidden font-semibold text-subtle uppercase text-[10px] block mb-1">Status:</span>
                         <div class="flex items-center justify-start lg:justify-center w-full">
                             <Badge
                                 v-if="row.message_status !== 'saved'"
                                 :text="'New'"
-                                :backgroundColor="'bg-blue-100'"
-                                :textColor="'text-blue-800'"
+                                :backgroundColor="'bg-info-subtle'"
+                                :textColor="'text-info'"
                                 class="inline-flex px-2 py-0.5 text-[10px]"
                             />
                         </div>
                     </TableField>
 
                     <TableField
-                        class="flex lg:table-cell items-center gap-2 px-0 lg:px-4 py-2 lg:min-w-[220px] text-sm whitespace-nowrap border-t border-gray-100 lg:border-none mt-2 lg:mt-0 pt-2 lg:pt-0"
-                        :class="row.message_status !== 'saved' ? 'font-bold text-gray-900' : 'text-gray-500'">
-                        <span class="lg:hidden font-semibold text-gray-400 uppercase text-[10px] block mb-1">Date:</span>
+                        class="flex lg:table-cell items-center gap-2 px-0 lg:px-4 py-2 lg:min-w-[220px] text-sm whitespace-nowrap border-t border-default lg:border-none mt-2 lg:mt-0 pt-2 lg:pt-0"
+                        :class="row.message_status !== 'saved' ? 'font-bold text-heading' : 'text-muted'">
+                        <span class="lg:hidden font-semibold text-subtle uppercase text-[10px] block mb-1">Date:</span>
                         <span>{{ row.created_epoch_formatted }}</span>
                     </TableField>
 
                     <TableField
-                        class="block lg:table-cell px-0 lg:px-4 py-2 text-sm border-t border-gray-100 lg:border-none mt-2 lg:mt-0 pt-2 lg:pt-0">
+                        class="block lg:table-cell px-0 lg:px-4 py-2 text-sm border-t border-default lg:border-none mt-2 lg:mt-0 pt-2 lg:pt-0">
                         <span
-                            class="lg:hidden font-semibold text-gray-400 uppercase text-[10px] block mb-1">Transcription</span>
+                            class="lg:hidden font-semibold text-subtle uppercase text-[10px] block mb-1">Transcription</span>
                         <div
-                            :class="['text-gray-600 leading-relaxed max-w-3xl', row.message_status !== 'saved' ? 'font-medium text-gray-800' : '']">
+                            :class="['text-body leading-relaxed max-w-3xl', row.message_status !== 'saved' ? 'font-medium text-heading' : '']">
                             {{ row.message_transcription }}
                         </div>
                     </TableField>
 
                     <TableField
-                        class="block lg:table-cell px-0 lg:px-2 py-2 text-sm border-t border-gray-100 lg:border-none mt-2 lg:mt-0 pt-2 lg:pt-0">
+                        class="block lg:table-cell px-0 lg:px-2 py-2 text-sm border-t border-default lg:border-none mt-2 lg:mt-0 pt-2 lg:pt-0">
                         <div class="flex items-center justify-between lg:justify-end">
-                            <span class="lg:hidden font-semibold text-gray-400 uppercase text-[10px]">Actions</span>
+                            <span class="lg:hidden font-semibold text-subtle uppercase text-[10px]">Actions</span>
 
                             <div class="flex items-center whitespace-nowrap justify-end">
 
@@ -169,7 +169,7 @@
                                     :target="'#play_tooltip_' + row.voicemail_message_uuid">
                                     <div :id="'play_tooltip_' + row.voicemail_message_uuid">
                                         <PlayCircleIcon @click="handlePlayVoicemail(row.voicemail_message_uuid)"
-                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-blue-500 hover:bg-blue-200 hover:text-blue-700 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-info hover:bg-info-subtle hover:text-info active:bg-info-subtle active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
 
@@ -178,7 +178,7 @@
                                     <div :id="'download_tooltip_' + row.voicemail_message_uuid">
                                         <CloudArrowDownIcon v-if="!isDownloading"
                                             @click="downloadVoicemailMessage(row.voicemail_message_uuid)"
-                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer" />
 
                                         <Spinner :show="isDownloading" class="h-9 w-9 py-2" />
                                     </div>
@@ -190,9 +190,9 @@
                                     <div :id="'status_tooltip_' + row.voicemail_message_uuid">
                                         <button
                                             @click="executeStatusUpdate([row.voicemail_message_uuid], row.message_status === 'saved' ? null : 'saved')"
-                                            class="h-9 w-9 transition duration-500 ease-in-out p-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer flex items-center justify-center">
+                                            class="h-9 w-9 transition duration-500 ease-in-out p-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer flex items-center justify-center">
                                             <EnvelopeIcon v-if="row.message_status === 'saved'" class="h-full w-full" />
-                                            <EnvelopeOpenIcon v-else class="h-full w-full text-blue-500" />
+                                            <EnvelopeOpenIcon v-else class="h-full w-full text-info" />
                                         </button>
                                     </div>
                                 </ejs-tooltip>
@@ -201,7 +201,7 @@
                                     position='TopCenter' :target="'#delete_tooltip_' + row.voicemail_message_uuid">
                                     <div :id="'delete_tooltip_' + row.voicemail_message_uuid">
                                         <TrashIcon @click="handleSingleItemDeleteRequest(row.voicemail_message_uuid)"
-                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
 
@@ -213,12 +213,12 @@
             </template>
             <template #empty>
                 <div v-if="data.data.length === 0" class="text-center my-6">
-                    <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
-                    <p class="mt-1 text-sm text-gray-500">
+                    <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-subtle" />
+                    <h3 class="mt-2 text-sm font-semibold text-heading">No results found</h3>
+                    <p class="mt-1 text-sm text-muted">
                         Adjust your search or filters and try again.
                     </p>
-                    <p class="mt-4 text-lg font-extrabold text-red-600">
+                    <p class="mt-4 text-lg font-extrabold text-danger">
                         Note: voicemail messages from only the last 30 days are shown by default. To view older messages, expand the date range above.
                     </p>
                 </div>

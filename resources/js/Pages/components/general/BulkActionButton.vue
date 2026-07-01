@@ -2,7 +2,7 @@
     <Menu as="div" class="">
         <div>
             <MenuButton
-                class="flex items-center rounded py-2 hover:bg-gray-200 text-gray-400  hover:text-gray-600 focus:outline-none focus:ring-1 focus:bg-gray-200 focus:ring-gray-300 transition duration-500 ease-in-out">
+                class="flex items-center rounded py-2 hover:bg-surface-3 text-subtle  hover:text-body focus:outline-none focus:ring-1 focus:bg-surface-3 focus:ring-strong transition duration-500 ease-in-out">
                 <span class="sr-only">Open options</span>
                 <ArrowDropDown class="h-5 w-5" aria-hidden="true" />
             </MenuButton>
@@ -13,20 +13,20 @@
             leave-active-class="transition ease-in duration-75" leave-from-class="transform opacity-100 scale-100"
             leave-to-class="transform opacity-0 scale-95">
             <MenuItems
-                class="absolute z-20 shadow-2xl mt-1 -ml-4 origin-top-right divide-y divide-gray-100 rounded-md bg-white font-normal ring-1 ring-black ring-opacity-15 focus:outline-none">
+                class="absolute z-20 shadow-2xl mt-1 -ml-4 origin-top-right divide-y divide-default rounded-md bg-surface font-normal ring-1 ring-black/[0.15] dark:ring-white/10 focus:outline-none">
                 <div class="px-4 py-3">
                     <p class="text-sm font-semibold">Bulk Actions</p>
                 </div>
                 <div v-if="hasSelectedItems" class="py-1">
                     <MenuItem v-for="action in actions" :key="action.id" v-slot="{ active }">
                         <button @click="$emit('bulkAction', action.id)"
-                            :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-500', getIconStyles(action.icon).bgColor, getIconStyles(action.icon).textColor, 'group flex items-center px-4 py-2 text-sm min-w-full']">
-                            <component :is="getIconComponent(action.icon)" class="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" aria-hidden="true" />
+                            :class="[active ? 'bg-surface-3 text-heading' : 'text-muted', getIconStyles(action.icon).bgColor, getIconStyles(action.icon).textColor, 'group flex items-center px-4 py-2 text-sm min-w-full']">
+                            <component :is="getIconComponent(action.icon)" class="mr-3 h-5 w-5 text-subtle group-hover:text-muted" aria-hidden="true" />
                             {{ action.label }}
                         </button>
                     </MenuItem>
                 </div>
-                <div v-else class="text-gray-500 italic group flex items-center px-4 py-2 text-sm min-w-full">
+                <div v-else class="text-muted italic group flex items-center px-4 py-2 text-sm min-w-full">
                     No items selected
                 </div>
             </MenuItems>
@@ -67,7 +67,7 @@ const getIconComponent = (iconKey) => {
 };
 
 const styleMap = {
-    // ArrowDropDown: { bgColor: 'bg-teal-50', textColor: 'text-teal-700' },
+    // ArrowDropDown: { bgColor: 'bg-teal-50 dark:bg-teal-900/40', textColor: 'text-teal-700 dark:text-teal-300' },
 };
 
 

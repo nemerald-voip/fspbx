@@ -15,15 +15,15 @@ const props = defineProps({
     },
     backgroundColor: {
         type: String,
-        default: 'bg-green-50'
+        default: 'bg-success-subtle'
     },
     textColor: {
         type: String,
-        default: 'text-green-700'
+        default: 'text-success'
     },
     ringColor: {
         type: String,
-        default: 'ring-green-600/20'
+        default: 'ring-success/20'
     }
 });
 

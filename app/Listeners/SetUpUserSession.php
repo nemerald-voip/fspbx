@@ -248,6 +248,21 @@ class SetUpUserSession
         //     $array[$setting['default_setting_category']][$setting['default_setting_subcategory']][$setting['default_setting_name']] = $setting['default_setting_value'];
         // }
         Session::put('default_settings', $default_settings);
+
+        // Dark mode preference (per-user, stored in v_user_settings).
+        // Loaded into the Laravel session so the root blade can apply the
+        // .dark class server-side (no flash) and Inertia can share it.
+        $theme = DB::table('v_user_settings')
+            ->where('user_uuid', $event->user->user_uuid)
+            ->where('user_setting_category', 'theme')
+            ->where('user_setting_name', 'mode')
+            ->value('user_setting_value');
+        $theme = $theme === 'dark' ? 'dark' : 'light';
+        Session::put('theme', $theme);
+        // Mirror to a browser-level cookie so the login screen (pre-auth, no
+        // session) reflects this browser's last-used theme.
+        // Hardened with Secure + SameSite=Lax; kept httpOnly with a 1-year life.
+        \Illuminate\Support\Facades\Cookie::queue(cookie('theme', $theme, 60 * 24 * 365, null, null, true, true, false, 'lax'));
         //dd(Session::all());
         //dd($_SESSION);
     }

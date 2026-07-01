@@ -11,7 +11,7 @@
                     </Vueform>
 
                     <button v-if="permissions?.email_test_send" type="button"
-                        class="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
+                        class="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-accent px-3 py-1.5 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
                         @click="openTestEmailModal">
                         <EnvelopeIcon class="h-4 w-4" />
                         Send Test Email
@@ -123,21 +123,21 @@
                 <template #modal-body>
                     <form class="space-y-4" @submit.prevent="sendTestEmail">
                         <div>
-                            <label for="test_email_address" class="block text-sm font-medium text-gray-700">Email address</label>
+                            <label for="test_email_address" class="block text-sm font-medium text-body">Email address</label>
                             <input id="test_email_address" v-model.trim="testEmailForm.email" type="email" required
                                 autocomplete="email" placeholder="name@example.com"
-                                class="mt-1 block w-full rounded-md border-0 py-1.5 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600" />
-                            <p v-if="testEmailErrors.email" class="mt-2 text-xs text-red-600">{{ testEmailErrors.email[0] }}</p>
+                                class="mt-1 block w-full rounded-md border-0 py-1.5 text-sm text-heading shadow-sm ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus" />
+                            <p v-if="testEmailErrors.email" class="mt-2 text-xs text-danger">{{ testEmailErrors.email[0] }}</p>
                         </div>
 
                         <div class="flex justify-end gap-2">
                             <button type="button"
-                                class="rounded-md bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                                class="rounded-md bg-surface px-3 py-1.5 text-sm font-medium text-body shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2"
                                 @click="closeTestEmailModal">
                                 Cancel
                             </button>
                             <button type="submit" :disabled="testEmailLoading"
-                                class="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60">
+                                class="inline-flex items-center gap-1.5 rounded-md bg-accent px-3 py-1.5 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60">
                                 <EnvelopeIcon class="h-4 w-4" />
                                 {{ testEmailLoading ? 'Sending...' : 'Send' }}
                             </button>

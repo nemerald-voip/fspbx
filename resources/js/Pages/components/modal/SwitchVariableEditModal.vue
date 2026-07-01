@@ -7,11 +7,11 @@
                         <HiddenElement v-if="item?.var_uuid" name="var_uuid" :meta="true" />
                         <StaticElement v-if="item?.var_uuid" name="var_uuid_display">
                             <div class="mb-1">
-                                <div class="mb-1 text-sm font-medium text-gray-600">Unique ID</div>
+                                <div class="mb-1 text-sm font-medium text-body">Unique ID</div>
                                 <div class="flex items-center">
-                                    <span class="select-all text-sm font-normal text-gray-900">{{ item.var_uuid }}</span>
-                                    <button type="button" class="ml-2 rounded-full p-1 text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2" title="Copy to clipboard" @click="handleCopyToClipboard(item.var_uuid)">
-                                        <ClipboardDocumentIcon class="h-4 w-4 text-gray-500 hover:text-gray-900" />
+                                    <span class="select-all text-sm font-normal text-heading">{{ item.var_uuid }}</span>
+                                    <button type="button" class="ml-2 rounded-full p-1 text-subtle transition-colors hover:bg-info-subtle hover:text-info focus:outline-none focus:ring-2 focus:ring-offset-2" title="Copy to clipboard" @click="handleCopyToClipboard(item.var_uuid)">
+                                        <ClipboardDocumentIcon class="h-4 w-4 text-muted hover:text-heading" />
                                     </button>
                                 </div>
                             </div>

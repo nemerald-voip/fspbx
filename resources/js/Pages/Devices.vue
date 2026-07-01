@@ -8,15 +8,15 @@
             <template #filters>
                 <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
                     <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                        <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                        <MagnifyingGlassIcon class="h-5 w-5 text-subtle" aria-hidden="true" />
                     </div>
                     <input type="text" v-model="filterData.search" name="mobile-search-candidate"
                         id="mobile-search-candidate"
-                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
+                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus sm:hidden"
                         placeholder="Search" @keydown.enter="handleSearchButtonClick" />
                     <input type="text" v-model="filterData.search" name="desktop-search-candidate"
                         id="desktop-search-candidate"
-                        class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
+                        class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus sm:block"
                         placeholder="Search" @keydown.enter="handleSearchButtonClick" />
                 </div>
             </template>
@@ -24,41 +24,41 @@
             <template #action>
                 <button v-if="page.props.auth.can.device_create" type="button"
                     @click.prevent="handleCreateButtonClick()"
-                    class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                    class="rounded-md bg-accent px-2.5 py-1.5 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
                     Create
                 </button>
 
                 <button v-if="page.props.auth.can.manage_cloud_provision_providers" type="button"
                     @click.prevent="handleCloudProvisioningButtonClick()"
-                    class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    class="rounded-md bg-surface px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2">
                     Cloud
                 </button>
 
                 <button v-if="permissions.device_import" type="button" @click.prevent="handleImportButtonClick()"
-                    class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    class="inline-flex items-center gap-x-1.5 rounded-md bg-surface px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2">
                     <DocumentArrowUpIcon class="h-5 w-5" aria-hidden="true" />
                     Import CSV
                 </button>
 
                 <a v-if="permissions.device_key_template_view" type="button" :href="routes.key_templates"
-                    class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    class="rounded-md bg-surface px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2">
                     Key Templates
                 </a>
 
                 <a v-if="page.props.auth.can.device_profile_index" type="button" href="app/devices/device_profiles.php"
-                    class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    class="rounded-md bg-surface px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2">
                     Profiles
                 </a>
 
                 <button v-if="!filterData.showGlobal && page.props.auth.can.device_view_global" type="button"
                     @click.prevent="handleShowGlobal()"
-                    class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    class="rounded-md bg-surface px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2">
                     Show global
                 </button>
 
                 <button v-if="filterData.showGlobal && page.props.auth.can.device_view_global" type="button"
                     @click.prevent="handleShowLocal()"
-                    class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    class="rounded-md bg-surface px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2">
                     Show local
                 </button>
             </template>
@@ -72,41 +72,41 @@
             <template #table-header>
 
                 <TableColumnHeader header="MAC Address"
-                    class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
+                    class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-heading items-center justify-start">
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
-                        class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                        class="h-4 w-4 rounded border-strong text-accent-fg">
                     <!-- <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
                         :has-selected-items="selectedItems.length > 0" /> -->
                     <div class="pl-4 flex items-center cursor-pointer select-none"
                         @click="handleSortRequest('device_address')">
                         <span class="mr-2">MAC Address</span>
-                        <ChevronUpIcon v-if="sortData.name === 'device_address' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
-                        <ChevronDownIcon v-else-if="sortData.name === 'device_address' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronUpIcon v-if="sortData.name === 'device_address' && sortData.order === 'asc'" class="h-4 w-4 text-muted" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'device_address' && sortData.order === 'desc'" class="h-4 w-4 text-muted" />
                     </div>                </TableColumnHeader>
                 <TableColumnHeader v-if="filterData.showGlobal" header="Domain"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
 
                 <TableColumnHeader header="Template"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Profile / Key Template" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+                <TableColumnHeader header="Profile / Key Template" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
                 <TableColumnHeader v-if="!filterData.showGlobal" header="Assigned extension"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-heading">
                     <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('device_description')">
                         <span class="mr-2">Description</span>
-                        <ChevronUpIcon v-if="sortData.name === 'device_description' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
-                        <ChevronDownIcon v-else-if="sortData.name === 'device_description' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronUpIcon v-if="sortData.name === 'device_description' && sortData.order === 'asc'" class="h-4 w-4 text-muted" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'device_description' && sortData.order === 'desc'" class="h-4 w-4 text-muted" />
                     </div>
                 </TableColumnHeader>
-                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-heading">
                     <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('device_provisioned_date')">
                         <span class="mr-2">Last Contact</span>
-                        <ChevronUpIcon v-if="sortData.name === 'device_provisioned_date' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
-                        <ChevronDownIcon v-else-if="sortData.name === 'device_provisioned_date' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronUpIcon v-if="sortData.name === 'device_provisioned_date' && sortData.order === 'asc'" class="h-4 w-4 text-muted" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'device_provisioned_date' && sortData.order === 'desc'" class="h-4 w-4 text-muted" />
                     </div>
                 </TableColumnHeader>
-                                <TableColumnHeader header="Cloud" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
+                                <TableColumnHeader header="Cloud" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+                <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-heading" />
             </template>
 
             <template v-if="selectPageItems" v-slot:current-selection>
@@ -114,12 +114,12 @@
                     <div class="text-sm text-center m-2">
                         <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
                         <button v-if="!selectAll && selectedItems.length !== data.total"
-                            class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
+                            class="text-info rounded py-2 px-2 hover:bg-info-subtle  hover:text-info focus:outline-none focus:ring-1 focus:bg-info-subtle focus:ring-focus transition duration-500 ease-in-out"
                             @click="handleSelectAll">
                             Select all {{ data.total }} items
                         </button>
                         <button v-if="selectAll"
-                            class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
+                            class="text-info rounded py-2 px-2 hover:bg-info-subtle  hover:text-info focus:outline-none focus:ring-1 focus:bg-info-subtle focus:ring-focus transition duration-500 ease-in-out"
                             @click="handleClearSelection">
                             Clear selection
                         </button>
@@ -129,13 +129,13 @@
 
             <template #table-body>
                 <tr v-for="row in data.data" :key="row.device_uuid">
-                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500"
+                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-muted"
                         :text="row.device_address_formatted">
                         <div class="flex items-center">
                             <input v-if="row.device_address" v-model="selectedItems" type="checkbox" name="action_box[]"
-                                :value="row.device_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                                :value="row.device_uuid" class="h-4 w-4 rounded border-strong text-accent-fg">
                             <div class="ml-4"
-                                :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.device_update, }"
+                                :class="{ 'cursor-pointer hover:text-heading': page.props.auth.can.device_update, }"
                                 @click="page.props.auth.can.device_update && handleEditButtonClick(row.device_uuid)">
                                 {{ row.device_address_formatted }}
                             </div>
@@ -143,13 +143,13 @@
                                 @click="handleCopyToClipboard(row.device_address)" target="#copy_tooltip_target">
                                 <div id="copy_tooltip_target">
                                     <ClipboardDocumentIcon
-                                        class="h-5 w-5 text-gray-500 hover:text-gray-900 pt-1 cursor-pointer" />
+                                        class="h-5 w-5 text-muted hover:text-heading pt-1 cursor-pointer" />
                                 </div>
                             </ejs-tooltip>
                         </div>
                     </TableField>
 
-                    <TableField v-if="filterData.showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                    <TableField v-if="filterData.showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-muted"
                         :text="row.domain?.domain_description">
                         <ejs-tooltip :content="row.domain?.domain_name" position='TopLeft'
                             target="#domain_tooltip_target">
@@ -158,7 +158,7 @@
                             </div>
                         </ejs-tooltip>
                     </TableField>
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.template?.name
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted" :text="row.template?.name
                         ? (() => {
                             const t = row.template;
 
@@ -175,7 +175,7 @@
                         })()
                         : (row.device_template || '—')" />
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted">
                         <template #default>
                             <div v-if="row.profile?.device_profile_name || row.key_template?.name">
                                 <div v-if="row.profile?.device_profile_name">
@@ -190,7 +190,7 @@
                             <div v-else>—</div>
                         </template>
                     </TableField>
-                    <TableField v-if="!filterData.showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                    <TableField v-if="!filterData.showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-muted">
                         <template #default>
                             <div v-if="row.lines?.length === 0">—</div>
                             <div v-else>
@@ -204,10 +204,10 @@
                             </div>
                         </template>
                     </TableField>
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted"
                         :text="row.device_description" />
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted">
                         <div v-if="row.device_provisioned_ip || row.device_provisioned_agent" 
                             class="group relative inline-block cursor-help focus:outline-none" 
                             tabindex="0">
@@ -231,7 +231,7 @@
                         </div>
                     </TableField>
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted">
                         <div class="flex items-center whitespace-nowrap">
                             <ejs-tooltip :content="!row.cloud_provisioning ? 'Not provisioned'
                                 : (row.cloud_provisioning.status === 'success' && row.cloud_provisioning.last_action === 'register') ? 'Provisioned'
@@ -242,24 +242,24 @@
                                 <div id="cloud_status_tooltip_target">
                                     <CloudIcon :class="[
                                         'h-9 w-9 py-2 rounded-full',
-                                        !row.cloud_provisioning ? 'text-gray-300'
-                                            : (row.cloud_provisioning.status === 'success' && row.cloud_provisioning.last_action === 'register') ? 'text-green-600'
-                                                : row.cloud_provisioning.status === 'error' ? 'text-red-600'
-                                                    : row.cloud_provisioning.status === 'pending' ? 'text-yellow-500'
-                                                        : 'text-gray-300'
+                                        !row.cloud_provisioning ? 'text-subtle'
+                                            : (row.cloud_provisioning.status === 'success' && row.cloud_provisioning.last_action === 'register') ? 'text-success'
+                                                : row.cloud_provisioning.status === 'error' ? 'text-danger'
+                                                    : row.cloud_provisioning.status === 'pending' ? 'text-warning'
+                                                        : 'text-subtle'
                                     ]" />
                                 </div>
                             </ejs-tooltip>
                         </div>
                     </TableField>
-                    <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
+                    <TableField class="whitespace-nowrap px-2 py-1 text-sm text-muted">
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap justify-end">
                                 <ejs-tooltip v-if="page.props.auth.can.device_update" :content="'Edit'"
                                     position='TopCenter' target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
                                         <PencilSquareIcon @click="handleEditButtonClick(row.device_uuid)"
-                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer" />
 
                                     </div>
                                 </ejs-tooltip>
@@ -269,7 +269,7 @@
                                     :target="'#provisioning_preview_tooltip_target_' + row.device_uuid">
                                     <div :id="'provisioning_preview_tooltip_target_' + row.device_uuid">
                                         <MagnifyingGlassIcon @click="handleProvisioningPreview(row.device_uuid)"
-                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
 
@@ -277,7 +277,7 @@
                                     target="#restart_tooltip_target">
                                     <div id="restart_tooltip_target">
                                         <RestartIcon @click="handleRestart(row.device_uuid)"
-                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
 
@@ -285,7 +285,7 @@
                                     position='TopCenter' target="#delete_tooltip_target">
                                     <div id="delete_tooltip_target">
                                         <TrashIcon @click="handleSingleItemDeleteRequest(row.device_uuid)"
-                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
                                 <div class="relative z-20 ml-2">
@@ -300,9 +300,9 @@
             <template #empty>
                 <!-- Conditional rendering for 'no records' message -->
                 <div v-if="data.data.length === 0" class="text-center my-5 ">
-                    <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
-                    <p class="mt-1 text-sm text-gray-500">
+                    <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-subtle" />
+                    <h3 class="mt-2 text-sm font-semibold text-heading">No results found</h3>
+                    <p class="mt-1 text-sm text-muted">
                         Adjust your search and try again.
                     </p>
                 </div>
@@ -370,36 +370,36 @@
         @close="closeProvisioningPreview">
         <template #modal-body>
             <div class="flex h-full min-h-0 flex-col">
-                <div v-if="provisioningPreviewError" class="rounded-md bg-red-50 p-4 text-sm text-red-700">
+                <div v-if="provisioningPreviewError" class="rounded-md bg-danger-subtle p-4 text-sm text-danger">
                     {{ provisioningPreviewError }}
                 </div>
 
                 <div v-else class="flex min-h-0 flex-1 flex-col gap-3">
-                    <div class="grid gap-2 text-sm text-gray-600 sm:grid-cols-3">
+                    <div class="grid gap-2 text-sm text-body sm:grid-cols-3">
                         <div>
-                            <span class="font-semibold text-gray-900">Device:</span>
+                            <span class="font-semibold text-heading">Device:</span>
                             {{ provisioningPreviewData?.device?.device_address_formatted || provisioningPreviewData?.device?.device_address || '—' }}
                         </div>
                         <div>
-                            <span class="font-semibold text-gray-900">Vendor:</span>
+                            <span class="font-semibold text-heading">Vendor:</span>
                             {{ provisioningPreviewData?.device?.device_vendor || '—' }}
                         </div>
                         <div>
-                            <span class="font-semibold text-gray-900">Template:</span>
+                            <span class="font-semibold text-heading">Template:</span>
                             {{ provisioningPreviewTemplateLabel }}
                         </div>
                     </div>
 
                     <div v-if="provisioningPreviewFiles.length === 0"
-                        class="flex min-h-0 flex-1 flex-col items-center justify-center rounded-md border border-dashed border-gray-300 bg-gray-50 p-8 text-center">
-                        <MagnifyingGlassIcon class="h-10 w-10 text-gray-300" aria-hidden="true" />
-                        <p class="mt-2 text-sm font-medium text-gray-900">No provisioning files generated</p>
-                        <p class="mt-1 text-sm text-gray-500">This device's template did not produce any files to preview.</p>
+                        class="flex min-h-0 flex-1 flex-col items-center justify-center rounded-md border border-dashed border-strong bg-surface-2 p-8 text-center">
+                        <MagnifyingGlassIcon class="h-10 w-10 text-subtle" aria-hidden="true" />
+                        <p class="mt-2 text-sm font-medium text-heading">No provisioning files generated</p>
+                        <p class="mt-1 text-sm text-muted">This device's template did not produce any files to preview.</p>
                     </div>
 
                     <template v-else>
                         <div role="tablist" aria-label="Provisioning files"
-                            class="flex flex-nowrap items-center gap-2 overflow-x-auto border-b border-gray-200 pb-2">
+                            class="flex flex-nowrap items-center gap-2 overflow-x-auto border-b border-default pb-2">
                             <button v-for="(file, index) in provisioningPreviewFiles" :key="file.flavor" type="button"
                                 role="tab" :aria-selected="activeProvisioningPreviewFlavor === file.flavor"
                                 :tabindex="activeProvisioningPreviewFlavor === file.flavor ? 0 : -1"
@@ -407,8 +407,8 @@
                                 @keydown.left.prevent="focusProvisioningPreviewTab(index - 1, $event)"
                                 @keydown.right.prevent="focusProvisioningPreviewTab(index + 1, $event)" :class="[
                                     activeProvisioningPreviewFlavor === file.flavor
-                                        ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
-                                        : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50',
+                                        ? 'border-accent bg-accent-subtle text-accent-fg'
+                                        : 'border-default bg-surface text-body hover:bg-surface-2',
                                     'shrink-0 whitespace-nowrap rounded-md border px-3 py-1.5 text-sm font-medium'
                                 ]">
                                 {{ file.filename }}
@@ -416,8 +416,8 @@
                         </div>
 
                         <div class="flex items-center justify-between gap-3">
-                            <div class="min-w-0 text-sm text-gray-600">
-                                <span class="font-semibold text-gray-900">{{ activeProvisioningPreviewFile?.flavor || '—' }}</span>
+                            <div class="min-w-0 text-sm text-body">
+                                <span class="font-semibold text-heading">{{ activeProvisioningPreviewFile?.flavor || '—' }}</span>
                                 <span v-if="activeProvisioningPreviewFile">
                                     · {{ activeProvisioningPreviewFile.mime }} · {{ formatBytes(activeProvisioningPreviewFile.bytes) }}
                                 </span>
@@ -426,24 +426,24 @@
                                 <button type="button" @click="provisioningPreviewWrap = !provisioningPreviewWrap"
                                     :aria-pressed="provisioningPreviewWrap" :class="[
                                         provisioningPreviewWrap
-                                            ? 'bg-indigo-50 text-indigo-700 ring-indigo-300'
-                                            : 'bg-white text-gray-900 ring-gray-300 hover:bg-gray-50',
+                                            ? 'bg-accent-subtle text-accent-fg ring-accent'
+                                            : 'bg-surface text-heading ring-strong hover:bg-surface-2',
                                         'rounded-md px-2.5 py-1.5 text-sm font-semibold shadow-sm ring-1 ring-inset'
                                     ]">
                                     Wrap
                                 </button>
                                 <button type="button" @click="copyProvisioningPreview"
-                                    class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                                    class="rounded-md bg-surface px-2.5 py-1.5 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2">
                                     Copy
                                 </button>
                                 <button type="button" @click="downloadProvisioningPreview"
-                                    class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                                    class="rounded-md bg-surface px-2.5 py-1.5 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2">
                                     Download
                                 </button>
                             </div>
                         </div>
 
-                        <div class="min-h-0 flex-1 overflow-hidden rounded-md border border-gray-200">
+                        <div class="min-h-0 flex-1 overflow-hidden rounded-md border border-default">
                             <AceEditor
                                 :key="`${activeProvisioningPreviewFile?.flavor}-${provisioningPreviewWrap}`"
                                 :model-value="activeProvisioningPreviewFile?.content || ''"
@@ -462,27 +462,27 @@
         <template #modal-body>
             <div class="p-6">
                 <div class="mb-4">
-                    <label for="new_mac" class="block text-sm font-medium leading-6 text-gray-900">
+                    <label for="new_mac" class="block text-sm font-medium leading-6 text-heading">
                         New MAC Address
                     </label>
                     <div class="mt-2">
                         <input type="text" id="new_mac" v-model="newMacAddress" placeholder="00:00:00:00:00:00"
-                            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                            class="block w-full rounded-md border-0 py-1.5 text-heading shadow-sm ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus sm:text-sm sm:leading-6"
                             @keydown.enter="submitDuplicateRequest" />
                     </div>
-                    <div v-if="formErrors?.new_mac_address" class="mt-2 text-sm text-red-600">
+                    <div v-if="formErrors?.new_mac_address" class="mt-2 text-sm text-danger">
                         {{ formErrors.new_mac_address[0] }}
                     </div>
-                    <div v-if="formErrors?.server" class="mt-2 text-sm text-red-600">
+                    <div v-if="formErrors?.server" class="mt-2 text-sm text-danger">
                         {{ formErrors.server[0] }}
                     </div>
                 </div>
 
                 <div class="mt-6 flex items-center justify-end gap-x-6">
                     <button type="button" @click="showDuplicateModal = false"
-                        class="text-sm font-semibold leading-6 text-gray-900">Cancel</button>
+                        class="text-sm font-semibold leading-6 text-heading">Cancel</button>
                     <button type="button" @click="submitDuplicateRequest"
-                        class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                        class="rounded-md bg-accent px-3 py-2 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
                         Duplicate
                     </button>
                 </div>
