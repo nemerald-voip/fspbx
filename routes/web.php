@@ -378,6 +378,8 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/apps/user/delete', [AppsController::class, 'deleteUser'])->name('apps.user.delete');
     Route::post('/apps/user/activate', [AppsController::class, 'activateUser'])->name('apps.user.activate');
     Route::post('/apps/user/deactivate', [AppsController::class, 'deactivateUser'])->name('apps.user.deactivate');
+    Route::post('/apps/user/state', [AppsController::class, 'setUserState'])->name('apps.user.state');
+    Route::post('/apps/user/device/delete', [AppsController::class, 'deleteDevice'])->name('apps.user.device.delete');
     Route::post('/apps/sync-users', [AppsController::class, 'syncUsers'])->name('apps.users.sync');
     Route::post('/apps/user/reset-password', [AppsController::class, 'resetPassword'])->name('apps.user.reset');
     Route::post('/apps/users/{extension}/status', [AppsController::class, 'SetStatus'])->name('appsSetStatus');
