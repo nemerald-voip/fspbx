@@ -67,6 +67,11 @@
                     @edit-item="handleUpdateLocationButtonClick" @delete-item="handleDeleteLocationButtonClick" />
             </section>
 
+            <!-- DOMAIN VARIABLES -->
+            <section v-if="selectedMenuOption === 'domain_variables' && props.domainSettings">
+                <DomainSettingsPanel v-bind="props.domainSettings" embedded />
+            </section>
+
             <!-- AUTO PROVISIONING -->
             <section v-show="selectedMenuOption === 'auto_provisioning'">
                 <Vueform>
@@ -179,6 +184,7 @@ import EmergencyCalls from "./components/EmergencyCalls.vue";
 import AutoProvisioning from "./components/AutoProvisioning.vue";
 import RoomManagement from "./components/RoomManagement.vue";
 import RoomStatus from "./components/RoomStatus.vue";
+import DomainSettingsPanel from "./DomainSettings.vue";
 import EmergencyServiceStatus from "./components/EmergencyServiceStatus.vue";
 import Locations from "./components/Locations.vue";
 import CreateLocationModal from "./components/modal/CreateLocationModal.vue"
@@ -195,6 +201,7 @@ import {
     KeyIcon,
     BellAlertIcon,
     ClipboardDocumentCheckIcon,
+    AdjustmentsHorizontalIcon,
     AdjustmentsVerticalIcon,
 } from '@heroicons/vue/24/outline'
 
@@ -209,6 +216,10 @@ const props = defineProps({
     pms_provider_options: {
         type: Array,
         default: () => [],
+    },
+    domainSettings: {
+        type: Object,
+        default: null,
     },
 
 })
@@ -255,6 +266,7 @@ const handleUpdateSelectedMenuOption = (key) => {
 const navigation = [
     { key: 'general', name: 'General', icon: Cog6ToothIcon },
     { key: 'locations', name: 'Locations', icon: MapPinIcon },
+    ...(props.domainSettings ? [{ key: 'domain_variables', name: 'Domain Variables', icon: AdjustmentsHorizontalIcon }] : []),
     { key: 'auto_provisioning', name: 'Auto Provisioning', icon: WrenchScrewdriverIcon },
     // { key: 'billing', name: 'Billing', icon: CreditCardIcon },
     {

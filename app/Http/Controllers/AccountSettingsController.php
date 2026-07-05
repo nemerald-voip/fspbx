@@ -23,7 +23,10 @@ class AccountSettingsController extends Controller
     public $model;
     protected $viewName = 'AccountSettings';
 
-    public function __construct(private readonly SettingsManagementService $settings)
+    public function __construct(
+        private readonly SettingsManagementService $settings,
+        private readonly DomainSettingsController $domainSettingsController,
+    )
     {
         $this->model = new Domain();
     }
@@ -85,6 +88,15 @@ class AccountSettingsController extends Controller
                 'pms_provider_options' => app(PmsProviderSettings::class)->options(),
                 'permissions' => function () {
                     return $this->getUserPermissions();
+                },
+                'domainSettings' => function () {
+                    if (! userCheckPermission('domain_setting_view')) {
+                        return null;
+                    }
+
+                    $domain = Domain::query()->find(session('domain_uuid'));
+
+                    return $domain ? $this->domainSettingsController->pageProps($domain) : null;
                 },
 
             ]
