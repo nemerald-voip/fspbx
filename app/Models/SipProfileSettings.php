@@ -15,7 +15,11 @@ class SipProfileSettings extends Model
 
     protected $primaryKey = 'sip_profile_setting_uuid';
 
+    public $incrementing = false;
+
     protected $keyType = 'string';
+
+    protected $guarded = [];
 
     // Define the inverse relationship with v_sip_profiles
     public function sipProfile()

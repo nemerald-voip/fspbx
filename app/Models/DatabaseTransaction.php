@@ -24,4 +24,13 @@ class DatabaseTransaction extends Model
      */
     protected $guarded = [];
 
+    public function domain()
+    {
+        return $this->belongsTo(Domain::class, 'domain_uuid', 'domain_uuid');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_uuid', 'user_uuid');
+    }
 }

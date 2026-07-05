@@ -58,4 +58,22 @@ class TigerTmsWebhookNormalizerTest extends TestCase
 
         $this->assertNull($normalized['action']);
     }
+
+    public function test_normalizes_room_transfer_payload_shape(): void
+    {
+        $normalized = app(TigerTmsWebhookNormalizer::class)->normalize([
+            'eventType' => 'room.transfer',
+            'propertyId' => '001',
+            'data' => [
+                'fromRoomNumber' => '100',
+                'toRoomNumber' => '102',
+            ],
+        ]);
+
+        $this->assertSame('001', $normalized['site']);
+        $this->assertSame('room.transfer', $normalized['event']);
+        $this->assertSame('transfer', $normalized['action']);
+        $this->assertSame('100', $normalized['from_room']);
+        $this->assertSame('102', $normalized['to_room']);
+    }
 }

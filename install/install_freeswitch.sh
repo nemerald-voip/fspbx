@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Honor the Bash requirement even when invoked as `sh install_freeswitch.sh`.
+if [ -z "${BASH_VERSION:-}" ]; then
+    exec /bin/bash "$0" "$@"
+fi
+
 # Set error handling
 set -e
 
@@ -12,6 +17,22 @@ print_success() {
 print_error() {
     echo -e "\e[31m$1 \e[0m"
 }
+
+FRESH_INSTALL=false
+RESTART_PREPARATION_COMPLETE=true
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --fresh-install)
+            FRESH_INSTALL=true
+            ;;
+        *)
+            print_error "Unknown option: $1"
+            exit 1
+            ;;
+    esac
+    shift
+done
 
 # Detect OS codename
 OS_CODENAME=$(lsb_release -sc 2>/dev/null || echo "")
@@ -212,6 +233,24 @@ chown -R www-data:www-data /var/log/freeswitch
 chown -R www-data:www-data /var/run/freeswitch
 chown -R www-data:www-data /var/cache/fusionpbx
 
+# PHP-FPM may have started before these paths existed, causing systemd to skip
+# the optional ReadWritePaths entries. Restart it to rebuild its mount namespace.
+systemctl daemon-reload
+systemctl restart php8.4-fpm
+print_success "Restarted php8.4-fpm with access to the FreeSWITCH directories."
+
+if [[ "$FRESH_INSTALL" == "false" ]]; then
+    print_success "Preparing FS PBX configuration for the FreeSWITCH restart..."
+
+    if sudo -u www-data -- php /var/www/fspbx/artisan freeswitch:prepare-restart --no-interaction; then
+        print_success "FreeSWITCH variables and XML cache prepared successfully."
+    else
+        RESTART_PREPARATION_COMPLETE=false
+        print_error "Automatic FreeSWITCH restart preparation was incomplete."
+        print_error "Before restarting, use Advanced > Variables > Sync XML and Status > SIP Status > Flush Cache."
+    fi
+fi
+
 print_success "FreeSWITCH $FREESWITCH_VERSION installed successfully!"
 
 print_success "Removing existing FreeSWITCH service..."
@@ -248,6 +287,10 @@ systemctl enable freeswitch
 if [ -d "/proc/vz" ] || [ -e "/proc/user_beancounters" ]; then
     print_success "Detected OpenVZ, disabling CPU scheduling for FreeSWITCH..."
     sed -i -e "s/CPUSchedulingPolicy=rr/;CPUSchedulingPolicy=rr/g" /lib/systemd/system/freeswitch.service
+fi
+
+if [[ "$RESTART_PREPARATION_COMPLETE" == "false" ]]; then
+    print_error "ACTION REQUIRED: Synchronize Variables XML and flush the SIP Status cache before restarting FreeSWITCH."
 fi
 
 #Remove SW Token

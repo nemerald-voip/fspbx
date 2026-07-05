@@ -17,6 +17,9 @@
     <li><strong>From:</strong> {{ $sender }}</li>
     <li><strong>To:</strong> {{ $destination }}</li>
     <li><strong>Pages:</strong> {{ $attributes['fax_pages'] ?? '' }}</li>
+    @if (!empty($attributes['fax_date']))
+        <li><strong>Received:</strong> {{ $attributes['fax_date'] }}</li>
+    @endif
     {{-- <li><strong>Status:</strong> {{ $attributes['fax_result_text'] ?? '' }}</li> --}}
 </ul>
 

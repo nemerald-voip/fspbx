@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Schema;
 use Spatie\QueryBuilder\AllowedFilter;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
+use App\Services\Auth\UserSessionInvalidationService;
 use App\Traits\ChecksLimits;
 
 class UsersController extends Controller
@@ -440,6 +441,22 @@ class UsersController extends Controller
             $allowedGroups = $this->allowedGroupsForActor($validated['groups'], $user->domain_uuid);
         }
 
+        $groupsChanged = false;
+        if (array_key_exists('groups', $validated) && is_array($validated['groups'])) {
+            $currentGroupUuids = $user->user_groups()
+                ->pluck('group_uuid')
+                ->sort()
+                ->values()
+                ->all();
+
+            $newGroupUuids = collect($validated['groups'])
+                ->sort()
+                ->values()
+                ->all();
+
+            $groupsChanged = $currentGroupUuids !== $newGroupUuids;
+        }
+
         try {
             DB::beginTransaction();
 
@@ -509,6 +526,10 @@ class UsersController extends Controller
 
             DB::commit();
 
+            if ($groupsChanged) {
+                app(UserSessionInvalidationService::class)->invalidateByUserUuids([$user->user_uuid]);
+            }
+
             return response()->json([
                 'messages' => ['success' => ['User updated']]
             ]);
@@ -567,6 +588,8 @@ class UsersController extends Controller
                 ->delete();
 
             DB::commit();
+
+            app(UserSessionInvalidationService::class)->invalidateByUserUuids($users->pluck('user_uuid'));
 
             return response()->json([
                 'messages' => ['success' => ['Selected user(s) were deleted successfully.']]

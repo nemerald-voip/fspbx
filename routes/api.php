@@ -23,6 +23,7 @@ use App\Http\Controllers\ConferenceProfileController;
 use App\Http\Controllers\ConferenceRoomController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\CustomerNotesController;
+use App\Http\Controllers\DatabaseTransactionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeviceCloudProvisioningController;
 use App\Http\Controllers\DeviceController;
@@ -49,13 +50,16 @@ use App\Http\Controllers\HotelHousekeepingDefinitionController;
 use App\Http\Controllers\HotelRoomController;
 use App\Http\Controllers\HotelRoomStatusController;
 use App\Http\Controllers\InboundWebhooksController;
+use App\Http\Controllers\LaravelLogController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\MessageSettingsController;
 use App\Http\Controllers\MusicOnHoldController;
 use App\Http\Controllers\BasicDialerController;
+use App\Http\Controllers\NginxLogController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\PaymentGatewayController;
 use App\Http\Controllers\PhoneNumbersController;
+use App\Http\Controllers\PinNumberController;
 use App\Http\Controllers\ProvisioningController;
 use App\Http\Controllers\RegistrationsController;
 use App\Http\Controllers\RecordingsManagerController;
@@ -78,6 +82,7 @@ use App\Http\Controllers\VoicemailController;
 use App\Http\Controllers\VoicemailMessagesController;
 use App\Http\Controllers\WakeupCallsController;
 use App\Http\Controllers\ScheduledAnnouncementController;
+use App\Http\Controllers\SipProfileController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -125,6 +130,12 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     // FreeSWITCH logs
     Route::get('/freeswitch-logs', [FreeswitchLogController::class, 'index'])->name('freeswitch-logs.index');
     Route::post('/freeswitch-logs/sip-trace', [FreeswitchLogController::class, 'sipTrace'])->name('freeswitch-logs.sip-trace');
+
+    // Nginx logs
+    Route::get('/nginx-logs', [NginxLogController::class, 'index'])->name('nginx-logs.index');
+
+    // Laravel logs
+    Route::get('/laravel-logs', [LaravelLogController::class, 'index'])->name('laravel-logs.index');
 
     // Basic Queue
     Route::get('/basic-queues/queues/data', [BasicQueueController::class, 'getQueueData'])->name('basic-queues.queues.data');
@@ -212,6 +223,17 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     // SIP Status
     Route::get('sip-status/data', [SipStatusController::class, 'data'])->name('sip-status.data');
     Route::post('sip-status/action', [SipStatusController::class, 'action'])->name('sip-status.action');
+
+    // SIP Profiles
+    Route::get('sip-profiles/data', [SipProfileController::class, 'getData'])->name('sip-profiles.data');
+    Route::post('sip-profiles', [SipProfileController::class, 'store'])->name('sip-profiles.store');
+    Route::post('sip-profiles/item-options', [SipProfileController::class, 'getItemOptions'])->name('sip-profiles.item.options');
+    Route::post('sip-profiles/select-all', [SipProfileController::class, 'selectAll'])->name('sip-profiles.select.all');
+    Route::post('sip-profiles/bulk-delete', [SipProfileController::class, 'bulkDelete'])->name('sip-profiles.bulk.delete');
+    Route::post('sip-profiles/bulk-toggle', [SipProfileController::class, 'bulkToggle'])->name('sip-profiles.bulk.toggle');
+    Route::post('sip-profiles/{sip_profile}/duplicate', [SipProfileController::class, 'duplicate'])->name('sip-profiles.duplicate');
+    Route::put('sip-profiles/{sip_profile}', [SipProfileController::class, 'update'])->name('sip-profiles.update');
+    Route::delete('sip-profiles/{sip_profile}', [SipProfileController::class, 'destroy'])->name('sip-profiles.destroy');
 
     // FreeSWITCH TLS (Let's Encrypt)
     Route::get('sip-status/tls', [LetsEncryptController::class, 'status'])->name('sip-status.tls.status');
@@ -357,6 +379,11 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     // User logs
     Route::post('user-logs/select-all', [UserLogsController::class, 'selectAll'])->name('user-logs.select.all');
 
+    // Database Transactions
+    Route::get('database-transactions/data', [DatabaseTransactionController::class, 'getData'])->name('database-transactions.data');
+    Route::get('database-transactions/{database_transaction}', [DatabaseTransactionController::class, 'show'])->name('database-transactions.show');
+    Route::post('database-transactions/{database_transaction}/undo', [DatabaseTransactionController::class, 'undo'])->name('database-transactions.undo');
+
     // Devices 
     Route::post('devices', [DeviceController::class, 'store'])->name('devices.store');
     Route::put('devices/{device}', [DeviceController::class, 'update'])->name('devices.update');
@@ -377,6 +404,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/device-key-templates/item-options', [DeviceKeyTemplateController::class, 'getItemOptions'])->name('device-key-templates.item.options');
     Route::post('/device-key-templates/select-all', [DeviceKeyTemplateController::class, 'selectAll'])->name('device-key-templates.select.all');
     Route::post('/device-key-templates/duplicate', [DeviceKeyTemplateController::class, 'duplicate'])->name('device-key-templates.duplicate');
+    Route::post('/device-key-templates/copy-to-domain', [DeviceKeyTemplateController::class, 'copyToDomain'])->name('device-key-templates.copy-to-domain');
     Route::post('/device-key-templates/bulk-delete', [DeviceKeyTemplateController::class, 'bulkDelete'])->name('device-key-templates.bulk.delete');
     Route::post('/devices/{device}/key-templates', [DeviceKeyTemplateController::class, 'storeFromDevice'])->name('devices.key-templates.store-from-device');
 
@@ -439,6 +467,16 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/bridges/bulk-copy', [BridgeController::class, 'bulkCopy'])->name('bridges.bulk.copy');
     Route::post('/bridges/bulk-delete', [BridgeController::class, 'bulkDelete'])->name('bridges.bulk.delete');
     Route::post('/bridges/bulk-toggle', [BridgeController::class, 'bulkToggle'])->name('bridges.bulk.toggle');
+
+    // PIN Numbers
+    Route::post('pin-numbers', [PinNumberController::class, 'store'])->name('pin-numbers.store');
+    Route::put('pin-numbers/{pin_number}', [PinNumberController::class, 'update'])->name('pin-numbers.update');
+    Route::get('/pin-numbers/data', [PinNumberController::class, 'getData'])->name('pin-numbers.data');
+    Route::post('/pin-numbers/item-options', [PinNumberController::class, 'getItemOptions'])->name('pin-numbers.item.options');
+    Route::post('/pin-numbers/select-all', [PinNumberController::class, 'selectAll'])->name('pin-numbers.select.all');
+    Route::post('/pin-numbers/bulk-copy', [PinNumberController::class, 'bulkCopy'])->name('pin-numbers.bulk.copy');
+    Route::post('/pin-numbers/bulk-delete', [PinNumberController::class, 'bulkDelete'])->name('pin-numbers.bulk.delete');
+    Route::post('/pin-numbers/bulk-toggle', [PinNumberController::class, 'bulkToggle'])->name('pin-numbers.bulk.toggle');
 
     // Call Blocks
     Route::post('call-blocks', [CallBlockController::class, 'store'])->name('call-blocks.store');

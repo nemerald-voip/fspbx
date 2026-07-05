@@ -198,7 +198,7 @@
 
 <script setup>
 import { computed, onMounted, ref } from "vue";
-import { usePage } from '@inertiajs/vue3'
+import { router, usePage } from '@inertiajs/vue3'
 import axios from 'axios';
 import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
@@ -444,7 +444,16 @@ const handleSearchButtonClick = () => {
 
 const refreshCurrentPage = () => {
     getData(currentPage.value)
+    refreshDomainSelector()
 };
+
+const refreshDomainSelector = () => {
+    router.reload({
+        only: ['domains', 'selectedDomain', 'selectedDomainUuid'],
+        preserveScroll: true,
+        preserveState: true,
+    });
+}
 
 
 const handleFiltersReset = () => {

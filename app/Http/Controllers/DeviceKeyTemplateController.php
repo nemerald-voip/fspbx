@@ -6,6 +6,7 @@ use App\Http\Requests\StoreDeviceKeyTemplateRequest;
 use App\Http\Requests\UpdateDeviceKeyTemplateRequest;
 use App\Models\DeviceKeyTemplate;
 use App\Models\Devices;
+use App\Models\Domain;
 use App\Services\DeviceKeyTemplateService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -35,12 +36,17 @@ class DeviceKeyTemplateController extends Controller
                 'item_options' => route('device-key-templates.item.options'),
                 'get_routing_options' => route('routing.options'),
                 'duplicate' => route('device-key-templates.duplicate'),
+                'copy_to_domain' => route('device-key-templates.copy-to-domain'),
                 'devices' => route('devices.index'),
             ],
             'permissions' => [
                 'create' => userCheckPermission('device_key_template_create'),
                 'update' => userCheckPermission('device_key_template_update'),
                 'destroy' => userCheckPermission('device_key_template_delete'),
+                'copy_to_domain' => userCheckPermission('device_key_template_create') && userCheckPermission('domain_select'),
+            ],
+            'options' => [
+                'domains' => $this->domainOptions(),
             ],
         ]);
     }
@@ -217,6 +223,61 @@ class DeviceKeyTemplateController extends Controller
         }
     }
 
+    public function copyToDomain(Request $request, DeviceKeyTemplateService $service): JsonResponse
+    {
+        if (! userCheckPermission('device_key_template_create') || ! userCheckPermission('domain_select')) {
+            return response()->json([
+                'messages' => ['error' => ['Access denied.']],
+            ], 403);
+        }
+
+        $data = $request->validate([
+            'uuid' => ['required', 'uuid', 'exists:device_key_templates,device_key_template_uuid'],
+            'target_domain_uuid' => ['required', 'uuid', 'exists:v_domains,domain_uuid'],
+        ]);
+
+        if ($data['target_domain_uuid'] === session('domain_uuid')) {
+            return response()->json([
+                'messages' => ['error' => ['Choose a different target domain.']],
+            ], 422);
+        }
+
+        if (! $this->canAccessDomain($data['target_domain_uuid'])) {
+            return response()->json([
+                'messages' => ['error' => ['Domain access denied.']],
+            ], 403);
+        }
+
+        try {
+            $template = DeviceKeyTemplate::query()
+                ->where('domain_uuid', session('domain_uuid'))
+                ->with('keys')
+                ->whereKey($data['uuid'])
+                ->first();
+
+            if (! $template) {
+                return response()->json([
+                    'messages' => ['error' => ['Device key template was not found.']],
+                ], 404);
+            }
+
+            $copy = $service->duplicate($template, $data['target_domain_uuid']);
+            $targetDomain = Domain::query()->findOrFail($data['target_domain_uuid']);
+            $targetDomainLabel = $targetDomain->domain_description ?: $targetDomain->domain_name;
+
+            return response()->json([
+                'messages' => ['success' => ["Device key template copied to {$targetDomainLabel}."]],
+                'device_key_template_uuid' => $copy->device_key_template_uuid,
+            ], 201);
+        } catch (\Throwable $e) {
+            logger('DeviceKeyTemplateController@copyToDomain error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+
+            return response()->json([
+                'messages' => ['error' => ['Failed to copy device key template.']],
+            ], 500);
+        }
+    }
+
     public function bulkDelete(Request $request, DeviceKeyTemplateService $service): JsonResponse
     {
         if (! userCheckPermission('device_key_template_delete')) {
@@ -323,5 +384,37 @@ class DeviceKeyTemplateController extends Controller
                 'name' => $extension->name_formatted,
             ])
             ->all();
+    }
+
+    private function domainOptions(): array
+    {
+        return collect(session('domains', []))
+            ->map(fn ($domain) => [
+                'value' => data_get($domain, 'domain_uuid'),
+                'label' => $this->domainOptionLabel($domain),
+            ])
+            ->filter(fn ($domain) => $domain['value']
+                && $domain['label']
+                && $domain['value'] !== session('domain_uuid'))
+            ->values()
+            ->all();
+    }
+
+    private function domainOptionLabel(mixed $domain): string
+    {
+        $name = (string) data_get($domain, 'domain_name', '');
+        $description = (string) data_get($domain, 'domain_description', '');
+
+        return $description ?: $name;
+    }
+
+    private function canAccessDomain(string $domainUuid): bool
+    {
+        if (userCheckPermission('domain_all')) {
+            return true;
+        }
+
+        return collect(session('domains', []))
+            ->contains(fn ($domain) => data_get($domain, 'domain_uuid') === $domainUuid);
     }
 }

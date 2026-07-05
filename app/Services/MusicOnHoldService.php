@@ -243,7 +243,13 @@ class MusicOnHoldService
 
     public function representativeQuery()
     {
-        $representatives = DB::query()
+        return $this->scopedQuery()
+            ->whereIn('music_on_hold_uuid', $this->representativeUuidsSubquery());
+    }
+
+    private function representativeUuidsSubquery()
+    {
+        return DB::query()
             ->select('music_on_hold_uuid')
             ->fromSub(function ($query) {
                 $query->from((new MusicOnHold())->getTable())
@@ -269,9 +275,6 @@ class MusicOnHoldService
                     );
             }, 'ranked_music_on_hold')
             ->where('stream_rank', 1);
-
-        return $this->scopedQuery()
-            ->whereIn('music_on_hold_uuid', $representatives);
     }
 
     public function accessibleDomainUuids(): array
@@ -341,11 +344,7 @@ class MusicOnHoldService
     {
         $domainUuid = session('domain_uuid');
 
-        return $this->representativeQuery()
-            ->where(function ($query) use ($domainUuid) {
-                $query->where('domain_uuid', $domainUuid)
-                    ->orWhereNull('domain_uuid');
-            })
+        return $this->tenantHoldMusicStreamQuery()
             ->orderByRaw('case when domain_uuid = ? then 0 when domain_uuid is null then 1 else 2 end', [$domainUuid])
             ->orderBy('music_on_hold_name')
             ->get()
@@ -357,6 +356,19 @@ class MusicOnHoldService
             ])
             ->values()
             ->all();
+    }
+
+    private function tenantHoldMusicStreamQuery()
+    {
+        $domainUuid = session('domain_uuid');
+
+        return MusicOnHold::query()
+            ->with(['domain:domain_uuid,domain_name,domain_description'])
+            ->whereIn('music_on_hold_uuid', $this->representativeUuidsSubquery())
+            ->where(function ($query) use ($domainUuid) {
+                $query->where('domain_uuid', $domainUuid)
+                    ->orWhereNull('domain_uuid');
+            });
     }
 
     public function tenantHoldMusicSettings(): array
@@ -435,11 +447,7 @@ class MusicOnHoldService
 
     private function tenantStreamHoldMusicValue(?string $streamUuid): string
     {
-        $stream = $this->representativeQuery()
-            ->where(function ($query) {
-                $query->where('domain_uuid', session('domain_uuid'))
-                    ->orWhereNull('domain_uuid');
-            })
+        $stream = $this->tenantHoldMusicStreamQuery()
             ->whereKey($streamUuid)
             ->firstOrFail();
 
@@ -519,7 +527,7 @@ class MusicOnHoldService
             return null;
         }
 
-        return $this->representativeQuery()
+        return $this->tenantHoldMusicStreamQuery()
             ->whereNull('domain_uuid')
             ->where('music_on_hold_name', $streamName)
             ->first();

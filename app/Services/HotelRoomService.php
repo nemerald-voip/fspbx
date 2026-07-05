@@ -202,7 +202,10 @@ class HotelRoomService
 
             // Update extensions (no file ops here)
             $this->vacateExtension($source);                                  // DND=true, VM disabled, name "Vacant"
-            $this->updateExtension($destination, ['extension_name' => $guestName, 'extension_id' => $voicemailContext['dst']['id']]); // DND=false, VM enabled, name guest
+            $this->updateExtension($destination, array_filter([
+                'extension_name' => $guestName,
+                'extension_id' => $voicemailContext['dst']['id'] ?? null,
+            ], fn ($value) => $value !== null && $value !== '')); // DND=false, VM enabled, name guest
 
             //New: transfer wakeup calls src -> dst (extension_uuid)
             $this->transferWakeupCallsForMove($source, $destination);

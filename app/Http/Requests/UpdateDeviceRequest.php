@@ -109,7 +109,7 @@ class UpdateDeviceRequest extends FormRequest
             'device_keys.*.key_area' => [
                 'nullable',
                 'string',
-                Rule::in(['main', 'multi_purpose', 'expansion']),
+                Rule::in(['main', 'side', 'multi_purpose', 'expansion']),
             ],
 
             'device_keys.*.key_type' => [

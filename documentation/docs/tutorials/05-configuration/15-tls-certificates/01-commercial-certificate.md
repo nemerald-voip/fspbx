@@ -21,22 +21,15 @@ You need:
 
 :::important FreeSWITCH version
 
-FreeSWITCH 1.11.1 or later can load a renewed certificate without interrupting calls. Existing FS PBX installations must upgrade FreeSWITCH separately from the normal FS PBX update:
+Check the currently running FreeSWITCH version:
 
 ```bash
-cd /var/www/fspbx
-sudo bash install/install_freeswitch.sh
-```
-
-After the upgrade finishes, restart the FreeSWITCH service:
-
-```bash
-sudo systemctl daemon-reload
-sudo systemctl restart freeswitch
 sudo fs_cli -x version
 ```
 
-Installing the new FreeSWITCH files does not replace the process that is already running. Until the service is restarted, the server continues running the old FreeSWITCH version and `reloadcert` may remain unavailable. A FreeSWITCH service restart interrupts active calls, so plan a maintenance window. New FS PBX installations already install the supported version.
+If the reported version is earlier than 1.11.1, follow the [FreeSWITCH upgrade or reinstall guide](../../04-freeswitch-upgrade.md). The required service restart interrupts active calls, so plan a maintenance window.
+
+If FreeSWITCH 1.11.1 or later is already running, no upgrade or service restart is needed. That version can load certificate updates without interrupting calls.
 
 :::
 

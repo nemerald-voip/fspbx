@@ -38,15 +38,23 @@ class MigrateSQLiteToRAM extends Command
         $this->insertSwitchVariables();
         $this->updateDefaultSettings();
         $this->updateFusionPBXConfig();
+
+        $this->info("Preparing FreeSWITCH configuration for restart...");
+
+        if ($this->call('freeswitch:prepare-restart', ['--no-interaction' => true]) !== Command::SUCCESS) {
+            $this->error("SQLite settings were updated, but FreeSWITCH restart preparation failed.");
+            $this->error("Do not restart FreeSWITCH until vars.xml is synchronized and the XML cache is flushed.");
+
+            return Command::FAILURE;
+        }
+
         $this->removeDatabaseFiles();
 
         $this->info("SQLite to RAM migration complete.");
 
         $this->info("------------");
         $this->info("TO DO:");
-        $this->info("1) Restart FreeSwitch");
-        $this->info("2) Flash Cache");
-        $this->info("3) Re-scan SIP Profiles");
+        $this->info("1) Restart FreeSWITCH");
         
         return Command::SUCCESS;
 

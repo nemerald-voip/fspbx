@@ -15,7 +15,11 @@ class SipProfiles extends Model
 
     protected $primaryKey = 'sip_profile_uuid';
 
+    public $incrementing = false;
+
     protected $keyType = 'string';
+
+    protected $guarded = [];
 
     // Define the relationship with v_sip_profile_settings
     public function settings()
@@ -23,5 +27,8 @@ class SipProfiles extends Model
         return $this->hasMany(SipProfileSettings::class, 'sip_profile_uuid', 'sip_profile_uuid');
     }
 
+    public function domains()
+    {
+        return $this->hasMany(SipProfileDomain::class, 'sip_profile_uuid', 'sip_profile_uuid');
+    }
 }
-

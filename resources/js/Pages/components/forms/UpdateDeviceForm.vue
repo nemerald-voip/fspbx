@@ -63,6 +63,9 @@
                                     device_keys: normalizeDeviceKeysForForm(
                                         filterKeysByArea(options.item?.keys ?? [], 'main')
                                     ),
+                                    side_keys: normalizeDeviceKeysForForm(
+                                        filterKeysByArea(options.item?.keys ?? [], 'side')
+                                    ),
                                     multi_purpose_keys: normalizeDeviceKeysForForm(
                                         filterKeysByArea(options.item?.keys ?? [], 'multi_purpose')
                                     ),
@@ -113,16 +116,16 @@
                                                     'submit_keys',
 
                                                 ]" />
-                                                <!-- <FormTab name="secondary_screen_keys" label="Secondary Screen"
+                                                <FormTab name="side_keys" label="Side Keys"
                                                     :elements="[
-                                                        'secondary_screen_keys_container',
-                                                        'secondary_screen_keys_title',
-                                                        // 'add_key',
-                                                        'secondary_screen_device_keys',
-                                                        'secondary_screen_keys_container2',
-                                                        // 'submit_keys',
+                                                        'side_keys_container',
+                                                        'side_keys_title',
+                                                        'side_keys',
+                                                        'side_keys_container2',
+                                                        'side_keys_submit',
 
-                                                    ]" :conditions="[() => options?.item?.device_vendor == 'polycom']" /> -->
+                                                    ]"
+                                                    :conditions="[() => options?.item?.device_vendor == 'fanvil']" />
 
                                                 <FormTab name="multi_purpose_keys" label="Multi Purpose Keys" :elements="[
                                                     'multi_purpose_keys_container',
@@ -499,8 +502,9 @@
                                                         <div>
                                                             <h4 class="text-base font-semibold text-gray-900">Device
                                                                 Function Keys</h4>
-                                                            <p class="mt-1 text-sm text-gray-500">Assign function keys to
-                                                                this device.</p>
+                                                            <p class="mt-1 text-sm text-gray-500">Programmable DSS keys
+                                                                for BLF, speed dial, line appearances, and other call
+                                                                actions.</p>
                                                         </div>
                                                         <button type="button"
                                                             v-if="options?.permissions?.device_key_template_create && options?.routes?.save_key_template_from_device && options?.item?.keys?.length > 0"
@@ -634,18 +638,20 @@
                                                 <ButtonElement name="submit_keys" button-label="Save" :submits="true"
                                                     align="right" />
 
-                                                <!-- Secondar Screen Keys -->
-                                                <StaticElement name="secondary_screen_keys_title" tag="h4"
-                                                    content="Device Secondary Screen Keys"
-                                                    description="Assign function keys to this device's secondary screen." />
+                                                <!-- Fanvil Side Keys -->
+                                                <StaticElement name="side_keys_title" tag="h4"
+                                                    content="Side Keys"
+                                                    description="Keys beside the display on supported Fanvil phones. Use these for primary-screen line appearances and other call actions." />
 
-                                                <GroupElement name="secondary_screen_keys_container" />
-                                                <ListElement name="secondary_screen_device_keys" :sort="true" size="sm"
+                                                <GroupElement name="side_keys_container" />
+                                                <ListElement name="side_keys" :sort="true" size="sm"
                                                     :controls="{ add: options.permissions.device_key_create, remove: options.permissions.device_key_destroy, sort: options.permissions.device_key_up }"
                                                     :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }">
                                                     <template #default="{ index }">
                                                         <ObjectElement :name="index"
-                                                            :key="form$?.data?.device_keys?.[index]?.key_uuid">
+                                                            :key="form$?.data?.side_keys?.[index]?.key_uuid">
+
+                                                            <HiddenElement name="key_area" :meta="true" default="side" />
 
                                                             <HiddenElement name="key_uuid" :meta="true"
                                                                 :default="Math.random().toString(36).slice(2)" />
@@ -660,7 +666,7 @@
                                                                 sm: {
                                                                     container: 1,
                                                                 },
-                                                            }" :default="getNextKeyNumber('secondary')" />
+                                                            }" :default="getNextKeyNumber('side_keys')" />
 
                                                             <SelectElement name="key_type" label="Type"
                                                                 :items="keyTypes" :search="true" label-prop="name"
@@ -673,7 +679,7 @@
                                                                 }" placeholder="Choose Function" :floating="false"
                                                                 @change="(newValue, oldValue, el$) => {
 
-                                                                    let key_value_select = el$.form$.el$('device_keys.' + index + '.key_value_select')
+                                                                    let key_value_select = el$.form$.el$('side_keys.' + index + '.key_value_select')
 
                                                                     // only clear when this isn’t the very first time (i.e. oldValue was set)
                                                                     if (oldValue !== null && oldValue !== undefined) {
@@ -688,17 +694,17 @@
                                                                 label-prop="name" value-prop="extension" :search="true"
                                                                 :native="false" :submit="false"
                                                                 :create="['blf', 'speed_dial', 'park']
-                                                                    .includes(form$?.data?.device_keys?.[index]?.key_type)" :append-new-option="false"
+                                                                    .includes(form$?.data?.side_keys?.[index]?.key_type)" :append-new-option="false"
                                                                 input-type="search" autocomplete="off" :columns="{
 
                                                                     sm: {
                                                                         container: 4,
-                                                                    },
+                                                                },
                                                                 }" placeholder="Choose Ext/Number" :floating="false"
-                                                                :items="(query, input) => getKeyValueSelectItems(query, input, index)"
-                                                                @change="(newValue, oldValue, el$) => updateLabel(newValue, oldValue, el$, index)"
+                                                                :items="(query, input) => getKeyValueSelectItems(query, input, index, 'side_keys')"
+                                                                @change="(newValue, oldValue, el$) => updateLabel(newValue, oldValue, el$, index, 'side_keys')"
                                                                 :conditions="[
-                                                                    ['device_keys.*.key_type', ['line', 'check_voicemail', 'blf', 'speed_dial', 'park']]
+                                                                    ['side_keys.*.key_type', ['line', 'check_voicemail', 'blf', 'speed_dial', 'park']]
                                                                 ]" />
 
                                                             <TextElement name="key_value_text" label="Value" :columns="{
@@ -706,9 +712,9 @@
                                                                     container: 4,
                                                                 },
                                                             }" placeholder="Enter Value" :floating="false" :disabled="[
-                                                                ['device_keys.*.key_type', '']
+                                                                ['side_keys.*.key_type', '']
                                                             ]" :conditions="[
-                                                                ['device_keys.*.key_type', '!=', ['line', 'check_voicemail', 'blf', 'speed_dial', 'park']]
+                                                                ['side_keys.*.key_type', '!=', ['line', 'check_voicemail', 'blf', 'speed_dial', 'park']]
                                                             ]" />
 
                                                             <HiddenElement name="key_value" :meta="true"
@@ -722,9 +728,9 @@
                                                                 sm: {
                                                                     container: 3,
                                                                 },
-                                                            }" :placeholder="form$?.data?.device_keys?.[index]?._generated_label ?? 'Enter Value'"
+                                                            }" :placeholder="form$?.data?.side_keys?.[index]?._generated_label ?? 'Enter Value'"
                                                                 :floating="false" :disabled="[
-                                                                    ['device_keys.*.key_type', ['', 'line']]
+                                                                    ['side_keys.*.key_type', ['', 'line']]
                                                                 ]" />
 
                                                             <StaticElement label="&nbsp;" name="key_advanced" :columns="{
@@ -752,15 +758,15 @@
                                                 </ListElement>
 
 
-                                                <GroupElement name="secondary_screen_keys_container2" />
+                                                <GroupElement name="side_keys_container2" />
 
-                                                <ButtonElement name="secondary_screen_submit_keys" button-label="Save"
+                                                <ButtonElement name="side_keys_submit" button-label="Save"
                                                     :submits="true" align="right" />
 
                                                 <!-- Multi Purpose Keys -->
                                                 <StaticElement name="multi_purpose_keys_title" tag="h4"
                                                     content="Multi Purpose Keys"
-                                                    description="Assign multi purpose keys to this device. Make sure your device supports this feature." />
+                                                    description="Additional programmable keys used by Grandstream phones." />
 
                                                 <GroupElement name="multi_purpose_keys_container" />
                                                 <ListElement name="multi_purpose_keys" :sort="true" size="sm"
@@ -887,7 +893,7 @@
                                                 <!-- Expansion Keys -->
                                                 <StaticElement name="expansion_keys_title" tag="h4"
                                                     content="Expansion Keys"
-                                                    description="Assign expansion keys to this device. Expansion Module required for this device." />
+                                                    description="Keys provided by an attached expansion module." />
 
                                                 <GroupElement name="expansion_keys_container" />
                                                 <ListElement name="expansion_keys" :sort="true" size="sm"
@@ -1741,6 +1747,10 @@ const submitForm = async (FormData, form$) => {
             ...k,
             key_area: k.key_area ?? 'main',
         })),
+        ...(data.side_keys ?? []).map(k => ({
+            ...k,
+            key_area: k.key_area ?? 'side',
+        })),
         ...(data.multi_purpose_keys ?? []).map(k => ({
             ...k,
             key_area: k.key_area ?? 'multi_purpose',
@@ -1751,6 +1761,7 @@ const submitForm = async (FormData, form$) => {
         })),
     ].map(normalizeKeyForSubmit)
 
+    delete data.side_keys
     delete data.multi_purpose_keys
     delete data.expansion_keys
 
@@ -1759,6 +1770,18 @@ const submitForm = async (FormData, form$) => {
 
 const normalizeKeyForSubmit = (key) => {
     const keyType = key?.key_type ?? ''
+
+    if (!keyType) {
+        return {
+            ...key,
+            key_value: null,
+            key_value_select: null,
+            key_value_text: null,
+            key_label: null,
+            _generated_label: null,
+        }
+    }
+
     const usesSelect = keyTypesWithSelect.includes(keyType)
 
     return {
