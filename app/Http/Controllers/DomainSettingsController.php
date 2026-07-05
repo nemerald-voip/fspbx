@@ -53,6 +53,7 @@ class DomainSettingsController extends Controller
                 'create' => userCheckPermission('domain_setting_add'),
                 'update' => userCheckPermission('domain_setting_edit'),
                 'destroy' => userCheckPermission('domain_setting_delete'),
+                'domain_select' => userCheckPermission('domain_select'),
                 'copy' => userCheckPermission('domain_select') && userCheckPermission('domain_setting_add'),
                 'copy_to_default' => userCheckPermission('default_setting_add') && userCheckPermission('default_setting_edit'),
                 'category_edit' => userCheckPermission('domain_setting_category_edit'),

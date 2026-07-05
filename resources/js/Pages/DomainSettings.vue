@@ -5,18 +5,18 @@
         <!-- Header -->
         <header class="flex flex-wrap items-end justify-between gap-3">
             <div>
-                <p class="text-xs font-medium uppercase tracking-wider text-indigo-600">Domain variables</p>
-                <h1 class="mt-1 text-2xl font-semibold text-gray-900">{{ domain.domain_description || domain.domain_name }}</h1>
+                <p class="text-xs font-medium uppercase tracking-wider text-indigo-600">{{ embedded ? 'Advanced' : 'Domain variables' }}</p>
+                <h1 v-if="!embedded" class="mt-1 text-2xl font-semibold text-gray-900">{{ domain.domain_description || domain.domain_name }}</h1>
                 <p class="mt-1 text-sm text-gray-500">Override global defaults for this domain, or revert customizations back to the system default.</p>
             </div>
             <div class="flex flex-wrap gap-2">
-                <a :href="routes.domains" class="inline-flex items-center gap-1.5 rounded-md bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                <a v-if="!embedded" :href="routes.domains" class="inline-flex items-center gap-1.5 rounded-md bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     <BuildingOffice2Icon class="h-4 w-4" /> Domains
                 </a>
-                <a :href="routes.default_settings" class="inline-flex items-center gap-1.5 rounded-md bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                <a v-if="!embedded" :href="routes.default_settings" class="inline-flex items-center gap-1.5 rounded-md bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     <ArrowUturnLeftIcon class="h-4 w-4" /> Default Settings
                 </a>
-                <button type="button" class="inline-flex items-center gap-1.5 rounded-md bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50" @click="reloadSettings">
+                <button v-if="!embedded" type="button" class="inline-flex items-center gap-1.5 rounded-md bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50" @click="reloadSettings">
                     <ArrowPathIcon class="h-4 w-4" /> Reload
                 </button>
                 <button v-if="permissions.create" type="button" class="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500" @click="openEditor()">
@@ -93,7 +93,7 @@
                                 <span>{{ selectedItems.length }} selected</span>
                                 <button v-if="permissions.update" type="button" class="rounded px-1.5 py-0.5 hover:bg-indigo-100" @click="handleBulkActionRequest('bulk_toggle')">Toggle</button>
                                 <button v-if="permissions.destroy" type="button" class="rounded px-1.5 py-0.5 hover:bg-indigo-100" @click="handleBulkActionRequest('bulk_revert')">Revert</button>
-                                <button v-if="permissions.copy" type="button" class="rounded px-1.5 py-0.5 hover:bg-indigo-100" @click="handleBulkActionRequest('bulk_copy')">Copy</button>
+                                <button v-if="canShowCopyAction" type="button" class="rounded px-1.5 py-0.5 hover:bg-indigo-100" @click="handleBulkActionRequest('bulk_copy')">Copy</button>
                             </div>
                         </div>
                     </header>
@@ -166,7 +166,7 @@
     <SettingsEditModal :show="showEditor" mode="domain" :item="editorItem" :types="options.types" :categories="options.categories" :route="editorRoute"
         :loading="editorLoading" @close="showEditor = false" @success="handleModalSuccess" @error="handleErrorResponse" />
 
-    <AddEditItemModal :show="showCopyModal" header="Copy Domain Variables" @close="showCopyModal = false">
+    <AddEditItemModal :show="showCopyModal" :header="embedded ? 'Copy Advanced Settings' : 'Copy Domain Variables'" @close="showCopyModal = false">
         <template #modal-body>
             <Vueform :endpoint="submitCopyForm" @success="handleCopySuccess" @error="handleErrorResponse" :display-errors="false">
                 <template #empty>
@@ -316,6 +316,13 @@ const allVisibleSelected = computed(() => {
     return selectableRowUuids.value.every(uuid => selectedItems.value.includes(uuid))
 })
 
+const canShowCopyAction = computed(() => {
+    if (!props.permissions?.copy) return false
+    if (!props.embedded) return true
+
+    return Boolean(props.permissions?.domain_select)
+})
+
 watch([selectedCategory, () => filterData.value.search, () => filterData.value.source, () => filterData.value.enabled], () => {
     selectedItems.value = []
 })
@@ -402,6 +409,8 @@ const handleBulkActionRequest = (action) => {
             .catch(handleErrorResponse)
     }
     if (action === 'bulk_copy') {
+        if (!canShowCopyAction.value) return
+
         showCopyModal.value = true
     }
 }

@@ -67,8 +67,8 @@
                     @edit-item="handleUpdateLocationButtonClick" @delete-item="handleDeleteLocationButtonClick" />
             </section>
 
-            <!-- DOMAIN VARIABLES -->
-            <section v-if="selectedMenuOption === 'domain_variables' && props.domainSettings">
+            <!-- ADVANCED -->
+            <section v-if="selectedMenuOption === 'advanced' && props.domainSettings">
                 <DomainSettingsPanel v-bind="props.domainSettings" embedded />
             </section>
 
@@ -266,7 +266,6 @@ const handleUpdateSelectedMenuOption = (key) => {
 const navigation = [
     { key: 'general', name: 'General', icon: Cog6ToothIcon },
     { key: 'locations', name: 'Locations', icon: MapPinIcon },
-    ...(props.domainSettings ? [{ key: 'domain_variables', name: 'Domain Variables', icon: AdjustmentsHorizontalIcon }] : []),
     { key: 'auto_provisioning', name: 'Auto Provisioning', icon: WrenchScrewdriverIcon },
     // { key: 'billing', name: 'Billing', icon: CreditCardIcon },
     {
@@ -289,6 +288,7 @@ const navigation = [
 
         ],
     },
+    ...(props.domainSettings ? [{ key: 'advanced', name: 'Advanced', icon: AdjustmentsHorizontalIcon }] : []),
 ]
 
 
