@@ -410,6 +410,12 @@ class BusinessHoursController extends Controller
     public function generateDialPlanXML(BusinessHour $businessHour): void
     {
         // logger($businessHour);
+        // 1) if we don't yet have a dialplan_uuid, make one and persist it
+        if (! $businessHour->dialplan_uuid) {
+            $businessHour->dialplan_uuid = (string) Str::uuid();
+            $businessHour->saveQuietly(); // avoid touching update_date again
+        }
+
         // Data to pass to the Blade template
         $data = [
             'businessHour' => $businessHour,
@@ -423,12 +429,6 @@ class BusinessHoursController extends Controller
         $dom->loadXML($xml);
         $dom->formatOutput = true;         // Formats XML properly
         $xml = $dom->saveXML($dom->documentElement);
-
-        // 1) if we don’t yet have a dialplan_uuid, make one and persist it
-        if (! $businessHour->dialplan_uuid) {
-            $businessHour->dialplan_uuid = (string) Str::uuid();
-            $businessHour->saveQuietly(); // avoid touching update_date again
-        }
 
         // logger($businessHour);
 
@@ -760,9 +760,9 @@ class BusinessHoursController extends Controller
             // 7. Replicate Holidays (if any exist)
             foreach ($original->holidays as $holiday) {
                 $newHoliday = $holiday->replicate();
-                $newHoliday->uuid = Str::uuid(); 
+                $newHoliday->uuid = Str::uuid();
                 $newHoliday->business_hour_uuid = $newBusinessHour->uuid;
-                $newHoliday->save();
+                $newHoliday->saveQuietly();
             }
 
             // 8. Generate Dialplan XML
