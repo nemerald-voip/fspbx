@@ -1649,7 +1649,7 @@ class AppsController extends Controller
             return response()->json([
                 'ringotel_user' => $ringotelUser,
                 'messages' => [
-                    'success' => [$request->boolean('dnd') ? 'Mobile App DND has been enabled.' : 'Mobile App DND has been disabled.'],
+                    'success' => [$request->boolean('dnd') ? 'Mobile App DND has been enabled.' : 'Mobile App status changed to Available.'],
                 ],
             ], 200);
         } catch (\Throwable $e) {

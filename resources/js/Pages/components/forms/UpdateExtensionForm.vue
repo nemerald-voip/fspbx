@@ -1380,32 +1380,39 @@
                                                         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                                             <div>
                                                                 <div class="flex items-center gap-x-3">
-                                                                    <span class="font-semibold">Extension State:</span>
-                                                                    <Badge v-if="ringotelUser"
-                                                                        :backgroundColor="ringotelStateBadge(ringotelUser).backgroundColor"
-                                                                        :textColor="ringotelStateBadge(ringotelUser).textColor"
-                                                                        :text="ringotelUser.state_label"
-                                                                        :ringColor="ringotelStateBadge(ringotelUser).ringColor"
-                                                                        class="px-2 py-1 text-xs font-semibold" />
-                                                                    <Badge v-else backgroundColor="bg-gray-100"
-                                                                        textColor="text-gray-700"
-                                                                        :text="'Unavailable'"
-                                                                        ringColor="ring-gray-400/20"
-                                                                        class="px-2 py-1 text-xs font-semibold" />
+                                                                    <span class="font-semibold">User Status:</span>
+                                                                    <div class="relative inline-flex items-center gap-2">
+                                                                        <button type="button"
+                                                                            :disabled="!canChangeMobileAppState"
+                                                                            :class="[
+                                                                                'inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold ring-1 ring-inset transition',
+                                                                                mobileAppStateButtonClass,
+                                                                                canChangeMobileAppState ? 'cursor-pointer' : 'cursor-default opacity-80'
+                                                                            ]"
+                                                                            @click="toggleMobileAppStateMenu">
+                                                                            {{ ringotelUser?.state_label ?? 'Unavailable' }}
+                                                                        </button>
+                                                                        <Spinner :show="isMobileAppLoading.state" />
+                                                                        <div v-if="showMobileAppStateMenu && canChangeMobileAppState"
+                                                                            class="absolute left-0 top-full z-20 mt-2 w-48 rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5">
+                                                                            <button type="button"
+                                                                                class="block w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                                                                                :class="{ 'font-semibold text-gray-900': isMobileAppAvailableState(ringotelUser) }"
+                                                                                @click="handleRingotelStateOptionClick(false)">
+                                                                                Online
+                                                                            </button>
+                                                                            <button type="button"
+                                                                                class="block w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                                                                                :class="{ 'font-semibold text-gray-900': isMobileAppDndState(ringotelUser) }"
+                                                                                @click="handleRingotelStateOptionClick(true)">
+                                                                                Do Not Disturb
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
                                                                 </div>
                                                                 <p class="mt-1 text-xs text-gray-500">
                                                                     Mobile App state controls whether DND should be toggled on or off.
                                                                 </p>
-                                                            </div>
-                                                            <div class="flex items-center gap-2">
-                                                                <select :value="ringotelUser?.dnd ? 'dnd' : 'available'"
-                                                                    :disabled="!ringotelUser || isMobileAppLoading.state"
-                                                                    @change="handleRingotelStateChange"
-                                                                    class="block w-44 rounded-md border-0 py-1.5 pl-3 pr-8 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 disabled:bg-gray-100 disabled:text-gray-500">
-                                                                    <option value="available">Available</option>
-                                                                    <option value="dnd">Do Not Disturb</option>
-                                                                </select>
-                                                                <Spinner :show="isMobileAppLoading.state" />
                                                             </div>
                                                         </div>
                                                     </div>
@@ -2071,9 +2078,18 @@ const isMobileAppLoading = reactive({
     device: false,
 })
 const mobileAppContactOnly = ref(false)
+const showMobileAppStateMenu = ref(false)
 const recordedName = ref(props.options?.recorded_name)
 const availableGreetings = ref(null)
 const ringotelUser = computed(() => mobileAppOptions.value?.ringotel_user ?? null)
+const canChangeMobileAppState = computed(() => {
+    const user = ringotelUser.value
+
+    return !!user
+        && Number(user.state) !== 0
+        && user.state_label?.toLowerCase() !== 'offline'
+        && !isMobileAppLoading.state
+})
 
 const ringotelStateBadge = (user) => {
     return {
@@ -2102,6 +2118,33 @@ const ringotelStateBadge = (user) => {
         textColor: 'text-gray-700',
         ringColor: 'ring-gray-400/20',
     }
+}
+
+const mobileAppStateButtonClass = computed(() => {
+    const badge = ringotelStateBadge(ringotelUser.value)
+
+    return [
+        badge.backgroundColor,
+        badge.textColor,
+        badge.ringColor,
+        canChangeMobileAppState.value ? 'hover:brightness-95' : '',
+    ]
+})
+
+const toggleMobileAppStateMenu = () => {
+    if (!canChangeMobileAppState.value) {
+        return
+    }
+
+    showMobileAppStateMenu.value = !showMobileAppStateMenu.value
+}
+
+const isMobileAppAvailableState = (user) => {
+    return [1, 5].includes(Number(user?.state))
+}
+
+const isMobileAppDndState = (user) => {
+    return Number(user?.state) === 3 || user?.dnd === true
 }
 
 const formatRingotelTimestamp = (timestamp) => {
@@ -2315,6 +2358,7 @@ const handleTabSelected = (activeTab, previousTab) => {
     }
     if (activeTab.name == 'mobile_app') {
         mobileAppOptions.value = null
+        showMobileAppStateMenu.value = false
         creatingInitiated.value = false
         mobileApp.value = null
         getMobileAppOptions()
@@ -2339,6 +2383,7 @@ const getDevices = async () => {
 const getMobileAppOptions = async () => {
     isMobileAppOptionsLoading.value = true
     mobileAppError.value = false
+    showMobileAppStateMenu.value = false
     axios.post(props.options.routes.mobile_app_options,
         {
             extension_uuid: props.options.item.extension_uuid,
@@ -2357,10 +2402,14 @@ const getMobileAppOptions = async () => {
         });
 }
 
-const handleRingotelStateChange = async (event) => {
-    const dnd = event.target.value === 'dnd'
+const handleRingotelStateOptionClick = async (dnd) => {
+    showMobileAppStateMenu.value = false
 
-    if (!ringotelUser.value || ringotelUser.value.dnd === dnd) {
+    if (!ringotelUser.value) {
+        return
+    }
+
+    if ((dnd && isMobileAppDndState(ringotelUser.value)) || (!dnd && isMobileAppAvailableState(ringotelUser.value))) {
         return
     }
 
@@ -2377,7 +2426,6 @@ const handleRingotelStateChange = async (event) => {
         emit('refresh-data')
     } catch (error) {
         emit('error', error)
-        event.target.value = ringotelUser.value?.dnd ? 'dnd' : 'available'
     } finally {
         isMobileAppLoading.state = false
     }
