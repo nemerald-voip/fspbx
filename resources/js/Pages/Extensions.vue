@@ -195,8 +195,9 @@
 
                             <template #action-buttons>
                                 <div class="flex items-center whitespace-nowrap">
-                                    <ejs-tooltip v-if="String(row.mobile_app?.status) === '1'"
-                                        :content="mobileAppTooltip(row)" position='TopCenter'>
+                                    <div v-if="String(row.mobile_app?.status) === '1'"
+                                        class="group relative inline-block cursor-help focus:outline-none"
+                                        tabindex="0">
                                         <span class="relative inline-flex">
                                             <DevicePhoneMobileSolidIcon
                                                 class="h-5 w-5 text-blue-400 hover:text-blue-600 active:bg-blue-300"
@@ -206,13 +207,32 @@
                                                 class="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white shadow-sm">
                                             </span>
                                         </span>
-                                    </ejs-tooltip>
-                                    <ejs-tooltip v-if="String(row.mobile_app?.status) === '-1'"
-                                        :content="'Mobile App (Phonebook Only)'" position='TopCenter'>
+                                        <div
+                                            class="invisible opacity-0 group-hover:visible group-hover:opacity-100 group-focus:visible group-focus:opacity-100 transition-opacity duration-300 absolute z-50 bottom-full left-1/2 -translate-x-1/2 pb-2">
+                                            <div class="relative w-64 max-w-xs px-3 py-2 text-xs leading-relaxed text-white bg-gray-900 rounded shadow-lg whitespace-normal cursor-text select-text">
+                                                {{ mobileAppTooltip(row) }}
+                                                <div
+                                                    class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div v-if="String(row.mobile_app?.status) === '-1'"
+                                        class="group relative inline-block cursor-help focus:outline-none"
+                                        tabindex="0">
                                         <DevicePhoneMobileIcon
                                             class="h-5 w-5 text-gray-400 hover:text-gray-600 active:bg-gray-300"
                                             aria-label="Mobile App (Phonebook Only)" />
-                                    </ejs-tooltip>
+                                        <div
+                                            class="invisible opacity-0 group-hover:visible group-hover:opacity-100 group-focus:visible group-focus:opacity-100 transition-opacity duration-300 absolute z-50 bottom-full left-1/2 -translate-x-1/2 pb-2">
+                                            <div class="relative w-64 max-w-xs px-3 py-2 text-xs leading-relaxed text-white bg-gray-900 rounded shadow-lg whitespace-normal cursor-text select-text">
+                                                Mobile App (Phonebook Only)
+                                                <div
+                                                    class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                     <ejs-tooltip v-if="!!row.user_record" :content="'Record Calls'"
                                         position='TopCenter'>
                                         <MicrophoneIcon
