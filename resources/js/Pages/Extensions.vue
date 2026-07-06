@@ -555,12 +555,17 @@ const ringotelStatusFor = (row) => {
 }
 
 const ringotelDotClass = (status) => {
+    if (Number(status?.state) === 0) {
+        return 'bg-white ring-2 ring-gray-400'
+    }
+
     return {
         green: 'bg-green-600',
         blue: 'bg-blue-600',
+        yellow: 'bg-amber-400',
         red: 'bg-rose-600',
-        gray: 'bg-gray-500',
-    }[status?.state_color] ?? 'bg-gray-500'
+        gray: 'bg-gray-300',
+    }[status?.state_color] ?? 'bg-gray-300'
 }
 
 const formatRingotelTimestamp = (timestamp) => {
@@ -814,7 +819,7 @@ const getData = (page = 1) => {
     }
 
 
-    axios.get(props.routes.data_route, {
+    return axios.get(props.routes.data_route, {
         params: {
             filter: filterData.value,
             page: currentPage.value,
@@ -839,9 +844,9 @@ const handleSearchButtonClick = () => {
     getData(1)
 };
 
-const refreshCurrentPage = () => {
-    getData(currentPage.value)
-    getRingotelStatuses()
+const refreshCurrentPage = async () => {
+    await getData(currentPage.value)
+    await getRingotelStatuses()
 };
 
 const handleFiltersReset = () => {
