@@ -41,6 +41,11 @@ class VendorRouter
             return $m[1]; // just the MAC
         }
 
+        // 4a) Algo "algom<MAC>" (e.g., "algom000222ABCDEF")
+        if (preg_match('/^algom([0-9a-f]{12})$/', $compact, $m)) {
+            return $m[1]; // just the MAC
+        }
+
         // 5) Bare MAC (12 hex chars) after normalization
         if (preg_match('/^([0-9a-f]{12})$/', $compact, $m)) {
             return $m[1];
