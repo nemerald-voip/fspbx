@@ -87,11 +87,11 @@ class ContactController extends Controller
             $contactFields = [
                 // 'contact_uuid' => (string) Str::uuid(),
                 'first_name' => $data['first_name'],
-                'last_name' => $data['last_name'],
-                'title' => $data['title'], // NEW
+                'last_name' => $data['last_name'] ?? null,
+                'title' => $data['title'] ?? null,
                 'organization_uuid' => $orgId,
-                'department' => $data['department'],
-                'notes' => $data['notes'],
+                'department' => $data['department'] ?? null,
+                'notes' => $data['notes'] ?? null,
             ];
 
             // 1. Handle Contact Creation/Update

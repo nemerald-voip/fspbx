@@ -36,6 +36,10 @@ class DeviceService
                 }
             }
 
+            if (array_key_exists('phonebook_mode', $inputs) || array_key_exists('phonebook_uuids', $inputs)) {
+                $this->syncDevicePhonebooks($device, $inputs);
+            }
+
             return $device->fresh();
         });
     }
@@ -71,8 +75,62 @@ class DeviceService
                 $this->syncDeviceKeys($device, $inputs['device_keys']);
             }
 
+            if (array_key_exists('phonebook_mode', $inputs) || array_key_exists('phonebook_uuids', $inputs)) {
+                $this->syncDevicePhonebooks($device, $inputs);
+            }
+
             return $device->fresh();
         });
+    }
+
+    /**
+     * Sync a device's phonebook assignments.
+     *
+     * mode 'default' (or empty custom list) clears assignments so the device
+     * inherits the domain default; mode 'custom' stores the ordered UUID list,
+     * with the array order becoming the phone slot / priority.
+     */
+    private function syncDevicePhonebooks(Devices $device, array $inputs): void
+    {
+        $mode = $inputs['phonebook_mode'] ?? 'custom';
+
+        DB::table('device_phonebook')->where('device_uuid', $device->device_uuid)->delete();
+
+        if ($mode !== 'custom') {
+            return;
+        }
+
+        $uuids = array_values(array_filter((array) ($inputs['phonebook_uuids'] ?? [])));
+        if (empty($uuids)) {
+            return;
+        }
+
+        // Only keep phonebooks that belong to the device's domain.
+        $valid = \App\Models\Phonebook::query()
+            ->where('domain_uuid', $device->domain_uuid)
+            ->whereIn('phonebook_uuid', $uuids)
+            ->pluck('phonebook_uuid')
+            ->all();
+
+        $now = now();
+        $slot = 1;
+        $rows = [];
+        foreach ($uuids as $uuid) {
+            if (! in_array($uuid, $valid, true)) {
+                continue;
+            }
+            $rows[] = [
+                'device_uuid'    => $device->device_uuid,
+                'phonebook_uuid' => $uuid,
+                'slot'           => $slot++,
+                'created_at'     => $now,
+                'updated_at'     => $now,
+            ];
+        }
+
+        if (! empty($rows)) {
+            DB::table('device_phonebook')->insert($rows);
+        }
     }
 
     public function delete(Devices $device): void

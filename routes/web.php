@@ -54,6 +54,8 @@ use App\Http\Controllers\PolycomLogController;
 use App\Http\Controllers\PolycomProvisioningFileController;
 use App\Http\Controllers\ProFeaturesController;
 use App\Http\Controllers\ProvisioningController;
+use App\Http\Controllers\PhonebookController;
+use App\Http\Controllers\PhonebookManagerController;
 use App\Http\Controllers\RecordingsController;
 use App\Http\Controllers\RecordingsManagerController;
 use App\Http\Controllers\RegistrationsController;
@@ -144,6 +146,15 @@ Route::match(['PUT', 'GET', 'HEAD'], '/prov/{bucket}/{id}-{kind}.{ext}', [Polyco
     ->middleware(['throttle:provision', 'provision.digest'])
     ->withoutMiddleware(['auth', 'web'])
     ->name('provision.polycom-files');
+
+// Device directory / phonebook XML. Must be registered before the /prov/{path}
+// catch-all so it is not shadowed by it.
+Route::match(['GET', 'HEAD'], '/prov/directory/{book}/{path}', [PhonebookController::class, 'serve'])
+    ->where('book', '[0-9A-Fa-f-]{36}|all')
+    ->where('path', '.*')
+    ->middleware(['throttle:provision', 'provision.digest'])
+    ->withoutMiddleware(['auth', 'web'])
+    ->name('provision.directory');
 
 Route::match(['GET', 'HEAD'], '/prov/{path}', [ProvisioningController::class, 'serve'])
     ->where('path', '.*')
@@ -326,6 +337,9 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/devices/import', [DeviceImportExportController::class, 'importPreview'])->name('devices.import.preview');
     Route::post('/devices/import/commit', [DeviceImportExportController::class, 'importCommit'])->name('devices.import.commit');
     Route::get('device-key-templates', [DeviceKeyTemplateController::class, 'index'])->name('device-key-templates.index');
+
+    //Phonebooks
+    Route::get('phonebooks', [PhonebookManagerController::class, 'index'])->name('phonebooks.index');
 
     //Phone Numbers
     Route::get('phone-numbers', [PhoneNumbersController::class, 'index'])->name('phone-numbers.index');

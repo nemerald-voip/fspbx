@@ -28,6 +28,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeviceCloudProvisioningController;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\DeviceKeyTemplateController;
+use App\Http\Controllers\PhonebookManagerController;
 use App\Http\Controllers\DialplanController;
 use App\Http\Controllers\DefaultSettingsController;
 use App\Http\Controllers\DomainController;
@@ -408,6 +409,15 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/device-key-templates/copy-to-domain', [DeviceKeyTemplateController::class, 'copyToDomain'])->name('device-key-templates.copy-to-domain');
     Route::post('/device-key-templates/bulk-delete', [DeviceKeyTemplateController::class, 'bulkDelete'])->name('device-key-templates.bulk.delete');
     Route::post('/devices/{device}/key-templates', [DeviceKeyTemplateController::class, 'storeFromDevice'])->name('devices.key-templates.store-from-device');
+
+    // Phonebooks
+    Route::get('/phonebooks/data', [PhonebookManagerController::class, 'getData'])->name('phonebooks.data');
+    Route::post('/phonebooks', [PhonebookManagerController::class, 'store'])->name('phonebooks.store');
+    Route::put('/phonebooks/{phonebook}', [PhonebookManagerController::class, 'update'])->name('phonebooks.update');
+    Route::post('/phonebooks/item-options', [PhonebookManagerController::class, 'getItemOptions'])->name('phonebooks.item.options');
+    Route::post('/phonebooks/select-all', [PhonebookManagerController::class, 'selectAll'])->name('phonebooks.select.all');
+    Route::post('/phonebooks/bulk-delete', [PhonebookManagerController::class, 'bulkDelete'])->name('phonebooks.bulk.delete');
+    Route::get('/phonebooks/{phonebook}/preview', [PhonebookManagerController::class, 'preview'])->name('phonebooks.preview');
 
     // Registrations
     Route::get('/registrations/data', [RegistrationsController::class, 'getData'])->name('registrations.data');

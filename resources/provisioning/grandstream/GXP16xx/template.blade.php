@@ -1,4 +1,4 @@
-{{-- version: 1.0.8 --}}
+{{-- version: 1.0.9 --}}
 
 @switch($flavor)
 
@@ -1127,7 +1127,7 @@
 
         <!-- Phonebook XML Server Path -->
         @if (array_key_exists('grandstream_phonebook_server', $settings))
-            <item name="phonebook.download.server">{{ $settings['grandstream_phonebook_server'] }}</item>
+            <item name="phonebook.download.server">{{ preg_replace('#^https?://#', '', $settings['grandstream_phonebook_server']) }}</item>
         @endif
         
         <!-- Phonebook Download Interval  -->

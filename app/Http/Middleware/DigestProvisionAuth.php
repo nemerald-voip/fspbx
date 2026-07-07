@@ -32,14 +32,18 @@ class DigestProvisionAuth
         }
 
         $token = VendorRouter::tokenFromId($id);
-        if (!$token) {
-            $this->dbg($debug, 'early-404.no-token', ['id' => $id]);
-            return response('', 404);
+        $device = $token ? VendorRouter::findDeviceByToken($token) : null;
+
+        if (!$device) {
+            // Some phones append a fixed filename to a directory path (e.g.
+            // Grandstream requests <server>/phonebook.xml), so the device token
+            // is an earlier path segment rather than the basename. Fall back to
+            // scanning the path segments for a resolvable device token.
+            $device = $this->deviceFromPathSegments($request);
         }
 
-        $device = VendorRouter::findDeviceByToken($token);
         if (!$device) {
-            $this->dbg($debug, '404.device-not-found', ['token' => $token]);
+            $this->dbg($debug, '404.device-not-found', ['token' => $token, 'id' => $id]);
             return response('', 404);
         }
 
@@ -153,6 +157,36 @@ class DigestProvisionAuth
         if (!$u) return '';
         return strlen($u) <= 2 ? '*'
             : substr($u, 0, 1) . str_repeat('*', max(1, strlen($u) - 2)) . substr($u, -1);
+    }
+
+    /**
+     * Resolve a device by scanning each path segment for a MAC/serial token.
+     * Used when the basename is a fixed filename (e.g. phonebook.xml) rather
+     * than the device identifier.
+     */
+    private function deviceFromPathSegments(Request $request)
+    {
+        $path = (string) ($request->route('path') ?? $request->path());
+        $path = ltrim($path, '/');
+        if (str_starts_with($path, 'prov/')) {
+            $path = substr($path, 5);
+        }
+
+        $segments = array_values(array_filter(explode('/', $path)));
+
+        foreach (array_reverse($segments) as $segment) {
+            $token = VendorRouter::tokenFromId($segment);
+            if (!$token) {
+                continue;
+            }
+
+            $device = VendorRouter::findDeviceByToken($token);
+            if ($device) {
+                return $device;
+            }
+        }
+
+        return null;
     }
 
     private function extractIdAndExt(Request $request): array

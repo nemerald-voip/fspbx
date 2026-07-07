@@ -1,8 +1,8 @@
-{{-- version: 1.0.4 --}}
+{{-- version: 1.0.7 --}}
 
 @switch($flavor)
 
-{{-- ================= Yealink W70B mac.cfg ================= --}}
+{{-- ================= Yealink T4 mac.cfg ================= --}}
 @case('mac.cfg')
 
 #!version:1.0.0.1
@@ -93,7 +93,6 @@
 
 @endforeach
 
-
 ################################################################
 #                      Account Advanced                       ##
 ################################################################
@@ -115,7 +114,6 @@
     voice_mail.number.{{ $n }} = {{ $settings['voicemail_number'] ?? '' }}
 
 @endforeach
-
 
 ################################################################
 ##                          Linekeys                          ##
@@ -189,6 +187,70 @@ linekey.{{ $slot }}.label =
 linekey.{{ $slot }}.value =
 linekey.{{ $slot }}.extension =
 
+@endfor
+
+################################################################
+##                       Expansion Keys                       ##
+################################################################
+@php
+  $expansionKeysPerModule = 60;
+  $expansionModuleCount = 3;
+  $configuredExpansionSlots = [];
+@endphp
+@foreach ($expansion_keys as $k)
+@php
+  $rawSlot = (int)($k['id'] ?? $loop->iteration);
+  if ($rawSlot <= 0) {
+      $rawSlot = $loop->iteration;
+  }
+
+  $module = intdiv($rawSlot - 1, $expansionKeysPerModule) + 1;
+  $slot = (($rawSlot - 1) % $expansionKeysPerModule) + 1;
+@endphp
+@continue($module > $expansionModuleCount)
+@php
+  $configuredExpansionSlots[$module][$slot] = true;
+
+  $type = (string)($k['type'] ?? '');
+  $ln   = (int)($k['line'] ?? 0);
+
+  $label = isset($k['label']) ? (string)$k['label'] : ' ';
+
+  if ($type === '15' && $ln > 0 && !isset($k['label']) && !empty($sharedLines[$ln])) {
+      $appearanceIndex[$ln] = ($appearanceIndex[$ln] ?? 0) + 1;
+      $sfx = $suffixFor($appearanceIndex[$ln]);
+
+      $base = '';
+      if (!empty($lines[$ln]['display_name']))       $base = (string)$lines[$ln]['display_name'];
+      elseif (!empty($lines[$ln]['auth_id']))        $base = (string)$lines[$ln]['auth_id'];
+      else                                          $base = (string)$ln;
+
+      $label = trim($base . ' ' . $sfx);
+  }
+
+  $value = isset($k['value']) ? (string)$k['value'] : '';
+  $ext   = array_key_exists('extension', $k) ? (string)($k['extension'] ?? '') : '';
+@endphp
+expansion_module.{{ $module }}.key.{{ $slot }}.type = {{ $k['type'] }}
+expansion_module.{{ $module }}.key.{{ $slot }}.line = {{ $k['line'] }}
+expansion_module.{{ $module }}.key.{{ $slot }}.label = {{ $label }}
+expansion_module.{{ $module }}.key.{{ $slot }}.value = {{ $value }}
+expansion_module.{{ $module }}.key.{{ $slot }}.extension = {{ $ext }}
+expansion_module.{{ $module }}.key.{{ $slot }}.xml_phonebook =
+
+@endforeach
+
+@for ($module = 1; $module <= $expansionModuleCount; $module++)
+@for ($slot = 1; $slot <= $expansionKeysPerModule; $slot++)
+@continue(isset($configuredExpansionSlots[$module][$slot]))
+expansion_module.{{ $module }}.key.{{ $slot }}.type = 0
+expansion_module.{{ $module }}.key.{{ $slot }}.line = 0
+expansion_module.{{ $module }}.key.{{ $slot }}.label =
+expansion_module.{{ $module }}.key.{{ $slot }}.value =
+expansion_module.{{ $module }}.key.{{ $slot }}.extension =
+expansion_module.{{ $module }}.key.{{ $slot }}.xml_phonebook =
+
+@endfor
 @endfor
 
 ################################################################
@@ -288,8 +350,8 @@ distinctive_ring_tones.alert_info.{{ $i }}.ringer = {{ $settings["yealink_ring_f
 ##for SIP-T54W/T46G/T46S/T29G: <=1.8 megapixels;SIP-T54S/T52S:<=4.2 megapixels;
 ##Single File Size: <=5MB
 ##2MB of space should bereserved for the phone
-wallpaper_upload.url = {{ $settings['yealink_t85w_wallpaper'] ?? '' }}
-phone_setting.backgrounds = Config:{{ $settings['yealink_t85_wallpaper_filename'] ?? '' }}
+wallpaper_upload.url = {{ $settings['yealink_t46u_wallpaper'] ?? '' }}
+phone_setting.backgrounds = Config:{{ $settings['yealink_t46u_wallpaper_filename'] ?? '' }}
 
 
 ################################################################
@@ -331,7 +393,7 @@ static.security.default_ssl_method = {{ $settings['yealink_security_default_ssl_
 static.security.trust_certificates = {{ $settings['yealink_trust_certificates'] ?? '0' }}
 @if (isset($settings['user_name']))
     static.security.user_name.user = {{ $settings['user_name'] }}
-    static.security.user_password = {{ $settings['user_password'] }}
+    static.security.user_password = {{ $settings['user_name'] }}:{{ $settings['user_password'] }}
 @endif
 @if (isset($settings['admin_name']))
     static.security.user_name.admin = {{ $settings['admin_name'] }}
@@ -339,7 +401,7 @@ static.security.trust_certificates = {{ $settings['yealink_trust_certificates'] 
 @endif
 @if (isset($settings['var_name']))
     static.security.user_name.var = {{ $settings['var_name'] }}
-    static.security.user_password = {{ $settings['var_password'] }}
+    static.security.user_password = {{ $settings['var_name'] }}:{{ $settings['var_password'] }}
 @endif
 sip.trust_ctrl = {{ $settings['yealink_trust_ctrl'] ?? '1' }}
 sip.listen_port = {{ $settings['yealink_sip_listen_port'] ?? '5060' }}

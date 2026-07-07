@@ -1,8 +1,8 @@
-{{-- version: 1.0.4 --}}
+{{-- version: 1.0.3 --}}
 
 @switch($flavor)
 
-{{-- ================= Yealink W70B mac.cfg ================= --}}
+{{-- ================= Yealink T8W mac.cfg ================= --}}
 @case('mac.cfg')
 
 #!version:1.0.0.1
@@ -192,6 +192,70 @@ linekey.{{ $slot }}.extension =
 @endfor
 
 ################################################################
+##                       Expansion Keys                       ##
+################################################################
+@php
+  $expansionKeysPerModule = 78;
+  $expansionModuleCount = 3;
+  $configuredExpansionSlots = [];
+@endphp
+@foreach ($expansion_keys as $k)
+@php
+  $rawSlot = (int)($k['id'] ?? $loop->iteration);
+  if ($rawSlot <= 0) {
+      $rawSlot = $loop->iteration;
+  }
+
+  $module = intdiv($rawSlot - 1, $expansionKeysPerModule) + 1;
+  $slot = (($rawSlot - 1) % $expansionKeysPerModule) + 1;
+@endphp
+@continue($module > $expansionModuleCount)
+@php
+  $configuredExpansionSlots[$module][$slot] = true;
+
+  $type = (string)($k['type'] ?? '');
+  $ln   = (int)($k['line'] ?? 0);
+
+  $label = isset($k['label']) ? (string)$k['label'] : ' ';
+
+  if ($type === '15' && $ln > 0 && !isset($k['label']) && !empty($sharedLines[$ln])) {
+      $appearanceIndex[$ln] = ($appearanceIndex[$ln] ?? 0) + 1;
+      $sfx = $suffixFor($appearanceIndex[$ln]);
+
+      $base = '';
+      if (!empty($lines[$ln]['display_name']))       $base = (string)$lines[$ln]['display_name'];
+      elseif (!empty($lines[$ln]['auth_id']))        $base = (string)$lines[$ln]['auth_id'];
+      else                                          $base = (string)$ln;
+
+      $label = trim($base . ' ' . $sfx);
+  }
+
+  $value = isset($k['value']) ? (string)$k['value'] : '';
+  $ext   = array_key_exists('extension', $k) ? (string)($k['extension'] ?? '') : '';
+@endphp
+expansion_module.{{ $module }}.key.{{ $slot }}.type = {{ $k['type'] }}
+expansion_module.{{ $module }}.key.{{ $slot }}.line = {{ $k['line'] }}
+expansion_module.{{ $module }}.key.{{ $slot }}.label = {{ $label }}
+expansion_module.{{ $module }}.key.{{ $slot }}.value = {{ $value }}
+expansion_module.{{ $module }}.key.{{ $slot }}.extension = {{ $ext }}
+expansion_module.{{ $module }}.key.{{ $slot }}.xml_phonebook =
+
+@endforeach
+
+@for ($module = 1; $module <= $expansionModuleCount; $module++)
+@for ($slot = 1; $slot <= $expansionKeysPerModule; $slot++)
+@continue(isset($configuredExpansionSlots[$module][$slot]))
+expansion_module.{{ $module }}.key.{{ $slot }}.type = 0
+expansion_module.{{ $module }}.key.{{ $slot }}.line = 0
+expansion_module.{{ $module }}.key.{{ $slot }}.label =
+expansion_module.{{ $module }}.key.{{ $slot }}.value =
+expansion_module.{{ $module }}.key.{{ $slot }}.extension =
+expansion_module.{{ $module }}.key.{{ $slot }}.xml_phonebook =
+
+@endfor
+@endfor
+
+################################################################
 ##                           DND                              ##
 ################################################################
 features.dnd.allow = {{ $settings['yealink_dnd_allow'] ?? '0' }}
@@ -335,7 +399,7 @@ static.security.trust_certificates = {{ $settings['yealink_trust_certificates'] 
 @endif
 @if (isset($settings['admin_name']))
     static.security.user_name.admin = {{ $settings['admin_name'] }}
-    static.security.user_password = {{ $settings['admin_name'] }}:{{ $settings['admin_password'] }}
+    static.security.user_password = {{ $settings['admin_password'] }}
 @endif
 @if (isset($settings['var_name']))
     static.security.user_name.var = {{ $settings['var_name'] }}
