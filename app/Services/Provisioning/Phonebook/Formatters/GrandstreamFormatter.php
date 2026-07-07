@@ -17,14 +17,41 @@ class GrandstreamFormatter
         $root = $dom->createElement('AddressBook');
         $dom->appendChild($root);
 
+        // Each source phonebook becomes a directory group (<pbgroup>), numbered
+        // by its group_index so the phone can filter contacts by phonebook.
+        $groups = [];
+        foreach ($entries as $entry) {
+            $index = (int) ($entry['group_index'] ?? 0);
+            if ($index > 0 && !isset($groups[$index])) {
+                $groups[$index] = (string) ($entry['group'] ?? '');
+            }
+        }
+        ksort($groups, SORT_NUMERIC);
+
+        foreach ($groups as $index => $name) {
+            $group = $dom->createElement('pbgroup');
+            $group->appendChild($dom->createElement('id'));
+            $group->lastChild->appendChild($dom->createTextNode((string) $index));
+            $group->appendChild($dom->createElement('name'));
+            $group->lastChild->appendChild($dom->createTextNode($name));
+            $root->appendChild($group);
+        }
+
+        $contactId = 1;
         foreach ($entries as $entry) {
             $contact = $dom->createElement('Contact');
+
+            $contact->appendChild($dom->createElement('id'));
+            $contact->lastChild->appendChild($dom->createTextNode((string) $contactId++));
 
             $contact->appendChild($dom->createElement('FirstName'));
             $contact->lastChild->appendChild($dom->createTextNode((string) ($entry['first_name'] ?? '')));
 
             $contact->appendChild($dom->createElement('LastName'));
             $contact->lastChild->appendChild($dom->createTextNode((string) ($entry['last_name'] ?? '')));
+
+            $contact->appendChild($dom->createElement('Frequent'));
+            $contact->lastChild->appendChild($dom->createTextNode('0'));
 
             foreach (($entry['numbers'] ?? []) as $number) {
                 $number = (string) $number;
@@ -41,6 +68,15 @@ class GrandstreamFormatter
 
                 $contact->appendChild($phone);
             }
+
+            $groupIndex = (int) ($entry['group_index'] ?? 0);
+            if ($groupIndex > 0) {
+                $contact->appendChild($dom->createElement('Group'));
+                $contact->lastChild->appendChild($dom->createTextNode((string) $groupIndex));
+            }
+
+            $contact->appendChild($dom->createElement('Primary'));
+            $contact->lastChild->appendChild($dom->createTextNode('0'));
 
             $root->appendChild($contact);
         }

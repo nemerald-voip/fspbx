@@ -10,20 +10,58 @@ use App\Models\Phonebook;
  * plus the phonebook's own contacts, as a normalized entry list.
  *
  * Each entry: [
- *   'first_name' => string,
- *   'last_name'  => string,
- *   'name'       => string,   // display name
- *   'numbers'    => string[], // one or more dialable numbers
+ *   'first_name'  => string,
+ *   'last_name'   => string,
+ *   'name'        => string,   // display name
+ *   'numbers'     => string[], // one or more dialable numbers
+ *   'group'       => string,   // source phonebook name (directory group)
+ *   'group_index' => int,      // 1-based group id (phonebook order)
  * ]
  */
 class PhonebookBuilder
 {
     /**
-     * Build the entries for a phonebook, scoped to the given domain.
+     * Build the entries for a single phonebook, scoped to the given domain.
+     * Entries are tagged with that phonebook as their directory group.
      *
-     * @return array<int, array{first_name:string,last_name:string,name:string,numbers:array<int,string>}>
+     * @return array<int, array<string, mixed>>
      */
     public function build(Phonebook $phonebook, string $domainUuid): array
+    {
+        $entries = $this->tagGroup($this->entriesForPhonebook($phonebook, $domainUuid), $phonebook->name, 1);
+
+        return $this->dedupe($entries);
+    }
+
+    /**
+     * Build a single merged directory from several phonebooks (used by
+     * Grandstream, which downloads one phonebook.xml per device). Each phonebook
+     * becomes its own directory group, numbered in the order given.
+     *
+     * @param  iterable<Phonebook>  $phonebooks
+     * @return array<int, array<string, mixed>>
+     */
+    public function buildMany(iterable $phonebooks, string $domainUuid): array
+    {
+        $entries = [];
+        $index = 1;
+
+        foreach ($phonebooks as $phonebook) {
+            $entries = array_merge(
+                $entries,
+                $this->tagGroup($this->entriesForPhonebook($phonebook, $domainUuid), $phonebook->name, $index)
+            );
+            $index++;
+        }
+
+        return $this->dedupe($entries);
+    }
+
+    /**
+     * Raw (untagged, un-deduped) entries for one phonebook: extensions when
+     * enabled, plus the phonebook's own contacts.
+     */
+    private function entriesForPhonebook(Phonebook $phonebook, string $domainUuid): array
     {
         $entries = [];
 
@@ -31,27 +69,21 @@ class PhonebookBuilder
             $entries = array_merge($entries, $this->fromExtensions($domainUuid, []));
         }
 
-        $entries = array_merge($entries, $this->fromPhonebookContacts($phonebook));
-
-        return $this->dedupe($entries);
+        return array_merge($entries, $this->fromPhonebookContacts($phonebook));
     }
 
     /**
-     * Build a single merged directory from several phonebooks (used by
-     * Grandstream, which downloads one phonebook.xml per device).
-     *
-     * @param  iterable<Phonebook>  $phonebooks
-     * @return array<int, array{first_name:string,last_name:string,name:string,numbers:array<int,string>}>
+     * Tag each entry with its source phonebook as the directory group.
      */
-    public function buildMany(iterable $phonebooks, string $domainUuid): array
+    private function tagGroup(array $entries, string $group, int $index): array
     {
-        $entries = [];
-
-        foreach ($phonebooks as $phonebook) {
-            $entries = array_merge($entries, $this->build($phonebook, $domainUuid));
+        foreach ($entries as &$entry) {
+            $entry['group'] = $group;
+            $entry['group_index'] = $index;
         }
+        unset($entry);
 
-        return $this->dedupe($entries);
+        return $entries;
     }
 
     /**
