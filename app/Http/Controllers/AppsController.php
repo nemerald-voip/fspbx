@@ -748,7 +748,6 @@ class AppsController extends Controller
             ], 400);
         }
 
-
         return response()->json([
             'users' => $users,
             'status' => 200,
@@ -1045,6 +1044,7 @@ class AppsController extends Controller
             $appUser->status = $user['status'];
             $appUser->save();
             // Log::info($response);
+            $this->clearRingotelExtensionStatusCache(request('org_id'));
 
             $qrcode = "";
             if ($hidePassInEmail == 'false') {
@@ -1090,6 +1090,7 @@ class AppsController extends Controller
 
             // Send request to delеte user
             $response = $this->ringotelApiService->deleteUser($params);
+            $this->clearRingotelExtensionStatusCache(request('org_id'));
 
             return response()->json([
                 'messages' => ['success' => ['Mobile app has been removed']]
@@ -1152,6 +1153,7 @@ class AppsController extends Controller
 
             // Send request to reset password
             $user = $this->ringotelApiService->resetPassword($params);
+            $this->clearRingotelExtensionStatusCache(request('org_id'));
 
             // If success and user is activated send user email with credentials
             if ($user) {
@@ -1459,6 +1461,8 @@ class AppsController extends Controller
             }
         }
 
+        $this->clearRingotelExtensionStatusCache($orgId);
+
         return response()->json([
             'messages' => [
                 'success' => [
@@ -1531,6 +1535,7 @@ class AppsController extends Controller
 
             $extension->mobile_app->status = 1;
             $extension->mobile_app->save();
+            $this->clearRingotelExtensionStatusCache(request('org_id'));
 
             // We don't show the password and QR code for the organisations that has dont_send_user_credentials=true
             $hidePassInEmail = get_domain_setting('dont_send_user_credentials');
@@ -1613,6 +1618,7 @@ class AppsController extends Controller
                 $mobile_app->status = -1;
                 $mobile_app->save();
             }
+            $this->clearRingotelExtensionStatusCache(request('org_id'));
 
             return response()->json([
                 'messages' => ['success' => ['Mobile app has been deactivated']]
@@ -1643,7 +1649,7 @@ class AppsController extends Controller
                 ->firstOrFail();
 
             $ringotelApiService->setUserState($mobileApp->org_id, $mobileApp->user_id, $request->boolean('dnd'));
-            Cache::forget('ringotel:extension-status:' . session('domain_uuid') . ':' . $mobileApp->org_id);
+            $this->clearRingotelExtensionStatusCache($mobileApp->org_id);
             $ringotelUser = $this->getMobileAppRingotelUser($ringotelApiService, $mobileApp);
 
             return response()->json([
@@ -1678,7 +1684,7 @@ class AppsController extends Controller
                 ->firstOrFail();
 
             $ringotelApiService->deleteDevice($mobileApp->org_id, $mobileApp->user_id, $request->input('termid'));
-            Cache::forget('ringotel:extension-status:' . session('domain_uuid') . ':' . $mobileApp->org_id);
+            $this->clearRingotelExtensionStatusCache($mobileApp->org_id);
             usleep(500000);
 
             $ringotelUser = $this->getMobileAppRingotelUser($ringotelApiService, $mobileApp, null, null, false);
@@ -1698,6 +1704,15 @@ class AppsController extends Controller
                 ],
             ], 500);
         }
+    }
+
+    private function clearRingotelExtensionStatusCache(?string $orgId): void
+    {
+        if (empty($orgId)) {
+            return;
+        }
+
+        Cache::forget('ringotel:extension-status:' . session('domain_uuid') . ':' . $orgId);
     }
 
     private function getMobileAppRingotelUser(

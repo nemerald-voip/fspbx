@@ -1399,7 +1399,7 @@
                                                                                 class="block w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
                                                                                 :class="{ 'font-semibold text-gray-900': isMobileAppAvailableState(ringotelUser) }"
                                                                                 @click="handleRingotelStateOptionClick(false)">
-                                                                                Online
+                                                                                Available
                                                                             </button>
                                                                             <button type="button"
                                                                                 class="block w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
@@ -2103,6 +2103,11 @@ const ringotelStateBadge = (user) => {
             textColor: 'text-blue-700',
             ringColor: 'ring-blue-400/20',
         },
+        yellow: {
+            backgroundColor: 'bg-amber-100',
+            textColor: 'text-amber-800',
+            ringColor: 'ring-amber-400/20',
+        },
         red: {
             backgroundColor: 'bg-rose-100',
             textColor: 'text-rose-700',
@@ -2487,6 +2492,7 @@ const handleMobileAppSubmitButtonClick = async () => {
 
         getMobileAppOptions()
         creatingInitiated.value = false
+        emit('refresh-data')
     } catch (error) {
         emit('error', error)
     } finally {
@@ -2507,6 +2513,7 @@ const handleMobileAppRemoveButtonClick = async () => {
 
 
         getMobileAppOptions()
+        emit('refresh-data')
     } catch (error) {
         emit('error', error)
     } finally {
@@ -2532,6 +2539,7 @@ const handleMobileAppResetButtonClick = async () => {
         emit('success', 'success', response.data.messages);
 
         getMobileAppOptions()
+        emit('refresh-data')
     } catch (error) {
         emit('error', error)
     } finally {
@@ -2553,6 +2561,7 @@ const handleMobileAppDeactivateButtonClick = async () => {
         emit('success', 'success', response.data.messages);
 
         getMobileAppOptions()
+        emit('refresh-data')
 
     } catch (error) {
         emit('error', error)
@@ -2580,6 +2589,7 @@ const handleMobileAppActivateButtonClick = async () => {
         emit('success', 'success', response.data.messages);
 
         getMobileAppOptions()
+        emit('refresh-data')
     } catch (error) {
         emit('error', error)
     } finally {
