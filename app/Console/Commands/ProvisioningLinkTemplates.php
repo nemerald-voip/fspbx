@@ -89,10 +89,6 @@ class ProvisioningLinkTemplates extends Command
                 'link'   => '/var/www/fspbx/public/resources/templates/provision/yealink/ax83h',
             ],
             [
-                'target' => '/var/www/fspbx/resources/provisioning/yealink/t34w',
-                'link'   => '/var/www/fspbx/public/resources/templates/provision/yealink/t34w',
-            ],
-            [
                 'target' => '/var/www/fspbx/resources/provisioning/yealink/w80',
                 'link'   => '/var/www/fspbx/public/resources/templates/provision/yealink/w80',
             ],

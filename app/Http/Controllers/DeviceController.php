@@ -757,6 +757,9 @@ class DeviceController extends Controller
                 'permissions' => $this->getUserPermissions(),
                 // Boolean field indicating if a cloud provider exists for this vendor:
                 'cloud_provider_available' => $deviceDto && $cloudProviderSelector->getCloudProvider($deviceDto->device_vendor) !== null,
+                // Phonebook directory options + this device's current assignment
+                'phonebook_options' => $this->getPhonebookOptions($domain_uuid),
+                'device_phonebooks' => $itemUuid ? $this->getDevicePhonebookAssignments($itemUuid) : [],
                 // Define options for other fields as needed
             ];
 
@@ -769,6 +772,40 @@ class DeviceController extends Controller
                 'errors' => ['server' => ['Failed to get item details']]
             ], 500); // 500 Internal Server Error for any other errors
         }
+    }
+
+    /**
+     * Enabled phonebooks available in the domain, for the device Phonebook tab.
+     */
+    private function getPhonebookOptions(?string $domainUuid): array
+    {
+        if (empty($domainUuid)) {
+            return [];
+        }
+
+        return \App\Models\Phonebook::query()
+            ->where('domain_uuid', $domainUuid)
+            ->where('enabled', true)
+            ->orderBy('name')
+            ->get(['phonebook_uuid', 'name'])
+            ->map(fn ($pb) => [
+                'value' => (string) $pb->phonebook_uuid,
+                'label' => (string) $pb->name,
+            ])
+            ->all();
+    }
+
+    /**
+     * The device's current phonebook assignments, ordered by slot.
+     */
+    private function getDevicePhonebookAssignments(string $deviceUuid): array
+    {
+        return \Illuminate\Support\Facades\DB::table('device_phonebook')
+            ->where('device_uuid', $deviceUuid)
+            ->orderBy('slot')
+            ->pluck('phonebook_uuid')
+            ->map(fn ($uuid) => (string) $uuid)
+            ->all();
     }
 
     /**

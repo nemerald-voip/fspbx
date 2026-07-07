@@ -300,7 +300,7 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
         }
 
         // New-style label:
-        // yealink/t74w (v1.0.5)
+        // yealink/T7W (v1.0.5)
         // dinstar/Dinstar test (r19)
         if (preg_match('/^(?<vendor>[^\/]+)\/(?<name>.+?) \((?<kind>v|r)(?<value>[^)]+)\)$/i', $rawTemplate, $matches)) {
             $vendor = trim($matches['vendor']);

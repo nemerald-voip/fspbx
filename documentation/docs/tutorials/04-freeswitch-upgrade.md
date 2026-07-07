@@ -33,9 +33,25 @@ sudo bash install/install_freeswitch.sh
 
 The script builds and installs the FreeSWITCH version supported by the current FS PBX checkout. It replaces `/etc/freeswitch` with the configuration included with FS PBX and saves the previous directory as `/etc/freeswitch.orig`. An older `/etc/freeswitch.orig` backup is replaced.
 
-The running FreeSWITCH process is not restarted automatically. It continues using the old binary until you restart the service in step 4.
+The running FreeSWITCH process is not restarted automatically. It continues using the old binary until you restart the service in step 5.
 
-## 3. Confirm restart preparation
+## 3. Restore SQLite-in-RAM configuration when used
+
+:::warning Most installations should run this step
+
+SQLite in RAM is the default FS PBX configuration, so most installations should run the command below. Skip this step only if FreeSWITCH was intentionally reconfigured to use PostgreSQL for its runtime databases. This does not refer to the PostgreSQL database used by the FS PBX application.
+
+:::
+
+The installer replaces the FreeSWITCH XML configuration with the version shipped by FS PBX. If this server uses SQLite databases in RAM, reapply that configuration before restarting:
+
+```bash
+sudo -u www-data php artisan fs:migrate-sqlite-to-ram
+```
+
+This command restores the `/dev/shm` database paths, rebuilds `vars.xml`, and flushes the generated FreeSWITCH XML cache.
+
+## 4. Confirm restart preparation
 
 Before it finishes, the script rebuilds `/etc/freeswitch/vars.xml` from the FS PBX database and flushes the generated FreeSWITCH XML cache. Confirm that the output includes:
 
@@ -56,7 +72,7 @@ After these two actions succeed, continue with the service restart below.
 
 :::
 
-## 4. Restart FreeSWITCH
+## 5. Restart FreeSWITCH
 
 ```bash
 sudo systemctl daemon-reload
@@ -65,7 +81,7 @@ sudo systemctl restart freeswitch
 
 This restart activates the newly installed binary and interrupts active calls.
 
-## 5. Verify the installation
+## 6. Verify the installation
 
 ```bash
 sudo systemctl status freeswitch --no-pager

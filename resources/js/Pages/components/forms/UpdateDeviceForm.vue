@@ -74,6 +74,8 @@
                                     ),
                                     device_settings: options.item?.settings,
                                     device_description: options.item?.device_description ?? null,
+                                    phonebook_mode: (options.device_phonebooks?.length ?? 0) > 0 ? 'custom' : 'default',
+                                    phonebook_uuids: options.device_phonebooks ?? [],
                                 }">
 
                                 <template #empty>
@@ -148,6 +150,16 @@
 
                                                 ]"
                                                     :conditions="[() => options?.item?.device_vendor == 'cisco' || options?.item?.device_vendor == 'snom' || options?.item?.device_vendor == 'yealink']" />
+
+                                                <FormTab name="phonebook" label="Phonebook" :elements="[
+                                                    'phonebook_title',
+                                                    'phonebook_mode',
+                                                    'phonebook_uuids',
+                                                    'phonebook_vendor_hint',
+                                                    'phonebook_container',
+                                                    'submit_phonebook',
+                                                ]"
+                                                    :conditions="[() => options?.item?.device_vendor == 'grandstream' || options?.item?.device_vendor == 'yealink']" />
 
                                                 <FormTab name="cloud_provisioning" label="Cloud Provisioning" :elements="[
                                                     'cloud_provisioning_title',
@@ -1015,6 +1027,39 @@
                                                 <GroupElement name="expansion_keys_container2" />
 
                                                 <ButtonElement name="expansion_keys_submit_keys" button-label="Save"
+                                                    :submits="true" align="right" />
+
+                                                <!-- Phonebook tab-->
+                                                <StaticElement name="phonebook_title" tag="h4" content="Phonebook"
+                                                    description="Choose which directories this phone downloads. Extensions and contacts are served to the phone as a remote phonebook." />
+
+                                                <RadiogroupElement name="phonebook_mode" :items="{
+                                                    default: 'Use account default',
+                                                    custom: 'Custom for this device',
+                                                }" />
+
+                                                <TagsElement name="phonebook_uuids" label="Phonebooks"
+                                                    description="Selection order sets the phone slot / priority."
+                                                    :items="options?.phonebook_options ?? []" :search="true"
+                                                    :close-on-select="false" :floating="false"
+                                                    :conditions="[['phonebook_mode', 'custom']]" />
+
+                                                <StaticElement name="phonebook_vendor_hint">
+                                                    <div v-if="options?.item?.device_vendor === 'grandstream'"
+                                                        class="rounded-md bg-blue-50 px-3 py-2 text-sm text-blue-700 ring-1 ring-inset ring-blue-600/20">
+                                                        Grandstream phones download a single directory. If you select multiple phonebooks,
+                                                        they're <span class="font-semibold">merged into one combined list</span> on the phone.
+                                                    </div>
+                                                    <div v-else-if="options?.item?.device_vendor === 'yealink'"
+                                                        class="rounded-md bg-blue-50 px-3 py-2 text-sm text-blue-700 ring-1 ring-inset ring-blue-600/20">
+                                                        Yealink phones show <span class="font-semibold">each selected phonebook as its own directory</span>
+                                                        (up to the phone's remote-phonebook limit).
+                                                    </div>
+                                                </StaticElement>
+
+                                                <GroupElement name="phonebook_container" />
+
+                                                <ButtonElement name="submit_phonebook" button-label="Save"
                                                     :submits="true" align="right" />
 
                                                 <!-- Cloud Provisioning tab-->

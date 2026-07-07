@@ -1,22 +1,22 @@
 <template>
-    <MainLayout />
+    <component :is="embedded ? 'div' : MainLayout">
 
-    <div class="m-3 space-y-4">
+    <div :class="embedded ? 'space-y-4' : 'm-3 space-y-4'">
         <!-- Header -->
         <header class="flex flex-wrap items-end justify-between gap-3">
             <div>
-                <p class="text-xs font-medium uppercase tracking-wider text-accent-fg">Domain settings</p>
-                <h1 class="mt-1 text-2xl font-semibold text-heading">{{ domain.domain_description || domain.domain_name }}</h1>
+                <p class="text-xs font-medium uppercase tracking-wider text-accent-fg">{{ embedded ? 'Advanced' : 'Domain variables' }}</p>
+                <h1 v-if="!embedded" class="mt-1 text-2xl font-semibold text-heading">{{ domain.domain_description || domain.domain_name }}</h1>
                 <p class="mt-1 text-sm text-muted">Override global defaults for this domain, or revert customizations back to the system default.</p>
             </div>
             <div class="flex flex-wrap gap-2">
-                <a :href="routes.domains" class="inline-flex items-center gap-1.5 rounded-md bg-surface px-3 py-1.5 text-sm font-medium text-body shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2">
+                <a v-if="!embedded" :href="routes.domains" class="inline-flex items-center gap-1.5 rounded-md bg-surface px-3 py-1.5 text-sm font-medium text-body shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2">
                     <BuildingOffice2Icon class="h-4 w-4" /> Domains
                 </a>
-                <a :href="routes.default_settings" class="inline-flex items-center gap-1.5 rounded-md bg-surface px-3 py-1.5 text-sm font-medium text-body shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2">
+                <a v-if="!embedded" :href="routes.default_settings" class="inline-flex items-center gap-1.5 rounded-md bg-surface px-3 py-1.5 text-sm font-medium text-body shadow-sm ring-1 ring-inset ring-stron hover:bg-surface-2">
                     <ArrowUturnLeftIcon class="h-4 w-4" /> Default Settings
                 </a>
-                <button type="button" class="inline-flex items-center gap-1.5 rounded-md bg-surface px-3 py-1.5 text-sm font-medium text-body shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2" @click="reloadSettings">
+                <button v-if="!embedded" type="button" class="inline-flex items-center gap-1.5 rounded-md bg-surface px-3 py-1.5 text-sm font-medium text-body shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2" @click="reloadSettings">
                     <ArrowPathIcon class="h-4 w-4" /> Reload
                 </button>
                 <button v-if="permissions.create" type="button" class="inline-flex items-center gap-1.5 rounded-md bg-accent px-3 py-1.5 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover" @click="openEditor()">
@@ -26,7 +26,7 @@
         </header>
 
         <!-- Stats -->
-        <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div v-if="!embedded" class="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <StatTile label="Total settings" :value="stats.total" tone="gray" />
             <StatTile label="Overridden" :value="stats.overrides" tone="amber" />
             <StatTile label="Domain only" :value="stats.custom" tone="purple" />
@@ -36,7 +36,7 @@
         <!-- Main two-column layout -->
         <div class="flex flex-col gap-4 lg:flex-row">
             <!-- Sidebar -->
-            <aside class="lg:w-72 lg:shrink-0">
+            <aside v-if="!embedded" class="lg:w-72 lg:shrink-0">
                 <div class="rounded-lg bg-surface p-3 shadow-sm ring-1 ring-strong">
                     <div class="relative mb-3">
                         <MagnifyingGlassIcon class="pointer-events-none absolute inset-y-0 left-3 h-4 w-4 my-auto text-subtle" />
@@ -93,7 +93,7 @@
                                 <span>{{ selectedItems.length }} selected</span>
                                 <button v-if="permissions.update" type="button" class="rounded px-1.5 py-0.5 hover:bg-accent-subtle" @click="handleBulkActionRequest('bulk_toggle')">Toggle</button>
                                 <button v-if="permissions.destroy" type="button" class="rounded px-1.5 py-0.5 hover:bg-accent-subtle" @click="handleBulkActionRequest('bulk_revert')">Revert</button>
-                                <button v-if="permissions.copy" type="button" class="rounded px-1.5 py-0.5 hover:bg-accent-subtle" @click="handleBulkActionRequest('bulk_copy')">Copy</button>
+                                <button v-if="canShowCopyAction" type="button" class="rounded px-1.5 py-0.5 hover:bg-accent-subtle" @click="handleBulkActionRequest('bulk_copy')">Copy</button>
                             </div>
                         </div>
                     </header>
@@ -121,15 +121,17 @@
                                 <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
                                     <div class="inline-flex min-w-0 max-w-full items-center gap-1.5">
                                         <span class="shrink-0 text-xs text-subtle">Value</span>
-                                        <button type="button" class="min-w-0 max-w-full text-left" :title="valueTitle(row.effective_value, row.is_secret)" aria-label="Copy value" @click.stop="copyValue(row.effective_value)">
+                                        <button v-if="hasCopyableValue(row.effective_value)" type="button" class="min-w-0 max-w-full text-left" :title="valueTitle(row.effective_value, row.is_secret)" aria-label="Copy value" @click.stop="copyValue(row.effective_value)">
                                             <code class="block max-w-full truncate rounded bg-surface-3 px-2 py-0.5 font-mono text-xs text-heading ring-1 ring-transparent transition hover:bg-surface-3 hover:ring-strong">{{ truncatedValue(row.effective_value, row.is_secret) }}</code>
                                         </button>
+                                        <code v-else class="block max-w-full truncate rounded bg-gray-100 px-2 py-0.5 font-mono text-xs text-gray-400">{{ truncatedValue(row.effective_value, row.is_secret) }}</code>
                                     </div>
                                     <div v-if="row.source === 'override'" class="inline-flex min-w-0 max-w-full items-center gap-1.5 text-xs text-subtle">
                                         <span class="shrink-0">default</span>
-                                        <button type="button" class="min-w-0 max-w-full text-left" :title="valueTitle(row.default_value, row.is_secret)" aria-label="Copy default value" @click.stop="copyValue(row.default_value)">
+                                        <button v-if="hasCopyableValue(row.default_value)" type="button" class="min-w-0 max-w-full text-left" :title="valueTitle(row.default_value, row.is_secret)" aria-label="Copy default value" @click.stop="copyValue(row.default_value)">
                                             <code class="block max-w-full truncate rounded bg-surface-2 px-1.5 py-0.5 font-mono text-xs text-muted line-through ring-1 ring-transparent transition hover:bg-surface-3 hover:ring-strong">{{ truncatedValue(row.default_value, row.is_secret) }}</code>
                                         </button>
+                                        <code v-else class="block max-w-full truncate rounded bg-gray-50 px-1.5 py-0.5 font-mono text-xs text-gray-400 line-through">{{ truncatedValue(row.default_value, row.is_secret) }}</code>
                                     </div>
                                 </div>
                             </div>
@@ -164,7 +166,7 @@
     <SettingsEditModal :show="showEditor" mode="domain" :item="editorItem" :types="options.types" :categories="options.categories" :route="editorRoute"
         :loading="editorLoading" @close="showEditor = false" @success="handleModalSuccess" @error="handleErrorResponse" />
 
-    <AddEditItemModal :show="showCopyModal" header="Copy Domain Settings" @close="showCopyModal = false">
+    <AddEditItemModal :show="showCopyModal" :header="embedded ? 'Copy Advanced Settings' : 'Copy Domain Variables'" @close="showCopyModal = false">
         <template #modal-body>
             <Vueform :endpoint="submitCopyForm" @success="handleCopySuccess" @error="handleErrorResponse" :display-errors="false">
                 <template #empty>
@@ -182,6 +184,7 @@
     <ConfirmationModal :show="showConfirmModal" header="Confirm Revert" text="Selected domain override rows will be removed and defaults will take effect." confirm-button-label="Revert" cancel-button-label="Cancel" @close="showConfirmModal = false" @confirm="executeConfirmedAction" />
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages" @update:show="notificationShow = false" />
+    </component>
 </template>
 
 <script setup>
@@ -214,6 +217,10 @@ const props = defineProps({
     routes: Object,
     permissions: Object,
     options: Object,
+    embedded: {
+        type: Boolean,
+        default: false,
+    },
 })
 
 const allRows = ref([])
@@ -309,6 +316,13 @@ const allVisibleSelected = computed(() => {
     return selectableRowUuids.value.every(uuid => selectedItems.value.includes(uuid))
 })
 
+const canShowCopyAction = computed(() => {
+    if (!props.permissions?.copy) return false
+    if (!props.embedded) return true
+
+    return Boolean(props.permissions?.domain_select)
+})
+
 watch([selectedCategory, () => filterData.value.search, () => filterData.value.source, () => filterData.value.enabled], () => {
     selectedItems.value = []
 })
@@ -395,6 +409,8 @@ const handleBulkActionRequest = (action) => {
             .catch(handleErrorResponse)
     }
     if (action === 'bulk_copy') {
+        if (!canShowCopyAction.value) return
+
         showCopyModal.value = true
     }
 }
@@ -468,6 +484,8 @@ const handleErrorResponse = (error) => {
 }
 
 const copyValue = async (value) => {
+    if (!hasCopyableValue(value)) return
+
     try {
         await writeClipboardText(value === null || value === undefined ? '' : String(value))
         showNotification('success', { success: ['Value copied.'] })
@@ -495,6 +513,10 @@ const writeClipboardText = async (text) => {
 
     if (!copied) throw new Error('Copy failed')
 }
+
+const hasCopyableValue = (value) => value !== null
+    && value !== undefined
+    && (typeof value !== 'string' || value.trim() !== '')
 
 const VALUE_TRUNCATE_AT = 160
 

@@ -1,8 +1,8 @@
-{{-- version: 1.0.7 --}}
+{{-- version: 1.0.8 --}}
 
 @switch($flavor)
 
-{{-- ================= Yealink T74W mac.cfg ================= --}}
+{{-- ================= Yealink T8 mac.cfg ================= --}}
 @case('mac.cfg')
 
 #!version:1.0.0.1
@@ -352,8 +352,8 @@ distinctive_ring_tones.alert_info.{{ $i }}.ringer = {{ $settings["yealink_ring_f
 ##for SIP-T54W/T46G/T46S/T29G: <=1.8 megapixels;SIP-T54S/T52S:<=4.2 megapixels;
 ##Single File Size: <=5MB
 ##2MB of space should bereserved for the phone
-wallpaper_upload.url = {{ $settings['yealink_t74w_wallpaper'] ?? '' }}
-phone_setting.backgrounds = Config:{{ $settings['yealink_t74w_wallpaper_filename'] ?? '' }}
+wallpaper_upload.url = {{ $settings['yealink_t74u_wallpaper'] ?? '' }}
+phone_setting.backgrounds = Config:{{ $settings['yealink_t74u_wallpaper_filename'] ?? '' }}
 
 
 ################################################################
@@ -544,6 +544,18 @@ programablekey.2.type = 73
 programablekey.2.line = 1
 programablekey.2.value = *8$PEnter Extension&TIntercom Extension&C4&N$ 
 programablekey.2.label = Intercom
+
+################################################################
+##                      Remote Phonebook                      ##
+################################################################
+@if (!empty($phonebooks))
+features.remote_phonebook.enable = 1
+features.remote_phonebook.flash_time = 3600
+@foreach ($phonebooks as $pb)
+remote_phonebook.data.{{ $pb['slot'] }}.name = {{ $pb['name'] }}
+remote_phonebook.data.{{ $pb['slot'] }}.url = {{ $pb['url'] }}
+@endforeach
+@endif
 
 
 @endswitch

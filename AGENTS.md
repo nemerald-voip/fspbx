@@ -47,6 +47,7 @@ This repo is a Laravel, Vue/Inertia, VueForm, and FreeSWITCH application. Before
 - Keep vendor translation and normalization in the existing provisioning path. Do not add new broad vendor translations unless the stored data shape truly requires it.
 - The modern provisioning path is `app/Http/Controllers/ProvisioningController.php`; the old provisioning URL still uses `public/app/provision/resources/classes/provision.php`.
 - Native provisioning renders `provisioning_templates.content` from the database, not the resource file directly. Changes under `resources/provisioning/.../template.blade.php` require reseeding default templates with `php artisan prov:templates:seed` or manually updating custom template content.
+- After reseeding provisioning templates, run `php artisan view:clear`. Changed template content forces Blade to recompile the stored string, and a stale/wrongly-owned compiled view causes a 500 on the phone's config request. Do not render provisioning Blade as root (via `tinker`/`artisan`) — it writes root-owned files in `storage/framework/views` that the `www-data` web server cannot overwrite. Verify template rendering with `curl` against `/prov/...`, not a root tinker `Blade::render`.
 - Custom provisioning templates do not inherit default template changes automatically.
 - When changing default provisioning templates, bump the Blade front-matter `version:` so the seeder can update the database row clearly.
 - The provisioning template seeder keys default rows by `vendor + folder name + type`. When renaming a default template folder, add an update step before `prov:templates:seed` runs that renames the existing `provisioning_templates.name` row and any custom `base_template` references, otherwise the seeder will create a second default row under the new folder name.
@@ -54,9 +55,29 @@ This repo is a Laravel, Vue/Inertia, VueForm, and FreeSWITCH application. Before
 - The old provisioning URL delegates modern `device_keys` overlay behavior to `fspbx_apply_new_keys_override()` in `app/helpers.php`. Key Template support for that old path should stay in helpers where possible.
 - `device_key_templates.enabled` is stored as the string `'true'`, not a boolean. Legacy SQL helpers should compare it as `t.enabled = 'true'`.
 - If the old `provision.php` path must participate in a new behavior, remember `public/` is not tracked. Make the runtime file change for the working server, then add or update an update class to download/replace the file for deployed systems.
+- When expanding a Grandstream template from an official configuration file, use active `P... = ...` assignments as the vendor baseline and retain commented P-value entries as documentation only. Apply FS PBX system, account, credential, and key values as an explicit overlay after parsing the baseline.
+- Comments inside Blade/PHP setup blocks are not part of the provisioned XML. If provisioning previews should explain each Grandstream P-value, render the captured descriptions as XML comments next to the resulting elements and render prominent XML-comment banners for section headings.
+- Grandstream key mode numbers are key-family specific. On GXP17xx, fixed/line VPKs 1-6 use values such as `11` for BLF and `26` for Monitored Call Park, while dynamic VPKs 7-32 use `1` for BLF and `16` for Monitored Call Park. Do not reuse one mode map for both families.
+- Grandstream account selectors in P-values are zero-based even when the UI labels them as Account 1, Account 2, and so on. Normalize FS PBX line assignments accordingly.
+- For normal GXP17xx BLF operation, leave the account BLF server blank so subscriptions use the configured SIP server. Monitored park values use the form `park+*5901`.
+- When a vendor baseline contains settings for unsupported accounts or model variants as commented entries, do not activate them merely to make the generated template more complete. Only emit supported active settings and intentional FS PBX overrides.
 - Yealink templates should use `$main_keys` for `linekey.*` output and `$expansion_keys` for `expansion_module.1.key.*` output.
 - Yealink phone line keys should clear unused slots through 30; Yealink expansion module keys should clear unused slots through 60 per module.
 - Yealink devices can use the Expansion Keys tab in the device edit modal.
+
+## Phonebooks
+
+- A phonebook is a device directory made of optional internal extensions (an `include_extensions` toggle) plus the phonebook's own contacts. This supports extensions-only, contacts-only, or both. Keep the editor simple enough that an end user grasps that composition at a glance.
+- Contacts are per-phonebook in `phonebook_contacts`, not the shared CRM `contacts`/Messages store. Each phonebook owns its list; do not reuse account-wide contacts for phonebooks or every phonebook shows the same people. Contacts save together with the phonebook via `PhonebookService` (delete + recreate), not through separate contact endpoints.
+- Data model: `phonebooks` (`enabled`, `is_default`, `include_extensions`), `phonebook_contacts` (per phonebook), and `device_phonebook` (per-device assignment with `slot`).
+- Directory entries are built in `app/Services/Provisioning/Phonebook/PhonebookBuilder.php` and rendered by vendor formatters (Grandstream `AddressBook`, Yealink `YealinkIPPhoneDirectory`). The final list is de-duplicated and sorted by last name, then first name, then display name, matching Grandstream's on-phone `phonebook.sortBy = LastName`.
+- Phones fetch directories from `/prov/directory/{book}/{path}` (`PhonebookController`), reusing the `provision.digest` middleware. `{book}` is a phonebook UUID or `all`. The device is resolved from the MAC/serial path segment, because some phones append a fixed filename (Grandstream requests `<server>/phonebook.xml`) so the basename is not the device token — `DigestProvisionAuth` scans path segments when the basename yields no token.
+- Grandstream downloads a single `phonebook.xml`, so its config points at the device-merged `all` directory (`/prov/directory/all/{mac}`), which combines every assigned phonebook. Yealink supports multiple remote phonebooks, so it gets one credentialed URL per phonebook via `remote_phonebook.data.X`.
+- Grandstream `phonebook.download.server` must be host/path WITHOUT a scheme; the separate `phonebook.download.mode`/P330 selects HTTP vs HTTPS. Item-style templates strip the scheme inline; GXP17xx strips it for P331 and derives P330 from the scheme.
+- Grandstream config is injected through settings in `ProvisioningController::buildTemplateVars` (`grandstream_phonebook_server`/`_username`/`_password`/`_download_interval`), so every Grandstream model picks it up without per-template edits. When no phonebook resolves, leave any manually-configured phonebook settings intact.
+- Device assignment lives on the device edit modal's Phonebook tab: "Use account default" (all `is_default` phonebooks) or "Custom" (rows in `device_phonebook`, order = slot). `DeviceService` syncs `device_phonebook` from `phonebook_mode` + `phonebook_uuids`.
+- Provisioning preview mirrors the phone: Grandstream shows one merged `phonebook.xml`; Yealink shows one file per phonebook.
+- User-facing phonebook copy uses "Account", never "domain" (the internal multi-tenant term). Show a per-vendor hint on the device Phonebook tab so the Grandstream-merges-into-one vs Yealink-separate-directories behavior is not surprising.
 
 ## Basic Queues
 

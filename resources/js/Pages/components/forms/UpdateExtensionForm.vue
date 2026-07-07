@@ -314,6 +314,7 @@
                                                 <FormTab name="mobile_app" label="Mobile App" :elements="[
                                                     'mobile_app_title',
                                                     'mobile_app_status',
+                                                    'mobile_app_ringotel_state',
                                                     'enable_mobile_app',
                                                     'enable_mobile_app_contact',
                                                     'mobile_app_connection',
@@ -323,6 +324,7 @@
                                                     'deactivate_mobile_app',
                                                     'activate_mobile_app',
                                                     'remove_mobile_app',
+                                                    'mobile_app_devices',
                                                     'mobile_app_loading',
                                                     'mobile_app_error',
                                                     'container2',
@@ -1372,6 +1374,50 @@
                                                     </div>
                                                 </StaticElement>
 
+                                                <StaticElement name="mobile_app_ringotel_state"
+                                                    :conditions="[() => !!mobileAppOptions?.mobile_app && mobileAppOptions?.mobile_app?.status == 1]">
+                                                    <div class="mt-4 space-y-4 rounded-md border border-gray-200 bg-gray-50 p-4">
+                                                        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                                            <div>
+                                                                <div class="flex items-center gap-x-3">
+                                                                    <span class="font-semibold">User Status:</span>
+                                                                    <div class="relative inline-flex items-center gap-2">
+                                                                        <button type="button"
+                                                                            :disabled="!canChangeMobileAppState"
+                                                                            :class="[
+                                                                                'inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold ring-1 ring-inset transition',
+                                                                                mobileAppStateButtonClass,
+                                                                                canChangeMobileAppState ? 'cursor-pointer' : 'cursor-default opacity-80'
+                                                                            ]"
+                                                                            @click="toggleMobileAppStateMenu">
+                                                                            {{ ringotelUser?.state_label ?? 'Unavailable' }}
+                                                                        </button>
+                                                                        <Spinner :show="isMobileAppLoading.state" />
+                                                                        <div v-if="showMobileAppStateMenu && canChangeMobileAppState"
+                                                                            class="absolute left-0 top-full z-20 mt-2 w-48 rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5">
+                                                                            <button type="button"
+                                                                                class="block w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                                                                                :class="{ 'font-semibold text-gray-900': isMobileAppAvailableState(ringotelUser) }"
+                                                                                @click="handleRingotelStateOptionClick(false)">
+                                                                                Available
+                                                                            </button>
+                                                                            <button type="button"
+                                                                                class="block w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                                                                                :class="{ 'font-semibold text-gray-900': isMobileAppDndState(ringotelUser) }"
+                                                                                @click="handleRingotelStateOptionClick(true)">
+                                                                                Do Not Disturb
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <p class="mt-1 text-xs text-gray-500">
+                                                                    Mobile App state controls whether DND should be toggled on or off.
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </StaticElement>
+
                                                 <ButtonElement name="enable_mobile_app" button-label="Enable"
                                                     label="Step 1: Enable Mobile App for Extension"
                                                     @click="handleMobileAppEnableButtonClick"
@@ -1506,6 +1552,47 @@
 
                                                 <GroupElement name="container5"
                                                     :conditions="[() => !!mobileAppOptions?.mobile_app]" />
+
+                                                <StaticElement name="mobile_app_devices"
+                                                    :conditions="[() => !!mobileAppOptions?.mobile_app && mobileAppOptions?.mobile_app?.status == 1]">
+                                                    <div class="mt-5">
+                                                        <h3 class="text-sm font-semibold text-gray-900">Mobile App Devices</h3>
+                                                        <div v-if="ringotelUser?.devices?.length"
+                                                            class="mt-3 overflow-hidden rounded-md border border-gray-200">
+                                                            <table class="min-w-full divide-y divide-gray-200">
+                                                                <thead class="bg-gray-50">
+                                                                    <tr>
+                                                                        <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700">Device</th>
+                                                                        <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700">Last Seen</th>
+                                                                        <th class="px-3 py-2 text-right text-xs font-semibold text-gray-700"></th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody class="divide-y divide-gray-200 bg-white">
+                                                                    <tr v-for="device in ringotelUser.devices" :key="device.id || device.name">
+                                                                        <td class="px-3 py-2 text-sm text-gray-700">
+                                                                            <div class="font-medium text-gray-900">{{ device.name }}</div>
+                                                                            <div v-if="device.id" class="text-xs text-gray-500">{{ device.id }}</div>
+                                                                        </td>
+                                                                        <td class="px-3 py-2 text-sm text-gray-700">{{ formatRingotelTimestamp(device.last_login_ts) }}</td>
+                                                                        <td class="px-3 py-2 text-right">
+                                                                            <button v-if="canDeleteMobileAppDevice(device)"
+                                                                                type="button"
+                                                                                title="Remove device"
+                                                                                :disabled="isMobileAppLoading.device"
+                                                                                @click="handleMobileAppDeviceDeleteClick(device)"
+                                                                                class="inline-flex h-7 w-7 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-rose-600 disabled:cursor-not-allowed disabled:text-gray-300">
+                                                                                <XMarkIcon class="h-4 w-4" aria-hidden="true" />
+                                                                            </button>
+                                                                        </td>
+                                                                    </tr>
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                        <div v-else class="mt-3 rounded-md border border-gray-200 bg-gray-50 px-3 py-3 text-sm text-gray-500">
+                                                            No mobile app devices found.
+                                                        </div>
+                                                    </div>
+                                                </StaticElement>
 
 
                                                 <StaticElement name="mobile_app_loading">
@@ -1987,10 +2074,96 @@ const isMobileAppLoading = reactive({
     activate: false,
     deactivate: false,
     remove: false,
+    state: false,
+    device: false,
 })
 const mobileAppContactOnly = ref(false)
+const showMobileAppStateMenu = ref(false)
 const recordedName = ref(props.options?.recorded_name)
 const availableGreetings = ref(null)
+const ringotelUser = computed(() => mobileAppOptions.value?.ringotel_user ?? null)
+const canChangeMobileAppState = computed(() => {
+    const user = ringotelUser.value
+
+    return !!user
+        && Number(user.state) !== 0
+        && user.state_label?.toLowerCase() !== 'offline'
+        && !isMobileAppLoading.state
+})
+
+const ringotelStateBadge = (user) => {
+    return {
+        green: {
+            backgroundColor: 'bg-green-100',
+            textColor: 'text-green-700',
+            ringColor: 'ring-green-400/20',
+        },
+        blue: {
+            backgroundColor: 'bg-blue-100',
+            textColor: 'text-blue-700',
+            ringColor: 'ring-blue-400/20',
+        },
+        yellow: {
+            backgroundColor: 'bg-amber-100',
+            textColor: 'text-amber-800',
+            ringColor: 'ring-amber-400/20',
+        },
+        red: {
+            backgroundColor: 'bg-rose-100',
+            textColor: 'text-rose-700',
+            ringColor: 'ring-rose-400/20',
+        },
+        gray: {
+            backgroundColor: 'bg-gray-100',
+            textColor: 'text-gray-700',
+            ringColor: 'ring-gray-400/20',
+        },
+    }[user?.state_color] ?? {
+        backgroundColor: 'bg-gray-100',
+        textColor: 'text-gray-700',
+        ringColor: 'ring-gray-400/20',
+    }
+}
+
+const mobileAppStateButtonClass = computed(() => {
+    const badge = ringotelStateBadge(ringotelUser.value)
+
+    return [
+        badge.backgroundColor,
+        badge.textColor,
+        badge.ringColor,
+        canChangeMobileAppState.value ? 'hover:brightness-95' : '',
+    ]
+})
+
+const toggleMobileAppStateMenu = () => {
+    if (!canChangeMobileAppState.value) {
+        return
+    }
+
+    showMobileAppStateMenu.value = !showMobileAppStateMenu.value
+}
+
+const isMobileAppAvailableState = (user) => {
+    return [1, 5].includes(Number(user?.state))
+}
+
+const isMobileAppDndState = (user) => {
+    return Number(user?.state) === 3 || user?.dnd === true
+}
+
+const formatRingotelTimestamp = (timestamp) => {
+    if (!timestamp) {
+        return 'Never'
+    }
+
+    const normalized = Number(timestamp) > 9999999999 ? Number(timestamp) : Number(timestamp) * 1000
+
+    return new Intl.DateTimeFormat(undefined, {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+    }).format(new Date(normalized))
+}
 
 watch(
     () => props.options?.recorded_name,
@@ -2190,6 +2363,7 @@ const handleTabSelected = (activeTab, previousTab) => {
     }
     if (activeTab.name == 'mobile_app') {
         mobileAppOptions.value = null
+        showMobileAppStateMenu.value = false
         creatingInitiated.value = false
         mobileApp.value = null
         getMobileAppOptions()
@@ -2214,6 +2388,7 @@ const getDevices = async () => {
 const getMobileAppOptions = async () => {
     isMobileAppOptionsLoading.value = true
     mobileAppError.value = false
+    showMobileAppStateMenu.value = false
     axios.post(props.options.routes.mobile_app_options,
         {
             extension_uuid: props.options.item.extension_uuid,
@@ -2230,6 +2405,62 @@ const getMobileAppOptions = async () => {
         }).finally(() => {
             isMobileAppOptionsLoading.value = false
         });
+}
+
+const handleRingotelStateOptionClick = async (dnd) => {
+    showMobileAppStateMenu.value = false
+
+    if (!ringotelUser.value) {
+        return
+    }
+
+    if ((dnd && isMobileAppDndState(ringotelUser.value)) || (!dnd && isMobileAppAvailableState(ringotelUser.value))) {
+        return
+    }
+
+    isMobileAppLoading.state = true
+
+    try {
+        const response = await axios.post(mobileAppOptions.value.routes.set_user_state, {
+            mobile_app_user_uuid: mobileAppOptions.value.mobile_app.mobile_app_user_uuid,
+            dnd,
+        })
+
+        mobileAppOptions.value.ringotel_user = response.data.ringotel_user
+        emit('success', 'success', response.data.messages)
+        emit('refresh-data')
+    } catch (error) {
+        emit('error', error)
+    } finally {
+        isMobileAppLoading.state = false
+    }
+}
+
+const canDeleteMobileAppDevice = (device) => {
+    return device?.source === 'device' && !!device?.id
+}
+
+const handleMobileAppDeviceDeleteClick = async (device) => {
+    if (!canDeleteMobileAppDevice(device) || isMobileAppLoading.device) {
+        return
+    }
+
+    isMobileAppLoading.device = true
+
+    try {
+        const response = await axios.post(mobileAppOptions.value.routes.delete_device, {
+            mobile_app_user_uuid: mobileAppOptions.value.mobile_app.mobile_app_user_uuid,
+            termid: device.id,
+        })
+
+        mobileAppOptions.value.ringotel_user = response.data.ringotel_user
+        emit('success', 'success', response.data.messages)
+        emit('refresh-data')
+    } catch (error) {
+        emit('error', error)
+    } finally {
+        isMobileAppLoading.device = false
+    }
 }
 
 const handleMobileAppEnableButtonClick = async () => {
@@ -2261,6 +2492,7 @@ const handleMobileAppSubmitButtonClick = async () => {
 
         getMobileAppOptions()
         creatingInitiated.value = false
+        emit('refresh-data')
     } catch (error) {
         emit('error', error)
     } finally {
@@ -2281,6 +2513,7 @@ const handleMobileAppRemoveButtonClick = async () => {
 
 
         getMobileAppOptions()
+        emit('refresh-data')
     } catch (error) {
         emit('error', error)
     } finally {
@@ -2306,6 +2539,7 @@ const handleMobileAppResetButtonClick = async () => {
         emit('success', 'success', response.data.messages);
 
         getMobileAppOptions()
+        emit('refresh-data')
     } catch (error) {
         emit('error', error)
     } finally {
@@ -2327,6 +2561,7 @@ const handleMobileAppDeactivateButtonClick = async () => {
         emit('success', 'success', response.data.messages);
 
         getMobileAppOptions()
+        emit('refresh-data')
 
     } catch (error) {
         emit('error', error)
@@ -2354,6 +2589,7 @@ const handleMobileAppActivateButtonClick = async () => {
         emit('success', 'success', response.data.messages);
 
         getMobileAppOptions()
+        emit('refresh-data')
     } catch (error) {
         emit('error', error)
     } finally {

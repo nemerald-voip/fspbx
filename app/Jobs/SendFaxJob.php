@@ -320,15 +320,18 @@ class SendFaxJob implements ShouldQueue
         }
 
         // Per-attempt fallback ladder, mirrors legacy fax_send.php behavior.
-        // Earlier retries try defaults; later retries flip T38/ECM/V17 combos
-        // to coax a connection out of finicky receivers.
-        foreach ($this->retryLadderOptions((int) $fax->retry_count) as $opt) {
+        // Attempt 1 uses configured defaults; later retries flip T38/ECM/V17
+        // combos to coax a connection out of finicky receivers.
+        $retryOptions = $this->retryLadderOptions((int) $fax->retry_count);
+
+        foreach ($retryOptions as $opt) {
             $vars[] = $opt;
         }
 
-        // Domain-configured dial-plan variables (fax.variable settings).
+        // Domain-configured dial-plan variables (fax.variable settings). Retry
+        // options win only for the variables that this attempt explicitly sets.
         foreach ($this->domainDialplanVariables() as $extra) {
-            if ($this->retryLadderControlsVariable($extra)) {
+            if ($this->retryLadderControlsVariable($extra, $retryOptions)) {
                 continue;
             }
 
@@ -433,16 +436,21 @@ class SendFaxJob implements ShouldQueue
         };
     }
 
-    private function retryLadderControlsVariable(string $variable): bool
+    private function retryLadderControlsVariable(string $variable, array $retryOptions): bool
     {
         $name = trim(strtok($variable, '='));
 
-        return in_array($name, [
-            'fax_disable_v17',
-            'fax_enable_t38',
-            'fax_enable_t38_request',
-            'fax_use_ecm',
-        ], true);
+        if ($name === '') {
+            return false;
+        }
+
+        foreach ($retryOptions as $option) {
+            if ($name === trim(strtok($option, '='))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function dedupeChannelVariables(array $variables): array

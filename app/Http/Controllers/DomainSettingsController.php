@@ -24,7 +24,12 @@ class DomainSettingsController extends Controller
             return redirect('/');
         }
 
-        return Inertia::render('DomainSettings', [
+        return Inertia::render('DomainSettings', $this->pageProps($domain));
+    }
+
+    public function pageProps(Domain $domain): array
+    {
+        return [
             'domain' => [
                 'domain_uuid' => $domain->domain_uuid,
                 'domain_name' => $domain->domain_name,
@@ -48,6 +53,7 @@ class DomainSettingsController extends Controller
                 'create' => userCheckPermission('domain_setting_add'),
                 'update' => userCheckPermission('domain_setting_edit'),
                 'destroy' => userCheckPermission('domain_setting_delete'),
+                'domain_select' => userCheckPermission('domain_select'),
                 'copy' => userCheckPermission('domain_select') && userCheckPermission('domain_setting_add'),
                 'copy_to_default' => userCheckPermission('default_setting_add') && userCheckPermission('default_setting_edit'),
                 'category_edit' => userCheckPermission('domain_setting_category_edit'),
@@ -57,7 +63,7 @@ class DomainSettingsController extends Controller
                 'types' => SettingsManagementService::TYPE_OPTIONS,
                 'domains' => $this->domainOptions($domain->domain_uuid),
             ],
-        ]);
+        ];
     }
 
     public function data(Request $request, Domain $domain): JsonResponse

@@ -116,9 +116,10 @@
                                 <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
                                     <div class="grid min-w-0 max-w-full grid-cols-[auto,minmax(0,1fr)] items-center gap-1.5">
                                         <span class="shrink-0 text-xs text-subtle">Value</span>
-                                        <button type="button" class="min-w-0 max-w-full text-left" :title="valueTitle(row.value, row.is_secret)" aria-label="Copy value" @click.stop="copyValue(row.value)">
+                                        <button v-if="hasCopyableValue(row.value)" type="button" class="min-w-0 max-w-full text-left" :title="valueTitle(row.value, row.is_secret)" aria-label="Copy value" @click.stop="copyValue(row.value)">
                                             <code class="block max-w-full truncate rounded bg-surface-3 px-2 py-0.5 font-mono text-xs text-heading ring-1 ring-transparent transition hover:bg-surface-3 hover:ring-strong">{{ truncatedValue(row.value, row.is_secret) }}</code>
                                         </button>
+                                        <code v-else class="block max-w-full truncate rounded bg-gray-100 px-2 py-0.5 font-mono text-xs text-gray-400">{{ truncatedValue(row.value, row.is_secret) }}</code>
                                     </div>
                                     <button v-if="row.override_count > 0" type="button" class="inline-flex items-center gap-1 rounded-md bg-warning-subtle px-2 py-0.5 text-[11px] font-medium text-warning ring-1 ring-inset ring-warning/20 hover:bg-warning-subtle" @click="showAffectedDomains(row)">
                                         <UsersIcon class="h-3 w-3" />
@@ -176,9 +177,10 @@
                 <div v-for="domain in affectedDomains" :key="domain.domain_setting_uuid" class="flex items-center justify-between py-3 text-sm">
                     <div>
                         <div class="font-medium text-heading">{{ domain.domain_description || domain.domain_name }}</div>
-                        <button type="button" class="min-w-0 max-w-full text-left" :title="valueTitle(domain.value, affectedDomainsSecret)" aria-label="Copy value" @click.stop="copyValue(domain.value)">
+                        <button v-if="hasCopyableValue(row.value)" type="button" class="min-w-0 max-w-full text-left" :title="valueTitle(domain.value, affectedDomainsSecret)" aria-label="Copy value" @click.stop="copyValue(domain.value)">
                             <code class="block max-w-full truncate rounded bg-surface-2 px-1.5 py-0.5 font-mono text-xs text-muted ring-1 ring-transparent transition hover:bg-surface-3 hover:ring-strong">{{ displayValue(domain.value, affectedDomainsSecret) }}</code>
                         </button>
+                        <code v-else class="block max-w-full truncate rounded bg-gray-50 px-1.5 py-0.5 font-mono text-xs text-gray-400">{{ displayValue(domain.value, affectedDomainsSecret) }}</code>
                     </div>
                     <a :href="routes.domain_settings.replace('__DOMAIN__', domain.domain_uuid)" class="rounded-md px-2 py-1 text-accent-fg hover:bg-accent-subtle">Open</a>
                 </div>
@@ -454,6 +456,8 @@ const handleErrorResponse = (error) => {
 }
 
 const copyValue = async (value) => {
+    if (!hasCopyableValue(value)) return
+
     try {
         await writeClipboardText(value === null || value === undefined ? '' : String(value))
         showNotification('success', { success: ['Value copied.'] })
@@ -481,6 +485,10 @@ const writeClipboardText = async (text) => {
 
     if (!copied) throw new Error('Copy failed')
 }
+
+const hasCopyableValue = (value) => value !== null
+    && value !== undefined
+    && (typeof value !== 'string' || value.trim() !== '')
 
 const VALUE_TRUNCATE_AT = 160
 

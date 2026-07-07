@@ -28,6 +28,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeviceCloudProvisioningController;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\DeviceKeyTemplateController;
+use App\Http\Controllers\PhonebookManagerController;
 use App\Http\Controllers\DialplanController;
 use App\Http\Controllers\DefaultSettingsController;
 use App\Http\Controllers\DomainController;
@@ -312,6 +313,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('extensions/bulk-delete', [ExtensionsController::class, 'bulkDelete'])->name('extensions.bulk.delete');
     Route::post('extensions/select-all', [ExtensionsController::class, 'selectAll'])->name('extensions.select.all');
     Route::get('/extensions/registrations', [ExtensionsController::class, 'registrations'])->name('extensions.registrations');
+    Route::get('/extensions/ringotel-status', [ExtensionsController::class, 'ringotelStatus'])->name('extensions.ringotel.status');
     Route::get('/extensions/{extension}/devices', [ExtensionsController::class, 'devices'])->name('extensions.devices');
     Route::get('/extensions/{extension}/sip-credentials', [ExtensionsController::class, 'sipCredentials'])->name('extensions.sip.credentials');
     Route::get('/extensions/{extension}/regenerate-sip-credentials', [ExtensionsController::class, 'regenerateSipCredentials'])->name('extensions.sip.credentials.regenerate');
@@ -407,6 +409,16 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/device-key-templates/copy-to-domain', [DeviceKeyTemplateController::class, 'copyToDomain'])->name('device-key-templates.copy-to-domain');
     Route::post('/device-key-templates/bulk-delete', [DeviceKeyTemplateController::class, 'bulkDelete'])->name('device-key-templates.bulk.delete');
     Route::post('/devices/{device}/key-templates', [DeviceKeyTemplateController::class, 'storeFromDevice'])->name('devices.key-templates.store-from-device');
+
+    // Phonebooks
+    Route::get('/phonebooks/data', [PhonebookManagerController::class, 'getData'])->name('phonebooks.data');
+    Route::post('/phonebooks', [PhonebookManagerController::class, 'store'])->name('phonebooks.store');
+    Route::put('/phonebooks/{phonebook}', [PhonebookManagerController::class, 'update'])->name('phonebooks.update');
+    Route::post('/phonebooks/item-options', [PhonebookManagerController::class, 'getItemOptions'])->name('phonebooks.item.options');
+    Route::post('/phonebooks/select-all', [PhonebookManagerController::class, 'selectAll'])->name('phonebooks.select.all');
+    Route::post('/phonebooks/copy-to-domain', [PhonebookManagerController::class, 'copyToDomain'])->name('phonebooks.copy-to-domain');
+    Route::post('/phonebooks/bulk-delete', [PhonebookManagerController::class, 'bulkDelete'])->name('phonebooks.bulk.delete');
+    Route::get('/phonebooks/{phonebook}/preview', [PhonebookManagerController::class, 'preview'])->name('phonebooks.preview');
 
     // Registrations
     Route::get('/registrations/data', [RegistrationsController::class, 'getData'])->name('registrations.data');

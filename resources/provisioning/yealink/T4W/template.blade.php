@@ -2,7 +2,7 @@
 
 @switch($flavor)
 
-{{-- ================= Yealink T74U mac.cfg ================= --}}
+{{-- ================= Yealink T4W mac.cfg ================= --}}
 @case('mac.cfg')
 
 #!version:1.0.0.1
@@ -195,7 +195,7 @@ linekey.{{ $slot }}.extension =
 ##                       Expansion Keys                       ##
 ################################################################
 @php
-  $expansionKeysPerModule = 78;
+  $expansionKeysPerModule = 60;
   $expansionModuleCount = 3;
   $configuredExpansionSlots = [];
 @endphp
@@ -352,8 +352,8 @@ distinctive_ring_tones.alert_info.{{ $i }}.ringer = {{ $settings["yealink_ring_f
 ##for SIP-T54W/T46G/T46S/T29G: <=1.8 megapixels;SIP-T54S/T52S:<=4.2 megapixels;
 ##Single File Size: <=5MB
 ##2MB of space should bereserved for the phone
-wallpaper_upload.url = {{ $settings['yealink_t74u_wallpaper'] ?? '' }}
-phone_setting.backgrounds = Config:{{ $settings['yealink_t74u_wallpaper_filename'] ?? '' }}
+wallpaper_upload.url = {{ $settings['yealink_t46u_wallpaper'] ?? '' }}
+phone_setting.backgrounds = Config:{{ $settings['yealink_t46u_wallpaper_filename'] ?? '' }}
 
 
 ################################################################
@@ -395,15 +395,15 @@ static.security.default_ssl_method = {{ $settings['yealink_security_default_ssl_
 static.security.trust_certificates = {{ $settings['yealink_trust_certificates'] ?? '0' }}
 @if (isset($settings['user_name']))
     static.security.user_name.user = {{ $settings['user_name'] }}
-    static.security.user_password = {{ $settings['user_password'] }}
+    static.security.user_password = {{ $settings['user_name'] }}:{{ $settings['user_password'] }}
 @endif
 @if (isset($settings['admin_name']))
     static.security.user_name.admin = {{ $settings['admin_name'] }}
-    static.security.user_password = {{ $settings['admin_password'] }}
+    static.security.user_password = {{ $settings['admin_name'] }}:{{ $settings['admin_password'] }}
 @endif
 @if (isset($settings['var_name']))
     static.security.user_name.var = {{ $settings['var_name'] }}
-    static.security.user_password = {{ $settings['var_password'] }}
+    static.security.user_password = {{ $settings['var_name'] }}:{{ $settings['var_password'] }}
 @endif
 sip.trust_ctrl = {{ $settings['yealink_trust_ctrl'] ?? '1' }}
 sip.listen_port = {{ $settings['yealink_sip_listen_port'] ?? '5060' }}
@@ -544,6 +544,18 @@ programablekey.2.type = 73
 programablekey.2.line = 1
 programablekey.2.value = *8$PEnter Extension&TIntercom Extension&C4&N$ 
 programablekey.2.label = Intercom
+
+################################################################
+##                      Remote Phonebook                      ##
+################################################################
+@if (!empty($phonebooks))
+features.remote_phonebook.enable = 1
+features.remote_phonebook.flash_time = 3600
+@foreach ($phonebooks as $pb)
+remote_phonebook.data.{{ $pb['slot'] }}.name = {{ $pb['name'] }}
+remote_phonebook.data.{{ $pb['slot'] }}.url = {{ $pb['url'] }}
+@endforeach
+@endif
 
 
 @endswitch

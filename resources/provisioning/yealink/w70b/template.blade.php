@@ -1,4 +1,4 @@
-{{-- version: 1.0.3 --}}
+{{-- version: 1.0.4 --}}
 
 @switch($flavor)
 
@@ -480,6 +480,18 @@ programablekey.2.type = 73
 programablekey.2.line = 1
 programablekey.2.value = *8$PEnter Extension&TIntercom Extension&C4&N$ 
 programablekey.2.label = Intercom
+
+################################################################
+##                      Remote Phonebook                      ##
+################################################################
+@if (!empty($phonebooks))
+features.remote_phonebook.enable = 1
+features.remote_phonebook.flash_time = 3600
+@foreach ($phonebooks as $pb)
+remote_phonebook.data.{{ $pb['slot'] }}.name = {{ $pb['name'] }}
+remote_phonebook.data.{{ $pb['slot'] }}.url = {{ $pb['url'] }}
+@endforeach
+@endif
 
 
 @endswitch

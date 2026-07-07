@@ -95,6 +95,18 @@ class StoreDeviceRequest extends FormRequest
                 'nullable',
                 'array',
             ],
+            'phonebook_mode' => [
+                'nullable',
+                'string',
+                Rule::in(['default', 'custom']),
+            ],
+            'phonebook_uuids' => [
+                'nullable',
+                'array',
+            ],
+            'phonebook_uuids.*' => [
+                'uuid',
+            ],
             'device_keys.*.key_index' => [
                 'required',
                 'integer',
