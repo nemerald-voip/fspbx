@@ -36,6 +36,30 @@ class PhonebookService
         });
     }
 
+    public function duplicate(Phonebook $phonebook, ?string $domainUuid = null): Phonebook
+    {
+        return DB::transaction(function () use ($phonebook, $domainUuid) {
+            $phonebook->loadMissing('contacts');
+
+            $copy = Phonebook::create([
+                'domain_uuid'         => $domainUuid ?: session('domain_uuid'),
+                'name'                => $this->copyName($phonebook->name),
+                'description'         => $phonebook->description,
+                'enabled'             => $phonebook->enabled,
+                'is_default'          => $phonebook->is_default,
+                'include_extensions'  => $phonebook->include_extensions,
+            ]);
+
+            $this->syncContacts($copy, $phonebook->contacts->map(fn ($contact) => [
+                'first_name'   => $contact->first_name,
+                'last_name'    => $contact->last_name,
+                'phone_number' => $contact->phone_number,
+            ])->all());
+
+            return $copy->fresh('contacts');
+        });
+    }
+
     /**
      * Replace a phonebook's contacts with the provided set.
      */
@@ -74,5 +98,13 @@ class PhonebookService
         }
 
         return $deleted;
+    }
+
+    private function copyName(?string $name): string
+    {
+        $base = trim((string) $name);
+        $name = $base === '' ? 'Phonebook' : $base;
+
+        return substr($name, 0, 93) . ' (Copy)';
     }
 }

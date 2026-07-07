@@ -108,6 +108,10 @@
                                 <TrashIcon v-if="permissions.destroy" @click="handleSingleItemDeleteRequest(row.phonebook_uuid)"
                                     class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
                                     title="Delete" />
+                                <div v-if="canCopyToAccount" class="relative z-20 ml-2">
+                                    <AdvancedActionButton :actions="advancedActions"
+                                        @advanced-action="(action) => handleAdvancedActionRequest(action, row.phonebook_uuid)" />
+                                </div>
                             </div>
                         </template>
                     </TableField>
@@ -143,6 +147,21 @@
         :header="formHeader" @close="handleFormClose" @error="handleErrorResponse" @success="showNotification"
         @refresh-data="refreshCurrentPage" />
 
+    <AddEditItemModal :show="showCopyModal" header="Copy Phonebook To Account" @close="handleCopyModalClose">
+        <template #modal-body>
+            <Vueform :endpoint="submitCopyForm" @success="handleCopySuccess" @error="handleErrorResponse" :display-errors="false">
+                <template #empty>
+                    <FormElements>
+                        <SelectElement name="target_domain_uuid" label="Target account" :items="copyDomainOptions"
+                            :native="false" :search="true" input-type="search" autocomplete="off" placeholder="Select account"
+                            :strict="false" :floating="false" />
+                        <ButtonElement name="submit" button-label="Copy" :submits="true" align="right" />
+                    </FormElements>
+                </template>
+            </Vueform>
+        </template>
+    </AddEditItemModal>
+
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
 </template>
@@ -160,12 +179,15 @@ import Loading from "./components/general/Loading.vue";
 import Notification from "./components/notifications/Notification.vue";
 import Badge from "@generalComponents/Badge.vue";
 import PhonebookForm from "./components/forms/PhonebookForm.vue";
+import AdvancedActionButton from "./components/general/AdvancedActionButton.vue";
+import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
 import { ChevronDownIcon, ChevronUpIcon, MagnifyingGlassIcon, PencilSquareIcon, TrashIcon } from "@heroicons/vue/24/solid";
 
 const props = defineProps({
     routes: Object,
     permissions: Object,
     pagination: Object,
+    options: Object,
 });
 
 const routes = props.routes;
@@ -188,6 +210,8 @@ const formMode = ref("create");
 const loadingForm = ref(false);
 const itemOptions = ref({ item: {}, routes: {} });
 const perPage = ref(props.pagination?.per_page);
+const showCopyModal = ref(false);
+const copyPhonebookUuid = ref(null);
 
 const data = ref({
     data: [],
@@ -207,6 +231,18 @@ const sortData = ref({ name: "name", order: "asc" });
 const bulkActions = computed(() => permissions.destroy ? [
     { id: "bulk_delete", label: "Delete", icon: "TrashIcon" },
 ] : []);
+
+const copyDomainOptions = computed(() => props.options?.domains ?? []);
+const canCopyToAccount = computed(() => permissions.copy_to_domain && copyDomainOptions.value.length > 0);
+
+const advancedActions = computed(() => [
+    {
+        category: "Advanced",
+        actions: [
+            { id: "copy_to_domain", label: "Copy to account", icon: "DocumentDuplicateIcon" },
+        ],
+    },
+]);
 
 const formHeader = computed(() => formMode.value === "create"
     ? "Create Phonebook"
@@ -275,6 +311,30 @@ const handleEditButtonClick = (uuid) => {
     showForm.value = true;
     formMode.value = "update";
     getItemOptions(uuid);
+};
+
+const handleAdvancedActionRequest = async (action, uuid) => {
+    if (action !== "copy_to_domain") return;
+
+    copyPhonebookUuid.value = uuid;
+    showCopyModal.value = true;
+};
+
+const submitCopyForm = async (FormData, form) => {
+    return await form.$vueform.services.axios.post(routes.copy_to_domain, {
+        ...form.requestData,
+        uuid: copyPhonebookUuid.value,
+    });
+};
+
+const handleCopySuccess = (response) => {
+    handleCopyModalClose();
+    showNotification("success", response.data.messages);
+};
+
+const handleCopyModalClose = () => {
+    showCopyModal.value = false;
+    copyPhonebookUuid.value = null;
 };
 
 const getItemOptions = (itemUuid = null) => {

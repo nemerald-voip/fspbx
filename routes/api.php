@@ -416,6 +416,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::put('/phonebooks/{phonebook}', [PhonebookManagerController::class, 'update'])->name('phonebooks.update');
     Route::post('/phonebooks/item-options', [PhonebookManagerController::class, 'getItemOptions'])->name('phonebooks.item.options');
     Route::post('/phonebooks/select-all', [PhonebookManagerController::class, 'selectAll'])->name('phonebooks.select.all');
+    Route::post('/phonebooks/copy-to-domain', [PhonebookManagerController::class, 'copyToDomain'])->name('phonebooks.copy-to-domain');
     Route::post('/phonebooks/bulk-delete', [PhonebookManagerController::class, 'bulkDelete'])->name('phonebooks.bulk.delete');
     Route::get('/phonebooks/{phonebook}/preview', [PhonebookManagerController::class, 'preview'])->name('phonebooks.preview');
 

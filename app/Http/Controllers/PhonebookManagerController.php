@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Phonebook;
+use App\Models\Domain;
 use App\Services\PhonebookService;
 use App\Http\Requests\StorePhonebookRequest;
 use App\Http\Requests\UpdatePhonebookRequest;
@@ -34,11 +35,16 @@ class PhonebookManagerController extends Controller
                 'store' => route('phonebooks.store'),
                 'item_options' => route('phonebooks.item.options'),
                 'preview' => route('phonebooks.preview', ['phonebook' => '__PHONEBOOK_UUID__']),
+                'copy_to_domain' => route('phonebooks.copy-to-domain'),
             ],
             'permissions' => [
                 'create' => userCheckPermission('phonebook_create'),
                 'update' => userCheckPermission('phonebook_update'),
                 'destroy' => userCheckPermission('phonebook_delete'),
+                'copy_to_domain' => userCheckPermission('phonebook_create') && userCheckPermission('domain_select'),
+            ],
+            'options' => [
+                'domains' => $this->domainOptions(),
             ],
         ]);
     }
@@ -171,6 +177,51 @@ class PhonebookManagerController extends Controller
         ]);
     }
 
+    public function copyToDomain(Request $request, PhonebookService $service): JsonResponse
+    {
+        if (! userCheckPermission('phonebook_create') || ! userCheckPermission('domain_select')) {
+            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+        }
+
+        $data = $request->validate([
+            'uuid' => ['required', 'uuid', 'exists:phonebooks,phonebook_uuid'],
+            'target_domain_uuid' => ['required', 'uuid', 'exists:v_domains,domain_uuid'],
+        ]);
+
+        if ($data['target_domain_uuid'] === session('domain_uuid')) {
+            return response()->json(['messages' => ['error' => ['Choose a different target account.']]], 422);
+        }
+
+        if (! $this->canAccessDomain($data['target_domain_uuid'])) {
+            return response()->json(['messages' => ['error' => ['Account access denied.']]], 403);
+        }
+
+        try {
+            $phonebook = Phonebook::query()
+                ->where('domain_uuid', session('domain_uuid'))
+                ->with('contacts')
+                ->whereKey($data['uuid'])
+                ->first();
+
+            if (! $phonebook) {
+                return response()->json(['messages' => ['error' => ['Phonebook was not found.']]], 404);
+            }
+
+            $copy = $service->duplicate($phonebook, $data['target_domain_uuid']);
+            $targetDomain = Domain::query()->findOrFail($data['target_domain_uuid']);
+            $targetDomainLabel = $targetDomain->domain_description ?: $targetDomain->domain_name;
+
+            return response()->json([
+                'messages' => ['success' => ["Phonebook copied to {$targetDomainLabel}."]],
+                'phonebook_uuid' => $copy->phonebook_uuid,
+            ], 201);
+        } catch (\Throwable $e) {
+            logger('PhonebookManagerController@copyToDomain error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+
+            return response()->json(['messages' => ['error' => ['Failed to copy phonebook.']]], 500);
+        }
+    }
+
     /**
      * Preview the rendered directory entries for a phonebook (domain-scoped).
      */
@@ -208,5 +259,37 @@ class PhonebookManagerController extends Controller
                     });
                 }),
             ]);
+    }
+
+    private function domainOptions(): array
+    {
+        return collect(session('domains', []))
+            ->map(fn ($domain) => [
+                'value' => data_get($domain, 'domain_uuid'),
+                'label' => $this->domainOptionLabel($domain),
+            ])
+            ->filter(fn ($domain) => $domain['value']
+                && $domain['label']
+                && $domain['value'] !== session('domain_uuid'))
+            ->values()
+            ->all();
+    }
+
+    private function domainOptionLabel(mixed $domain): string
+    {
+        $name = (string) data_get($domain, 'domain_name', '');
+        $description = (string) data_get($domain, 'domain_description', '');
+
+        return $description ?: $name;
+    }
+
+    private function canAccessDomain(string $domainUuid): bool
+    {
+        if (userCheckPermission('domain_all')) {
+            return true;
+        }
+
+        return collect(session('domains', []))
+            ->contains(fn ($domain) => data_get($domain, 'domain_uuid') === $domainUuid);
     }
 }
