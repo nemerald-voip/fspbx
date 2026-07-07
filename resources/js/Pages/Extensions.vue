@@ -204,7 +204,7 @@
                                                 aria-label="Mobile App (Activated)" />
                                             <span v-if="ringotelStatusFor(row)"
                                                 :class="ringotelDotClass(ringotelStatusFor(row))"
-                                                class="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white shadow-sm">
+                                                class="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 shadow-sm">
                                             </span>
                                         </span>
                                         <div
@@ -576,16 +576,16 @@ const ringotelStatusFor = (row) => {
 
 const ringotelDotClass = (status) => {
     if (Number(status?.state) === 0) {
-        return 'bg-white ring-2 ring-gray-400'
+        return 'bg-white border-gray-400'
     }
 
     return {
-        green: 'bg-green-600',
-        blue: 'bg-blue-600',
-        yellow: 'bg-amber-400',
-        red: 'bg-rose-600',
-        gray: 'bg-gray-300',
-    }[status?.state_color] ?? 'bg-gray-300'
+        green: 'bg-green-500 border-white',
+        blue: 'bg-blue-700 border-white',
+        yellow: 'bg-amber-400 border-white',
+        red: 'bg-rose-600 border-white',
+        gray: 'bg-gray-300 border-white',
+    }[status?.state_color] ?? 'bg-gray-300 border-white'
 }
 
 const formatRingotelTimestamp = (timestamp) => {
