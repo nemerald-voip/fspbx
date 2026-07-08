@@ -41,13 +41,36 @@ class SwitchModuleService
         return $rows->count();
     }
 
-    public function activeModuleNames(): Collection
+    public function activeModuleNames(?Collection $candidateModuleNames = null): Collection
     {
         $response = $this->esl()->executeCommand('show modules as json');
 
-        return collect($response['rows'] ?? [])
-            ->pluck('ikey')
+        $rows = is_array($response) ? ($response['rows'] ?? []) : [];
+
+        $activeNames = collect($rows)
+            ->flatMap(fn ($row) => [
+                $row['ikey'] ?? null,
+                $this->moduleNameFromFilename($row['filename'] ?? null),
+            ])
             ->filter()
+            ->unique()
+            ->values();
+
+        $candidateModuleNames = $candidateModuleNames
+            ? $this->sanitizeModuleNames($candidateModuleNames)
+            : collect();
+
+        $missingNames = $candidateModuleNames
+            ->reject(fn ($name) => $activeNames->contains($name))
+            ->values();
+
+        if ($missingNames->isEmpty()) {
+            return $activeNames;
+        }
+
+        return $activeNames
+            ->merge($this->moduleExistsNames($missingNames))
+            ->unique()
             ->values();
     }
 
@@ -120,7 +143,7 @@ class SwitchModuleService
 
     public function toggle(Collection $modules): array
     {
-        $activeNames = $this->activeModuleNames();
+        $activeNames = $this->activeModuleNames($modules->pluck('module_name'));
 
         DB::transaction(function () use ($modules) {
             foreach ($modules as $module) {
@@ -148,7 +171,7 @@ class SwitchModuleService
 
     public function delete(Collection $modules): array
     {
-        $activeNames = $this->activeModuleNames();
+        $activeNames = $this->activeModuleNames($modules->pluck('module_name'));
         $responses = $this->unloadActiveModules($modules, $activeNames);
 
         DB::table('v_modules')
@@ -306,7 +329,7 @@ class SwitchModuleService
         for ($attempt = 0; $attempt < 8; $attempt++) {
             usleep(250000);
 
-            $activeNames = $this->activeModuleNames();
+            $activeNames = $this->activeModuleNames($moduleNames);
             $matches = $action === 'start'
                 ? $moduleNames->every(fn ($name) => $activeNames->contains($name))
                 : $moduleNames->every(fn ($name) => ! $activeNames->contains($name));
@@ -333,5 +356,47 @@ class SwitchModuleService
             'insert_date' => now(),
             'insert_user' => session('user_uuid'),
         ];
+    }
+
+    private function moduleExistsNames(Collection $moduleNames): Collection
+    {
+        $esl = $this->esl();
+
+        if (! $esl->isConnected()) {
+            return collect();
+        }
+
+        try {
+            return $moduleNames
+                ->filter(function ($name) use ($esl) {
+                    $response = $esl->executeCommand("module_exists {$name}", false);
+
+                    return strtolower(trim((string) $response)) === 'true';
+                })
+                ->values();
+        } finally {
+            $esl->disconnect();
+        }
+    }
+
+    private function moduleNameFromFilename(?string $filename): ?string
+    {
+        if (! $filename) {
+            return null;
+        }
+
+        $basename = basename($filename);
+
+        return preg_match('/^(mod_[A-Za-z0-9_]+)\.(?:so|dll)$/', $basename, $matches)
+            ? $matches[1]
+            : null;
+    }
+
+    private function sanitizeModuleNames(Collection $moduleNames): Collection
+    {
+        return $moduleNames
+            ->filter(fn ($name) => is_string($name) && preg_match('/^[A-Za-z0-9_]+$/', $name))
+            ->unique()
+            ->values();
     }
 }

@@ -49,9 +49,6 @@ class SwitchModuleController extends Controller
         $service->syncFromDisk();
         $service->writeXml();
 
-        $activeNames = $service->activeModuleNames();
-        $eventSocketAvailable = $activeNames->isNotEmpty() || $service->eventSocketIsAvailable();
-
         $modules = $this->moduleQuery($request)
             ->allowedSorts([
                 'module_category',
@@ -61,8 +58,15 @@ class SwitchModuleController extends Controller
             ])
             ->defaultSort('module_category', 'module_label')
             ->paginate($this->perPage)
-            ->appends($request->query())
-            ->through(fn (SwitchModule $module) => $this->serializeModule($module, $activeNames, $eventSocketAvailable));
+            ->appends($request->query());
+
+        $activeNames = $service->activeModuleNames($modules->getCollection()->pluck('module_name'));
+        $eventSocketAvailable = $activeNames->isNotEmpty() || $service->eventSocketIsAvailable();
+
+        $modules->setCollection(
+            $modules->getCollection()
+                ->map(fn (SwitchModule $module) => $this->serializeModule($module, $activeNames, $eventSocketAvailable))
+        );
 
         return response()
             ->json($modules)
