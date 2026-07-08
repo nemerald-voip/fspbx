@@ -371,7 +371,7 @@ class SwitchModuleService
                 ->filter(function ($name) use ($esl) {
                     $response = $esl->executeCommand("module_exists {$name}", false);
 
-                    return strtolower(trim((string) $response)) === 'true';
+                    return $response === true || strtolower(trim((string) $response)) === 'true';
                 })
                 ->values();
         } finally {

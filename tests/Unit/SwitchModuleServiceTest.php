@@ -40,7 +40,7 @@ class SwitchModuleServiceTest extends TestCase
         $esl->shouldReceive('executeCommand')
             ->once()
             ->with('module_exists mod_bcg729', false)
-            ->andReturn('true');
+            ->andReturnTrue();
         $esl->shouldReceive('disconnect')
             ->once();
 
