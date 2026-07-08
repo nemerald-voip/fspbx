@@ -8,7 +8,7 @@ require "resources.functions.config"
 local Database = require "resources.functions.database"
 
 local CF_PREFIX   = "flow"
-local DEBUG_MODE  = true
+local DEBUG_MODE  = false
 local SCRIPT_NAME = "[flow_blf.lua]"
 
 local api = freeswitch.API()
@@ -141,7 +141,6 @@ local function handle_probe(event)
     local expires = tonumber(event:getHeader("expires") or "0")
 
     if not expires or expires <= 0 then
-        debug_log("DEBUG", "Ignoring probe with expires <= 0")
         return
     end
 
