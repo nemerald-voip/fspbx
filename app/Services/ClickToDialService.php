@@ -114,13 +114,11 @@ class ClickToDialService
             throw new RuntimeException("No controllable registrations found for {$extensionNumber}@{$domain->domain_name}.");
         }
 
-        $selectedGroups = $this->selectGroups($groups, $options);
+        $selection = $this->selectGroups($groups, $options);
+        $selectedGroups = $selection['selected'];
+        $skippedGroups = $selection['skipped'];
         $apiGroups = $selectedGroups->filter(fn (array $group) => $this->actionForVendor((string) $group['vendor']) === self::ACTION_API);
         $freeswitchGroups = $selectedGroups->filter(fn (array $group) => $this->actionForVendor((string) $group['vendor']) === self::ACTION_FREESWITCH);
-
-        if ($apiGroups->isNotEmpty() && $freeswitchGroups->isNotEmpty()) {
-            throw new RuntimeException("Both API and FreeSWITCH endpoints matched. Choose a vendor, LAN IP, or call-id:\n" . $this->formatGroups($selectedGroups));
-        }
 
         if ($apiGroups->isNotEmpty()) {
             $selected = $this->singleGroupOrFail($apiGroups, $groups, 'API selection');
@@ -132,6 +130,7 @@ class ClickToDialService
                 'extension' => $extension,
                 'group' => $selected,
                 'groups' => [$selected],
+                'skipped_groups' => $skippedGroups->values()->all(),
                 'results' => [$result],
             ];
         }
@@ -225,6 +224,7 @@ class ClickToDialService
             'extension' => $extension,
             'group' => $freeswitchGroups->first(),
             'groups' => $freeswitchGroups->values()->all(),
+            'skipped_groups' => $skippedGroups->values()->all(),
             'results' => $results,
         ];
     }
@@ -322,7 +322,10 @@ class ClickToDialService
             });
     }
 
-    private function selectGroups(Collection $groups, array $options): Collection
+    /**
+     * @return array{selected: Collection, skipped: Collection}
+     */
+    private function selectGroups(Collection $groups, array $options): array
     {
         if (! empty($options['call_id'])) {
             $matches = $groups->filter(function (array $group) use ($options) {
@@ -330,14 +333,28 @@ class ClickToDialService
                     ->contains(fn (array $registration) => (string) ($registration['call_id'] ?? '') === (string) $options['call_id']);
             });
 
-            return collect([$this->singleGroupOrFail($matches, $groups, 'call-id')]);
+            return [
+                'selected' => collect([$this->singleGroupOrFail($matches, $groups, 'call-id')]),
+                'skipped' => collect(),
+            ];
         }
 
         $matches = $groups;
 
         if (! empty($options['vendor'])) {
             $vendor = strtolower((string) $options['vendor']);
+
+            if (! array_key_exists($vendor, $this->userAgents)) {
+                throw new RuntimeException("Unknown vendor [{$vendor}]. Valid vendors: " . implode(', ', array_keys($this->userAgents)) . '.');
+            }
+
             $matches = $matches->where('vendor', $vendor)->values();
+        }
+
+        if (! empty($options['agent'])) {
+            $matches = $matches
+                ->filter(fn (array $group) => $this->agentMatches((string) ($group['agent'] ?? ''), (string) $options['agent']))
+                ->values();
         }
 
         if (! empty($options['lan_ip'])) {
@@ -352,10 +369,38 @@ class ClickToDialService
         }
 
         if (! empty($options['lan_ip'])) {
-            return collect([$this->singleGroupOrFail($matches, $groups, 'selection')]);
+            return [
+                'selected' => collect([$this->singleGroupOrFail($matches, $groups, 'selection')]),
+                'skipped' => collect(),
+            ];
         }
 
-        return $matches->values();
+        // Never command more than one device per request: a dial sent to every
+        // matched group would make several phones call at once. Pick the group
+        // with the freshest registration (registrations are already sorted
+        // freshest-first within each group) and report the rest as skipped.
+        $matches = $matches
+            ->sortByDesc(fn (array $group) => (int) ($group['registrations'][0]['expsecs'] ?? 0))
+            ->values();
+
+        return [
+            'selected' => $matches->take(1),
+            'skipped' => $matches->slice(1)->values(),
+        ];
+    }
+
+    private function agentMatches(string $agent, string $pattern): bool
+    {
+        $regex = '/' . str_replace('/', '\/', $pattern) . '/i';
+
+        $result = @preg_match($regex, $agent);
+
+        if ($result !== false) {
+            return $result === 1;
+        }
+
+        // Not a valid regex — fall back to a case-insensitive substring match.
+        return str_contains(Str::lower($agent), Str::lower($pattern));
     }
 
     private function singleGroupOrFail(Collection $matches, Collection $allGroups, string $context): array

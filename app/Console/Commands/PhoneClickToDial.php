@@ -13,10 +13,10 @@ class PhoneClickToDial extends Command
         {extension : Extension to control}
         {domain : Domain name or UUID}
         {destination? : Destination number to call}
-        {vendor? : Optional user agent vendor to target, for example poly or yealink}
         {--list-uas : List controllable registered user agent groups for the extension}
         {--vendor= : User agent vendor to target, for example poly or yealink}
         {--lan-ip= : Narrow selection to a LAN IP when several devices match}
+        {--agent= : Narrow selection to user agents matching this regex, for example "SIP-T53W" (case-insensitive; plain text works too)}
         {--call-id= : Narrow selection to a specific FreeSWITCH registration call-id}
         {--event= : Force the NOTIFY transport and override its SIP Event header (vendor recipe otherwise)}
         {--content-type= : Force the NOTIFY transport and override its Content-Type (vendor recipe otherwise)}
@@ -72,8 +72,9 @@ class PhoneClickToDial extends Command
                 (string) $this->argument('domain'),
                 (string) $this->argument('destination'),
                 [
-                    'vendor' => $this->option('vendor') ?: $this->argument('vendor'),
+                    'vendor' => $this->option('vendor'),
                     'lan_ip' => $this->option('lan-ip'),
+                    'agent' => $this->option('agent'),
                     'call_id' => $this->option('call-id'),
                     'event' => $this->option('event'),
                     'content_type' => $this->option('content-type'),
@@ -90,6 +91,17 @@ class PhoneClickToDial extends Command
                     $group['sip_profile_name'] ?: 'unknown profile',
                     $group['agent'] ?: 'unknown agent',
                     $group['count']
+                ));
+            }
+
+            foreach ($result['skipped_groups'] ?? [] as $group) {
+                $this->warn(sprintf(
+                    'Skipped %s at %s (%s). Target it with --vendor=%s or --lan-ip=%s.',
+                    $group['vendor'],
+                    $group['lan_ip'] ?: 'unknown LAN IP',
+                    $group['agent'] ?: 'unknown agent',
+                    $group['vendor'],
+                    $group['lan_ip'] ?: '<ip>'
                 ));
             }
 
