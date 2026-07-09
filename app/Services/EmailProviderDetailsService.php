@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Http;
 
 class EmailProviderDetailsService
 {
+    private ?int $lastPostmarkSearchStatus = null;
+
     public function getDetails(EmailLog $log): array
     {
         $provider = strtolower((string) $log->provider);
@@ -44,6 +46,13 @@ class EmailProviderDetailsService
         if ($messageId === '') {
             $messageId = $this->findPostmarkMessageId($log, $token);
 
+            if ($this->lastPostmarkSearchStatus === 429) {
+                return [
+                    'available' => false,
+                    'message' => 'Postmark rate-limited the delivery details lookup. Try again in a few minutes.',
+                ];
+            }
+
             if ($messageId === '') {
                 return [
                     'available' => false,
@@ -77,6 +86,15 @@ class EmailProviderDetailsService
             ];
         }
 
+        if ($response->status() === 429) {
+            return [
+                'available' => false,
+                'message' => 'Postmark rate-limited the delivery details lookup. Try again in a few minutes.',
+                'status' => $response->status(),
+                'details' => $response->json(),
+            ];
+        }
+
         if (! $response->successful()) {
             return [
                 'available' => false,
@@ -103,6 +121,8 @@ class EmailProviderDetailsService
 
     private function findPostmarkMessageId(EmailLog $log, string $token): string
     {
+        $this->lastPostmarkSearchStatus = null;
+
         try {
             $createdAt = $log->created_at
                 ? Carbon::parse($log->created_at)
@@ -129,6 +149,8 @@ class EmailProviderDetailsService
 
             return '';
         }
+
+        $this->lastPostmarkSearchStatus = $response->status();
 
         if (! $response->successful()) {
             logger('EmailProviderDetailsService Postmark search failed', [
