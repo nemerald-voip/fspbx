@@ -23,7 +23,9 @@ class PhoneNumbersImport implements ToArray, WithHeadingRow, SkipsEmptyRows, Ski
         // We validate the raw CSV data here
         return [
             '*.country_code' => ['nullable', 'numeric'],
-            '*.phone_number' => ['required'], 
+            '*.phone_number' => ['required'],
+            '*.description' => ['nullable', 'string'],
+            '*.destination_description' => ['nullable', 'string'],
             // We removed the Unique check here because we will check it 
             // either on the frontend or during the final commit to avoid blocking the preview.
         ];
@@ -39,8 +41,11 @@ class PhoneNumbersImport implements ToArray, WithHeadingRow, SkipsEmptyRows, Ski
 
     public function prepareForValidation($data, $index)
     {
-        $data['country_code'] = preg_replace('/\D+/', '', $data['country_code']);
-        $data['phone_number'] = preg_replace('/\D+/', '', $data['phone_number']);
+        $data['country_code'] = preg_replace('/\D+/', '', (string) ($data['country_code'] ?? ''));
+        $data['phone_number'] = preg_replace('/\D+/', '', (string) ($data['phone_number'] ?? ''));
+        $data['description'] = trim((string) ($data['description'] ?? ''));
+        $data['destination_description'] = trim((string) ($data['destination_description'] ?? ''));
+
         return $data;
     }
 

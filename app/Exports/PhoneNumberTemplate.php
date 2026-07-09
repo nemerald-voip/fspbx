@@ -16,6 +16,7 @@ class PhoneNumberTemplate implements FromCollection, WithHeadings
         return [
             'country_code',
             'phone_number',
+            'description',
         ];
     }
 
@@ -27,8 +28,9 @@ class PhoneNumberTemplate implements FromCollection, WithHeadings
         // Provide a sample row matching your import requirements
         return new Collection([
             [
-                '1',                 // country_code (required, numeric)
-                '3105552020',                // phone_number (required)
+                '1',              // country_code (optional, numeric)
+                '3105552020',     // phone_number (required)
+                'Main Office',    // description (optional)
             ]
         ]);
     }

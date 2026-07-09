@@ -568,7 +568,7 @@ function downloadTemplateFile() {
             // Create a hidden link element, set it to the blob URL, and trigger a download
             const link = document.createElement('a')
             link.href = fileURL
-            link.setAttribute('download', 'template.csv') // The filename you want
+            link.setAttribute('download', 'phone_number_template.csv') // The filename you want
             document.body.appendChild(link)
             link.click()
             link.remove()

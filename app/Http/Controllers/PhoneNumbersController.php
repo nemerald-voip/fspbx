@@ -433,13 +433,16 @@ class PhoneNumbersController extends Controller
                 // Combine Country code and number for display
                 $prefix = preg_replace('/\D+/', '', $row['country_code'] ?? '');
                 $number = preg_replace('/\D+/', '', $row['phone_number'] ?? '');
+                $description = $this->normalizeImportDescription(
+                    $row['description'] ?? $row['destination_description'] ?? null
+                );
                 
                 $previewData[] = [
                     'id' => Str::uuid()->toString(), // Temp ID for frontend keys
                     'destination_prefix' => $prefix,
                     'destination_number' => $number,
                     'destination_number_formatted' => $prefix . $number, // Initial value
-                    'destination_description' => '', // Empty by default
+                    'destination_description' => $description,
                 ];
             }
 
@@ -521,7 +524,7 @@ public function importCommit(Request $request)
                     'dialplan_uuid' => Str::uuid(),
                     'destination_prefix' => $row['destination_prefix'] ?? null,
                     'destination_number' => $row['destination_number'],
-                    'destination_description' => $row['destination_description'] ?? null,
+                    'destination_description' => $this->sanitizeImportDescription($row['destination_description'] ?? null),
                     'destination_type' => 'inbound',
                     'destination_actions' => $destination_actions,
                     'destination_enabled' => 'true', 
@@ -548,6 +551,32 @@ public function importCommit(Request $request)
                 'errors' => ['server' => ['Error saving phone numbers: ' . $e->getMessage()]]
             ], 500);
         }
+    }
+
+    private function sanitizeImportDescription(?string $description): ?string
+    {
+        $description = $this->normalizeImportDescription($description);
+
+        if ($description === null) {
+            return null;
+        }
+
+        return htmlspecialchars($description, ENT_QUOTES, 'UTF-8');
+    }
+
+    private function normalizeImportDescription(?string $description): ?string
+    {
+        if ($description === null) {
+            return null;
+        }
+
+        $description = trim(strip_tags(htmlspecialchars_decode($description, ENT_QUOTES)));
+
+        if ($description === '') {
+            return null;
+        }
+
+        return preg_replace('/[^\x20-\x7E]/', '', $description);
     }
 
     /**
@@ -927,6 +956,6 @@ public function importCommit(Request $request)
     public function downloadTemplate()
     {
         // Download as CSV (third parameter sets the writer type)
-        return Excel::download(new PhoneNumberTemplate, 'template.csv', ExcelWriter::CSV);
+        return Excel::download(new PhoneNumberTemplate, 'phone_number_template.csv', ExcelWriter::CSV);
     }
 }
