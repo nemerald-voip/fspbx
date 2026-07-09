@@ -3,13 +3,13 @@
 namespace App\Console\Commands;
 
 use App\Services\FreeswitchEslService;
-use App\Services\UaCstaService;
+use App\Services\ClickToDialService;
 use Illuminate\Console\Command;
 use Throwable;
 
-class UaCstaMakeCall extends Command
+class PhoneClickToDial extends Command
 {
-    protected $signature = 'uacsta:make-call
+    protected $signature = 'phone:click-to-dial
         {extension : Extension to control}
         {domain : Domain name or UUID}
         {destination? : Destination number to call}
@@ -18,16 +18,20 @@ class UaCstaMakeCall extends Command
         {--vendor= : User agent vendor to target, for example poly or yealink}
         {--lan-ip= : Narrow selection to a LAN IP when several devices match}
         {--call-id= : Narrow selection to a specific FreeSWITCH registration call-id}
-        {--sdp : Add the optional sdp flag to sofia_csta_call}
-        {--dry-run : Resolve and print the selected registrations without sending the command}';
+        {--event= : Force the NOTIFY transport and override its SIP Event header (vendor recipe otherwise)}
+        {--content-type= : Force the NOTIFY transport and override its Content-Type (vendor recipe otherwise)}
+        {--body= : Force the NOTIFY transport and override its body (vendor recipe otherwise)}
+        {--dry-run : Resolve targets and print what would be sent without sending anything}';
 
-    protected $description = 'Send a uaCSTA MakeCall request to the selected registered user agent.';
+    protected $description = 'Make the selected registered phone dial a number (click to dial).';
 
-    public function handle(UaCstaService $uaCsta, FreeswitchEslService $eslService): int
+    protected $aliases = ['uacsta:make-call'];
+
+    public function handle(ClickToDialService $clickToDial, FreeswitchEslService $eslService): int
     {
         try {
             if ((bool) $this->option('list-uas')) {
-                $groups = $uaCsta->candidateGroups(
+                $groups = $clickToDial->candidateGroups(
                     $eslService,
                     (string) $this->argument('extension'),
                     (string) $this->argument('domain')
@@ -62,7 +66,7 @@ class UaCstaMakeCall extends Command
                 return self::FAILURE;
             }
 
-            $result = $uaCsta->makeCall(
+            $result = $clickToDial->makeCall(
                 $eslService,
                 (string) $this->argument('extension'),
                 (string) $this->argument('domain'),
@@ -71,7 +75,9 @@ class UaCstaMakeCall extends Command
                     'vendor' => $this->option('vendor') ?: $this->argument('vendor'),
                     'lan_ip' => $this->option('lan-ip'),
                     'call_id' => $this->option('call-id'),
-                    'sdp' => (bool) $this->option('sdp'),
+                    'event' => $this->option('event'),
+                    'content_type' => $this->option('content-type'),
+                    'body' => $this->option('body'),
                     'dry_run' => (bool) $this->option('dry-run'),
                 ]
             );
@@ -106,6 +112,9 @@ class UaCstaMakeCall extends Command
                 $this->line('Transport: ' . ($item['transport'] ?? 'esl'));
                 if (! empty($item['command'])) {
                     $this->line('Command: ' . $item['command']);
+                }
+                if (! empty($item['body'])) {
+                    $this->line('Body: ' . $item['body']);
                 }
                 if (($item['result'] ?? null) !== null && $item['result'] !== '+OK') {
                     $this->line('Response: ' . (is_scalar($item['result']) ? (string) $item['result'] : json_encode($item['result'])));
