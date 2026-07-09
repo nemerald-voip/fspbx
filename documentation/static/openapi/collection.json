@@ -10,7 +10,7 @@
     ],
     "info": {
         "name": "FS PBX",
-        "_postman_id": "a89a284c-f8a7-4188-9bdc-0bf891c36118",
+        "_postman_id": "26d229d1-6add-459f-93d4-383a367b73bb",
         "description": "",
         "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
     },
@@ -780,7 +780,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"device_address\":\"0004f23a5bc7\",\"serial_number\":\"8603123456789\",\"device_profile_uuid\":\"51759db8-c8bf-4b2f-b48a-6577d7ad6a1a\",\"device_template\":\"Yealink T46U\",\"device_template_uuid\":\"a6cf59ba-4b2b-4bdd-b870-35cc55bca146\",\"device_description\":\"Reception desk device\",\"device_lines\":[[]]}"
+                            "raw": "{\"device_address\":\"0004f23a5bc7\",\"serial_number\":\"8603123456789\",\"device_profile_uuid\":\"51759db8-c8bf-4b2f-b48a-6577d7ad6a1a\",\"device_template\":\"Yealink T46U\",\"device_template_uuid\":\"a6cf59ba-4b2b-4bdd-b870-35cc55bca146\",\"device_keys\":[\"harum\"],\"phonebook_mode\":\"custom\",\"phonebook_uuids\":[\"ba85a525-b3a7-321e-b51a-1ce497859fde\"],\"device_description\":\"Reception desk device\",\"device_lines\":[[]]}"
                         },
                         "description": "Creates a new device in the specified domain.\n\nNotes:\n- `device_template` is deprecated and retained for backward compatibility.\n- Use `device_template_uuid` as its successor."
                     },
@@ -1744,6 +1744,204 @@
                             "code": 404,
                             "body": "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"message\": \"Extension not found.\",\n    \"code\": \"resource_missing\",\n    \"param\": \"extension_uuid\"\n  }\n}",
                             "name": "Extension not found"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Phone Control",
+            "description": "",
+            "item": [
+                {
+                    "name": "List click-to-dial targets",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/click-to-dial\/targets",
+                            "query": [
+                                {
+                                    "key": "extension",
+                                    "value": "1001",
+                                    "description": "Extension number to inspect.",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/click-to-dial\/targets?extension=1001",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The domain UUID."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Returns the controllable registered user agent groups for one extension.\nA group represents one selectable phone control target. If an extension has\nmultiple registered devices, prefer the returned `agent` value when\ncreating a click-to-dial call. Use `vendor` only when any phone from that\nvendor is an acceptable target.\n\nAccess rules:\n- Caller must have access to the target domain.\n- Caller must have the `phone_control_view` permission."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\n  \"object\": \"list\",\n  \"url\": \"\/api\/v1\/domains\/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\/click-to-dial\/targets\",\n  \"has_more\": false,\n  \"data\": [\n    {\n      \"vendor\": \"yealink\",\n      \"agent\": \"Yealink SIP-T53W 96.86.0.45\"\n    }\n  ]\n}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid domain UUID.\",\"code\":\"invalid_request\",\"param\":\"domain_uuid\",\"doc_url\":\"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"}}",
+                            "name": "Invalid domain UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"The extension field is required.\",\"code\":\"invalid_parameter\",\"param\":\"extension\",\"doc_url\":\"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"}}",
+                            "name": "Validation error"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\",\"doc_url\":\"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"}}",
+                            "name": "Unauthenticated"
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"You do not have access to this domain.\",\"code\":\"forbidden_domain\",\"param\":\"domain_uuid\",\"doc_url\":\"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"}}",
+                            "name": "Forbidden (domain access)"
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\"success\":false,\"message\":\"Forbidden (missing permission).\",\"error\":{\"code\":\"forbidden_permission\",\"permission\":\"phone_control_view\"}}",
+                            "name": "Forbidden (missing permission)"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Domain not found.\",\"code\":\"resource_missing\",\"param\":\"domain_uuid\",\"doc_url\":\"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"}}",
+                            "name": "Domain not found"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Extension not found.\",\"code\":\"resource_missing\",\"param\":\"extension\",\"doc_url\":\"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"}}",
+                            "name": "Extension not found"
+                        },
+                        {
+                            "header": [],
+                            "code": 500,
+                            "body": "{\"error\":{\"type\":\"api_error\",\"message\":\"An unexpected error occurred.\",\"doc_url\":\"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"}}",
+                            "name": "Internal server error"
+                        }
+                    ]
+                },
+                {
+                    "name": "Create a click-to-dial call",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/click-to-dial",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/click-to-dial",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The domain UUID."
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"extension\":\"1001\",\"destination\":\"18005551212\",\"agent\":\"SIP-T53W\",\"vendor\":\"yealink\",\"event\":\"ACTION-URI\",\"content_type\":\"message\\\/sipfrag\",\"body\":\"number=18005551212&outgoing_uri=sip:1001@example.com\"}"
+                        },
+                        "description": "Makes the selected registered phone place a call to the requested\ndestination. If no selector is provided, FS PBX picks the freshest\ncontrollable registration group and returns any other matching groups in\n`skipped_targets`. When selecting a specific phone, use an `agent` value\nreturned by the targets endpoint. Use `vendor` only when any phone from\nthat vendor is an acceptable target.\n\nAccess rules:\n- Caller must have access to the target domain.\n- Caller must have the `phone_control_call` permission."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\n  \"object\": \"click_to_dial_call\",\n  \"domain_uuid\": \"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\n  \"extension_uuid\": \"d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b\",\n  \"extension\": \"1001\",\n  \"destination\": \"18005551212\",\n  \"sent\": true,\n  \"targets\": [\n    {\n      \"vendor\": \"yealink\",\n      \"agent\": \"Yealink SIP-T53W 96.86.0.45\"\n    }\n  ],\n  \"skipped_targets\": [],\n  \"results\": [\n    {\n      \"sent\": true,\n      \"reason\": null,\n      \"vendor\": \"yealink\",\n      \"agent\": \"Yealink SIP-T53W 96.86.0.45\"\n    }\n  ]\n}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"No controllable registrations matched the selection.\",\"code\":\"invalid_request\",\"param\":\"selection\",\"doc_url\":\"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"}}",
+                            "name": "Invalid selection"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"The destination field is required.\",\"code\":\"invalid_parameter\",\"param\":\"destination\",\"doc_url\":\"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"}}",
+                            "name": "Validation error"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\",\"doc_url\":\"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"}}",
+                            "name": "Unauthenticated"
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"You do not have access to this domain.\",\"code\":\"forbidden_domain\",\"param\":\"domain_uuid\",\"doc_url\":\"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"}}",
+                            "name": "Forbidden (domain access)"
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\"success\":false,\"message\":\"Forbidden (missing permission).\",\"error\":{\"code\":\"forbidden_permission\",\"permission\":\"phone_control_call\"}}",
+                            "name": "Forbidden (missing permission)"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Domain not found.\",\"code\":\"resource_missing\",\"param\":\"domain_uuid\",\"doc_url\":\"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"}}",
+                            "name": "Domain not found"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Extension not found.\",\"code\":\"resource_missing\",\"param\":\"extension\",\"doc_url\":\"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"}}",
+                            "name": "Extension not found"
+                        },
+                        {
+                            "header": [],
+                            "code": 409,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"No controllable registrations found for 1001@pbx.example.com.\",\"code\":\"no_controllable_registrations\",\"param\":\"extension\",\"doc_url\":\"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"}}",
+                            "name": "No controllable registrations"
+                        },
+                        {
+                            "header": [],
+                            "code": 500,
+                            "body": "{\"error\":{\"type\":\"api_error\",\"message\":\"An unexpected error occurred.\",\"doc_url\":\"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"}}",
+                            "name": "Internal server error"
                         }
                     ]
                 }

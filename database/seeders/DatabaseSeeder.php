@@ -210,6 +210,8 @@ class DatabaseSeeder extends Seeder
             ['application_name' => 'Basic Dialer', 'permission_name' => 'basic_dialer_update'],
             ['application_name' => 'Basic Dialer', 'permission_name' => 'basic_dialer_delete'],
             ['application_name' => 'Basic Dialer', 'permission_name' => 'basic_dialer_start'],
+            ['application_name' => 'PhoneControl', 'permission_name' => 'phone_control_view'],
+            ['application_name' => 'PhoneControl', 'permission_name' => 'phone_control_call'],
         ];
         $timestamp = date("Y-m-d H:i:s");
 
@@ -341,6 +343,8 @@ class DatabaseSeeder extends Seeder
                 'basic_dialer_update',
                 'basic_dialer_delete',
                 'basic_dialer_start',
+                'phone_control_view',
+                'phone_control_call',
             ],
             'admin' => [
                 'wakeup_calls_list_view',
@@ -395,6 +399,8 @@ class DatabaseSeeder extends Seeder
                 'basic_dialer_update',
                 'basic_dialer_delete',
                 'basic_dialer_start',
+                'phone_control_view',
+                'phone_control_call',
             ],
             'Message Admin' => [
                 'message_settings_list_view',

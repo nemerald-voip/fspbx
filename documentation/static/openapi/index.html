@@ -168,6 +168,19 @@
                             </li>
                                                                         </ul>
                             </ul>
+                    <ul id="tocify-header-phone-control" class="tocify-header">
+                <li class="tocify-item level-1" data-unique="phone-control">
+                    <a href="#phone-control">Phone Control</a>
+                </li>
+                                    <ul id="tocify-subheader-phone-control" class="tocify-subheader">
+                                                    <li class="tocify-item level-2" data-unique="phone-control-GETapi-v1-domains--domain_uuid--click-to-dial-targets">
+                                <a href="#phone-control-GETapi-v1-domains--domain_uuid--click-to-dial-targets">List click-to-dial targets</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="phone-control-POSTapi-v1-domains--domain_uuid--click-to-dial">
+                                <a href="#phone-control-POSTapi-v1-domains--domain_uuid--click-to-dial">Create a click-to-dial call</a>
+                            </li>
+                                                                        </ul>
+                            </ul>
                     <ul id="tocify-header-phone-numbers" class="tocify-header">
                 <li class="tocify-item level-1" data-unique="phone-numbers">
                     <a href="#phone-numbers">Phone Numbers</a>
@@ -265,7 +278,7 @@
     </ul>
 
     <ul class="toc-footer" id="last-updated">
-        <li>Last updated: May 19, 2026</li>
+        <li>Last updated: July 9, 2026</li>
     </ul>
 </div>
 
@@ -2452,6 +2465,13 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"device_profile_uuid\": \"51759db8-c8bf-4b2f-b48a-6577d7ad6a1a\",
     \"device_template\": \"Yealink T46U\",
     \"device_template_uuid\": \"a6cf59ba-4b2b-4bdd-b870-35cc55bca146\",
+    \"device_keys\": [
+        \"harum\"
+    ],
+    \"phonebook_mode\": \"custom\",
+    \"phonebook_uuids\": [
+        \"ba85a525-b3a7-321e-b51a-1ce497859fde\"
+    ],
     \"device_description\": \"Reception desk device\",
     \"device_lines\": [
         []
@@ -2477,6 +2497,13 @@ let body = {
     "device_profile_uuid": "51759db8-c8bf-4b2f-b48a-6577d7ad6a1a",
     "device_template": "Yealink T46U",
     "device_template_uuid": "a6cf59ba-4b2b-4bdd-b870-35cc55bca146",
+    "device_keys": [
+        "harum"
+    ],
+    "phonebook_mode": "custom",
+    "phonebook_uuids": [
+        "ba85a525-b3a7-321e-b51a-1ce497859fde"
+    ],
     "device_description": "Reception desk device",
     "device_lines": [
         []
@@ -2708,6 +2735,100 @@ You can check the Dev Tools console for debugging information.</code></pre>
                data-component="body">
     <br>
 <p>Optional provisioning template UUID. Must be a valid UUID. Example: <code>a6cf59ba-4b2b-4bdd-b870-35cc55bca146</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+        <details>
+            <summary style="padding-bottom: 10px;">
+                <b style="line-height: 2;"><code>device_keys</code></b>&nbsp;&nbsp;
+<small>integer[]</small>&nbsp;
+<i>optional</i> &nbsp;
+<br>
+
+            </summary>
+                                                <div style="margin-left: 14px; clear: unset;">
+                        <b style="line-height: 2;"><code>key_index</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+ &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="device_keys.0.key_index"                data-endpoint="POSTapi-v1-domains--domain_uuid--devices"
+               value="7"
+               data-component="body">
+    <br>
+<p>Example: <code>7</code></p>
+                    </div>
+                                                                <div style="margin-left: 14px; clear: unset;">
+                        <b style="line-height: 2;"><code>key_area</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="device_keys.0.key_area"                data-endpoint="POSTapi-v1-domains--domain_uuid--devices"
+               value="main"
+               data-component="body">
+    <br>
+<p>Example: <code>main</code></p>
+Must be one of:
+<ul style="list-style-type: square;"><li><code>main</code></li> <li><code>side</code></li> <li><code>multi_purpose</code></li> <li><code>expansion</code></li></ul>
+                    </div>
+                                                                <div style="margin-left: 14px; clear: unset;">
+                        <b style="line-height: 2;"><code>key_type</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="device_keys.0.key_type"                data-endpoint="POSTapi-v1-domains--domain_uuid--devices"
+               value="htvbaoxrolqegzhvkvlb"
+               data-component="body">
+    <br>
+<p>Must not be greater than 50 characters. Example: <code>htvbaoxrolqegzhvkvlb</code></p>
+                    </div>
+                                                                <div style="margin-left: 14px; clear: unset;">
+                        <b style="line-height: 2;"><code>key_value</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="device_keys.0.key_value"                data-endpoint="POSTapi-v1-domains--domain_uuid--devices"
+               value="v"
+               data-component="body">
+    <br>
+<p>Must not be greater than 64 characters. Example: <code>v</code></p>
+                    </div>
+                                                                <div style="margin-left: 14px; clear: unset;">
+                        <b style="line-height: 2;"><code>key_label</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="device_keys.0.key_label"                data-endpoint="POSTapi-v1-domains--domain_uuid--devices"
+               value="elvmclanenakatruopul"
+               data-component="body">
+    <br>
+<p>Must not be greater than 80 characters. Example: <code>elvmclanenakatruopul</code></p>
+                    </div>
+                                    </details>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>phonebook_mode</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="phonebook_mode"                data-endpoint="POSTapi-v1-domains--domain_uuid--devices"
+               value="custom"
+               data-component="body">
+    <br>
+<p>Example: <code>custom</code></p>
+Must be one of:
+<ul style="list-style-type: square;"><li><code>default</code></li> <li><code>custom</code></li></ul>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>phonebook_uuids</code></b>&nbsp;&nbsp;
+<small>string[]</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="phonebook_uuids[0]"                data-endpoint="POSTapi-v1-domains--domain_uuid--devices"
+               data-component="body">
+        <input type="text" style="display: none"
+               name="phonebook_uuids[1]"                data-endpoint="POSTapi-v1-domains--domain_uuid--devices"
+               data-component="body">
+    <br>
+<p>Must be a valid UUID.</p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>device_description</code></b>&nbsp;&nbsp;
@@ -7093,6 +7214,673 @@ You can check the Dev Tools console for debugging information.</code></pre>
             </div>
                     </form>
 
+                <h1 id="phone-control">Phone Control</h1>
+
+    
+
+                                <h2 id="phone-control-GETapi-v1-domains--domain_uuid--click-to-dial-targets">List click-to-dial targets</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Returns the controllable registered user agent groups for one extension.
+A group represents one selectable phone control target. If an extension has
+multiple registered devices, prefer the returned <code>agent</code> value when
+creating a click-to-dial call. Use <code>vendor</code> only when any phone from that
+vendor is an acceptable target.</p>
+<p>Access rules:</p>
+<ul>
+<li>Caller must have access to the target domain.</li>
+<li>Caller must have the <code>phone_control_view</code> permission.</li>
+</ul>
+
+<span id="example-requests-GETapi-v1-domains--domain_uuid--click-to-dial-targets">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/click-to-dial/targets?extension=1001" \
+    --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/click-to-dial/targets"
+);
+
+const params = {
+    "extension": "1001",
+};
+Object.keys(params)
+    .forEach(key =&gt; url.searchParams.append(key, params[key]));
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-v1-domains--domain_uuid--click-to-dial-targets">
+            <blockquote>
+            <p>Example response (200, Success):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;object&quot;: &quot;list&quot;,
+    &quot;url&quot;: &quot;/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/click-to-dial/targets&quot;,
+    &quot;has_more&quot;: false,
+    &quot;data&quot;: [
+        {
+            &quot;vendor&quot;: &quot;yealink&quot;,
+            &quot;agent&quot;: &quot;Yealink SIP-T53W 96.86.0.45&quot;
+        }
+    ]
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Invalid domain UUID):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Invalid domain UUID.&quot;,
+        &quot;code&quot;: &quot;invalid_request&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;,
+        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Validation error):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;The extension field is required.&quot;,
+        &quot;code&quot;: &quot;invalid_parameter&quot;,
+        &quot;param&quot;: &quot;extension&quot;,
+        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401, Unauthenticated):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;,
+        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403, Forbidden (domain access)):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;You do not have access to this domain.&quot;,
+        &quot;code&quot;: &quot;forbidden_domain&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;,
+        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403, Forbidden (missing permission)):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;success&quot;: false,
+    &quot;message&quot;: &quot;Forbidden (missing permission).&quot;,
+    &quot;error&quot;: {
+        &quot;code&quot;: &quot;forbidden_permission&quot;,
+        &quot;permission&quot;: &quot;phone_control_view&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Domain not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Domain not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;,
+        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Extension not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Extension not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;extension&quot;,
+        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (500, Internal server error):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;api_error&quot;,
+        &quot;message&quot;: &quot;An unexpected error occurred.&quot;,
+        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-v1-domains--domain_uuid--click-to-dial-targets" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-v1-domains--domain_uuid--click-to-dial-targets"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-v1-domains--domain_uuid--click-to-dial-targets"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-v1-domains--domain_uuid--click-to-dial-targets" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-v1-domains--domain_uuid--click-to-dial-targets">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-v1-domains--domain_uuid--click-to-dial-targets" data-method="GET"
+      data-path="api/v1/domains/{domain_uuid}/click-to-dial/targets"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-v1-domains--domain_uuid--click-to-dial-targets', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/v1/domains/{domain_uuid}/click-to-dial/targets</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-domains--domain_uuid--click-to-dial-targets"
+               value="Bearer {YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-v1-domains--domain_uuid--click-to-dial-targets"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-v1-domains--domain_uuid--click-to-dial-targets"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>domain_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_uuid"                data-endpoint="GETapi-v1-domains--domain_uuid--click-to-dial-targets"
+               value="4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
+               data-component="url">
+    <br>
+<p>The domain UUID. Example: <code>4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>Query Parameters</b></h4>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>extension</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="extension"                data-endpoint="GETapi-v1-domains--domain_uuid--click-to-dial-targets"
+               value="1001"
+               data-component="query">
+    <br>
+<p>Extension number to inspect. Example: <code>1001</code></p>
+            </div>
+                </form>
+
+                    <h2 id="phone-control-POSTapi-v1-domains--domain_uuid--click-to-dial">Create a click-to-dial call</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Makes the selected registered phone place a call to the requested
+destination. If no selector is provided, FS PBX picks the freshest
+controllable registration group and returns any other matching groups in
+<code>skipped_targets</code>. When selecting a specific phone, use an <code>agent</code> value
+returned by the targets endpoint. Use <code>vendor</code> only when any phone from
+that vendor is an acceptable target.</p>
+<p>Access rules:</p>
+<ul>
+<li>Caller must have access to the target domain.</li>
+<li>Caller must have the <code>phone_control_call</code> permission.</li>
+</ul>
+
+<span id="example-requests-POSTapi-v1-domains--domain_uuid--click-to-dial">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request POST \
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/click-to-dial" \
+    --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json" \
+    --data "{
+    \"extension\": \"1001\",
+    \"destination\": \"18005551212\",
+    \"agent\": \"SIP-T53W\",
+    \"vendor\": \"yealink\",
+    \"event\": \"ACTION-URI\",
+    \"content_type\": \"message\\/sipfrag\",
+    \"body\": \"number=18005551212&amp;outgoing_uri=sip:1001@example.com\"
+}"
+</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/click-to-dial"
+);
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+let body = {
+    "extension": "1001",
+    "destination": "18005551212",
+    "agent": "SIP-T53W",
+    "vendor": "yealink",
+    "event": "ACTION-URI",
+    "content_type": "message\/sipfrag",
+    "body": "number=18005551212&amp;outgoing_uri=sip:1001@example.com"
+};
+
+fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-POSTapi-v1-domains--domain_uuid--click-to-dial">
+            <blockquote>
+            <p>Example response (200, Success):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;object&quot;: &quot;click_to_dial_call&quot;,
+    &quot;domain_uuid&quot;: &quot;4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b&quot;,
+    &quot;extension_uuid&quot;: &quot;d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b&quot;,
+    &quot;extension&quot;: &quot;1001&quot;,
+    &quot;destination&quot;: &quot;18005551212&quot;,
+    &quot;sent&quot;: true,
+    &quot;targets&quot;: [
+        {
+            &quot;vendor&quot;: &quot;yealink&quot;,
+            &quot;agent&quot;: &quot;Yealink SIP-T53W 96.86.0.45&quot;
+        }
+    ],
+    &quot;skipped_targets&quot;: [],
+    &quot;results&quot;: [
+        {
+            &quot;sent&quot;: true,
+            &quot;reason&quot;: null,
+            &quot;vendor&quot;: &quot;yealink&quot;,
+            &quot;agent&quot;: &quot;Yealink SIP-T53W 96.86.0.45&quot;
+        }
+    ]
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Invalid selection):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;No controllable registrations matched the selection.&quot;,
+        &quot;code&quot;: &quot;invalid_request&quot;,
+        &quot;param&quot;: &quot;selection&quot;,
+        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Validation error):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;The destination field is required.&quot;,
+        &quot;code&quot;: &quot;invalid_parameter&quot;,
+        &quot;param&quot;: &quot;destination&quot;,
+        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401, Unauthenticated):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;,
+        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403, Forbidden (domain access)):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;You do not have access to this domain.&quot;,
+        &quot;code&quot;: &quot;forbidden_domain&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;,
+        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403, Forbidden (missing permission)):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;success&quot;: false,
+    &quot;message&quot;: &quot;Forbidden (missing permission).&quot;,
+    &quot;error&quot;: {
+        &quot;code&quot;: &quot;forbidden_permission&quot;,
+        &quot;permission&quot;: &quot;phone_control_call&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Domain not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Domain not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;,
+        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Extension not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Extension not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;extension&quot;,
+        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (409, No controllable registrations):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;No controllable registrations found for 1001@pbx.example.com.&quot;,
+        &quot;code&quot;: &quot;no_controllable_registrations&quot;,
+        &quot;param&quot;: &quot;extension&quot;,
+        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (500, Internal server error):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;api_error&quot;,
+        &quot;message&quot;: &quot;An unexpected error occurred.&quot;,
+        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-POSTapi-v1-domains--domain_uuid--click-to-dial" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-POSTapi-v1-domains--domain_uuid--click-to-dial"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-POSTapi-v1-domains--domain_uuid--click-to-dial"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-POSTapi-v1-domains--domain_uuid--click-to-dial" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-POSTapi-v1-domains--domain_uuid--click-to-dial">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-POSTapi-v1-domains--domain_uuid--click-to-dial" data-method="POST"
+      data-path="api/v1/domains/{domain_uuid}/click-to-dial"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('POSTapi-v1-domains--domain_uuid--click-to-dial', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+            </h3>
+            <p>
+            <small class="badge badge-black">POST</small>
+            <b><code>api/v1/domains/{domain_uuid}/click-to-dial</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="POSTapi-v1-domains--domain_uuid--click-to-dial"
+               value="Bearer {YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="POSTapi-v1-domains--domain_uuid--click-to-dial"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="POSTapi-v1-domains--domain_uuid--click-to-dial"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>domain_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_uuid"                data-endpoint="POSTapi-v1-domains--domain_uuid--click-to-dial"
+               value="4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
+               data-component="url">
+    <br>
+<p>The domain UUID. Example: <code>4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b</code></p>
+            </div>
+                            <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
+        <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>extension</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="extension"                data-endpoint="POSTapi-v1-domains--domain_uuid--click-to-dial"
+               value="1001"
+               data-component="body">
+    <br>
+<p>Extension number to control. Example: <code>1001</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>destination</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="destination"                data-endpoint="POSTapi-v1-domains--domain_uuid--click-to-dial"
+               value="18005551212"
+               data-component="body">
+    <br>
+<p>Destination number or dial string to call. Example: <code>18005551212</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>agent</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="agent"                data-endpoint="POSTapi-v1-domains--domain_uuid--click-to-dial"
+               value="SIP-T53W"
+               data-component="body">
+    <br>
+<p>Optional. Preferred selector for a specific phone. Use an <code>agent</code> value from the targets response; plain text matching is case-insensitive. Example: <code>SIP-T53W</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>vendor</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="vendor"                data-endpoint="POSTapi-v1-domains--domain_uuid--click-to-dial"
+               value="yealink"
+               data-component="body">
+    <br>
+<p>Optional. Broader selector for any matching phone from this vendor. Valid values: poly, polycom, yealink, grandstream, snom, ringotel, or generic. Example: <code>yealink</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>event</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="event"                data-endpoint="POSTapi-v1-domains--domain_uuid--click-to-dial"
+               value="ACTION-URI"
+               data-component="body">
+    <br>
+<p>Optional. Force NOTIFY transport and override the SIP Event header. Example: <code>ACTION-URI</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>content_type</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="content_type"                data-endpoint="POSTapi-v1-domains--domain_uuid--click-to-dial"
+               value="message/sipfrag"
+               data-component="body">
+    <br>
+<p>Optional. Force NOTIFY transport and override Content-Type. Example: <code>message/sipfrag</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>body</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="body"                data-endpoint="POSTapi-v1-domains--domain_uuid--click-to-dial"
+               value="number=18005551212&outgoing_uri=sip:1001@example.com"
+               data-component="body">
+    <br>
+<p>Optional. Force NOTIFY transport and override the message body. Example: <code>number=18005551212&amp;outgoing_uri=sip:1001@example.com</code></p>
+        </div>
+        </form>
+
                 <h1 id="phone-numbers">Phone Numbers</h1>
 
     
@@ -10852,10 +11640,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="members.0.destination_number"                data-endpoint="POSTapi-v1-domains--domain_uuid--ring-groups"
-               value="0"
+               value="+4"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present.  Must match the regex /^+?\d+$/. Example: <code>0</code></p>
+<p>This field is required when <code>members</code> is present.  Must match the regex /^+?\d+$/. Example: <code>+4</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_delay</code></b>&nbsp;&nbsp;
@@ -10863,10 +11651,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="members.0.destination_delay"                data-endpoint="POSTapi-v1-domains--domain_uuid--ring-groups"
-               value="61"
+               value="2"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>61</code></p>
+<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>2</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_timeout</code></b>&nbsp;&nbsp;
@@ -10874,10 +11662,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="members.0.destination_timeout"                data-endpoint="POSTapi-v1-domains--domain_uuid--ring-groups"
-               value="35"
+               value="20"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>35</code></p>
+<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>20</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_prompt</code></b>&nbsp;&nbsp;
@@ -10919,7 +11707,7 @@ Must be one of:
             <code>false</code>
         </label>
     <br>
-<p>This field is required when <code>members</code> is present. Example: <code>false</code></p>
+<p>This field is required when <code>members</code> is present. Example: <code>true</code></p>
                     </div>
                                     </details>
         </div>
@@ -11513,10 +12301,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="members.0.destination_number"                data-endpoint="PATCHapi-v1-domains--domain_uuid--ring-groups--ring_group_uuid-"
-               value="+29877"
+               value="905"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present.  Must match the regex /^+?\d+$/. Example: <code>+29877</code></p>
+<p>This field is required when <code>members</code> is present.  Must match the regex /^+?\d+$/. Example: <code>905</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_delay</code></b>&nbsp;&nbsp;
@@ -11524,10 +12312,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="members.0.destination_delay"                data-endpoint="PATCHapi-v1-domains--domain_uuid--ring-groups--ring_group_uuid-"
-               value="11"
+               value="58"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>11</code></p>
+<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>58</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_timeout</code></b>&nbsp;&nbsp;
@@ -11535,10 +12323,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="members.0.destination_timeout"                data-endpoint="PATCHapi-v1-domains--domain_uuid--ring-groups--ring_group_uuid-"
-               value="74"
+               value="85"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>74</code></p>
+<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>85</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_prompt</code></b>&nbsp;&nbsp;
@@ -11559,7 +12347,7 @@ Must be one of:
             <code>false</code>
         </label>
     <br>
-<p>This field is required when <code>members</code> is present. Example: <code>true</code></p>
+<p>This field is required when <code>members</code> is present. Example: <code>false</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_enabled</code></b>&nbsp;&nbsp;
@@ -11580,7 +12368,7 @@ Must be one of:
             <code>false</code>
         </label>
     <br>
-<p>This field is required when <code>members</code> is present. Example: <code>true</code></p>
+<p>This field is required when <code>members</code> is present. Example: <code>false</code></p>
                     </div>
                                     </details>
         </div>

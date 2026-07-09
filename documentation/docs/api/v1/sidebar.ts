@@ -176,6 +176,24 @@ const sidebar: SidebarsConfig = {
     },
     {
       type: "category",
+      label: "Phone Control",
+      items: [
+        {
+          type: "doc",
+          id: "api/v1/list-click-to-dial-targets",
+          label: "List click-to-dial targets",
+          className: "api-method get",
+        },
+        {
+          type: "doc",
+          id: "api/v1/create-a-click-to-dial-call",
+          label: "Create a click-to-dial call",
+          className: "api-method post",
+        },
+      ],
+    },
+    {
+      type: "category",
       label: "Phone Numbers",
       items: [
         {
