@@ -43,19 +43,41 @@ class AuthoritativeDnsActiveNodeGuard
             return $this->result(false, 'active_unknown', 'Unable to discover authoritative nameservers.', $fqdn, [], [], $nodeIps);
         }
 
+        if (! $this->digIsAvailable()) {
+            return $this->result(
+                false,
+                'active_unknown',
+                'The dig DNS lookup command is not available.',
+                $fqdn,
+                $nameservers,
+                [],
+                $nodeIps
+            );
+        }
+
         $answersByNameserver = [];
+        $lookupFailures = [];
         foreach ($nameservers as $nameserver) {
-            $answers = $this->authoritativeAnswers($fqdn, $nameserver);
+            $answers = $this->authoritativeAnswers($fqdn, $nameserver, $lookupFailures);
 
             if ($answers === null) {
-                return $this->result(false, 'active_unknown', 'An authoritative nameserver did not answer.', $fqdn, $nameservers, $answersByNameserver, $nodeIps);
+                continue;
             }
 
             $answersByNameserver[$nameserver] = $answers;
         }
 
         if (empty($answersByNameserver)) {
-            return $this->result(false, 'active_unknown', 'No authoritative DNS answers were available.', $fqdn, $nameservers, [], $nodeIps);
+            return $this->result(
+                false,
+                'active_unknown',
+                'No authoritative nameservers answered.',
+                $fqdn,
+                $nameservers,
+                [],
+                $nodeIps,
+                ['lookup_failures' => $lookupFailures]
+            );
         }
 
         $first = null;
@@ -69,24 +91,69 @@ class AuthoritativeDnsActiveNodeGuard
             }
 
             if ($first !== $normalized) {
-                return $this->result(false, 'active_unknown', 'Authoritative nameservers disagreed.', $fqdn, $nameservers, $answersByNameserver, $nodeIps);
+                return $this->result(
+                    false,
+                    'active_unknown',
+                    'Authoritative nameservers disagreed.',
+                    $fqdn,
+                    $nameservers,
+                    $answersByNameserver,
+                    $nodeIps,
+                    ['lookup_failures' => $lookupFailures]
+                );
             }
         }
 
         if (empty($first)) {
-            return $this->result(false, 'active_unknown', 'Authoritative DNS returned no address records.', $fqdn, $nameservers, $answersByNameserver, $nodeIps);
+            return $this->result(
+                false,
+                'active_unknown',
+                'Authoritative DNS returned no address records.',
+                $fqdn,
+                $nameservers,
+                $answersByNameserver,
+                $nodeIps,
+                ['lookup_failures' => $lookupFailures]
+            );
         }
 
         $matchesNode = ! empty(array_intersect($first ?? [], $nodeIps));
         if (! $matchesNode) {
-            return $this->result(false, 'standby', 'Authoritative DNS points to another node.', $fqdn, $nameservers, $answersByNameserver, $nodeIps);
+            return $this->result(
+                false,
+                'standby',
+                'Authoritative DNS points to another node.',
+                $fqdn,
+                $nameservers,
+                $answersByNameserver,
+                $nodeIps,
+                ['lookup_failures' => $lookupFailures]
+            );
         }
 
         if ($esl !== null && ! $this->freeswitchIsHealthy($esl)) {
-            return $this->result(false, 'active_unknown', 'FreeSWITCH ESL health is uncertain.', $fqdn, $nameservers, $answersByNameserver, $nodeIps);
+            return $this->result(
+                false,
+                'active_unknown',
+                'FreeSWITCH ESL health is uncertain.',
+                $fqdn,
+                $nameservers,
+                $answersByNameserver,
+                $nodeIps,
+                ['lookup_failures' => $lookupFailures]
+            );
         }
 
-        return $this->result(true, 'active', 'Authoritative DNS points to this node.', $fqdn, $nameservers, $answersByNameserver, $nodeIps);
+        return $this->result(
+            true,
+            'active',
+            'Authoritative DNS points to this node.',
+            $fqdn,
+            $nameservers,
+            $answersByNameserver,
+            $nodeIps,
+            ['lookup_failures' => $lookupFailures]
+        );
     }
 
     private function activeFqdn(): ?string
@@ -135,26 +202,32 @@ class AuthoritativeDnsActiveNodeGuard
         return array_values(array_unique($nameservers));
     }
 
-    private function authoritativeAnswers(string $fqdn, string $nameserver): ?array
+    private function authoritativeAnswers(string $fqdn, string $nameserver, array &$lookupFailures): ?array
     {
-        if (! $this->digIsAvailable()) {
-            return null;
-        }
-
         $answers = [];
         foreach (['A', 'AAAA'] as $type) {
-            $result = Process::timeout($this->dnsTimeoutSeconds())
-                ->run([
+            $timeout = $this->dnsTimeoutSeconds();
+
+            try {
+                $result = Process::timeout($timeout + 1)->run([
                     'dig',
                     '+short',
                     '+tries=1',
-                    '+time=' . $this->dnsTimeoutSeconds(),
+                    '+time=' . $timeout,
                     $fqdn,
                     $type,
                     '@' . $nameserver,
                 ]);
+            } catch (Throwable $e) {
+                $lookupFailures[$nameserver][$type] = $e->getMessage();
+
+                return null;
+            }
 
             if (! $result->successful()) {
+                $lookupFailures[$nameserver][$type] = trim($result->errorOutput() ?: $result->output())
+                    ?: 'dig exited with status ' . $result->exitCode();
+
                 return null;
             }
 
@@ -283,9 +356,10 @@ class AuthoritativeDnsActiveNodeGuard
         ?string $fqdn,
         array $nameservers,
         array $answers,
-        array $nodeIps
+        array $nodeIps,
+        array $extra = []
     ): array {
-        return [
+        return array_merge([
             'active' => $active,
             'status' => $status,
             'reason' => $reason,
@@ -293,6 +367,6 @@ class AuthoritativeDnsActiveNodeGuard
             'nameservers' => $nameservers,
             'answers' => $answers,
             'node_ips' => $nodeIps,
-        ];
+        ], $extra);
     }
 }
