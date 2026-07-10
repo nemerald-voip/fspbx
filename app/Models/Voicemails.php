@@ -159,12 +159,28 @@ class Voicemails extends Model
 
     public function syncCopies(array $copyUuids)
     {
+        $copyUuids = array_values(array_unique(array_filter($copyUuids)));
+        $domainUuid = $this->domain_uuid ?: session('domain_uuid');
+
+        $allowedCopyUuids = self::query()
+            ->where('domain_uuid', $domainUuid)
+            ->whereIn('voicemail_uuid', $copyUuids)
+            ->pluck('voicemail_uuid')
+            ->all();
+
+        $allowedLookup = array_flip($allowedCopyUuids);
+        $copyUuids = array_values(array_filter(
+            $copyUuids,
+            fn ($copyUuid) => isset($allowedLookup[$copyUuid])
+        ));
+
         // Remove all current destinations
         VoicemailDestinations::where('voicemail_uuid', $this->voicemail_uuid)->delete();
 
         // Add the new destinations
         foreach ($copyUuids as $copyUuid) {
             $destination = new VoicemailDestinations();
+            $destination->domain_uuid = $domainUuid;
             $destination->voicemail_uuid = $this->voicemail_uuid;
             $destination->voicemail_uuid_copy = $copyUuid;
             $destination->save();

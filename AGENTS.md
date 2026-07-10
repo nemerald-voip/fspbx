@@ -23,6 +23,12 @@ This repo is a Laravel, Vue/Inertia, VueForm, and FreeSWITCH application. Before
 - Use VueForm for create/update modals.
 - Keep forms clear and operational. Avoid marketing-style UI.
 
+## Extensions And Voicemail
+
+- Extension numbers and voicemail IDs are only unique inside a domain. Any lookup, relationship use, eager load, listener, observer, job, or response reload that connects `v_extensions.extension` to `v_voicemails.voicemail_id` must also constrain `domain_uuid`.
+- `Extensions::voicemail()` is intentionally broad because Eloquent does not enforce the domain match there. Do not update, delete, sync copies, or read user-facing voicemail data from `$extension->voicemail` unless the relation was loaded with a domain filter or the voicemail was queried explicitly by `domain_uuid + voicemail_id`.
+- Extension suspension and unsuspension must only toggle voicemail for the same tenant. DND updates should target the concrete extension row by `extension_uuid` and `domain_uuid`, not by extension number alone.
+
 ## Settings Pages
 
 - Default Settings and Domain Settings are native Laravel/Vue pages. Keep page routes in `routes/web.php` and data/action routes in `routes/api.php`.

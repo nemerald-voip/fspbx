@@ -10,7 +10,6 @@ use App\Models\Domain;
 use App\Models\Extensions;
 use App\Models\VmNotifyProfile;
 use App\Models\VmNotifyProfileRecipient;
-use App\Models\VoicemailDestinations;
 use App\Models\VoicemailGreetings;
 use App\Models\Voicemails;
 use App\Services\OpenAIService;
@@ -110,8 +109,10 @@ class VoicemailController extends Controller
                             // Search related extenion
                             ->orWhereHas('extension', function ($q2) use ($value, $currentDomain) {
                                 $q2->where('domain_uuid', $currentDomain)
-                                    ->where('extension', 'ilike', "%{$value}%")
-                                    ->orWhere('effective_caller_id_name', 'ilike', "%{$value}%");
+                                    ->where(function ($q3) use ($value) {
+                                        $q3->where('extension', 'ilike', "%{$value}%")
+                                            ->orWhere('effective_caller_id_name', 'ilike', "%{$value}%");
+                                    });
                             });
                         // Add more fields if needed
                     });
@@ -142,6 +143,7 @@ class VoicemailController extends Controller
     public function store(StoreVoicemailRequest $request)
     {
         $inputs = $request->validated();
+        $inputs['domain_uuid'] = session('domain_uuid');
         $inputs = $this->syncVoicemailAttachFile($inputs);
 
         // If blank, generate
@@ -170,18 +172,8 @@ class VoicemailController extends Controller
             // Save the model instance to the database
             $this->model->save();
 
-            // Check if voicemail_copies is present and is an array
             if (isset($inputs['voicemail_copies']) && is_array($inputs['voicemail_copies'])) {
-                // Prepare data for VoicemailDestinations
-                foreach ($inputs['voicemail_copies'] as $copyUuid) {
-                    // Create a new VoicemailDestinations instance and set the fields
-                    $voicemailDestination = new VoicemailDestinations();
-                    $voicemailDestination->voicemail_uuid = $this->model->voicemail_uuid; // Set the parent voicemail UUID
-                    $voicemailDestination->voicemail_uuid_copy = $copyUuid; // Set the copy UUID
-
-                    // Save the VoicemailDestinations instance
-                    $voicemailDestination->save();
-                }
+                $this->model->syncCopies($inputs['voicemail_copies']);
             }
 
             // Return a JSON response indicating success
@@ -208,7 +200,10 @@ class VoicemailController extends Controller
 
         try {
             DB::transaction(function () use ($inputs, $uuid) {
-                $voicemail = $this->model->findOrFail($uuid);
+                $voicemail = $this->model::where('domain_uuid', session('domain_uuid'))
+                    ->whereKey($uuid)
+                    ->firstOrFail();
+                $inputs['domain_uuid'] = $voicemail->domain_uuid;
 
                 // Update voicemail
                 $voicemail->insert_date = date('Y-m-d H:i:s');
@@ -216,14 +211,8 @@ class VoicemailController extends Controller
                 $voicemail->fill($inputs);
                 $voicemail->save();
 
-                // Update voicemail copies
-                VoicemailDestinations::where('voicemail_uuid', $voicemail->voicemail_uuid)->delete();
-
-                foreach (($inputs['voicemail_copies'] ?? []) as $copyUuid) {
-                    VoicemailDestinations::create([
-                        'voicemail_uuid' => $voicemail->voicemail_uuid,
-                        'voicemail_uuid_copy' => $copyUuid,
-                    ]);
+                if (array_key_exists('voicemail_copies', $inputs)) {
+                    $voicemail->syncCopies($inputs['voicemail_copies'] ?? []);
                 }
 
                 // Update voicemail escalation profile
@@ -322,6 +311,7 @@ class VoicemailController extends Controller
      */
     public function uploadVoicemailGreeting(Request $request, Voicemails $voicemail)
     {
+        $this->authorizeVoicemailManagement($voicemail);
 
         $domain = Domain::where('domain_uuid', $voicemail->domain_uuid)->first();
 
@@ -387,6 +377,7 @@ class VoicemailController extends Controller
      */
     public function downloadVoicemailGreeting(Voicemails $voicemail, string $filename)
     {
+        $this->authorizeVoicemailManagement($voicemail);
 
         $path = session('domain_name') . '/' . $voicemail->voicemail_id . '/' . $filename;
 
@@ -410,6 +401,7 @@ class VoicemailController extends Controller
      */
     public function deleteVoicemailGreeting(Voicemails $voicemail, string $filename)
     {
+        $this->authorizeVoicemailManagement($voicemail);
 
         $path = session('domain_name') . '/' . $voicemail->voicemail_id . '/' . $filename;
 
@@ -453,8 +445,9 @@ class VoicemailController extends Controller
             DB::beginTransaction();
 
             // Retrieve all items at once
-            $items = $this->model::whereIn('voicemail_uuid', request('items'))
-                ->get(['voicemail_uuid']);
+            $items = $this->model::where('domain_uuid', session('domain_uuid'))
+                ->whereIn('voicemail_uuid', request('items'))
+                ->get(['voicemail_uuid', 'voicemail_id', 'domain_uuid']);
 
             foreach ($items as $item) {
                 // Delete related voicemail destinations
@@ -502,7 +495,7 @@ class VoicemailController extends Controller
     {
         try {
 
-            $domain_uuid = request('domain_uuid') ?? session('domain_uuid');
+            $domain_uuid = session('domain_uuid');
             $item_uuid = request('item_uuid'); // Retrieve item_uuid from the request
 
             $voicemails =  $this->model::where($this->model->getTable() . '.domain_uuid', $domain_uuid)
@@ -523,7 +516,11 @@ class VoicemailController extends Controller
             $voicemailOptions = $voicemails->map(function ($voicemail) {
                 return [
                     'value' => $voicemail->voicemail_uuid,
-                    'label' => $voicemail->extension ? $voicemail->extension->name_formatted : $voicemail->voicemail_id . ' - Team Voicemail',
+                    'label' => $voicemail->extension
+                        ? $voicemail->extension->name_formatted
+                        : $voicemail->voicemail_id
+                        . ' - Team voicemail'
+                        . ($voicemail->voicemail_description ? " ({$voicemail->voicemail_description})" : ''),
                 ];
             })->toArray();
 
@@ -726,12 +723,15 @@ class VoicemailController extends Controller
     public function getGreetings($item_uuid)
     {
         try {
-            $domain_uuid = request('domain_uuid') ?? session('domain_uuid');
+            $domain_uuid = session('domain_uuid');
 
             $voicemail = Voicemails::with(['greetings' => function ($query) use ($domain_uuid) {
                 $query->select('voicemail_id', 'greeting_id', 'greeting_name', 'greeting_description')
                     ->where('domain_uuid', $domain_uuid);
-            }])->where('voicemail_uuid', $item_uuid)->first();
+            }])
+                ->where('domain_uuid', $domain_uuid)
+                ->where('voicemail_uuid', $item_uuid)
+                ->first();
 
             if (!$voicemail) {
                 return response()->json([
@@ -903,6 +903,10 @@ class VoicemailController extends Controller
 
     public function serveVoicemailFile($domain, $voicemail_id, $file)
     {
+        if ($domain !== session('domain_name')) {
+            abort(403);
+        }
+
         $filePath = "{$domain}/{$voicemail_id}/{$file}";
 
         if (!Storage::disk('voicemail')->exists($filePath)) {
@@ -930,7 +934,10 @@ class VoicemailController extends Controller
         try {
             $domain = session('domain_name');
 
-            $voicemail = Voicemails::find(request('voicemail_uuid'));
+            $voicemail = Voicemails::query()
+                ->where('domain_uuid', session('domain_uuid'))
+                ->where('voicemail_uuid', request('voicemail_uuid'))
+                ->first();
 
             if (!$voicemail) {
                 abort(404);
@@ -1019,6 +1026,9 @@ class VoicemailController extends Controller
     public function applyVoicemailFileForName($domain, Voicemails $voicemail, $file)
     {
         $this->authorizeVoicemailManagement($voicemail);
+        if ($domain !== session('domain_name')) {
+            abort(403);
+        }
 
         try {
             $filePath = "{$domain}/{$voicemail->voicemail_id}/{$file}";
@@ -1397,12 +1407,8 @@ class VoicemailController extends Controller
     public function selectAll()
     {
         try {
-            if (request()->get('showGlobal')) {
-                $uuids = $this->model::get($this->model->getKeyName())->pluck($this->model->getKeyName());
-            } else {
-                $uuids = $this->model::where('domain_uuid', session('domain_uuid'))
-                    ->get($this->model->getKeyName())->pluck($this->model->getKeyName());
-            }
+            $uuids = $this->model::where('domain_uuid', session('domain_uuid'))
+                ->get($this->model->getKeyName())->pluck($this->model->getKeyName());
 
             // Return a JSON response indicating success
             return response()->json([
@@ -1434,7 +1440,10 @@ class VoicemailController extends Controller
 
     private function authorizeVoicemailManagement(Voicemails $voicemail): void
     {
-        if (userCheckPermission('voicemail_edit') || userCheckPermission('extension_voicemail_settings')) {
+        if (
+            $voicemail->domain_uuid === session('domain_uuid')
+            && (userCheckPermission('voicemail_edit') || userCheckPermission('extension_voicemail_settings'))
+        ) {
             return;
         }
 

@@ -8,6 +8,7 @@ use App\Jobs\FireFollowMePresenceJob;
 use App\Jobs\SendSystemStatusNotificationToSlackJob;
 use App\Models\DeviceLines;
 use App\Models\Extensions;
+use App\Models\Voicemails;
 use Illuminate\Support\Arr;
 
 class ExtensionObserver
@@ -98,10 +99,12 @@ class ExtensionObserver
             ['extension_uuid', 'domain_uuid', 'extension', 'effective_caller_id_name']
         );
 
-        if ($extension->voicemail) {
+        $voicemail = $this->sameDomainVoicemail($extension);
+
+        if ($voicemail) {
             $vmOriginalAttributes = Arr::only(
-                $extension->voicemail->getOriginal(),
-                ['voicemail_uuid', 'domain_uuid', 'voicmeail_id', 'voicemail_mail_to']
+                $voicemail->getOriginal(),
+                ['voicemail_uuid', 'domain_uuid', 'voicemail_id', 'voicemail_mail_to']
             );
         } else {
             $vmOriginalAttributes = null;
@@ -131,15 +134,25 @@ class ExtensionObserver
             ['extension_uuid', 'domain_uuid', 'extension', 'effective_caller_id_name']
         );
 
-        if ($extension->voicemail) {
+        $voicemail = $this->sameDomainVoicemail($extension);
+
+        if ($voicemail) {
             $vmOriginalAttributes = Arr::only(
-                $extension->voicemail->getOriginal(),
-                ['voicemail_uuid', 'domain_uuid', 'voicmeail_id', 'voicemail_mail_to']
+                $voicemail->getOriginal(),
+                ['voicemail_uuid', 'domain_uuid', 'voicemail_id', 'voicemail_mail_to']
             );
         } else {
             $vmOriginalAttributes = null;
         }
         ExtensionDeleted::dispatch($extensionAttributes, $originalAttributes, $vmOriginalAttributes);
+    }
+
+    private function sameDomainVoicemail(Extensions $extension): ?Voicemails
+    {
+        return Voicemails::query()
+            ->where('domain_uuid', $extension->domain_uuid)
+            ->where('voicemail_id', $extension->getOriginal('extension') ?: $extension->extension)
+            ->first();
     }
 
     /**
