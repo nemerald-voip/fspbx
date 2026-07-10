@@ -205,12 +205,14 @@ class AuthoritativeDnsActiveNodeGuard
     private function authoritativeAnswers(string $fqdn, string $nameserver, array &$lookupFailures): ?array
     {
         $answers = [];
+        $answered = false;
         foreach (['A', 'AAAA'] as $type) {
             $timeout = $this->dnsTimeoutSeconds();
 
             try {
                 $result = Process::timeout($timeout + 1)->run([
                     'dig',
+                    '-4',
                     '+short',
                     '+tries=1',
                     '+time=' . $timeout,
@@ -221,16 +223,17 @@ class AuthoritativeDnsActiveNodeGuard
             } catch (Throwable $e) {
                 $lookupFailures[$nameserver][$type] = $e->getMessage();
 
-                return null;
+                continue;
             }
 
             if (! $result->successful()) {
                 $lookupFailures[$nameserver][$type] = trim($result->errorOutput() ?: $result->output())
                     ?: 'dig exited with status ' . $result->exitCode();
 
-                return null;
+                continue;
             }
 
+            $answered = true;
             foreach (explode("\n", trim($result->output())) as $line) {
                 $line = trim($line);
                 if ($line !== '' && filter_var($line, FILTER_VALIDATE_IP)) {
@@ -239,7 +242,7 @@ class AuthoritativeDnsActiveNodeGuard
             }
         }
 
-        return array_values(array_unique($answers));
+        return $answered ? array_values(array_unique($answers)) : null;
     }
 
     private function digIsAvailable(): bool
