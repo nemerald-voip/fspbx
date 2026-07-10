@@ -1,4 +1,4 @@
-{{-- version: 1.1.5 --}}
+{{-- version: 1.1.6 --}}
 
 @switch($flavor)
 
@@ -447,7 +447,7 @@ P2347 = 0
 # Authenticate Incoming INVITE. 0 - No, 1 - Yes. Default is 0
 # Number: 0, 1
 # Mandatory
-P2346 = 1
+P2346 = 0
 
 ###############################################################
 # Account 1/Audio Settings
