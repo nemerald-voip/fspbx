@@ -1385,16 +1385,23 @@
                                                                         <button type="button"
                                                                             :disabled="!canChangeMobileAppState"
                                                                             :class="[
-                                                                                'inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold ring-1 ring-inset transition',
+                                                                                'inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-semibold shadow-sm ring-1 ring-inset transition',
                                                                                 mobileAppStateButtonClass,
                                                                                 canChangeMobileAppState ? 'cursor-pointer' : 'cursor-default opacity-80'
                                                                             ]"
-                                                                            @click="toggleMobileAppStateMenu">
-                                                                            {{ ringotelUser?.state_label ?? 'Unavailable' }}
+                                                                            @click.stop="toggleMobileAppStateMenu">
+                                                                            <span>{{ ringotelUser?.state_label ?? 'Unavailable' }}</span>
+                                                                            <ChevronDownIcon v-if="canChangeMobileAppState"
+                                                                                class="h-3 w-3" aria-hidden="true" />
                                                                         </button>
                                                                         <Spinner :show="isMobileAppLoading.state" />
                                                                         <div v-if="showMobileAppStateMenu && canChangeMobileAppState"
-                                                                            class="absolute left-0 top-full z-20 mt-2 w-48 rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5">
+                                                                            class="fixed inset-0 z-10"
+                                                                            @click="showMobileAppStateMenu = false">
+                                                                        </div>
+                                                                        <div v-if="showMobileAppStateMenu && canChangeMobileAppState"
+                                                                            class="absolute left-0 top-full z-20 mt-2 w-48 rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5"
+                                                                            @click.stop>
                                                                             <button type="button"
                                                                                 class="block w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
                                                                                 :class="{ 'font-semibold text-gray-900': isMobileAppAvailableState(ringotelUser) }"
@@ -1975,7 +1982,7 @@
 import { ref, computed, watch, reactive, onBeforeUnmount } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { XMarkIcon } from "@heroicons/vue/24/solid";
-import { PlusIcon, TrashIcon, PencilSquareIcon } from '@heroicons/vue/20/solid'
+import { ChevronDownIcon, PlusIcon, TrashIcon, PencilSquareIcon } from '@heroicons/vue/20/solid'
 import { PlayCircleIcon, CloudArrowDownIcon, PauseCircleIcon } from '@heroicons/vue/24/solid';
 import Spinner from "@generalComponents/Spinner.vue";
 import NewGreetingForm from './NewGreetingForm.vue';
