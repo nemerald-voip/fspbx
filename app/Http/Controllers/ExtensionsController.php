@@ -1460,10 +1460,17 @@ public function store(StoreExtensionRequest $request)
                 unset($_SESSION['destinations']['array']);
             }
 
+            $freshExtension = $extension->fresh(['advSettings']);
+            $freshExtension->load([
+                'voicemail' => function ($query) use ($currentDomain) {
+                    $query->where('domain_uuid', $currentDomain);
+                },
+            ]);
+
             // logger($extension->toArray());
             return response()->json([
                 'messages' => ['success' => ['Extension updated successfully']],
-                'extension' => $extension->fresh(['voicemail', 'advSettings']),
+                'extension' => $freshExtension,
             ], 200);
         } catch (\Throwable $e) {
             DB::rollBack();

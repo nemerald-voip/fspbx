@@ -4,6 +4,7 @@ namespace App\Listeners;
 
 use App\Models\Activity;
 use App\Jobs\SuspendAppUser;
+use App\Models\Voicemails;
 use Illuminate\Bus\Queueable;
 use App\Jobs\UpdateAppSettings;
 use Illuminate\Queue\SerializesModels;
@@ -138,14 +139,19 @@ class HandleExtensionSuspendedStatusChange implements ShouldQueue
         // Clear the runtime domain_uuid to avoid conflicts
         Activity::clearRuntimeDomainUuid();
 
-        // Disable Vocemail if exists
-        if ($event->model->voicemail) {
+        // Disable voicemail in the same domain. Extension numbers are not tenant-unique.
+        $voicemail = Voicemails::query()
+            ->where('domain_uuid', $event->model->domain_uuid)
+            ->where('voicemail_id', $event->model->extension)
+            ->first();
+
+        if ($voicemail) {
             if ($event->model->suspended) {
-                $event->model->voicemail->voicemail_enabled = 'false';
+                $voicemail->voicemail_enabled = 'false';
             } else {
-                $event->model->voicemail->voicemail_enabled = 'true';
+                $voicemail->voicemail_enabled = 'true';
             }
-            $event->model->voicemail->save();
+            $voicemail->save();
         }
     }
 }
