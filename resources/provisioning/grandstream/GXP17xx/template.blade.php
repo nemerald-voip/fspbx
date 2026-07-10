@@ -432,17 +432,17 @@ P2367 = 0
 # Validate Incoming Messages. 0 - No, 1 - Yes. Default is 0
 # Number: 0, 1
 # Mandatory
-P2306 = 0
+P2306 = 1
 
 # Check SIP User ID for incoming INVITE. 0 - No, 1 - Yes. Default is 0
 # Number: 0, 1
 # Mandatory
-P258 = 0
+P258 = 1
 
 # Accept Incoming SIP from Proxy Only. 0 - No, 1 - Yes. Default is 0
 # Number: 0, 1
 # Mandatory
-P2347 = 0
+P2347 = 1
 
 # Authenticate Incoming INVITE. 0 - No, 1 - Yes. Default is 0
 # Number: 0, 1
