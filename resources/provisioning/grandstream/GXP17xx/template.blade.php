@@ -1,4 +1,4 @@
-{{-- version: 1.1.4 --}}
+{{-- version: 1.1.5 --}}
 
 @switch($flavor)
 
@@ -447,7 +447,7 @@ P2347 = 0
 # Authenticate Incoming INVITE. 0 - No, 1 - Yes. Default is 0
 # Number: 0, 1
 # Mandatory
-P2346 = 0
+P2346 = 1
 
 ###############################################################
 # Account 1/Audio Settings
@@ -655,7 +655,7 @@ P2384 = 0
 # No Key Entry Timeout (in seconds). Default is 4
 # Number: 1 - 15
 # Mandatory
-P85 = 4
+P85 = 3
 
 # Use # as Dial Key. 0 - No, 1 - Yes. Default is 1
 # Number: 0, 1
@@ -3323,7 +3323,7 @@ P6762 = 0
 # Disable Direct IP Call. 0 - No, 1 - Yes. Default is 0
 # Number: 0, 1
 # Mandatory
-P1310 = 0
+P1310 = 1
 
 # Use Quick IP call mode. 0 - No, 1 - Yes. Default is 0
 # Number: 0, 1
@@ -6838,6 +6838,7 @@ PVALUES;
 
     // Shared phone behavior matching the established Grandstream templates.
     $set('P2909', 'f1=540,f2=516,c=70/16-55/16-70/300;');
+    $set('P345', 'f1=540,f2=516,c=70/16-55/16-70/300;');
     $callWaiting = strtolower((string) ($settings['grandstream_call_waiting'] ?? 'no'));
     $set('P91', in_array($callWaiting, ['1', 'yes', 'true'], true) ? '1' : '0');
 
