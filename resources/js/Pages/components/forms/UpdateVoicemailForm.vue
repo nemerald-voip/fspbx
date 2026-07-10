@@ -3,7 +3,7 @@
         <Dialog as="div" class="relative z-10">
             <TransitionChild as="div" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100"
                 leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0">
-                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+                <div class="fixed inset-0 bg-gray-500 dark:bg-gray-900 bg-opacity-75 transition-opacity" />
             </TransitionChild>
             <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
                 <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
@@ -14,15 +14,15 @@
                         leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
 
                         <DialogPanel
-                            class="relative transform  rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-5xl sm:p-6">
+                            class="relative transform  rounded-lg bg-surface px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-5xl sm:p-6">
 
-                            <DialogTitle as="h3" class="mb-4 pr-8 text-base font-semibold leading-6 text-gray-900">
+                            <DialogTitle as="h3" class="mb-4 pr-8 text-base font-semibold leading-6 text-heading">
                                 {{ header }}
                             </DialogTitle>
 
                             <div class="absolute right-0 top-0 pr-4 pt-4 sm:block">
                                 <button type="button"
-                                    class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                                    class="rounded-md bg-surface text-subtle hover:text-muted focus:outline-none focus:ring-2 focus:ring-focus focus:ring-offset-2"
                                     @click="handleClose">
                                     <span class="sr-only">Close</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
@@ -32,7 +32,7 @@
                             <div v-if="loading" class="w-full h-full">
                                 <div class="flex justify-center items-center space-x-3">
                                     <div>
-                                        <svg class="animate-spin  h-10 w-10 text-blue-600"
+                                        <svg class="animate-spin  h-10 w-10 text-info"
                                             xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
                                                 stroke-width="4">
@@ -42,7 +42,7 @@
                                             </path>
                                         </svg>
                                     </div>
-                                    <div class="text-lg text-blue-600 m-auto">Loading...</div>
+                                    <div class="text-lg text-info m-auto">Loading...</div>
                                 </div>
                             </div>
 
@@ -150,7 +150,7 @@
                                         </div>
 
                                         <div
-                                            class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
+                                            class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-body bg-surface-2 px-4 py-6 sm:p-6">
                                             <FormElements>
 
                                                 <StaticElement name="voicemail_title" tag="h4" content="Settings"
@@ -159,22 +159,22 @@
                                                     :conditions="[() => options?.permissions?.is_superadmin ?? false]">
 
                                                     <div class="mb-1">
-                                                        <div class="text-sm font-medium text-gray-600 mb-1">
+                                                        <div class="text-sm font-medium text-body mb-1">
                                                             Unique ID
                                                         </div>
 
                                                         <div class="flex items-center group">
-                                                            <span class="text-sm text-gray-900 select-all font-normal">
+                                                            <span class="text-sm text-heading select-all font-normal">
                                                                 {{ options?.item?.voicemail_uuid ?? null }}
                                                             </span>
 
                                                             <button type="button"
                                                                 @click="handleCopyToClipboard(options?.item?.voicemail_uuid ?? null)"
-                                                                class="ml-2 p-1 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
+                                                                class="ml-2 p-1 rounded-full text-subtle hover:text-info hover:bg-info-subtle transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
                                                                 title="Copy to clipboard">
                                                                 <!-- Small Copy Icon -->
                                                                 <ClipboardDocumentIcon
-                                                                    class="h-4 w-4 text-gray-500 hover:text-gray-900  cursor-pointer" />
+                                                                    class="h-4 w-4 text-muted hover:text-heading  cursor-pointer" />
                                                             </button>
                                                         </div>
                                                     </div>
@@ -278,7 +278,7 @@
                                                         :conditions="[hasPlayableGreeting]"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                                         <PlayCircleIcon
-                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-info hover:bg-info-subtle hover:text-info active:bg-info-subtle active:duration-150 cursor-pointer" />
                                                     </ButtonElement>
 
 
@@ -288,7 +288,7 @@
                                                         }"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                                         <PauseCircleIcon
-                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
+                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-danger hover:bg-danger-subtle hover:text-danger active:bg-danger-subtle active:duration-150 cursor-pointer" />
 
                                                     </ButtonElement>
 
@@ -299,7 +299,7 @@
                                                         }" :conditions="[hasPlayableGreeting]"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                                         <CloudArrowDownIcon
-                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-info hover:bg-info-subtle hover:text-info active:bg-info-subtle active:duration-150 cursor-pointer" />
 
                                                     </ButtonElement>
 
@@ -309,7 +309,7 @@
                                                         }"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                                         <Spinner :show="true"
-                                                            class="h-8 w-8 ml-0 mr-0 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                                            class="h-8 w-8 ml-0 mr-0 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-info hover:bg-info-subtle hover:text-info active:bg-info-subtle active:duration-150 cursor-pointer" />
 
                                                     </ButtonElement>
 
@@ -320,7 +320,7 @@
                                                         :conditions="[function (form$) { const val = form$.el$('greeting_id')?.value; return val?.value !== '0' && val?.value !== '-1' && val !== null; }]"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                                         <PencilSquareIcon
-                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-info hover:bg-info-subtle hover:text-info active:bg-info-subtle active:duration-150 cursor-pointer" />
 
                                                     </ButtonElement> -->
 
@@ -330,7 +330,7 @@
                                                         }" :conditions="[hasPlayableGreeting]"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                                         <TrashIcon
-                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
+                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-danger hover:bg-danger-subtle hover:text-danger active:bg-danger-subtle active:duration-150 cursor-pointer" />
 
                                                     </ButtonElement>
 
@@ -340,7 +340,7 @@
                                                         }"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                                         <PlusIcon
-                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-info hover:bg-info-subtle hover:text-info active:bg-info-subtle active:duration-150 cursor-pointer" />
 
                                                     </ButtonElement>
 
@@ -371,12 +371,12 @@
                                                     <div class="pt-2 flex items-center  whitespace-nowrap space-x-2">
                                                         <!-- <p>Recorded Name:</p> -->
                                                         <Badge v-if="recordedName == 'Custom recording'"
-                                                            :text="recordedName" backgroundColor="bg-green-50"
-                                                            textColor="text-green-700" ringColor="ring-green-600/20" />
+                                                            :text="recordedName" backgroundColor="bg-success-subtle"
+                                                            textColor="text-success" ringColor="ring-success/20" />
 
                                                         <Badge v-if="recordedName == 'System Default'"
-                                                            :text="recordedName" backgroundColor="bg-blue-50"
-                                                            textColor="text-blue-700" ringColor="ring-blue-600/20" />
+                                                            :text="recordedName" backgroundColor="bg-info-subtle"
+                                                            textColor="text-info" ringColor="ring-info/20" />
 
                                                     </div>
                                                 </StaticElement>
@@ -393,7 +393,7 @@
                                                         :conditions="[function () { return recordedName == 'Custom recording' }]"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                                         <PlayCircleIcon
-                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-info hover:bg-info-subtle hover:text-info active:bg-info-subtle active:duration-150 cursor-pointer" />
                                                     </ButtonElement>
 
 
@@ -404,7 +404,7 @@
                                                         }"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                                         <PauseCircleIcon
-                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
+                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-danger hover:bg-danger-subtle hover:text-danger active:bg-danger-subtle active:duration-150 cursor-pointer" />
 
                                                     </ButtonElement>
 
@@ -416,7 +416,7 @@
                                                         :conditions="[function () { return recordedName == 'Custom recording' }]"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                                         <CloudArrowDownIcon
-                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-info hover:bg-info-subtle hover:text-info active:bg-info-subtle active:duration-150 cursor-pointer" />
 
                                                     </ButtonElement>
 
@@ -427,7 +427,7 @@
                                                         }"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                                         <Spinner :show="true"
-                                                            class="h-8 w-8 ml-0 mr-0 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                                            class="h-8 w-8 ml-0 mr-0 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-info hover:bg-info-subtle hover:text-info active:bg-info-subtle active:duration-150 cursor-pointer" />
 
                                                     </ButtonElement>
 
@@ -438,7 +438,7 @@
                                                         :conditions="[function (form$) { const val = form$.el$('greeting_id')?.value; return val?.value !== '0' && val?.value !== '-1' && val !== null; }]"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                                         <PencilSquareIcon
-                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-info hover:bg-info-subtle hover:text-info active:bg-info-subtle active:duration-150 cursor-pointer" />
 
                                                     </ButtonElement> -->
 
@@ -449,7 +449,7 @@
                                                         :conditions="[function () { return recordedName == 'Custom recording' }]"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                                         <TrashIcon
-                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
+                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-danger hover:bg-danger-subtle hover:text-danger active:bg-danger-subtle active:duration-150 cursor-pointer" />
 
                                                     </ButtonElement>
 
@@ -460,7 +460,7 @@
                                                         }"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                                         <PlusIcon
-                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-info hover:bg-info-subtle hover:text-info active:bg-info-subtle active:duration-150 cursor-pointer" />
 
                                                     </ButtonElement>
 
@@ -660,7 +660,7 @@
                                                         :controls="{ add: false, remove: true, sort: true }"
                                                         :add-classes="{
                                                             ListElement: {
-                                                                listItem: 'bg-white p-3 mb-3 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow'
+                                                                listItem: 'bg-surface p-3 mb-3 border border-default rounded-lg shadow-sm hover:shadow-md transition-shadow'
                                                             }
                                                         }"
                                                         :conditions="[['voicemail_enabled', '==', 'true'], ['vm_notify_profile.enabled', '==', true]]">
@@ -684,17 +684,17 @@
                                                                         const isInternal = row.recipient_type === 'extension';
 
                                                                         const icon = isInternal
-                                                                            ? `<svg class='w-5 h-5 text-indigo-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'></path></svg>`
-                                                                            : `<svg class='w-5 h-5 text-emerald-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z'></path></svg>`;
+                                                                            ? `<svg class='w-5 h-5 text-accent-fg' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'></path></svg>`
+                                                                            : `<svg class='w-5 h-5 text-success' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z'></path></svg>`;
 
                                                                         return `
                         <div class='flex items-center space-x-3'>
-                            <div class='flex-shrink-0 w-10 h-10 ${isInternal ? 'bg-indigo-50 border-indigo-100' : 'bg-emerald-50 border-emerald-100'} rounded-full flex items-center justify-center border'>
+                            <div class='flex-shrink-0 w-10 h-10 ${isInternal ? 'bg-accent-subtle border-accent' : 'bg-success-subtle border-success'} rounded-full flex items-center justify-center border'>
                                 ${icon}
                             </div>
                             <div class='flex flex-col min-w-0'>
-                                <span class='text-base font-bold text-gray-900 truncate'>${label}</span>
-                                <span class='text-xs font-medium text-gray-500'>${isInternal ? 'Internal Extension' : 'External Number'}</span>
+                                <span class='text-base font-bold text-heading truncate'>${label}</span>
+                                <span class='text-xs font-medium text-muted'>${isInternal ? 'Internal Extension' : 'External Number'}</span>
                             </div>
                         </div>
                     `;
@@ -709,7 +709,7 @@
 
                                                                         ElementLabel: {
                                                                             container: 'items-center !pt-0 !pb-0', // Centers the text vertically
-                                                                            wrapper: 'font-medium text-sm text-gray-500 whitespace-nowrap'
+                                                                            wrapper: 'font-medium text-sm text-muted whitespace-nowrap'
                                                                         },
                                                                         TextElement: { input: 'text-center py-1' }
                                                                     }" />

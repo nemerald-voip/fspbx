@@ -3,7 +3,7 @@
         <Dialog as="div" class="relative z-10">
             <TransitionChild as="div" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100"
                 leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0">
-                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+                <div class="fixed inset-0 bg-gray-500 dark:bg-gray-900 bg-opacity-75 transition-opacity" />
             </TransitionChild>
             <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
                 <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
@@ -14,15 +14,15 @@
                         leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
 
                         <DialogPanel
-                            class="relative transform  rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-5xl sm:p-6">
+                            class="relative transform  rounded-lg bg-surface px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-5xl sm:p-6">
 
-                            <DialogTitle as="h3" class="mb-4 pr-8 text-base font-semibold leading-6 text-gray-900">
+                            <DialogTitle as="h3" class="mb-4 pr-8 text-base font-semibold leading-6 text-heading">
                                 {{ header }}
                             </DialogTitle>
 
                             <div class="absolute right-0 top-0 pr-4 pt-4 sm:block">
                                 <button type="button"
-                                    class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                                    class="rounded-md bg-surface text-subtle hover:text-muted focus:outline-none focus:ring-2 focus:ring-focus focus:ring-offset-2"
                                     @click="emit('close')">
                                     <span class="sr-only">Close</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
@@ -32,7 +32,7 @@
                             <div v-if="loading" class="w-full h-full">
                                 <div class="flex justify-center items-center space-x-3">
                                     <div>
-                                        <svg class="animate-spin  h-10 w-10 text-blue-600"
+                                        <svg class="animate-spin  h-10 w-10 text-info"
                                             xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
                                                 stroke-width="4">
@@ -42,7 +42,7 @@
                                             </path>
                                         </svg>
                                     </div>
-                                    <div class="text-lg text-blue-600 m-auto">Loading...</div>
+                                    <div class="text-lg text-info m-auto">Loading...</div>
                                 </div>
                             </div>
 
@@ -189,7 +189,7 @@
                                         </div>
 
                                         <div
-                                            class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
+                                            class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-body bg-surface-2 px-4 py-6 sm:p-6">
                                             <FormElements>
 
                                                 <StaticElement name="h4" tag="h4" content="Device Settings" />
@@ -197,22 +197,22 @@
                                                     :conditions="[() => options.permissions.is_superadmin]">
 
                                                     <div class="mb-1">
-                                                        <div class="text-sm font-medium text-gray-600 mb-1">
+                                                        <div class="text-sm font-medium text-body mb-1">
                                                             Unique ID
                                                         </div>
 
                                                         <div class="flex items-center group">
-                                                            <span class="text-sm text-gray-900 select-all font-normal">
+                                                            <span class="text-sm text-heading select-all font-normal">
                                                                 {{ options.item.device_uuid }}
                                                             </span>
 
                                                             <button type="button"
                                                                 @click="handleCopyToClipboard(options.item.device_uuid)"
-                                                                class="ml-2 p-1 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
+                                                                class="ml-2 p-1 rounded-full text-subtle hover:text-info hover:bg-info-subtle transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
                                                                 title="Copy to clipboard">
                                                                 <!-- Small Copy Icon -->
                                                                 <ClipboardDocumentIcon
-                                                                    class="h-4 w-4 text-gray-500 hover:text-gray-900  cursor-pointer" />
+                                                                    class="h-4 w-4 text-muted hover:text-heading  cursor-pointer" />
                                                             </button>
                                                         </div>
                                                     </div>
@@ -288,7 +288,7 @@
 
                                                 <ListElement name="device_lines" :sort="true" size="sm"
                                                     :controls="{ add: options.permissions.device_line_create, remove: options.permissions.device_line_destroy, sort: options.permissions.device_line_update }"
-                                                    :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }">
+                                                    :add-classes="{ ListElement: { listItem: 'bg-surface p-4 mb-4 rounded-lg shadow-md' } }">
                                                     <template #default="{ index }">
                                                         <ObjectElement :name="index">
                                                             <HiddenElement name="device_line_uuid" :meta="true" />
@@ -376,7 +376,7 @@
                                                                     },
                                                                 }">
                                                                 <div
-                                                                    class="flex h-9 items-center rounded-md bg-gray-100 px-3 text-sm text-gray-900 ring-1 ring-inset ring-gray-300">
+                                                                    class="flex h-9 items-center rounded-md bg-surface-3 px-3 text-sm text-heading ring-1 ring-inset ring-strong">
                                                                     Edit in Advanced Settings
                                                                 </div>
                                                             </StaticElement>
@@ -405,7 +405,7 @@
 
 
                                                                 <Cog8ToothIcon @click="showLineAdvSettings(index)"
-                                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer" />
 
                                                             </StaticElement>
 
@@ -512,9 +512,9 @@
                                                 <StaticElement name="keys_title">
                                                     <div class="flex items-start justify-between gap-3">
                                                         <div>
-                                                            <h4 class="text-base font-semibold text-gray-900">Device
+                                                            <h4 class="text-base font-semibold text-heading">Device
                                                                 Function Keys</h4>
-                                                            <p class="mt-1 text-sm text-gray-500">Programmable DSS keys
+                                                            <p class="mt-1 text-sm text-muted">Programmable DSS keys
                                                                 for BLF, speed dial, line appearances, and other call
                                                                 actions.</p>
                                                         </div>
@@ -523,8 +523,8 @@
                                                             @click="openSaveTemplateModal"
                                                             aria-label="Save Keys as Template"
                                                             title="Save Keys as Template"
-                                                            class="shrink-0 inline-flex items-center gap-x-1.5 rounded-md bg-white p-2 sm:px-3 sm:py-2 text-sm font-medium text-gray-700 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-                                                            <DocumentDuplicateIcon class="h-4 w-4 text-gray-500"
+                                                            class="shrink-0 inline-flex items-center gap-x-1.5 rounded-md bg-surface p-2 sm:px-3 sm:py-2 text-sm font-medium text-body ring-1 ring-inset ring-strong hover:bg-surface-2 focus:outline-none focus:ring-2 focus:ring-focus focus:ring-offset-2">
+                                                            <DocumentDuplicateIcon class="h-4 w-4 text-muted"
                                                                 aria-hidden="true" />
                                                             <span class="hidden sm:inline">Save Keys as Template</span>
                                                         </button>
@@ -534,7 +534,7 @@
                                                 <GroupElement name="keys_container" />
                                                 <ListElement name="device_keys" :sort="true" size="sm"
                                                     :controls="{ add: options.permissions.device_key_create, remove: options.permissions.device_key_destroy, sort: options.permissions.device_key_up }"
-                                                    :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }">
+                                                    :add-classes="{ ListElement: { listItem: 'bg-surface p-4 mb-4 rounded-lg shadow-md' } }">
                                                     <template #default="{ index }">
                                                         <ObjectElement :name="index"
                                                             :key="form$?.data?.device_keys?.[index]?.key_uuid">
@@ -634,7 +634,7 @@
 
 
                                                                 <!-- <Cog8ToothIcon @click="showLineAdvSettings(index)"
-                                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" /> -->
+                                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer" /> -->
 
                                                             </StaticElement>
 
@@ -658,7 +658,7 @@
                                                 <GroupElement name="side_keys_container" />
                                                 <ListElement name="side_keys" :sort="true" size="sm"
                                                     :controls="{ add: options.permissions.device_key_create, remove: options.permissions.device_key_destroy, sort: options.permissions.device_key_up }"
-                                                    :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }">
+                                                    :add-classes="{ ListElement: { listItem: 'bg-surface p-4 mb-4 rounded-lg shadow-md' } }">
                                                     <template #default="{ index }">
                                                         <ObjectElement :name="index"
                                                             :key="form$?.data?.side_keys?.[index]?.key_uuid">
@@ -758,7 +758,7 @@
 
 
                                                                 <!-- <Cog8ToothIcon @click="showLineAdvSettings(index)"
-                                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" /> -->
+                                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer" /> -->
 
                                                             </StaticElement>
 
@@ -783,7 +783,7 @@
                                                 <GroupElement name="multi_purpose_keys_container" />
                                                 <ListElement name="multi_purpose_keys" :sort="true" size="sm"
                                                     :controls="{ add: options.permissions.device_key_create, remove: options.permissions.device_key_destroy, sort: options.permissions.device_key_up }"
-                                                    :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }">
+                                                    :add-classes="{ ListElement: { listItem: 'bg-surface p-4 mb-4 rounded-lg shadow-md' } }">
                                                     <template #default="{ index }">
                                                         <ObjectElement :name="index"
                                                             :key="form$?.data?.multi_purpose_keys?.[index]?.key_uuid">
@@ -885,7 +885,7 @@
 
 
                                                                 <!-- <Cog8ToothIcon @click="showLineAdvSettings(index)"
-                                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" /> -->
+                                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer" /> -->
 
                                                             </StaticElement>
 
@@ -910,7 +910,7 @@
                                                 <GroupElement name="expansion_keys_container" />
                                                 <ListElement name="expansion_keys" :sort="true" size="sm"
                                                     :controls="{ add: options.permissions.device_key_create, remove: options.permissions.device_key_destroy, sort: options.permissions.device_key_up }"
-                                                    :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }">
+                                                    :add-classes="{ ListElement: { listItem: 'bg-surface p-4 mb-4 rounded-lg shadow-md' } }">
                                                     <template #default="{ index }">
                                                         <ObjectElement :name="index"
                                                             :key="form$?.data?.expansion_keys?.[index]?.key_uuid">
@@ -1012,7 +1012,7 @@
 
 
                                                                 <!-- <Cog8ToothIcon @click="showLineAdvSettings(index)"
-                                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" /> -->
+                                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer" /> -->
 
                                                             </StaticElement>
 
@@ -1069,12 +1069,12 @@
 
                                                 <StaticElement name="provisioning_loading"
                                                     :conditions="[() => isCloudProvisioningLoading.loading]">
-                                                    <div class="text-center my-5 text-sm text-gray-500">
+                                                    <div class="text-center my-5 text-sm text-muted">
                                                         <div class="animate-pulse flex space-x-4">
                                                             <div class="flex-1 space-y-6 py-1">
-                                                                <div class="h-2 bg-slate-200 rounded"></div>
-                                                                <div class="h-2 bg-slate-200 rounded"></div>
-                                                                <div class="h-2 bg-slate-200 rounded"></div>
+                                                                <div class="h-2 bg-surface-3 rounded"></div>
+                                                                <div class="h-2 bg-surface-3 rounded"></div>
+                                                                <div class="h-2 bg-surface-3 rounded"></div>
 
                                                             </div>
                                                         </div>
@@ -1088,48 +1088,48 @@
                                                     <div v-if="provisioning && provisioning.last_action == 'register' && provisioning.status == 'success'"
                                                         class="flex items-center gap-x-3">
                                                         <div
-                                                            class="flex-none rounded-full bg-green-400/10 p-1 text-green-400">
+                                                            class="flex-none rounded-full bg-success/10 p-1 text-success">
                                                             <div class="size-3 rounded-full bg-current" />
                                                         </div>
                                                         <h1 class="flex gap-x-3 text-lg">
                                                             <span class="font-semibold ">Status:</span>
-                                                            <Badge backgroundColor="bg-green-100"
-                                                                textColor="text-green-700" :text="'Active'"
-                                                                ringColor="ring-green-400/20"
+                                                            <Badge backgroundColor="bg-success-subtle"
+                                                                textColor="text-success" :text="'Active'"
+                                                                ringColor="ring-success/20"
                                                                 class="px-2 py-1 text-xs font-semibold" />
                                                         </h1>
                                                     </div>
                                                     <div v-if="provisioning && provisioning.status == 'error'"
                                                         class="flex items-center gap-x-3">
                                                         <div
-                                                            class="flex-none rounded-full bg-rose-400/10 p-1 text-rose-400">
+                                                            class="flex-none rounded-full bg-danger/10 p-1 text-danger">
                                                             <div class="size-3 rounded-full bg-current" />
                                                         </div>
                                                         <h1 class="flex gap-x-3 text-lg">
                                                             <span class="font-semibold ">Status:</span>
-                                                            <Badge backgroundColor="bg-rose-100"
-                                                                textColor="text-rose-700" :text="'Error'"
-                                                                ringColor="ring-rose-400/20"
+                                                            <Badge backgroundColor="bg-danger-subtle"
+                                                                textColor="text-danger" :text="'Error'"
+                                                                ringColor="ring-danger/20"
                                                                 class="px-2 py-1 text-xs font-semibold" />
                                                         </h1>
                                                     </div>
 
 
                                                     <div v-if="provisioning && provisioning.status == 'error'"
-                                                        class="mt-3 rounded-md bg-red-50 p-4">
+                                                        class="mt-3 rounded-md bg-danger-subtle p-4">
                                                         <div class="flex">
                                                             <div class="shrink-0">
-                                                                <XCircleIcon class="size-5 text-red-400"
+                                                                <XCircleIcon class="size-5 text-danger"
                                                                     aria-hidden="true" />
                                                             </div>
                                                             <div class="ml-3">
-                                                                <!-- <h3 class="text-sm font-medium text-red-800">There were
+                                                                <!-- <h3 class="text-sm font-medium text-danger">There were
                                                                     2 errors with your submission</h3> -->
-                                                                <div class="text-sm text-red-700">
+                                                                <div class="text-sm text-danger">
                                                                     <span>Last Action: {{ provisioning.last_action
                                                                         }}</span>
                                                                 </div>
-                                                                <div class="text-sm text-red-700">
+                                                                <div class="text-sm text-danger">
                                                                     <span>Error: {{ provisioning.error }}</span>
                                                                 </div>
                                                             </div>
@@ -1139,14 +1139,14 @@
                                                     <div v-if="provisioning && provisioning.status == 'pending'"
                                                         class="flex items-center gap-x-3">
                                                         <div
-                                                            class="flex-none rounded-full bg-amber-400/10 p-1 text-amber-400">
+                                                            class="flex-none rounded-full bg-warning/10 p-1 text-warning">
                                                             <div class="size-3 rounded-full bg-current" />
                                                         </div>
                                                         <h1 class="flex gap-x-3 text-lg">
                                                             <span class="font-semibold ">Status:</span>
-                                                            <Badge backgroundColor="bg-amber-100"
-                                                                textColor="text-amber-700" :text="'Pending'"
-                                                                ringColor="ring-amber-400/20"
+                                                            <Badge backgroundColor="bg-warning-subtle"
+                                                                textColor="text-warning" :text="'Pending'"
+                                                                ringColor="ring-warning/20"
                                                                 class="px-2 py-1 text-xs font-semibold" />
                                                         </h1>
                                                     </div>
@@ -1154,14 +1154,14 @@
                                                     <div v-if="!provisioning || (provisioning.last_action == 'deregister' && provisioning.status == 'success')"
                                                         class="flex items-center gap-x-3">
                                                         <div
-                                                            class="flex-none rounded-full bg-gray-400/10 p-1 text-gray-400">
+                                                            class="flex-none rounded-full bg-gray-400/10 p-1 text-subtle">
                                                             <div class="size-3 rounded-full bg-current" />
                                                         </div>
                                                         <h1 class="flex gap-x-3 text-lg">
                                                             <span class="font-semibold ">Status:</span>
-                                                            <Badge backgroundColor="bg-gray-100"
-                                                                textColor="text-gray-700" :text="'Not Registered'"
-                                                                ringColor="ring-gray-400/20"
+                                                            <Badge backgroundColor="bg-surface-3"
+                                                                textColor="text-body" :text="'Not Registered'"
+                                                                ringColor="ring-strong/20"
                                                                 class="px-2 py-1 text-xs font-semibold" />
                                                         </h1>
                                                     </div>
@@ -1222,7 +1222,7 @@
                                                 <ListElement name="device_settings" :sort="true" size="sm" :initial="0"
                                                     :conditions="[() => options?.permissions?.device_setting_view]"
                                                     :controls="{ add: options.permissions.device_setting_add, remove: options.permissions.device_setting_destroy, sort: options.permissions.device_setting_update }"
-                                                    :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }">
+                                                    :add-classes="{ ListElement: { listItem: 'bg-surface p-4 mb-4 rounded-lg shadow-md' } }">
                                                     <template #default="{ index }">
                                                         <ObjectElement :name="index">
 
@@ -1282,7 +1282,7 @@
                                     <TransitionChild as="div" enter="ease-out duration-200"
                                         enter-from="opacity-0" enter-to="opacity-100" leave="ease-in duration-150"
                                         leave-from="opacity-100" leave-to="opacity-0">
-                                        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+                                        <div class="fixed inset-0 bg-gray-500 dark:bg-gray-900 bg-opacity-75 transition-opacity" />
                                     </TransitionChild>
                                     <div class="fixed inset-0 z-20 w-screen overflow-y-auto">
                                         <div
@@ -1294,19 +1294,19 @@
                                                 leave-from="opacity-100 translate-y-0 sm:scale-100"
                                                 leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
                                                 <DialogPanel
-                                                    class="relative transform rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+                                                    class="relative transform rounded-lg bg-surface px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
                                                     <DialogTitle as="h3"
-                                                        class="mb-1 pr-8 text-base font-semibold leading-6 text-gray-900">
+                                                        class="mb-1 pr-8 text-base font-semibold leading-6 text-heading">
                                                         Save Keys as Template
                                                     </DialogTitle>
-                                                    <p class="text-sm text-gray-500">
+                                                    <p class="text-sm text-muted">
                                                         Create a reusable Key Template from this device's current
                                                         function keys.
                                                     </p>
 
                                                     <div class="absolute right-0 top-0 pr-4 pt-4 sm:block">
                                                         <button type="button"
-                                                            class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                                                            class="rounded-md bg-surface text-subtle hover:text-muted focus:outline-none focus:ring-2 focus:ring-focus focus:ring-offset-2"
                                                             :disabled="savingKeyTemplate"
                                                             @click="closeSaveTemplateModal">
                                                             <span class="sr-only">Close</span>
@@ -1317,30 +1317,30 @@
                                                     <div class="mt-4 space-y-4">
                                                         <div>
                                                             <label for="key_template_name"
-                                                                class="block text-sm font-medium text-gray-700">
-                                                                Template Name <span class="text-red-500">*</span>
+                                                                class="block text-sm font-medium text-body">
+                                                                Template Name <span class="text-danger">*</span>
                                                             </label>
                                                             <input id="key_template_name" type="text"
                                                                 v-model="templateName"
-                                                                :class="['mt-1 block w-full rounded-md shadow-sm sm:text-sm focus:ring-indigo-500 focus:border-indigo-500',
-                                                                    templateNameError ? 'border-red-400' : 'border-gray-300']"
+                                                                :class="['mt-1 block w-full rounded-md shadow-sm sm:text-sm focus:ring-focus focus:border-accent',
+                                                                    templateNameError ? 'border-danger' : 'border-strong']"
                                                                 placeholder="e.g. Sales team standard keys"
                                                                 :disabled="savingKeyTemplate"
                                                                 @keyup.enter="handleSaveKeyTemplate" />
                                                             <p v-if="templateNameError"
-                                                                class="mt-1 text-sm text-red-600">
+                                                                class="mt-1 text-sm text-danger">
                                                                 {{ templateNameError }}
                                                             </p>
                                                         </div>
 
                                                         <div>
                                                             <label for="key_template_description"
-                                                                class="block text-sm font-medium text-gray-700">
+                                                                class="block text-sm font-medium text-body">
                                                                 Description
                                                             </label>
                                                             <textarea id="key_template_description" rows="3"
                                                                 v-model="templateDescription"
-                                                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                                                class="mt-1 block w-full rounded-md border-strong shadow-sm sm:text-sm focus:ring-focus focus:border-accent"
                                                                 placeholder="Optional — what this template is for"
                                                                 :disabled="savingKeyTemplate"></textarea>
                                                         </div>
@@ -1348,13 +1348,13 @@
 
                                                     <div class="mt-6 flex items-center justify-end gap-2">
                                                         <button type="button"
-                                                            class="inline-flex justify-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-700 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50"
+                                                            class="inline-flex justify-center rounded-md bg-surface px-3 py-2 text-sm font-medium text-body ring-1 ring-inset ring-strong hover:bg-surface-2 disabled:opacity-50"
                                                             :disabled="savingKeyTemplate"
                                                             @click="closeSaveTemplateModal">
                                                             Cancel
                                                         </button>
                                                         <button type="button"
-                                                            class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50"
+                                                            class="inline-flex justify-center rounded-md bg-accent px-3 py-2 text-sm font-medium text-on-accent shadow-sm hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50"
                                                             :disabled="savingKeyTemplate"
                                                             @click="handleSaveKeyTemplate">
                                                             <span v-if="savingKeyTemplate">Saving…</span>

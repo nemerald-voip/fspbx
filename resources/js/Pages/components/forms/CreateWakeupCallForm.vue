@@ -3,14 +3,14 @@
         <aside class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
             <nav class="space-y-1">
                 <a v-for="item in localOptions.navigation" :key="item.name" href="#"
-                    :class="[activeTab === item.slug ? 'bg-gray-200 text-indigo-700 hover:bg-gray-100 hover:text-indigo-700' : 'text-gray-900 hover:bg-gray-200 hover:text-gray-900', 'group flex items-center rounded-md px-3 py-2 text-sm font-medium']"
+                    :class="[activeTab === item.slug ? 'bg-surface-3 text-accent-fg hover:bg-surface-3 hover:text-accent-fg' : 'text-heading hover:bg-surface-3 hover:text-heading', 'group flex items-center rounded-md px-3 py-2 text-sm font-medium']"
                     @click.prevent="setActiveTab(item.slug)" :aria-current="item.current ? 'page' : undefined">
                     <component :is="iconComponents[item.icon]"
-                        :class="[item.current ? 'text-indigo-500 group-hover:text-indigo-500' : 'text-gray-400 group-hover:text-gray-500', '-ml-1 mr-3 h-6 w-6 flex-shrink-0']"
+                        :class="[item.current ? 'text-accent-fg group-hover:text-accent-fg' : 'text-subtle group-hover:text-muted', '-ml-1 mr-3 h-6 w-6 flex-shrink-0']"
                         aria-hidden="true" />
                     <span class="truncate">{{ item.name }}</span>
                     <ExclamationCircleIcon v-if="((errors?.extension || errors?.wake_up_time || errors?.status) && item.slug === 'settings')"
-                        class="ml-2 h-5 w-5 text-red-500" aria-hidden="true" />
+                        class="ml-2 h-5 w-5 text-danger" aria-hidden="true" />
 
                 </a>
             </nav>
@@ -21,16 +21,16 @@
             <div v-if="activeTab === 'settings'">
 
                 <div class="shadow sm:rounded-md">
-                    <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
+                    <div class="space-y-6 bg-surface-3 px-4 py-6 sm:p-6">
                         <div>
-                            <h3 class="text-base font-semibold leading-6 text-gray-900">Settings</h3>
-                            <p class="mt-1 text-sm text-gray-500">Choose wakeup call settings.</p>
+                            <h3 class="text-base font-semibold leading-6 text-heading">Settings</h3>
+                            <p class="mt-1 text-sm text-muted">Choose wakeup call settings.</p>
                         </div>
 
                         <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
                             <div class="sm:col-span-3 space-y-3">
                                 <LabelInputRequired label="Date" class="truncate" />
-                                <VueDatePicker v-model="date" :range="false" :enable-time-picker="false"
+                                <VueDatePicker v-model="date" :dark="isDark" :range="false" :enable-time-picker="false"
                                     :min-date="new Date()" auto-apply @update:model-value="handleDate"
                                     :timezone="options.timezone" placeholder="Select Date">
                                 </VueDatePicker>
@@ -38,13 +38,13 @@
 
                             <div class="sm:col-span-3 space-y-3">
                                 <LabelInputRequired label="Time" class="truncate" />
-                                <VueDatePicker v-model="time" time-picker auto-apply :is-24="false"
+                                <VueDatePicker v-model="time" :dark="isDark" time-picker auto-apply :is-24="false"
                                     @update:model-value="handleTime" :timezone="options.timezone" placeholder="Select Time">
                                 </VueDatePicker>
                             </div>
 
                             <div class="col-span-6 -mt-5">
-                                <div v-if="errors?.wake_up_time" class="mt-2 text-xs text-red-600">
+                                <div v-if="errors?.wake_up_time" class="mt-2 text-xs text-danger">
                                     {{ errors.wake_up_time[0] }}
                                 </div>
                             </div>
@@ -56,7 +56,7 @@
                                     :search="true" placeholder="Choose Extension"
                                     @update:model-value="handleExtensionUpdate"
                                     :error="errors?.extension && errors.extension.length > 0" />
-                                <div v-if="errors?.extension" class="mt-2 text-xs text-red-600">
+                                <div v-if="errors?.extension" class="mt-2 text-xs text-danger">
                                     {{ errors.extension[0] }}
                                 </div>
                             </div>
@@ -66,12 +66,12 @@
                                 <ComboBox :options="options.status_options" :selectedItem="form.status"
                                     :search="true" placeholder="Choose Status" @update:model-value="handleStatusUpdate"
                                     :error="errors?.status && errors.status.length > 0" />
-                                <div v-if="errors?.status" class="mt-2 text-xs text-red-600">
+                                <div v-if="errors?.status" class="mt-2 text-xs text-danger">
                                     {{ errors.status[0] }}
                                 </div>
                             </div>
 
-                            <div class="divide-y divide-gray-200 col-span-6">
+                            <div class="divide-y divide-default col-span-6">
 
                                 <Toggle label="Daily Repeat"
                                     description="Enable this option to automatically repeat the wake-up call every day at the scheduled time. If unchecked, the call will only be made once. Snoozes and missed calls will be handled separately and do not affect the daily repeat setting."
@@ -82,9 +82,9 @@
                         </div>
                     </div>
                 </div>
-                <div class="bg-gray-100 px-4 py-3 text-right sm:px-6">
+                <div class="bg-surface-3 px-4 py-3 text-right sm:px-6">
                     <button type="submit"
-                        class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Save</button>
+                        class="inline-flex justify-center rounded-md bg-accent px-3 py-2 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">Save</button>
                 </div>
 
 
@@ -112,7 +112,9 @@ import VueDatePicker from '@vuepic/vue-datepicker';
 import { zonedTimeToUtc, utcToZonedTime } from 'date-fns-tz';
 import { parseISO } from 'date-fns';
 import Popover from "@generalComponents/Popover.vue";
+import { useTheme } from "../../../composables/useTheme";
 
+const { isDark } = useTheme();
 
 const props = defineProps({
     options: Object,

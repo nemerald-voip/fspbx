@@ -5,21 +5,21 @@
         <MainLayout />
 
         <!-- Main Layout: Full Screen Flex Container -->
-        <div class="flex-1 min-h-0 flex w-full mx-auto m-4 border rounded-xl overflow-hidden shadow-xl bg-white">
+        <div class="flex-1 min-h-0 flex w-full mx-auto m-4 border rounded-xl overflow-hidden shadow-xl bg-surface">
 
             <!-- LEFT COLUMN: Sidebar -->
-            <aside class="w-80 bg-white border-r border-gray-200 flex flex-col">
+            <aside class="w-80 bg-surface border-r border-default flex flex-col">
                 <!-- Header -->
-                <div class="p-4 border-b border-gray-100 flex justify-between items-center">
-                    <h2 class="text-xl font-bold text-gray-800">Messages</h2>
+                <div class="p-4 border-b border-default flex justify-between items-center">
+                    <h2 class="text-xl font-bold text-heading">Messages</h2>
                     <!-- Optional: Loading Indicator -->
                     <div class="flex items-center space-x-2">
 
                         <span v-if="loadingRooms"
-                            class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></span>
+                            class="animate-spin rounded-full h-4 w-4 border-b-2 border-info"></span>
 
                         <button @click="showCreateModal = true"
-                            class="p-2 bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100 transition-colors"
+                            class="p-2 bg-info-subtle text-info rounded-full hover:bg-info-subtle transition-colors"
                             title="New Chat">
 
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
@@ -36,8 +36,8 @@
 
                 </div>
 
-                <div v-if="props.permissions.messages_view_as" class="px-4 py-3 bg-gray-50 border-b border-gray-200">
-                    <label class="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider">
+                <div v-if="props.permissions.messages_view_as" class="px-4 py-3 bg-surface-2 border-b border-default">
+                    <label class="block text-xs font-semibold text-muted mb-1 uppercase tracking-wider">
                         Viewing as:
                     </label>
                     <Vueform ref="extensionForm$" :endpoint="false" :schema="extensionSelectSchema"
@@ -47,17 +47,17 @@
                 <!-- Room List -->
                 <div class="flex-1 overflow-y-auto">
                     <div v-for="room in rooms" :key="room.id" @click="selectRoom(room.id)"
-                        class="group relative flex items-center p-3 cursor-pointer transition-all duration-200 border-l-4 hover:bg-gray-50"
+                        class="group relative flex items-center p-3 cursor-pointer transition-all duration-200 border-l-4 hover:bg-surface-2"
                         :class="[
                             activeRoomId === room.id
-                                ? 'bg-blue-50 border-blue-600'
+                                ? 'bg-info-subtle border-info'
                                 : 'border-transparent'
                         ]">
 
                         <!-- 1. Avatar -->
                         <div class="relative flex-shrink-0 mr-3">
                             <div
-                                class="h-10 w-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-600 font-bold text-xs shadow-sm group-hover:shadow-md transition-shadow">
+                                class="h-10 w-10 rounded-full bg-gradient-to-br from-surface-3 to-surface-3 flex items-center justify-center text-body font-bold text-xs shadow-sm group-hover:shadow-md transition-shadow">
 
                                 {{ room.name.slice(0, 2) }}
                             </div>
@@ -68,7 +68,7 @@
 
                             <!-- Name -->
                             <h3 class="text-sm truncate mb-0.5"
-                                :class="room.unread > 0 ? 'font-bold text-gray-900' : 'font-semibold text-gray-700'">
+                                :class="room.unread > 0 ? 'font-bold text-heading' : 'font-semibold text-body'">
                                 {{ room.name }}
                             </h3>
 
@@ -76,13 +76,13 @@
                             <div class="flex items-center">
                                 <!-- Via Badge -->
                                 <span v-if="room.my_number"
-                                    class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-700 mr-2 flex-shrink-0 border border-blue-200">
+                                    class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-info-subtle text-info mr-2 flex-shrink-0 border border-info">
                                     {{ room.my_number }}
                                 </span>
 
                                 <!-- Last Message -->
                                 <p class="text-xs truncate"
-                                    :class="room.unread > 0 ? 'font-semibold text-gray-800' : 'text-gray-500'">
+                                    :class="room.unread > 0 ? 'font-semibold text-heading' : 'text-muted'">
                                     {{ room.lastMessage }}
                                 </p>
                             </div>
@@ -93,13 +93,13 @@
 
                             <!-- Time -->
                             <span class="text-[10px] font-medium whitespace-nowrap"
-                                :class="room.unread > 0 ? 'text-blue-600' : 'text-gray-400'">
+                                :class="room.unread > 0 ? 'text-info' : 'text-subtle'">
                                 {{ formatDate(room.timestamp) }}
                             </span>
 
                             <!-- Red Unread Badge -->
                             <span v-if="room.unread > 0"
-                                class="flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 text-[10px] font-bold text-white bg-red-500 rounded-full shadow-sm animate-pulse">
+                                class="flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 text-[10px] font-bold text-on-accent bg-danger rounded-full shadow-sm animate-pulse">
                                 {{ room.unread }}
                             </span>
 
@@ -110,22 +110,22 @@
             </aside>
 
             <!-- Chat Area -->
-            <main class="flex-1 relative flex flex-col bg-gray-100 min-w-0">
+            <main class="flex-1 relative flex flex-col bg-surface-3 min-w-0">
 
                 <!-- Chat Toolbar -->
                 <div
-                    class="h-16 border-b border-gray-200 bg-white flex justify-between items-center px-6 shadow-sm z-10">
+                    class="h-16 border-b border-default bg-surface flex justify-between items-center px-6 shadow-sm z-10">
                     <div>
-                        <h3 class="font-bold text-gray-800 text-lg">{{ currentRoomName }}</h3>
-                        <span class="text-xs text-gray-500 font-mono" v-if="activeRoomId">
+                        <h3 class="font-bold text-heading text-lg">{{ currentRoomName }}</h3>
+                        <span class="text-xs text-muted font-mono" v-if="activeRoomId">
                             {{ activeRoomId.split('_')[1] }}
                         </span>
                     </div>
 
                     <!-- Toggle Contact Panel Button -->
                     <button v-if="activeRoomId" @click="toggleContactPanel"
-                        class="p-2 rounded-full hover:bg-gray-100 text-gray-500 transition-colors focus:outline-none"
-                        :class="{ 'bg-blue-100 text-blue-600 ring-2 ring-blue-200': showContactPanel }"
+                        class="p-2 rounded-full hover:bg-surface-3 text-muted transition-colors focus:outline-none"
+                        :class="{ 'bg-info-subtle text-info ring-2 ring-info': showContactPanel }"
                         title="Contact Details">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor">
@@ -137,47 +137,29 @@
 
                 <deep-chat ref="elementRef" :history="currentHistory" :connect="connectConfig" :images="true"
                     :introMessage="introMessage"
-                    style="width: 100%; height: 100%; border: none; background-color: #f3f4f6;" :messageStyles="{
-                        default: {
-                            shared: {
-                                bubble: { maxWidth: '80%', padding: '10px 15px', borderRadius: '12px' }
-                            },
-                            user: {
-                                bubble: { backgroundColor: '#3b82f6', color: 'white' }
-                            },
-                            ai: {
-                                bubble: { backgroundColor: '#ffffff', color: '#1f2937' }
-                            }
-                        }
-                    }" :textInput="{
-                        placeholder: { text: 'Type a message...' },
-                        styles: {
-                            container: { backgroundColor: 'white', borderTop: '1px solid #e5e7eb', maxHeight: '100px', },
-                            text: { color: '#374151' }
-                        }
-                    }">
+                    :style="deepChatStyle" :messageStyles="deepChatMessageStyles" :textInput="deepChatTextInput">
                 </deep-chat>
             </main>
 
             <!-- COL 3: CONTACT INFO PANEL -->
             <aside v-if="showContactPanel && activeRoomId"
-                class="w-96 bg-white border-l border-gray-200 flex flex-col overflow-hidden transition-all duration-300 ease-in-out z-15 shadow-xl">
+                class="w-96 bg-surface border-l border-default flex flex-col overflow-hidden transition-all duration-300 ease-in-out z-15 shadow-xl">
 
                 <!-- Panel Header -->
                 <div
-                    class="flex-shrink-0 h-16 px-6 border-b border-gray-100 flex justify-between items-center bg-white">
-                    <h2 class="text-lg font-bold text-gray-800">
+                    class="flex-shrink-0 h-16 px-6 border-b border-default flex justify-between items-center bg-surface">
+                    <h2 class="text-lg font-bold text-heading">
                         {{ isEditingContact ? 'Edit Contact' : 'Contact Details' }}
                     </h2>
                     <div class="flex items-center space-x-3">
                         <!-- Edit/Cancel Button -->
                         <button @click="toggleContactEditForm" class="text-sm font-medium transition-colors"
-                            :class="isEditingContact ? 'text-red-500 hover:text-red-700' : 'text-blue-600 hover:text-blue-800'">
+                            :class="isEditingContact ? 'text-danger hover:text-danger' : 'text-info hover:text-info'">
                             {{ isEditingContact ? 'Cancel' : 'Edit' }}
                         </button>
 
                         <!-- Close Panel -->
-                        <button @click="showContactPanel = false" class="text-gray-400 hover:text-gray-600">
+                        <button @click="showContactPanel = false" class="text-subtle hover:text-body">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                                 stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -196,34 +178,34 @@
                         <!-- Identity Header -->
                         <div class="text-center">
                             <div
-                                class="w-20 h-20 mx-auto bg-gray-100 rounded-full flex items-center justify-center text-2xl font-bold text-gray-500 mb-3 border border-gray-200">
+                                class="w-20 h-20 mx-auto bg-surface-3 rounded-full flex items-center justify-center text-2xl font-bold text-muted mb-3 border border-default">
                                 {{ contactInitials }}
                             </div>
-                            <h3 class="text-xl font-bold text-gray-900">{{ contactFullName }}</h3>
+                            <h3 class="text-xl font-bold text-heading">{{ contactFullName }}</h3>
 
                             <!-- Job Title / Org / Dept -->
-                            <div v-if="contactData?.title" class="text-sm font-semibold text-gray-700 mt-1">
+                            <div v-if="contactData?.title" class="text-sm font-semibold text-body mt-1">
                                 {{ contactData?.title }}
                             </div>
 
                             <!-- FIXED: Organization Name Extraction -->
-                            <div v-if="contactData?.organization" class="text-sm text-gray-500 font-medium">
+                            <div v-if="contactData?.organization" class="text-sm text-muted font-medium">
                                 {{ contactData.organization.name || contactData.organization }}
                             </div>
 
-                            <div v-if="contactData?.department" class="text-xs text-gray-400 mt-0.5">
+                            <div v-if="contactData?.department" class="text-xs text-subtle mt-0.5">
                                 {{ contactData?.department }}
                             </div>
                         </div>
 
                         <!-- Contact Info Section -->
-                        <div class="border-t border-gray-100 pt-4 space-y-4">
-                            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Contact Details
+                        <div class="border-t border-default pt-4 space-y-4">
+                            <h4 class="text-xs font-bold text-subtle uppercase tracking-wider mb-3">Contact Details
                             </h4>
 
                             <!-- Primary Phone -->
                             <div v-if="contactData?.phone_number" class="flex items-start">
-                                <div class="mt-0.5 w-5 text-gray-400 flex-shrink-0">
+                                <div class="mt-0.5 w-5 text-subtle flex-shrink-0">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20"
                                         fill="currentColor">
                                         <path
@@ -231,14 +213,14 @@
                                     </svg>
                                 </div>
                                 <div class="ml-3">
-                                    <p class="text-sm font-medium text-gray-900">{{ contactData?.phone_number }}</p>
-                                    <p class="text-xs text-gray-500">Primary Phone</p>
+                                    <p class="text-sm font-medium text-heading">{{ contactData?.phone_number }}</p>
+                                    <p class="text-xs text-muted">Primary Phone</p>
                                 </div>
                             </div>
 
                             <!-- Mobile -->
                             <div v-if="contactData?.mobile_number" class="flex items-start">
-                                <div class="mt-0.5 w-5 text-gray-400 flex-shrink-0">
+                                <div class="mt-0.5 w-5 text-subtle flex-shrink-0">
                                     <!-- Mobile device icon -->
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20"
                                         fill="currentColor">
@@ -248,14 +230,14 @@
                                     </svg>
                                 </div>
                                 <div class="ml-3">
-                                    <p class="text-sm font-medium text-gray-900">{{ contactData?.mobile_number }}</p>
-                                    <p class="text-xs text-gray-500">Mobile</p>
+                                    <p class="text-sm font-medium text-heading">{{ contactData?.mobile_number }}</p>
+                                    <p class="text-xs text-muted">Mobile</p>
                                 </div>
                             </div>
 
                             <!-- Fax -->
                             <div v-if="contactData?.fax_number" class="flex items-start">
-                                <div class="mt-0.5 w-5 text-gray-400 flex-shrink-0">
+                                <div class="mt-0.5 w-5 text-subtle flex-shrink-0">
                                     <!-- Printer/Fax icon -->
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20"
                                         fill="currentColor">
@@ -265,14 +247,14 @@
                                     </svg>
                                 </div>
                                 <div class="ml-3">
-                                    <p class="text-sm font-medium text-gray-900">{{ contactData?.fax_number }}</p>
-                                    <p class="text-xs text-gray-500">Fax</p>
+                                    <p class="text-sm font-medium text-heading">{{ contactData?.fax_number }}</p>
+                                    <p class="text-xs text-muted">Fax</p>
                                 </div>
                             </div>
 
                             <!-- Email -->
                             <div v-if="contactData?.email" class="flex items-start">
-                                <div class="mt-0.5 w-5 text-gray-400 flex-shrink-0">
+                                <div class="mt-0.5 w-5 text-subtle flex-shrink-0">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20"
                                         fill="currentColor">
                                         <path
@@ -282,16 +264,16 @@
                                 </div>
                                 <div class="ml-3 break-all">
                                     <a :href="`mailto:${contactData?.email}`"
-                                        class="text-sm font-medium text-blue-600 hover:underline">
+                                        class="text-sm font-medium text-info hover:underline">
                                         {{ contactData?.email }}
                                     </a>
-                                    <p class="text-xs text-gray-500">Email</p>
+                                    <p class="text-xs text-muted">Email</p>
                                 </div>
                             </div>
 
                             <!-- Website -->
                             <div v-if="contactData?.website" class="flex items-start">
-                                <div class="mt-0.5 w-5 text-gray-400 flex-shrink-0">
+                                <div class="mt-0.5 w-5 text-subtle flex-shrink-0">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20"
                                         fill="currentColor">
                                         <path fill-rule="evenodd"
@@ -301,19 +283,19 @@
                                 </div>
                                 <div class="ml-3 break-all">
                                     <a :href="contactData?.website" target="_blank"
-                                        class="text-sm font-medium text-blue-600 hover:underline">
+                                        class="text-sm font-medium text-info hover:underline">
                                         {{ contactData?.website }}
                                     </a>
-                                    <p class="text-xs text-gray-500">Website</p>
+                                    <p class="text-xs text-muted">Website</p>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Address Section (UPDATED) -->
-                        <div v-if="formattedAddress" class="border-t border-gray-100 pt-4">
-                            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Location</h4>
+                        <div v-if="formattedAddress" class="border-t border-default pt-4">
+                            <h4 class="text-xs font-bold text-subtle uppercase tracking-wider mb-2">Location</h4>
                             <div class="flex items-start">
-                                <div class="mt-0.5 w-5 text-gray-400">
+                                <div class="mt-0.5 w-5 text-subtle">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20"
                                         fill="currentColor">
                                         <path fill-rule="evenodd"
@@ -321,15 +303,15 @@
                                             clip-rule="evenodd" />
                                     </svg>
                                 </div>
-                                <p class="ml-3 text-sm text-gray-700 whitespace-pre-line">{{ formattedAddress }}</p>
+                                <p class="ml-3 text-sm text-body whitespace-pre-line">{{ formattedAddress }}</p>
                             </div>
                         </div>
 
                         <!-- Notes Section -->
-                        <div v-if="contactData?.notes" class="border-t border-gray-100 pt-4">
-                            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Notes</h4>
+                        <div v-if="contactData?.notes" class="border-t border-default pt-4">
+                            <h4 class="text-xs font-bold text-subtle uppercase tracking-wider mb-2">Notes</h4>
                             <div
-                                class="bg-yellow-50 p-3 rounded text-sm text-gray-700 whitespace-pre-line border border-yellow-100 shadow-sm">
+                                class="bg-warning-subtle p-3 rounded text-sm text-body whitespace-pre-line border border-warning shadow-sm">
                                 {{ contactData?.notes }}
                             </div>
                         </div>
@@ -343,9 +325,9 @@
                             @success="handleContactSuccess" @error="handleContactError" :display-errors="false" />
 
                         <!-- Delete Button below the form -->
-                        <div v-if="contactData?.contact_uuid" class="mt-6 pt-4 pb-6 border-t border-gray-100">
+                        <div v-if="contactData?.contact_uuid" class="mt-6 pt-4 pb-6 border-t border-default">
                             <button @click="showDeleteContactModal = true"
-                                class="w-full text-center text-sm font-medium text-red-500 hover:text-red-700 py-2">
+                                class="w-full text-center text-sm font-medium text-danger hover:text-danger py-2">
                                 Delete Contact
                             </button>
                         </div>
@@ -357,8 +339,8 @@
         <!-- VueForm CREATE ROOM MODAL -->
         <div v-if="showCreateModal"
             class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
-            <div class="bg-white rounded-lg shadow-2xl w-96 p-6 transform transition-all scale-100">
-                <h3 class="text-lg font-bold text-gray-900 mb-4">Start New Conversation</h3>
+            <div class="bg-surface rounded-lg shadow-2xl w-96 p-6 transform transition-all scale-100">
+                <h3 class="text-lg font-bold text-heading mb-4">Start New Conversation</h3>
 
                 <!-- VueForm Component -->
                 <Vueform :endpoint="false" :float-placeholders="false" :schema="createRoomSchema"
@@ -367,7 +349,7 @@
                 <!-- Close Button (Optional, if not included in form actions) -->
                 <div class="mt-4 flex justify-center">
                     <button @click="showCreateModal = false"
-                        class="text-sm text-gray-400 hover:text-gray-600">Cancel</button>
+                        class="text-sm text-subtle hover:text-body">Cancel</button>
                 </div>
             </div>
         </div>
@@ -375,15 +357,15 @@
         <!-- VueForm CREATE ORG MODAL -->
         <div v-if="showOrgModal"
             class="fixed inset-0 z-20 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
-            <div class="bg-white rounded-lg shadow-2xl w-96 p-6">
-                <h3 class="text-lg font-bold text-gray-800 mb-4">Add Organization</h3>
+            <div class="bg-surface rounded-lg shadow-2xl w-96 p-6">
+                <h3 class="text-lg font-bold text-heading mb-4">Add Organization</h3>
 
                 <Vueform :endpoint="false" :float-placeholders="false" :schema="createOrgSchema"
                     @submit="handleCreateOrg" />
 
                 <div class="mt-4 flex justify-center">
                     <button @click="showOrgModal = false"
-                        class="text-sm text-gray-400 hover:text-gray-600">Cancel</button>
+                        class="text-sm text-subtle hover:text-body">Cancel</button>
                 </div>
             </div>
         </div>
@@ -405,6 +387,46 @@
 import { computed, onMounted, ref, onBeforeUnmount, nextTick } from "vue";
 import axios from 'axios';
 import 'deep-chat'; // Registers the web component
+import { useTheme } from "../composables/useTheme";
+
+// --- Theme (deep-chat lives in shadow DOM, so CSS can't reach it; feed it reactive props) ---
+const { isDark } = useTheme();
+
+const deepChatStyle = computed(() => ({
+    width: '100%',
+    height: '100%',
+    border: 'none',
+    backgroundColor: isDark.value ? '#111827' : '#f3f4f6',
+}));
+
+const deepChatMessageStyles = computed(() => ({
+    default: {
+        shared: {
+            bubble: { maxWidth: '80%', padding: '10px 15px', borderRadius: '12px' },
+        },
+        user: {
+            bubble: { backgroundColor: '#3b82f6', color: 'white' },
+        },
+        ai: {
+            bubble: {
+                backgroundColor: isDark.value ? '#1f2937' : '#ffffff',
+                color: isDark.value ? '#f3f4f6' : '#1f2937',
+            },
+        },
+    },
+}));
+
+const deepChatTextInput = computed(() => ({
+    placeholder: { text: 'Type a message...' },
+    styles: {
+        container: {
+            backgroundColor: isDark.value ? '#111827' : 'white',
+            borderTop: isDark.value ? '1px solid #374151' : '1px solid #e5e7eb',
+            maxHeight: '100px',
+        },
+        text: { color: isDark.value ? '#f3f4f6' : '#374151' },
+    },
+}));
 import MainLayout from "../Layouts/MainLayout.vue";
 import Notification from "./components/notifications/Notification.vue";
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
@@ -1014,7 +1036,7 @@ const createRoomSchema = computed(() => {
             submits: true,
             buttonLabel: 'Start Chat',
             align: 'center',
-            buttonClass: 'bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded mt-2',
+            buttonClass: 'bg-info-solid hover:bg-info-solid-hover text-white font-bold py-2 px-6 rounded mt-2',
 
             disabled: myDids.value.length === 0,
         }
@@ -1076,7 +1098,7 @@ const contactFormSchema = ref({
                 buttonLabel: '+',
                 label: '&nbsp;', // Empty label to align with input
                 columns: 2,
-                buttonClass: 'w-full bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold py-2 rounded border border-gray-300',
+                buttonClass: 'w-full bg-surface-3 hover:bg-surface-3 text-body font-bold py-2 rounded border border-strong',
                 onClick: () => { showOrgModal.value = true; }
             }
         }
@@ -1093,10 +1115,10 @@ const contactFormSchema = ref({
     fax_number: { type: 'text', label: 'Fax', columns: 12 },
 
 
-    divider2: { type: 'static', content: '<hr class="my-4 border-gray-100">' },
+    divider2: { type: 'static', content: '<hr class="my-4 border-default">' },
 
     // Row 5: Address (Granular)
-    address_label: { type: 'static', content: '<label class="text-xs font-bold text-gray-500 uppercase">Address</label>' },
+    address_label: { type: 'static', content: '<label class="text-xs font-bold text-muted uppercase">Address</label>' },
     address_street: { type: 'text', placeholder: 'Street Address', columns: 12 },
     container_addr: {
         type: 'group',
@@ -1116,7 +1138,7 @@ const contactFormSchema = ref({
         type: 'button',
         buttonLabel: 'Save Changes',
         submits: true,
-        buttonClass: 'w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded shadow-sm',
+        buttonClass: 'w-full bg-info-solid hover:bg-info-solid-hover text-white font-bold py-2 rounded shadow-sm',
     }
 });
 
@@ -1129,7 +1151,7 @@ const createOrgSchema = ref({
     website: { type: 'text', label: 'Website' },
 
     // Address (Grouped for layout)
-    address_label: { type: 'static', content: '<label class="text-xs font-bold text-gray-500 uppercase mt-2 block">Address</label>' },
+    address_label: { type: 'static', content: '<label class="text-xs font-bold text-muted uppercase mt-2 block">Address</label>' },
     address_street: { type: 'text', placeholder: 'Street' },
 
     container_addr: {
@@ -1149,7 +1171,7 @@ const createOrgSchema = ref({
         type: 'button',
         submits: true,
         buttonLabel: 'Create Organization',
-        buttonClass: 'w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded mt-2',
+        buttonClass: 'w-full bg-info-solid hover:bg-info-solid-hover text-white font-bold py-2 rounded mt-2',
     }
 });
 

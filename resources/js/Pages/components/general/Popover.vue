@@ -1,6 +1,6 @@
 <template>
     <Popover class="relative">
-        <PopoverButton class="inline-flex items-center gap-x-1 text-sm font-semibold leading-6 text-gray-900">
+        <PopoverButton class="inline-flex items-center gap-x-1 text-sm font-semibold leading-6 text-heading">
             <slot name="popover-button"></slot>
         </PopoverButton>
 
@@ -9,8 +9,8 @@
             leave-from-class="opacity-100 translate-y-0" leave-to-class="opacity-0 translate-y-1">
             <PopoverPanel class="absolute left-1/2 z-10 mt-3 flex w-screen max-w-max -translate-x-1/2 px-4">
                 <div
-                    class="w-screen max-w-64 flex-auto rounded-xl bg-white text-sm leading-6 shadow-xl ring-2 ring-gray-900/5">
-                    <div class="relative rounded-lg p-3 hover:bg-gray-50">
+                    class="w-screen max-w-64 flex-auto rounded-xl bg-surface text-sm leading-6 shadow-xl ring-2 ring-default">
+                    <div class="relative rounded-lg p-3 hover:bg-surface-2">
                         <slot name="popover-panel"></slot>
                     </div>
                 </div>

@@ -4,7 +4,7 @@
             :inert="showPairModal || showUpdateModal || showApiTokenModal || showCreateModal">
             <TransitionChild as="div" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100"
                 leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0">
-                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+                <div class="fixed inset-0 bg-gray-500 dark:bg-gray-900 bg-opacity-75 transition-opacity" />
             </TransitionChild>
             <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
                 <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
@@ -15,15 +15,15 @@
                         leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
 
                         <DialogPanel
-                            class="relative transform  rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-5xl sm:p-6">
+                            class="relative transform  rounded-lg bg-surface px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-5xl sm:p-6">
 
-                            <DialogTitle as="h3" class="mb-4 pr-8 text-base font-semibold leading-6 text-gray-900">
+                            <DialogTitle as="h3" class="mb-4 pr-8 text-base font-semibold leading-6 text-heading">
                                 {{ header }}
                             </DialogTitle>
 
                             <div class="absolute right-0 top-0 pr-4 pt-4 sm:block">
                                 <button type="button"
-                                    class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                                    class="rounded-md bg-surface text-subtle hover:text-muted focus:outline-none focus:ring-2 focus:ring-focus focus:ring-offset-2"
                                     @click="emit('close')">
                                     <span class="sr-only">Close</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
@@ -33,7 +33,7 @@
                             <div v-if="loading" class="w-full h-full">
                                 <div class="flex justify-center items-center space-x-3">
                                     <div>
-                                        <svg class="animate-spin  h-10 w-10 text-blue-600"
+                                        <svg class="animate-spin  h-10 w-10 text-info"
                                             xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
                                                 stroke-width="4">
@@ -43,7 +43,7 @@
                                             </path>
                                         </svg>
                                     </div>
-                                    <div class="text-lg text-blue-600 m-auto">Loading...</div>
+                                    <div class="text-lg text-info m-auto">Loading...</div>
                                 </div>
                             </div>
 
@@ -101,19 +101,19 @@
                                         </div>
 
                                         <div
-                                            class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
+                                            class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-body bg-surface-2 px-4 py-6 sm:p-6">
                                             <FormElements>
 
                                                 <StaticElement name="polycom_title" tag="h4" content="Polycom ZTP" />
 
                                                 <StaticElement name="polycom_loading"
                                                     :conditions="[() => isFormLoading]">
-                                                    <div class="text-center my-5 text-sm text-gray-500">
+                                                    <div class="text-center my-5 text-sm text-muted">
                                                         <div class="animate-pulse flex space-x-4">
                                                             <div class="flex-1 space-y-6 py-1">
-                                                                <div class="h-2 bg-slate-200 rounded"></div>
-                                                                <div class="h-2 bg-slate-200 rounded"></div>
-                                                                <div class="h-2 bg-slate-200 rounded"></div>
+                                                                <div class="h-2 bg-surface-3 rounded"></div>
+                                                                <div class="h-2 bg-surface-3 rounded"></div>
+                                                                <div class="h-2 bg-surface-3 rounded"></div>
 
                                                             </div>
                                                         </div>
@@ -125,14 +125,14 @@
                                                     <div v-if="options && options?.organization_id"
                                                         class="flex items-center gap-x-3">
                                                         <div
-                                                            class="flex-none rounded-full bg-green-400/10 p-1 text-green-400">
+                                                            class="flex-none rounded-full bg-success/10 p-1 text-success">
                                                             <div class="size-3 rounded-full bg-current" />
                                                         </div>
                                                         <h1 class="flex gap-x-3 text-lg">
                                                             <span class="font-semibold ">Status:</span>
-                                                            <Badge backgroundColor="bg-green-100"
-                                                                textColor="text-green-700" :text="'Active'"
-                                                                ringColor="ring-green-400/20"
+                                                            <Badge backgroundColor="bg-success-subtle"
+                                                                textColor="text-success" :text="'Active'"
+                                                                ringColor="ring-success/20"
                                                                 class="px-2 py-1 text-xs font-semibold" />
                                                         </h1>
                                                     </div>
@@ -140,15 +140,15 @@
 
                                                     <div v-if="!options" class="flex items-center gap-x-3">
                                                         <div
-                                                            class="flex-none rounded-full bg-amber-400/10 p-1 text-amber-400">
+                                                            class="flex-none rounded-full bg-warning/10 p-1 text-warning">
                                                             <div class="size-3 rounded-full bg-current" />
                                                         </div>
                                                         <h1 class="flex gap-x-3 text-lg">
                                                             <span class="font-semibold ">Status:</span>
-                                                            <Badge v-if="!isFormLoading" backgroundColor="bg-amber-100"
-                                                                textColor="text-amber-700"
+                                                            <Badge v-if="!isFormLoading" backgroundColor="bg-warning-subtle"
+                                                                textColor="text-warning"
                                                                 :text="'Polycom ZTP API Token Missing or Invalid'"
-                                                                ringColor="ring-amber-400/20"
+                                                                ringColor="ring-warning/20"
                                                                 class="px-2 py-1 text-xs font-semibold" />
                                                         </h1>
                                                     </div>
@@ -156,14 +156,14 @@
                                                     <div v-if="!options?.organization_id && options?.provider_settings"
                                                         class="flex items-center gap-x-3">
                                                         <div
-                                                            class="flex-none rounded-full bg-gray-400/10 p-1 text-gray-400">
+                                                            class="flex-none rounded-full bg-gray-400/10 p-1 text-subtle">
                                                             <div class="size-3 rounded-full bg-current" />
                                                         </div>
                                                         <h1 class="flex gap-x-3 text-lg">
                                                             <span class="font-semibold ">Status:</span>
-                                                            <Badge backgroundColor="bg-gray-100"
-                                                                textColor="text-gray-700" :text="'Not Registered'"
-                                                                ringColor="ring-gray-400/20"
+                                                            <Badge backgroundColor="bg-surface-3"
+                                                                textColor="text-body" :text="'Not Registered'"
+                                                                ringColor="ring-strong/20"
                                                                 class="px-2 py-1 text-xs font-semibold" />
                                                         </h1>
                                                     </div>

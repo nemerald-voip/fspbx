@@ -2,10 +2,10 @@
     <audio ref="audio" :src="url" preload="metadata" class="hidden" />
     <!-- Mobile layout -->
     <div class="block md:hidden">
-        <div class="w-full max-w-xl mx-auto rounded-2xl bg-white shadow-sm ring-1 ring-gray-200 overflow-hidden">
+        <div class="w-full max-w-xl mx-auto rounded-2xl bg-surface shadow-sm ring-1 ring-strong overflow-hidden">
             <!-- Top bar: timeline (full width) -->
             <div class="px-4 pt-3">
-                <input type="range" class="slider text-indigo-500 accent-indigo-500 w-full" min="0" max="100" step="0.1"
+                <input type="range" class="slider text-accent-fg accent-accent w-full" min="0" max="100" step="0.1"
                     :value="progress" @input="onTimeSlider" @change="onTimeSlider" />
             </div>
 
@@ -14,7 +14,7 @@
                 <div class="flex items-center justify-center gap-6">
                     <!-- Volume -->
                     <button @click="toggleMute"
-                        class="grid h-9 w-9 place-items-center text-slate-600 hover:text-slate-800">
+                        class="grid h-9 w-9 place-items-center text-body hover:text-heading">
                         <svg v-if="muted || volume === 0" class="h-5 w-5" viewBox="0 0 24 24">
                             <use href="#off" fill="currentColor" />
                         </svg>
@@ -25,7 +25,7 @@
 
                     <!-- Back 10s -->
                     <button @click="seekBy(-10)"
-                        class="grid h-10 w-10 place-items-center text-slate-500 hover:text-slate-700">
+                        class="grid h-10 w-10 place-items-center text-muted hover:text-body">
                         <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none">
                             <use href="#backward" stroke="currentColor" />
                         </svg>
@@ -45,23 +45,23 @@
 
                     <!-- Forward 10s -->
                     <button @click="seekBy(10)"
-                        class="grid h-10 w-10 place-items-center text-slate-500 hover:text-slate-700">
+                        class="grid h-10 w-10 place-items-center text-muted hover:text-body">
                         <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none">
                             <use href="#forward" stroke="currentColor" />
                         </svg>
                     </button>
 
                     <!-- Speed -->
-                    <button @click="cycleRate" class="text-sm font-semibold text-slate-600 hover:text-slate-800"> {{
+                    <button @click="cycleRate" class="text-sm font-semibold text-body hover:text-heading"> {{
                         rate }}x </button>
 
                     <!-- Download (mobile) -->
                     <button @click="handleDownload" :disabled="isDownloading"
-                        class="grid h-9 w-9 place-items-center rounded-full text-slate-600 hover:text-slate-800 disabled:opacity-50"
+                        class="grid h-9 w-9 place-items-center rounded-full text-body hover:text-heading disabled:opacity-50"
                         title="Download">
-                        <DownloadIcon v-if="!isDownloading" class="h-6 w-6 text-slate-600" aria-hidden="true" />
+                        <DownloadIcon v-if="!isDownloading" class="h-6 w-6 text-body" aria-hidden="true" />
                         <Spinner :show="isDownloading"
-                            class="h-6 w-6 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                            class="h-6 w-6 transition duration-500 ease-in-out py-2 rounded-full text-subtle active:bg-surface-3 active:duration-150 cursor-pointer" />
                     </button>
 
                 </div>
@@ -72,11 +72,11 @@
 
     <!-- Desktop layout -->
     <div class="hidden md:block">
-        <div class="w-full rounded-2xl bg-white shadow-sm ring-1 ring-gray-200 px-4 py-3">
+        <div class="w-full rounded-2xl bg-surface shadow-sm ring-1 ring-strong px-4 py-3">
 
             <div class="flex items-center gap-4">
                 <!-- Rewind 10s -->
-                <button type="button" class="grid h-10 w-10 place-items-center text-slate-500 hover:text-slate-700"
+                <button type="button" class="grid h-10 w-10 place-items-center text-muted hover:text-body"
                     @click="seekBy(-10)" title="Back 10s">
                     <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none">
                         <use href="#backward" stroke="currentColor" />
@@ -100,7 +100,7 @@
                 </button>
 
                 <!-- Forward 10s -->
-                <button type="button" class="grid h-10 w-10 place-items-center text-slate-500 hover:text-slate-700"
+                <button type="button" class="grid h-10 w-10 place-items-center text-muted hover:text-body"
                     @click="seekBy(10)" title="Forward 10s">
                     <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                         <!-- color comes from current text color -->
@@ -111,27 +111,27 @@
                 <!-- Center area: time + progress + duration -->
                 <div class="flex items-center gap-3 w-full">
                     <!-- current time -->
-                    <div class="w-12 text-right text-sm tabular-nums text-slate-600">
+                    <div class="w-12 text-right text-sm tabular-nums text-body">
                         {{ fmt(current) }}
                     </div>
 
                     <!-- progress bar -->
-                    <input type="range" class="slider text-indigo-500 accent-indigo-500 w-full" min="0" max="100"
+                    <input type="range" class="slider text-accent-fg accent-accent w-full" min="0" max="100"
                         step="0.1" :value="progress" @input="onTimeSlider" @change="onTimeSlider" />
 
                     <!-- duration -->
-                    <div class="w-12 text-sm tabular-nums text-slate-600">
+                    <div class="w-12 text-sm tabular-nums text-body">
                         {{ fmt(duration) }}
                     </div>
 
                     <!-- 1x speed -->
-                    <button type="button" class="text-sm text-slate-600 hover:text-slate-800 select-none"
+                    <button type="button" class="text-sm text-body hover:text-heading select-none"
                         @click="cycleRate" title="Playback speed">
                         {{ rate }}x
                     </button>
 
                     <!-- Volume button -->
-                    <button type="button" class="grid h-9 w-9 place-items-center text-slate-600 hover:text-slate-800"
+                    <button type="button" class="grid h-9 w-9 place-items-center text-body hover:text-heading"
                         @click="toggleMute" :title="muted || volume === 0 ? 'Unmute' : 'Mute'">
                         <!-- muted/off -->
                         <svg v-if="muted || volume === 0" class="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
@@ -145,15 +145,15 @@
 
                     <!-- Volume slider -->
                     <input type="range" min="0" max="1" step="0.01" v-model.number="volume"
-                        class="w-14 sm:w-20 lg:w-28 accent-indigo-500" :title="`Volume: ${(volume * 100) | 0}%`" />
+                        class="w-14 sm:w-20 lg:w-28 accent-accent" :title="`Volume: ${(volume * 100) | 0}%`" />
 
                     <!-- Download (desktop) -->
                     <button @click="handleDownload" :disabled="isDownloading"
-                        class="ml-2 grid h-9 w-9 place-items-center rounded-full text-slate-600 hover:text-slate-800 disabled:opacity-50"
+                        class="ml-2 grid h-9 w-9 place-items-center rounded-full text-body hover:text-heading disabled:opacity-50"
                         title="Download">
                         <DownloadIcon v-if="!isDownloading" class="h-6 w-6" aria-hidden="true" />
                         <Spinner :show="isDownloading"
-                            class="h-6 w-6 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                            class="h-6 w-6 transition duration-500 ease-in-out py-2 rounded-full text-subtle active:bg-surface-3 active:duration-150 cursor-pointer" />
                     </button>
 
 

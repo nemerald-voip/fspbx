@@ -1,8 +1,8 @@
 <template>
-    <div v-if="show" :class="{'absolute bg-gray-400 bg-opacity-30': absolute}" class="w-full h-full">
+    <div v-if="show" :class="{'absolute bg-gray-400 dark:bg-gray-900 bg-opacity-30': absolute}" class="w-full h-full">
         <div :class="{'mt-20': absolute}" class="flex justify-center items-center space-x-3">
             <div>
-                <svg class="animate-spin  h-10 w-10 text-blue-600" xmlns="http://www.w3.org/2000/svg"
+                <svg class="animate-spin  h-10 w-10 text-accent-fg" xmlns="http://www.w3.org/2000/svg"
                      fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
                             stroke-width="4">
@@ -12,7 +12,7 @@
                     </path>
                 </svg>
             </div>
-            <div class="text-lg text-blue-600 m-auto">Loading...</div>
+            <div class="text-lg text-accent-fg m-auto">Loading...</div>
         </div>
     </div>
 </template>

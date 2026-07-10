@@ -3,33 +3,33 @@
     <div class="m-3">
       <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
         <template #title>
-          <h1 class="text-xl font-bold text-gray-900 flex items-center">
-            <a :href="props.routes.faxes_index" class="hover:text-indigo-600">
+          <h1 class="text-xl font-bold text-heading flex items-center">
+            <a :href="props.routes.faxes_index" class="hover:text-accent-fg">
               Fax Dashboard
             </a>
-            <svg class="mx-3 h-5 w-5 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg class="mx-3 h-5 w-5 text-subtle" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
             </svg>
-            <span class="font-medium text-gray-500">{{ props.fax_label ? `${props.fax_label} Logs` : 'Fax Logs' }}</span>
+            <span class="font-medium text-muted">{{ props.fax_label ? `${props.fax_label} Logs` : 'Fax Logs' }}</span>
           </h1>
         </template>
 
         <template #filters>
           <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
             <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-              <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+              <MagnifyingGlassIcon class="h-5 w-5 text-subtle" aria-hidden="true" />
             </div>
             <input
               type="search"
               v-model="filterData.search"
-              class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
+              class="block w-full rounded-md border-0 py-1.5 pl-10 text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus sm:hidden"
               placeholder="Search"
               @keydown.enter="handleSearchButtonClick"
             />
             <input
               type="search"
               v-model="filterData.search"
-              class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
+              class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus sm:block"
               placeholder="Search"
               @keydown.enter="handleSearchButtonClick"
             />
@@ -43,7 +43,7 @@
           <div class="relative min-w-40 mb-2 shrink-0 sm:mr-4">
             <select
               v-model="filterData.status"
-              class="block w-full rounded-md border-0 py-2 pl-3 pr-10 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600"
+              class="block w-full rounded-md border-0 py-2 pl-3 pr-10 text-sm text-heading ring-1 ring-inset ring-strong focus:ring-2 focus:ring-inset focus:ring-focus"
             >
               <option value="all">All</option>
               <option value="success">Success</option>
@@ -71,7 +71,7 @@
 
         <template #table-header>
           <TableColumnHeader
-            class="w-12 py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
+            class="w-12 py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-heading sm:pl-6"
             :sortable="false"
           >
             <input
@@ -79,32 +79,32 @@
               type="checkbox"
               v-model="selectPageItems"
               @change="handleSelectPageItems"
-              class="h-4 w-4 rounded border-gray-300 text-indigo-600"
+              class="h-4 w-4 rounded border-strong text-accent-fg"
             />
           </TableColumnHeader>
 
           <TableColumnHeader
             header=" "
-            class="w-12 px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
+            class="w-12 px-2 py-3.5 text-left text-sm font-semibold text-heading"
             :sortable="false"
           />
 
-          <TableColumnHeader header="Date" class="whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-gray-900" />
+          <TableColumnHeader header="Date" class="whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-heading" />
 
-          <TableColumnHeader header="From" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-          <TableColumnHeader header="To" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-          <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-          <TableColumnHeader header="Code" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-          <TableColumnHeader header="Result" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-          <!-- <TableColumnHeader header="File" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" /> -->
-          <TableColumnHeader header="ECM" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-          <!-- <TableColumnHeader header="Local Station ID" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" /> -->
-          <TableColumnHeader header="Bad Rows" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-          <TableColumnHeader header="Transfer Rate" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-          <TableColumnHeader header="Transferred Pages" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-          <TableColumnHeader header="Total Pages" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-          <!-- <TableColumnHeader header="Destination" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" /> -->
-          <TableColumnHeader v-if="permissions.delete || permissions.retry" header="" class="px-2 py-3.5 text-center text-sm font-semibold text-gray-900" />
+          <TableColumnHeader header="From" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+          <TableColumnHeader header="To" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+          <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+          <TableColumnHeader header="Code" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+          <TableColumnHeader header="Result" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+          <!-- <TableColumnHeader header="File" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" /> -->
+          <TableColumnHeader header="ECM" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+          <!-- <TableColumnHeader header="Local Station ID" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" /> -->
+          <TableColumnHeader header="Bad Rows" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+          <TableColumnHeader header="Transfer Rate" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+          <TableColumnHeader header="Transferred Pages" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+          <TableColumnHeader header="Total Pages" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+          <!-- <TableColumnHeader header="Destination" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" /> -->
+          <TableColumnHeader v-if="permissions.delete || permissions.retry" header="" class="px-2 py-3.5 text-center text-sm font-semibold text-heading" />
         </template>
 
         <template v-if="permissions.delete && (selectPageItems || selectAll)" v-slot:current-selection>
@@ -113,14 +113,14 @@
               <span class="font-semibold">{{ selectedItems.length }}</span> items are selected.
               <button
                 v-if="!selectAll && selectedItems.length != data.total"
-                class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
+                class="text-info rounded py-2 px-2 hover:bg-info-subtle hover:text-info focus:outline-none focus:ring-1 focus:bg-info-subtle focus:ring-focus transition duration-500 ease-in-out"
                 @click="handleSelectAll"
               >
                 Select all {{ data.total }} items
               </button>
               <button
                 v-if="selectAll"
-                class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
+                class="text-info rounded py-2 px-2 hover:bg-info-subtle hover:text-info focus:outline-none focus:ring-1 focus:bg-info-subtle focus:ring-focus transition duration-500 ease-in-out"
                 @click="handleClearSelection"
               >
                 Clear selection
@@ -131,42 +131,42 @@
 
         <template #table-body>
           <tr v-for="row in data.data" :key="row.fax_log_uuid">
-            <TableField class="w-12 whitespace-nowrap py-2 pl-4 pr-3 text-sm text-gray-500 sm:pl-6">
+            <TableField class="w-12 whitespace-nowrap py-2 pl-4 pr-3 text-sm text-muted sm:pl-6">
               <input
                 v-if="permissions.delete"
                 v-model="selectedItems"
                 type="checkbox"
                 name="action_box[]"
                 :value="row.fax_log_uuid"
-                class="h-4 w-4 rounded border-gray-300 text-indigo-600"
+                class="h-4 w-4 rounded border-strong text-accent-fg"
               />
             </TableField>
 
             <TableField
               :text="directionText(row)"
-              class="w-12 whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+              class="w-12 whitespace-nowrap px-2 py-2 text-sm text-muted"
             >
               <ejs-tooltip :content="directionTooltip(row)" position="TopLeft" target="#direction_tooltip_target">
                 <div id="direction_tooltip_target">
-                  <PhoneOutgoingIcon class="w-5 h-5 text-blue-600" v-if="row.direction === 'outbound'" />
-                  <PhoneIncomingIcon class="w-5 h-5 text-green-600" v-if="row.direction === 'inbound'" />
+                  <PhoneOutgoingIcon class="w-5 h-5 text-info" v-if="row.direction === 'outbound'" />
+                  <PhoneIncomingIcon class="w-5 h-5 text-success" v-if="row.direction === 'inbound'" />
                   <span v-if="!row.direction">{{ directionText(row) }}</span>
                 </div>
               </ejs-tooltip>
             </TableField>
 
-            <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500">
-              <div class="text-gray-500">{{ row.fax_date_formatted }}</div>
+            <TableField class="whitespace-nowrap px-4 py-2 text-sm text-muted">
+              <div class="text-muted">{{ row.fax_date_formatted }}</div>
             </TableField>
 
-            <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="faxSource(row)" />
+            <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted" :text="faxSource(row)" />
 
             <TableField
-                class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                class="whitespace-nowrap px-2 py-2 text-sm text-muted"
                 :text="faxDestination(row)"
             />
 
-            <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+            <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted">
               <template #default>
                 <span
                   class="inline-flex items-center rounded-md px-2 py-1 text-xs font-semibold"
@@ -177,25 +177,25 @@
               </template>
             </TableField>
 
-            <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="String(row.fax_result_code ?? '')" />
-            <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.fax_result_text ?? ''" />
-            <!-- <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="fileBase(row.fax_file)" /> -->
-            <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.fax_ecm_used ?? ''" />
-            <!-- <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.fax_local_station_id ?? ''" /> -->
-            <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="String(row.fax_bad_rows ?? '')" />
-            <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="String(row.fax_transfer_rate ?? '')" />
-            <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.fax_document_transferred_pages" />
-            <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.fax_document_total_pages" />
-            <!-- <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.fax_uri ?? ''" /> -->
+            <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted" :text="String(row.fax_result_code ?? '')" />
+            <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted" :text="row.fax_result_text ?? ''" />
+            <!-- <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted" :text="fileBase(row.fax_file)" /> -->
+            <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted" :text="row.fax_ecm_used ?? ''" />
+            <!-- <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted" :text="row.fax_local_station_id ?? ''" /> -->
+            <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted" :text="String(row.fax_bad_rows ?? '')" />
+            <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted" :text="String(row.fax_transfer_rate ?? '')" />
+            <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted" :text="row.fax_document_transferred_pages" />
+            <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted" :text="row.fax_document_total_pages" />
+            <!-- <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted" :text="row.fax_uri ?? ''" /> -->
 
-            <TableField v-if="permissions.delete || permissions.retry" class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
+            <TableField v-if="permissions.delete || permissions.retry" class="whitespace-nowrap px-2 py-1 text-sm text-muted">
               <template #action-buttons>
                 <div class="flex items-center whitespace-nowrap justify-end">
                   <ejs-tooltip v-if="canRetry(row)" :content="'Retry outbound fax'" position="TopCenter" target="#retry_tooltip_target">
                     <div id="retry_tooltip_target">
                       <ArrowPathIcon
                         @click="handleRetryButtonClick(row)"
-                        class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
+                        class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer"
                       />
                     </div>
                   </ejs-tooltip>
@@ -203,7 +203,7 @@
                     <div id="delete_tooltip_target">
                       <TrashIcon
                         @click="handleDeleteButtonClick(row.fax_log_uuid)"
-                        class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
+                        class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer"
                       />
                     </div>
                   </ejs-tooltip>
@@ -215,9 +215,9 @@
 
         <template #empty>
           <div v-if="data.data.length === 0" class="text-center my-5">
-            <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-            <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
-            <p class="mt-1 text-sm text-gray-500">Adjust your search and try again.</p>
+            <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-subtle" />
+            <h3 class="mt-2 text-sm font-semibold text-heading">No results found</h3>
+            <p class="mt-1 text-sm text-muted">Adjust your search and try again.</p>
           </div>
         </template>
 
@@ -524,7 +524,7 @@ const statusBadge = (row) => {
   if (String(row?.fax_success ?? "0") === "1") {
     return {
       text: "Success",
-      classes: "bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20",
+      classes: "bg-success-subtle text-success ring-1 ring-inset ring-success/20",
     };
   }
 
@@ -533,30 +533,30 @@ const statusBadge = (row) => {
       case "waiting":
         return {
           text: "Retry queued",
-          classes: "bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-600/20",
+          classes: "bg-info-subtle text-info ring-1 ring-inset ring-info/20",
         };
       case "sending":
         return {
           text: "Sending",
-          classes: "bg-indigo-50 text-indigo-700 ring-1 ring-inset ring-indigo-600/20",
+          classes: "bg-accent-subtle text-accent-fg ring-1 ring-inset ring-accent/20",
         };
       case "trying":
       case "busy":
         return {
           text: "Retrying",
-          classes: "bg-yellow-50 text-yellow-800 ring-1 ring-inset ring-yellow-600/20",
+          classes: "bg-warning-subtle text-warning ring-1 ring-inset ring-warning/20",
         };
       case "sent":
         return {
           text: "Retried",
-          classes: "bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20",
+          classes: "bg-success-subtle text-success ring-1 ring-inset ring-success/20",
         };
     }
   }
 
   return {
     text: "Failed",
-    classes: "bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20",
+    classes: "bg-danger-subtle text-danger ring-1 ring-inset ring-danger/20",
   };
 };
 

@@ -3,7 +3,7 @@
         <Dialog as="div" class="relative z-10">
             <TransitionChild as="div" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100"
                 leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0">
-                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+                <div class="fixed inset-0 bg-gray-500 dark:bg-gray-900 bg-opacity-75 transition-opacity" />
             </TransitionChild>
 
             <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
@@ -14,14 +14,14 @@
                         leave-from="opacity-100 translate-y-0 sm:scale-100"
                         leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
                         <DialogPanel
-                            class="relative transform rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-7xl sm:p-6">
-                            <DialogTitle as="h3" class="mb-4 pr-8 text-base font-semibold leading-6 text-gray-900">
+                            class="relative transform rounded-lg bg-surface px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-7xl sm:p-6">
+                            <DialogTitle as="h3" class="mb-4 pr-8 text-base font-semibold leading-6 text-heading">
                                 {{ header }}
                             </DialogTitle>
 
                             <div class="absolute right-0 top-0 pr-4 pt-4 sm:block">
                                 <button type="button"
-                                    class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                                    class="rounded-md bg-surface text-subtle hover:text-muted focus:outline-none focus:ring-2 focus:ring-focus focus:ring-offset-2"
                                     @click="handleClose">
                                     <span class="sr-only">Close</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
@@ -30,14 +30,14 @@
 
                             <div v-if="loading" class="w-full py-10">
                                 <div class="flex items-center justify-center space-x-3">
-                                    <svg class="h-10 w-10 animate-spin text-blue-600" xmlns="http://www.w3.org/2000/svg"
+                                    <svg class="h-10 w-10 animate-spin text-info" xmlns="http://www.w3.org/2000/svg"
                                         fill="none" viewBox="0 0 24 24">
                                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
                                             stroke-width="4" />
                                         <path class="opacity-75" fill="currentColor"
                                             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                     </svg>
-                                    <div class="text-lg text-blue-600">Loading...</div>
+                                    <div class="text-lg text-info">Loading...</div>
                                 </div>
                             </div>
 
@@ -83,7 +83,7 @@
                                         </div>
 
                                         <div
-                                            class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
+                                            class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-body bg-surface-2 px-4 py-6 sm:p-6">
                                             <FormElements>
                                                 <HiddenElement name="dialplan_uuid" :meta="true" />
 
@@ -94,18 +94,18 @@
                                                 <StaticElement name="dialplan_uuid_clean"
                                                     :conditions="[() => props.options?.item?.dialplan_uuid]">
                                                     <div class="mb-1">
-                                                        <div class="mb-1 text-sm font-medium text-gray-600">Unique ID
+                                                        <div class="mb-1 text-sm font-medium text-body">Unique ID
                                                         </div>
                                                         <div class="flex items-center group">
-                                                            <span class="select-all text-sm font-normal text-gray-900">
+                                                            <span class="select-all text-sm font-normal text-heading">
                                                                 {{ props.options?.item?.dialplan_uuid }}
                                                             </span>
                                                             <button type="button"
                                                                 @click="handleCopyToClipboard(props.options?.item?.dialplan_uuid)"
-                                                                class="ml-2 rounded-full p-1 text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2"
+                                                                class="ml-2 rounded-full p-1 text-subtle transition-colors hover:bg-info-subtle hover:text-info focus:outline-none focus:ring-2 focus:ring-offset-2"
                                                                 title="Copy to clipboard">
                                                                 <ClipboardDocumentIcon
-                                                                    class="h-4 w-4 cursor-pointer text-gray-500 hover:text-gray-900" />
+                                                                    class="h-4 w-4 cursor-pointer text-muted hover:text-heading" />
                                                             </button>
                                                         </div>
                                                     </div>
@@ -166,13 +166,13 @@
 
                                                 <ListElement name="dialplan_rule_groups" :sort="true" size="sm"
                                                     :initial="0" :controls="{ add: true, remove: true, sort: true }"
-                                                    :add-classes="{ ListElement: { listItem: 'bg-white p-5 mb-6 rounded-lg shadow-sm border-l-4 border-l-blue-500 border border-gray-200' } }">
+                                                    :add-classes="{ ListElement: { listItem: 'bg-surface p-5 mb-6 rounded-lg shadow-sm border-l-4 border-l-blue-500 border border-default' } }">
                                                     <template #default="{ index }">
                                                         <ObjectElement :name="index">
                                                             <StaticElement name="rule_card_header"
                                                                 :columns="{ sm: { container: 12 } }">
                                                                 <div>
-                                                                    <div class="text-lg font-semibold text-gray-900">
+                                                                    <div class="text-lg font-semibold text-heading">
                                                                         Rule {{ index + 1 }}
                                                                     </div>
                                                                 </div>
@@ -180,15 +180,15 @@
 
                                                             <StaticElement name="rule_card_divider"
                                                                 :columns="{ container: 12 }">
-                                                                <div class="mb-5 border-b border-gray-200"></div>
+                                                                <div class="mb-5 border-b border-default"></div>
                                                             </StaticElement>
 
                                                             <StaticElement name="conditions_header">
                                                                 <div class="mb-4 mt-4">
-                                                                    <div class="text-lg font-semibold text-gray-900">
+                                                                    <div class="text-lg font-semibold text-heading">
                                                                         When
                                                                     </div>
-                                                                    <div class="mt-1 text-sm text-gray-500">
+                                                                    <div class="mt-1 text-sm text-muted">
                                                                         All listed conditions must match before actions run.
                                                                     </div>
                                                                 </div>
@@ -197,7 +197,7 @@
                                                             <ListElement name="conditions" :sort="true" size="sm"
                                                                 :initial="0"
                                                                 :controls="{ add: true, remove: true, sort: true }"
-                                                                :add-classes="{ ListElement: { listItem: 'bg-blue-100/40 p-2 mb-2 rounded-md border border-blue-150' } }">
+                                                                :add-classes="{ ListElement: { listItem: 'bg-info/40 p-2 mb-2 rounded-md border border-info' } }">
                                                                 <template #default="{ index: conditionIndex }">
                                                                     <ObjectElement :name="conditionIndex">
                                                                         <SelectElement name="tag"
@@ -236,11 +236,11 @@
                                                             </ListElement>
 
                                                             <StaticElement name="actions_header">
-                                                                <div class="mb-4 mt-8 border-t border-gray-200 pt-6">
-                                                                    <div class="text-lg font-semibold text-gray-900">
+                                                                <div class="mb-4 mt-8 border-t border-default pt-6">
+                                                                    <div class="text-lg font-semibold text-heading">
                                                                         Then
                                                                     </div>
-                                                                    <div class="mt-1 text-sm text-gray-500">
+                                                                    <div class="mt-1 text-sm text-muted">
                                                                         Run these actions when the conditions match.
                                                                     </div>
                                                                 </div>
@@ -249,7 +249,7 @@
                                                             <ListElement name="actions" :sort="true" size="sm"
                                                                 :initial="0"
                                                                 :controls="{ add: true, remove: true, sort: true }"
-                                                                :add-classes="{ ListElement: { listItem: 'bg-emerald-100/40 p-2 mb-2 rounded-md border border-emerald-150' } }">
+                                                                :add-classes="{ ListElement: { listItem: 'bg-success/40 p-2 mb-2 rounded-md border border-success' } }">
 
                                                                 <template #default="{ index: actionIndex }">
                                                                     <ObjectElement :name="actionIndex">
@@ -280,11 +280,11 @@
                                                             </ListElement>
 
                                                             <StaticElement name="anti_actions_header">
-                                                                <div class="mb-4 mt-8 border-t border-gray-200 pt-6">
-                                                                    <div class="text-lg font-semibold text-gray-900">
+                                                                <div class="mb-4 mt-8 border-t border-default pt-6">
+                                                                    <div class="text-lg font-semibold text-heading">
                                                                         Otherwise
                                                                     </div>
-                                                                    <div class="mt-1 text-sm text-gray-500">
+                                                                    <div class="mt-1 text-sm text-muted">
                                                                         Run these actions when the conditions do not match.
                                                                     </div>
                                                                 </div>
@@ -293,7 +293,7 @@
                                                             <ListElement name="anti_actions" :sort="true" size="sm"
                                                                 :initial="0"
                                                                 :controls="{ add: true, remove: true, sort: true }"
-                                                                :add-classes="{ ListElement: { listItem: 'bg-amber-100/40 p-2 mb-2 rounded-md border border-amber-150' } }">
+                                                                :add-classes="{ ListElement: { listItem: 'bg-warning/40 p-2 mb-2 rounded-md border border-warning' } }">
 
                                                                 <template #default="{ index: antiActionIndex }">
                                                                     <ObjectElement :name="antiActionIndex">
@@ -337,24 +337,24 @@
                                                 <StaticElement name="xml_editor">
                                                     <div>
                                                         <div class="mb-2 flex items-center justify-between gap-3">
-                                                            <div class="text-sm font-medium text-gray-700">Dialplan XML
+                                                            <div class="text-sm font-medium text-body">Dialplan XML
                                                             </div>
                                                             <select v-model="xmlEditorTheme"
-                                                                class="rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                                                class="rounded-md border-strong text-sm shadow-sm focus:border-accent focus:ring-focus">
                                                                 <option value="chrome">Light</option>
                                                                 <option value="one_dark">Dark</option>
                                                             </select>
                                                         </div>
 
                                                         <div
-                                                            class="overflow-hidden rounded-lg border border-gray-200 shadow-sm">
+                                                            class="overflow-hidden rounded-lg border border-default shadow-sm">
                                                             <AceEditor v-model="xmlEditorContent" lang="xml"
                                                                 :theme="xmlEditorTheme"
                                                                 :options="{ fontSize: 12, tabSize: 4, showPrintMargin: false }"
                                                                 height="60vh" />
                                                         </div>
 
-                                                        <div v-if="xmlEditorError" class="mt-2 text-sm text-red-600">
+                                                        <div v-if="xmlEditorError" class="mt-2 text-sm text-danger">
                                                             {{ xmlEditorError }}
                                                         </div>
                                                     </div>

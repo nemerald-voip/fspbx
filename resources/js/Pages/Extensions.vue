@@ -8,15 +8,15 @@
             <template #filters>
                 <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
                     <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                        <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                        <MagnifyingGlassIcon class="h-5 w-5 text-subtle" aria-hidden="true" />
                     </div>
                     <input type="text" v-model="filterData.search" name="mobile-search-candidate"
                         id="mobile-search-candidate"
-                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
+                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus sm:hidden"
                         placeholder="Search" @keydown.enter="handleSearchButtonClick" />
                     <input type="text" v-model="filterData.search" name="desktop-search-candidate"
                         id="desktop-search-candidate"
-                        class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
+                        class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus sm:block"
                         placeholder="Search" @keydown.enter="handleSearchButtonClick" />
                 </div>
             </template>
@@ -24,20 +24,20 @@
             <template #action>
                 <button v-if="permissions.extension_create" type="button"
                     @click.prevent="handleCreateButtonClick()"
-                    class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                    class="rounded-md bg-accent px-2.5 py-1.5 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
                     Create
                 </button>
 
                 <button v-if="permissions.extension_import"
                     type="button" @click.prevent="handleImportButtonClick()"
-                    class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    class="inline-flex items-center gap-x-1.5 rounded-md bg-surface px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2">
                     <DocumentArrowUpIcon class="h-5 w-5" aria-hidden="true" />
                     Import CSV
                 </button>
                 <button type="button"
                     v-if="permissions.extension_export"
                     @click.prevent="exportExtensionsCsv()"
-                    class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    class="inline-flex items-center gap-x-1.5 rounded-md bg-surface px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2">
                     <DocumentArrowDownIcon class="h-5 w-5" aria-hidden="true" />
                     Export CSV
                 </button>
@@ -54,51 +54,51 @@
             <template #table-header>
                 <!-- Checkbox + Extension column -->
             <TableColumnHeader
-                class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
+                class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-heading items-center justify-start">
                 <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
-                    class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                    class="h-4 w-4 rounded border-strong text-accent-fg">
 
                 <div class="flex items-center cursor-pointer select-none pl-14"
                     @click="handleSortRequest('extension')">
                     <span class="mr-2">Extension</span>
                     <ChevronUpIcon
                         v-if="sortData.name === 'extension' && sortData.order === 'asc'"
-                        class="h-4 w-4 text-gray-500" />
+                        class="h-4 w-4 text-muted" />
                     <ChevronDownIcon
                         v-else-if="sortData.name === 'extension' && sortData.order === 'desc'"
-                        class="h-4 w-4 text-gray-500" />
+                        class="h-4 w-4 text-muted" />
                 </div>
             </TableColumnHeader>
 
                 <TableColumnHeader header="Email"
-                    class="hidden px-2 py-3.5 text-left text-sm font-semibold text-gray-900 sm:table-cell" />
+                    class="hidden px-2 py-3.5 text-left text-sm font-semibold text-heading sm:table-cell" />
                 <TableColumnHeader header=""
-                    class="whitespace-nowrap hidden px-2 py-3.5...text-left text-sm font-semibold text-gray-900 md:table-cell">
+                    class="whitespace-nowrap hidden px-2 py-3.5...text-left text-sm font-semibold text-heading md:table-cell">
                     <div class="flex items-center cursor-pointer select-none"
                         @click="handleSortRequest('outbound_caller_id_number')">
                         <span class="mr-2">Outbound Caller ID</span>
                         <ChevronUpIcon
                             v-if="sortData.name === 'outbound_caller_id_number' && sortData.order === 'asc'"
-                            class="h-4 w-4 text-gray-500" />
+                            class="h-4 w-4 text-muted" />
                         <ChevronDownIcon
                             v-else-if="sortData.name === 'outbound_caller_id_number' && sortData.order === 'desc'"
-                            class="h-4 w-4 text-gray-500" />
+                            class="h-4 w-4 text-muted" />
                     </div>
                 </TableColumnHeader>
                 <TableColumnHeader header=""
-                    class="hidden px-2 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell">
+                    class="hidden px-2 py-3.5 text-left text-sm font-semibold text-heading lg:table-cell">
                     <div class="flex items-center cursor-pointer select-none"
                         @click="handleSortRequest('description')">
                         <span class="mr-2">Description</span>
                         <ChevronUpIcon v-if="sortData.name === 'description' && sortData.order === 'asc'"
-                            class="h-4 w-4 text-gray-500" />
+                            class="h-4 w-4 text-muted" />
                         <ChevronDownIcon v-else-if="sortData.name === 'description' && sortData.order === 'desc'"
-                            class="h-4 w-4 text-gray-500" />
+                            class="h-4 w-4 text-muted" />
                     </div>
                 </TableColumnHeader>
                 <TableColumnHeader header="Services"
-                    class="hidden px-2 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell" />
-                <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
+                    class="hidden px-2 py-3.5 text-left text-sm font-semibold text-heading lg:table-cell" />
+                <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-heading" />
             </template>
 
 
@@ -107,12 +107,12 @@
                     <div class="text-sm text-center m-2">
                         <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
                         <button v-if="!selectAll && selectedItems.length != data.total"
-                            class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
+                            class="text-info rounded py-2 px-2 hover:bg-info-subtle  hover:text-info focus:outline-none focus:ring-1 focus:bg-info-subtle focus:ring-focus transition duration-500 ease-in-out"
                             @click="handleSelectAll">
                             Select all {{ data.total }} items
                         </button>
                         <button v-if="selectAll"
-                            class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
+                            class="text-info rounded py-2 px-2 hover:bg-info-subtle  hover:text-info focus:outline-none focus:ring-1 focus:bg-info-subtle focus:ring-focus transition duration-500 ease-in-out"
                             @click="handleClearSelection">
                             Clear selection
                         </button>
@@ -126,50 +126,50 @@
 
                     <tr>
                         <!-- Checkbox + Extension -->
-                        <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500">
+                        <TableField class="whitespace-nowrap px-4 py-2 text-sm text-muted">
                             <div class="flex items-center gap-5">
                                 <input v-if="row.extension_uuid" v-model="selectedItems" type="checkbox"
                                     name="action_box[]" :value="row.extension_uuid"
-                                    class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                                    class="h-4 w-4 rounded border-strong text-accent-fg">
                                 <span
                                     v-if="!isRegsLoading && registrations && Array.isArray(registrations[String(row.extension)])"
-                                    class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-500 text-white text-xs cursor-pointer focus:outline-none"
+                                    class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-success text-on-accent text-xs cursor-pointer focus:outline-none"
                                     :title="`${registrations[String(row.extension)].length} device(s) registered`"
                                     @click="toggleExpand(row.extension_uuid)">
                                     {{ registrations[String(row.extension)].length }}
                                 </span>
                                 <span v-else
-                                    class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-300 text-gray-600 text-xs"
+                                    class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-surface-3 text-body text-xs"
                                     title="Not registered" @click="toggleExpand(row.extension_uuid)">
                                 </span>
 
-                                <div :class="{ 'cursor-pointer hover:text-gray-900': permissions.extension_update, }"
+                                <div :class="{ 'cursor-pointer hover:text-heading': permissions.extension_update, }"
                                     @click="permissions.extension_update && handleEditButtonClick(row.extension_uuid)">
                                     <span class="flex flex-col lg:flex-row items-start gap-2">
                                         {{ row.name_formatted }}
                                         <span class="italic text-xs sm:hidden"> {{ row.email || '' }}</span>
-                                        <Badge v-if="row.suspended" :text="'Suspended'" :backgroundColor="'bg-rose-100'"
-                                            :textColor="'text-rose-800'" ringColor="ring-rose-400/20"
+                                        <Badge v-if="row.suspended" :text="'Suspended'" :backgroundColor="'bg-danger-subtle'"
+                                            :textColor="'text-danger'" ringColor="ring-danger/20"
                                             class="px-2 py-1 text-xs" />
                                         <Badge v-if="row.do_not_disturb == 'true' && !row.suspended" :text="'DND'"
-                                            :backgroundColor="'bg-rose-100'" :textColor="'text-rose-800'"
-                                            ringColor="ring-rose-400/20" class="px-2 py-1 text-xs" />
+                                            :backgroundColor="'bg-danger-subtle'" :textColor="'text-danger'"
+                                            ringColor="ring-danger/20" class="px-2 py-1 text-xs" />
                                         <Badge v-if="row.forward_all_enabled == 'true'" :text="'FWD All'"
-                                            :backgroundColor="'bg-blue-100'" :textColor="'text-blue-800'"
-                                            ringColor="ring-blue-400/20" class="px-2 py-1 text-xs" />
+                                            :backgroundColor="'bg-info-subtle'" :textColor="'text-info'"
+                                            ringColor="ring-info/20" class="px-2 py-1 text-xs" />
                                         <Badge v-if="row.forward_busy_enabled == 'true'" :text="'FWD Busy'"
-                                            :backgroundColor="'bg-blue-100'" :textColor="'text-blue-800'"
-                                            ringColor="ring-blue-400/20" class="px-2 py-1 text-xs" />
+                                            :backgroundColor="'bg-info-subtle'" :textColor="'text-info'"
+                                            ringColor="ring-info/20" class="px-2 py-1 text-xs" />
                                         <Badge v-if="row.forward_no_answer_enabled == 'true'" :text="'FWD no Ans'"
-                                            :backgroundColor="'bg-blue-100'" :textColor="'text-blue-800'"
-                                            ringColor="ring-blue-400/20" class="px-2 py-1 text-xs" />
+                                            :backgroundColor="'bg-info-subtle'" :textColor="'text-info'"
+                                            ringColor="ring-info/20" class="px-2 py-1 text-xs" />
                                         <Badge v-if="row.forward_user_not_registered_enabled == 'true'"
-                                            :text="'FWD no Reg'" :backgroundColor="'bg-blue-100'"
-                                            :textColor="'text-blue-800'" ringColor="ring-blue-400/20"
+                                            :text="'FWD no Reg'" :backgroundColor="'bg-info-subtle'"
+                                            :textColor="'text-info'" ringColor="ring-info/20"
                                             class="px-2 py-1 text-xs" />
                                         <Badge v-if="row.follow_me_enabled == 'true'" :text="'Sequence'"
-                                            :backgroundColor="'bg-blue-100'" :textColor="'text-blue-800'"
-                                            ringColor="ring-blue-400/20" class="px-2 py-1 text-xs" />
+                                            :backgroundColor="'bg-info-subtle'" :textColor="'text-info'"
+                                            ringColor="ring-info/20" class="px-2 py-1 text-xs" />
                                     </span>
 
                                 </div>
@@ -178,20 +178,20 @@
 
 
                         <!-- Email -->
-                        <TableField class="hidden px-2 py-2 text-sm text-gray-500 sm:table-cell">
+                        <TableField class="hidden px-2 py-2 text-sm text-muted sm:table-cell">
                             {{ row.email || '' }}
                         </TableField>
                         <!-- Outbound Caller ID -->
-                        <TableField class="whitespace-nowrap hidden spx-2 py-2 text-sm text-gray-500 md:table-cell">
+                        <TableField class="whitespace-nowrap hidden spx-2 py-2 text-sm text-muted md:table-cell">
                             {{ row.outbound_caller_id_number_formatted || row.outbound_caller_id_number || '' }}
 
                         </TableField>
                         <!-- Description -->
-                        <TableField class="hidden px-2 py-2 text-sm text-gray-500 lg:table-cell">
+                        <TableField class="hidden px-2 py-2 text-sm text-muted lg:table-cell">
                             {{ row.description }}
                         </TableField>
 
-                        <TableField class="hidden whitespace-nowrap px-2 py-1 text-sm text-gray-500 lg:table-cell">
+                        <TableField class="hidden whitespace-nowrap px-2 py-1 text-sm text-muted lg:table-cell">
 
                             <template #action-buttons>
                                 <div class="flex items-center whitespace-nowrap">
@@ -221,7 +221,7 @@
                                         class="group relative inline-block cursor-help focus:outline-none"
                                         tabindex="0">
                                         <DevicePhoneMobileIcon
-                                            class="h-5 w-5 text-gray-400 hover:text-gray-600 active:bg-gray-300"
+                                            class="h-5 w-5 text-subtle hover:text-body active:bg-surface-3"
                                             aria-label="Mobile App (Phonebook Only)" />
                                         <div
                                             class="invisible opacity-0 group-hover:visible group-hover:opacity-100 group-focus:visible group-focus:opacity-100 transition-opacity duration-300 absolute z-50 bottom-full left-1/2 -translate-x-1/2 pb-2">
@@ -236,7 +236,7 @@
                                     <ejs-tooltip v-if="!!row.user_record" :content="'Record Calls'"
                                         position='TopCenter'>
                                         <MicrophoneIcon
-                                            class="h-5 w-5 text-rose-400 hover:text-rose-600 active:bg-rose-300"
+                                            class="h-5 w-5 text-danger hover:text-danger active:bg-danger-subtle"
                                             aria-label="Record Calls" />
                                     </ejs-tooltip>
 
@@ -246,7 +246,7 @@
 
                         </TableField>
 
-                        <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
+                        <TableField class="whitespace-nowrap px-2 py-1 text-sm text-muted">
 
                             <template #action-buttons>
                                 <div class="flex items-center whitespace-nowrap justify-end">
@@ -255,7 +255,7 @@
                                         position='TopCenter' target="#destination_tooltip_target">
                                         <div id="destination_tooltip_target">
                                             <PencilSquareIcon @click="handleEditButtonClick(row.extension_uuid)"
-                                                class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                                class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer" />
 
                                         </div>
                                     </ejs-tooltip>
@@ -264,7 +264,7 @@
                                         position='TopCenter' target="#delete_tooltip_target">
                                         <div id="delete_tooltip_target">
                                             <TrashIcon @click="handleSingleItemDeleteRequest(row.extension_uuid)"
-                                                class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                                class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer" />
                                         </div>
                                     </ejs-tooltip>
 
@@ -280,10 +280,10 @@
 
                     <!-- EXPANDABLE ROW -->
                     <tr v-if="expandedExtension === row.extension_uuid">
-                        <td :colspan="5" class="bg-gray-50 px-6 py-4">
+                        <td :colspan="5" class="bg-surface-2 px-6 py-4">
                             <div
                                 v-if="registrations && Array.isArray(registrations[String(row.extension)]) && registrations[String(row.extension)].length">
-                                <div class="ml-9 space-y-2 text-sm text-gray-500">
+                                <div class="ml-9 space-y-2 text-sm text-muted">
                                     <div v-for="(reg, idx) in registrations[String(row.extension)]" :key="idx"
                                         class="flex flex-col md:flex-row gap-4 border-b last:border-0 pb-2">
                                         <div><span class="font-semibold">Device:</span> {{ reg.agent }}</div>
@@ -295,7 +295,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div v-else class="text-gray-400 text-sm ">No registered devices found.</div>
+                            <div v-else class="text-subtle text-sm ">No registered devices found.</div>
                         </td>
                     </tr>
                 </template>
@@ -307,9 +307,9 @@
             <template #empty>
                 <!-- Conditional rendering for 'no records' message -->
                 <div v-if="data.data.length === 0" class="text-center my-5 ">
-                    <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
-                    <p class="mt-1 text-sm text-gray-500">
+                    <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-subtle" />
+                    <h3 class="mt-2 text-sm font-semibold text-heading">No results found</h3>
+                    <p class="mt-1 text-sm text-muted">
                         Adjust your search and try again.
                     </p>
                 </div>
@@ -353,18 +353,18 @@
         cancel-button-label="Cancel" 
     >
         <div>
-            <p class="text-sm text-gray-500 mb-5">
+            <p class="text-sm text-muted mb-5">
                 This action will permanently delete the selected extension(s). Are you sure you want to proceed?
             </p>
             
-            <div class="flex items-center bg-gray-50 p-3 rounded-md border border-gray-200">
+            <div class="flex items-center bg-surface-2 p-3 rounded-md border border-default">
                 <input 
                     id="retain_voicemail" 
                     v-model="retainVoicemail" 
                     type="checkbox" 
-                    class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer"
+                    class="h-4 w-4 rounded border-strong text-accent-fg focus:ring-focus cursor-pointer"
                 >
-                <label for="retain_voicemail" class="ml-3 block text-sm font-medium text-gray-700 cursor-pointer">
+                <label for="retain_voicemail" class="ml-3 block text-sm font-medium text-body cursor-pointer">
                     Retain voicemail (convert to team inbox)
                 </label>
             </div>

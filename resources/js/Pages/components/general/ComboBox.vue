@@ -12,8 +12,8 @@
             </ComboboxButton>
 
             <div v-if="multiple && badgeText" class="absolute inset-y-0 pl-1 flex items-center">
-                <Badge :text="badgeText" backgroundColor="bg-indigo-50" textColor="text-indigo-700"
-                    ringColor="ring-indigo-600/20" />
+                <Badge :text="badgeText" backgroundColor="bg-accent-subtle" textColor="text-accent-fg"
+                    ringColor="ring-accent/20" />
             </div>
 
             <div class="absolute inset-y-0 right-0 flex items-center pr-1">
@@ -21,20 +21,20 @@
 
                 <div v-if="true">
                     <UndoIcon v-if="showUndo" @click="undoValue"
-                        class="h-8 w-8 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
+                        class="h-8 w-8 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer"
                         aria-hidden="true" />
                 </div>
 
                 <div v-if="hasCurrentSelection || showClear" class="">
                     <XMarkIcon @click="clearValue"
-                        class="h-8 w-8 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
+                        class="h-8 w-8 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer"
                         aria-hidden="true" />
                 </div>
 
                 <div v-if="true">
                     <ComboboxButton class=" flex items-center  focus:outline-none">
                         <ChevronUpDownIcon
-                            class="h-8 w-8 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
+                            class="h-8 w-8 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer"
                             aria-hidden="true" />
                     </ComboboxButton>
                 </div>
@@ -44,14 +44,14 @@
             <transition leave-active-class="transition duration-100 ease-in" leave-from-class="opacity-100"
                 leave-to-class="opacity-0">
                 <ComboboxOptions
-                    class="absolute z-10 mt-1 px-2 max-h-72 w-full rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm">
+                    class="absolute z-10 mt-1 px-2 max-h-72 w-full rounded-md bg-surface py-1 text-base shadow-lg ring-1 ring-black/5 dark:ring-white/10 focus:outline-none sm:text-sm">
 
                     <div class="max-h-56 overflow-auto">
 
 
                         <ComboboxOption v-if="props.allowEmpty" v-slot="{ active, selected }" as="template">
                             <li :class="[
-                                active ? 'bg-blue-100 text-blue-800' : 'text-gray-900',
+                                active ? 'bg-info-subtle text-info' : 'text-heading',
                                 'relative cursor-default select-none py-2 pl-10 pr-4',
                             ]">
                                 <span :class="[
@@ -64,7 +64,7 @@
                         <ComboboxOption v-slot="{ active, selected }" v-for="item in filteredOptions" :key="item.value"
                             :value="item" as="template">
                             <li :class="[
-                                active ? 'bg-blue-100 text-blue-800' : 'text-gray-900',
+                                active ? 'bg-info-subtle text-info' : 'text-heading',
                                 'relative cursor-default select-none py-2 pl-10 pr-4',
                             ]">
                                 <span :class="[
@@ -72,7 +72,7 @@
                                     'block truncate',
                                 ]">{{ item.name }}</span>
                                 <span v-if="selected"
-                                    class="absolute inset-y-0 left-0 flex items-center pl-3 text-blue-600">
+                                    class="absolute inset-y-0 left-0 flex items-center pl-3 text-info">
                                     <CheckIcon class="h-5 w-5" aria-hidden="true" />
                                 </span>
                             </li>
@@ -82,25 +82,25 @@
                     <div v-if="multiple" class="p-2 border-t flex justify-between items-center">
                         <div>
                             <button type="button" @click.prevent="selectAll" :disabled="allSelected"
-                                class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-indigo-300">
+                                class="rounded-md bg-accent px-2.5 py-1.5 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50">
                                 Select All
                             </button>
 
-                            <!-- <a class="text-indigo-600 underline cursor-pointer mx-2">Reset</a> -->
+                            <!-- <a class="text-accent-fg underline cursor-pointer mx-2">Reset</a> -->
                             <button type="button" @click.prevent="resetSelection"
-                                class="ml-6 rounded-md bg-white text-sm font-medium text-indigo-600 hover:text-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                                class="ml-6 rounded-md bg-surface text-sm font-medium text-accent-fg hover:text-accent focus:outline-none focus:ring-2 focus:ring-focus focus:ring-offset-2">
                                 Reset
                             </button>
                         </div>
 
 
                         <!-- <button type="button" @click.prevent="resetSelection"
-                            class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                            class="rounded-md bg-surface px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2">
                             Reset
                         </button> -->
 
                         <button type="button" @click.prevent="applySelection" :disabled="!hasCurrentSelection"
-                            class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-indigo-300">
+                            class="rounded-md bg-accent px-2.5 py-1.5 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50">
                             Apply
                         </button>
                     </div>
@@ -223,15 +223,15 @@ const filteredOptions = computed(() => {
 
 // Compute the classes based on the error state
 const inputClass = computed(() => {
-    let baseClasses = 'w-full truncate text-gray-900 border-0 cursor-default rounded-md bg-white py-1.5 pl-3 text-left ring-1 ring-inset focus:outline-none focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-blue-600 sm:text-sm sm:leading-6';
+    let baseClasses = 'w-full truncate text-heading border-0 cursor-default rounded-md bg-surface py-1.5 pl-3 text-left ring-1 ring-inset focus:outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-info sm:text-sm sm:leading-6';
 
     // Check if either `hasCurrentSelection` or `showClear` is true to adjust padding-right
     let paddingRight = (hasCurrentSelection.value || props.showClear) ? 'pr-20' : 'pr-10';
 
     if (props.error) {
-        return `${baseClasses} ring-red-600 focus-visible:ring-offset-red-600`; // Apply red ring if there's an error
+        return `${baseClasses} ring-danger focus-visible:ring-offset-danger`; // Apply red ring if there's an error
     }
-    return `${baseClasses} ${paddingRight} ring-gray-300 disabled:opacity-50 disabled:bg-gray-200 disabled:cursor-not-allowed`;  // Default ring color when no error
+    return `${baseClasses} ${paddingRight} ring-strong disabled:opacity-50 disabled:bg-surface-3 disabled:cursor-not-allowed`;  // Default ring color when no error
 });
 
 // Determine if there is a current selection

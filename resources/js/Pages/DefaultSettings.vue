@@ -5,18 +5,18 @@
         <!-- Header -->
         <header class="flex flex-wrap items-end justify-between gap-3">
             <div>
-                <p class="text-xs font-medium uppercase tracking-wider text-indigo-600">Global configuration</p>
-                <h1 class="mt-1 text-2xl font-semibold text-gray-900">Default Settings</h1>
-                <p class="mt-1 text-sm text-gray-500">Manage system-wide defaults. Each setting may be overridden per domain.</p>
+                <p class="text-xs font-medium uppercase tracking-wider text-accent-fg">Global configuration</p>
+                <h1 class="mt-1 text-2xl font-semibold text-heading">Default Settings</h1>
+                <p class="mt-1 text-sm text-muted">Manage system-wide defaults. Each setting may be overridden per domain.</p>
             </div>
             <div class="flex flex-wrap gap-2">
-                <a v-if="permissions.domain_settings && routes.current_domain_settings" :href="routes.current_domain_settings" class="inline-flex items-center gap-1.5 rounded-md bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                <a v-if="permissions.domain_settings && routes.current_domain_settings" :href="routes.current_domain_settings" class="inline-flex items-center gap-1.5 rounded-md bg-surface px-3 py-1.5 text-sm font-medium text-body shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2">
                     <BuildingOffice2Icon class="h-4 w-4" /> Domain Settings
                 </a>
-                <button type="button" class="inline-flex items-center gap-1.5 rounded-md bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50" @click="reloadSettings">
+                <button type="button" class="inline-flex items-center gap-1.5 rounded-md bg-surface px-3 py-1.5 text-sm font-medium text-body shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2" @click="reloadSettings">
                     <ArrowPathIcon class="h-4 w-4" /> Reload
                 </button>
-                <button v-if="permissions.create" type="button" class="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500" @click="openEditor()">
+                <button v-if="permissions.create" type="button" class="inline-flex items-center gap-1.5 rounded-md bg-accent px-3 py-1.5 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover" @click="openEditor()">
                     <PlusIcon class="h-4 w-4" /> New default
                 </button>
             </div>
@@ -34,24 +34,24 @@
         <div class="flex flex-col gap-4 lg:flex-row">
             <!-- Sidebar -->
             <aside class="lg:w-72 lg:shrink-0">
-                <div class="rounded-lg bg-white p-3 shadow-sm ring-1 ring-gray-200">
+                <div class="rounded-lg bg-surface p-3 shadow-sm ring-1 ring-strong">
                     <div class="relative mb-3">
-                        <MagnifyingGlassIcon class="pointer-events-none absolute inset-y-0 left-3 h-4 w-4 my-auto text-gray-400" />
-                        <input v-model="filterData.search" type="text" placeholder="Search settings..." class="block w-full rounded-md border-0 py-1.5 pl-9 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600" />
+                        <MagnifyingGlassIcon class="pointer-events-none absolute inset-y-0 left-3 h-4 w-4 my-auto text-subtle" />
+                        <input v-model="filterData.search" type="text" placeholder="Search settings..." class="block w-full rounded-md border-0 py-1.5 pl-9 text-sm text-heading ring-1 ring-inset ring-strong focus:ring-2 focus:ring-inset focus:ring-focus" />
                     </div>
 
                     <div class="mb-3 space-y-2">
                         <div>
-                            <label class="block text-xs font-medium text-gray-500">Status</label>
-                            <select v-model="filterData.enabled" class="mt-1 block w-full rounded-md border-0 py-1.5 pl-2 pr-8 text-sm text-gray-900 ring-1 ring-inset ring-gray-300">
+                            <label class="block text-xs font-medium text-muted">Status</label>
+                            <select v-model="filterData.enabled" class="mt-1 block w-full rounded-md border-0 py-1.5 pl-2 pr-8 text-sm text-heading ring-1 ring-inset ring-strong">
                                 <option value="all">Any status</option>
                                 <option value="true">Enabled</option>
                                 <option value="false">Disabled</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-gray-500">Overrides</label>
-                            <select v-model="filterData.overrides" class="mt-1 block w-full rounded-md border-0 py-1.5 pl-2 pr-8 text-sm text-gray-900 ring-1 ring-inset ring-gray-300">
+                            <label class="block text-xs font-medium text-muted">Overrides</label>
+                            <select v-model="filterData.overrides" class="mt-1 block w-full rounded-md border-0 py-1.5 pl-2 pr-8 text-sm text-heading ring-1 ring-inset ring-strong">
                                 <option value="all">Any</option>
                                 <option value="with">Has overrides</option>
                                 <option value="without">No overrides</option>
@@ -59,7 +59,7 @@
                         </div>
                     </div>
 
-                    <p class="px-1 pb-1 text-xs font-medium uppercase tracking-wider text-gray-400">Categories</p>
+                    <p class="px-1 pb-1 text-xs font-medium uppercase tracking-wider text-subtle">Categories</p>
                     <nav class="max-h-[60vh] space-y-0.5 overflow-y-auto">
                         <button type="button" :class="categoryButtonClass('')" @click="selectedCategory = ''">
                             <span class="min-w-0 flex-1 truncate">All</span>
@@ -69,28 +69,28 @@
                             <span class="min-w-0 flex-1 truncate">{{ cat.label }}</span>
                             <span :class="categoryBadgeClass(cat.value)">{{ cat.count }}</span>
                         </button>
-                        <p v-if="!categoriesWithCounts.length" class="px-3 py-2 text-xs text-gray-400">No matching categories</p>
+                        <p v-if="!categoriesWithCounts.length" class="px-3 py-2 text-xs text-subtle">No matching categories</p>
                     </nav>
                 </div>
             </aside>
 
             <!-- Main panel -->
             <section class="min-w-0 flex-1">
-                <div class="rounded-lg bg-white shadow-sm ring-1 ring-gray-200">
-                    <header class="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 px-4 py-3">
+                <div class="rounded-lg bg-surface shadow-sm ring-1 ring-strong">
+                    <header class="flex flex-wrap items-center justify-between gap-3 border-b border-default px-4 py-3">
                         <div>
-                            <h2 class="text-base font-semibold text-gray-900">{{ selectedCategoryLabel }}</h2>
-                            <p class="text-xs text-gray-500">{{ displayedRows.length }} setting{{ displayedRows.length === 1 ? '' : 's' }} shown</p>
+                            <h2 class="text-base font-semibold text-heading">{{ selectedCategoryLabel }}</h2>
+                            <p class="text-xs text-muted">{{ displayedRows.length }} setting{{ displayedRows.length === 1 ? '' : 's' }} shown</p>
                         </div>
                         <div class="flex items-center gap-2">
-                            <button v-if="displayedRows.length" type="button" class="text-xs text-gray-500 hover:text-gray-900" @click="toggleSelectAllVisible">
+                            <button v-if="displayedRows.length" type="button" class="text-xs text-muted hover:text-heading" @click="toggleSelectAllVisible">
                                 {{ allVisibleSelected ? 'Clear selection' : 'Select visible' }}
                             </button>
-                            <div v-if="selectedItems.length" class="flex items-center gap-1 rounded-md bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700">
+                            <div v-if="selectedItems.length" class="flex items-center gap-1 rounded-md bg-accent-subtle px-2 py-1 text-xs font-medium text-accent-fg">
                                 <span>{{ selectedItems.length }} selected</span>
-                                <button v-if="permissions.update" type="button" class="rounded px-1.5 py-0.5 hover:bg-indigo-100" @click="handleBulkActionRequest('bulk_toggle')">Toggle</button>
-                                <button v-if="permissions.destroy" type="button" class="rounded px-1.5 py-0.5 hover:bg-indigo-100" @click="handleBulkActionRequest('bulk_delete')">Delete</button>
-                                <button v-if="permissions.copy_to_domain" type="button" class="rounded px-1.5 py-0.5 hover:bg-indigo-100" @click="handleBulkActionRequest('bulk_copy')">Copy to domain</button>
+                                <button v-if="permissions.update" type="button" class="rounded px-1.5 py-0.5 hover:bg-accent-subtle" @click="handleBulkActionRequest('bulk_toggle')">Toggle</button>
+                                <button v-if="permissions.destroy" type="button" class="rounded px-1.5 py-0.5 hover:bg-accent-subtle" @click="handleBulkActionRequest('bulk_delete')">Delete</button>
+                                <button v-if="permissions.copy_to_domain" type="button" class="rounded px-1.5 py-0.5 hover:bg-accent-subtle" @click="handleBulkActionRequest('bulk_copy')">Copy to domain</button>
                             </div>
                         </div>
                     </header>
@@ -99,29 +99,29 @@
                         <Loading :show="true" :absolute="false" />
                     </div>
 
-                    <ul v-else-if="displayedRows.length" class="divide-y divide-gray-100">
-                        <li v-for="row in displayedRows" :key="row.default_setting_uuid" class="relative flex items-start gap-3 px-4 py-3 transition hover:bg-gray-50">
-                            <input v-model="selectedItems" type="checkbox" :value="row.default_setting_uuid" class="mt-1 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600" />
+                    <ul v-else-if="displayedRows.length" class="divide-y divide-default">
+                        <li v-for="row in displayedRows" :key="row.default_setting_uuid" class="relative flex items-start gap-3 px-4 py-3 transition hover:bg-surface-2">
+                            <input v-model="selectedItems" type="checkbox" :value="row.default_setting_uuid" class="mt-1 h-4 w-4 rounded border-strong text-accent-fg focus:ring-focus" />
 
                             <div class="min-w-0 flex-1">
                                 <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                    <h3 class="text-sm font-semibold text-gray-900">{{ formatLabel(row.subcategory) }}</h3>
-                                    <button type="button" class="inline-flex items-center rounded-md bg-indigo-50 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-indigo-700 ring-1 ring-inset ring-indigo-600/20 hover:bg-indigo-100" :title="`Filter by ${row.category_label}`" @click="selectedCategory = row.category">{{ row.category_label }}</button>
-                                    <span class="font-mono text-xs text-gray-400">{{ row.subcategory }}</span>
-                                    <span class="text-xs text-gray-300">·</span>
-                                    <span class="text-xs text-gray-500">{{ row.type_label }}</span>
+                                    <h3 class="text-sm font-semibold text-heading">{{ formatLabel(row.subcategory) }}</h3>
+                                    <button type="button" class="inline-flex items-center rounded-md bg-accent-subtle px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-accent-fg ring-1 ring-inset ring-accent/20 hover:bg-accent-subtle" :title="`Filter by ${row.category_label}`" @click="selectedCategory = row.category">{{ row.category_label }}</button>
+                                    <span class="font-mono text-xs text-subtle">{{ row.subcategory }}</span>
+                                    <span class="text-xs text-subtle">·</span>
+                                    <span class="text-xs text-muted">{{ row.type_label }}</span>
                                 </div>
-                                <p v-if="row.description" class="mt-1 text-xs text-gray-500">{{ row.description }}</p>
+                                <p v-if="row.description" class="mt-1 text-xs text-muted">{{ row.description }}</p>
 
                                 <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
                                     <div class="grid min-w-0 max-w-full grid-cols-[auto,minmax(0,1fr)] items-center gap-1.5">
-                                        <span class="shrink-0 text-xs text-gray-400">Value</span>
+                                        <span class="shrink-0 text-xs text-subtle">Value</span>
                                         <button v-if="hasCopyableValue(row.value)" type="button" class="min-w-0 max-w-full text-left" :title="valueTitle(row.value, row.is_secret)" aria-label="Copy value" @click.stop="copyValue(row.value)">
-                                            <code class="block max-w-full truncate rounded bg-gray-100 px-2 py-0.5 font-mono text-xs text-gray-800 ring-1 ring-transparent transition hover:bg-gray-200 hover:ring-gray-300">{{ truncatedValue(row.value, row.is_secret) }}</code>
+                                            <code class="block max-w-full truncate rounded bg-surface-3 px-2 py-0.5 font-mono text-xs text-heading ring-1 ring-transparent transition hover:bg-surface-3 hover:ring-strong">{{ truncatedValue(row.value, row.is_secret) }}</code>
                                         </button>
                                         <code v-else class="block max-w-full truncate rounded bg-gray-100 px-2 py-0.5 font-mono text-xs text-gray-400">{{ truncatedValue(row.value, row.is_secret) }}</code>
                                     </div>
-                                    <button v-if="row.override_count > 0" type="button" class="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20 hover:bg-amber-100" @click="showAffectedDomains(row)">
+                                    <button v-if="row.override_count > 0" type="button" class="inline-flex items-center gap-1 rounded-md bg-warning-subtle px-2 py-0.5 text-[11px] font-medium text-warning ring-1 ring-inset ring-warning/20 hover:bg-warning-subtle" @click="showAffectedDomains(row)">
                                         <UsersIcon class="h-3 w-3" />
                                         {{ row.override_count }} override{{ row.override_count === 1 ? '' : 's' }}
                                     </button>
@@ -130,23 +130,23 @@
 
                             <div class="flex shrink-0 items-center gap-2">
                                 <button v-if="permissions.update" type="button" :class="statusClass(row)" :title="row.enabled ? 'Disable setting' : 'Enable setting'" @click="toggleStatus(row)">
-                                    <span :class="['mr-1 inline-block h-1.5 w-1.5 rounded-full', row.enabled ? 'bg-green-500' : 'bg-rose-500']" />
+                                    <span :class="['mr-1 inline-block h-1.5 w-1.5 rounded-full', row.enabled ? 'bg-success' : 'bg-danger']" />
                                     {{ row.enabled ? 'Enabled' : 'Disabled' }}
                                 </button>
                                 <span v-else :class="statusClass(row)">
-                                    <span :class="['mr-1 inline-block h-1.5 w-1.5 rounded-full', row.enabled ? 'bg-green-500' : 'bg-rose-500']" />
+                                    <span :class="['mr-1 inline-block h-1.5 w-1.5 rounded-full', row.enabled ? 'bg-success' : 'bg-danger']" />
                                     {{ row.enabled ? 'Enabled' : 'Disabled' }}
                                 </span>
-                                <button v-if="permissions.update" type="button" class="rounded-md px-2 py-1 text-xs font-medium text-indigo-600 hover:bg-indigo-50" @click="openEditor(row)">Edit</button>
-                                <button v-if="permissions.destroy" type="button" class="rounded-md px-2 py-1 text-xs font-medium text-rose-600 hover:bg-rose-50" @click="confirmDelete([row.default_setting_uuid])">Delete</button>
+                                <button v-if="permissions.update" type="button" class="rounded-md px-2 py-1 text-xs font-medium text-accent-fg hover:bg-accent-subtle" @click="openEditor(row)">Edit</button>
+                                <button v-if="permissions.destroy" type="button" class="rounded-md px-2 py-1 text-xs font-medium text-danger hover:bg-danger-subtle" @click="confirmDelete([row.default_setting_uuid])">Delete</button>
                             </div>
                         </li>
                     </ul>
 
                     <div v-else class="px-4 py-12 text-center">
-                        <p class="text-sm font-medium text-gray-900">No settings match your filters</p>
-                        <p class="mt-1 text-xs text-gray-500">Try clearing search or status filters.</p>
-                        <button type="button" class="mt-3 rounded-md bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50" @click="handleFiltersReset">Reset filters</button>
+                        <p class="text-sm font-medium text-heading">No settings match your filters</p>
+                        <p class="mt-1 text-xs text-muted">Try clearing search or status filters.</p>
+                        <button type="button" class="mt-3 rounded-md bg-surface px-3 py-1.5 text-xs font-medium text-body shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2" @click="handleFiltersReset">Reset filters</button>
                     </div>
                 </div>
             </section>
@@ -173,19 +173,19 @@
 
     <AddEditItemModal :show="showAffectedModal" header="Affected Domains" @close="showAffectedModal = false">
         <template #modal-body>
-            <div v-if="affectedDomains.length" class="divide-y divide-gray-200">
+            <div v-if="affectedDomains.length" class="divide-y divide-default">
                 <div v-for="domain in affectedDomains" :key="domain.domain_setting_uuid" class="flex items-center justify-between py-3 text-sm">
                     <div>
-                        <div class="font-medium text-gray-900">{{ domain.domain_description || domain.domain_name }}</div>
-                        <button v-if="hasCopyableValue(domain.value)" type="button" class="min-w-0 max-w-full text-left" :title="valueTitle(domain.value, affectedDomainsSecret)" aria-label="Copy value" @click.stop="copyValue(domain.value)">
-                            <code class="block max-w-full truncate rounded bg-gray-50 px-1.5 py-0.5 font-mono text-xs text-gray-500 ring-1 ring-transparent transition hover:bg-gray-100 hover:ring-gray-300">{{ displayValue(domain.value, affectedDomainsSecret) }}</code>
+                        <div class="font-medium text-heading">{{ domain.domain_description || domain.domain_name }}</div>
+                        <button v-if="hasCopyableValue(row.value)" type="button" class="min-w-0 max-w-full text-left" :title="valueTitle(domain.value, affectedDomainsSecret)" aria-label="Copy value" @click.stop="copyValue(domain.value)">
+                            <code class="block max-w-full truncate rounded bg-surface-2 px-1.5 py-0.5 font-mono text-xs text-muted ring-1 ring-transparent transition hover:bg-surface-3 hover:ring-strong">{{ displayValue(domain.value, affectedDomainsSecret) }}</code>
                         </button>
                         <code v-else class="block max-w-full truncate rounded bg-gray-50 px-1.5 py-0.5 font-mono text-xs text-gray-400">{{ displayValue(domain.value, affectedDomainsSecret) }}</code>
                     </div>
-                    <a :href="routes.domain_settings.replace('__DOMAIN__', domain.domain_uuid)" class="rounded-md px-2 py-1 text-indigo-600 hover:bg-indigo-50">Open</a>
+                    <a :href="routes.domain_settings.replace('__DOMAIN__', domain.domain_uuid)" class="rounded-md px-2 py-1 text-accent-fg hover:bg-accent-subtle">Open</a>
                 </div>
             </div>
-            <div v-else class="py-4 text-sm text-gray-500">No affected domains.</div>
+            <div v-else class="py-4 text-sm text-muted">No affected domains.</div>
         </template>
     </AddEditItemModal>
 
@@ -207,13 +207,13 @@ import { MagnifyingGlassIcon, ArrowPathIcon, PlusIcon, UsersIcon, BuildingOffice
 
 const StatTile = (props) => {
     const toneMap = {
-        gray: 'text-gray-900',
-        amber: 'text-amber-600',
-        green: 'text-green-600',
-        rose: 'text-rose-600',
+        gray: 'text-heading',
+        amber: 'text-warning',
+        green: 'text-success',
+        rose: 'text-danger',
     }
-    return h('div', { class: 'rounded-lg bg-white p-3 shadow-sm ring-1 ring-gray-200' }, [
-        h('p', { class: 'text-xs text-gray-500' }, props.label),
+    return h('div', { class: 'rounded-lg bg-surface p-3 shadow-sm ring-1 ring-strong' }, [
+        h('p', { class: 'text-xs text-muted' }, props.label),
         h('p', { class: ['mt-0.5 text-xl font-semibold', toneMap[props.tone] || toneMap.gray] }, String(props.value ?? 0)),
     ])
 }
@@ -523,7 +523,7 @@ const categoryButtonClass = (value) => {
     const active = selectedCategory.value === value
     return [
         'flex w-full items-center justify-between gap-2 rounded-md px-3 py-1.5 text-left text-sm transition',
-        active ? 'bg-indigo-50 font-semibold text-indigo-700' : 'text-gray-700 hover:bg-gray-50',
+        active ? 'bg-accent-subtle font-semibold text-accent-fg' : 'text-body hover:bg-surface-2',
     ]
 }
 
@@ -531,13 +531,13 @@ const categoryBadgeClass = (value) => {
     const active = selectedCategory.value === value
     return [
         'inline-flex min-w-6 shrink-0 items-center justify-center rounded-full px-1.5 py-0.5 text-[11px] font-medium tabular-nums',
-        active ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-600',
+        active ? 'bg-accent-subtle text-accent-fg' : 'bg-surface-3 text-body',
     ]
 }
 
 const statusClass = (row) => [
     'inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset transition',
     props.permissions?.update ? 'hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-1' : '',
-    row.enabled ? 'bg-green-50 text-green-700 ring-green-600/20' : 'bg-rose-50 text-rose-700 ring-rose-600/20',
+    row.enabled ? 'bg-success-subtle text-success ring-success/20' : 'bg-danger-subtle text-danger ring-danger/20',
 ]
 </script>

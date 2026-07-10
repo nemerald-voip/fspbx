@@ -8,7 +8,7 @@
                         placeholder="Enter Phone Number"
                         :error="errors?.destination && errors.destination.length > 0"/>
                 </div>
-                <div v-if="errors?.destination" class="mt-2 text-sm text-red-600">
+                <div v-if="errors?.destination" class="mt-2 text-sm text-danger">
                     {{ errors.destination[0] }}
                 </div>
             </div> -->
@@ -28,7 +28,7 @@
                     <SelectBox :options="options.chatplan_detail_data" :selectedItem="null"
                         :search="true" :placeholder="'Choose extension'" @update:model-value="handleUpdateExtension" />
                 </div>
-                <p class="mt-3 text-sm leading-6 text-gray-600">Assign the extension to which the messages should be
+                <p class="mt-3 text-sm leading-6 text-body">Assign the extension to which the messages should be
                     forwarded.</p>
             </div>
 
@@ -38,10 +38,10 @@
                     <InputField v-model="form.email" type="text" name="email" placeholder="Optional"
                         :error="errors?.email && errors.email.length > 0"/>
                 </div>
-                <div v-if="errors?.email" class="mt-2 text-sm text-red-600">
+                <div v-if="errors?.email" class="mt-2 text-sm text-danger">
                     {{ errors.email[0] }}
                 </div>
-                <p class="mt-3 text-sm leading-6 text-gray-600">You can choose to use email instead of the extension if
+                <p class="mt-3 text-sm leading-6 text-body">You can choose to use email instead of the extension if
                     you'd like.</p>
             </div>
 
@@ -55,13 +55,13 @@
         <div class="border-t mt-4 sm:mt-4 ">
             <div class="mt-4 sm:mt-4 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
                 <button type="submit"
-                    class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
+                    class="inline-flex w-full justify-center rounded-md bg-accent px-3 py-2 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:col-start-2"
                     ref="saveButtonRef" :disabled="isSubmitting">
                     <Spinner :show="isSubmitting" />
                     Save
                 </button>
                 <button type="button"
-                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0"
+                    class="mt-3 inline-flex w-full justify-center rounded-md bg-surface px-3 py-2 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2 sm:col-start-1 sm:mt-0"
                     @click="emits('cancel')" ref="cancelButtonRef">Cancel
                 </button>
             </div>

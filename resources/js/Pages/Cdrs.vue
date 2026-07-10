@@ -9,7 +9,7 @@
 
                     <button v-if="page.props.auth.can.cdrs_export" type="button" @click.prevent="exportCsv"
                         :disabled="isExporting"
-                        class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                        class="inline-flex items-center gap-x-1.5 rounded-md bg-accent px-2.5 py-1.5 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
                         <DocumentArrowDownIcon class="h-5 w-5" aria-hidden="true" />
                         Export CSV
                         <Spinner class="ml-1" :show="isExporting" />
@@ -17,13 +17,13 @@
 
                     <button v-if="!showGlobal && page.props.auth.can.cdrs_view_global" type="button"
                         @click.prevent="handleShowGlobal()"
-                        class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                        class="rounded-md bg-surface px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2">
                         Show global
                     </button>
 
                     <button v-if="showGlobal && page.props.auth.can.cdrs_view_global" type="button"
                         @click.prevent="handleShowLocal()"
-                        class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                        class="rounded-md bg-surface px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2">
                         Show local
                     </button>
 
@@ -32,15 +32,15 @@
                 <template #filters>
                     <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
                         <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                            <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                            <MagnifyingGlassIcon class="h-5 w-5 text-subtle" aria-hidden="true" />
                         </div>
                         <input type="search" v-model="filterData.search" name="mobile-search-candidate"
                             id="mobile-search-candidate"
-                            class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
+                            class="block w-full rounded-md border-0 py-1.5 pl-10 text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus sm:hidden"
                             placeholder="Search" @keydown.enter="handleSearchButtonClick" />
                         <input type="search" v-model="filterData.search" name="desktop-search-candidate"
                             id="desktop-search-candidate"
-                            class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
+                            class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus sm:block"
                             placeholder="Search" @keydown.enter="handleSearchButtonClick" />
                     </div>
 
@@ -88,98 +88,98 @@
                 </template>
                 <template #table-header>
                     <TableColumnHeader header=" "
-                        class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">
+                        class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-heading sm:pl-6">
                     </TableColumnHeader>
                     <TableColumnHeader v-if="showGlobal" header="Domain"
-                        class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                        class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+                    <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-heading">
                         <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('caller_id_name')">
                             <span class="mr-2">Caller ID Name</span>
-                            <ChevronUpIcon v-if="sortData.name === 'caller_id_name' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
-                            <ChevronDownIcon v-else-if="sortData.name === 'caller_id_name' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                            <ChevronUpIcon v-if="sortData.name === 'caller_id_name' && sortData.order === 'asc'" class="h-4 w-4 text-muted" />
+                            <ChevronDownIcon v-else-if="sortData.name === 'caller_id_name' && sortData.order === 'desc'" class="h-4 w-4 text-muted" />
                         </div>
                     </TableColumnHeader>
-                    <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-heading">
                         <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('caller_id_number')">
                             <span class="mr-2">Caller ID Number</span>
-                            <ChevronUpIcon v-if="sortData.name === 'caller_id_number' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
-                            <ChevronDownIcon v-else-if="sortData.name === 'caller_id_number' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                            <ChevronUpIcon v-if="sortData.name === 'caller_id_number' && sortData.order === 'asc'" class="h-4 w-4 text-muted" />
+                            <ChevronDownIcon v-else-if="sortData.name === 'caller_id_number' && sortData.order === 'desc'" class="h-4 w-4 text-muted" />
                         </div>
                     </TableColumnHeader>
-                    <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-heading">
                         <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('caller_destination')">
                             <span class="mr-2">Dialed Number</span>
-                            <ChevronUpIcon v-if="sortData.name === 'caller_destination' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
-                            <ChevronDownIcon v-else-if="sortData.name === 'caller_destination' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                            <ChevronUpIcon v-if="sortData.name === 'caller_destination' && sortData.order === 'asc'" class="h-4 w-4 text-muted" />
+                            <ChevronDownIcon v-else-if="sortData.name === 'caller_destination' && sortData.order === 'desc'" class="h-4 w-4 text-muted" />
                         </div>
                     </TableColumnHeader>
-                    <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-heading">
                         <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('destination_number')">
                             <span class="mr-2">Recipient</span>
-                            <ChevronUpIcon v-if="sortData.name === 'destination_number' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
-                            <ChevronDownIcon v-else-if="sortData.name === 'destination_number' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                            <ChevronUpIcon v-if="sortData.name === 'destination_number' && sortData.order === 'asc'" class="h-4 w-4 text-muted" />
+                            <ChevronDownIcon v-else-if="sortData.name === 'destination_number' && sortData.order === 'desc'" class="h-4 w-4 text-muted" />
                         </div>
                     </TableColumnHeader>
-                    <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-heading">
                         <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('start_epoch')">
                             <span class="mr-2">Date</span>
-                            <ChevronUpIcon v-if="sortData.name === 'start_epoch' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
-                            <ChevronDownIcon v-else-if="sortData.name === 'start_epoch' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                            <ChevronUpIcon v-if="sortData.name === 'start_epoch' && sortData.order === 'asc'" class="h-4 w-4 text-muted" />
+                            <ChevronDownIcon v-else-if="sortData.name === 'start_epoch' && sortData.order === 'desc'" class="h-4 w-4 text-muted" />
                         </div>
                     </TableColumnHeader>
-                    <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-heading">
                         <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('start_epoch')">
                             <span class="mr-2">Time</span>
-                            <ChevronUpIcon v-if="sortData.name === 'start_epoch' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
-                            <ChevronDownIcon v-else-if="sortData.name === 'start_epoch' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                            <ChevronUpIcon v-if="sortData.name === 'start_epoch' && sortData.order === 'asc'" class="h-4 w-4 text-muted" />
+                            <ChevronDownIcon v-else-if="sortData.name === 'start_epoch' && sortData.order === 'desc'" class="h-4 w-4 text-muted" />
                         </div>
                     </TableColumnHeader>
-                    <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-heading">
                         <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('duration')">
                             <span class="mr-2">Duration</span>
-                            <ChevronUpIcon v-if="sortData.name === 'duration' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
-                            <ChevronDownIcon v-else-if="sortData.name === 'duration' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                            <ChevronUpIcon v-if="sortData.name === 'duration' && sortData.order === 'asc'" class="h-4 w-4 text-muted" />
+                            <ChevronDownIcon v-else-if="sortData.name === 'duration' && sortData.order === 'desc'" class="h-4 w-4 text-muted" />
                         </div>
                     </TableColumnHeader>
                     <TableColumnHeader header="Status"
-                        class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                        class="px-2 py-3.5 text-left text-sm font-semibold text-heading">
                     </TableColumnHeader>
 
-                    <TableColumnHeader v-if="permissions.cdr_mos_view" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <TableColumnHeader v-if="permissions.cdr_mos_view" class="px-2 py-3.5 text-left text-sm font-semibold text-heading">
                         <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('rtp_audio_in_mos')">
                             <span class="mr-2">MOS</span>
-                            <ChevronUpIcon v-if="sortData.name === 'rtp_audio_in_mos' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
-                            <ChevronDownIcon v-else-if="sortData.name === 'rtp_audio_in_mos' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                            <ChevronUpIcon v-if="sortData.name === 'rtp_audio_in_mos' && sortData.order === 'asc'" class="h-4 w-4 text-muted" />
+                            <ChevronDownIcon v-else-if="sortData.name === 'rtp_audio_in_mos' && sortData.order === 'desc'" class="h-4 w-4 text-muted" />
                         </div>
                     </TableColumnHeader>
 
-                    <TableColumnHeader header="Rec" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader header="Rec" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
 
                     <TableColumnHeader header="Actions"
-                        class="w-24 px-1 py-3.5 text-sm font-semibold text-center text-gray-900" />
+                        class="w-24 px-1 py-3.5 text-sm font-semibold text-center text-heading" />
 
                 </template>
 
                 <template #table-body>
                     <tr v-for="row in data.data" :key="row.xml_cdr_uuid">
-                        <!-- <TableField class="whitespace-nowrap py-2 pl-4 pr-3 text-sm text-gray-500 sm:pl-6"
+                        <!-- <TableField class="whitespace-nowrap py-2 pl-4 pr-3 text-sm text-muted sm:pl-6"
                         :text="row.direction" /> -->
                         <TableField :text="row.direction"
-                            class="whitespace-nowrap py-2 pl-4 pr-3 text-sm text-gray-500 sm:pl-6">
+                            class="whitespace-nowrap py-2 pl-4 pr-3 text-sm text-muted sm:pl-6">
                             <ejs-tooltip :content="row.direction + ' call'" position='TopLeft'
                                 target="#destination_tooltip_target">
                                 <div id="destination_tooltip_target">
-                                    <PhoneOutgoingIcon class="w-5 h-5 text-blue-600"
+                                    <PhoneOutgoingIcon class="w-5 h-5 text-info"
                                         v-if="row.direction === 'outbound'" />
-                                    <PhoneIncomingIcon class="w-5 h-5 text-green-600"
+                                    <PhoneIncomingIcon class="w-5 h-5 text-success"
                                         v-if="row.direction === 'inbound'" />
-                                    <PhoneLocalIcon class="w-5 h-5 text-fuchsia-600" v-if="row.direction === 'local'" />
+                                    <PhoneLocalIcon class="w-5 h-5 text-fuchsia-600 dark:text-fuchsia-300" v-if="row.direction === 'local'" />
                                 </div>
                             </ejs-tooltip>
 
                         </TableField>
 
-                        <TableField v-if="showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                        <TableField v-if="showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-muted"
                             :text="row.domain?.domain_description">
                             <ejs-tooltip :content="row.domain?.domain_name" position='TopLeft'
                                 target="#domain_tooltip_target">
@@ -189,16 +189,16 @@
                             </ejs-tooltip>
                         </TableField>
 
-                        <!-- <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                        <!-- <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted"
                             :text="row.caller_id_name" /> -->
 
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted">
                             <div v-if="row.extension && row.direction == 'outbound'">{{ row.extension?.name_formatted }}
                             </div>
                             <div v-else>{{ row.caller_id_name_formatted }}</div>
                         </TableField>
 
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted">
 
                             <div v-if="row.extension && row.direction == 'outbound' && false">{{
                                 row.extension?.extension
@@ -206,53 +206,53 @@
                             <div v-else>{{ row.caller_id_number_formatted }}</div>
                         </TableField>
 
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted"
                             :text="row.caller_destination_formatted" />
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted"
                             :text="row.destination_number_formatted" />
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.start_date" />
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.start_time" />
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted" :text="row.start_date" />
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted" :text="row.start_time" />
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted"
                             :text="row.duration_formatted" />
 
-                        <!-- <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.status" /> -->
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                        <!-- <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted" :text="row.status" /> -->
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted">
                             <Badge :text="row.status"
-                                :backgroundColor="statusBadgeConfig[row.status]?.backgroundColor || 'bg-blue-50'"
-                                :textColor="statusBadgeConfig[row.status]?.textColor || 'text-blue-700'"
-                                :ringColor="statusBadgeConfig[row.status]?.ringColor || 'ring-blue-600/20'" />
+                                :backgroundColor="statusBadgeConfig[row.status]?.backgroundColor || 'bg-info-subtle'"
+                                :textColor="statusBadgeConfig[row.status]?.textColor || 'text-info'"
+                                :ringColor="statusBadgeConfig[row.status]?.ringColor || 'ring-info/20'" />
                         </TableField>
 
                         <TableField v-if="permissions.cdr_mos_view"
-                            class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.rtp_audio_in_mos" />
+                            class="whitespace-nowrap px-2 py-2 text-sm text-muted" :text="row.rtp_audio_in_mos" />
 
-                        <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
+                        <TableField class="whitespace-nowrap px-2 py-1 text-sm text-muted">
                             <template v-if="(row.record_name && row.record_path) || row.record_path === 'S3'
                             " #action-buttons>
                                 <div class="flex items-center space-x-2 whitespace-nowrap">
                                     <PlayCircleIcon v-if="permissions.call_recording_play"
                                         @click="handleCallRecordingButtonClick(row.xml_cdr_uuid)"
-                                        class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
-                                    <!-- class="h-6 w-6 text-blue-500 hover:text-blue-700 active:h-5 active:w-5 cursor-pointer" /> -->
+                                        class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-info hover:bg-info-subtle hover:text-info active:bg-info-subtle active:duration-150 cursor-pointer" />
+                                    <!-- class="h-6 w-6 text-info hover:text-info active:h-5 active:w-5 cursor-pointer" /> -->
                                     <!-- <PauseCircleIcon v-if="currentAudioUuid === row.xml_cdr_uuid && isAudioPlaying"
                                         @click="pauseAudio"
-                                        class="h-6 w-6 text-blue-500 hover:text-blue-700 active:h-5 active:w-5 cursor-pointer" /> -->
+                                        class="h-6 w-6 text-info hover:text-info active:h-5 active:w-5 cursor-pointer" /> -->
 
                                     <!-- <CloudArrowDownIcon v-if="page.props.auth.can.call_recording_download"
                                         @click="downloadAudio(row.xml_cdr_uuid)"
-                                        class="h-6 w-6 text-gray-500 hover:text-gray-700 active:h-5 active:w-5 cursor-pointer" /> -->
+                                        class="h-6 w-6 text-muted hover:text-body active:h-5 active:w-5 cursor-pointer" /> -->
                                 </div>
                             </template>
                         </TableField>
 
-                        <TableField class="w-24 whitespace-nowrap px-1 py-1 text-sm text-gray-500">
+                        <TableField class="w-24 whitespace-nowrap px-1 py-1 text-sm text-muted">
                             <template #action-buttons>
                                 <div class="grid w-[72px] grid-cols-2 place-items-center gap-0 whitespace-nowrap">
                                     <ejs-tooltip v-if="page.props.auth.can.cdr_view_details" :content="'View details'"
                                         position='TopCenter' target="#view_tooltip_target">
                                         <div id="view_tooltip_target">
                                             <MagnifyingGlassIcon @click="handleViewRequest(row.xml_cdr_uuid)"
-                                                class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                                class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer" />
 
                                         </div>
                                     </ejs-tooltip>
@@ -270,9 +270,9 @@
                 <template #empty>
                     <!-- Conditional rendering for 'no records' message -->
                     <div v-if="data.data.length === 0" class="text-center my-5 ">
-                        <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                        <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
-                        <p class="mt-1 text-sm text-gray-500">
+                        <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-subtle" />
+                        <h3 class="mt-2 text-sm font-semibold text-heading">No results found</h3>
+                        <p class="mt-1 text-sm text-muted">
                             Adjust your search and try again.
                         </p>
                     </div>
@@ -718,34 +718,34 @@ const handleErrorResponse = (error) => {
 
 const statusBadgeConfig = {
     answered: {
-        backgroundColor: "bg-green-50",
-        textColor: "text-green-700",
-        ringColor: "ring-green-600/20",
+        backgroundColor: "bg-success-subtle",
+        textColor: "text-success",
+        ringColor: "ring-success/20",
     },
     cancelled: {
-        backgroundColor: "bg-gray-50",
-        textColor: "text-gray-700",
-        ringColor: "ring-gray-600/20",
+        backgroundColor: "bg-surface-2",
+        textColor: "text-body",
+        ringColor: "ring-strong/20",
     },
     no_answer: {
-        backgroundColor: "bg-amber-50",
-        textColor: "text-amber-700",
-        ringColor: "ring-amber-600/20",
+        backgroundColor: "bg-warning-subtle",
+        textColor: "text-warning",
+        ringColor: "ring-warning/20",
     },
     failed: {
-        backgroundColor: "bg-red-50",
-        textColor: "text-red-700",
-        ringColor: "ring-red-600/20",
+        backgroundColor: "bg-danger-subtle",
+        textColor: "text-danger",
+        ringColor: "ring-danger/20",
     },
     "missed call": {
-        backgroundColor: "bg-orange-50",
-        textColor: "text-orange-700",
-        ringColor: "ring-orange-600/20",
+        backgroundColor: "bg-warning-subtle",
+        textColor: "text-warning",
+        ringColor: "ring-warning/20",
     },
     abandoned: {
-        backgroundColor: "bg-purple-50",
-        textColor: "text-purple-700",
-        ringColor: "ring-purple-600/20",
+        backgroundColor: "bg-purple-50 dark:bg-purple-900/40",
+        textColor: "text-purple-700 dark:text-purple-300",
+        ringColor: "ring-purple-600/20 dark:ring-purple-400/30",
     }
 };
 

@@ -3,8 +3,8 @@
         <div class="flex items-center" :class="justifyClass">
             <slot>{{ header }}</slot>
             <!-- Sorting icons -->
-            <ChevronUpIcon v-if="isSorted && sortOrder === 'asc'" class="ml-2 h-5 w-5 text-indigo-500" />
-            <ChevronDownIcon v-if="isSorted && sortOrder === 'desc'" class="ml-2 h-5 w-5 text-indigo-500" />
+            <ChevronUpIcon v-if="isSorted && sortOrder === 'asc'" class="ml-2 h-5 w-5 text-accent-fg" />
+            <ChevronDownIcon v-if="isSorted && sortOrder === 'desc'" class="ml-2 h-5 w-5 text-accent-fg" />
         </div>
     </th>
 </template>

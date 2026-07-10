@@ -141,9 +141,9 @@
 
                 <EmergencyCalls :routes="routes" />
                 <div class="flex p-5 items-center">
-                    <div class="w-full border-t border-gray-300" aria-hidden="true" />
+                    <div class="w-full border-t border-strong" aria-hidden="true" />
 
-                    <div class="w-full border-t border-gray-300" aria-hidden="true" />
+                    <div class="w-full border-t border-strong" aria-hidden="true" />
                 </div>
 
                 <EmergencyServiceStatus :routes="routes" />

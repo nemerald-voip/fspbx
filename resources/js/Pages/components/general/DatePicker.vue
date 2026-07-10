@@ -1,5 +1,5 @@
 <template>
-    <VueDatePicker v-model="dateRange" :range="true" :multi-calendars="{ static: false }" :preset-dates="presetDates"
+    <VueDatePicker v-model="dateRange" :dark="isDark" :range="true" :multi-calendars="{ static: false }" :preset-dates="presetDates"
         :enable-time-picker="false" :week-start="0" auto-apply @update:model-value="handleDate" :timezone="timezone">
         <template #preset-date-range-button="{ label, value, presetDate }">
             <span role="button" :tabindex="0" @click="presetDate(value)" @keyup.enter.prevent="presetDate(value)"
@@ -14,6 +14,9 @@
 import { ref,watch,onMounted } from 'vue';
 import VueDatePicker from '@vuepic/vue-datepicker';
 import moment from 'moment-timezone';
+import { useTheme } from '../../../composables/useTheme';
+
+const { isDark } = useTheme();
 
 import {
     startOfDay, endOfDay,

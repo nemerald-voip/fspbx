@@ -7,22 +7,22 @@
                         leave-active-class="transition ease-in duration-100" leave-from-class="opacity-100"
                         leave-to-class="opacity-0">
                 <div v-if="show"
-                     class="pointer-events-auto w-full max-w-sm overflow-hidden rounded-lg bg-gray-50 shadow-lg ring-1 ring-black ring-opacity-5">
+                     class="pointer-events-auto w-full max-w-sm overflow-hidden rounded-lg bg-surface-2 shadow-lg ring-1 ring-black/5 dark:ring-white/10">
                     <div class="p-4">
                         <div class="flex items-start">
                             <div v-if="isSuccess" class="flex-shrink-0">
-                                <CheckCircleIcon class="h-6 w-6 text-green-400" aria-hidden="true"/>
+                                <CheckCircleIcon class="h-6 w-6 text-success" aria-hidden="true"/>
                             </div>
                             <div v-else class="flex-shrink-0">
-                                <XMarkIcon class="h-6 w-6 text-red-400" aria-hidden="true"/>
+                                <XMarkIcon class="h-6 w-6 text-danger" aria-hidden="true"/>
                             </div>
                             <div class="ml-3 w-0 flex-1 pt-0.5">
-                                <p v-if="header" class="text-sm font-medium text-gray-900 mb-1">{{ header }}</p>
-                                <p v-if="text" class="text-sm text-gray-500">{{ text }}</p>
+                                <p v-if="header" class="text-sm font-medium text-heading mb-1">{{ header }}</p>
+                                <p v-if="text" class="text-sm text-muted">{{ text }}</p>
                             </div>
                             <div class="ml-4 flex flex-shrink-0">
                                 <button type="button" @click="show = false"
-                                        class="inline-flex rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                                        class="inline-flex rounded-md bg-surface-2 text-subtle hover:text-muted focus:outline-none focus:ring-2 focus:ring-focus focus:ring-offset-2">
                                     <span class="sr-only">Close</span>
                                     <XMarkIcon class="h-5 w-5" aria-hidden="true"/>
                                 </button>

@@ -4,87 +4,87 @@
     <div class="m-3">
         <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div>
-                <h1 class="text-xl font-semibold text-gray-900">Agent Status</h1>
-                <p class="mt-1 text-sm text-gray-500">Basic Queue agents and their live call center state.</p>
+                <h1 class="text-xl font-semibold text-heading">Agent Status</h1>
+                <p class="mt-1 text-sm text-muted">Basic Queue agents and their live call center state.</p>
             </div>
             <div class="flex items-center gap-2">
                 <a :href="routes.back"
-                    class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    class="rounded-md bg-surface px-3 py-2 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2">
                     Back
                 </a>
                 <button type="button" @click="getData"
-                    class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    class="rounded-md bg-surface px-3 py-2 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2">
                     Refresh
                 </button>
             </div>
         </div>
 
         <div v-if="runtimeAvailable === false"
-            class="mb-4 rounded-md bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800 ring-1 ring-inset ring-amber-200">
+            class="mb-4 rounded-md bg-warning-subtle px-4 py-3 text-sm font-medium text-warning ring-1 ring-inset ring-warning">
             FreeSWITCH event socket is unavailable. Showing saved defaults only.
         </div>
 
         <div v-if="permissions.update"
-            class="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-white px-4 py-3 shadow ring-1 ring-black ring-opacity-5">
+            class="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-surface px-4 py-3 shadow ring-1 ring-black ring-opacity-5">
             <div class="flex flex-wrap items-center gap-3">
                 <BulkActions :actions="bulkActions" :has-selected-items="selectedItems.length > 0"
                     @bulk-action="handleBulkActionRequest" />
-                <p class="text-sm text-gray-600">
+                <p class="text-sm text-body">
                     <span class="font-semibold">{{ selectedItems.length }}</span> selected
                 </p>
                 <button v-if="selectedItems.length > 0" type="button" @click="handleClearSelection"
-                    class="text-sm font-semibold text-blue-600 hover:text-blue-500">
+                    class="text-sm font-semibold text-info hover:text-info">
                     Clear selection
                 </button>
             </div>
         </div>
 
-        <div class="overflow-hidden rounded-lg bg-white shadow ring-1 ring-black ring-opacity-5">
+        <div class="overflow-hidden rounded-lg bg-surface shadow ring-1 ring-black ring-opacity-5">
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-300">
-                    <thead class="bg-gray-50">
+                <table class="min-w-full divide-y divide-strong">
+                    <thead class="bg-surface-2">
                         <tr>
                             <th v-if="permissions.update" class="px-4 py-3.5 text-left">
                                 <input v-model="selectPageItems" type="checkbox" @change="handleSelectPageItems"
-                                    class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                                    class="h-4 w-4 rounded border-strong text-accent-fg">
                             </th>
-                            <th class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">Agent</th>
-                            <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Runtime Status</th>
-                            <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">State</th>
-                            <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Default</th>
-                            <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Answered</th>
-                            <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">No Answer</th>
-                            <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Set Status</th>
-                            <th class="px-4 py-3.5 text-right text-sm font-semibold text-gray-900"></th>
+                            <th class="px-4 py-3.5 text-left text-sm font-semibold text-heading">Agent</th>
+                            <th class="px-3 py-3.5 text-left text-sm font-semibold text-heading">Runtime Status</th>
+                            <th class="px-3 py-3.5 text-left text-sm font-semibold text-heading">State</th>
+                            <th class="px-3 py-3.5 text-left text-sm font-semibold text-heading">Default</th>
+                            <th class="px-3 py-3.5 text-left text-sm font-semibold text-heading">Answered</th>
+                            <th class="px-3 py-3.5 text-left text-sm font-semibold text-heading">No Answer</th>
+                            <th class="px-3 py-3.5 text-left text-sm font-semibold text-heading">Set Status</th>
+                            <th class="px-4 py-3.5 text-right text-sm font-semibold text-heading"></th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-200 bg-white">
+                    <tbody class="divide-y divide-default bg-surface">
                         <tr v-if="loading">
-                            <td :colspan="tableColspan" class="px-4 py-8 text-center text-sm text-gray-500">Loading...</td>
+                            <td :colspan="tableColspan" class="px-4 py-8 text-center text-sm text-muted">Loading...</td>
                         </tr>
                         <tr v-else-if="agents.length === 0">
-                            <td :colspan="tableColspan" class="px-4 py-8 text-center text-sm text-gray-500">No agents found.</td>
+                            <td :colspan="tableColspan" class="px-4 py-8 text-center text-sm text-muted">No agents found.</td>
                         </tr>
                         <tr v-for="agent in agents" v-else :key="agent.call_center_agent_uuid">
                             <td v-if="permissions.update" class="whitespace-nowrap px-4 py-3 text-sm">
                                 <input v-model="selectedItems" type="checkbox" name="agent_status_action_box[]"
                                     :value="agent.call_center_agent_uuid"
-                                    class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                                    class="h-4 w-4 rounded border-strong text-accent-fg">
                             </td>
                             <td class="whitespace-nowrap px-4 py-3 text-sm">
-                                <div class="font-medium text-gray-900">{{ agent.agent_name }}</div>
-                                <div class="text-gray-500">{{ agent.agent_id || agent.agent_type || "-" }}</div>
+                                <div class="font-medium text-heading">{{ agent.agent_name }}</div>
+                                <div class="text-muted">{{ agent.agent_id || agent.agent_type || "-" }}</div>
                             </td>
                             <td class="whitespace-nowrap px-3 py-3 text-sm">
                                 <Badge :text="agent.runtime_status || '-'" v-bind="statusBadge(agent.runtime_status)" />
                             </td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">{{ agent.runtime_state || "-" }}</td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">{{ agent.default_status || "-" }}</td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">{{ agent.calls_answered || "0" }}</td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">{{ agent.no_answer_count || "0" }}</td>
+                            <td class="whitespace-nowrap px-3 py-3 text-sm text-muted">{{ agent.runtime_state || "-" }}</td>
+                            <td class="whitespace-nowrap px-3 py-3 text-sm text-muted">{{ agent.default_status || "-" }}</td>
+                            <td class="whitespace-nowrap px-3 py-3 text-sm text-muted">{{ agent.calls_answered || "0" }}</td>
+                            <td class="whitespace-nowrap px-3 py-3 text-sm text-muted">{{ agent.no_answer_count || "0" }}</td>
                             <td class="whitespace-nowrap px-3 py-3 text-sm">
                                 <select v-model="agent.pending_status" :disabled="!permissions.update || updatingUuid === agent.call_center_agent_uuid"
-                                    class="block w-52 rounded-md border-0 py-1.5 pl-3 pr-8 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 disabled:bg-gray-100 disabled:text-gray-500">
+                                    class="block w-52 rounded-md border-0 py-1.5 pl-3 pr-8 text-sm text-heading ring-1 ring-inset ring-strong focus:ring-2 focus:ring-focus disabled:bg-surface-3 disabled:text-muted">
                                     <option v-for="option in statusOptions" :key="option.value" :value="option.value">
                                         {{ option.label }}
                                     </option>
@@ -93,7 +93,7 @@
                             <td class="whitespace-nowrap px-4 py-3 text-right text-sm">
                                 <button type="button" :disabled="!permissions.update || updatingUuid === agent.call_center_agent_uuid"
                                     @click="updateStatus(agent)"
-                                    class="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:cursor-not-allowed disabled:bg-gray-300">
+                                    class="rounded-md bg-accent px-3 py-1.5 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover disabled:cursor-not-allowed disabled:bg-surface-3">
                                     Save
                                 </button>
                             </td>
@@ -273,14 +273,14 @@ const updateStatus = (agent) => {
 
 const statusBadge = (status) => {
     if (status === "Available") {
-        return { backgroundColor: "bg-green-50", textColor: "text-green-700", ringColor: "ring-green-600/20" };
+        return { backgroundColor: "bg-success-subtle", textColor: "text-success", ringColor: "ring-success/20" };
     }
 
     if (status === "On Break") {
-        return { backgroundColor: "bg-amber-50", textColor: "text-amber-700", ringColor: "ring-amber-600/20" };
+        return { backgroundColor: "bg-warning-subtle", textColor: "text-warning", ringColor: "ring-warning/20" };
     }
 
-    return { backgroundColor: "bg-gray-50", textColor: "text-gray-700", ringColor: "ring-gray-600/20" };
+    return { backgroundColor: "bg-surface-2", textColor: "text-body", ringColor: "ring-strong/20" };
 };
 
 const normalizeStatus = (status) => status || "Logged Out";

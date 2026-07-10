@@ -3,9 +3,9 @@
         <!-- Search/Select Input -->
         <input type="text" :value="dropdownOpen ? searchQuery : selectedOption?.name || ''" @focus="openDropdown"
             @input="onSearch" placeholder="Search or select..."
-            class="w-full border-0 cursor-pointer rounded-lg bg-white py-2 pl-3 pr-10 text-left shadow-md ring-1 ring-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 sm:text-sm" />
+            class="w-full border-0 cursor-pointer rounded-lg bg-surface py-2 pl-3 pr-10 text-left shadow-md ring-1 ring-strong focus:outline-none focus:ring-2 focus:ring-focus sm:text-sm" />
         <span class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-            <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+            <svg class="h-5 w-5 text-subtle" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                 stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
             </svg>
@@ -13,17 +13,17 @@
 
         <!-- Dropdown -->
         <ul v-if="dropdownOpen"
-            class="absolute z-10 mt-1 w-full max-h-60 overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+            class="absolute z-10 mt-1 w-full max-h-60 overflow-auto rounded-md bg-surface py-1 text-base shadow-lg ring-1 ring-black/5 dark:ring-white/10 focus:outline-none sm:text-sm">
             <template v-for="(options, group) in filteredOptions" :key="group">
                 <!-- Group Label -->
-                <li class="px-4 py-2 text-sm font-medium text-gray-500">
+                <li class="px-4 py-2 text-sm font-medium text-muted">
                     {{ group }}
                 </li>
 
                 <!-- Options -->
                 <li v-for="option in options" :key="option.value"
-                    class="relative cursor-pointer select-none py-2 pl-10 pr-4 hover:bg-blue-100 hover:text-blue-900"
-                    :class="{ 'bg-blue-100 text-blue-900': modelValue === option.value }"
+                    class="relative cursor-pointer select-none py-2 pl-10 pr-4 hover:bg-info-subtle hover:text-info"
+                    :class="{ 'bg-info-subtle text-info': modelValue === option.value }"
                     @click="selectOption(option)">
                     <span class="block truncate"
                         :class="{ 'font-meduim': modelValue === option.value, 'font-normal': modelValue !== option.value }">
@@ -31,7 +31,7 @@
                     </span>
                     <!-- Add the CheckIcon for the selected item -->
                     <span v-if="modelValue === option.value"
-                        class="absolute inset-y-0 left-0 flex items-center pl-3 text-blue-600">
+                        class="absolute inset-y-0 left-0 flex items-center pl-3 text-info">
                         <CheckIcon class="h-5 w-5" aria-hidden="true" />
                     </span>
                 </li>

@@ -63,6 +63,12 @@ class HandleInertiaRequests extends Middleware
                 'message' => fn() => $request->session()->get('message'),
                 'error' =>  fn() => $request->session()->get('error'),
             ],
+
+            // Dark/light mode preference (source of truth for the toggle's
+            // reactive state; the .dark class itself is applied server-side
+            // by the root blade to avoid a flash). Falls back to the browser
+            // cookie so pre-auth screens (login) reflect the last-used theme.
+            'theme' => Session::get('theme') ?: ($request->cookie('theme') ?: 'light'),
         ]);
     }
 

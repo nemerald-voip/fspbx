@@ -5,36 +5,36 @@
         <div class="px-4 sm:px-6 lg:px-8">
             <div class="mb-6 mt-2 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                    <p class="text-xs font-semibold uppercase tracking-wide text-indigo-600">Scheduled Announcements</p>
-                    <h1 class="mt-1 text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl">Scheduled Announcements</h1>
-                    <p class="mt-1 text-sm text-gray-500">Build schedules with their recordings, extensions, announcement times, and exclusions in one window.</p>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-accent-fg">Scheduled Announcements</p>
+                    <h1 class="mt-1 text-2xl font-semibold tracking-tight text-heading sm:text-3xl">Scheduled Announcements</h1>
+                    <p class="mt-1 text-sm text-muted">Build schedules with their recordings, extensions, announcement times, and exclusions in one window.</p>
                 </div>
             </div>
         </div>
 
-        <div class="mb-6 border-b border-gray-200 px-4 sm:px-6 lg:px-8">
+        <div class="mb-6 border-b border-default px-4 sm:px-6 lg:px-8">
             <nav class="-mb-px flex gap-0.5 overflow-x-auto sm:gap-2" aria-label="Tabs">
                 <button v-for="tab in tabs" :key="tab.id" type="button"
                     :class="[
                         'group relative -mb-px inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-t-lg px-3 py-2.5 text-sm font-semibold tracking-tight transition-colors sm:gap-2.5 sm:px-6 sm:py-3.5 sm:text-base',
                         activeTab === tab.id
-                            ? 'text-indigo-700'
-                            : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
+                            ? 'text-accent-fg'
+                            : 'text-muted hover:bg-surface-3 hover:text-heading'
                     ]"
                     @click="switchTab(tab.id)">
                     <component :is="tab.icon" class="h-4 w-4 sm:h-5 sm:w-5"
-                        :class="activeTab === tab.id ? 'text-indigo-600' : 'text-gray-400 group-hover:text-gray-600'" />
+                        :class="activeTab === tab.id ? 'text-accent-fg' : 'text-subtle group-hover:text-body'" />
                     <span>{{ tab.label }}</span>
                     <span :class="[
                         'ml-0.5 rounded-full px-2 py-0.5 text-xs font-semibold sm:ml-1 sm:px-2.5',
                         activeTab === tab.id
-                            ? 'bg-indigo-100 text-indigo-700'
-                            : 'bg-gray-100 text-gray-600 group-hover:bg-gray-200'
+                            ? 'bg-accent-subtle text-accent-fg'
+                            : 'bg-surface-3 text-body group-hover:bg-surface-3'
                     ]">
                         {{ tab.count }}
                     </span>
                     <span v-if="activeTab === tab.id"
-                        class="absolute inset-x-2 -bottom-px h-[3px] rounded-full bg-indigo-600 sm:inset-x-3"></span>
+                        class="absolute inset-x-2 -bottom-px h-[3px] rounded-full bg-accent sm:inset-x-3"></span>
                 </button>
             </nav>
         </div>
@@ -47,22 +47,22 @@
             <template #filters>
                 <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
                     <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                        <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                        <MagnifyingGlassIcon class="h-5 w-5 text-subtle" aria-hidden="true" />
                     </div>
                     <input type="text" v-model="filterData.search" name="scheduled-announcements-search"
                         id="mobile-search-scheduled-announcements"
-                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
+                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus sm:hidden"
                         placeholder="Search" @keydown.enter="handleSearchButtonClick" />
                     <input type="text" v-model="filterData.search" name="desktop-search-scheduled-announcements"
                         id="desktop-search-scheduled-announcements"
-                        class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
+                        class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus sm:block"
                         placeholder="Search" @keydown.enter="handleSearchButtonClick" />
                 </div>
             </template>
 
             <template #action>
                 <button v-if="canCreateActiveTab" type="button" @click.prevent="handleCreateButtonClick"
-                    class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                    class="rounded-md bg-accent px-2.5 py-1.5 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
                     Create
                 </button>
             </template>
@@ -78,31 +78,31 @@
             <template #table-header>
                 <template v-if="activeTab === 'schedules'">
                     <TableColumnHeader
-                        class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
+                        class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-heading items-center justify-start">
                         <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
-                            class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                            class="h-4 w-4 rounded border-strong text-accent-fg">
                         <div class="pl-4 flex items-center cursor-pointer select-none" @click="handleSortRequest('name')">
                             <span class="mr-2">Name</span>
                             <ChevronUpIcon v-if="sortData.name === 'name' && sortData.order === 'asc'"
-                                class="h-4 w-4 text-gray-500" />
+                                class="h-4 w-4 text-muted" />
                             <ChevronDownIcon v-else-if="sortData.name === 'name' && sortData.order === 'desc'"
-                                class="h-4 w-4 text-gray-500" />
+                                class="h-4 w-4 text-muted" />
                         </div>
                     </TableColumnHeader>
-                    <TableColumnHeader header="Plays" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="To" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="When" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader header="Plays" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+                    <TableColumnHeader header="To" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+                    <TableColumnHeader header="When" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+                    <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+                    <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-heading" />
                 </template>
 
                 <template v-else>
-                    <TableColumnHeader header="Scheduled" class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="Announcement" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="Trigger" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="Played" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="Error / Note" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader header="Scheduled" class="px-4 py-3.5 text-left text-sm font-semibold text-heading" />
+                    <TableColumnHeader header="Announcement" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+                    <TableColumnHeader header="Trigger" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+                    <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+                    <TableColumnHeader header="Played" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+                    <TableColumnHeader header="Error / Note" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
                 </template>
             </template>
 
@@ -111,12 +111,12 @@
                     <div class="text-sm text-center m-2">
                         <span class="font-semibold">{{ selectedItems.length }}</span> schedules are selected.
                         <button v-if="!selectAll && selectedItems.length !== activeRows.length"
-                            class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
+                            class="text-info rounded py-2 px-2 hover:bg-info-subtle hover:text-info focus:outline-none focus:ring-1 focus:bg-info-subtle focus:ring-focus transition duration-500 ease-in-out"
                             @click="handleSelectAll">
                             Select all {{ activeRows.length }} schedules
                         </button>
                         <button v-if="selectAll"
-                            class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
+                            class="text-info rounded py-2 px-2 hover:bg-info-subtle hover:text-info focus:outline-none focus:ring-1 focus:bg-info-subtle focus:ring-focus transition duration-500 ease-in-out"
                             @click="handleClearSelection">
                             Clear selection
                         </button>
@@ -127,47 +127,47 @@
             <template #table-body>
                 <template v-if="activeTab === 'schedules'">
                     <tr v-for="item in scheduleRows" :key="item.row.scheduled_announcement_schedule_uuid">
-                        <TableField class="px-4 py-2 align-middle text-sm text-gray-500">
+                        <TableField class="px-4 py-2 align-middle text-sm text-muted">
                             <div class="flex items-start">
                                 <input v-model="selectedItems" type="checkbox" name="action_box[]"
                                     :value="item.row.scheduled_announcement_schedule_uuid"
-                                    class="mt-1 h-4 w-4 rounded border-gray-300 text-indigo-600">
+                                    class="mt-1 h-4 w-4 rounded border-strong text-accent-fg">
                                 <button type="button" class="ml-4 text-left"
-                                    :class="{ 'cursor-pointer hover:text-indigo-600': permissions.update }"
+                                    :class="{ 'cursor-pointer hover:text-accent-fg': permissions.update }"
                                     @click="permissions.update && handleEditButtonClick(item.row)">
-                                    <span class="block font-medium text-gray-900">{{ item.row.name }}</span>
+                                    <span class="block font-medium text-heading">{{ item.row.name }}</span>
                                     <span v-if="item.row.description"
-                                        class="block max-w-[16rem] truncate text-xs text-gray-400">{{ item.row.description }}</span>
+                                        class="block max-w-[16rem] truncate text-xs text-subtle">{{ item.row.description }}</span>
                                 </button>
                             </div>
                         </TableField>
-                        <TableField class="px-2 py-2 align-middle text-sm text-gray-500">
+                        <TableField class="px-2 py-2 align-middle text-sm text-muted">
                             <span class="block max-w-[12rem] truncate" :title="item.plays">{{ item.plays }}</span>
                         </TableField>
-                        <TableField class="px-2 py-2 align-middle text-sm text-gray-500">
+                        <TableField class="px-2 py-2 align-middle text-sm text-muted">
                             <span class="block max-w-[14rem] truncate" :title="item.to.full.join(', ')">
-                                {{ item.to.first }}<span v-if="item.to.extra > 0" class="text-gray-400"> +{{ item.to.extra }}</span>
+                                {{ item.to.first }}<span v-if="item.to.extra > 0" class="text-subtle"> +{{ item.to.extra }}</span>
                             </span>
                         </TableField>
-                        <TableField class="px-2 py-2 align-middle text-sm text-gray-500">
+                        <TableField class="px-2 py-2 align-middle text-sm text-muted">
                             <template v-if="item.when.lines.length">
                                 <div v-for="(line, i) in item.when.lines" :key="i" class="whitespace-nowrap">{{ line }}</div>
-                                <div v-if="item.when.extra > 0" class="text-xs text-gray-400">+{{ item.when.extra }} more</div>
-                                <div v-if="item.when.tz" class="truncate text-xs text-gray-400">{{ item.when.tz }}</div>
+                                <div v-if="item.when.extra > 0" class="text-xs text-subtle">+{{ item.when.extra }} more</div>
+                                <div v-if="item.when.tz" class="truncate text-xs text-subtle">{{ item.when.tz }}</div>
                             </template>
-                            <span v-else class="text-gray-400">No times set</span>
+                            <span v-else class="text-subtle">No times set</span>
                         </TableField>
-                        <TableField class="whitespace-nowrap px-2 py-2 align-middle text-sm text-gray-500">
+                        <TableField class="whitespace-nowrap px-2 py-2 align-middle text-sm text-muted">
                             <Badge :text="item.status.label" v-bind="item.status.props" />
                         </TableField>
-                        <TableField class="whitespace-nowrap px-2 py-1 align-middle text-sm text-gray-500">
+                        <TableField class="whitespace-nowrap px-2 py-1 align-middle text-sm text-muted">
                             <template #action-buttons>
                                 <div class="flex items-center whitespace-nowrap justify-end">
                                     <PencilSquareIcon v-if="permissions.update" @click="handleEditButtonClick(item.row)"
-                                        class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
+                                        class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer"
                                         title="Edit" />
                                     <TrashIcon v-if="permissions.delete" @click="deleteRecord(item.row.scheduled_announcement_schedule_uuid)"
-                                        class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
+                                        class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer"
                                         title="Delete" />
                                 </div>
                             </template>
@@ -177,29 +177,29 @@
 
                 <template v-else>
                     <tr v-for="item in runRows" :key="item.row.scheduled_announcement_run_uuid">
-                        <TableField class="px-4 py-2 align-middle text-sm text-gray-500">
-                            <span class="block whitespace-nowrap text-gray-900">{{ item.scheduledRel }}</span>
-                            <span class="block whitespace-nowrap text-xs text-gray-400">{{ item.scheduledAbs }}</span>
+                        <TableField class="px-4 py-2 align-middle text-sm text-muted">
+                            <span class="block whitespace-nowrap text-heading">{{ item.scheduledRel }}</span>
+                            <span class="block whitespace-nowrap text-xs text-subtle">{{ item.scheduledAbs }}</span>
                         </TableField>
-                        <TableField class="px-2 py-2 align-middle text-sm text-gray-500">
-                            <span class="block max-w-[18rem] truncate text-gray-900">{{ item.announcement.name }}</span>
+                        <TableField class="px-2 py-2 align-middle text-sm text-muted">
+                            <span class="block max-w-[18rem] truncate text-heading">{{ item.announcement.name }}</span>
                             <span v-if="item.announcement.sub"
-                                class="block max-w-[18rem] truncate text-xs text-gray-400">{{ item.announcement.sub }}</span>
+                                class="block max-w-[18rem] truncate text-xs text-subtle">{{ item.announcement.sub }}</span>
                         </TableField>
-                        <TableField class="whitespace-nowrap px-2 py-2 align-middle text-sm text-gray-500">
+                        <TableField class="whitespace-nowrap px-2 py-2 align-middle text-sm text-muted">
                             <Badge :text="item.trigger.label" v-bind="item.trigger.props" />
                         </TableField>
-                        <TableField class="whitespace-nowrap px-2 py-2 align-middle text-sm text-gray-500">
+                        <TableField class="whitespace-nowrap px-2 py-2 align-middle text-sm text-muted">
                             <Badge :text="item.status.label" v-bind="item.status.props" />
                         </TableField>
-                        <TableField class="px-2 py-2 align-middle text-sm text-gray-500">
+                        <TableField class="px-2 py-2 align-middle text-sm text-muted">
                             <template v-if="item.played.ran">
-                                <span class="block whitespace-nowrap text-gray-900">{{ item.played.late }}</span>
-                                <span class="block whitespace-nowrap text-xs text-gray-400" :title="item.played.abs">{{ item.played.clock }}</span>
+                                <span class="block whitespace-nowrap text-heading">{{ item.played.late }}</span>
+                                <span class="block whitespace-nowrap text-xs text-subtle" :title="item.played.abs">{{ item.played.clock }}</span>
                             </template>
-                            <span v-else class="text-gray-400">—</span>
+                            <span v-else class="text-subtle">—</span>
                         </TableField>
-                        <TableField class="max-w-xl px-2 py-2 align-middle text-sm text-gray-500">
+                        <TableField class="max-w-xl px-2 py-2 align-middle text-sm text-muted">
                             <span class="block max-w-xl truncate" :title="item.row.error_text">{{ item.row.error_text }}</span>
                         </TableField>
                     </tr>
@@ -208,9 +208,9 @@
 
             <template #empty>
                 <div v-if="activeRows.length === 0" class="text-center my-5">
-                    <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
-                    <p class="mt-1 text-sm text-gray-500">Adjust your search and try again.</p>
+                    <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-subtle" />
+                    <h3 class="mt-2 text-sm font-semibold text-heading">No results found</h3>
+                    <p class="mt-1 text-sm text-muted">Adjust your search and try again.</p>
                 </div>
             </template>
 
@@ -750,7 +750,7 @@ function formatShortDate(value) {
 function scheduleStatus(row) {
     const gray = enabledBadgeProps(false)
     const green = enabledBadgeProps(true)
-    const yellow = { backgroundColor: 'bg-yellow-50', textColor: 'text-yellow-700', ringColor: 'ring-yellow-600/20' }
+    const yellow = { backgroundColor: 'bg-warning-subtle', textColor: 'text-warning', ringColor: 'ring-warning/20' }
 
     if (!row.enabled) return { label: 'Disabled', props: gray }
 
@@ -834,8 +834,8 @@ function runAnnouncement(row) {
 
 function runTrigger(row) {
     return row.manual
-        ? { label: 'Manual', props: { backgroundColor: 'bg-purple-50', textColor: 'text-purple-700', ringColor: 'ring-purple-600/20' } }
-        : { label: 'Auto', props: { backgroundColor: 'bg-gray-50', textColor: 'text-gray-700', ringColor: 'ring-gray-600/20' } }
+        ? { label: 'Manual', props: { backgroundColor: 'bg-purple-50 dark:bg-purple-900/40', textColor: 'text-purple-700 dark:text-purple-300', ringColor: 'ring-purple-600/20 dark:ring-purple-400/30' } }
+        : { label: 'Auto', props: { backgroundColor: 'bg-surface-2', textColor: 'text-body', ringColor: 'ring-strong/20' } }
 }
 
 function runPlayed(row) {
@@ -873,14 +873,14 @@ const handleErrorResponse = (error) => {
 
 const enabledBadgeProps = (enabled) => enabled
     ? {
-        backgroundColor: 'bg-green-50',
-        textColor: 'text-green-700',
-        ringColor: 'ring-green-600/20',
+        backgroundColor: 'bg-success-subtle',
+        textColor: 'text-success',
+        ringColor: 'ring-success/20',
     }
     : {
-        backgroundColor: 'bg-gray-50',
-        textColor: 'text-gray-700',
-        ringColor: 'ring-gray-600/20',
+        backgroundColor: 'bg-surface-2',
+        textColor: 'text-body',
+        ringColor: 'ring-strong/20',
     }
 
 const statusBadgeProps = (status) => {
@@ -890,24 +890,24 @@ const statusBadgeProps = (status) => {
 
     if (['missed', 'failed'].includes(status)) {
         return {
-            backgroundColor: 'bg-red-50',
-            textColor: 'text-red-700',
-            ringColor: 'ring-red-600/20',
+            backgroundColor: 'bg-danger-subtle',
+            textColor: 'text-danger',
+            ringColor: 'ring-danger/20',
         }
     }
 
     if (String(status || '').startsWith('skipped')) {
         return {
-            backgroundColor: 'bg-yellow-50',
-            textColor: 'text-yellow-700',
-            ringColor: 'ring-yellow-600/20',
+            backgroundColor: 'bg-warning-subtle',
+            textColor: 'text-warning',
+            ringColor: 'ring-warning/20',
         }
     }
 
     return {
-        backgroundColor: 'bg-gray-50',
-        textColor: 'text-gray-700',
-        ringColor: 'ring-gray-600/20',
+        backgroundColor: 'bg-surface-2',
+        textColor: 'text-body',
+        ringColor: 'ring-strong/20',
     }
 }
 </script>

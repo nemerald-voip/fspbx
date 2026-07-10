@@ -1,5 +1,5 @@
 <template>
-    <form class="bg-white px-4 py-6 sm:px-6 lg:px-8" @submit.prevent="submitForm">
+    <form class="bg-surface px-4 py-6 sm:px-6 lg:px-8" @submit.prevent="submitForm">
 
 
         <div class="grid grid-cols-1 gap-6 ">
@@ -13,7 +13,7 @@
                         placeholder="Enter one or more digits (e.g., 1, 12, 123)"
                         autocomplete="off" />
                 </div>
-                <div v-if="errors?.key" class="mt-2 text-xs text-red-600">
+                <div v-if="errors?.key" class="mt-2 text-xs text-danger">
                     {{ errors.key[0] }}
                 </div>
             </div>
@@ -26,7 +26,7 @@
                         autocomplete="off"
                         :error="errors?.action && errors.action.length > 0" />
                 </div>
-                <div v-if="errors?.action" class="mt-2 text-xs text-red-600">
+                <div v-if="errors?.action" class="mt-2 text-xs text-danger">
                     {{ errors.action[0] }}
                 </div>
             </div>
@@ -40,11 +40,11 @@
                         :disabled="isTargetDisabled" :error="errors?.target && errors.target.length > 0"/>
 
                     <!-- Spinner Overlay -->
-                    <div v-if="loading" class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-50">
-                        <Spinner class="w-10 h-10 text-gray-500" :show="loading" />
+                    <div v-if="loading" class="absolute inset-0 flex items-center justify-center bg-surface bg-opacity-50">
+                        <Spinner class="w-10 h-10 text-muted" :show="loading" />
                     </div>
                 </div>
-                <div v-if="errors?.target" class="mt-2 text-xs text-red-600">
+                <div v-if="errors?.target" class="mt-2 text-xs text-danger">
                     {{ errors.target[0] }}
                 </div>
             </div>
@@ -59,13 +59,13 @@
             <div class="border-t mt-4 sm:mt-4 ">
                 <div class="mt-4 sm:mt-4 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
                     <button type="submit"
-                        class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
+                        class="inline-flex w-full justify-center rounded-md bg-accent px-3 py-2 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:col-start-2"
                         ref="saveButtonRef" :disabled="isSubmitting">
                         <Spinner :show="isSubmitting" />
                         Save
                     </button>
                     <button type="button"
-                        class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0"
+                        class="mt-3 inline-flex w-full justify-center rounded-md bg-surface px-3 py-2 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2 sm:col-start-1 sm:mt-0"
                         @click="emit('cancel')" ref="cancelButtonRef">Cancel
                     </button>
                 </div>

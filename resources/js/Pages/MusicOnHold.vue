@@ -12,12 +12,12 @@
             <template #filters>
                 <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
                     <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                        <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                        <MagnifyingGlassIcon class="h-5 w-5 text-subtle" aria-hidden="true" />
                     </div>
                     <input
                         v-model="filterData.search"
                         type="text"
-                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600"
+                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-sm text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus"
                         placeholder="Search"
                         @keydown.enter="fetchData(1)"
                     />
@@ -30,27 +30,27 @@
                 <button
                     v-if="permissions.reload"
                     type="button"
-                    class="ml-2 sm:ml-4 inline-flex items-center gap-1 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                    class="ml-2 sm:ml-4 inline-flex items-center gap-1 rounded-md bg-surface px-2.5 py-1.5 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2"
                     @click="confirmReload"
                 >
-                    <ArrowPathIcon class="h-4 w-4 text-gray-500" />
+                    <ArrowPathIcon class="h-4 w-4 text-muted" />
                     Reload
                 </button>
 
                 <button
                     v-if="permissions.tenant_settings"
                     type="button"
-                    class="ml-2 sm:ml-4 inline-flex items-center gap-1 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                    class="ml-2 sm:ml-4 inline-flex items-center gap-1 rounded-md bg-surface px-2.5 py-1.5 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2"
                     @click="openTenantSettingsModal"
                 >
-                    <Cog6ToothIcon class="h-4 w-4 text-gray-500" />
+                    <Cog6ToothIcon class="h-4 w-4 text-muted" />
                     Tenant settings
                 </button>
 
                 <button
                     v-if="permissions.create"
                     type="button"
-                    class="ml-2 sm:ml-4 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                    class="ml-2 sm:ml-4 rounded-md bg-surface px-2.5 py-1.5 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2"
                     @click="openUploadModal()"
                 >
                     Upload
@@ -59,7 +59,7 @@
                 <button
                     v-if="permissions.create"
                     type="button"
-                    class="ml-2 sm:ml-4 rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
+                    class="ml-2 sm:ml-4 rounded-md bg-accent px-2.5 py-1.5 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover"
                     @click="openCreateForm"
                 >
                     Create stream
@@ -68,7 +68,7 @@
                 <button
                     v-if="permissions.view_all && filterData.showGlobal"
                     type="button"
-                    class="ml-2 sm:ml-4 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                    class="ml-2 sm:ml-4 rounded-md bg-surface px-2.5 py-1.5 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2"
                     @click="showLocal"
                 >
                     Show local
@@ -77,7 +77,7 @@
                 <button
                     v-else-if="permissions.view_all"
                     type="button"
-                    class="ml-2 sm:ml-4 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                    class="ml-2 sm:ml-4 rounded-md bg-surface px-2.5 py-1.5 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2"
                     @click="showAll"
                 >
                     Show all
@@ -102,26 +102,26 @@
             </template>
 
             <template #table-header>
-                <TableColumnHeader class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">
+                <TableColumnHeader class="px-4 py-3.5 text-left text-sm font-semibold text-heading">
                     <div class="flex items-center">
                         <input
                             v-model="selectPageItems"
                             type="checkbox"
                             :disabled="selectablePageIds.length === 0"
-                            class="h-4 w-4 rounded border-gray-300 text-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
+                            class="h-4 w-4 rounded border-strong text-accent-fg disabled:cursor-not-allowed disabled:opacity-50"
                         />
                         <button class="ml-4 flex items-center" @click="setSort('music_on_hold_name')">
                             <span class="mr-2">Name</span>
-                            <ChevronUpIcon v-if="sortData.name === 'music_on_hold_name' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
-                            <ChevronDownIcon v-else-if="sortData.name === 'music_on_hold_name' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                            <ChevronUpIcon v-if="sortData.name === 'music_on_hold_name' && sortData.order === 'asc'" class="h-4 w-4 text-muted" />
+                            <ChevronDownIcon v-else-if="sortData.name === 'music_on_hold_name' && sortData.order === 'desc'" class="h-4 w-4 text-muted" />
                         </button>
                     </div>
                 </TableColumnHeader>
-                <TableColumnHeader v-if="filterData.showGlobal" header="Domain" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Rate" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Options" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Files" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
+                <TableColumnHeader v-if="filterData.showGlobal" header="Domain" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+                <TableColumnHeader header="Rate" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+                <TableColumnHeader header="Options" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+                <TableColumnHeader header="Files" class="px-2 py-3.5 text-left text-sm font-semibold text-heading" />
+                <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-heading" />
             </template>
 
             <template v-if="selectPageItems" #current-selection>
@@ -130,14 +130,14 @@
                         <span class="font-semibold">{{ selectedItems.length }}</span> streams are selected.
                         <button
                             v-if="!selectAll && selectedItems.length !== data.total"
-                            class="rounded px-2 py-2 text-blue-500 transition duration-500 ease-in-out hover:bg-blue-200 hover:text-blue-500 focus:bg-blue-200 focus:outline-none focus:ring-1 focus:ring-blue-300"
+                            class="rounded px-2 py-2 text-info transition duration-500 ease-in-out hover:bg-info-subtle hover:text-info focus:bg-info-subtle focus:outline-none focus:ring-1 focus:ring-focus"
                             @click="handleSelectAll"
                         >
                             Select all {{ data.total }} streams
                         </button>
                         <button
                             v-if="selectAll"
-                            class="rounded px-2 py-2 text-blue-500 transition duration-500 ease-in-out hover:bg-blue-200 hover:text-blue-500 focus:bg-blue-200 focus:outline-none focus:ring-1 focus:ring-blue-300"
+                            class="rounded px-2 py-2 text-info transition duration-500 ease-in-out hover:bg-info-subtle hover:text-info focus:bg-info-subtle focus:outline-none focus:ring-1 focus:ring-focus"
                             @click="clearSelection"
                         >
                             Clear selection
@@ -149,49 +149,49 @@
             <template #table-body>
                 <template v-for="row in data.data" :key="row.music_on_hold_uuid">
                     <tr>
-                        <TableField class="px-4 py-2 text-sm text-gray-500">
+                        <TableField class="px-4 py-2 text-sm text-muted">
                             <div class="flex items-center">
                                 <input
                                     v-model="selectedItems"
                                     type="checkbox"
                                     :value="row.music_on_hold_uuid"
                                     :disabled="!row.can_modify"
-                                    class="h-4 w-4 rounded border-gray-300 text-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
+                                    class="h-4 w-4 rounded border-strong text-accent-fg disabled:cursor-not-allowed disabled:opacity-50"
                                 />
                                 <div class="ml-4 min-w-0">
                                     <button
                                         type="button"
-                                        class="font-medium text-gray-900"
-                                        :class="{ 'cursor-pointer hover:text-indigo-600': permissions.update && row.can_modify }"
+                                        class="font-medium text-heading"
+                                        :class="{ 'cursor-pointer hover:text-accent-fg': permissions.update && row.can_modify }"
                                         @click="permissions.update && row.can_modify && openEditForm(row.music_on_hold_uuid)"
                                     >
                                         {{ row.music_on_hold_name }}
                                     </button>
                                     <Badge v-if="row.is_tenant_default" text="TENANT DEFAULT" v-bind="tenantDefaultBadge" class="ml-2 align-middle" />
-                                    <div v-if="permissions.view_path && row.music_on_hold_path" class="mt-1 max-w-md truncate text-xs text-gray-400">
+                                    <div v-if="permissions.view_path && row.music_on_hold_path" class="mt-1 max-w-md truncate text-xs text-subtle">
                                         {{ row.music_on_hold_path }}
                                     </div>
                                 </div>
                             </div>
                         </TableField>
 
-                        <TableField v-if="filterData.showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.domain_label" />
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.rate_label" />
-                        <TableField class="px-2 py-2 text-sm text-gray-500">
+                        <TableField v-if="filterData.showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-muted" :text="row.domain_label" />
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted" :text="row.rate_label" />
+                        <TableField class="px-2 py-2 text-sm text-muted">
                             <div class="flex flex-wrap gap-1">
                                 <Badge :text="row.music_on_hold_shuffle === 'true' ? 'Shuffle' : 'Ordered'" v-bind="row.music_on_hold_shuffle === 'true' ? blueBadge : grayBadge" />
                                 <Badge :text="row.music_on_hold_channels === '2' ? 'Stereo' : 'Mono'" v-bind="grayBadge" />
                                 <Badge v-if="row.music_on_hold_chime_list" text="Chime" v-bind="amberBadge" />
                             </div>
                         </TableField>
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="`${row.files.length} file${row.files.length === 1 ? '' : 's'}`" />
-                        <TableField class="px-2 py-1 text-sm text-gray-500">
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted" :text="`${row.files.length} file${row.files.length === 1 ? '' : 's'}`" />
+                        <TableField class="px-2 py-1 text-sm text-muted">
                             <template #action-buttons>
                                 <div class="flex items-center justify-end gap-1">
                                     <button
                                         v-if="permissions.update && row.can_modify"
                                         type="button"
-                                        class="rounded-full p-2 text-gray-400 transition hover:bg-gray-200 hover:text-gray-600"
+                                        class="rounded-full p-2 text-subtle transition hover:bg-surface-3 hover:text-body"
                                         title="Edit"
                                         @click="openEditForm(row.music_on_hold_uuid)"
                                     >
@@ -200,7 +200,7 @@
                                     <button
                                         v-if="permissions.destroy && row.can_modify"
                                         type="button"
-                                        class="rounded-full p-2 text-gray-400 transition hover:bg-gray-200 hover:text-gray-600"
+                                        class="rounded-full p-2 text-subtle transition hover:bg-surface-3 hover:text-body"
                                         title="Delete"
                                         @click="confirmStreamDelete([row.music_on_hold_uuid])"
                                     >
@@ -212,31 +212,31 @@
                     </tr>
 
                     <tr>
-                        <td :colspan="columnCount" class="bg-gray-50 px-8 py-3">
+                        <td :colspan="columnCount" class="bg-surface-2 px-8 py-3">
                             <div v-if="row.files.length" class="overflow-x-auto">
-                                <table class="min-w-full divide-y divide-gray-200">
-                                    <tbody class="divide-y divide-gray-200">
+                                <table class="min-w-full divide-y divide-default">
+                                    <tbody class="divide-y divide-default">
                                         <tr v-for="file in row.files" :key="`${row.music_on_hold_uuid}-${file.name}`">
-                                            <td class="py-2 pr-4 text-sm text-gray-700">
+                                            <td class="py-2 pr-4 text-sm text-body">
                                                 <span class="break-all">{{ file.name }}</span>
                                             </td>
-                                            <td class="whitespace-nowrap px-4 py-2 text-right text-sm text-gray-500">
+                                            <td class="whitespace-nowrap px-4 py-2 text-right text-sm text-muted">
                                                 {{ file.size_label }}
                                             </td>
-                                            <td class="whitespace-nowrap px-4 py-2 text-right text-sm text-gray-500">
+                                            <td class="whitespace-nowrap px-4 py-2 text-right text-sm text-muted">
                                                 {{ formatDate(file.modified_at) }}
                                             </td>
                                             <td class="whitespace-nowrap py-1 pl-4 text-right">
-                                                <button type="button" class="rounded-full p-2 text-blue-500 transition hover:bg-blue-100 hover:text-blue-700" title="Play" @click="openPlayer(row, file)">
+                                                <button type="button" class="rounded-full p-2 text-info transition hover:bg-info-subtle hover:text-info" title="Play" @click="openPlayer(row, file)">
                                                     <PlayCircleIcon class="h-5 w-5" />
                                                 </button>
-                                                <button type="button" class="rounded-full p-2 text-gray-400 transition hover:bg-gray-200 hover:text-gray-600" title="Download" @click="downloadFile(file.download_url)">
+                                                <button type="button" class="rounded-full p-2 text-subtle transition hover:bg-surface-3 hover:text-body" title="Download" @click="downloadFile(file.download_url)">
                                                     <ArrowDownTrayIcon class="h-5 w-5" />
                                                 </button>
                                                 <button
                                                     v-if="permissions.destroy && row.can_modify"
                                                     type="button"
-                                                    class="rounded-full p-2 text-gray-400 transition hover:bg-gray-200 hover:text-gray-600"
+                                                    class="rounded-full p-2 text-subtle transition hover:bg-surface-3 hover:text-body"
                                                     title="Delete"
                                                     @click="confirmFileDelete(row, file)"
                                                 >
@@ -247,7 +247,7 @@
                                     </tbody>
                                 </table>
                             </div>
-                            <div v-else class="text-sm text-gray-500">No audio files in this stream.</div>
+                            <div v-else class="text-sm text-muted">No audio files in this stream.</div>
                         </td>
                     </tr>
                 </template>
@@ -255,9 +255,9 @@
 
             <template #empty>
                 <div v-if="!loading && data.data.length === 0" class="text-center my-5">
-                    <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
-                    <p class="mt-1 text-sm text-gray-500">Adjust your search and try again.</p>
+                    <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-subtle" />
+                    <h3 class="mt-2 text-sm font-semibold text-heading">No results found</h3>
+                    <p class="mt-1 text-sm text-muted">Adjust your search and try again.</p>
                 </div>
             </template>
 
@@ -287,8 +287,8 @@
         <div v-else class="px-4 sm:px-6 lg:px-8">
             <div class="sm:flex sm:items-center">
                 <div class="sm:flex-auto">
-                    <div class="mt-3 text-lg font-semibold leading-6 text-gray-600">Music on Hold</div>
-                    <p class="mt-2 text-sm text-gray-700">Manage hold music streams and audio files.</p>
+                    <div class="mt-3 text-lg font-semibold leading-6 text-body">Music on Hold</div>
+                    <p class="mt-2 text-sm text-body">Manage hold music streams and audio files.</p>
                 </div>
                 <div class="mt-4 flex flex-wrap items-center gap-2 sm:ml-16 sm:mt-0 sm:flex-none">
                     <ViewToggle :model-value="viewMode" @update:model-value="setViewMode" />
@@ -296,27 +296,27 @@
                     <button
                         v-if="permissions.reload"
                         type="button"
-                        class="inline-flex items-center gap-1 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                        class="inline-flex items-center gap-1 rounded-md bg-surface px-2.5 py-1.5 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2"
                         @click="confirmReload"
                     >
-                        <ArrowPathIcon class="h-4 w-4 text-gray-500" />
+                        <ArrowPathIcon class="h-4 w-4 text-muted" />
                         Reload
                     </button>
 
                     <button
                         v-if="permissions.tenant_settings"
                         type="button"
-                        class="inline-flex items-center gap-1 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                        class="inline-flex items-center gap-1 rounded-md bg-surface px-2.5 py-1.5 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2"
                         @click="openTenantSettingsModal"
                     >
-                        <Cog6ToothIcon class="h-4 w-4 text-gray-500" />
+                        <Cog6ToothIcon class="h-4 w-4 text-muted" />
                         Tenant settings
                     </button>
 
                     <button
                         v-if="permissions.create"
                         type="button"
-                        class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                        class="rounded-md bg-surface px-2.5 py-1.5 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2"
                         @click="openUploadModal()"
                     >
                         Upload
@@ -325,7 +325,7 @@
                     <button
                         v-if="permissions.create"
                         type="button"
-                        class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
+                        class="rounded-md bg-accent px-2.5 py-1.5 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover"
                         @click="openCreateForm"
                     >
                         Create stream
@@ -334,7 +334,7 @@
                     <button
                         v-if="permissions.view_all && filterData.showGlobal"
                         type="button"
-                        class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                        class="rounded-md bg-surface px-2.5 py-1.5 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2"
                         @click="showLocal"
                     >
                         Show local
@@ -343,7 +343,7 @@
                     <button
                         v-else-if="permissions.view_all"
                         type="button"
-                        class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                        class="rounded-md bg-surface px-2.5 py-1.5 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2"
                         @click="showAll"
                     >
                         Show all
@@ -354,12 +354,12 @@
             <div class="mt-6 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
                 <div class="relative min-w-64 focus-within:z-10 sm:mr-4">
                     <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                        <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                        <MagnifyingGlassIcon class="h-5 w-5 text-subtle" aria-hidden="true" />
                     </div>
                     <input
                         v-model="filterData.search"
                         type="text"
-                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600"
+                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-sm text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus"
                         placeholder="Search"
                         @keydown.enter="fetchData(1)"
                     />
@@ -367,18 +367,18 @@
 
                 <button
                     type="button"
-                    class="inline-flex items-center gap-1 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                    class="inline-flex items-center gap-1 rounded-md bg-surface px-2.5 py-1.5 text-sm font-semibold text-body shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2"
                     title="Toggle sort order"
                     @click="toggleNameSort"
                 >
                     <span>Name</span>
-                    <ChevronUpIcon v-if="sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
-                    <ChevronDownIcon v-else class="h-4 w-4 text-gray-500" />
+                    <ChevronUpIcon v-if="sortData.order === 'asc'" class="h-4 w-4 text-muted" />
+                    <ChevronDownIcon v-else class="h-4 w-4 text-muted" />
                 </button>
 
                 <button
                     type="button"
-                    class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
+                    class="rounded-md bg-accent px-2.5 py-1.5 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover"
                     @click.prevent="fetchData(1)"
                 >
                     Search
@@ -386,26 +386,26 @@
 
                 <button
                     type="button"
-                    class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                    class="rounded-md bg-surface px-2.5 py-1.5 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2"
                     @click.prevent="resetFilters"
                 >
                     Reset
                 </button>
             </div>
 
-            <div v-if="selectedItems.length > 0" class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-md bg-indigo-50 px-4 py-2 text-sm">
-                <div class="text-indigo-900">
+            <div v-if="selectedItems.length > 0" class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-md bg-accent-subtle px-4 py-2 text-sm">
+                <div class="text-accent-fg">
                     <span class="font-semibold">{{ selectedItems.length }}</span> selected
                     <button
                         v-if="!selectAll && selectedItems.length !== data.total"
-                        class="ml-2 rounded px-2 py-1 text-blue-600 transition hover:bg-blue-100"
+                        class="ml-2 rounded px-2 py-1 text-info transition hover:bg-info-subtle"
                         @click="handleSelectAll"
                     >
                         Select all {{ data.total }}
                     </button>
                     <button
                         v-if="selectAll"
-                        class="ml-2 rounded px-2 py-1 text-blue-600 transition hover:bg-blue-100"
+                        class="ml-2 rounded px-2 py-1 text-info transition hover:bg-info-subtle"
                         @click="clearSelection"
                     >
                         Clear selection
@@ -415,7 +415,7 @@
                     <button
                         v-if="permissions.destroy"
                         type="button"
-                        class="inline-flex items-center gap-1 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-red-600 shadow-sm ring-1 ring-inset ring-red-200 hover:bg-red-50"
+                        class="inline-flex items-center gap-1 rounded-md bg-surface px-2.5 py-1.5 text-sm font-semibold text-danger shadow-sm ring-1 ring-inset ring-danger hover:bg-danger-subtle"
                         @click="handleBulkAction('bulk_delete')"
                     >
                         <TrashIcon class="h-4 w-4" />
@@ -423,7 +423,7 @@
                     </button>
                     <button
                         type="button"
-                        class="rounded-md px-2 py-1 text-sm text-gray-600 hover:bg-white"
+                        class="rounded-md px-2 py-1 text-sm text-body hover:bg-surface"
                         @click="clearSelection"
                     >
                         Clear
@@ -435,9 +435,9 @@
                 <Loading :show="loading" />
 
                 <div v-if="!loading && data.data.length === 0" class="text-center my-12">
-                    <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
-                    <p class="mt-1 text-sm text-gray-500">Adjust your search and try again.</p>
+                    <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-subtle" />
+                    <h3 class="mt-2 text-sm font-semibold text-heading">No results found</h3>
+                    <p class="mt-1 text-sm text-muted">Adjust your search and try again.</p>
                 </div>
 
                 <div
@@ -448,10 +448,10 @@
                         v-for="row in data.data"
                         :key="row.music_on_hold_uuid"
                         :class="[
-                            'group relative flex cursor-pointer flex-col rounded-lg bg-white ring-1 transition hover:-translate-y-0.5 hover:shadow-md',
+                            'group relative flex cursor-pointer flex-col rounded-lg bg-surface ring-1 transition hover:-translate-y-0.5 hover:shadow-md',
                             selectedItems.includes(row.music_on_hold_uuid)
-                                ? 'ring-2 ring-indigo-500'
-                                : 'ring-gray-200 hover:ring-indigo-200',
+                                ? 'ring-2 ring-focus'
+                                : 'ring-strong hover:ring-accent',
                         ]"
                         @click="openDrawer(row)"
                     >
@@ -462,7 +462,7 @@
                                 :value="row.music_on_hold_uuid"
                                 :disabled="!row.can_modify"
                                 :class="[
-                                    'h-4 w-4 rounded border-gray-300 text-indigo-600 transition',
+                                    'h-4 w-4 rounded border-strong text-accent-fg transition',
                                     !row.can_modify
                                         ? 'cursor-not-allowed opacity-0'
                                         : '',
@@ -475,7 +475,7 @@
 
                         <div
                             v-if="row.is_tenant_default"
-                            class="absolute right-3 top-3 z-10 rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-semibold uppercase leading-none text-emerald-700 ring-1 ring-inset ring-emerald-600/20"
+                            class="absolute right-3 top-3 z-10 rounded-full bg-success-subtle px-2 py-1 text-[10px] font-semibold uppercase leading-none text-success ring-1 ring-inset ring-success/20"
                         >
                             TENANT DEFAULT
                         </div>
@@ -488,7 +488,7 @@
                             <button
                                 v-if="permissions.update && row.can_modify"
                                 type="button"
-                                class="rounded-full bg-white/80 p-1.5 text-gray-500 shadow-sm hover:bg-white hover:text-indigo-600"
+                                class="rounded-full bg-white/80 p-1.5 text-muted shadow-sm hover:bg-surface hover:text-accent-fg"
                                 title="Edit"
                                 @click="openEditForm(row.music_on_hold_uuid)"
                             >
@@ -497,7 +497,7 @@
                             <button
                                 v-if="permissions.destroy && row.can_modify"
                                 type="button"
-                                class="rounded-full bg-white/80 p-1.5 text-gray-500 shadow-sm hover:bg-white hover:text-red-600"
+                                class="rounded-full bg-white/80 p-1.5 text-muted shadow-sm hover:bg-surface hover:text-danger"
                                 title="Delete"
                                 @click="confirmStreamDelete([row.music_on_hold_uuid])"
                             >
@@ -506,12 +506,12 @@
                         </div>
 
                         <div class="flex flex-col items-center px-6 pb-5 pt-8">
-                            <div class="relative flex h-20 w-20 items-center justify-center rounded-full bg-indigo-50 text-indigo-500 ring-1 ring-indigo-100 transition group-hover:scale-105">
+                            <div class="relative flex h-20 w-20 items-center justify-center rounded-full bg-accent-subtle text-accent-fg ring-1 ring-accent transition group-hover:scale-105">
                                 <MusicalNoteIcon class="h-9 w-9" />
                                 <button
                                     v-if="row.files.length"
                                     type="button"
-                                    class="absolute -bottom-1 -right-1 flex h-9 w-9 items-center justify-center rounded-full bg-indigo-600 text-white shadow-sm transition hover:bg-indigo-500"
+                                    class="absolute -bottom-1 -right-1 flex h-9 w-9 items-center justify-center rounded-full bg-accent text-on-accent shadow-sm transition hover:bg-accent-hover"
                                     title="Play first track"
                                     @click.stop="quickPlay(row)"
                                 >
@@ -520,14 +520,14 @@
                             </div>
 
                             <h3
-                                class="mt-4 w-full truncate text-center font-semibold text-gray-900"
+                                class="mt-4 w-full truncate text-center font-semibold text-heading"
                                 :title="row.music_on_hold_name"
                             >
                                 {{ row.music_on_hold_name }}
                             </h3>
                             <p
                                 v-if="filterData.showGlobal && row.domain_label"
-                                class="mt-0.5 truncate text-xs text-gray-500"
+                                class="mt-0.5 truncate text-xs text-muted"
                                 :title="row.domain_label"
                             >
                                 {{ row.domain_label }}
@@ -544,7 +544,7 @@
                             </div>
                         </div>
 
-                        <div class="mt-auto border-t border-gray-100 px-6 py-3 text-center text-xs text-gray-500">
+                        <div class="mt-auto border-t border-default px-6 py-3 text-center text-xs text-muted">
                             {{ row.files.length }} file{{ row.files.length === 1 ? "" : "s" }}
                         </div>
                     </div>
@@ -734,7 +734,7 @@ const ViewToggle = {
         const baseBtn = "inline-flex items-center justify-center px-2.5 py-1.5 text-sm font-medium transition";
         const select = (mode) => emit("update:modelValue", mode);
         return () =>
-            h("div", { class: "inline-flex overflow-hidden rounded-md shadow-sm ring-1 ring-inset ring-gray-300" }, [
+            h("div", { class: "inline-flex overflow-hidden rounded-md shadow-sm ring-1 ring-inset ring-strong" }, [
                 h(
                     "button",
                     {
@@ -742,7 +742,7 @@ const ViewToggle = {
                         title: "Grid view",
                         class: [
                             baseBtn,
-                            props.modelValue === "grid" ? "bg-indigo-600 text-white" : "bg-white text-gray-700 hover:bg-gray-50",
+                            props.modelValue === "grid" ? "bg-accent text-on-accent" : "bg-surface text-body hover:bg-surface-2",
                         ],
                         onClick: () => select("grid"),
                     },
@@ -755,8 +755,8 @@ const ViewToggle = {
                         title: "List view",
                         class: [
                             baseBtn,
-                            "border-l border-gray-300",
-                            props.modelValue === "list" ? "bg-indigo-600 text-white" : "bg-white text-gray-700 hover:bg-gray-50",
+                            "border-l border-strong",
+                            props.modelValue === "list" ? "bg-accent text-on-accent" : "bg-surface text-body hover:bg-surface-2",
                         ],
                         onClick: () => select("list"),
                     },
@@ -833,10 +833,10 @@ const itemOptions = ref({
     chime_options: [],
 });
 
-const grayBadge = { backgroundColor: "bg-gray-50", textColor: "text-gray-700", ringColor: "ring-gray-600/20" };
-const blueBadge = { backgroundColor: "bg-blue-50", textColor: "text-blue-700", ringColor: "ring-blue-600/20" };
-const amberBadge = { backgroundColor: "bg-amber-50", textColor: "text-amber-700", ringColor: "ring-amber-600/20" };
-const tenantDefaultBadge = { backgroundColor: "bg-emerald-50", textColor: "text-emerald-700", ringColor: "ring-emerald-600/20" };
+const grayBadge = { backgroundColor: "bg-surface-2", textColor: "text-body", ringColor: "ring-strong/20" };
+const blueBadge = { backgroundColor: "bg-info-subtle", textColor: "text-info", ringColor: "ring-info/20" };
+const amberBadge = { backgroundColor: "bg-warning-subtle", textColor: "text-warning", ringColor: "ring-warning/20" };
+const tenantDefaultBadge = { backgroundColor: "bg-success-subtle", textColor: "text-success", ringColor: "ring-success/20" };
 
 const columnCount = computed(() => filterData.value.showGlobal ? 6 : 5);
 const formHeader = computed(() => formMode.value === "create"

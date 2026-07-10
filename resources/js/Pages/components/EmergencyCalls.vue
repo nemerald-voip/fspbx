@@ -1,9 +1,9 @@
 <template>
     <div class="space-y-6 px-4 py-6 sm:p-6">
         <div class="flex justify-end items-center">
-            <!-- <h3 class="text-base font-semibold leading-6 text-gray-900">Emergency Calls</h3> -->
+            <!-- <h3 class="text-base font-semibold leading-6 text-heading">Emergency Calls</h3> -->
             <button type="button" @click.prevent="handleCreateButtonClick()"
-                class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                class="rounded-md bg-accent px-2.5 py-1.5 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
                 Create
             </button>
         </div>
@@ -12,34 +12,34 @@
     <div class="flex flex-col">
         <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
             <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-                <div class="overflow-hidden border-t border-gray-200">
-                    <table class="min-w-full divide-y divide-gray-200 mb-4">
-                        <thead class="bg-gray-100">
+                <div class="overflow-hidden border-t border-default">
+                    <table class="min-w-full divide-y divide-default mb-4">
+                        <thead class="bg-surface-3">
                             <tr>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Number</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Extensions to Notify
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-heading">Number</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-heading">Extensions to Notify
                                 </th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Description</th>
-                                <th class="relative px-6 py-3 text-left text-sm font-medium text-gray-500">
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-heading">Description</th>
+                                <th class="relative px-6 py-3 text-left text-sm font-medium text-muted">
                                     <span class="sr-only">Actions</span>
                                 </th>
                             </tr>
                         </thead>
-                        <tbody v-if="!loading && emergencyCalls.length" class="divide-y divide-gray-200 bg-white">
+                        <tbody v-if="!loading && emergencyCalls.length" class="divide-y divide-default bg-surface">
                             <tr v-for="call in emergencyCalls" :key="call.id">
-                                <td class="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
+                                <td class="whitespace-nowrap px-6 py-4 text-sm font-medium text-heading">
                                     {{ call.emergency_number }}
                                 </td>
-                                <!-- <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                                <!-- <td class="whitespace-nowrap px-6 py-4 text-sm text-muted">
                                     {{ call.members.length }}
                                 </td> -->
 
-                                <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                                    <Badge :text="call.members.length" backgroundColor="bg-indigo-100"
-                                        textColor="text-indigo-700" ringColor="ring-indigo-400/20"
+                                <td class="whitespace-nowrap px-6 py-4 text-sm text-muted">
+                                    <Badge :text="call.members.length" backgroundColor="bg-accent-subtle"
+                                        textColor="text-accent-fg" ringColor="ring-accent/20"
                                         class="px-2 py-1 text-xs font-semibold" />
                                 </td>
-                                <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                                <td class="whitespace-nowrap px-6 py-4 text-sm text-muted">
                                     {{ call.description }}
                                 </td>
                                 <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
@@ -48,7 +48,7 @@
                                             target="#destination_tooltip_target">
                                             <div id="destination_tooltip_target">
                                                 <PencilSquareIcon @click="handleEditButtonClick(call.uuid)"
-                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer" />
 
                                             </div>
                                         </ejs-tooltip>
@@ -57,7 +57,7 @@
                                             target="#delete_tooltip_target">
                                             <div id="delete_tooltip_target">
                                                 <TrashIcon @click="handleSingleItemDeleteRequest(call.uuid)"
-                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-subtle hover:bg-surface-3 hover:text-body active:bg-surface-3 active:duration-150 cursor-pointer" />
                                             </div>
                                         </ejs-tooltip>
                                     </div>
@@ -69,15 +69,15 @@
 
                     <!-- Empty State -->
                     <div v-if="!loading && emergencyCalls.length === 0" class="text-center my-5">
-                        <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                        <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
-                        <!-- <p class="mt-1 text-sm text-gray-500">
+                        <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-subtle" />
+                        <h3 class="mt-2 text-sm font-semibold text-heading">No results found</h3>
+                        <!-- <p class="mt-1 text-sm text-muted">
                 Adjust your search and try again.
               </p> -->
                     </div>
 
                     <!-- Loading -->
-                    <div v-if="loading" class="text-center my-5 text-sm text-gray-500">
+                    <div v-if="loading" class="text-center my-5 text-sm text-muted">
                         Loading emergency calls...
                     </div>
                 </div>

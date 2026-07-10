@@ -54,7 +54,7 @@
                     </div>
 
                     <div
-                        class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
+                        class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-body bg-surface-2 px-4 py-6 sm:p-6">
                         <FormElements>
 
                             <HiddenElement name="uuid" :meta="true" />
@@ -63,21 +63,21 @@
                                 :conditions="[() => options.permissions.is_superadmin]">
 
                                 <div class="mb-1">
-                                    <div class="text-sm font-medium text-gray-600 mb-1">
+                                    <div class="text-sm font-medium text-body mb-1">
                                         Unique ID
                                     </div>
 
                                     <div class="flex items-center group">
-                                        <span class="text-sm text-gray-900 select-all font-normal">
+                                        <span class="text-sm text-heading select-all font-normal">
                                             {{ options.item.uuid }}
                                         </span>
 
                                         <button type="button" @click="handleCopyToClipboard(options.item.uuid)"
-                                            class="ml-2 p-1 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
+                                            class="ml-2 p-1 rounded-full text-subtle hover:text-info hover:bg-info-subtle transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
                                             title="Copy to clipboard">
                                             <!-- Small Copy Icon -->
                                             <ClipboardDocumentIcon
-                                                class="h-4 w-4 text-gray-500 hover:text-gray-900  cursor-pointer" />
+                                                class="h-4 w-4 text-muted hover:text-heading  cursor-pointer" />
                                         </button>
                                     </div>
                                 </div>
@@ -126,7 +126,7 @@
                                 @change="handleCustomHoursUpdate" />
                             <ListElement name="time_slots" :sort="true" label="Time Slots" :initial="1"
                                 :conditions="[['custom_hours', true]]"
-                                :add-classes="{ ListElement: { listItem: 'bg-white p-3 sm:p-4 mb-4 rounded-lg shadow-md' } }">
+                                :add-classes="{ ListElement: { listItem: 'bg-surface p-3 sm:p-4 mb-4 rounded-lg shadow-md' } }">
                                 <template #default="{ index }">
                                     <ObjectElement :name="index">
                                         <CheckboxgroupElement name="weekdays" view="tabs" label="Weekdays" :items="[

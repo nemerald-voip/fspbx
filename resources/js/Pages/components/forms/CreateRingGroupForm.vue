@@ -20,7 +20,7 @@
                     </div>
 
                     <div
-                        class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
+                        class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-body bg-surface-2 px-4 py-6 sm:p-6">
                         <FormElements>
 
                             <StaticElement name="h4" tag="h4" content="Settings"

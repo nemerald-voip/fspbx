@@ -5,15 +5,15 @@
         <div class="flex flex-col sm:flex-row sm:flex-wrap">
             <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
                 <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                    <MagnifyingGlassIcon class="h-5 w-5 text-subtle" aria-hidden="true" />
                 </div>
                 <!-- mobile -->
                 <input type="search" v-model="filterData.search" id="mobile-search-inbound-webhooks"
-                    class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
+                    class="block w-full rounded-md border-0 py-1.5 pl-10 text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus sm:hidden"
                     placeholder="Search" @keydown.enter="handleSearchButtonClick" />
                 <!-- desktop -->
                 <input type="search" v-model="filterData.search" id="desktop-search-inbound-webhooks"
-                    class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
+                    class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus sm:block"
                     placeholder="Search" @keydown.enter="handleSearchButtonClick" />
             </div>
 
@@ -26,13 +26,13 @@
             <div class="relative">
                 <div class="flex justify-between">
                     <button type="button" @click.prevent="handleSearchButtonClick"
-                        class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500
-                     focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                        class="rounded-md bg-accent px-2.5 py-1.5 text-sm font-semibold text-on-accent shadow-sm hover:bg-accent-hover
+                     focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
                         Search
                     </button>
 
                     <button type="button" @click.prevent="handleFiltersReset"
-                        class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                        class="rounded-md bg-surface px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2">
                         Reset
                     </button>
                 </div>
@@ -42,57 +42,57 @@
         <!-- TABLE + PAGINATION -->
         <div class="mt-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
             <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-                <Paginator class="border border-gray-200" :previous="data.prev_page_url" :next="data.next_page_url"
+                <Paginator class="border border-default" :previous="data.prev_page_url" :next="data.next_page_url"
                     :from="data.from" :to="data.to" :total="data.total" :currentPage="data.current_page"
                     :lastPage="data.last_page" :links="data.links" @pagination-change-page="renderRequestedPage" />
 
-                <div class="overflow-hidden-t border-l border-r border-gray-200">
-                    <table class="min-w-full divide-y divide-gray-200 mb-4">
-                        <thead class="bg-gray-100">
+                <div class="overflow-hidden-t border-l border-r border-default">
+                    <table class="min-w-full divide-y divide-default mb-4">
+                        <thead class="bg-surface-3">
                             <tr>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Date</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">In/Out</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Source</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Destination</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Message</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Type</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Status</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Action</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-heading">Date</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-heading">In/Out</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-heading">Source</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-heading">Destination</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-heading">Message</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-heading">Type</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-heading">Status</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-heading">Action</th>
 
                             </tr>
                         </thead>
 
-                        <tbody v-if="!isDataLoading && data.data?.length" class="divide-y divide-gray-200 bg-white">
+                        <tbody v-if="!isDataLoading && data.data?.length" class="divide-y divide-default bg-surface">
                             <template v-for="row in data.data" :key="row.message_uuid">
-                                <tr @click="toggleExpand(row.message_uuid)" class="hover:bg-gray-50 cursor-pointer">
-                                    <td class="whitespace-nowrap px-6 py-2 text-sm font-medium text-gray-500">
+                                <tr @click="toggleExpand(row.message_uuid)" class="hover:bg-surface-2 cursor-pointer">
+                                    <td class="whitespace-nowrap px-6 py-2 text-sm font-medium text-muted">
                                         {{ row.created_at_formatted ?? row.created_at }}
                                     </td>
-                                    <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
+                                    <td class="whitespace-nowrap px-6 py-2 text-sm text-muted">
                                         {{ row.direction }}
                                     </td>
-                                    <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
+                                    <td class="whitespace-nowrap px-6 py-2 text-sm text-muted">
                                         {{ row.source_formatted }}
                                     </td>
-                                    <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
+                                    <td class="whitespace-nowrap px-6 py-2 text-sm text-muted">
                                         {{ row.destination_formatted }}
                                     </td>
-                                    <td class="px-6 py-2 text-sm text-gray-500" :title="row.message_preview">
+                                    <td class="px-6 py-2 text-sm text-muted" :title="row.message_preview">
                                         <div class="max-w-sm">
                                             <div class="truncate">
                                                 {{ row.message_preview }}
                                             </div>
-                                            <div class="mt-1 text-xs text-gray-400">
+                                            <div class="mt-1 text-xs text-subtle">
                                                 <span v-if="row.provider_name">{{ row.provider_name }}</span>
                                                 <span v-if="row.provider_name && row.has_media"> • </span>
                                                 <span v-if="row.has_media">📎 {{ row.media_count }}</span>
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
+                                    <td class="whitespace-nowrap px-6 py-2 text-sm text-muted">
                                         {{ row.type }}
                                     </td>
-                                    <td class="px-6 py-2 text-sm text-gray-500"
+                                    <td class="px-6 py-2 text-sm text-muted"
                                         :title="row.status_summary || row.status">
                                         <Badge :text="truncateText(row.status_summary || row.status, 60)"
                                             :backgroundColor="determineColor(row.status_summary || row.status).backgroundColor"
@@ -106,7 +106,7 @@
                                             <!-- RETRY ICON -->
                                             <div class="relative group flex items-center justify-center cursor-pointer">
                                                 <RestartIcon @click="handleRetry(row.message_uuid)"
-                                                    class="h-7 w-7 transition duration-300 ease-in-out p-1 text-gray-400 hover:bg-gray-200 hover:text-gray-600 rounded-full" />
+                                                    class="h-7 w-7 transition duration-300 ease-in-out p-1 text-subtle hover:bg-surface-3 hover:text-body rounded-full" />
 
                                                 <!-- TOOLTIP -->
                                                 <div
@@ -126,49 +126,49 @@
 
                                 <!-- EXPANDED DETAILS -->
                                 <tr v-if="expandedRow === row.message_uuid">
-                                    <td :colspan="8" class="bg-gray-50 px-6 py-4 shadow-inner">
+                                    <td :colspan="8" class="bg-surface-2 px-6 py-4 shadow-inner">
                                         <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                                            <div class="rounded-md border border-gray-200 bg-white p-4">
-                                                <div class="text-gray-900 font-semibold text-sm mb-2">Overview</div>
+                                            <div class="rounded-md border border-default bg-surface p-4">
+                                                <div class="text-heading font-semibold text-sm mb-2">Overview</div>
 
                                                 <div class="space-y-2 text-sm">
-                                                    <div><span class="font-medium text-gray-700">Message ID:</span> {{
+                                                    <div><span class="font-medium text-body">Message ID:</span> {{
                                                         row.message_uuid }}</div>
-                                                    <div><span class="font-medium text-gray-700">Provider:</span> {{
+                                                    <div><span class="font-medium text-body">Provider:</span> {{
                                                         row.provider_name || '—' }}</div>
-                                                    <div><span class="font-medium text-gray-700">Reference ID:</span> {{
+                                                    <div><span class="font-medium text-body">Reference ID:</span> {{
                                                         row.reference_id || '—' }}</div>
-                                                    <div><span class="font-medium text-gray-700">Direction:</span> {{
+                                                    <div><span class="font-medium text-body">Direction:</span> {{
                                                         row.direction }}</div>
-                                                    <div><span class="font-medium text-gray-700">Type:</span> {{
+                                                    <div><span class="font-medium text-body">Type:</span> {{
                                                         row.type }}</div>
-                                                    <div><span class="font-medium text-gray-700">Status Summary:</span>
+                                                    <div><span class="font-medium text-body">Status Summary:</span>
                                                         {{ row.status_summary || row.status }}</div>
-                                                    <div><span class="font-medium text-gray-700">Read At:</span> {{
+                                                    <div><span class="font-medium text-body">Read At:</span> {{
                                                         row.read_at || '—' }}</div>
                                                 </div>
                                             </div>
 
-                                            <div class="rounded-md border border-gray-200 bg-white p-4">
-                                                <div class="text-gray-900 font-semibold text-sm mb-2">Message</div>
+                                            <div class="rounded-md border border-default bg-surface p-4">
+                                                <div class="text-heading font-semibold text-sm mb-2">Message</div>
                                                 <pre
-                                                    class="text-gray-700 text-sm whitespace-pre-wrap break-words">{{ row.message || '—' }}</pre>
+                                                    class="text-body text-sm whitespace-pre-wrap break-words">{{ row.message || '—' }}</pre>
                                             </div>
 
-                                            <div class="rounded-md border border-gray-200 bg-white p-4 lg:col-span-2"
+                                            <div class="rounded-md border border-default bg-surface p-4 lg:col-span-2"
                                                 v-if="hasMedia(row)">
-                                                <div class="text-gray-900 font-semibold text-sm mb-2">Attachments</div>
+                                                <div class="text-heading font-semibold text-sm mb-2">Attachments</div>
 
                                                 <div class="space-y-2">
                                                     <div v-for="(item, index) in row.media"
                                                         :key="`${row.message_uuid}-${index}`"
-                                                        class="flex items-center justify-between rounded border border-gray-200 px-3 py-2 text-sm">
+                                                        class="flex items-center justify-between rounded border border-default px-3 py-2 text-sm">
                                                         <div class="min-w-0">
-                                                            <div class="truncate font-medium text-gray-800">
+                                                            <div class="truncate font-medium text-heading">
                                                                 {{ item.original_name || item.stored_name || `Attachment
                                                                 ${index + 1}` }}
                                                             </div>
-                                                            <div class="text-xs text-gray-500">
+                                                            <div class="text-xs text-muted">
                                                                 {{ item.mime_type || 'unknown' }}
                                                                 <span v-if="item.size"> • {{ item.size }} bytes</span>
                                                             </div>
@@ -176,7 +176,7 @@
 
                                                         <a v-if="item.access_path" :href="item.access_path"
                                                             target="_blank"
-                                                            class="ml-4 text-sm font-medium text-indigo-600 hover:text-indigo-500"
+                                                            class="ml-4 text-sm font-medium text-accent-fg hover:text-accent-fg"
                                                             @click.stop>
                                                             Open
                                                         </a>
@@ -184,11 +184,11 @@
                                                 </div>
                                             </div>
 
-                                            <div class="rounded-md border border-gray-200 bg-white p-4 lg:col-span-2">
-                                                <div class="text-gray-900 font-semibold text-sm mb-2">Delivery Meta
+                                            <div class="rounded-md border border-default bg-surface p-4 lg:col-span-2">
+                                                <div class="text-heading font-semibold text-sm mb-2">Delivery Meta
                                                 </div>
                                                 <pre
-                                                    class="text-gray-700 text-sm whitespace-pre-wrap break-words">{{ prettyJson(row.delivery_meta) }}</pre>
+                                                    class="text-body text-sm whitespace-pre-wrap break-words">{{ prettyJson(row.delivery_meta) }}</pre>
                                             </div>
                                         </div>
                                     </td>
@@ -199,25 +199,25 @@
 
                     <!-- EMPTY STATE -->
                     <div v-if="!isDataLoading && data.data?.length === 0" class="text-center my-5">
-                        <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                        <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
+                        <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-subtle" />
+                        <h3 class="mt-2 text-sm font-semibold text-heading">No results found</h3>
                     </div>
 
                     <!-- LOADING -->
-                    <div v-if="isDataLoading" class="text-center my-5 text-sm text-gray-500">
+                    <div v-if="isDataLoading" class="text-center my-5 text-sm text-muted">
                         <div class="animate-pulse flex space-x-4">
                             <div class="flex-1 space-y-6 py-1">
-                                <div class="h-2 bg-slate-200 rounded"></div>
-                                <div class="h-2 bg-slate-200 rounded"></div>
-                                <div class="h-2 bg-slate-200 rounded"></div>
-                                <div class="h-2 bg-slate-200 rounded"></div>
+                                <div class="h-2 bg-surface-3 rounded"></div>
+                                <div class="h-2 bg-surface-3 rounded"></div>
+                                <div class="h-2 bg-surface-3 rounded"></div>
+                                <div class="h-2 bg-surface-3 rounded"></div>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- BOTTOM PAGER -->
-                <Paginator class="border border-gray-200" :previous="data.prev_page_url" :next="data.next_page_url"
+                <Paginator class="border border-default" :previous="data.prev_page_url" :next="data.next_page_url"
                     :from="data.from" :to="data.to" :total="data.total" :currentPage="data.current_page"
                     :lastPage="data.last_page" :links="data.links" @pagination-change-page="renderRequestedPage" />
             </div>
@@ -362,32 +362,32 @@ const determineColor = (status) => {
 
     if (value.includes('failed') || value.includes('error') || value.includes('undelivered')) {
         return {
-            backgroundColor: 'bg-red-50',
-            textColor: 'text-red-700',
-            ringColor: 'ring-red-600/20'
+            backgroundColor: 'bg-danger-subtle',
+            textColor: 'text-danger',
+            ringColor: 'ring-danger/20'
         }
     }
 
     if (value.includes('queued') || value.includes('received')) {
         return {
-            backgroundColor: 'bg-blue-50',
-            textColor: 'text-blue-700',
-            ringColor: 'ring-blue-600/20'
+            backgroundColor: 'bg-info-subtle',
+            textColor: 'text-info',
+            ringColor: 'ring-info/20'
         }
     }
 
     if (value.includes('success') || value.includes('delivered') || value.includes('emailed')) {
         return {
-            backgroundColor: 'bg-green-50',
-            textColor: 'text-green-700',
-            ringColor: 'ring-green-600/20'
+            backgroundColor: 'bg-success-subtle',
+            textColor: 'text-success',
+            ringColor: 'ring-success/20'
         }
     }
 
     return {
-        backgroundColor: 'bg-yellow-50',
-        textColor: 'text-yellow-700',
-        ringColor: 'ring-yellow-600/20'
+        backgroundColor: 'bg-warning-subtle',
+        textColor: 'text-warning',
+        ringColor: 'ring-warning/20'
     }
 }
 

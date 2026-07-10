@@ -13,7 +13,7 @@
                                     <StaticElement name="payment_gateways_tab_label" tag="h4" content="Payment Gateways"
                                         description="Manage Payment Providers" />
                                     <ListElement name="gateways" :controls="{ add: false, remove: false }"
-                                        :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }">
+                                        :add-classes="{ ListElement: { listItem: 'bg-surface p-4 mb-4 rounded-lg shadow-md' } }">
                                         <template #default="{ index }">
                                             <ObjectElement :name="index">
                                                 <StaticElement name="name" tag="p" :content="(el$) => {
@@ -23,12 +23,12 @@
                                                     <template #after="{ el$ }">
                                                         <Badge v-if="el$.form$.el$('gateways').value[index].is_enabled"
                                                             class="mt-1" :text="'Activated'"
-                                                            :backgroundColor="'bg-green-50'"
-                                                            :textColor="'text-green-700'"
-                                                            :ringColor="'ring-green-600/20'" />
+                                                            :backgroundColor="'bg-success-subtle'"
+                                                            :textColor="'text-success'"
+                                                            :ringColor="'ring-success/20'" />
                                                         <Badge v-else class="mt-1" :text="'Disabled'"
-                                                            :backgroundColor="'bg-rose-50'" :textColor="'text-rose-700'"
-                                                            :ringColor="'ring-rose-600/20'" />
+                                                            :backgroundColor="'bg-danger-subtle'" :textColor="'text-danger'"
+                                                            :ringColor="'ring-danger/20'" />
                                                     </template>
                                                 </StaticElement>
                                                 <HiddenElement name="is_enabled" :meta="true" />

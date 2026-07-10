@@ -12,12 +12,12 @@
             <template #filters>
                 <div class="relative mb-2 min-w-64 focus-within:z-10 sm:mr-4">
                     <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                        <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                        <MagnifyingGlassIcon class="h-5 w-5 text-subtle" aria-hidden="true" />
                     </div>
                     <input
                         v-model="filterData.search"
                         type="text"
-                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600"
+                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus"
                         placeholder="Search"
                         @keydown.enter="fetchData(1)"
                     />
@@ -26,7 +26,7 @@
                 <div v-if="users.length" class="relative mb-2 min-w-48 sm:mr-4">
                     <select
                         v-model="filterData.user_uuid"
-                        class="block w-full rounded-md border-0 py-1.5 pl-3 pr-8 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600"
+                        class="block w-full rounded-md border-0 py-1.5 pl-3 pr-8 text-sm leading-6 text-heading ring-1 ring-inset ring-strong focus:ring-2 focus:ring-inset focus:ring-focus"
                         @change="fetchData(1)"
                     >
                         <option value="">All users</option>
@@ -52,93 +52,93 @@
             </template>
 
             <template #table-header>
-                <TableColumnHeader class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">
+                <TableColumnHeader class="px-4 py-3.5 text-left text-sm font-semibold text-heading">
                     <button class="flex items-center" @click="setSort('domain_name')">
                         <span class="mr-2">Domain</span>
-                        <ChevronUpIcon v-if="sortData.name === 'domain_name' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
-                        <ChevronDownIcon v-else-if="sortData.name === 'domain_name' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronUpIcon v-if="sortData.name === 'domain_name' && sortData.order === 'asc'" class="h-4 w-4 text-muted" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'domain_name' && sortData.order === 'desc'" class="h-4 w-4 text-muted" />
                     </button>
                 </TableColumnHeader>
-                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-heading">
                     <button class="flex items-center" @click="setSort('username')">
                         <span class="mr-2">User</span>
-                        <ChevronUpIcon v-if="sortData.name === 'username' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
-                        <ChevronDownIcon v-else-if="sortData.name === 'username' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronUpIcon v-if="sortData.name === 'username' && sortData.order === 'asc'" class="h-4 w-4 text-muted" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'username' && sortData.order === 'desc'" class="h-4 w-4 text-muted" />
                     </button>
                 </TableColumnHeader>
-                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-heading">
                     <button class="flex items-center" @click="setSort('app_name')">
                         <span class="mr-2">App</span>
-                        <ChevronUpIcon v-if="sortData.name === 'app_name' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
-                        <ChevronDownIcon v-else-if="sortData.name === 'app_name' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronUpIcon v-if="sortData.name === 'app_name' && sortData.order === 'asc'" class="h-4 w-4 text-muted" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'app_name' && sortData.order === 'desc'" class="h-4 w-4 text-muted" />
                     </button>
                 </TableColumnHeader>
-                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-heading">
                     <button class="flex items-center" @click="setSort('transaction_code')">
                         <span class="mr-2">Code</span>
-                        <ChevronUpIcon v-if="sortData.name === 'transaction_code' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
-                        <ChevronDownIcon v-else-if="sortData.name === 'transaction_code' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronUpIcon v-if="sortData.name === 'transaction_code' && sortData.order === 'asc'" class="h-4 w-4 text-muted" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'transaction_code' && sortData.order === 'desc'" class="h-4 w-4 text-muted" />
                     </button>
                 </TableColumnHeader>
-                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-heading">
                     <button class="flex items-center" @click="setSort('transaction_address')">
                         <span class="mr-2">Address</span>
-                        <ChevronUpIcon v-if="sortData.name === 'transaction_address' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
-                        <ChevronDownIcon v-else-if="sortData.name === 'transaction_address' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronUpIcon v-if="sortData.name === 'transaction_address' && sortData.order === 'asc'" class="h-4 w-4 text-muted" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'transaction_address' && sortData.order === 'desc'" class="h-4 w-4 text-muted" />
                     </button>
                 </TableColumnHeader>
-                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-heading">
                     <button class="flex items-center" @click="setSort('transaction_type')">
                         <span class="mr-2">Type</span>
-                        <ChevronUpIcon v-if="sortData.name === 'transaction_type' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
-                        <ChevronDownIcon v-else-if="sortData.name === 'transaction_type' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronUpIcon v-if="sortData.name === 'transaction_type' && sortData.order === 'asc'" class="h-4 w-4 text-muted" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'transaction_type' && sortData.order === 'desc'" class="h-4 w-4 text-muted" />
                     </button>
                 </TableColumnHeader>
-                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-heading">
                     <button class="flex items-center" @click="setSort('transaction_date')">
                         <span class="mr-2">Date</span>
-                        <ChevronUpIcon v-if="sortData.name === 'transaction_date' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
-                        <ChevronDownIcon v-else-if="sortData.name === 'transaction_date' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronUpIcon v-if="sortData.name === 'transaction_date' && sortData.order === 'asc'" class="h-4 w-4 text-muted" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'transaction_date' && sortData.order === 'desc'" class="h-4 w-4 text-muted" />
                     </button>
                 </TableColumnHeader>
-                <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-heading" />
             </template>
 
             <template #table-body>
                 <tr v-for="row in data.data" :key="row.database_transaction_uuid">
-                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500">
+                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-muted">
                         {{ row.domain_name || "No domain" }}
                     </TableField>
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted">
                         {{ row.username || "No user" }}
                     </TableField>
-                    <TableField class="px-2 py-2 text-sm text-gray-500">
+                    <TableField class="px-2 py-2 text-sm text-muted">
                         <button
                             type="button"
-                            class="max-w-56 truncate text-left font-medium text-gray-900 hover:text-indigo-600"
+                            class="max-w-56 truncate text-left font-medium text-heading hover:text-accent-fg"
                             @click="openDetails(row.database_transaction_uuid)"
                         >
                             {{ row.app_name || "No app" }}
                         </button>
                     </TableField>
-                    <TableField class="max-w-52 px-2 py-2 text-sm text-gray-500">
+                    <TableField class="max-w-52 px-2 py-2 text-sm text-muted">
                         <span class="line-clamp-2">{{ row.transaction_code || "No code" }}</span>
                     </TableField>
-                    <TableField class="whitespace-nowrap px-2 py-2 font-mono text-xs text-gray-500">
+                    <TableField class="whitespace-nowrap px-2 py-2 font-mono text-xs text-muted">
                         {{ row.transaction_address || "No address" }}
                     </TableField>
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted">
                         <Badge :text="row.transaction_type || 'unknown'" v-bind="typeBadge(row.transaction_type)" />
                     </TableField>
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-muted">
                         {{ formatDate(row.transaction_date) }}
                     </TableField>
-                    <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
+                    <TableField class="whitespace-nowrap px-2 py-1 text-sm text-muted">
                         <template #action-buttons>
                             <div class="flex items-center justify-end">
                                 <button
                                     type="button"
-                                    class="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+                                    class="rounded-full p-2 text-subtle transition hover:bg-surface-3 hover:text-body"
                                     title="View"
                                     @click="openDetails(row.database_transaction_uuid)"
                                 >
@@ -151,7 +151,7 @@
             </template>
 
             <template #empty>
-                <div v-if="!loading && data.data.length === 0" class="px-6 py-8 text-center text-sm text-gray-500">
+                <div v-if="!loading && data.data.length === 0" class="px-6 py-8 text-center text-sm text-muted">
                     No database transactions found.
                 </div>
             </template>
@@ -189,13 +189,13 @@
                 <div class="flex flex-wrap items-center justify-between gap-3">
                     <div class="flex flex-wrap items-center gap-2">
                         <Badge :text="details.item.transaction_type" v-bind="typeBadge(details.item.transaction_type)" />
-                        <span class="text-sm text-gray-500">{{ formatDate(details.item.transaction_date) }}</span>
+                        <span class="text-sm text-muted">{{ formatDate(details.item.transaction_date) }}</span>
                     </div>
 
                     <button
                         v-if="permissions.update && details.item.can_undo"
                         type="button"
-                        class="inline-flex items-center gap-1 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                        class="inline-flex items-center gap-1 rounded-md bg-surface px-2.5 py-1.5 text-sm font-semibold text-heading shadow-sm ring-1 ring-inset ring-strong hover:bg-surface-2"
                         @click="confirmUndo"
                     >
                         <ArrowUturnLeftIcon class="h-4 w-4" />
@@ -205,51 +205,51 @@
 
                 <dl class="grid gap-x-6 gap-y-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
                     <div>
-                        <dt class="font-medium text-gray-900">Domain</dt>
-                        <dd class="mt-1 text-gray-600">{{ details.item.domain_description || details.item.domain_name || "No domain" }}</dd>
+                        <dt class="font-medium text-heading">Domain</dt>
+                        <dd class="mt-1 text-body">{{ details.item.domain_description || details.item.domain_name || "No domain" }}</dd>
                     </div>
                     <div>
-                        <dt class="font-medium text-gray-900">User</dt>
-                        <dd class="mt-1 text-gray-600">{{ details.item.username || "No user" }}</dd>
+                        <dt class="font-medium text-heading">User</dt>
+                        <dd class="mt-1 text-body">{{ details.item.username || "No user" }}</dd>
                     </div>
                     <div>
-                        <dt class="font-medium text-gray-900">Address</dt>
-                        <dd class="mt-1 font-mono text-xs text-gray-600">{{ details.item.transaction_address || "No address" }}</dd>
+                        <dt class="font-medium text-heading">Address</dt>
+                        <dd class="mt-1 font-mono text-xs text-body">{{ details.item.transaction_address || "No address" }}</dd>
                     </div>
                     <div>
-                        <dt class="font-medium text-gray-900">App UUID</dt>
-                        <dd class="mt-1 break-all font-mono text-xs text-gray-600">{{ details.item.app_uuid || "No app UUID" }}</dd>
+                        <dt class="font-medium text-heading">App UUID</dt>
+                        <dd class="mt-1 break-all font-mono text-xs text-body">{{ details.item.app_uuid || "No app UUID" }}</dd>
                     </div>
                 </dl>
 
                 <div>
-                    <h4 class="text-sm font-semibold text-gray-900">Transaction Code</h4>
-                    <p class="mt-2 whitespace-pre-wrap rounded-md bg-gray-50 p-3 font-mono text-xs text-gray-700 ring-1 ring-inset ring-gray-200">
+                    <h4 class="text-sm font-semibold text-heading">Transaction Code</h4>
+                    <p class="mt-2 whitespace-pre-wrap rounded-md bg-surface-2 p-3 font-mono text-xs text-body ring-1 ring-inset ring-strong">
                         {{ details.item.transaction_code || "No code" }}
                     </p>
                 </div>
 
                 <div v-if="details.item.diff.length" class="space-y-5">
-                    <div v-for="section in details.item.diff" :key="section.title" class="overflow-hidden rounded-md ring-1 ring-gray-200">
-                        <div class="bg-gray-50 px-4 py-2 text-sm font-semibold text-gray-900">
+                    <div v-for="section in details.item.diff" :key="section.title" class="overflow-hidden rounded-md ring-1 ring-strong">
+                        <div class="bg-surface-2 px-4 py-2 text-sm font-semibold text-heading">
                             {{ section.title }}
                         </div>
                         <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200">
-                                <thead class="bg-white">
+                            <table class="min-w-full divide-y divide-default">
+                                <thead class="bg-surface">
                                     <tr>
-                                        <th class="px-4 py-2 text-left text-xs font-semibold uppercase text-gray-500">Field</th>
-                                        <th class="px-4 py-2 text-left text-xs font-semibold uppercase text-gray-500">Old</th>
-                                        <th class="px-4 py-2 text-left text-xs font-semibold uppercase text-gray-500">New</th>
+                                        <th class="px-4 py-2 text-left text-xs font-semibold uppercase text-muted">Field</th>
+                                        <th class="px-4 py-2 text-left text-xs font-semibold uppercase text-muted">Old</th>
+                                        <th class="px-4 py-2 text-left text-xs font-semibold uppercase text-muted">New</th>
                                     </tr>
                                 </thead>
-                                <tbody class="divide-y divide-gray-100 bg-white">
+                                <tbody class="divide-y divide-default bg-surface">
                                     <tr v-for="row in section.rows" :key="`${section.title}-${row.name}`">
-                                        <td class="max-w-xs px-4 py-2 font-mono text-xs text-gray-700">{{ row.name }}</td>
-                                        <td class="max-w-md px-4 py-2 font-mono text-xs" :class="row.changed ? 'text-red-700' : 'text-gray-600'">
+                                        <td class="max-w-xs px-4 py-2 font-mono text-xs text-body">{{ row.name }}</td>
+                                        <td class="max-w-md px-4 py-2 font-mono text-xs" :class="row.changed ? 'text-danger' : 'text-body'">
                                             <span class="whitespace-pre-wrap break-words">{{ row.old }}</span>
                                         </td>
-                                        <td class="max-w-md px-4 py-2 font-mono text-xs" :class="row.changed ? 'text-red-700' : 'text-gray-600'">
+                                        <td class="max-w-md px-4 py-2 font-mono text-xs" :class="row.changed ? 'text-danger' : 'text-body'">
                                             <span class="whitespace-pre-wrap break-words">{{ row.new }}</span>
                                         </td>
                                     </tr>
@@ -259,24 +259,24 @@
                     </div>
                 </div>
 
-                <div v-else class="rounded-md bg-gray-50 px-4 py-6 text-center text-sm text-gray-500 ring-1 ring-inset ring-gray-200">
+                <div v-else class="rounded-md bg-surface-2 px-4 py-6 text-center text-sm text-muted ring-1 ring-inset ring-strong">
                     No transaction details found.
                 </div>
 
-                <details class="rounded-md bg-gray-50 p-4 ring-1 ring-inset ring-gray-200">
-                    <summary class="cursor-pointer text-sm font-semibold text-gray-900">Raw payloads</summary>
+                <details class="rounded-md bg-surface-2 p-4 ring-1 ring-inset ring-strong">
+                    <summary class="cursor-pointer text-sm font-semibold text-heading">Raw payloads</summary>
                     <div class="mt-4 grid gap-4 lg:grid-cols-3">
                         <div>
-                            <h5 class="text-xs font-semibold uppercase text-gray-500">Old</h5>
-                            <pre class="mt-2 max-h-72 overflow-auto whitespace-pre-wrap rounded bg-white p-3 text-xs text-gray-700 ring-1 ring-inset ring-gray-200">{{ details.item.raw.old || "" }}</pre>
+                            <h5 class="text-xs font-semibold uppercase text-muted">Old</h5>
+                            <pre class="mt-2 max-h-72 overflow-auto whitespace-pre-wrap rounded bg-surface p-3 text-xs text-body ring-1 ring-inset ring-strong">{{ details.item.raw.old || "" }}</pre>
                         </div>
                         <div>
-                            <h5 class="text-xs font-semibold uppercase text-gray-500">New</h5>
-                            <pre class="mt-2 max-h-72 overflow-auto whitespace-pre-wrap rounded bg-white p-3 text-xs text-gray-700 ring-1 ring-inset ring-gray-200">{{ details.item.raw.new || "" }}</pre>
+                            <h5 class="text-xs font-semibold uppercase text-muted">New</h5>
+                            <pre class="mt-2 max-h-72 overflow-auto whitespace-pre-wrap rounded bg-surface p-3 text-xs text-body ring-1 ring-inset ring-strong">{{ details.item.raw.new || "" }}</pre>
                         </div>
                         <div>
-                            <h5 class="text-xs font-semibold uppercase text-gray-500">Result</h5>
-                            <pre class="mt-2 max-h-72 overflow-auto whitespace-pre-wrap rounded bg-white p-3 text-xs text-gray-700 ring-1 ring-inset ring-gray-200">{{ details.item.raw.result || "" }}</pre>
+                            <h5 class="text-xs font-semibold uppercase text-muted">Result</h5>
+                            <pre class="mt-2 max-h-72 overflow-auto whitespace-pre-wrap rounded bg-surface p-3 text-xs text-body ring-1 ring-inset ring-strong">{{ details.item.raw.result || "" }}</pre>
                         </div>
                     </div>
                 </details>
@@ -527,31 +527,31 @@ const typeBadge = (type) => {
     const normalized = String(type || "unknown").toLowerCase();
     const colors = {
         add: {
-            backgroundColor: "bg-green-50",
-            textColor: "text-green-700",
-            ringColor: "ring-green-600/20",
+            backgroundColor: "bg-success-subtle",
+            textColor: "text-success",
+            ringColor: "ring-success/20",
         },
         update: {
-            backgroundColor: "bg-blue-50",
-            textColor: "text-blue-700",
-            ringColor: "ring-blue-600/20",
+            backgroundColor: "bg-info-subtle",
+            textColor: "text-info",
+            ringColor: "ring-info/20",
         },
         delete: {
-            backgroundColor: "bg-red-50",
-            textColor: "text-red-700",
-            ringColor: "ring-red-600/20",
+            backgroundColor: "bg-danger-subtle",
+            textColor: "text-danger",
+            ringColor: "ring-danger/20",
         },
         select: {
-            backgroundColor: "bg-gray-50",
-            textColor: "text-gray-700",
-            ringColor: "ring-gray-600/20",
+            backgroundColor: "bg-surface-2",
+            textColor: "text-body",
+            ringColor: "ring-strong/20",
         },
     };
 
     return colors[normalized] || {
-        backgroundColor: "bg-gray-50",
-        textColor: "text-gray-700",
-        ringColor: "ring-gray-600/20",
+        backgroundColor: "bg-surface-2",
+        textColor: "text-body",
+        ringColor: "ring-strong/20",
     };
 };
 

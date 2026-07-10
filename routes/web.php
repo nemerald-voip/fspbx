@@ -308,6 +308,9 @@ Route::group(['middleware' => 'auth'], function () {
     // Account settings
     Route::get('account-settings', [AccountSettingsController::class, 'index'])->name('account-settings.index');
 
+    // Dark/light mode preference
+    Route::post('user/theme', [\App\Http\Controllers\ThemeController::class, 'update'])->name('user.theme.update');
+
     // Default settings
     Route::get('default-settings', [\App\Http\Controllers\DefaultSettingsController::class, 'index'])->name('default-settings.index');
 

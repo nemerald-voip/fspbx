@@ -1,14 +1,14 @@
 <template>
     <div class="space-y-6">
-        <div v-if="loading && !loaded" class="rounded-lg bg-white p-12 text-center text-sm text-gray-500 ring-1 ring-gray-200">
+        <div v-if="loading && !loaded" class="rounded-lg bg-surface p-12 text-center text-sm text-muted ring-1 ring-strong">
             Loading dashboard...
         </div>
 
         <template v-else>
             <div class="flex items-center justify-end gap-2">
-                <span class="text-xs text-gray-400">{{ lastUpdatedLabel }}</span>
+                <span class="text-xs text-subtle">{{ lastUpdatedLabel }}</span>
                 <button type="button" @click="fetchOverview"
-                    class="rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    class="rounded-md p-2 text-subtle hover:bg-surface-3 hover:text-body focus:outline-none focus:ring-2 focus:ring-focus"
                     title="Refresh">
                     <ArrowPathIcon class="h-5 w-5" :class="{ 'animate-spin': loading }" />
                 </button>
@@ -16,29 +16,29 @@
 
             <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
                 <KpiCard label="Running" :value="kpis.running_campaigns" :sub="`of ${kpis.total_campaigns} campaigns`"
-                    accent="bg-blue-50 text-blue-700 ring-blue-600/20" />
+                    accent="bg-info-subtle text-info ring-info/20" />
                 <KpiCard label="Paused" :value="kpis.paused_campaigns" sub="campaigns"
-                    accent="bg-yellow-50 text-yellow-700 ring-yellow-600/20" />
+                    accent="bg-warning-subtle text-warning ring-warning/20" />
                 <KpiCard label="Calls Today" :value="kpis.attempts_today"
                     :sub="`${kpis.answered_today} answered`"
-                    accent="bg-indigo-50 text-indigo-700 ring-indigo-600/20" />
+                    accent="bg-accent-subtle text-accent-fg ring-accent/20" />
                 <KpiCard label="Answer Rate (Today)" :value="`${kpis.answer_rate_today}%`"
                     :sub="`${kpis.answer_rate}% all-time`"
-                    accent="bg-emerald-50 text-emerald-700 ring-emerald-600/20" />
+                    accent="bg-success-subtle text-success ring-success/20" />
                 <KpiCard label="Total Attempts" :value="kpis.total_attempts"
                     :sub="`${kpis.total_answered} answered`"
-                    accent="bg-gray-50 text-gray-700 ring-gray-600/20" />
+                    accent="bg-surface-2 text-body ring-strong/20" />
                 <KpiCard label="Talk Time" :value="formatDuration(kpis.total_talk_seconds)" sub="cumulative"
-                    accent="bg-violet-50 text-violet-700 ring-violet-600/20" />
+                    accent="bg-violet-50 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 ring-violet-600/20 dark:ring-violet-400/30" />
             </div>
 
             <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
-                <div class="rounded-lg bg-white p-5 ring-1 ring-gray-200 lg:col-span-1">
+                <div class="rounded-lg bg-surface p-5 ring-1 ring-strong lg:col-span-1">
                     <div class="mb-3 flex items-baseline justify-between">
-                        <h3 class="text-sm font-semibold text-gray-900">Outcome Breakdown</h3>
-                        <span class="text-xs text-gray-400">{{ outcomeTotal }} attempts</span>
+                        <h3 class="text-sm font-semibold text-heading">Outcome Breakdown</h3>
+                        <span class="text-xs text-subtle">{{ outcomeTotal }} attempts</span>
                     </div>
-                    <div v-if="outcomeBreakdown.length === 0" class="py-12 text-center text-sm text-gray-500">
+                    <div v-if="outcomeBreakdown.length === 0" class="py-12 text-center text-sm text-muted">
                         No attempts yet.
                     </div>
                     <div v-else class="flex flex-col items-center gap-4">
@@ -51,23 +51,23 @@
                                 <div class="flex items-center gap-2">
                                     <span class="inline-block h-2.5 w-2.5 rounded-full"
                                         :style="{ backgroundColor: outcomeColor(item.label) }"></span>
-                                    <span class="capitalize text-gray-700">{{ formatLabel(item.label) }}</span>
+                                    <span class="capitalize text-body">{{ formatLabel(item.label) }}</span>
                                 </div>
-                                <div class="font-medium text-gray-900">
+                                <div class="font-medium text-heading">
                                     {{ item.count }}
-                                    <span class="ml-1 text-gray-400">{{ percent(item.count, outcomeTotal) }}%</span>
+                                    <span class="ml-1 text-subtle">{{ percent(item.count, outcomeTotal) }}%</span>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="rounded-lg bg-white p-5 ring-1 ring-gray-200 lg:col-span-2">
+                <div class="rounded-lg bg-surface p-5 ring-1 ring-strong lg:col-span-2">
                     <div class="mb-3 flex items-baseline justify-between">
-                        <h3 class="text-sm font-semibold text-gray-900">Hangup Causes</h3>
-                        <span class="text-xs text-gray-400">top {{ hangupBreakdown.length }}</span>
+                        <h3 class="text-sm font-semibold text-heading">Hangup Causes</h3>
+                        <span class="text-xs text-subtle">top {{ hangupBreakdown.length }}</span>
                     </div>
-                    <div v-if="hangupBreakdown.length === 0" class="py-12 text-center text-sm text-gray-500">
+                    <div v-if="hangupBreakdown.length === 0" class="py-12 text-center text-sm text-muted">
                         No hangup cause data yet.
                     </div>
                     <div v-else class="h-64">
@@ -76,31 +76,31 @@
                 </div>
             </div>
 
-            <div v-if="activeCampaigns.length > 0" class="rounded-lg bg-white p-5 ring-1 ring-gray-200">
-                <h3 class="mb-3 text-sm font-semibold text-gray-900">Active Campaigns</h3>
+            <div v-if="activeCampaigns.length > 0" class="rounded-lg bg-surface p-5 ring-1 ring-strong">
+                <h3 class="mb-3 text-sm font-semibold text-heading">Active Campaigns</h3>
                 <div class="space-y-3">
                     <div v-for="campaign in activeCampaigns" :key="campaign.basic_dialer_campaign_uuid"
-                        class="rounded-md border border-gray-100 px-4 py-3 hover:bg-gray-50 cursor-pointer"
+                        class="rounded-md border border-default px-4 py-3 hover:bg-surface-2 cursor-pointer"
                         @click="$emit('open-campaign', campaign.basic_dialer_campaign_uuid)">
                         <div class="flex items-center justify-between gap-3">
                             <div class="min-w-0">
                                 <div class="flex items-center gap-2">
-                                    <span class="truncate text-sm font-medium text-gray-900">{{ campaign.name }}</span>
+                                    <span class="truncate text-sm font-medium text-heading">{{ campaign.name }}</span>
                                     <Badge :text="campaign.status" v-bind="statusBadgeProps(campaign.status)" />
                                 </div>
-                                <div class="mt-1 text-xs text-gray-500">
+                                <div class="mt-1 text-xs text-muted">
                                     {{ campaign.answered_recipients_count }} answered
                                     &middot; {{ campaign.failed_recipients_count }} failed
                                     &middot; {{ campaign.pending_recipients_count }} pending
                                 </div>
                             </div>
                             <div class="w-40 sm:w-56">
-                                <div class="flex items-center justify-between text-xs text-gray-500">
+                                <div class="flex items-center justify-between text-xs text-muted">
                                     <span>{{ campaignProgress(campaign) }}%</span>
                                     <span>{{ campaign.recipients_count }} contacts</span>
                                 </div>
-                                <div class="mt-1 h-1.5 overflow-hidden rounded-full bg-gray-100">
-                                    <div class="h-full rounded-full bg-indigo-500"
+                                <div class="mt-1 h-1.5 overflow-hidden rounded-full bg-surface-3">
+                                    <div class="h-full rounded-full bg-accent"
                                         :style="{ width: campaignProgress(campaign) + '%' }"></div>
                                 </div>
                             </div>
@@ -109,18 +109,18 @@
                 </div>
             </div>
 
-            <div class="rounded-lg bg-white ring-1 ring-gray-200">
-                <div class="flex items-center justify-between border-b border-gray-100 px-5 py-3">
-                    <h3 class="text-sm font-semibold text-gray-900">Recent Activity</h3>
-                    <span class="text-xs text-gray-400">last {{ recentActivity.length }} attempts</span>
+            <div class="rounded-lg bg-surface ring-1 ring-strong">
+                <div class="flex items-center justify-between border-b border-default px-5 py-3">
+                    <h3 class="text-sm font-semibold text-heading">Recent Activity</h3>
+                    <span class="text-xs text-subtle">last {{ recentActivity.length }} attempts</span>
                 </div>
-                <div v-if="recentActivity.length === 0" class="py-12 text-center text-sm text-gray-500">
+                <div v-if="recentActivity.length === 0" class="py-12 text-center text-sm text-muted">
                     No call activity yet.
                 </div>
                 <div v-else class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-100 text-sm">
-                        <thead class="bg-gray-50">
-                            <tr class="text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    <table class="min-w-full divide-y divide-default text-sm">
+                        <thead class="bg-surface-2">
+                            <tr class="text-left text-xs font-semibold uppercase tracking-wide text-muted">
                                 <th class="px-4 py-2">When</th>
                                 <th class="px-4 py-2">Campaign</th>
                                 <th class="px-4 py-2">Phone</th>
@@ -130,30 +130,30 @@
                                 <th class="px-4 py-2">Duration</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-100">
+                        <tbody class="divide-y divide-default">
                             <tr v-for="item in recentActivity" :key="item.basic_dialer_campaign_attempt_uuid"
-                                class="hover:bg-gray-50">
-                                <td class="whitespace-nowrap px-4 py-2 text-gray-500">
+                                class="hover:bg-surface-2">
+                                <td class="whitespace-nowrap px-4 py-2 text-muted">
                                     {{ formatRelative(item.created_at) }}
                                 </td>
                                 <td class="whitespace-nowrap px-4 py-2">
-                                    <button type="button" class="text-indigo-600 hover:underline"
+                                    <button type="button" class="text-accent-fg hover:underline"
                                         @click="$emit('open-campaign', item.basic_dialer_campaign_uuid)">
                                         {{ item.campaign?.name || '-' }}
                                     </button>
                                 </td>
-                                <td class="whitespace-nowrap px-4 py-2 text-gray-900">
+                                <td class="whitespace-nowrap px-4 py-2 text-heading">
                                     <div>{{ item.recipient?.phone_number || '-' }}</div>
-                                    <div v-if="item.recipient?.contact_name" class="text-xs text-gray-400">
+                                    <div v-if="item.recipient?.contact_name" class="text-xs text-subtle">
                                         {{ item.recipient.contact_name }}
                                     </div>
                                 </td>
                                 <td class="whitespace-nowrap px-4 py-2">
                                     <Badge :text="item.status" v-bind="statusBadgeProps(item.status)" />
                                 </td>
-                                <td class="whitespace-nowrap px-4 py-2 text-gray-500">{{ formatLabel(item.outcome) || '-' }}</td>
-                                <td class="whitespace-nowrap px-4 py-2 text-gray-500">{{ item.hangup_cause || '-' }}</td>
-                                <td class="whitespace-nowrap px-4 py-2 text-gray-500">{{ formatDuration(item.duration) }}</td>
+                                <td class="whitespace-nowrap px-4 py-2 text-muted">{{ formatLabel(item.outcome) || '-' }}</td>
+                                <td class="whitespace-nowrap px-4 py-2 text-muted">{{ item.hangup_cause || '-' }}</td>
+                                <td class="whitespace-nowrap px-4 py-2 text-muted">{{ formatDuration(item.duration) }}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -180,8 +180,13 @@ import {
 } from "chart.js";
 import Badge from "@generalComponents/Badge.vue";
 import KpiCard from "./BasicDialerKpiCard.vue";
+import { useTheme } from "../../../composables/useTheme";
 
 ChartJS.register(ArcElement, BarElement, CategoryScale, LinearScale, Tooltip, Title, Legend);
+
+const { isDark } = useTheme();
+const chartTickColor = computed(() => (isDark.value ? "#9ca3af" : "#6b7280"));
+const chartGridColor = computed(() => (isDark.value ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"));
 
 const props = defineProps({
     route: {
@@ -269,7 +274,7 @@ const doughnutOptions = {
     },
 };
 
-const barOptions = {
+const barOptions = computed(() => ({
     responsive: true,
     maintainAspectRatio: false,
     indexAxis: "y",
@@ -281,10 +286,10 @@ const barOptions = {
         bar: { maxBarThickness: 24, categoryPercentage: 0.7, barPercentage: 0.8 },
     },
     scales: {
-        x: { beginAtZero: true, ticks: { precision: 0 } },
-        y: { grid: { display: false }, ticks: { autoSkip: false } },
+        x: { beginAtZero: true, ticks: { precision: 0, color: chartTickColor.value }, grid: { color: chartGridColor.value } },
+        y: { grid: { display: false }, ticks: { autoSkip: false, color: chartTickColor.value } },
     },
-};
+}));
 
 const lastUpdatedLabel = computed(() => {
     if (!lastUpdated.value) return "";
@@ -363,17 +368,17 @@ function formatRelative(value) {
 
 function statusBadgeProps(status) {
     if (["running", "dialing", "queued"].includes(status)) {
-        return { backgroundColor: "bg-blue-50", textColor: "text-blue-700", ringColor: "ring-blue-600/20" };
+        return { backgroundColor: "bg-info-subtle", textColor: "text-info", ringColor: "ring-info/20" };
     }
     if (["completed", "answered"].includes(status)) {
-        return { backgroundColor: "bg-green-50", textColor: "text-green-700", ringColor: "ring-green-600/20" };
+        return { backgroundColor: "bg-success-subtle", textColor: "text-success", ringColor: "ring-success/20" };
     }
     if (["paused", "retry_wait"].includes(status)) {
-        return { backgroundColor: "bg-yellow-50", textColor: "text-yellow-700", ringColor: "ring-yellow-600/20" };
+        return { backgroundColor: "bg-warning-subtle", textColor: "text-warning", ringColor: "ring-warning/20" };
     }
     if (["stopped", "failed", "rejected"].includes(status)) {
-        return { backgroundColor: "bg-red-50", textColor: "text-red-700", ringColor: "ring-red-600/20" };
+        return { backgroundColor: "bg-danger-subtle", textColor: "text-danger", ringColor: "ring-danger/20" };
     }
-    return { backgroundColor: "bg-gray-50", textColor: "text-gray-700", ringColor: "ring-gray-600/20" };
+    return { backgroundColor: "bg-surface-2", textColor: "text-body", ringColor: "ring-strong/20" };
 }
 </script>

@@ -5,18 +5,18 @@
             <div v-if="!isEditing" class="space-y-4">
                 <div class="flex justify-end">
                     <button v-if="canEdit" type="button" @click="startEditing"
-                        class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 transition hover:bg-gray-50">
+                        class="inline-flex items-center rounded-md bg-surface px-3 py-2 text-sm font-semibold text-heading ring-1 ring-inset ring-strong transition hover:bg-surface-2">
                         Edit
                     </button>
                 </div>
 
-                <div v-for="note in visibleNotes" :key="note.key" :class="['rounded-lg bg-amber-50/70 p-4 ring-1 ring-inset ring-amber-200', note.borderClass]">
+                <div v-for="note in visibleNotes" :key="note.key" :class="['rounded-lg bg-warning/70 p-4 ring-1 ring-inset ring-warning', note.borderClass]">
                     <div class="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide" :class="note.labelClass">
                         <span :class="['h-2 w-2 rounded-full', note.dotClass]"></span>
                         {{ note.label }}
                     </div>
-                    <div v-if="note.content" class="customer-notes-content text-sm leading-6 text-gray-800" v-html="note.content"></div>
-                    <p v-else class="text-sm italic text-gray-500">No notes yet.</p>
+                    <div v-if="note.content" class="customer-notes-content text-sm leading-6 text-heading" v-html="note.content"></div>
+                    <p v-else class="text-sm italic text-muted">No notes yet.</p>
                 </div>
             </div>
 
@@ -70,24 +70,24 @@ const noteLayers = [
         level: 1,
         label: 'Level 1',
         borderClass: 'border-l-4 border-l-amber-600',
-        labelClass: 'text-amber-800',
-        dotClass: 'bg-amber-600',
+        labelClass: 'text-warning',
+        dotClass: 'bg-warning',
     },
     {
         key: 'level_2',
         level: 2,
         label: 'Level 2',
         borderClass: 'border-l-4 border-l-sky-600',
-        labelClass: 'text-sky-800',
-        dotClass: 'bg-sky-600',
+        labelClass: 'text-info',
+        dotClass: 'bg-info',
     },
     {
         key: 'level_3',
         level: 3,
         label: 'Level 3',
         borderClass: 'border-l-4 border-l-rose-600',
-        labelClass: 'text-rose-800',
-        dotClass: 'bg-rose-600',
+        labelClass: 'text-danger',
+        dotClass: 'bg-danger',
     },
 ]
 
@@ -173,7 +173,7 @@ const handleError = (error) => {
 }
 
 .customer-notes-content :deep(a) {
-    color: #0e7490;
+    color: rgb(var(--color-info));
     text-decoration: underline;
 }
 </style>

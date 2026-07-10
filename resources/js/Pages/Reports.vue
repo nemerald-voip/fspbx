@@ -8,15 +8,15 @@
             <template #filters>
                 <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
                     <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                        <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                        <MagnifyingGlassIcon class="h-5 w-5 text-subtle" aria-hidden="true" />
                     </div>
                     <input type="text" v-model="filterData.search" name="mobile-search-candidate"
                         id="mobile-search-candidate"
-                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
+                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus sm:hidden"
                         placeholder="Search" />
                     <input type="text" v-model="filterData.search" name="desktop-search-candidate"
                         id="desktop-search-candidate"
-                        class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
+                        class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-heading ring-1 bg-surface ring-inset ring-strong placeholder:text-subtle focus:ring-2 focus:ring-inset focus:ring-focus sm:block"
                         placeholder="Search" />
                 </div>
             </template>
@@ -31,9 +31,9 @@
                     @pagination-change-page="renderRequestedPage" /> -->
             </template>
             <template #table-header>
-                <TableColumnHeader header="Report Name" class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Report Name" class="px-4 py-3.5 text-left text-sm font-semibold text-heading" />
                 <TableColumnHeader header="Action"
-                    class="flex justify-end px-4 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    class="flex justify-end px-4 py-3.5 text-left text-sm font-semibold text-heading" />
             </template>
 
             <template v-if="selectPageItems" v-slot:current-selection>
@@ -41,12 +41,12 @@
                     <div class="text-sm text-center m-2">
                         <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
                         <button v-if="!selectAll && selectedItems.length != data.total"
-                            class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
+                            class="text-info rounded py-2 px-2 hover:bg-info-subtle  hover:text-info focus:outline-none focus:ring-1 focus:bg-info-subtle focus:ring-focus transition duration-500 ease-in-out"
                             @click="handleSelectAll">
                             Select all {{ data.total }} items
                         </button>
                         <button v-if="selectAll"
-                            class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
+                            class="text-info rounded py-2 px-2 hover:bg-info-subtle  hover:text-info focus:outline-none focus:ring-1 focus:bg-info-subtle focus:ring-focus transition duration-500 ease-in-out"
                             @click="handleClearSelection">
                             Clear selection
                         </button>
@@ -57,16 +57,16 @@
             <template #table-body>
                 <tr v-for="row in data" :key="row.message_uuid">
 
-                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500" :text="row.reportName" />
+                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-muted" :text="row.reportName" />
 
 
 
-                    <TableField class="whitespace-nowrap px-4 py-4 text-sm text-gray-500">
+                    <TableField class="whitespace-nowrap px-4 py-4 text-sm text-muted">
                         <template #action-buttons>
                             <div class="flex justify-end items-center whitespace-nowrap">
                                 <div class="ml-4 flex-shrink-0">
                                     <button @click="handleReportRequest(row.reportName)"
-                                        class="font-medium text-blue-600 hover:text-blue-500">Generate</button>
+                                        class="font-medium text-info hover:text-info">Generate</button>
                                 </div>
                             </div>
                         </template>
@@ -76,9 +76,9 @@
             <template #empty>
                 <!-- Conditional rendering for 'no records' message -->
                 <div v-if="data.length === 0" class="text-center my-5 ">
-                    <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
-                    <p class="mt-1 text-sm text-gray-500">
+                    <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-subtle" />
+                    <h3 class="mt-2 text-sm font-semibold text-heading">No results found</h3>
+                    <p class="mt-1 text-sm text-muted">
                         Adjust your search and try again.
                     </p>
                 </div>
@@ -284,21 +284,21 @@ const determineColor = (status) => {
         case 'emailed':
         case 'delivered':
             return {
-                backgroundColor: 'bg-green-50',
-                textColor: 'text-green-700',
-                ringColor: 'ring-green-600/20'
+                backgroundColor: 'bg-success-subtle',
+                textColor: 'text-success',
+                ringColor: 'ring-success/20'
             };
         case 'queued':
             return {
-                backgroundColor: 'bg-blue-50',
-                textColor: 'text-blue-700',
-                ringColor: 'ring-blue-600/20'
+                backgroundColor: 'bg-info-subtle',
+                textColor: 'text-info',
+                ringColor: 'ring-info/20'
             };
         default:
             return {
-                backgroundColor: 'bg-yellow-50',
-                textColor: 'text-yellow-700',
-                ringColor: 'ring-yellow-600/20'
+                backgroundColor: 'bg-warning-subtle',
+                textColor: 'text-warning',
+                ringColor: 'ring-warning/20'
             };
     }
 };
