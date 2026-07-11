@@ -1,4 +1,4 @@
-{{-- version: 1.1.6 --}}
+{{-- version: 1.1.7 --}}
 
 @switch($flavor)
 
@@ -6768,7 +6768,7 @@ PVALUES;
             } elseif (str_starts_with($assignment, '##')) {
                 $comment = trim($assignment);
             } else {
-                $comment = trim(preg_replace('/^#\s?/', '', $assignment));
+                $comment = trim(preg_replace('/^#\s?/', '# ', $assignment));
             }
 
             if ($comment !== '') {
@@ -6904,7 +6904,7 @@ PVALUES;
         $set($codes['pei'], '1');
     }
 
-    $vpkModeMap = [
+    $fixedVpkModeMap = [
         'none' => '-1',
         'line' => '0',
         'sharedline' => '1',
@@ -6919,6 +6919,23 @@ PVALUES;
         'call park' => '19',
         'intercom' => '20',
         'monitored call park' => '26',
+    ];
+
+    $dynamicVpkModeMap = [
+        'none' => '-1',
+        'line' => '-1',
+        'sharedline' => '-1',
+        'speed dial' => '0',
+        'blf' => '1',
+        'presence watcher' => '2',
+        'eventlist blf' => '3',
+        'speed dial via active account' => '4',
+        'dial dtmf' => '5',
+        'voicemail' => '6',
+        'transfer' => '8',
+        'call park' => '9',
+        'intercom' => '10',
+        'monitored call park' => '16',
     ];
 
     $vpkCodes = [
@@ -6939,7 +6956,8 @@ PVALUES;
     foreach ($vpkCodes as $slot => $codes) {
         $key = $mainKeyById->get($slot);
         $type = strtolower(trim((string) ($key['type'] ?? 'none')));
-        $set($codes['mode'], $vpkModeMap[$type] ?? '-1');
+        $modeMap = $slot <= 6 ? $fixedVpkModeMap : $dynamicVpkModeMap;
+        $set($codes['mode'], $modeMap[$type] ?? '-1');
         $set($codes['account'], max(0, (int) ($key['line'] ?? 0)));
         $set($codes['label'], $key['label'] ?? '');
         $set($codes['value'], $key['value'] ?? '');
