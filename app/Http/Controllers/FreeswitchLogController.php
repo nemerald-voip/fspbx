@@ -13,8 +13,8 @@ use Illuminate\Support\Collection;
 class FreeswitchLogController extends Controller
 {
     private const DEFAULT_LOG_DIR = '/var/log/freeswitch';
-    private const DEFAULT_SIZE_KB = 5120;
-    private const MAX_SIZE_KB = 10240;
+    private const DEFAULT_SIZE_KB = 102400;
+    private const MAX_SIZE_KB = 102400;
     private const DEFAULT_MAX_LINES = 3000;
     private const MAX_LINES = 5000;
     private const DEFAULT_CORRELATION_PADDING_MINUTES = 5;
@@ -486,6 +486,7 @@ class FreeswitchLogController extends Controller
         $lines = [];
         $errors = [];
         $bytesRead = 0;
+        $matchedLines = 0;
 
         foreach ($files as $file) {
             if (! $file['readable']) {
@@ -551,16 +552,16 @@ class FreeswitchLogController extends Controller
                     $included[$lineKey] = true;
                     $entries[$blockIndex]['matched_terms'] = $this->matchedTerms($entries[$blockIndex]['message'], $searchTerms);
                     $lines[] = $entries[$blockIndex];
+                    $matchedLines++;
+
+                    if (count($lines) > $maxLines) {
+                        array_shift($lines);
+                    }
                 }
             }
         }
 
-        $matchedLines = count($lines);
         $truncated = $matchedLines > $maxLines;
-
-        if ($truncated) {
-            $lines = array_slice($lines, -$maxLines);
-        }
 
         if ($sort === 'desc') {
             $lines = array_reverse($lines);

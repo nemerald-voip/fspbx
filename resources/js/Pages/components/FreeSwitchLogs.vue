@@ -6,7 +6,9 @@
                     v-model="filterData.seed_uuid"
                     type="search"
                     class="block w-full rounded-md border-0 py-2 pl-3 pr-3 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600"
-                    placeholder="Call UUID or SIP Call-ID"
+                    placeholder="Call ID, UUID, or SIP Call-ID"
+                    title="Find log lines for a specific call identifier."
+                    aria-label="Call ID, UUID, or SIP Call-ID"
                     @keydown.enter="handleSearchButtonClick"
                 />
             </div>
@@ -19,7 +21,9 @@
                     v-model="filterData.search"
                     type="search"
                     class="block w-full rounded-md border-0 py-2 pl-10 pr-3 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600"
-                    placeholder="Contains"
+                    placeholder="Text contains"
+                    title="Only show log lines containing this text."
+                    aria-label="Text contains"
                     @keydown.enter="handleSearchButtonClick"
                 />
             </div>
@@ -77,11 +81,11 @@
                     type="checkbox"
                     class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
                 />
-                Whole call
+                <span title="Use CDR links to include related call legs for the entered call identifier.">Whole call from CDR</span>
             </label>
 
             <label class="inline-flex items-center gap-2 text-sm text-gray-700">
-                <span>Padding</span>
+                <span title="Extra time added around the CDR call window when matching related log lines.">CDR padding</span>
                 <select
                     v-model.number="filterData.correlation_padding_minutes"
                     :disabled="!filterData.whole_call"
@@ -96,19 +100,20 @@
             </label>
 
             <label class="inline-flex items-center gap-2 text-sm text-gray-700">
-                <span>Read</span>
+                <span title="How much of the end of each selected log file to scan.">Read per file</span>
                 <input
-                    v-model.number="filterData.size_kb"
+                    v-model.number="filterData.read_size_mb"
                     type="number"
                     min="1"
-                    max="10240"
-                    class="block w-24 rounded-md border-0 py-1.5 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600"
+                    :max="MAX_READ_SIZE_MB"
+                    step="1"
+                    class="block w-20 rounded-md border-0 py-1.5 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600"
                 />
-                <span>KB</span>
+                <span>MB</span>
             </label>
 
             <label class="inline-flex items-center gap-2 text-sm text-gray-700">
-                <span>Rows</span>
+                <span title="Maximum matching log rows returned to the page.">Show rows</span>
                 <input
                     v-model.number="filterData.max_lines"
                     type="number"
@@ -120,6 +125,8 @@
 
             <select
                 v-model="filterData.sort"
+                title="Display order for the returned matching log rows."
+                aria-label="Log row order"
                 class="block rounded-md border-0 py-1.5 pl-3 pr-10 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600"
             >
                 <option value="asc">Oldest first</option>
@@ -253,6 +260,10 @@ const props = defineProps({
     permissions: Object,
 })
 
+const KB_PER_MB = 1024
+const DEFAULT_READ_SIZE_MB = 100
+const MAX_READ_SIZE_MB = 100
+
 const isDataLoading = ref(false)
 const isSipTraceLoading = ref(false)
 const hasLoaded = ref(false)
@@ -281,7 +292,7 @@ const filterData = ref({
     search: '',
     log_file: 'freeswitch.log',
     level: 'all',
-    size_kb: 5120,
+    read_size_mb: DEFAULT_READ_SIZE_MB,
     max_lines: 3000,
     sort: 'asc',
     correlation_padding_minutes: 5,
@@ -298,6 +309,25 @@ const correlationIdentifiers = computed(() => [
     ...(correlation.value.sip_call_ids || []),
 ])
 
+const requestParams = computed(() => {
+    const readSizeMb = Number(filterData.value.read_size_mb)
+    const normalizedReadSizeMb = Number.isFinite(readSizeMb)
+        ? Math.max(1, Math.min(Math.round(readSizeMb), MAX_READ_SIZE_MB))
+        : DEFAULT_READ_SIZE_MB
+
+    return {
+        seed_uuid: filterData.value.seed_uuid,
+        whole_call: filterData.value.whole_call,
+        search: filterData.value.search,
+        log_file: filterData.value.log_file,
+        level: filterData.value.level,
+        max_lines: filterData.value.max_lines,
+        sort: filterData.value.sort,
+        correlation_padding_minutes: filterData.value.correlation_padding_minutes,
+        size_kb: normalizedReadSizeMb * KB_PER_MB,
+    }
+})
+
 watch(() => props.trigger, () => {
     fetchData()
 })
@@ -308,7 +338,7 @@ const fetchData = async () => {
 
     try {
         const response = await axios.get(props.routes.freeswitch_logs, {
-            params: filterData.value,
+            params: requestParams.value,
         })
 
         lines.value = response.data.lines || []
@@ -343,7 +373,7 @@ const handleFiltersReset = () => {
         search: '',
         log_file: 'freeswitch.log',
         level: 'all',
-        size_kb: 5120,
+        read_size_mb: DEFAULT_READ_SIZE_MB,
         max_lines: 3000,
         sort: 'asc',
         correlation_padding_minutes: 5,
