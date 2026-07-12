@@ -1,0 +1,215 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+STATUS_FILE="${STATUS_FILE:-/var/log/openvpn/phones-status.log}"
+TIMEOUT="${TIMEOUT:-8}"
+RAW_DIR="${RAW_DIR:-}"
+jar=""
+
+cleanup() {
+  if [[ -n "$jar" ]]; then
+    rm -f "$jar"
+  fi
+}
+trap cleanup EXIT INT TERM
+
+usage() {
+  cat <<'USAGE'
+Usage: grandstream-vpn-map [--raw-dir DIR] [status-file]
+
+Maps connected Grandstream OpenVPN clients to MAC addresses by logging into
+each phone web UI over its VPN IP.
+
+Environment:
+  GS_USER      Grandstream username. If omitted, prompts interactively.
+  GS_PASS      Grandstream password. If omitted, prompts without echo.
+  STATUS_FILE  OpenVPN status file. Default: /var/log/openvpn/phones-status.log
+  TIMEOUT      Curl max-time/connect timeout in seconds. Default: 8
+  RAW_DIR      Optional directory to save raw login/status/account API JSON.
+USAGE
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    --raw-dir)
+      RAW_DIR="${2:-}"
+      if [[ -z "$RAW_DIR" ]]; then
+        echo "--raw-dir requires a directory path" >&2
+        exit 1
+      fi
+      shift 2
+      ;;
+    *)
+      STATUS_FILE="$1"
+      shift
+      ;;
+  esac
+done
+
+if [[ ! -r "$STATUS_FILE" ]]; then
+  echo "Cannot read status file: $STATUS_FILE" >&2
+  exit 1
+fi
+
+if [[ -n "$RAW_DIR" ]]; then
+  mkdir -p "$RAW_DIR"
+fi
+
+if [[ -z "${GS_USER:-}" ]]; then
+  read -r -p "Grandstream username: " GS_USER
+fi
+
+if [[ -z "${GS_PASS:-}" ]]; then
+  read -r -s -p "Grandstream password: " GS_PASS
+  echo
+fi
+
+api_get() {
+  local phone="$1"
+  local path="$2"
+  curl -fsS --connect-timeout "$TIMEOUT" --max-time "$TIMEOUT" \
+    -b "$jar" "http://$phone/$path"
+}
+
+api_post() {
+  local phone="$1"
+  local path="$2"
+  local data="$3"
+  curl -fsS --connect-timeout "$TIMEOUT" --max-time "$TIMEOUT" \
+    -b "$jar" -c "$jar" \
+    -H "Content-Type: application/x-www-form-urlencoded" \
+    -H "Referer: http://$phone/" \
+    -H "Origin: http://$phone" \
+    --data "$data" \
+    "http://$phone/$path"
+}
+
+json_value() {
+  local key="$1"
+  sed -n 's/.*"'"$key"'": *"\([^"]*\)".*/\1/p'
+}
+
+body_string() {
+  sed -n 's/.*"body": *"\([^"]*\)".*/\1/p'
+}
+
+compact() {
+  tr '\n' ' ' | sed 's/[[:space:]][[:space:]]*/ /g; s/^ //; s/ $//; s/"/'\''/g' | cut -c 1-44
+}
+
+account_summary() {
+  perl -0777 -ne '
+    while (/\{[^{}]*"sip_server"\s*:\s*"([^"]*)"[^{}]*"sip_id"\s*:\s*"([^"]*)"[^{}]*"name"\s*:\s*"([^"]*)"[^{}]*"reg"\s*:\s*([0-9]+)/g) {
+      my ($server, $sip_id, $name, $reg) = ($1, $2, $3, $4);
+      my $label = length($sip_id) ? $sip_id : $name;
+      next if !length($label) && !length($server);
+      push @accounts, sprintf("%s:%s@%s", $label, $reg ? "reg" : "unreg", $server);
+    }
+    if (@accounts) {
+      print join(";", @accounts);
+    } elsif (/"body"\s*:\s*\[\s*\]/) {
+      print "none";
+    }
+  '
+}
+
+line_summary() {
+  perl -0777 -ne '
+    while (/\{[^{}]*"line"\s*:\s*([0-9]+)[^{}]*"state"\s*:\s*"([^"]*)"[^{}]*"active"\s*:\s*([0-9]+)/g) {
+      my ($line, $state, $active) = ($1, $2, $3);
+      $seen++;
+      next if $state eq "idle" && !$active;
+      push @lines, sprintf("L%s:%s", $line, $state);
+    }
+    print @lines ? join(";", @lines) : ($seen ? "idle" : "");
+  '
+}
+
+save_raw() {
+  local phone="$1"
+  local name="$2"
+  local payload="$3"
+
+  if [[ -z "$RAW_DIR" ]]; then
+    return
+  fi
+
+  printf '%s\n' "$payload" > "$RAW_DIR/${phone}.${name}.json"
+}
+
+mapfile -t phones < <(awk -F, '/^CLIENT_LIST,grandstream-phone,/ {print $4 "," $3}' "$STATUS_FILE")
+
+if [[ "${#phones[@]}" -eq 0 ]]; then
+  echo "No connected grandstream-phone clients found in $STATUS_FILE"
+  exit 0
+fi
+
+printf "%-15s %-17s %-12s %-12s %-34s %-12s %s\n" "VPN IP" "MAC" "VERSION" "PHONE" "REGISTRATION" "CALLS" "REAL ADDRESS"
+
+for row in "${phones[@]}"; do
+  IFS=, read -r phone real_address <<< "$row"
+  jar="$(mktemp)"
+
+  mac="unknown"
+  role="unknown"
+  ver="unknown"
+  phone_status="unknown"
+  accounts="unknown"
+  lines="unknown"
+
+  if curl -fsS --connect-timeout "$TIMEOUT" --max-time "$TIMEOUT" -c "$jar" "http://$phone/" >/dev/null; then
+    if login="$(
+      curl -fsS --connect-timeout "$TIMEOUT" --max-time "$TIMEOUT" \
+        -b "$jar" -c "$jar" \
+        -H "Content-Type: application/x-www-form-urlencoded" \
+        -H "Referer: http://$phone/" \
+        -H "Origin: http://$phone" \
+        --data-urlencode "username=$GS_USER" \
+        --data-urlencode "password=$GS_PASS" \
+        "http://$phone/cgi-bin/dologin"
+    )"; then
+      save_raw "$phone" "login" "$login"
+
+      mac="$(printf '%s\n' "$login" | json_value mac)"
+      role="$(printf '%s\n' "$login" | json_value role)"
+      ver="$(printf '%s\n' "$login" | json_value ver)"
+
+      [[ -n "$mac" ]] || mac="unknown"
+      [[ -n "$role" ]] || role="unknown"
+      [[ -n "$ver" ]] || ver="unknown"
+
+      if response="$(api_get "$phone" "cgi-bin/api-get_phone_status")"; then
+        save_raw "$phone" "phone-status" "$response"
+        phone_status="$(printf '%s\n' "$response" | body_string)"
+        [[ -n "$phone_status" ]] || phone_status="$(printf '%s\n' "$response" | compact)"
+      fi
+
+      if response="$(api_post "$phone" "cgi-bin/api-get_accounts" "")" || response="$(api_post "$phone" "cgi-bin/api-get_accounts" "registered=true")"; then
+        save_raw "$phone" "accounts" "$response"
+        accounts="$(printf '%s\n' "$response" | account_summary)"
+        [[ -n "$accounts" ]] || accounts="$(printf '%s\n' "$response" | compact)"
+      fi
+
+      if response="$(api_post "$phone" "cgi-bin/api-get_line_status" "line=-1")"; then
+        save_raw "$phone" "line-status" "$response"
+        lines="$(printf '%s\n' "$response" | line_summary)"
+        [[ -n "$lines" ]] || lines="$(printf '%s\n' "$response" | compact)"
+      fi
+
+      curl -fsS --connect-timeout "$TIMEOUT" --max-time "$TIMEOUT" \
+        -b "$jar" "http://$phone/cgi-bin/dologout" >/dev/null 2>&1 || true
+    else
+      mac="login-failed"
+    fi
+  else
+    mac="unreachable"
+  fi
+
+  printf "%-15s %-17s %-12s %-12s %-34s %-12s %s\n" "$phone" "$mac" "$ver" "$phone_status" "$accounts" "$lines" "$real_address"
+  rm -f "$jar"
+  jar=""
+done
