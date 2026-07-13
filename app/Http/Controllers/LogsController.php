@@ -35,6 +35,7 @@ class LogsController extends Controller
         $domain_uuid = session('domain_uuid');
         $startPeriod = Carbon::now(get_local_time_zone($domain_uuid))->startOfDay()->setTimeZone('UTC');
         $endPeriod = Carbon::now(get_local_time_zone($domain_uuid))->endOfDay()->setTimeZone('UTC');
+        $postmarkDeliveryDetailsEnabled = $this->postmarkDeliveryDetailsEnabled();
 
         return Inertia::render(
             $this->viewName,
@@ -56,7 +57,9 @@ class LogsController extends Controller
                     'dashboard_route' => route('dashboard'),
                     'email_logs' => route('email-logs.index'),
                     'email_retry' => route('email-logs.retry'),
-                    'email_delivery_details' => route('email-logs.delivery-details', ['uuid' => '__UUID__']),
+                    'email_delivery_details' => $postmarkDeliveryDetailsEnabled
+                        ? route('email-logs.delivery-details', ['uuid' => '__UUID__'])
+                        : null,
                     'test_email_send' => route('test-email-send.store'),
                     'tigertms_logs' => $this->tigerTmsLogsEnabled() ? route('tigertms-logs.index') : null,
                     'inbound_webhooks' => route('inbound-webhooks.index'),
@@ -77,10 +80,32 @@ class LogsController extends Controller
                 },
                 'features' => [
                     'tigertms_logs' => $this->tigerTmsLogsEnabled(),
+                    'postmark_delivery_details' => $postmarkDeliveryDetailsEnabled,
                 ],
 
             ]
         );
+    }
+
+    private function postmarkDeliveryDetailsEnabled(): bool
+    {
+        if (blank(config('services.postmark.token'))) {
+            return false;
+        }
+
+        $defaultMailer = config('mail.default');
+        $mailer = config("mail.mailers.{$defaultMailer}", []);
+
+        if (($mailer['transport'] ?? null) === 'postmark') {
+            return true;
+        }
+
+        if (($mailer['transport'] ?? null) === 'failover') {
+            return collect($mailer['mailers'] ?? [])
+                ->contains(fn ($name) => (config("mail.mailers.{$name}.transport") === 'postmark'));
+        }
+
+        return str_contains((string) ($mailer['host'] ?? ''), 'postmarkapp.com');
     }
 
     private function tigerTmsLogsEnabled(): bool

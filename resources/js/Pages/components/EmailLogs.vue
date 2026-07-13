@@ -289,6 +289,10 @@ const props = defineProps({
     timezone: String,
     routes: Object,
     permissions: Object,
+    features: {
+        type: Object,
+        default: () => ({}),
+    },
     trigger: Boolean,
     domainOptions: {
         type: Array,
@@ -362,7 +366,9 @@ const domainLabel = (row) => {
 };
 
 const canShowDeliveryDetails = (row) => {
-    return !!row.provider_message_id || ['sent', 'failed', 'permanent_failed'].includes(row.status);
+    return props.features?.postmark_delivery_details === true
+        && row.provider === 'postmark'
+        && (!!row.provider_message_id || ['sent', 'failed', 'permanent_failed'].includes(row.status));
 }
 
 // const emits = defineEmits(['edit-item', 'delete-item']);
@@ -406,6 +412,8 @@ const handleUpdateDomainFilter = (newValue) => {
 }
 
 const renderRequestedPage = (url) => {
+    if (!url) return;
+
     isDataLoading.value = true;
     // Extract the page number from the url, e.g. "?page=3"
     const urlObj = new URL(url, window.location.origin);
@@ -522,6 +530,8 @@ const handleRetry = (uuid) => {
 }
 
 const handleDeliveryDetails = (row) => {
+    if (!canShowDeliveryDetails(row)) return;
+
     showDeliveryDetailsModal.value = true;
     deliveryDetails.value = null;
     deliveryDetailsLoading.value = true;
