@@ -11,6 +11,8 @@ Phone provisioning is the process of automating the setup, configuration, and ma
 
 When a phone boots, reboots, or triggers a resync, it reaches out to a specific URL on the FS PBX server. FS PBX looks at the phone's unique MAC address, matches it to a device record in the system, and dynamically generates a configuration file tailored specifically for that exact phone. 
 
+For a guided walkthrough, watch the [FS PBX phone provisioning video](https://youtu.be/SoJlbCvLqYw).
+
 A provisioned phone will automatically download and apply:
 - **Connectivity settings:** SIP usernames, passwords, and server/proxy addresses.
 - **User interface:** Line keys, BLF (Busy Lamp Field) button layouts, and speed dials.
@@ -33,7 +35,7 @@ Make sure you have:
 - A phone MAC address
 - A matching device template for the phone model
 - A provisioning URL that the phone can reach
-- Provisioning HTTP credentials
+- Provisioning HTTP credentials and/or an allowed source IP or CIDR range
 
 *Note: For remote phones, the FS PBX URL should use a valid HTTPS certificate that the phone trusts.*
 
@@ -81,18 +83,33 @@ Once saved, you can assign this template to devices via the device form, extensi
 
 ## 3. Connect the Phone
 
-To download its configuration, the physical phone needs to know where to look. You must enter a provisioning URL and authentication credentials into the phone’s web interface (or distribute them via DHCP/vendor cloud).
+To download its configuration, the physical phone needs to know where to look. Enter the provisioning URL and any configured HTTP credentials into the phone’s web interface, or distribute them through DHCP or a vendor cloud service.
 
 ### Provisioning Authentication
-For security, phones must authenticate before FS PBX will hand over the configuration files. 
+Provisioning access can be restricted by source IP or CIDR range, HTTP credentials, or both.
 
 > **Important:** Provisioning credentials are **HTTP credentials**, which are completely separate from the SIP extension username and password.
 
-The HTTP username and password are configured in **Default Settings** under the following variables:
+Configure these variables in the `provision` category under **Default Settings**:
+
+- `cidr`
 - `http_auth_username`
 - `http_auth_password`
 
-Both settings must be enabled and have values set. *Recommendation: Copy these settings to each tenant domain and override the values there. Once overridden on a domain, the global values no longer apply to that tenant.*
+Enable one `cidr` row for each allowed source address or network, such as `203.0.113.25/32` for one address or `203.0.113.0/24` for a network. Use the source address that FS PBX sees. This is usually the site's public NAT address for a remote phone, or the phone's private address when the phone and FS PBX are on the same network.
+
+| Security settings configured | Requirement |
+| --- | --- |
+| CIDR only | The source IP must match at least one enabled CIDR row. |
+| HTTP username and password only | HTTP authentication must pass. |
+| CIDR and HTTP credentials | The source IP must match **and** HTTP authentication must pass. |
+| Neither | No additional CIDR or HTTP authentication check is applied. |
+
+For the modern `/prov/` path, HTTP authentication is checked only when `http_auth_username` and at least one non-empty `http_auth_password` are configured. A partial credential configuration does not enable HTTP authentication.
+
+For account-specific values, open **Domains**, select the account's settings, and add or copy the settings there. Account CIDR rows replace the default CIDR list; they are not merged with it. The same override behavior applies to the HTTP credential settings.
+
+> **Security recommendation:** Use HTTPS even when CIDR restrictions are enabled. CIDR restrictions control where requests may originate but do not encrypt provisioning credentials or phone configuration files.
 
 ### Provisioning URL
 Always use your FS PBX domain name as the base URL. However, the exact path depends entirely on the **Device Template** assigned to the phone in FS PBX. *(Note: Key Templates handle button layouts, but do not affect the URL).*
@@ -132,6 +149,7 @@ Anytime you change a device, key template, profile, or extension assignment:
 - Check that the phone is using the correct Provisioning URL (Modern vs. Legacy).
 - Ensure the phone can reach the FS PBX server over the network and trusts the HTTPS certificate.
 - Verify the HTTP Provisioning username and password are correct.
+- If CIDR restrictions are enabled, confirm the phone's source IP as seen by FS PBX matches an enabled `provision` > `cidr` row. A CIDR rejection returns a `404` response, while failed HTTP authentication returns `401`.
 - Ensure the requested vendor/model template actually exists in the system.
 
 **If the phone provisions but the buttons are wrong:**
