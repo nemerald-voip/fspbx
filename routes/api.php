@@ -12,6 +12,7 @@ use App\Http\Controllers\BasicQueueController;
 use App\Http\Controllers\BusinessHoursController;
 use App\Http\Controllers\BridgeController;
 use App\Http\Controllers\CallBlockController;
+use App\Http\Controllers\CallWebhookController;
 use App\Http\Controllers\CallFlowController;
 use App\Http\Controllers\CallTranscriptionController;
 use App\Http\Controllers\CdrsController;
@@ -419,6 +420,13 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/phonebooks/copy-to-domain', [PhonebookManagerController::class, 'copyToDomain'])->name('phonebooks.copy-to-domain');
     Route::post('/phonebooks/bulk-delete', [PhonebookManagerController::class, 'bulkDelete'])->name('phonebooks.bulk.delete');
     Route::get('/phonebooks/{phonebook}/preview', [PhonebookManagerController::class, 'preview'])->name('phonebooks.preview');
+
+    // Call Webhooks
+    Route::get('/call-webhooks', [CallWebhookController::class, 'show'])->name('call-webhooks.show');
+    Route::put('/call-webhooks', [CallWebhookController::class, 'save'])->name('call-webhooks.save');
+    Route::post('/call-webhooks/test', [CallWebhookController::class, 'test'])->name('call-webhooks.test');
+    Route::post('/call-webhooks/rotate-secret', [CallWebhookController::class, 'rotateSecret'])->name('call-webhooks.rotate-secret');
+    Route::delete('/call-webhooks', [CallWebhookController::class, 'destroy'])->name('call-webhooks.destroy');
 
     // Registrations
     Route::get('/registrations/data', [RegistrationsController::class, 'getData'])->name('registrations.data');

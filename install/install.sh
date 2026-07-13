@@ -832,6 +832,15 @@ else
     exit 1
 fi
 
+# Copy FS PBX call webhook listener configuration to Supervisor
+sudo cp install/fs-esl-listener-call-webhooks.conf /etc/supervisor/conf.d/
+if [ $? -eq 0 ]; then
+    print_success "FS PBX call webhook listener configuration installed disabled by default."
+else
+    print_error "Error occurred while copying the call webhook listener configuration to Supervisor."
+    exit 1
+fi
+
 # Copy Laravel Reverb configuration to Supervisor
 sudo cp install/reverb.conf /etc/supervisor/conf.d/
 if [ $? -eq 0 ]; then
@@ -881,7 +890,7 @@ else
     exit 1
 fi
 
-# Restart FS ELS Emergency process under Supervisor
+# Start FS ESL Emergency Listener under Supervisor
 sudo supervisorctl start fs-esl-listener-emergency
 if [ $? -eq 0 ]; then
     sleep 6
@@ -891,7 +900,7 @@ else
     exit 1
 fi
 
-# Restart FS ELS Emergency process under Supervisor
+# Restart FS PBX CDR Service under Supervisor
 sudo supervisorctl restart fs-cdr-service
 if [ $? -eq 0 ]; then
     sleep 6

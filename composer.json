@@ -40,6 +40,7 @@
         "spatie/laravel-data": "^4.8",
         "spatie/laravel-query-builder": "^5.7",
         "spatie/laravel-webhook-client": "^3.2",
+        "spatie/laravel-webhook-server": "^3.10",
         "spatie/simple-excel": "^3.8.1",
         "stripe/stripe-php": "^17.6",
         "symfony/http-client": "^6.4",
