@@ -326,7 +326,6 @@ const data = ref({
 });
 const expandedRow = ref(null)
 const domainFilterKey = ref(0)
-const deliveryStatusSyncs = new Map()
 
 
 const startLocal = moment.utc(props.startPeriod).tz(props.timezone)
@@ -378,7 +377,6 @@ const fetchData = async (page = 1) => {
     })
         .then((response) => {
             data.value = response.data;
-            syncVisibleDeliveryStatuses();
             // console.log(data.value);
 
         }).catch((error) => {
@@ -392,29 +390,6 @@ const fetchData = async (page = 1) => {
 watch(() => props.trigger, (newVal) => {
     fetchData(1)
 })
-
-const syncVisibleDeliveryStatuses = () => {
-    const rows = data.value.data ?? [];
-    const now = Date.now();
-    const rowsToSync = rows.filter((row) => {
-        const lastSync = deliveryStatusSyncs.get(row.uuid) ?? 0;
-
-        return row.provider === 'postmark'
-            && row.status === 'sent'
-            && now - lastSync > 30000
-            && canShowDeliveryDetails(row);
-    });
-
-    if (!rowsToSync.length) return;
-
-    rowsToSync.forEach((row) => deliveryStatusSyncs.set(row.uuid, now));
-
-    Promise.allSettled(rowsToSync.map((row) => {
-        return axios.get(props.routes.email_delivery_details.replace('__UUID__', row.uuid));
-    })).then(() => {
-        fetchData(data.value.current_page || 1);
-    });
-}
 
 const toggleExpand = (uuid) => {
     expandedRow.value = expandedRow.value === uuid ? null : uuid;
