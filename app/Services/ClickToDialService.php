@@ -98,6 +98,10 @@ class ClickToDialService
     // UCS release that introduced REST API delivery over SIP NOTIFY (ACTION-URI).
     private const POLYCOM_REST_NOTIFY_MIN_VERSION = '6.4.2';
 
+    public function __construct(private PhoneRegistrationTargetService $registrationTargets)
+    {
+    }
+
     public function makeCall(
         FreeswitchEslService $eslService,
         string $extensionNumber,
@@ -105,23 +109,38 @@ class ClickToDialService
         string $destination,
         array $options = []
     ): array {
-        $domain = $this->resolveDomain($domainIdentifier);
-        $extension = $this->resolveExtension($extensionNumber, $domain);
-        $groups = $this->registrationsForExtension($eslService, $extension, $domain)
-            ->pipe(fn (Collection $registrations) => $this->groupRegistrations($registrations));
+        $target = $this->registrationTargets->resolveCandidates(
+            $eslService,
+            $extensionNumber,
+            $domainIdentifier,
+            fn (string $agent) => $this->registrationIdentity($agent)
+        );
+        $domain = $target['domain'];
+        $extension = $target['extension'];
+        $groups = $target['groups'];
 
         if ($groups->isEmpty()) {
             throw new RuntimeException("No controllable registrations found for {$extensionNumber}@{$domain->domain_name}.");
         }
 
-        $selection = $this->selectGroups($groups, $options);
+        $selection = $this->registrationTargets->selectGroups(
+            $groups,
+            $options,
+            array_keys($this->userAgents),
+            'controllable registrations'
+        );
         $selectedGroups = $selection['selected'];
         $skippedGroups = $selection['skipped'];
         $apiGroups = $selectedGroups->filter(fn (array $group) => $this->actionForVendor((string) $group['vendor']) === self::ACTION_API);
         $freeswitchGroups = $selectedGroups->filter(fn (array $group) => $this->actionForVendor((string) $group['vendor']) === self::ACTION_FREESWITCH);
 
         if ($apiGroups->isNotEmpty()) {
-            $selected = $this->singleGroupOrFail($apiGroups, $groups, 'API selection');
+            $selected = $this->registrationTargets->singleGroupOrFail(
+                $apiGroups,
+                $groups,
+                'API selection',
+                'controllable registrations'
+            );
             $result = $this->sendApiMakeCall((string) $selected['vendor'], $extension, $domain, $destination, $options);
             $eslService->disconnect();
 
@@ -234,203 +253,21 @@ class ClickToDialService
         string $extensionNumber,
         string $domainIdentifier
     ): Collection {
-        $domain = $this->resolveDomain($domainIdentifier);
-        $extension = $this->resolveExtension($extensionNumber, $domain);
-
-        return $this->registrationsForExtension($eslService, $extension, $domain)
-            ->pipe(fn (Collection $registrations) => $this->groupRegistrations($registrations));
+        return $this->registrationTargets->resolveCandidates(
+            $eslService,
+            $extensionNumber,
+            $domainIdentifier,
+            fn (string $agent) => $this->registrationIdentity($agent)
+        )['groups'];
     }
 
-    private function resolveDomain(string $identifier): Domain
+    private function registrationIdentity(string $agent): ?array
     {
-        $domain = Domain::query()
-            ->when(Str::isUuid($identifier), fn ($query) => $query->where('domain_uuid', $identifier))
-            ->when(! Str::isUuid($identifier), fn ($query) => $query->where('domain_name', $identifier))
-            ->first(['domain_uuid', 'domain_name']);
+        $vendor = $this->detectVendor($agent);
 
-        if (! $domain) {
-            throw new RuntimeException("Domain [{$identifier}] was not found.");
-        }
-
-        return $domain;
-    }
-
-    private function resolveExtension(string $extensionNumber, Domain $domain): Extensions
-    {
-        $extension = Extensions::query()
-            ->where('domain_uuid', $domain->domain_uuid)
-            ->where('extension', $extensionNumber)
-            ->first(['extension_uuid', 'domain_uuid', 'extension', 'user_context', 'effective_caller_id_name']);
-
-        if (! $extension) {
-            throw new RuntimeException("Extension [{$extensionNumber}] was not found in {$domain->domain_name}.");
-        }
-
-        return $extension;
-    }
-
-    private function registrationsForExtension(
-        FreeswitchEslService $eslService,
-        Extensions $extension,
-        Domain $domain
-    ): Collection {
-        return $eslService->getAllSipRegistrations()
-            ->filter(function (array $registration) use ($extension, $domain) {
-                return (string) ($registration['sip_auth_user'] ?? '') === (string) $extension->extension
-                    && (string) ($registration['sip_auth_realm'] ?? '') === (string) $domain->domain_name;
-            })
-            ->values();
-    }
-
-    private function groupRegistrations(Collection $registrations): Collection
-    {
-        return $registrations
-            ->map(function (array $registration) {
-                $vendor = $this->detectVendor((string) ($registration['agent'] ?? ''));
-
-                return $vendor ? array_merge($registration, ['click_to_dial_vendor' => $vendor]) : null;
-            })
-            ->filter()
-            ->groupBy(function (array $registration) {
-                return implode('|', [
-                    $registration['click_to_dial_vendor'],
-                    $registration['sip_profile_name'] ?? '',
-                    $this->normalizeLanIp($this->registrationDeviceIp($registration)),
-                ]);
-            })
-            ->values()
-            ->map(function (Collection $registrations, int $index) {
-                // Freshest registration first: stale entries linger after a phone
-                // reboot and point at dead NAT pinholes.
-                $registrations = $registrations
-                    ->sortByDesc(fn (array $registration) => (int) ($registration['expsecs'] ?? 0))
-                    ->values();
-                $first = $registrations->first();
-                $deviceIp = $this->registrationDeviceIp($first);
-
-                return [
-                    'index' => $index + 1,
-                    'vendor' => $first['click_to_dial_vendor'],
-                    'label' => $this->userAgents[$first['click_to_dial_vendor']]['label'],
-                    'agent' => $first['agent'] ?? '',
-                    'lan_ip' => $deviceIp,
-                    'registration_lan_ip' => $first['lan_ip'] ?? '',
-                    'sip_profile_name' => $first['sip_profile_name'] ?? '',
-                    'count' => $registrations->count(),
-                    'registrations' => $registrations->values()->all(),
-                ];
-            });
-    }
-
-    /**
-     * @return array{selected: Collection, skipped: Collection}
-     */
-    private function selectGroups(Collection $groups, array $options): array
-    {
-        if (! empty($options['call_id'])) {
-            $matches = $groups->filter(function (array $group) use ($options) {
-                return collect($group['registrations'])
-                    ->contains(fn (array $registration) => (string) ($registration['call_id'] ?? '') === (string) $options['call_id']);
-            });
-
-            return [
-                'selected' => collect([$this->singleGroupOrFail($matches, $groups, 'call-id')]),
-                'skipped' => collect(),
-            ];
-        }
-
-        $matches = $groups;
-
-        if (! empty($options['vendor'])) {
-            $vendor = strtolower((string) $options['vendor']);
-
-            if (! array_key_exists($vendor, $this->userAgents)) {
-                throw new RuntimeException("Unknown vendor [{$vendor}]. Valid vendors: " . implode(', ', array_keys($this->userAgents)) . '.');
-            }
-
-            $matches = $matches->where('vendor', $vendor)->values();
-        }
-
-        if (! empty($options['agent'])) {
-            $matches = $matches
-                ->filter(fn (array $group) => $this->agentMatches((string) ($group['agent'] ?? ''), (string) $options['agent']))
-                ->values();
-        }
-
-        if (! empty($options['lan_ip'])) {
-            $lanIp = $this->normalizeLanIp((string) $options['lan_ip']);
-            $matches = $matches
-                ->filter(fn (array $group) => $this->normalizeLanIp((string) $group['lan_ip']) === $lanIp)
-                ->values();
-        }
-
-        if ($matches->isEmpty()) {
-            throw new RuntimeException("No controllable registrations matched the selection. Available choices:\n" . $this->formatGroups($groups));
-        }
-
-        if (! empty($options['lan_ip'])) {
-            return [
-                'selected' => collect([$this->singleGroupOrFail($matches, $groups, 'selection')]),
-                'skipped' => collect(),
-            ];
-        }
-
-        // Never command more than one device per request: a dial sent to every
-        // matched group would make several phones call at once. Pick the group
-        // with the freshest registration (registrations are already sorted
-        // freshest-first within each group) and report the rest as skipped.
-        $matches = $matches
-            ->sortByDesc(fn (array $group) => (int) ($group['registrations'][0]['expsecs'] ?? 0))
-            ->values();
-
-        return [
-            'selected' => $matches->take(1),
-            'skipped' => $matches->slice(1)->values(),
-        ];
-    }
-
-    private function agentMatches(string $agent, string $pattern): bool
-    {
-        $regex = '/' . str_replace('/', '\/', $pattern) . '/i';
-
-        $result = @preg_match($regex, $agent);
-
-        if ($result !== false) {
-            return $result === 1;
-        }
-
-        // Not a valid regex — fall back to a case-insensitive substring match.
-        return str_contains(Str::lower($agent), Str::lower($pattern));
-    }
-
-    private function singleGroupOrFail(Collection $matches, Collection $allGroups, string $context): array
-    {
-        if ($matches->count() === 1) {
-            return $matches->first();
-        }
-
-        if ($matches->isEmpty()) {
-            throw new RuntimeException("No controllable registrations matched the {$context}. Available choices:\n" . $this->formatGroups($allGroups));
-        }
-
-        throw new RuntimeException("Multiple registration groups matched the {$context}. Choose a vendor, LAN IP, or call-id:\n" . $this->formatGroups($matches));
-    }
-
-    private function formatGroups(Collection $groups): string
-    {
-        return $groups
-            ->map(function (array $group) {
-                return sprintf(
-                    '[%d] vendor=%s profile=%s lan_ip=%s count=%d agent=%s',
-                    $group['index'],
-                    $group['vendor'],
-                    $group['sip_profile_name'] ?: '(unknown)',
-                    $group['lan_ip'] ?: '(unknown)',
-                    $group['count'],
-                    $group['agent'] ?: '(unknown)'
-                );
-            })
-            ->implode("\n");
+        return $vendor
+            ? ['vendor' => $vendor, 'label' => $this->userAgents[$vendor]['label']]
+            : null;
     }
 
     private function detectVendor(string $agent): ?string
@@ -474,62 +311,6 @@ class ClickToDialService
 
         return $version !== null
             && version_compare($version, self::POLYCOM_REST_NOTIFY_MIN_VERSION, '>=');
-    }
-
-    private function normalizeLanIp(string $lanIp): string
-    {
-        return trim(Str::lower($lanIp));
-    }
-
-    private function registrationDeviceIp(array $registration): string
-    {
-        $agentIp = $this->deviceIpFromAgent((string) ($registration['agent'] ?? ''));
-
-        return $agentIp
-            ?: $this->deviceIpFromContact((string) ($registration['contact'] ?? ''))
-            ?: (string) ($registration['lan_ip'] ?? '');
-    }
-
-    private function deviceIpFromAgent(string $agent): ?string
-    {
-        if (preg_match('/\bX-LAN:\s*([^\/;\s]+)/i', $agent, $matches)) {
-            $ip = trim($matches[1]);
-
-            if (filter_var($ip, FILTER_VALIDATE_IP)) {
-                return $ip;
-            }
-        }
-
-        return null;
-    }
-
-    private function deviceIpFromContact(string $contact): ?string
-    {
-        $contactUri = $this->extractSipUri($contact);
-
-        if (! $contactUri) {
-            return null;
-        }
-
-        if (preg_match('/^sips?:[^@]+@\[?([0-9a-f:.]+)\]?(?::\d+)?(?:[;?]|$)/i', $contactUri, $matches)
-            && filter_var($matches[1], FILTER_VALIDATE_IP)) {
-            return $matches[1];
-        }
-
-        return null;
-    }
-
-    private function extractSipUri(string $contact): ?string
-    {
-        if (preg_match('/<(sip:[^>]+)>/i', $contact, $matches)) {
-            return $matches[1];
-        }
-
-        if (preg_match('/(sip:\S+)/i', $contact, $matches)) {
-            return $matches[1];
-        }
-
-        return null;
     }
 
     private function sendAutoAnswerOriginate(

@@ -1,4 +1,4 @@
-{{-- version: 1.0.1 --}}
+{{-- version: 1.0.2 --}}
 
 @switch($flavor)
 
@@ -69,6 +69,7 @@
     <webserver_admin_password perm="">{{ $settings['admin_password'] ?? ''}}</webserver_admin_password>
     <dst perm="">{{ $settings['snom_dst'] ?? '3600 03.02.07 02:00:00 11.01.07 02:00:00' }}</dst>
     <tone_scheme perm="">{{ $settings['snom_tone_scheme'] ?? 'USA' }}</tone_scheme>
+    <mb_trusted_hosts perm="">{{ $settings['snom_mb_trusted_hosts'] ?? '' }}</mb_trusted_hosts>
     <ntp_server perm="">{{ $settings['snom_ntp_server'] ?? $settings['ntp_server_primary'] ?? '0.pool.ntp.org' }}</ntp_server>
     <ntp_refresh_timer perm="">{{ $settings['snom_ntp_refresh_timer'] ?? 3600 }}</ntp_refresh_timer>
     <timezone perm="">{{ $settings['snom_time_zone'] ?? $settings['time_zone'] ?? 'USA-8' }}</timezone>

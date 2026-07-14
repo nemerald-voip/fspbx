@@ -108,9 +108,16 @@ class FreeswitchEslService
                 $event->addBody($body);
             }
 
-            $this->conn->sendEvent($event);
+            $response = $this->conn->sendEvent($event);
+            $reply = $response ? trim((string) $response->getHeader('Reply-Text')) : '';
 
-            return '+OK event sent';
+            if (! preg_match('/^\+OK\b/i', $reply)) {
+                logger("FreeSWITCH ESL rejected event [{$eventName}]: " . ($reply !== '' ? $reply : 'no reply from server'));
+
+                return null;
+            }
+
+            return $reply;
         } catch (Throwable $e) {
             logger($e->getMessage());
             return null;
@@ -253,7 +260,7 @@ class FreeswitchEslService
         return collect($registrations);
     }
 
-    function getAllChannels()
+    function getAllChannels($disconnect = true)
     {
         // Check if the 'esl' extension is loaded
         if (!extension_loaded('esl')) {
@@ -262,7 +269,7 @@ class FreeswitchEslService
 
         $cmd = "show channels as json";
         // $cmd = "show channels";
-        $result = $this->executeCommand($cmd);
+        $result = $this->executeCommand($cmd, $disconnect);
 
         // Initialize an array to hold channel information
         $channels = [];
