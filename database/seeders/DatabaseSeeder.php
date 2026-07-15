@@ -672,6 +672,14 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'cidr',
+                'default_setting_name'          => 'array',
+                'default_setting_value'         => '',
+                'default_setting_enabled'       => false,
+                'default_setting_description'   => 'Restrict provisioning to these IP addresses or CIDR ranges. When HTTP credentials are configured, both CIDR and HTTP authentication are required.',
+            ],
+            [
+                'default_setting_category'      => 'provision',
                 'default_setting_subcategory'   => 'polycom_vvx_firmware_url',
                 'default_setting_name'          => 'text',
                 'default_setting_value'         => "",
