@@ -907,6 +907,7 @@ class ExtensionsController extends Controller
             'voices' => isset($openAiService) && $openAiService ? $openAiService->getVoices() : null,
             'default_voice' => isset($openAiService) && $openAiService ? $openAiService->getDefaultVoice() : null,
             'speeds' => isset($openAiService) && $openAiService ? $openAiService->getSpeeds() : null,
+            'tts_voices_route' => route('tts.voices'),
             'phone_call_instructions' => $phoneCallInstructions ?? null,
             'phone_call_instructions_for_name' => $phoneCallInstructionsForName ?? null,
             'sample_message' => $sampleMessage ?? null,

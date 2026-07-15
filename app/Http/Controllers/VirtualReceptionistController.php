@@ -501,6 +501,7 @@ class VirtualReceptionistController extends Controller
                 'voices' => $openAiService ? $openAiService->getVoices() : null,
                 'default_voice' => $openAiService ? $openAiService->getDefaultVoice() : null,
                 'speeds' => $openAiService ? $openAiService->getSpeeds() : null,
+                'tts_voices_route' => route('tts.voices'),
                 'phone_call_instructions' => $phoneCallInstructions,
                 'sample_message' => $sampleMessage,
                 'prompt_repeat_options' => $promptRepeatOptions,
