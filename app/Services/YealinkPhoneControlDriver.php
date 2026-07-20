@@ -53,6 +53,7 @@ class YealinkPhoneControlDriver implements PhoneControlDriver
         array $group,
         string $action,
         ?string $destination = null,
+        ?string $activeCallId = null,
         bool $dryRun = false
     ): array {
         $registration = $group['registrations'][0] ?? [];

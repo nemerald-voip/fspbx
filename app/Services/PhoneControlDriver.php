@@ -15,7 +15,10 @@ interface PhoneControlDriver
     public const ACTION_CANCEL_TRANSFER = 'cancel-transfer';
     public const ACTION_CONFERENCE = 'conference';
     public const ACTION_MUTE_TOGGLE = 'mute-toggle';
+    public const ACTION_MUTE_ON = 'mute-on';
+    public const ACTION_MUTE_OFF = 'mute-off';
     public const ACTION_END_CALL = 'end-call';
+    public const ACTION_ANSWER_CALL = 'answer-call';
     public const ACTION_DND_ON = 'dnd-on';
     public const ACTION_DND_OFF = 'dnd-off';
     public const ACTION_DND_TOGGLE = 'dnd-toggle';
@@ -28,6 +31,11 @@ interface PhoneControlDriver
 
     public function supportedActions(): array;
 
+    /**
+     * $activeCallId is the SIP call-id of the extension's single guarded call,
+     * resolved by PhoneControlService; null under --force or --dry-run.
+     * Key-simulation drivers ignore it; API drivers use it as the call reference.
+     */
     public function send(
         FreeswitchEslService $eslService,
         Extensions $extension,
@@ -35,6 +43,7 @@ interface PhoneControlDriver
         array $group,
         string $action,
         ?string $destination = null,
+        ?string $activeCallId = null,
         bool $dryRun = false
     ): array;
 

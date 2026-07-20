@@ -171,9 +171,7 @@ class PhoneControlService
     ): Collection {
         $presenceId = $extension->extension . '@' . $domain->domain_name;
 
-        return $eslService->getAllChannels(false)
-            ->filter(fn (array $channel) => (string) ($channel['presence_id'] ?? '') === $presenceId)
-            ->values()
+        return $eslService->channelsForPresenceId($presenceId)
             ->map(function (array $channel) use ($eslService) {
                 $sipCallId = (string) $eslService->executeCommand(
                     'uuid_getvar ' . $channel['uuid'] . ' sip_call_id',
@@ -240,14 +238,26 @@ class PhoneControlService
         $driver = $this->drivers->forVendor((string) $selectedGroup['vendor']);
         $action = Str::lower(trim($action));
 
+        if (! in_array($action, $driver->supportedActions(), true)) {
+            throw new RuntimeException(
+                "Action [{$action}] is not supported for {$driver->label()}. Supported actions: "
+                . implode(', ', $driver->supportedActions()) . '.'
+            );
+        }
+
+        $activeCallId = null;
+
         if (in_array($action, [
                 PhoneControlDriver::ACTION_HOLD,
                 PhoneControlDriver::ACTION_RESUME,
                 PhoneControlDriver::ACTION_END_CALL,
+                PhoneControlDriver::ACTION_BLIND_TRANSFER,
+                PhoneControlDriver::ACTION_ATTENDED_TRANSFER,
+                PhoneControlDriver::ACTION_ANSWER_CALL,
             ], true)
             && ! (bool) ($options['force'] ?? false)
             && ! (bool) ($options['dry_run'] ?? false)) {
-            $this->guardCallState($eslService, $extension, $domain, $action);
+            $activeCallId = $this->guardCallState($eslService, $extension, $domain, $action);
         }
 
         $results = [];
@@ -260,6 +270,7 @@ class PhoneControlService
                 $group,
                 $action,
                 $destination,
+                $activeCallId,
                 (bool) ($options['dry_run'] ?? false)
             );
         }
@@ -272,6 +283,7 @@ class PhoneControlService
             'vendor' => $driver->vendor(),
             'action' => $action,
             'destination' => $destination,
+            'active_call_id' => $activeCallId,
             'state_is_toggle' => $driver->actionIsToggle($action),
             'group' => $selectedGroup,
             'groups' => $selectedGroups->values()->all(),
@@ -281,16 +293,17 @@ class PhoneControlService
     }
 
     /**
-     * Call-state key actions are applied by the phone to whichever call is
-     * selected on its screen, so refuse to send one unless FreeSWITCH confirms
-     * exactly one call in a state the action makes sense for.
+     * Call-state actions target one specific call, so refuse to send one
+     * unless FreeSWITCH confirms exactly one call in a state the action makes
+     * sense for. Returns that call's SIP call-id — API drivers (Poly) use it
+     * as the call reference; key-simulation drivers ignore it.
      */
     private function guardCallState(
         FreeswitchEslService $eslService,
         Extensions $extension,
         Domain $domain,
         string $action
-    ): void {
+    ): string {
         $calls = $this->activeCalls($eslService, $extension, $domain);
         $target = "{$extension->extension}@{$domain->domain_name}";
 
@@ -300,23 +313,39 @@ class PhoneControlService
 
         if ($calls->count() > 1) {
             throw new RuntimeException(
-                "Extension {$target} has {$calls->count()} active calls; {$action} acts on the call "
-                . "selected on the phone, so this is ambiguous. Finish or select the right call on the phone, "
+                "Extension {$target} has {$calls->count()} active calls; {$action} targets a single call, "
+                . "so this is ambiguous. Finish or select the right call on the phone, "
                 . "or pass --force to bypass this check:\n" . $this->formatCalls($calls)
             );
         }
 
         $call = $calls->first();
+        $state = (string) $call['callstate'];
 
-        if ($action === PhoneControlDriver::ACTION_HOLD && $call['callstate'] === 'HELD') {
+        if ($action === PhoneControlDriver::ACTION_HOLD && $state === 'HELD') {
             throw new RuntimeException("The call on {$target} is already on hold.");
         }
 
-        if ($action === PhoneControlDriver::ACTION_RESUME && $call['callstate'] !== 'HELD') {
+        if ($action === PhoneControlDriver::ACTION_RESUME && $state !== 'HELD') {
+            throw new RuntimeException("The call on {$target} is not on hold (state: {$state}).");
+        }
+
+        if (in_array($action, [
+            PhoneControlDriver::ACTION_BLIND_TRANSFER,
+            PhoneControlDriver::ACTION_ATTENDED_TRANSFER,
+        ], true) && $state !== 'ACTIVE') {
             throw new RuntimeException(
-                "The call on {$target} is not on hold (state: {$call['callstate']})."
+                "The call on {$target} is not answered yet (state: {$state}); transfers need an active call."
             );
         }
+
+        if ($action === PhoneControlDriver::ACTION_ANSWER_CALL && $state !== 'RINGING') {
+            throw new RuntimeException(
+                "Extension {$target} has no ringing call to answer (state: {$state})."
+            );
+        }
+
+        return (string) $call['sip_call_id'];
     }
 
     private function formatCalls(Collection $calls): string

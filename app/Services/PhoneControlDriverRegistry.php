@@ -10,11 +10,20 @@ class PhoneControlDriverRegistry
     /** @var array<string, PhoneControlDriver> */
     private array $drivers;
 
-    public function __construct(YealinkPhoneControlDriver $yealink, SnomPhoneControlDriver $snom)
-    {
+    public function __construct(
+        YealinkPhoneControlDriver $yealink,
+        SnomPhoneControlDriver $snom,
+        PolyPhoneControlDriver $poly,
+        PbxCallControl $pbx
+    ) {
         $this->drivers = [];
         $this->register($yealink);
         $this->register($snom);
+        $this->register($poly);
+        // Order matters: the specific match must be registered before the
+        // catch-all, since forAgent() returns the first driver that matches.
+        $this->register(new GenericPhoneControlDriver($pbx, 'grandstream', 'Grandstream', ['grandstream']));
+        $this->register(new GenericPhoneControlDriver($pbx, 'generic', 'Generic (PBX-assisted)', []));
     }
 
     public function vendors(): array

@@ -6,8 +6,10 @@ use App\Models\Domain;
 use App\Models\Extensions;
 use App\Services\FreeswitchEslService;
 use App\Services\PhoneControlService;
+use App\Services\PbxCallControl;
 use App\Services\PhoneControlDriverRegistry;
 use App\Services\PhoneRegistrationTargetService;
+use App\Services\PolyPhoneControlDriver;
 use App\Services\SnomPhoneControlDriver;
 use App\Services\YealinkPhoneControlDriver;
 use InvalidArgumentException;
@@ -66,13 +68,17 @@ class PhoneControlServiceTest extends TestCase
     {
         $driver = new YealinkPhoneControlDriver();
         $service = new PhoneControlService(
-            new PhoneControlDriverRegistry($driver, new SnomPhoneControlDriver()),
+            new PhoneControlDriverRegistry($driver, new SnomPhoneControlDriver(), new PolyPhoneControlDriver(new PbxCallControl()), new PbxCallControl()),
             new PhoneRegistrationTargetService()
         );
 
-        $this->assertSame(['yealink', 'snom'], $service->supportedVendors());
+        $this->assertSame(['yealink', 'snom', 'poly', 'grandstream', 'generic'], $service->supportedVendors());
         $this->assertContains('hold', $service->supportedActions('yealink'));
         $this->assertContains('dnd-toggle', $service->supportedActions('snom'));
+        $this->assertContains('answer-call', $service->supportedActions('poly'));
+        $this->assertContains('conference', $service->supportedActions('poly'));
+        $this->assertContains('conference', $service->supportedActions('grandstream'));
+        $this->assertContains('conference', $service->supportedActions('generic'));
     }
 
     public function test_transfer_requires_a_destination(): void
@@ -98,22 +104,14 @@ class PhoneControlServiceTest extends TestCase
     public function test_active_calls_resolves_sip_call_ids_for_the_extension_only(): void
     {
         $esl = Mockery::mock(FreeswitchEslService::class);
-        $esl->shouldReceive('getAllChannels')
+        $esl->shouldReceive('channelsForPresenceId')
             ->once()
-            ->with(false)
+            ->with('101@example.test')
             ->andReturn(collect([
                 [
                     'uuid' => 'uuid-a',
                     'presence_id' => '101@example.test',
                     'direction' => 'inbound',
-                    'callstate' => 'ACTIVE',
-                    'cid_num' => '101',
-                    'dest' => '100',
-                ],
-                [
-                    'uuid' => 'uuid-b',
-                    'presence_id' => '100@example.test',
-                    'direction' => 'outbound',
                     'callstate' => 'ACTIVE',
                     'cid_num' => '101',
                     'dest' => '100',
@@ -125,7 +123,7 @@ class PhoneControlServiceTest extends TestCase
             ->andReturn('0_123456@192.168.4.34');
 
         $service = new PhoneControlService(
-            new PhoneControlDriverRegistry(new YealinkPhoneControlDriver(), new SnomPhoneControlDriver()),
+            new PhoneControlDriverRegistry(new YealinkPhoneControlDriver(), new SnomPhoneControlDriver(), new PolyPhoneControlDriver(new PbxCallControl()), new PbxCallControl()),
             new PhoneRegistrationTargetService()
         );
         $extension = new Extensions();
@@ -228,6 +226,109 @@ class PhoneControlServiceTest extends TestCase
         $this->assertTrue($result['sent']);
         $this->assertSame('snom', $result['vendor']);
         $this->assertSame('key=F_TRANSFER | numberdial=100', $result['body']);
+    }
+
+    public static function polyRestCommands(): array
+    {
+        return [
+            'hold with ref' => ['hold', null, 'ref-1', [['command-URI' => '/api/v1/callctrl/holdCall', 'data' => ['Ref' => 'ref-1']]]],
+            'hold without ref (--force)' => ['hold', null, null, [['command-URI' => '/api/v1/callctrl/holdCall']]],
+            'resume with ref' => ['resume', null, 'ref-1', [['command-URI' => '/api/v1/callctrl/resumeCall', 'data' => ['Ref' => 'ref-1']]]],
+            'blind transfer' => ['blind-transfer', '102', 'ref-1', [['command-URI' => '/api/v1/callctrl/transferCall', 'data' => ['Ref' => 'ref-1', 'TransferDest' => '102']]]],
+            'attended transfer holds then dials' => ['attended-transfer', '102', 'ref-1', [
+                ['command-URI' => '/api/v1/callctrl/holdCall', 'data' => ['Ref' => 'ref-1']],
+                ['command-URI' => '/api/v1/callctrl/dial', 'data' => ['Dest' => '102', 'Line' => '1', 'Type' => 'TEL']],
+            ]],
+            'cancel transfer ends the consultation' => ['cancel-transfer', null, 'consult-ref', [['command-URI' => '/api/v1/callctrl/endCall', 'data' => ['Ref' => 'consult-ref']]]],
+            'mute on' => ['mute-on', null, null, [['command-URI' => '/api/v1/callctrl/mute', 'data' => ['state' => '1']]]],
+            'mute off' => ['mute-off', null, null, [['command-URI' => '/api/v1/callctrl/mute', 'data' => ['state' => '0']]]],
+            'end call' => ['end-call', null, 'ref-1', [['command-URI' => '/api/v1/callctrl/endCall', 'data' => ['Ref' => 'ref-1']]]],
+            'answer call' => ['answer-call', null, 'ref-1', [['command-URI' => '/api/v1/callctrl/answerCall', 'data' => ['Ref' => 'ref-1']]]],
+        ];
+    }
+
+    /**
+     * @dataProvider polyRestCommands
+     */
+    public function test_poly_driver_builds_verified_rest_commands(
+        string $action,
+        ?string $destination,
+        ?string $activeCallId,
+        array $expected
+    ): void {
+        $driver = new PolyPhoneControlDriver(new PbxCallControl());
+
+        $this->assertSame($expected, $driver->buildCommands($action, $destination, $activeCallId));
+    }
+
+    public function test_poly_transfer_requires_a_call_reference(): void
+    {
+        $driver = new PolyPhoneControlDriver(new PbxCallControl());
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('blind-transfer requires the call reference');
+
+        $driver->buildCommands('blind-transfer', '102', null);
+    }
+
+    public function test_poly_driver_rejects_key_simulation_actions(): void
+    {
+        $driver = new PolyPhoneControlDriver(new PbxCallControl());
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Action [dnd-on] is not supported for Poly Edge.');
+
+        $driver->buildCommands('dnd-on');
+    }
+
+    public function test_poly_driver_detects_edge_agents(): void
+    {
+        $driver = new PolyPhoneControlDriver(new PbxCallControl());
+
+        $this->assertTrue($driver->matchesAgent('PolyEdge-Edge_E350-UA/8.3.1.0614_f04ea4691c59'));
+        $this->assertFalse($driver->matchesAgent('snomD862/10.1.226.13'));
+        $this->assertFalse($driver->matchesAgent('Yealink SIP-T53W 96.86.0.70'));
+    }
+
+    public function test_poly_driver_sends_rest_json_over_notify(): void
+    {
+        $driver = new PolyPhoneControlDriver(new PbxCallControl());
+        $esl = Mockery::mock(FreeswitchEslService::class);
+        $esl->shouldReceive('sendEvent')
+            ->once()
+            ->with(
+                'NOTIFY',
+                Mockery::on(fn (array $headers) => $headers['event-string'] === 'ACTION-URI'
+                    && $headers['content-type'] === 'application/JSON'
+                    && $headers['call-id'] === 'registration-call-id'),
+                json_encode(['command-URI' => '/api/v1/callctrl/holdCall', 'data' => ['Ref' => 'sip-call-id-1']]),
+                false
+            )
+            ->andReturn('+OK event sent');
+
+        $extension = new Extensions();
+        $extension->extension = '100';
+        $domain = new Domain();
+        $domain->domain_name = 'example.test';
+        $result = $driver->send(
+            $esl,
+            $extension,
+            $domain,
+            [
+                'agent' => 'PolyEdge-Edge_E350-UA/8.3.1.0614_f04ea4691c59',
+                'lan_ip' => '10.0.0.7',
+                'sip_profile_name' => 'internal',
+                'registrations' => [[
+                    'call_id' => 'registration-call-id',
+                ]],
+            ],
+            'hold',
+            null,
+            'sip-call-id-1'
+        );
+
+        $this->assertTrue($result['sent']);
+        $this->assertSame('poly', $result['vendor']);
     }
 
     public function test_yealink_driver_owns_its_notify_transport(): void

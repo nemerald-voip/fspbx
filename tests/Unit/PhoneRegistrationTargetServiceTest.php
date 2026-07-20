@@ -6,9 +6,11 @@ use App\Models\Domain;
 use App\Models\Extensions;
 use App\Services\ClickToDialService;
 use App\Services\FreeswitchEslService;
+use App\Services\PbxCallControl;
 use App\Services\PhoneControlDriverRegistry;
 use App\Services\PhoneControlService;
 use App\Services\PhoneRegistrationTargetService;
+use App\Services\PolyPhoneControlDriver;
 use App\Services\SnomPhoneControlDriver;
 use App\Services\YealinkPhoneControlDriver;
 use Mockery;
@@ -45,7 +47,12 @@ class PhoneRegistrationTargetServiceTest extends TestCase
 
         $clickToDial = new ClickToDialService($targets);
         $phoneControl = new PhoneControlService(
-            new PhoneControlDriverRegistry(new YealinkPhoneControlDriver(), new SnomPhoneControlDriver()),
+            new PhoneControlDriverRegistry(
+                new YealinkPhoneControlDriver(),
+                new SnomPhoneControlDriver(),
+                new PolyPhoneControlDriver(new PbxCallControl()),
+                new PbxCallControl()
+            ),
             $targets
         );
 

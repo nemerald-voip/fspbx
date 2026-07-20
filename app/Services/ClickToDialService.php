@@ -366,6 +366,7 @@ class ClickToDialService
                 . ' \'unset:sip_auto_answer,unset:ignore_early_media,unset:sip_h_Call-Info,'
                 . 'set:effective_caller_id_number=%7$s,set:effective_caller_id_name=%8$s,'
                 . 'set:caller_id_number=%7$s,set:caller_id_name=%8$s,'
+                . 'set:presence_id=%7$s@%6$s,'
                 . 'transfer:%1$s XML %4$s\' inline',
             $destination,
             $profile,

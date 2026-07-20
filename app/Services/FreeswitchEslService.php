@@ -5,6 +5,7 @@ namespace App\Services;
 use Throwable;
 use ESLconnection;
 use App\Models\SipProfiles;
+use Illuminate\Support\Collection;
 
 class FreeswitchEslService
 {
@@ -258,6 +259,16 @@ class FreeswitchEslService
         }
 
         return collect($registrations);
+    }
+
+    /**
+     * Channels belonging to one extension's presence (e.g. "101@example.com").
+     */
+    public function channelsForPresenceId(string $presenceId, bool $disconnect = false): Collection
+    {
+        return $this->getAllChannels($disconnect)
+            ->filter(fn (array $channel) => (string) ($channel['presence_id'] ?? '') === $presenceId)
+            ->values();
     }
 
     function getAllChannels($disconnect = true)
