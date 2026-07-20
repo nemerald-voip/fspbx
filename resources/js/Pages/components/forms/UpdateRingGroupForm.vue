@@ -618,7 +618,7 @@ const handleMemberSelect = (option) => {
         destination_number: option.destination ? option.destination : option.label,
         type: option.type ? option.type : "other",
         destination_delay: "0",
-        destination_timeout: "25",
+        destination_timeout: String(props.options.default_ring_time ?? "30"),
         destination_prompt: false,
         destination_enabled: true,
     };

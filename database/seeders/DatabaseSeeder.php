@@ -1241,6 +1241,14 @@ class DatabaseSeeder extends Seeder
 
             [
                 'default_setting_category'      => 'ring_group',
+                'default_setting_subcategory'   => 'ring_group_ring_time',
+                'default_setting_name'          => 'numeric',
+                'default_setting_value'         => "30",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Default ring time in seconds for new ring group members.",
+            ],
+            [
+                'default_setting_category'      => 'ring_group',
                 'default_setting_subcategory'   => 'honor_member_cfwd',
                 'default_setting_name'          => 'boolean',
                 'default_setting_value'         => "true",
