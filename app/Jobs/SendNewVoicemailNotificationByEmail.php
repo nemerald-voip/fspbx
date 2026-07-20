@@ -297,12 +297,24 @@ class SendNewVoicemailNotificationByEmail implements ShouldQueue
                     // mark as sent so future retries won't resend
                     Cache::put($sentKey, 1, now()->addDays(1));
                 } catch (\Throwable $e) {
+                    $classification = $this->classifyMailException($e);
+
+                    $this->markEmailLogSendFailure($classification);
+
                     logger()->error('Voicemail email send failed', [
                         'uuid' => $uuid,
                         'attempt' => $this->attempts(),
                         'max_tries' => $this->tries,
+                        'status' => $classification['status'],
+                        'category' => $classification['category'],
                         'error' => $e->getMessage(),
-                    ]);                    
+                    ]);
+
+                    if ($classification['stop_retrying']) {
+                        $this->fail($e);
+                        return;
+                    }
+
                     throw $e; // ensure retry on failure
                 }
             }
@@ -398,6 +410,114 @@ class SendNewVoicemailNotificationByEmail implements ShouldQueue
 
         // text, password, select, label, etc.
         return $value;
+    }
+
+    private function classifyMailException(\Throwable $e): array
+    {
+        $raw = $this->exceptionMessageWithPrevious($e);
+        $normalized = strtolower($raw);
+
+        if (
+            str_contains($normalized, 'marked as inactive') ||
+            str_contains($normalized, 'inactive recipients') ||
+            str_contains($normalized, 'manual suppression') ||
+            str_contains($normalized, 'generated a hard bounce') ||
+            str_contains($normalized, 'code 406')
+        ) {
+            return [
+                'category' => 'postmark_inactive_recipient',
+                'status' => 'permanent_failed',
+                'summary' => 'Postmark rejected the message because the recipient is inactive or suppressed.',
+                'details' => $this->shortenTransportMessage($raw),
+                'stop_retrying' => true,
+            ];
+        }
+
+        if (
+            str_contains($normalized, 'invalid credentials') ||
+            str_contains($normalized, 'authentication failed') ||
+            str_contains($normalized, 'failed to authenticate on smtp server')
+        ) {
+            return [
+                'category' => 'auth_invalid',
+                'status' => 'permanent_failed',
+                'summary' => 'Email authentication failed. Check the outgoing mail credentials.',
+                'details' => $this->shortenTransportMessage($raw),
+                'stop_retrying' => true,
+            ];
+        }
+
+        if (
+            str_contains($normalized, 'rfc 2822') ||
+            str_contains($normalized, 'addr-spec') ||
+            str_contains($normalized, 'invalid from address format') ||
+            str_contains($normalized, 'no valid recipient found')
+        ) {
+            return [
+                'category' => 'config_error',
+                'status' => 'permanent_failed',
+                'summary' => 'Email could not be sent because of invalid message data or mail configuration.',
+                'details' => $this->shortenTransportMessage($raw),
+                'stop_retrying' => true,
+            ];
+        }
+
+        return [
+            'category' => 'transport_error',
+            'status' => 'failed',
+            'summary' => 'Email send attempt failed due to a mail transport error.',
+            'details' => $this->shortenTransportMessage($raw),
+            'stop_retrying' => false,
+        ];
+    }
+
+    private function markEmailLogSendFailure(array $classification): void
+    {
+        $log = EmailLog::query()->find($this->logId);
+
+        if (! $log) {
+            return;
+        }
+
+        $existing = trim((string) $log->sent_debug_info);
+        $line = 'Voicemail email send failed at '
+            . now()->toDateTimeString()
+            . ': '
+            . $classification['summary'];
+
+        if (! empty($classification['details'])) {
+            $line .= ' Details: ' . $classification['details'];
+        }
+
+        $log->update([
+            'status' => $classification['status'],
+            'sent_debug_info' => $existing
+                ? $existing . PHP_EOL . $line
+                : $line,
+        ]);
+    }
+
+    private function exceptionMessageWithPrevious(\Throwable $e): string
+    {
+        $messages = [];
+
+        do {
+            $messages[] = get_class($e) . ': ' . $e->getMessage();
+            $e = $e->getPrevious();
+        } while ($e);
+
+        return implode(' | Previous: ', $messages);
+    }
+
+    private function shortenTransportMessage(string $message, int $max = 500): string
+    {
+        $message = preg_replace('/\s+/', ' ', trim($message));
+
+        if (mb_strlen($message) <= $max) {
+            return $message;
+        }
+
+        return mb_substr($message, 0, $max - 3) . '...';
     }
 
     private function applyVoicemailDeliveryInstructions(
