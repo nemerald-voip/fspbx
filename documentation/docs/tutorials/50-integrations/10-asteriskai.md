@@ -2,7 +2,7 @@
 id: asterisk-ai
 title: Asterisk AI Application Server
 slug: /integrations/asterisk-ai/
-sidebar_position: 1
+sidebar_position: 10
 ---
 
 ### Overview
