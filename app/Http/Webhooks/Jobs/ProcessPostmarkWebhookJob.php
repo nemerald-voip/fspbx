@@ -74,29 +74,9 @@ class ProcessPostmarkWebhookJob extends SpatieProcessWebhookJob
         $messageId = (string) ($payload['MessageID'] ?? '');
         $metadataLogId = (string) data_get($payload, 'Metadata.email_log_uuid', '');
         $recipient = (string) ($payload['Recipient'] ?? $payload['Email'] ?? '');
+        $eventAt = $this->eventTimestamp($payload);
 
-        $log = EmailLog::query()
-            ->where(function ($query) use ($metadataLogId, $messageId, $recipient) {
-                if ($metadataLogId !== '') {
-                    $query->where('uuid', $metadataLogId);
-                }
-
-                if ($messageId !== '') {
-                    $method = $metadataLogId !== '' ? 'orWhere' : 'where';
-                    $query->{$method}('provider_message_id', $messageId);
-                }
-
-                if ($recipient !== '') {
-                    $method = $metadataLogId !== '' || $messageId !== '' ? 'orWhere' : 'where';
-                    $query->{$method}(function ($query) use ($recipient) {
-                        $query->where('to', 'ILIKE', '%' . $recipient . '%')
-                            ->where('provider', 'postmark')
-                            ->where('created_at', '>=', Carbon::now()->subDays(2));
-                    });
-                }
-            })
-            ->latest('created_at')
-            ->first();
+        $log = $this->findEmailLogForOutboundEvent($metadataLogId, $messageId, $recipient, $eventAt);
 
         if (! $log) {
             logger('ProcessPostmarkWebhookJob: email log not found for outbound event', [
@@ -106,6 +86,7 @@ class ProcessPostmarkWebhookJob extends SpatieProcessWebhookJob
                 'recipient' => $recipient ?: null,
                 'record_type' => $payload['RecordType'] ?? null,
                 'type' => $payload['Type'] ?? null,
+                'event_at' => $eventAt?->toDateTimeString(),
             ]);
 
             return;
@@ -129,6 +110,73 @@ class ProcessPostmarkWebhookJob extends SpatieProcessWebhookJob
         }
 
         $log->forceFill($updates)->save();
+    }
+
+    private function findEmailLogForOutboundEvent(
+        string $metadataLogId,
+        string $messageId,
+        string $recipient,
+        ?Carbon $eventAt = null
+    ): ?EmailLog
+    {
+        if ($metadataLogId !== '') {
+            $log = EmailLog::query()->where('uuid', $metadataLogId)->first();
+
+            if ($log) {
+                return $log;
+            }
+        }
+
+        if ($messageId !== '') {
+            $log = EmailLog::query()->where('provider_message_id', $messageId)->first();
+
+            if ($log) {
+                return $log;
+            }
+        }
+
+        if ($recipient === '') {
+            return null;
+        }
+
+        $query = EmailLog::query()
+            ->where('provider', 'postmark')
+            ->where('to', 'ILIKE', '%' . $recipient . '%')
+            ->where(function ($query) use ($messageId) {
+                $query->whereNull('provider_message_id')
+                    ->orWhere('provider_message_id', '');
+
+                if ($messageId !== '') {
+                    $query->orWhere('provider_message_id', $messageId);
+                }
+            });
+
+        if ($eventAt) {
+            $query
+                ->where('created_at', '>=', $eventAt->copy()->subHours(6))
+                ->where('created_at', '<=', $eventAt->copy()->addMinutes(10));
+        } else {
+            $query->where('created_at', '>=', Carbon::now()->subHours(6));
+        }
+
+        return $query->latest('created_at')->first();
+    }
+
+    private function eventTimestamp(array $payload): ?Carbon
+    {
+        foreach (['DeliveredAt', 'BouncedAt', 'ReceivedAt', 'OpenedAt', 'ClickedAt'] as $field) {
+            if (empty($payload[$field])) {
+                continue;
+            }
+
+            try {
+                return Carbon::parse($payload[$field]);
+            } catch (\Throwable) {
+                return null;
+            }
+        }
+
+        return null;
     }
 
     private function statusForOutboundEvent(array $payload): ?string

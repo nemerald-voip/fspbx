@@ -34,7 +34,13 @@ class EmailSentLogger
                 $updates['provider_message_stream'] = config('mail.mailers.postmark.message_stream_id');
             }
 
-            EmailLog::where('uuid', $logId)->update($updates);
+            EmailLog::query()
+                ->where('uuid', $logId)
+                ->where(function ($query) {
+                    $query->whereNull('status')
+                        ->orWhereNotIn('status', ['failed', 'permanent_failed']);
+                })
+                ->update($updates);
         } catch (\Throwable $e) {
             logger('EmailSentLogger@handle error ' . $e->getMessage());
         }
