@@ -21,6 +21,7 @@ class YealinkPhoneControlDriver implements PhoneControlDriver
         self::ACTION_END_CALL,
         self::ACTION_DND_ON,
         self::ACTION_DND_OFF,
+        self::ACTION_ANSWER_CALL,
     ];
 
     public function vendor(): string
@@ -151,6 +152,11 @@ class YealinkPhoneControlDriver implements PhoneControlDriver
             self::ACTION_END_CALL => 'key=CALLEND',
             self::ACTION_DND_ON => 'key=DNDOn',
             self::ACTION_DND_OFF => 'key=DNDOff',
+            // Answers a ringing call. Verified empirically on a T53W: this is
+            // the OK softkey, not a dedicated ANSWER/F_ANSWER/ENTER key (those
+            // did nothing to a ringing call — same brute-force process that
+            // found Snom's answer key is ENTER, a different key entirely).
+            self::ACTION_ANSWER_CALL => 'key=OK',
         };
     }
 

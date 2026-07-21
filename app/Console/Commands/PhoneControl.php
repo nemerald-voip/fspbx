@@ -22,6 +22,7 @@ class PhoneControl extends Command
         {--agent= : Narrow selection to user agents matching this regex (case-insensitive; plain text works too)}
         {--call-id= : Narrow selection to a specific FreeSWITCH registration call-id}
         {--force : Skip the hold/resume call-state check and send the vendor key action anyway}
+        {--no-resume : After cancel-transfer, leave the original call on hold instead of resuming it automatically}
         {--dry-run : Resolve the phone and print the command without sending it}';
 
     protected $description = 'Control a registered phone through its vendor phone-control driver.';
@@ -60,6 +61,7 @@ class PhoneControl extends Command
                     'agent' => $this->option('agent'),
                     'call_id' => $this->option('call-id'),
                     'force' => (bool) $this->option('force'),
+                    'no_resume' => (bool) $this->option('no-resume'),
                     'dry_run' => (bool) $this->option('dry-run'),
                 ]
             );
@@ -101,6 +103,15 @@ class PhoneControl extends Command
                 ));
                 $this->line('Command: ' . $item['command']);
                 $this->line('Body: ' . $item['body']);
+            }
+
+            if ($result['auto_resume'] !== null) {
+                if ($result['auto_resume']['sent']) {
+                    $this->line('Automatically resumed the call.');
+                } else {
+                    $this->warn('Could not automatically resume the call: '
+                        . ($result['auto_resume']['reason'] ?? 'unknown reason') . '.');
+                }
             }
 
             if ((bool) $this->option('force')

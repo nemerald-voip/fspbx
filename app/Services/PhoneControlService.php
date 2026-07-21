@@ -275,6 +275,15 @@ class PhoneControlService
             );
         }
 
+        $autoResume = null;
+
+        if ($action === PhoneControlDriver::ACTION_CANCEL_TRANSFER
+            && ! (bool) ($options['dry_run'] ?? false)
+            && ! (bool) ($options['no_resume'] ?? false)
+            && collect($results)->every(fn (array $result) => $result['sent'])) {
+            $autoResume = $this->autoResumeAfterCancel($eslService, $extension, $domain, $driver, $selectedGroup);
+        }
+
         $eslService->disconnect();
 
         return [
@@ -289,7 +298,63 @@ class PhoneControlService
             'groups' => $selectedGroups->values()->all(),
             'skipped_groups' => $selection['skipped']->values()->all(),
             'results' => $results,
+            'auto_resume' => $autoResume,
         ];
+    }
+
+    /**
+     * After cancel-transfer drops the consultation call, the original caller
+     * is left on hold (matching what a physical Cancel key press would do).
+     * If exactly one call remains and it's confirmed HELD, resume it
+     * automatically so cancel-transfer reads as a single complete action
+     * instead of requiring a separate resume command. Silently skipped (not
+     * an error) if the state isn't clean enough to resume safely.
+     *
+     * "sent" from the cancel-transfer driver call only means FreeSWITCH
+     * accepted the request — vendor-NOTIFY drivers (Poly, Yealink, Snom) still
+     * need a real SIP round trip to the phone before it actually hangs up the
+     * consultation leg, so the channel list briefly still shows both calls.
+     * Poll a few times for it to settle before giving up; a PBX-side driver
+     * (Generic/Grandstream) resolves on the first check since uuid_kill is
+     * synchronous, so this adds no delay there.
+     */
+    private function autoResumeAfterCancel(
+        FreeswitchEslService $eslService,
+        Extensions $extension,
+        Domain $domain,
+        PhoneControlDriver $driver,
+        array $group
+    ): ?array {
+        $maxAttempts = 5;
+        $delayMicroseconds = 400_000;
+
+        for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
+            $calls = $this->activeCalls($eslService, $extension, $domain);
+
+            if ($calls->count() === 1 && $calls->first()['callstate'] === 'HELD') {
+                return $driver->send(
+                    $eslService,
+                    $extension,
+                    $domain,
+                    $group,
+                    PhoneControlDriver::ACTION_RESUME,
+                    null,
+                    (string) $calls->first()['sip_call_id'],
+                    false
+                );
+            }
+
+            // Only keep waiting while it looks like the consultation leg just
+            // hasn't cleared yet (still two calls); any other count means
+            // there's nothing to usefully wait for.
+            if ($calls->count() !== 2 || $attempt === $maxAttempts) {
+                return null;
+            }
+
+            usleep($delayMicroseconds);
+        }
+
+        return null;
     }
 
     /**

@@ -9,6 +9,16 @@ use InvalidArgumentException;
 
 class PolyPhoneControlDriver implements PhoneControlDriver
 {
+    // UCS release that introduced REST API delivery over SIP NOTIFY. Below
+    // this, a legacy Polycom phone (VVX, Trio, CCX, SoundPoint/SoundStation)
+    // 200-OKs the ACTION-URI NOTIFY but silently discards it — no negative
+    // signal to probe for, so those stay on the Generic/PBX-side driver.
+    // Same threshold and detection ClickToDialService already uses to decide
+    // whether a legacy Polycom agent gets REST-over-NOTIFY dialing.
+    private const POLYCOM_REST_NOTIFY_MIN_VERSION = '6.4.2';
+
+    private const LEGACY_POLYCOM_PATTERNS = ['polycom', 'vvx', 'soundpoint', 'soundstation', 'trio', 'ccx'];
+
     private const ACTIONS = [
         self::ACTION_HOLD,
         self::ACTION_RESUME,
@@ -36,12 +46,42 @@ class PolyPhoneControlDriver implements PhoneControlDriver
 
     public function label(): string
     {
-        return 'Poly Edge';
+        return 'Poly';
     }
 
     public function matchesAgent(string $agent): bool
     {
-        return str_contains(Str::lower(trim($agent)), 'polyedge');
+        $haystack = Str::lower(trim($agent));
+
+        if ($haystack === '') {
+            return false;
+        }
+
+        if (str_contains($haystack, 'polyedge')) {
+            return true;
+        }
+
+        foreach (self::LEGACY_POLYCOM_PATTERNS as $pattern) {
+            if (str_contains($haystack, $pattern)) {
+                return $this->polycomSupportsRestNotify($agent);
+            }
+        }
+
+        return false;
+    }
+
+    private function polycomSupportsRestNotify(string $agent): bool
+    {
+        $version = null;
+
+        if (preg_match('/-UA\/(\d+(?:\.\d+){1,3})/i', $agent, $matches)) {
+            $version = $matches[1];
+        } elseif (preg_match('/\b(\d+\.\d+\.\d+(?:\.\d+)?)\b/', $agent, $matches)) {
+            $version = $matches[1];
+        }
+
+        return $version !== null
+            && version_compare($version, self::POLYCOM_REST_NOTIFY_MIN_VERSION, '>=');
     }
 
     public function supportedActions(): array
@@ -179,7 +219,7 @@ class PolyPhoneControlDriver implements PhoneControlDriver
 
         if (! in_array($action, self::ACTIONS, true)) {
             throw new InvalidArgumentException(
-                "Action [{$action}] is not supported for Poly Edge. Supported actions: "
+                "Action [{$action}] is not supported for Poly. Supported actions: "
                 . implode(', ', self::ACTIONS) . '.'
             );
         }

@@ -39,6 +39,7 @@ class PhoneControlServiceTest extends TestCase
             'end call' => ['end-call', null, 'key=CALLEND'],
             'DND on' => ['dnd-on', null, 'key=DNDOn'],
             'DND off' => ['dnd-off', null, 'key=DNDOff'],
+            'answer call' => ['answer-call', null, 'key=OK'],
         ];
     }
 
@@ -151,6 +152,7 @@ class PhoneControlServiceTest extends TestCase
             'mute toggle' => ['mute-toggle', null, ['key=F_MUTE']],
             'end call' => ['end-call', null, ['key=F_CANCEL']],
             'dnd toggle' => ['dnd-toggle', null, ['key=F_DND']],
+            'answer call' => ['answer-call', null, ['key=ENTER']],
         ];
     }
 
@@ -276,7 +278,7 @@ class PhoneControlServiceTest extends TestCase
         $driver = new PolyPhoneControlDriver(new PbxCallControl());
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Action [dnd-on] is not supported for Poly Edge.');
+        $this->expectExceptionMessage('Action [dnd-on] is not supported for Poly.');
 
         $driver->buildCommands('dnd-on');
     }
@@ -288,6 +290,22 @@ class PhoneControlServiceTest extends TestCase
         $this->assertTrue($driver->matchesAgent('PolyEdge-Edge_E350-UA/8.3.1.0614_f04ea4691c59'));
         $this->assertFalse($driver->matchesAgent('snomD862/10.1.226.13'));
         $this->assertFalse($driver->matchesAgent('Yealink SIP-T53W 96.86.0.70'));
+    }
+
+    public function test_poly_driver_promotes_legacy_polycom_agents_on_ucs_6_4_2_and_newer(): void
+    {
+        $driver = new PolyPhoneControlDriver(new PbxCallControl());
+
+        // UCS 6.4.2 is when REST-over-NOTIFY delivery arrived — same
+        // threshold/detection ClickToDialService uses for click-to-dial.
+        $this->assertTrue($driver->matchesAgent('PolycomVVX-VVX_450-UA/6.4.2.1234'));
+        $this->assertTrue($driver->matchesAgent('PolycomTrio-Trio_8800-UA/6.4.3.5678'));
+        $this->assertTrue($driver->matchesAgent('PolycomCCX-CCX_500-UA/7.1.0.100'));
+
+        // Older UCS 200-OKs the NOTIFY but silently discards it, so those
+        // phones fall through to the Generic/PBX-side driver instead.
+        $this->assertFalse($driver->matchesAgent('PolycomVVX-VVX_310-UA/5.9.3.1234'));
+        $this->assertFalse($driver->matchesAgent('PolycomSoundPointIP-SPIP_650-UA/4.0.1.0'));
     }
 
     public function test_poly_driver_sends_rest_json_over_notify(): void
@@ -329,6 +347,199 @@ class PhoneControlServiceTest extends TestCase
 
         $this->assertTrue($result['sent']);
         $this->assertSame('poly', $result['vendor']);
+    }
+
+    private function genericServiceWithMockedTargets(PhoneRegistrationTargetService|\Mockery\MockInterface $registrationTargets): PhoneControlService
+    {
+        return new PhoneControlService(
+            new PhoneControlDriverRegistry(
+                new YealinkPhoneControlDriver(),
+                new SnomPhoneControlDriver(),
+                new PolyPhoneControlDriver(new PbxCallControl()),
+                new PbxCallControl()
+            ),
+            $registrationTargets
+        );
+    }
+
+    private function genericCancelTransferGroups(): \Illuminate\Support\Collection
+    {
+        return collect([[
+            'vendor' => 'generic',
+            'agent' => 'Some Unrecognized Phone',
+            'lan_ip' => '10.0.0.9',
+            'sip_profile_name' => 'internal',
+            'registrations' => [['call_id' => 'reg-call-id', 'contact' => 'sip:101@10.0.0.9']],
+        ]]);
+    }
+
+    public function test_cancel_transfer_automatically_resumes_when_exactly_one_held_call_remains(): void
+    {
+        $esl = Mockery::mock(FreeswitchEslService::class);
+        $registrationTargets = Mockery::mock(PhoneRegistrationTargetService::class);
+        $domain = new Domain();
+        $domain->domain_name = 'example.test';
+        $extension = new Extensions();
+        $extension->extension = '101';
+        $groups = $this->genericCancelTransferGroups();
+
+        $registrationTargets->shouldReceive('resolveCandidates')
+            ->once()
+            ->andReturn(['domain' => $domain, 'extension' => $extension, 'groups' => $groups]);
+        $registrationTargets->shouldReceive('selectGroups')
+            ->once()
+            ->andReturn(['selected' => $groups, 'skipped' => collect()]);
+
+        // 1st call: cancel-transfer's own channel resolution (held + active).
+        // 2nd call: the auto-resume state check (only the held call remains).
+        // 3rd call: the driver's own channel lookup while sending the resume.
+        $heldOnly = collect([
+            ['uuid' => 'held-uuid', 'callstate' => 'HELD', 'direction' => 'inbound', 'cid_num' => '200', 'dest' => '101'],
+        ]);
+        $esl->shouldReceive('channelsForPresenceId')
+            ->times(3)
+            ->with('101@example.test')
+            ->andReturn(
+                collect([
+                    ['uuid' => 'held-uuid', 'callstate' => 'HELD'],
+                    ['uuid' => 'active-uuid', 'callstate' => 'ACTIVE'],
+                ]),
+                $heldOnly,
+                $heldOnly
+            );
+        $esl->shouldReceive('executeCommand')->once()->with('uuid_kill active-uuid', false)->andReturn('+OK');
+        $esl->shouldReceive('executeCommand')->once()->with('uuid_getvar held-uuid sip_call_id', false)->andReturn('sip-call-id-1');
+        $esl->shouldReceive('executeCommand')->once()->with('uuid_hold off held-uuid', false)->andReturn('+OK Success');
+        $esl->shouldReceive('disconnect')->once();
+
+        $result = $this->genericServiceWithMockedTargets($registrationTargets)
+            ->execute($esl, '101', 'example.test', 'cancel-transfer');
+
+        $this->assertTrue($result['results'][0]['sent']);
+        $this->assertNotNull($result['auto_resume']);
+        $this->assertTrue($result['auto_resume']['sent']);
+    }
+
+    public function test_cancel_transfer_polls_until_the_vendor_finishes_clearing_the_consultation(): void
+    {
+        // "sent" from a vendor-NOTIFY driver only means FreeSWITCH accepted the
+        // request — the phone can take a moment to actually hang up. The
+        // consultation leg should still show up as present for one extra check
+        // before finally clearing.
+        $esl = Mockery::mock(FreeswitchEslService::class);
+        $registrationTargets = Mockery::mock(PhoneRegistrationTargetService::class);
+        $domain = new Domain();
+        $domain->domain_name = 'example.test';
+        $extension = new Extensions();
+        $extension->extension = '101';
+        $groups = $this->genericCancelTransferGroups();
+
+        $registrationTargets->shouldReceive('resolveCandidates')
+            ->once()
+            ->andReturn(['domain' => $domain, 'extension' => $extension, 'groups' => $groups]);
+        $registrationTargets->shouldReceive('selectGroups')
+            ->once()
+            ->andReturn(['selected' => $groups, 'skipped' => collect()]);
+
+        $twoCalls = collect([
+            ['uuid' => 'held-uuid', 'callstate' => 'HELD'],
+            ['uuid' => 'active-uuid', 'callstate' => 'ACTIVE'],
+        ]);
+        $heldOnly = collect([
+            ['uuid' => 'held-uuid', 'callstate' => 'HELD', 'direction' => 'inbound', 'cid_num' => '200', 'dest' => '101'],
+        ]);
+        $esl->shouldReceive('channelsForPresenceId')
+            ->times(4)
+            ->with('101@example.test')
+            // 1: cancel-transfer's own resolution. 2-3: still clearing (poll,
+            // poll). 4: cleared, then the driver's own lookup for resume.
+            ->andReturn($twoCalls, $twoCalls, $heldOnly, $heldOnly);
+        $esl->shouldReceive('executeCommand')->once()->with('uuid_kill active-uuid', false)->andReturn('+OK');
+        // held-uuid is enriched (sip_call_id lookup) on both poll attempts
+        // that still see it; active-uuid only on the first (it's gone by the
+        // second poll).
+        $esl->shouldReceive('executeCommand')->twice()->with('uuid_getvar held-uuid sip_call_id', false)->andReturn('sip-call-id-1');
+        $esl->shouldReceive('executeCommand')->once()->with('uuid_getvar active-uuid sip_call_id', false)->andReturn('sip-call-id-2');
+        $esl->shouldReceive('executeCommand')->once()->with('uuid_hold off held-uuid', false)->andReturn('+OK Success');
+        $esl->shouldReceive('disconnect')->once();
+
+        $result = $this->genericServiceWithMockedTargets($registrationTargets)
+            ->execute($esl, '101', 'example.test', 'cancel-transfer');
+
+        $this->assertNotNull($result['auto_resume']);
+        $this->assertTrue($result['auto_resume']['sent']);
+    }
+
+    public function test_cancel_transfer_skips_auto_resume_when_state_is_ambiguous(): void
+    {
+        $esl = Mockery::mock(FreeswitchEslService::class);
+        $registrationTargets = Mockery::mock(PhoneRegistrationTargetService::class);
+        $domain = new Domain();
+        $domain->domain_name = 'example.test';
+        $extension = new Extensions();
+        $extension->extension = '101';
+        $groups = $this->genericCancelTransferGroups();
+
+        $registrationTargets->shouldReceive('resolveCandidates')
+            ->once()
+            ->andReturn(['domain' => $domain, 'extension' => $extension, 'groups' => $groups]);
+        $registrationTargets->shouldReceive('selectGroups')
+            ->once()
+            ->andReturn(['selected' => $groups, 'skipped' => collect()]);
+
+        $esl->shouldReceive('channelsForPresenceId')
+            ->once()
+            ->with('101@example.test')
+            ->andReturn(collect([
+                ['uuid' => 'held-uuid', 'callstate' => 'HELD'],
+                ['uuid' => 'active-uuid', 'callstate' => 'ACTIVE'],
+            ]));
+        $esl->shouldReceive('executeCommand')->once()->with('uuid_kill active-uuid', false)->andReturn('+OK');
+
+        // Nothing is left held (e.g. it hung up too) — auto-resume must not fire.
+        $esl->shouldReceive('channelsForPresenceId')
+            ->once()
+            ->with('101@example.test')
+            ->andReturn(collect());
+        $esl->shouldReceive('disconnect')->once();
+
+        $result = $this->genericServiceWithMockedTargets($registrationTargets)
+            ->execute($esl, '101', 'example.test', 'cancel-transfer');
+
+        $this->assertNull($result['auto_resume']);
+    }
+
+    public function test_no_resume_option_suppresses_auto_resume(): void
+    {
+        $esl = Mockery::mock(FreeswitchEslService::class);
+        $registrationTargets = Mockery::mock(PhoneRegistrationTargetService::class);
+        $domain = new Domain();
+        $domain->domain_name = 'example.test';
+        $extension = new Extensions();
+        $extension->extension = '101';
+        $groups = $this->genericCancelTransferGroups();
+
+        $registrationTargets->shouldReceive('resolveCandidates')
+            ->once()
+            ->andReturn(['domain' => $domain, 'extension' => $extension, 'groups' => $groups]);
+        $registrationTargets->shouldReceive('selectGroups')
+            ->once()
+            ->andReturn(['selected' => $groups, 'skipped' => collect()]);
+
+        $esl->shouldReceive('channelsForPresenceId')
+            ->once()
+            ->with('101@example.test')
+            ->andReturn(collect([
+                ['uuid' => 'held-uuid', 'callstate' => 'HELD'],
+                ['uuid' => 'active-uuid', 'callstate' => 'ACTIVE'],
+            ]));
+        $esl->shouldReceive('executeCommand')->once()->with('uuid_kill active-uuid', false)->andReturn('+OK');
+        $esl->shouldReceive('disconnect')->once();
+
+        $result = $this->genericServiceWithMockedTargets($registrationTargets)
+            ->execute($esl, '101', 'example.test', 'cancel-transfer', null, ['no_resume' => true]);
+
+        $this->assertNull($result['auto_resume']);
     }
 
     public function test_yealink_driver_owns_its_notify_transport(): void
