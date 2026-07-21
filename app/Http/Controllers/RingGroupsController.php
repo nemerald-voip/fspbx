@@ -352,7 +352,7 @@ class RingGroupsController extends Controller
                 'sample_message' => $sampleMessage,
                 'greetings' => $greetingsArray,
                 'ring_back_tones' => $ring_back_tones,
-                'default_ring_time' => get_domain_setting('ring_group_ring_time', session('domain_uuid')) ?? '30',
+                'default_ring_time' => get_domain_setting('ring_group_ring_time', session('domain_uuid')) ?? '25',
                 // Define options for other fields as needed
             ];
             // logger($itemOptions);
