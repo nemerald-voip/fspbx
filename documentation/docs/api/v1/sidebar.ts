@@ -180,14 +180,26 @@ const sidebar: SidebarsConfig = {
       items: [
         {
           type: "doc",
-          id: "api/v1/list-click-to-dial-targets",
-          label: "List click-to-dial targets",
+          id: "api/v1/create-a-click-to-dial-call",
+          label: "Create a click-to-dial call",
+          className: "api-method post",
+        },
+        {
+          type: "doc",
+          id: "api/v1/list-phone-control-targets",
+          label: "List phone-control targets",
           className: "api-method get",
         },
         {
           type: "doc",
-          id: "api/v1/create-a-click-to-dial-call",
-          label: "Create a click-to-dial call",
+          id: "api/v1/list-active-calls-for-phone-control",
+          label: "List active calls for phone control",
+          className: "api-method get",
+        },
+        {
+          type: "doc",
+          id: "api/v1/create-a-phone-control-action",
+          label: "Create a phone-control action",
           className: "api-method post",
         },
       ],

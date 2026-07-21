@@ -16,44 +16,13 @@ use Throwable;
 class ClickToDialController extends Controller
 {
     /**
-     * List click-to-dial targets
+     * Legacy click-to-dial target discovery endpoint.
      *
-     * Returns the controllable registered user agent groups for one extension.
-     * A group represents one selectable phone control target. If an extension has
-     * multiple registered devices, prefer the returned `agent` value when
-     * creating a click-to-dial call. Use `vendor` only when any phone from that
-     * vendor is an acceptable target.
+     * Kept for compatibility with deployed integrations. New clients should
+     * retrieve agent values from
+     * `GET /api/v1/domains/{domain_uuid}/phone-control/targets`.
      *
-     * Access rules:
-     * - Caller must have access to the target domain.
-     * - Caller must have the `phone_control_view` permission.
-     *
-     * @group Phone Control
-     * @authenticated
-     *
-     * @urlParam domain_uuid string required The domain UUID. Example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
-     * @queryParam extension string required Extension number to inspect. Example: 1001
-     *
-     * @response 200 scenario="Success" {
-     *   "object": "list",
-     *   "url": "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/click-to-dial/targets",
-     *   "has_more": false,
-     *   "data": [
-     *     {
-     *       "vendor": "yealink",
-     *       "agent": "Yealink SIP-T53W 96.86.0.45"
-     *     }
-     *   ]
-     * }
-     *
-     * @response 400 scenario="Invalid domain UUID" {"error":{"type":"invalid_request_error","message":"Invalid domain UUID.","code":"invalid_request","param":"domain_uuid","doc_url":"https://www.fspbx.com/docs/api/v1/errors/"}}
-     * @response 400 scenario="Validation error" {"error":{"type":"invalid_request_error","message":"The extension field is required.","code":"invalid_parameter","param":"extension","doc_url":"https://www.fspbx.com/docs/api/v1/errors/"}}
-     * @response 401 scenario="Unauthenticated" {"error":{"type":"authentication_error","message":"Unauthenticated.","code":"unauthenticated","doc_url":"https://www.fspbx.com/docs/api/v1/errors/"}}
-     * @response 403 scenario="Forbidden (domain access)" {"error":{"type":"invalid_request_error","message":"You do not have access to this domain.","code":"forbidden_domain","param":"domain_uuid","doc_url":"https://www.fspbx.com/docs/api/v1/errors/"}}
-     * @response 403 scenario="Forbidden (missing permission)" {"success":false,"message":"Forbidden (missing permission).","error":{"code":"forbidden_permission","permission":"phone_control_view"}}
-     * @response 404 scenario="Domain not found" {"error":{"type":"invalid_request_error","message":"Domain not found.","code":"resource_missing","param":"domain_uuid","doc_url":"https://www.fspbx.com/docs/api/v1/errors/"}}
-     * @response 404 scenario="Extension not found" {"error":{"type":"invalid_request_error","message":"Extension not found.","code":"resource_missing","param":"extension","doc_url":"https://www.fspbx.com/docs/api/v1/errors/"}}
-     * @response 500 scenario="Internal server error" {"error":{"type":"api_error","message":"An unexpected error occurred.","doc_url":"https://www.fspbx.com/docs/api/v1/errors/"}}
+     * @hideFromAPIDocumentation
      */
     public function targets(
         ListClickToDialTargetsRequest $request,
@@ -94,9 +63,10 @@ class ClickToDialController extends Controller
      * Makes the selected registered phone place a call to the requested
      * destination. If no selector is provided, FS PBX picks the freshest
      * controllable registration group and returns any other matching groups in
-     * `skipped_targets`. When selecting a specific phone, use an `agent` value
-     * returned by the targets endpoint. Use `vendor` only when any phone from
-     * that vendor is an acceptable target.
+     * `skipped_targets`. To select a specific phone, retrieve its `agent` from
+     * `GET /api/v1/domains/{domain_uuid}/phone-control/targets` and send it
+     * with this request. Use `vendor` only when any phone from that vendor is
+     * an acceptable target.
      *
      * Access rules:
      * - Caller must have access to the target domain.
@@ -108,7 +78,7 @@ class ClickToDialController extends Controller
      * @urlParam domain_uuid string required The domain UUID. Example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
      * @bodyParam extension string required Extension number to control. Example: 1001
      * @bodyParam destination string required Destination number or dial string to call. Example: 18005551212
-     * @bodyParam agent string Optional. Preferred selector for a specific phone. Use an `agent` value from the targets response; plain text matching is case-insensitive. Example: SIP-T53W
+     * @bodyParam agent string Optional. Preferred selector for a specific phone. Retrieve the `agent` value from `GET /api/v1/domains/{domain_uuid}/phone-control/targets`; plain text matching is case-insensitive. Example: SIP-T53W
      * @bodyParam vendor string Optional. Broader selector for any matching phone from this vendor. Valid values: poly, polycom, yealink, grandstream, snom, ringotel, or generic. Example: yealink
      * @bodyParam event string Optional. Force NOTIFY transport and override the SIP Event header. Example: ACTION-URI
      * @bodyParam content_type string Optional. Force NOTIFY transport and override Content-Type. Example: message/sipfrag

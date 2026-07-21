@@ -1749,13 +1749,13 @@ paths:
                   type: array
                   description: ''
                   example:
-                    - harum
+                    - et
                   items:
                     type: integer
                 phonebook_mode:
                   type: string
                   description: ''
-                  example: custom
+                  example: default
                   enum:
                     - default
                     - custom
@@ -1763,7 +1763,7 @@ paths:
                   type: array
                   description: 'Must be a valid UUID.'
                   example:
-                    - ba85a525-b3a7-321e-b51a-1ce497859fde
+                    - 49eb218a-09f9-321d-a03b-083918e62064
                   items:
                     type: string
                 device_description:
@@ -4531,222 +4531,11 @@ paths:
         required: true
         schema:
           type: string
-  '/api/v1/domains/{domain_uuid}/click-to-dial/targets':
-    get:
-      summary: 'List click-to-dial targets'
-      operationId: listClickToDialTargets
-      description: "Returns the controllable registered user agent groups for one extension.\nA group represents one selectable phone control target. If an extension has\nmultiple registered devices, prefer the returned `agent` value when\ncreating a click-to-dial call. Use `vendor` only when any phone from that\nvendor is an acceptable target.\n\nAccess rules:\n- Caller must have access to the target domain.\n- Caller must have the `phone_control_view` permission."
-      parameters:
-        -
-          in: query
-          name: extension
-          description: 'Extension number to inspect.'
-          example: '1001'
-          required: true
-          schema:
-            type: string
-            description: 'Extension number to inspect.'
-            example: '1001'
-      responses:
-        200:
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: object
-                example:
-                  object: list
-                  url: /api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/click-to-dial/targets
-                  has_more: false
-                  data:
-                    -
-                      vendor: yealink
-                      agent: 'Yealink SIP-T53W 96.86.0.45'
-                properties:
-                  object:
-                    type: string
-                    example: list
-                  url:
-                    type: string
-                    example: /api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/click-to-dial/targets
-                  has_more:
-                    type: boolean
-                    example: false
-                  data:
-                    type: array
-                    example:
-                      -
-                        vendor: yealink
-                        agent: 'Yealink SIP-T53W 96.86.0.45'
-                    items:
-                      type: object
-                      properties:
-                        vendor:
-                          type: string
-                          example: yealink
-                        agent:
-                          type: string
-                          example: 'Yealink SIP-T53W 96.86.0.45'
-        400:
-          description: 'Validation error'
-          content:
-            application/json:
-              schema:
-                type: object
-                example:
-                  error:
-                    type: invalid_request_error
-                    message: 'The extension field is required.'
-                    code: invalid_parameter
-                    param: extension
-                    doc_url: 'https://www.fspbx.com/docs/api/v1/errors/'
-                properties:
-                  error:
-                    type: object
-                    properties:
-                      type:
-                        type: string
-                        example: invalid_request_error
-                      message:
-                        type: string
-                        example: 'The extension field is required.'
-                      code:
-                        type: string
-                        example: invalid_parameter
-                      param:
-                        type: string
-                        example: extension
-                      doc_url:
-                        type: string
-                        example: 'https://www.fspbx.com/docs/api/v1/errors/'
-        401:
-          description: Unauthenticated
-          content:
-            application/json:
-              schema:
-                type: object
-                example:
-                  error:
-                    type: authentication_error
-                    message: Unauthenticated.
-                    code: unauthenticated
-                    doc_url: 'https://www.fspbx.com/docs/api/v1/errors/'
-                properties:
-                  error:
-                    type: object
-                    properties:
-                      type:
-                        type: string
-                        example: authentication_error
-                      message:
-                        type: string
-                        example: Unauthenticated.
-                      code:
-                        type: string
-                        example: unauthenticated
-                      doc_url:
-                        type: string
-                        example: 'https://www.fspbx.com/docs/api/v1/errors/'
-        403:
-          description: 'Forbidden (missing permission)'
-          content:
-            application/json:
-              schema:
-                type: object
-                example:
-                  success: false
-                  message: 'Forbidden (missing permission).'
-                  error:
-                    code: forbidden_permission
-                    permission: phone_control_view
-                properties:
-                  success:
-                    type: boolean
-                    example: false
-                  message:
-                    type: string
-                    example: 'Forbidden (missing permission).'
-                  error:
-                    type: object
-                    properties:
-                      code:
-                        type: string
-                        example: forbidden_permission
-                      permission:
-                        type: string
-                        example: phone_control_view
-        404:
-          description: 'Extension not found'
-          content:
-            application/json:
-              schema:
-                type: object
-                example:
-                  error:
-                    type: invalid_request_error
-                    message: 'Extension not found.'
-                    code: resource_missing
-                    param: extension
-                    doc_url: 'https://www.fspbx.com/docs/api/v1/errors/'
-                properties:
-                  error:
-                    type: object
-                    properties:
-                      type:
-                        type: string
-                        example: invalid_request_error
-                      message:
-                        type: string
-                        example: 'Extension not found.'
-                      code:
-                        type: string
-                        example: resource_missing
-                      param:
-                        type: string
-                        example: extension
-                      doc_url:
-                        type: string
-                        example: 'https://www.fspbx.com/docs/api/v1/errors/'
-        500:
-          description: 'Internal server error'
-          content:
-            application/json:
-              schema:
-                type: object
-                example:
-                  error:
-                    type: api_error
-                    message: 'An unexpected error occurred.'
-                    doc_url: 'https://www.fspbx.com/docs/api/v1/errors/'
-                properties:
-                  error:
-                    type: object
-                    properties:
-                      type:
-                        type: string
-                        example: api_error
-                      message:
-                        type: string
-                        example: 'An unexpected error occurred.'
-                      doc_url:
-                        type: string
-                        example: 'https://www.fspbx.com/docs/api/v1/errors/'
-      tags:
-        - 'Phone Control'
-    parameters:
-      -
-        in: path
-        name: domain_uuid
-        description: 'The domain UUID.'
-        example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
-        required: true
-        schema:
-          type: string
   '/api/v1/domains/{domain_uuid}/click-to-dial':
     post:
       summary: 'Create a click-to-dial call'
       operationId: createAClickToDialCall
-      description: "Makes the selected registered phone place a call to the requested\ndestination. If no selector is provided, FS PBX picks the freshest\ncontrollable registration group and returns any other matching groups in\n`skipped_targets`. When selecting a specific phone, use an `agent` value\nreturned by the targets endpoint. Use `vendor` only when any phone from\nthat vendor is an acceptable target.\n\nAccess rules:\n- Caller must have access to the target domain.\n- Caller must have the `phone_control_call` permission."
+      description: "Makes the selected registered phone place a call to the requested\ndestination. If no selector is provided, FS PBX picks the freshest\ncontrollable registration group and returns any other matching groups in\n`skipped_targets`. To select a specific phone, retrieve its `agent` from\n`GET /api/v1/domains/{domain_uuid}/phone-control/targets` and send it\nwith this request. Use `vendor` only when any phone from that vendor is\nan acceptable target.\n\nAccess rules:\n- Caller must have access to the target domain.\n- Caller must have the `phone_control_call` permission."
       parameters: []
       responses:
         200:
@@ -5028,7 +4817,7 @@ paths:
                   example: '18005551212'
                 agent:
                   type: string
-                  description: 'Optional. Preferred selector for a specific phone. Use an `agent` value from the targets response; plain text matching is case-insensitive.'
+                  description: 'Optional. Preferred selector for a specific phone. Retrieve the `agent` value from `GET /api/v1/domains/{domain_uuid}/phone-control/targets`; plain text matching is case-insensitive.'
                   example: SIP-T53W
                 vendor:
                   type: string
@@ -5049,6 +4838,803 @@ paths:
               required:
                 - extension
                 - destination
+    parameters:
+      -
+        in: path
+        name: domain_uuid
+        description: 'The domain UUID.'
+        example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+        required: true
+        schema:
+          type: string
+  '/api/v1/domains/{domain_uuid}/phone-control/targets':
+    get:
+      summary: 'List phone-control targets'
+      operationId: listPhoneControlTargets
+      description: "Returns the registered phones that FS PBX can control for one extension.\nUse the returned `agent` value with either the click-to-dial or phone-control\naction endpoint. Each target also lists its supported phone-control actions.\nUse `vendor`, `lan_ip`, or a `registration_call_ids` value when needed.\n\nAccess rules:\n- Caller must have access to the target domain.\n- Caller must have the `phone_control_view` permission."
+      parameters:
+        -
+          in: query
+          name: extension
+          description: 'Extension number to inspect.'
+          example: '1001'
+          required: true
+          schema:
+            type: string
+            description: 'Extension number to inspect.'
+            example: '1001'
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  object: list
+                  url: /api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/phone-control/targets
+                  has_more: false
+                  data:
+                    -
+                      vendor: yealink
+                      agent: 'Yealink SIP-T53W 96.86.0.45'
+                      lan_ip: 10.0.0.25
+                      registration_count: 1
+                      registration_call_ids:
+                        - 8cc81337-3728-4b87-a507-f59627abf313
+                      supported_actions:
+                        - hold
+                        - resume
+                        - blind-transfer
+                        - attended-transfer
+                        - complete-transfer
+                        - cancel-transfer
+                        - conference
+                        - mute-toggle
+                        - end-call
+                        - answer-call
+                        - dnd-on
+                        - dnd-off
+                properties:
+                  object:
+                    type: string
+                    example: list
+                  url:
+                    type: string
+                    example: /api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/phone-control/targets
+                  has_more:
+                    type: boolean
+                    example: false
+                  data:
+                    type: array
+                    example:
+                      -
+                        vendor: yealink
+                        agent: 'Yealink SIP-T53W 96.86.0.45'
+                        lan_ip: 10.0.0.25
+                        registration_count: 1
+                        registration_call_ids:
+                          - 8cc81337-3728-4b87-a507-f59627abf313
+                        supported_actions:
+                          - hold
+                          - resume
+                          - blind-transfer
+                          - attended-transfer
+                          - complete-transfer
+                          - cancel-transfer
+                          - conference
+                          - mute-toggle
+                          - end-call
+                          - answer-call
+                          - dnd-on
+                          - dnd-off
+                    items:
+                      type: object
+                      properties:
+                        vendor:
+                          type: string
+                          example: yealink
+                        agent:
+                          type: string
+                          example: 'Yealink SIP-T53W 96.86.0.45'
+                        lan_ip:
+                          type: string
+                          example: 10.0.0.25
+                        registration_count:
+                          type: integer
+                          example: 1
+                        registration_call_ids:
+                          type: array
+                          example:
+                            - 8cc81337-3728-4b87-a507-f59627abf313
+                          items:
+                            type: string
+                        supported_actions:
+                          type: array
+                          example:
+                            - hold
+                            - resume
+                            - blind-transfer
+                            - attended-transfer
+                            - complete-transfer
+                            - cancel-transfer
+                            - conference
+                            - mute-toggle
+                            - end-call
+                            - answer-call
+                            - dnd-on
+                            - dnd-off
+                          items:
+                            type: string
+        400:
+          description: 'Validation error'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'The extension field is required.'
+                    code: invalid_parameter
+                    param: extension
+                    doc_url: 'https://www.fspbx.com/docs/api/v1/errors/'
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'The extension field is required.'
+                      code:
+                        type: string
+                        example: invalid_parameter
+                      param:
+                        type: string
+                        example: extension
+                      doc_url:
+                        type: string
+                        example: 'https://www.fspbx.com/docs/api/v1/errors/'
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                    doc_url: 'https://www.fspbx.com/docs/api/v1/errors/'
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+                      doc_url:
+                        type: string
+                        example: 'https://www.fspbx.com/docs/api/v1/errors/'
+        403:
+          description: 'Forbidden (missing permission)'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: false
+                  message: 'Forbidden (missing permission).'
+                  error:
+                    code: forbidden_permission
+                    permission: phone_control_view
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: 'Forbidden (missing permission).'
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: forbidden_permission
+                      permission:
+                        type: string
+                        example: phone_control_view
+        404:
+          description: 'Extension not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Extension not found.'
+                    code: resource_missing
+                    param: extension
+                    doc_url: 'https://www.fspbx.com/docs/api/v1/errors/'
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Extension not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: extension
+                      doc_url:
+                        type: string
+                        example: 'https://www.fspbx.com/docs/api/v1/errors/'
+        500:
+          description: 'Internal server error'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: api_error
+                    message: 'An unexpected error occurred.'
+                    doc_url: 'https://www.fspbx.com/docs/api/v1/errors/'
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: api_error
+                      message:
+                        type: string
+                        example: 'An unexpected error occurred.'
+                      doc_url:
+                        type: string
+                        example: 'https://www.fspbx.com/docs/api/v1/errors/'
+      tags:
+        - 'Phone Control'
+    parameters:
+      -
+        in: path
+        name: domain_uuid
+        description: 'The domain UUID.'
+        example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+        required: true
+        schema:
+          type: string
+  '/api/v1/domains/{domain_uuid}/phone-control/calls':
+    get:
+      summary: 'List active calls for phone control'
+      operationId: listActiveCallsForPhoneControl
+      description: "Returns the extension's current FreeSWITCH calls and their states. Use\nthis before or after an action to confirm whether a call is `RINGING`,\n`ACTIVE`, or `HELD`. An empty `data` array means there are no calls.\n\nAccess rules:\n- Caller must have access to the target domain.\n- Caller must have the `phone_control_view` permission."
+      parameters:
+        -
+          in: query
+          name: extension
+          description: 'Extension number to inspect.'
+          example: '1001'
+          required: true
+          schema:
+            type: string
+            description: 'Extension number to inspect.'
+            example: '1001'
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  object: list
+                  url: /api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/phone-control/calls
+                  has_more: false
+                  data:
+                    -
+                      channel_uuid: adf94fd8-4a57-45ea-a463-2c1f53b38f80
+                      sip_call_id: 0_123456@10.0.0.25
+                      state: ACTIVE
+                      direction: inbound
+                      other_party: '2001'
+                properties:
+                  object:
+                    type: string
+                    example: list
+                  url:
+                    type: string
+                    example: /api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/phone-control/calls
+                  has_more:
+                    type: boolean
+                    example: false
+                  data:
+                    type: array
+                    example:
+                      -
+                        channel_uuid: adf94fd8-4a57-45ea-a463-2c1f53b38f80
+                        sip_call_id: 0_123456@10.0.0.25
+                        state: ACTIVE
+                        direction: inbound
+                        other_party: '2001'
+                    items:
+                      type: object
+                      properties:
+                        channel_uuid:
+                          type: string
+                          example: adf94fd8-4a57-45ea-a463-2c1f53b38f80
+                        sip_call_id:
+                          type: string
+                          example: 0_123456@10.0.0.25
+                        state:
+                          type: string
+                          example: ACTIVE
+                        direction:
+                          type: string
+                          example: inbound
+                        other_party:
+                          type: string
+                          example: '2001'
+        400:
+          description: 'Validation error'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'The extension field is required.'
+                    code: invalid_parameter
+                    param: extension
+                    doc_url: 'https://www.fspbx.com/docs/api/v1/errors/'
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'The extension field is required.'
+                      code:
+                        type: string
+                        example: invalid_parameter
+                      param:
+                        type: string
+                        example: extension
+                      doc_url:
+                        type: string
+                        example: 'https://www.fspbx.com/docs/api/v1/errors/'
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                    doc_url: 'https://www.fspbx.com/docs/api/v1/errors/'
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+                      doc_url:
+                        type: string
+                        example: 'https://www.fspbx.com/docs/api/v1/errors/'
+        403:
+          description: 'Forbidden (missing permission)'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: false
+                  message: 'Forbidden (missing permission).'
+                  error:
+                    code: forbidden_permission
+                    permission: phone_control_view
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: 'Forbidden (missing permission).'
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: forbidden_permission
+                      permission:
+                        type: string
+                        example: phone_control_view
+        404:
+          description: 'Extension not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Extension not found.'
+                    code: resource_missing
+                    param: extension
+                    doc_url: 'https://www.fspbx.com/docs/api/v1/errors/'
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Extension not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: extension
+                      doc_url:
+                        type: string
+                        example: 'https://www.fspbx.com/docs/api/v1/errors/'
+        500:
+          description: 'Internal server error'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: api_error
+                    message: 'An unexpected error occurred.'
+                    doc_url: 'https://www.fspbx.com/docs/api/v1/errors/'
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: api_error
+                      message:
+                        type: string
+                        example: 'An unexpected error occurred.'
+                      doc_url:
+                        type: string
+                        example: 'https://www.fspbx.com/docs/api/v1/errors/'
+      tags:
+        - 'Phone Control'
+    parameters:
+      -
+        in: path
+        name: domain_uuid
+        description: 'The domain UUID.'
+        example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+        required: true
+        schema:
+          type: string
+  '/api/v1/domains/{domain_uuid}/phone-control/actions':
+    post:
+      summary: 'Create a phone-control action'
+      operationId: createAPhoneControlAction
+      description: "Controls a registered phone or its active call through the same service\nused by `php artisan phone:control`. Vendor support differs, so first use\nthe targets endpoint and choose an action from that phone's\n`supported_actions`. Prefer `agent` when selecting a specific phone.\n\nCall-state safeguards are enabled by default. Hold, resume, end-call,\ntransfer, and answer-call normally require one unambiguous call in the\nexpected state. `force=true` bypasses those checks. `dry_run=true`\nresolves the target and returns a command preview without sending it.\n\nAccess rules:\n- Caller must have access to the target domain.\n- Caller must have the `phone_control_call` permission."
+      parameters: []
+      responses:
+        200:
+          description: 'Dry run'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  object: phone_control_action
+                  action: hold
+                  dry_run: true
+                  sent: true
+                  results:
+                    -
+                      sent: true
+                      vendor: yealink
+                      command: 'sendevent NOTIFY ...'
+                      body: key=F_HOLD
+                properties:
+                  object:
+                    type: string
+                    example: phone_control_action
+                  action:
+                    type: string
+                    example: hold
+                  dry_run:
+                    type: boolean
+                    example: true
+                  sent:
+                    type: boolean
+                    example: true
+                  results:
+                    type: array
+                    example:
+                      -
+                        sent: true
+                        vendor: yealink
+                        command: 'sendevent NOTIFY ...'
+                        body: key=F_HOLD
+                    items:
+                      type: object
+                      properties:
+                        sent:
+                          type: boolean
+                          example: true
+                        vendor:
+                          type: string
+                          example: yealink
+                        command:
+                          type: string
+                          example: 'sendevent NOTIFY ...'
+                        body:
+                          type: string
+                          example: key=F_HOLD
+        400:
+          description: 'Validation error'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'The destination field is required when action is blind transfer.'
+                    code: invalid_parameter
+                    param: destination
+                    doc_url: 'https://www.fspbx.com/docs/api/v1/errors/'
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'The destination field is required when action is blind transfer.'
+                      code:
+                        type: string
+                        example: invalid_parameter
+                      param:
+                        type: string
+                        example: destination
+                      doc_url:
+                        type: string
+                        example: 'https://www.fspbx.com/docs/api/v1/errors/'
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                    doc_url: 'https://www.fspbx.com/docs/api/v1/errors/'
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+                      doc_url:
+                        type: string
+                        example: 'https://www.fspbx.com/docs/api/v1/errors/'
+        403:
+          description: 'Forbidden (missing permission)'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: false
+                  message: 'Forbidden (missing permission).'
+                  error:
+                    code: forbidden_permission
+                    permission: phone_control_call
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: 'Forbidden (missing permission).'
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: forbidden_permission
+                      permission:
+                        type: string
+                        example: phone_control_call
+        404:
+          description: 'Extension not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Extension not found.'
+                    code: resource_missing
+                    param: extension
+                    doc_url: 'https://www.fspbx.com/docs/api/v1/errors/'
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Extension not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: extension
+                      doc_url:
+                        type: string
+                        example: 'https://www.fspbx.com/docs/api/v1/errors/'
+        409:
+          description: 'Invalid call state'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'The call on 1001@pbx.example.com is already on hold.'
+                    code: invalid_call_state
+                    param: action
+                    doc_url: 'https://www.fspbx.com/docs/api/v1/errors/'
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'The call on 1001@pbx.example.com is already on hold.'
+                      code:
+                        type: string
+                        example: invalid_call_state
+                      param:
+                        type: string
+                        example: action
+                      doc_url:
+                        type: string
+                        example: 'https://www.fspbx.com/docs/api/v1/errors/'
+        500:
+          description: 'Internal server error'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: api_error
+                    message: 'An unexpected error occurred.'
+                    doc_url: 'https://www.fspbx.com/docs/api/v1/errors/'
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: api_error
+                      message:
+                        type: string
+                        example: 'An unexpected error occurred.'
+                      doc_url:
+                        type: string
+                        example: 'https://www.fspbx.com/docs/api/v1/errors/'
+      tags:
+        - 'Phone Control'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                extension:
+                  type: string
+                  description: 'Extension number to control.'
+                  example: '1001'
+                action:
+                  type: string
+                  description: 'Action to execute. Valid values: hold, resume, blind-transfer, attended-transfer, complete-transfer, cancel-transfer, conference, mute-toggle, mute-on, mute-off, end-call, answer-call, dnd-on, dnd-off, or dnd-toggle.'
+                  example: hold
+                destination:
+                  type: string
+                  description: 'Optional. Required for blind-transfer and attended-transfer.'
+                  example: '2001'
+                agent:
+                  type: string
+                  description: 'Optional. Preferred selector for a specific phone. Use an `agent` value from the targets response; plain text matching is case-insensitive.'
+                  example: SIP-T53W
+                vendor:
+                  type: string
+                  description: 'Optional. Broader selector for a supported driver: yealink, snom, poly, grandstream, or generic.'
+                  example: yealink
+                lan_ip:
+                  type: string
+                  description: 'Optional. Exact device IP selector from the targets response.'
+                  example: 10.0.0.25
+                call_id:
+                  type: string
+                  description: "Optional. Registration call ID selector from a target's `registration_call_ids`."
+                  example: 8cc81337-3728-4b87-a507-f59627abf313
+                force:
+                  type: boolean
+                  description: 'Optional. Skip normal single-call state checks. Default: false.'
+                  example: false
+                no_resume:
+                  type: boolean
+                  description: 'Optional. For cancel-transfer, leave the original call held. Default: false.'
+                  example: false
+                dry_run:
+                  type: boolean
+                  description: 'Optional. Preview the command without sending it. Default: false.'
+                  example: false
+              required:
+                - extension
+                - action
     parameters:
       -
         in: path

@@ -36,7 +36,7 @@ class StoreClickToDialCallRequest extends FormRequest
                 'example' => '18005551212',
             ],
             'agent' => [
-                'description' => 'Optional preferred selector for a specific phone. Use an agent value returned by the targets endpoint; plain text matching is case-insensitive.',
+                'description' => 'Optional preferred selector for a specific phone. Retrieve the agent value from GET /api/v1/domains/{domain_uuid}/phone-control/targets; plain text matching is case-insensitive.',
                 'example' => 'SIP-T53W',
             ],
             'vendor' => [
