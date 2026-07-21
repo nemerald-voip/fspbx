@@ -10,7 +10,7 @@
     ],
     "info": {
         "name": "FS PBX",
-        "_postman_id": "3d28b694-7599-4d5f-92eb-08310a88d246",
+        "_postman_id": "fdee5b77-eaad-4c8c-8a63-0d936cd37680",
         "description": "",
         "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
     },
@@ -780,7 +780,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"device_address\":\"0004f23a5bc7\",\"serial_number\":\"8603123456789\",\"device_profile_uuid\":\"51759db8-c8bf-4b2f-b48a-6577d7ad6a1a\",\"device_template\":\"Yealink T46U\",\"device_template_uuid\":\"a6cf59ba-4b2b-4bdd-b870-35cc55bca146\",\"device_keys\":[\"et\"],\"phonebook_mode\":\"default\",\"phonebook_uuids\":[\"49eb218a-09f9-321d-a03b-083918e62064\"],\"device_description\":\"Reception desk device\",\"device_lines\":[[]]}"
+                            "raw": "{\"device_address\":\"0004f23a5bc7\",\"serial_number\":\"8603123456789\",\"device_profile_uuid\":\"51759db8-c8bf-4b2f-b48a-6577d7ad6a1a\",\"device_template\":\"Yealink T46U\",\"device_template_uuid\":\"a6cf59ba-4b2b-4bdd-b870-35cc55bca146\",\"device_keys\":[\"optio\"],\"phonebook_mode\":\"custom\",\"phonebook_uuids\":[\"bcc77733-d8c7-35e6-861a-8a7cf3a91411\"],\"device_description\":\"Reception desk device\",\"device_lines\":[[]]}"
                         },
                         "description": "Creates a new device in the specified domain.\n\nNotes:\n- `device_template` is deprecated and retained for backward compatibility.\n- Use `device_template_uuid` as its successor."
                     },
@@ -1886,7 +1886,7 @@
                             }
                         ],
                         "body": null,
-                        "description": "Returns the registered phones that FS PBX can control for one extension.\nUse the returned `agent` value with either the click-to-dial or phone-control\naction endpoint. Each target also lists its supported phone-control actions.\nUse `vendor`, `lan_ip`, or a `registration_call_ids` value when needed.\n\nAccess rules:\n- Caller must have access to the target domain.\n- Caller must have the `phone_control_view` permission."
+                        "description": "Returns the registered phones that FS PBX can control for one extension.\nUse the returned `agent` value with either the click-to-dial or phone-control\naction endpoint. Each target also lists its supported phone-control actions.\nUse `vendor`, `lan_ip`, or a `registration_call_ids` value when needed.\nSee [Supported phones and actions](https:\/\/www.fspbx.com\/docs\/additional-information\/phone-control\/#supported-phones-and-actions)\nfor vendor-specific capabilities and behavior.\n\nAccess rules:\n- Caller must have access to the target domain.\n- Caller must have the `phone_control_view` permission."
                     },
                     "response": [
                         {
@@ -2072,7 +2072,7 @@
                             "mode": "raw",
                             "raw": "{\"extension\":\"1001\",\"action\":\"hold\",\"destination\":\"2001\",\"agent\":\"SIP-T53W\",\"vendor\":\"yealink\",\"lan_ip\":\"10.0.0.25\",\"call_id\":\"8cc81337-3728-4b87-a507-f59627abf313\",\"force\":false,\"no_resume\":false,\"dry_run\":false}"
                         },
-                        "description": "Controls a registered phone or its active call through the same service\nused by `php artisan phone:control`. Vendor support differs, so first use\nthe targets endpoint and choose an action from that phone's\n`supported_actions`. Prefer `agent` when selecting a specific phone.\n\nCall-state safeguards are enabled by default. Hold, resume, end-call,\ntransfer, and answer-call normally require one unambiguous call in the\nexpected state. `force=true` bypasses those checks. `dry_run=true`\nresolves the target and returns a command preview without sending it.\n\nAccess rules:\n- Caller must have access to the target domain.\n- Caller must have the `phone_control_call` permission."
+                        "description": "Controls a registered phone or its active call through the same service\nused by `php artisan phone:control`. Vendor support differs, so first use\nthe targets endpoint and choose an action from that phone's\n`supported_actions`. Prefer `agent` when selecting a specific phone.\nSee [Supported phones and actions](https:\/\/www.fspbx.com\/docs\/additional-information\/phone-control\/#supported-phones-and-actions)\nfor vendor-specific capabilities and behavior.\n\nCall-state safeguards are enabled by default. Hold, resume, end-call,\ntransfer, and answer-call normally require one unambiguous call in the\nexpected state. `force=true` bypasses those checks. `dry_run=true`\nresolves the target and returns a command preview without sending it.\n\nAccess rules:\n- Caller must have access to the target domain.\n- Caller must have the `phone_control_call` permission."
                     },
                     "response": [
                         {

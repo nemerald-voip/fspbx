@@ -2472,11 +2472,11 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"device_template\": \"Yealink T46U\",
     \"device_template_uuid\": \"a6cf59ba-4b2b-4bdd-b870-35cc55bca146\",
     \"device_keys\": [
-        \"et\"
+        \"optio\"
     ],
-    \"phonebook_mode\": \"default\",
+    \"phonebook_mode\": \"custom\",
     \"phonebook_uuids\": [
-        \"49eb218a-09f9-321d-a03b-083918e62064\"
+        \"bcc77733-d8c7-35e6-861a-8a7cf3a91411\"
     ],
     \"device_description\": \"Reception desk device\",
     \"device_lines\": [
@@ -2504,11 +2504,11 @@ let body = {
     "device_template": "Yealink T46U",
     "device_template_uuid": "a6cf59ba-4b2b-4bdd-b870-35cc55bca146",
     "device_keys": [
-        "et"
+        "optio"
     ],
-    "phonebook_mode": "default",
+    "phonebook_mode": "custom",
     "phonebook_uuids": [
-        "49eb218a-09f9-321d-a03b-083918e62064"
+        "bcc77733-d8c7-35e6-861a-8a7cf3a91411"
     ],
     "device_description": "Reception desk device",
     "device_lines": [
@@ -2757,10 +2757,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="device_keys.0.key_index"                data-endpoint="POSTapi-v1-domains--domain_uuid--devices"
-               value="8"
+               value="3"
                data-component="body">
     <br>
-<p>Example: <code>8</code></p>
+<p>Example: <code>3</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>key_area</code></b>&nbsp;&nbsp;
@@ -2768,10 +2768,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="device_keys.0.key_area"                data-endpoint="POSTapi-v1-domains--domain_uuid--devices"
-               value="main"
+               value="expansion"
                data-component="body">
     <br>
-<p>Example: <code>main</code></p>
+<p>Example: <code>expansion</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>main</code></li> <li><code>side</code></li> <li><code>multi_purpose</code></li> <li><code>expansion</code></li></ul>
                     </div>
@@ -2781,10 +2781,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="device_keys.0.key_type"                data-endpoint="POSTapi-v1-domains--domain_uuid--devices"
-               value="wyugpoiaiqhgowyjvjqa"
+               value="tntliwmzatvljhgxcqmepane"
                data-component="body">
     <br>
-<p>Must not be greater than 50 characters. Example: <code>wyugpoiaiqhgowyjvjqa</code></p>
+<p>Must not be greater than 50 characters. Example: <code>tntliwmzatvljhgxcqmepane</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>key_value</code></b>&nbsp;&nbsp;
@@ -2792,10 +2792,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="device_keys.0.key_value"                data-endpoint="POSTapi-v1-domains--domain_uuid--devices"
-               value="gitdpcbci"
+               value="jmgc"
                data-component="body">
     <br>
-<p>Must not be greater than 64 characters. Example: <code>gitdpcbci</code></p>
+<p>Must not be greater than 64 characters. Example: <code>jmgc</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>key_label</code></b>&nbsp;&nbsp;
@@ -2803,10 +2803,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="device_keys.0.key_label"                data-endpoint="POSTapi-v1-domains--domain_uuid--devices"
-               value="amdjbkxedjqoidwklmr"
+               value="rznfyfdpzutrvnpedqle"
                data-component="body">
     <br>
-<p>Must not be greater than 80 characters. Example: <code>amdjbkxedjqoidwklmr</code></p>
+<p>Must not be greater than 80 characters. Example: <code>rznfyfdpzutrvnpedqle</code></p>
                     </div>
                                     </details>
         </div>
@@ -2816,10 +2816,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="phonebook_mode"                data-endpoint="POSTapi-v1-domains--domain_uuid--devices"
-               value="default"
+               value="custom"
                data-component="body">
     <br>
-<p>Example: <code>default</code></p>
+<p>Example: <code>custom</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>default</code></li> <li><code>custom</code></li></ul>
         </div>
@@ -7620,7 +7620,9 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <p>Returns the registered phones that FS PBX can control for one extension.
 Use the returned <code>agent</code> value with either the click-to-dial or phone-control
 action endpoint. Each target also lists its supported phone-control actions.
-Use <code>vendor</code>, <code>lan_ip</code>, or a <code>registration_call_ids</code> value when needed.</p>
+Use <code>vendor</code>, <code>lan_ip</code>, or a <code>registration_call_ids</code> value when needed.
+See <a href="https://www.fspbx.com/docs/additional-information/phone-control/#supported-phones-and-actions">Supported phones and actions</a>
+for vendor-specific capabilities and behavior.</p>
 <p>Access rules:</p>
 <ul>
 <li>Caller must have access to the target domain.</li>
@@ -8193,7 +8195,9 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <p>Controls a registered phone or its active call through the same service
 used by <code>php artisan phone:control</code>. Vendor support differs, so first use
 the targets endpoint and choose an action from that phone's
-<code>supported_actions</code>. Prefer <code>agent</code> when selecting a specific phone.</p>
+<code>supported_actions</code>. Prefer <code>agent</code> when selecting a specific phone.
+See <a href="https://www.fspbx.com/docs/additional-information/phone-control/#supported-phones-and-actions">Supported phones and actions</a>
+for vendor-specific capabilities and behavior.</p>
 <p>Call-state safeguards are enabled by default. Hold, resume, end-call,
 transfer, and answer-call normally require one unambiguous call in the
 expected state. <code>force=true</code> bypasses those checks. <code>dry_run=true</code>
@@ -12462,10 +12466,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="members.0.destination_number"                data-endpoint="POSTapi-v1-domains--domain_uuid--ring-groups"
-               value="84"
+               value="+6077"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present.  Must match the regex /^+?\d+$/. Example: <code>84</code></p>
+<p>This field is required when <code>members</code> is present.  Must match the regex /^+?\d+$/. Example: <code>+6077</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_delay</code></b>&nbsp;&nbsp;
@@ -12473,10 +12477,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="members.0.destination_delay"                data-endpoint="POSTapi-v1-domains--domain_uuid--ring-groups"
-               value="48"
+               value="5"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>48</code></p>
+<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>5</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_timeout</code></b>&nbsp;&nbsp;
@@ -12484,10 +12488,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="members.0.destination_timeout"                data-endpoint="POSTapi-v1-domains--domain_uuid--ring-groups"
-               value="26"
+               value="51"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>26</code></p>
+<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>51</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_prompt</code></b>&nbsp;&nbsp;
@@ -13123,10 +13127,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="members.0.destination_number"                data-endpoint="PATCHapi-v1-domains--domain_uuid--ring-groups--ring_group_uuid-"
-               value="53"
+               value="278"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present.  Must match the regex /^+?\d+$/. Example: <code>53</code></p>
+<p>This field is required when <code>members</code> is present.  Must match the regex /^+?\d+$/. Example: <code>278</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_delay</code></b>&nbsp;&nbsp;
@@ -13134,10 +13138,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="members.0.destination_delay"                data-endpoint="PATCHapi-v1-domains--domain_uuid--ring-groups--ring_group_uuid-"
-               value="48"
+               value="2"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>48</code></p>
+<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>2</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_timeout</code></b>&nbsp;&nbsp;
@@ -13145,10 +13149,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="members.0.destination_timeout"                data-endpoint="PATCHapi-v1-domains--domain_uuid--ring-groups--ring_group_uuid-"
-               value="76"
+               value="44"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>76</code></p>
+<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>44</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_prompt</code></b>&nbsp;&nbsp;

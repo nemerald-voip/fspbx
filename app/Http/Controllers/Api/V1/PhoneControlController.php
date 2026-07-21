@@ -24,6 +24,8 @@ class PhoneControlController extends Controller
      * Use the returned `agent` value with either the click-to-dial or phone-control
      * action endpoint. Each target also lists its supported phone-control actions.
      * Use `vendor`, `lan_ip`, or a `registration_call_ids` value when needed.
+     * See [Supported phones and actions](https://www.fspbx.com/docs/additional-information/phone-control/#supported-phones-and-actions)
+     * for vendor-specific capabilities and behavior.
      *
      * Access rules:
      * - Caller must have access to the target domain.
@@ -178,6 +180,8 @@ class PhoneControlController extends Controller
      * used by `php artisan phone:control`. Vendor support differs, so first use
      * the targets endpoint and choose an action from that phone's
      * `supported_actions`. Prefer `agent` when selecting a specific phone.
+     * See [Supported phones and actions](https://www.fspbx.com/docs/additional-information/phone-control/#supported-phones-and-actions)
+     * for vendor-specific capabilities and behavior.
      *
      * Call-state safeguards are enabled by default. Hold, resume, end-call,
      * transfer, and answer-call normally require one unambiguous call in the
