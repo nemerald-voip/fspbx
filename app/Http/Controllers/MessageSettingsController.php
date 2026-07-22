@@ -91,6 +91,7 @@ class MessageSettingsController extends Controller
                 ['value' => 'bandwidth', 'label' => 'Bandwidth'],
                 ['value' => 'bulkvs', 'label' => 'BulkVS'],
                 ['value' => 'clicksend', 'label' => 'ClickSend'],
+                ['value' => 'fibernetics', 'label' => 'Fibernetics'],
                 ['value' => 'sinch', 'label' => 'Sinch'],
                 ['value' => 'telnyx', 'label' => 'Telnyx'],
                 ['value' => 'thinq', 'label' => 'Commio (ThinQ)'],

@@ -12,5 +12,6 @@ return [
         'bulkvs' => \App\Services\Messaging\Outbound\Providers\BulkVSOutboundProvider::class,
         'thinq' => \App\Services\Messaging\Outbound\Providers\CommioOutboundProvider::class,
         'voipms' => \App\Services\Messaging\Outbound\Providers\VoipMsOutboundProvider::class,
+        'fibernetics' => \App\Services\Messaging\Outbound\Providers\FiberneticsOutboundProvider::class,
     ],
 ];

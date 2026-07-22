@@ -733,6 +733,16 @@ return [
             'process_webhook_job'   => App\Http\Webhooks\Jobs\ProcessAssemblyAiWebhookJob::class,
         ],
 
+        [
+            'name' => 'fibernetics_messaging',
+            'signature_header_name' => 'Signature',
+            'signature_validator' => \App\Http\Webhooks\SignatureValidators\FiberneticsSignatureValidator::class,
+            'webhook_profile' => \App\Http\Webhooks\WebhookProfiles\FiberneticsWebhookProfile::class,
+            'webhook_response' => \Spatie\WebhookClient\WebhookResponse\DefaultRespondsTo::class,
+            'webhook_model' => \App\Models\WhCall::class,
+            'store_headers' => [],
+            'process_webhook_job' => \App\Http\Webhooks\Jobs\ProcessFiberneticsWebhookJob::class,
+        ],
 
     ],
 
