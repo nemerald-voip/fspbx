@@ -53,14 +53,14 @@ class PhoneControlController extends Controller
      *   ]
      * }
      *
-     * @response 400 scenario="Invalid domain UUID" {"error":{"type":"invalid_request_error","message":"Invalid domain UUID.","code":"invalid_request","param":"domain_uuid","doc_url":"https://www.fspbx.com/docs/api/v1/errors/"}}
-     * @response 400 scenario="Validation error" {"error":{"type":"invalid_request_error","message":"The extension field is required.","code":"invalid_parameter","param":"extension","doc_url":"https://www.fspbx.com/docs/api/v1/errors/"}}
-     * @response 401 scenario="Unauthenticated" {"error":{"type":"authentication_error","message":"Unauthenticated.","code":"unauthenticated","doc_url":"https://www.fspbx.com/docs/api/v1/errors/"}}
-     * @response 403 scenario="Forbidden (domain access)" {"error":{"type":"invalid_request_error","message":"You do not have access to this domain.","code":"forbidden_domain","param":"domain_uuid","doc_url":"https://www.fspbx.com/docs/api/v1/errors/"}}
+     * @response 400 scenario="Invalid domain UUID" {"error":{"type":"invalid_request_error","message":"Invalid domain UUID.","code":"invalid_request","param":"domain_uuid"}}
+     * @response 400 scenario="Validation error" {"error":{"type":"invalid_request_error","message":"The extension field is required.","code":"invalid_parameter","param":"extension"}}
+     * @response 401 scenario="Unauthenticated" {"error":{"type":"authentication_error","message":"Unauthenticated.","code":"unauthenticated"}}
+     * @response 403 scenario="Forbidden (domain access)" {"error":{"type":"invalid_request_error","message":"You do not have access to this domain.","code":"forbidden_domain","param":"domain_uuid"}}
      * @response 403 scenario="Forbidden (missing permission)" {"success":false,"message":"Forbidden (missing permission).","error":{"code":"forbidden_permission","permission":"phone_control_view"}}
-     * @response 404 scenario="Domain not found" {"error":{"type":"invalid_request_error","message":"Domain not found.","code":"resource_missing","param":"domain_uuid","doc_url":"https://www.fspbx.com/docs/api/v1/errors/"}}
-     * @response 404 scenario="Extension not found" {"error":{"type":"invalid_request_error","message":"Extension not found.","code":"resource_missing","param":"extension","doc_url":"https://www.fspbx.com/docs/api/v1/errors/"}}
-     * @response 500 scenario="Internal server error" {"error":{"type":"api_error","message":"An unexpected error occurred.","doc_url":"https://www.fspbx.com/docs/api/v1/errors/"}}
+     * @response 404 scenario="Domain not found" {"error":{"type":"invalid_request_error","message":"Domain not found.","code":"resource_missing","param":"domain_uuid"}}
+     * @response 404 scenario="Extension not found" {"error":{"type":"invalid_request_error","message":"Extension not found.","code":"resource_missing","param":"extension"}}
+     * @response 500 scenario="Internal server error" {"error":{"type":"api_error","message":"An unexpected error occurred."}}
      */
     public function targets(
         ListPhoneControlTargetsRequest $request,
@@ -126,14 +126,14 @@ class PhoneControlController extends Controller
      *   ]
      * }
      *
-     * @response 400 scenario="Invalid domain UUID" {"error":{"type":"invalid_request_error","message":"Invalid domain UUID.","code":"invalid_request","param":"domain_uuid","doc_url":"https://www.fspbx.com/docs/api/v1/errors/"}}
-     * @response 400 scenario="Validation error" {"error":{"type":"invalid_request_error","message":"The extension field is required.","code":"invalid_parameter","param":"extension","doc_url":"https://www.fspbx.com/docs/api/v1/errors/"}}
-     * @response 401 scenario="Unauthenticated" {"error":{"type":"authentication_error","message":"Unauthenticated.","code":"unauthenticated","doc_url":"https://www.fspbx.com/docs/api/v1/errors/"}}
-     * @response 403 scenario="Forbidden (domain access)" {"error":{"type":"invalid_request_error","message":"You do not have access to this domain.","code":"forbidden_domain","param":"domain_uuid","doc_url":"https://www.fspbx.com/docs/api/v1/errors/"}}
+     * @response 400 scenario="Invalid domain UUID" {"error":{"type":"invalid_request_error","message":"Invalid domain UUID.","code":"invalid_request","param":"domain_uuid"}}
+     * @response 400 scenario="Validation error" {"error":{"type":"invalid_request_error","message":"The extension field is required.","code":"invalid_parameter","param":"extension"}}
+     * @response 401 scenario="Unauthenticated" {"error":{"type":"authentication_error","message":"Unauthenticated.","code":"unauthenticated"}}
+     * @response 403 scenario="Forbidden (domain access)" {"error":{"type":"invalid_request_error","message":"You do not have access to this domain.","code":"forbidden_domain","param":"domain_uuid"}}
      * @response 403 scenario="Forbidden (missing permission)" {"success":false,"message":"Forbidden (missing permission).","error":{"code":"forbidden_permission","permission":"phone_control_view"}}
-     * @response 404 scenario="Domain not found" {"error":{"type":"invalid_request_error","message":"Domain not found.","code":"resource_missing","param":"domain_uuid","doc_url":"https://www.fspbx.com/docs/api/v1/errors/"}}
-     * @response 404 scenario="Extension not found" {"error":{"type":"invalid_request_error","message":"Extension not found.","code":"resource_missing","param":"extension","doc_url":"https://www.fspbx.com/docs/api/v1/errors/"}}
-     * @response 500 scenario="Internal server error" {"error":{"type":"api_error","message":"An unexpected error occurred.","doc_url":"https://www.fspbx.com/docs/api/v1/errors/"}}
+     * @response 404 scenario="Domain not found" {"error":{"type":"invalid_request_error","message":"Domain not found.","code":"resource_missing","param":"domain_uuid"}}
+     * @response 404 scenario="Extension not found" {"error":{"type":"invalid_request_error","message":"Extension not found.","code":"resource_missing","param":"extension"}}
+     * @response 500 scenario="Internal server error" {"error":{"type":"api_error","message":"An unexpected error occurred."}}
      */
     public function calls(
         ListPhoneControlCallsRequest $request,
@@ -233,17 +233,17 @@ class PhoneControlController extends Controller
      *   "results": [{"sent":true,"vendor":"yealink","command":"sendevent NOTIFY ...","body":"key=F_HOLD"}]
      * }
      *
-     * @response 400 scenario="Invalid selection" {"error":{"type":"invalid_request_error","message":"No supported phone-control registrations matched the selection.","code":"invalid_request","param":"selection","doc_url":"https://www.fspbx.com/docs/api/v1/errors/"}}
-     * @response 400 scenario="Validation error" {"error":{"type":"invalid_request_error","message":"The destination field is required when action is blind transfer.","code":"invalid_parameter","param":"destination","doc_url":"https://www.fspbx.com/docs/api/v1/errors/"}}
-     * @response 401 scenario="Unauthenticated" {"error":{"type":"authentication_error","message":"Unauthenticated.","code":"unauthenticated","doc_url":"https://www.fspbx.com/docs/api/v1/errors/"}}
-     * @response 403 scenario="Forbidden (domain access)" {"error":{"type":"invalid_request_error","message":"You do not have access to this domain.","code":"forbidden_domain","param":"domain_uuid","doc_url":"https://www.fspbx.com/docs/api/v1/errors/"}}
+     * @response 400 scenario="Invalid selection" {"error":{"type":"invalid_request_error","message":"No supported phone-control registrations matched the selection.","code":"invalid_request","param":"selection"}}
+     * @response 400 scenario="Validation error" {"error":{"type":"invalid_request_error","message":"The destination field is required when action is blind transfer.","code":"invalid_parameter","param":"destination"}}
+     * @response 401 scenario="Unauthenticated" {"error":{"type":"authentication_error","message":"Unauthenticated.","code":"unauthenticated"}}
+     * @response 403 scenario="Forbidden (domain access)" {"error":{"type":"invalid_request_error","message":"You do not have access to this domain.","code":"forbidden_domain","param":"domain_uuid"}}
      * @response 403 scenario="Forbidden (missing permission)" {"success":false,"message":"Forbidden (missing permission).","error":{"code":"forbidden_permission","permission":"phone_control_call"}}
-     * @response 404 scenario="Domain not found" {"error":{"type":"invalid_request_error","message":"Domain not found.","code":"resource_missing","param":"domain_uuid","doc_url":"https://www.fspbx.com/docs/api/v1/errors/"}}
-     * @response 404 scenario="Extension not found" {"error":{"type":"invalid_request_error","message":"Extension not found.","code":"resource_missing","param":"extension","doc_url":"https://www.fspbx.com/docs/api/v1/errors/"}}
-     * @response 409 scenario="No supported registrations" {"error":{"type":"invalid_request_error","message":"No supported phone-control registrations found for 1001@pbx.example.com.","code":"no_supported_registrations","param":"extension","doc_url":"https://www.fspbx.com/docs/api/v1/errors/"}}
-     * @response 409 scenario="Unsupported action" {"error":{"type":"invalid_request_error","message":"Action [dnd-on] is not supported for Poly.","code":"unsupported_action","param":"action","doc_url":"https://www.fspbx.com/docs/api/v1/errors/"}}
-     * @response 409 scenario="Invalid call state" {"error":{"type":"invalid_request_error","message":"The call on 1001@pbx.example.com is already on hold.","code":"invalid_call_state","param":"action","doc_url":"https://www.fspbx.com/docs/api/v1/errors/"}}
-     * @response 500 scenario="Internal server error" {"error":{"type":"api_error","message":"An unexpected error occurred.","doc_url":"https://www.fspbx.com/docs/api/v1/errors/"}}
+     * @response 404 scenario="Domain not found" {"error":{"type":"invalid_request_error","message":"Domain not found.","code":"resource_missing","param":"domain_uuid"}}
+     * @response 404 scenario="Extension not found" {"error":{"type":"invalid_request_error","message":"Extension not found.","code":"resource_missing","param":"extension"}}
+     * @response 409 scenario="No supported registrations" {"error":{"type":"invalid_request_error","message":"No supported phone-control registrations found for 1001@pbx.example.com.","code":"no_supported_registrations","param":"extension"}}
+     * @response 409 scenario="Unsupported action" {"error":{"type":"invalid_request_error","message":"Action [dnd-on] is not supported for Poly.","code":"unsupported_action","param":"action"}}
+     * @response 409 scenario="Invalid call state" {"error":{"type":"invalid_request_error","message":"The call on 1001@pbx.example.com is already on hold.","code":"invalid_call_state","param":"action"}}
+     * @response 500 scenario="Internal server error" {"error":{"type":"api_error","message":"An unexpected error occurred."}}
      */
     public function store(
         StorePhoneControlActionRequest $request,

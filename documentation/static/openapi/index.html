@@ -284,7 +284,7 @@
     </ul>
 
     <ul class="toc-footer" id="last-updated">
-        <li>Last updated: July 21, 2026</li>
+        <li>Last updated: July 22, 2026</li>
     </ul>
 </div>
 
@@ -2472,11 +2472,11 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"device_template\": \"Yealink T46U\",
     \"device_template_uuid\": \"a6cf59ba-4b2b-4bdd-b870-35cc55bca146\",
     \"device_keys\": [
-        \"optio\"
+        \"inventore\"
     ],
     \"phonebook_mode\": \"custom\",
     \"phonebook_uuids\": [
-        \"bcc77733-d8c7-35e6-861a-8a7cf3a91411\"
+        \"a6603e7c-f9b6-3036-bc6b-a28ba3577c16\"
     ],
     \"device_description\": \"Reception desk device\",
     \"device_lines\": [
@@ -2504,11 +2504,11 @@ let body = {
     "device_template": "Yealink T46U",
     "device_template_uuid": "a6cf59ba-4b2b-4bdd-b870-35cc55bca146",
     "device_keys": [
-        "optio"
+        "inventore"
     ],
     "phonebook_mode": "custom",
     "phonebook_uuids": [
-        "bcc77733-d8c7-35e6-861a-8a7cf3a91411"
+        "a6603e7c-f9b6-3036-bc6b-a28ba3577c16"
     ],
     "device_description": "Reception desk device",
     "device_lines": [
@@ -2757,10 +2757,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="device_keys.0.key_index"                data-endpoint="POSTapi-v1-domains--domain_uuid--devices"
-               value="3"
+               value="4"
                data-component="body">
     <br>
-<p>Example: <code>3</code></p>
+<p>Example: <code>4</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>key_area</code></b>&nbsp;&nbsp;
@@ -2768,10 +2768,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="device_keys.0.key_area"                data-endpoint="POSTapi-v1-domains--domain_uuid--devices"
-               value="expansion"
+               value="main"
                data-component="body">
     <br>
-<p>Example: <code>expansion</code></p>
+<p>Example: <code>main</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>main</code></li> <li><code>side</code></li> <li><code>multi_purpose</code></li> <li><code>expansion</code></li></ul>
                     </div>
@@ -2781,10 +2781,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="device_keys.0.key_type"                data-endpoint="POSTapi-v1-domains--domain_uuid--devices"
-               value="tntliwmzatvljhgxcqmepane"
+               value="ir"
                data-component="body">
     <br>
-<p>Must not be greater than 50 characters. Example: <code>tntliwmzatvljhgxcqmepane</code></p>
+<p>Must not be greater than 50 characters. Example: <code>ir</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>key_value</code></b>&nbsp;&nbsp;
@@ -2792,10 +2792,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="device_keys.0.key_value"                data-endpoint="POSTapi-v1-domains--domain_uuid--devices"
-               value="jmgc"
+               value="vypuzdnnygzolrprlu"
                data-component="body">
     <br>
-<p>Must not be greater than 64 characters. Example: <code>jmgc</code></p>
+<p>Must not be greater than 64 characters. Example: <code>vypuzdnnygzolrprlu</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>key_label</code></b>&nbsp;&nbsp;
@@ -2803,10 +2803,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="device_keys.0.key_label"                data-endpoint="POSTapi-v1-domains--domain_uuid--devices"
-               value="rznfyfdpzutrvnpedqle"
+               value="tkeu"
                data-component="body">
     <br>
-<p>Must not be greater than 80 characters. Example: <code>rznfyfdpzutrvnpedqle</code></p>
+<p>Must not be greater than 80 characters. Example: <code>tkeu</code></p>
                     </div>
                                     </details>
         </div>
@@ -4077,8 +4077,7 @@ fetch(url, {
         &quot;type&quot;: &quot;invalid_request_error&quot;,
         &quot;message&quot;: &quot;Please enter a domain label.&quot;,
         &quot;code&quot;: &quot;invalid_parameter&quot;,
-        &quot;param&quot;: &quot;domain_description&quot;,
-        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+        &quot;param&quot;: &quot;domain_description&quot;
     }
 }</code>
  </pre>
@@ -7334,8 +7333,7 @@ fetch(url, {
         &quot;type&quot;: &quot;invalid_request_error&quot;,
         &quot;message&quot;: &quot;No controllable registrations matched the selection.&quot;,
         &quot;code&quot;: &quot;invalid_request&quot;,
-        &quot;param&quot;: &quot;selection&quot;,
-        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+        &quot;param&quot;: &quot;selection&quot;
     }
 }</code>
  </pre>
@@ -7349,8 +7347,7 @@ fetch(url, {
         &quot;type&quot;: &quot;invalid_request_error&quot;,
         &quot;message&quot;: &quot;The destination field is required.&quot;,
         &quot;code&quot;: &quot;invalid_parameter&quot;,
-        &quot;param&quot;: &quot;destination&quot;,
-        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+        &quot;param&quot;: &quot;destination&quot;
     }
 }</code>
  </pre>
@@ -7363,8 +7360,7 @@ fetch(url, {
     &quot;error&quot;: {
         &quot;type&quot;: &quot;authentication_error&quot;,
         &quot;message&quot;: &quot;Unauthenticated.&quot;,
-        &quot;code&quot;: &quot;unauthenticated&quot;,
-        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+        &quot;code&quot;: &quot;unauthenticated&quot;
     }
 }</code>
  </pre>
@@ -7378,8 +7374,7 @@ fetch(url, {
         &quot;type&quot;: &quot;invalid_request_error&quot;,
         &quot;message&quot;: &quot;You do not have access to this domain.&quot;,
         &quot;code&quot;: &quot;forbidden_domain&quot;,
-        &quot;param&quot;: &quot;domain_uuid&quot;,
-        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+        &quot;param&quot;: &quot;domain_uuid&quot;
     }
 }</code>
  </pre>
@@ -7407,8 +7402,7 @@ fetch(url, {
         &quot;type&quot;: &quot;invalid_request_error&quot;,
         &quot;message&quot;: &quot;Domain not found.&quot;,
         &quot;code&quot;: &quot;resource_missing&quot;,
-        &quot;param&quot;: &quot;domain_uuid&quot;,
-        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+        &quot;param&quot;: &quot;domain_uuid&quot;
     }
 }</code>
  </pre>
@@ -7422,8 +7416,7 @@ fetch(url, {
         &quot;type&quot;: &quot;invalid_request_error&quot;,
         &quot;message&quot;: &quot;Extension not found.&quot;,
         &quot;code&quot;: &quot;resource_missing&quot;,
-        &quot;param&quot;: &quot;extension&quot;,
-        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+        &quot;param&quot;: &quot;extension&quot;
     }
 }</code>
  </pre>
@@ -7437,8 +7430,7 @@ fetch(url, {
         &quot;type&quot;: &quot;invalid_request_error&quot;,
         &quot;message&quot;: &quot;No controllable registrations found for 1001@pbx.example.com.&quot;,
         &quot;code&quot;: &quot;no_controllable_registrations&quot;,
-        &quot;param&quot;: &quot;extension&quot;,
-        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+        &quot;param&quot;: &quot;extension&quot;
     }
 }</code>
  </pre>
@@ -7450,8 +7442,7 @@ fetch(url, {
 <code class="language-json" style="max-height: 300px;">{
     &quot;error&quot;: {
         &quot;type&quot;: &quot;api_error&quot;,
-        &quot;message&quot;: &quot;An unexpected error occurred.&quot;,
-        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+        &quot;message&quot;: &quot;An unexpected error occurred.&quot;
     }
 }</code>
  </pre>
@@ -7712,8 +7703,7 @@ fetch(url, {
         &quot;type&quot;: &quot;invalid_request_error&quot;,
         &quot;message&quot;: &quot;Invalid domain UUID.&quot;,
         &quot;code&quot;: &quot;invalid_request&quot;,
-        &quot;param&quot;: &quot;domain_uuid&quot;,
-        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+        &quot;param&quot;: &quot;domain_uuid&quot;
     }
 }</code>
  </pre>
@@ -7727,8 +7717,7 @@ fetch(url, {
         &quot;type&quot;: &quot;invalid_request_error&quot;,
         &quot;message&quot;: &quot;The extension field is required.&quot;,
         &quot;code&quot;: &quot;invalid_parameter&quot;,
-        &quot;param&quot;: &quot;extension&quot;,
-        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+        &quot;param&quot;: &quot;extension&quot;
     }
 }</code>
  </pre>
@@ -7741,8 +7730,7 @@ fetch(url, {
     &quot;error&quot;: {
         &quot;type&quot;: &quot;authentication_error&quot;,
         &quot;message&quot;: &quot;Unauthenticated.&quot;,
-        &quot;code&quot;: &quot;unauthenticated&quot;,
-        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+        &quot;code&quot;: &quot;unauthenticated&quot;
     }
 }</code>
  </pre>
@@ -7756,8 +7744,7 @@ fetch(url, {
         &quot;type&quot;: &quot;invalid_request_error&quot;,
         &quot;message&quot;: &quot;You do not have access to this domain.&quot;,
         &quot;code&quot;: &quot;forbidden_domain&quot;,
-        &quot;param&quot;: &quot;domain_uuid&quot;,
-        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+        &quot;param&quot;: &quot;domain_uuid&quot;
     }
 }</code>
  </pre>
@@ -7785,8 +7772,7 @@ fetch(url, {
         &quot;type&quot;: &quot;invalid_request_error&quot;,
         &quot;message&quot;: &quot;Domain not found.&quot;,
         &quot;code&quot;: &quot;resource_missing&quot;,
-        &quot;param&quot;: &quot;domain_uuid&quot;,
-        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+        &quot;param&quot;: &quot;domain_uuid&quot;
     }
 }</code>
  </pre>
@@ -7800,8 +7786,7 @@ fetch(url, {
         &quot;type&quot;: &quot;invalid_request_error&quot;,
         &quot;message&quot;: &quot;Extension not found.&quot;,
         &quot;code&quot;: &quot;resource_missing&quot;,
-        &quot;param&quot;: &quot;extension&quot;,
-        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+        &quot;param&quot;: &quot;extension&quot;
     }
 }</code>
  </pre>
@@ -7813,8 +7798,7 @@ fetch(url, {
 <code class="language-json" style="max-height: 300px;">{
     &quot;error&quot;: {
         &quot;type&quot;: &quot;api_error&quot;,
-        &quot;message&quot;: &quot;An unexpected error occurred.&quot;,
-        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+        &quot;message&quot;: &quot;An unexpected error occurred.&quot;
     }
 }</code>
  </pre>
@@ -7990,8 +7974,7 @@ fetch(url, {
         &quot;type&quot;: &quot;invalid_request_error&quot;,
         &quot;message&quot;: &quot;Invalid domain UUID.&quot;,
         &quot;code&quot;: &quot;invalid_request&quot;,
-        &quot;param&quot;: &quot;domain_uuid&quot;,
-        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+        &quot;param&quot;: &quot;domain_uuid&quot;
     }
 }</code>
  </pre>
@@ -8005,8 +7988,7 @@ fetch(url, {
         &quot;type&quot;: &quot;invalid_request_error&quot;,
         &quot;message&quot;: &quot;The extension field is required.&quot;,
         &quot;code&quot;: &quot;invalid_parameter&quot;,
-        &quot;param&quot;: &quot;extension&quot;,
-        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+        &quot;param&quot;: &quot;extension&quot;
     }
 }</code>
  </pre>
@@ -8019,8 +8001,7 @@ fetch(url, {
     &quot;error&quot;: {
         &quot;type&quot;: &quot;authentication_error&quot;,
         &quot;message&quot;: &quot;Unauthenticated.&quot;,
-        &quot;code&quot;: &quot;unauthenticated&quot;,
-        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+        &quot;code&quot;: &quot;unauthenticated&quot;
     }
 }</code>
  </pre>
@@ -8034,8 +8015,7 @@ fetch(url, {
         &quot;type&quot;: &quot;invalid_request_error&quot;,
         &quot;message&quot;: &quot;You do not have access to this domain.&quot;,
         &quot;code&quot;: &quot;forbidden_domain&quot;,
-        &quot;param&quot;: &quot;domain_uuid&quot;,
-        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+        &quot;param&quot;: &quot;domain_uuid&quot;
     }
 }</code>
  </pre>
@@ -8063,8 +8043,7 @@ fetch(url, {
         &quot;type&quot;: &quot;invalid_request_error&quot;,
         &quot;message&quot;: &quot;Domain not found.&quot;,
         &quot;code&quot;: &quot;resource_missing&quot;,
-        &quot;param&quot;: &quot;domain_uuid&quot;,
-        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+        &quot;param&quot;: &quot;domain_uuid&quot;
     }
 }</code>
  </pre>
@@ -8078,8 +8057,7 @@ fetch(url, {
         &quot;type&quot;: &quot;invalid_request_error&quot;,
         &quot;message&quot;: &quot;Extension not found.&quot;,
         &quot;code&quot;: &quot;resource_missing&quot;,
-        &quot;param&quot;: &quot;extension&quot;,
-        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+        &quot;param&quot;: &quot;extension&quot;
     }
 }</code>
  </pre>
@@ -8091,8 +8069,7 @@ fetch(url, {
 <code class="language-json" style="max-height: 300px;">{
     &quot;error&quot;: {
         &quot;type&quot;: &quot;api_error&quot;,
-        &quot;message&quot;: &quot;An unexpected error occurred.&quot;,
-        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+        &quot;message&quot;: &quot;An unexpected error occurred.&quot;
     }
 }</code>
  </pre>
@@ -8337,8 +8314,7 @@ fetch(url, {
         &quot;type&quot;: &quot;invalid_request_error&quot;,
         &quot;message&quot;: &quot;No supported phone-control registrations matched the selection.&quot;,
         &quot;code&quot;: &quot;invalid_request&quot;,
-        &quot;param&quot;: &quot;selection&quot;,
-        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+        &quot;param&quot;: &quot;selection&quot;
     }
 }</code>
  </pre>
@@ -8352,8 +8328,7 @@ fetch(url, {
         &quot;type&quot;: &quot;invalid_request_error&quot;,
         &quot;message&quot;: &quot;The destination field is required when action is blind transfer.&quot;,
         &quot;code&quot;: &quot;invalid_parameter&quot;,
-        &quot;param&quot;: &quot;destination&quot;,
-        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+        &quot;param&quot;: &quot;destination&quot;
     }
 }</code>
  </pre>
@@ -8366,8 +8341,7 @@ fetch(url, {
     &quot;error&quot;: {
         &quot;type&quot;: &quot;authentication_error&quot;,
         &quot;message&quot;: &quot;Unauthenticated.&quot;,
-        &quot;code&quot;: &quot;unauthenticated&quot;,
-        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+        &quot;code&quot;: &quot;unauthenticated&quot;
     }
 }</code>
  </pre>
@@ -8381,8 +8355,7 @@ fetch(url, {
         &quot;type&quot;: &quot;invalid_request_error&quot;,
         &quot;message&quot;: &quot;You do not have access to this domain.&quot;,
         &quot;code&quot;: &quot;forbidden_domain&quot;,
-        &quot;param&quot;: &quot;domain_uuid&quot;,
-        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+        &quot;param&quot;: &quot;domain_uuid&quot;
     }
 }</code>
  </pre>
@@ -8410,8 +8383,7 @@ fetch(url, {
         &quot;type&quot;: &quot;invalid_request_error&quot;,
         &quot;message&quot;: &quot;Domain not found.&quot;,
         &quot;code&quot;: &quot;resource_missing&quot;,
-        &quot;param&quot;: &quot;domain_uuid&quot;,
-        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+        &quot;param&quot;: &quot;domain_uuid&quot;
     }
 }</code>
  </pre>
@@ -8425,8 +8397,7 @@ fetch(url, {
         &quot;type&quot;: &quot;invalid_request_error&quot;,
         &quot;message&quot;: &quot;Extension not found.&quot;,
         &quot;code&quot;: &quot;resource_missing&quot;,
-        &quot;param&quot;: &quot;extension&quot;,
-        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+        &quot;param&quot;: &quot;extension&quot;
     }
 }</code>
  </pre>
@@ -8440,8 +8411,7 @@ fetch(url, {
         &quot;type&quot;: &quot;invalid_request_error&quot;,
         &quot;message&quot;: &quot;No supported phone-control registrations found for 1001@pbx.example.com.&quot;,
         &quot;code&quot;: &quot;no_supported_registrations&quot;,
-        &quot;param&quot;: &quot;extension&quot;,
-        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+        &quot;param&quot;: &quot;extension&quot;
     }
 }</code>
  </pre>
@@ -8455,8 +8425,7 @@ fetch(url, {
         &quot;type&quot;: &quot;invalid_request_error&quot;,
         &quot;message&quot;: &quot;Action [dnd-on] is not supported for Poly.&quot;,
         &quot;code&quot;: &quot;unsupported_action&quot;,
-        &quot;param&quot;: &quot;action&quot;,
-        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+        &quot;param&quot;: &quot;action&quot;
     }
 }</code>
  </pre>
@@ -8470,8 +8439,7 @@ fetch(url, {
         &quot;type&quot;: &quot;invalid_request_error&quot;,
         &quot;message&quot;: &quot;The call on 1001@pbx.example.com is already on hold.&quot;,
         &quot;code&quot;: &quot;invalid_call_state&quot;,
-        &quot;param&quot;: &quot;action&quot;,
-        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+        &quot;param&quot;: &quot;action&quot;
     }
 }</code>
  </pre>
@@ -8483,8 +8451,7 @@ fetch(url, {
 <code class="language-json" style="max-height: 300px;">{
     &quot;error&quot;: {
         &quot;type&quot;: &quot;api_error&quot;,
-        &quot;message&quot;: &quot;An unexpected error occurred.&quot;,
-        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+        &quot;message&quot;: &quot;An unexpected error occurred.&quot;
     }
 }</code>
  </pre>
@@ -12466,10 +12433,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="members.0.destination_number"                data-endpoint="POSTapi-v1-domains--domain_uuid--ring-groups"
-               value="+6077"
+               value="+8687"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present.  Must match the regex /^+?\d+$/. Example: <code>+6077</code></p>
+<p>This field is required when <code>members</code> is present.  Must match the regex /^+?\d+$/. Example: <code>+8687</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_delay</code></b>&nbsp;&nbsp;
@@ -12477,10 +12444,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="members.0.destination_delay"                data-endpoint="POSTapi-v1-domains--domain_uuid--ring-groups"
-               value="5"
+               value="1"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>5</code></p>
+<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>1</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_timeout</code></b>&nbsp;&nbsp;
@@ -12488,10 +12455,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="members.0.destination_timeout"                data-endpoint="POSTapi-v1-domains--domain_uuid--ring-groups"
-               value="51"
+               value="10"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>51</code></p>
+<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>10</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_prompt</code></b>&nbsp;&nbsp;
@@ -12512,7 +12479,7 @@ Must be one of:
             <code>false</code>
         </label>
     <br>
-<p>This field is required when <code>members</code> is present. Example: <code>false</code></p>
+<p>This field is required when <code>members</code> is present. Example: <code>true</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_enabled</code></b>&nbsp;&nbsp;
@@ -12533,7 +12500,7 @@ Must be one of:
             <code>false</code>
         </label>
     <br>
-<p>This field is required when <code>members</code> is present. Example: <code>false</code></p>
+<p>This field is required when <code>members</code> is present. Example: <code>true</code></p>
                     </div>
                                     </details>
         </div>
@@ -13127,10 +13094,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="members.0.destination_number"                data-endpoint="PATCHapi-v1-domains--domain_uuid--ring-groups--ring_group_uuid-"
-               value="278"
+               value="5276"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present.  Must match the regex /^+?\d+$/. Example: <code>278</code></p>
+<p>This field is required when <code>members</code> is present.  Must match the regex /^+?\d+$/. Example: <code>5276</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_delay</code></b>&nbsp;&nbsp;
@@ -13138,10 +13105,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="members.0.destination_delay"                data-endpoint="PATCHapi-v1-domains--domain_uuid--ring-groups--ring_group_uuid-"
-               value="2"
+               value="73"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>2</code></p>
+<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>73</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_timeout</code></b>&nbsp;&nbsp;
@@ -13149,10 +13116,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="members.0.destination_timeout"                data-endpoint="PATCHapi-v1-domains--domain_uuid--ring-groups--ring_group_uuid-"
-               value="44"
+               value="22"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>44</code></p>
+<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>22</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_prompt</code></b>&nbsp;&nbsp;
@@ -13194,7 +13161,7 @@ Must be one of:
             <code>false</code>
         </label>
     <br>
-<p>This field is required when <code>members</code> is present. Example: <code>true</code></p>
+<p>This field is required when <code>members</code> is present. Example: <code>false</code></p>
                     </div>
                                     </details>
         </div>

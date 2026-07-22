@@ -352,8 +352,7 @@ class DomainController extends Controller
      *     "type": "invalid_request_error",
      *     "message": "Please enter a domain label.",
      *     "code": "invalid_parameter",
-     *     "param": "domain_description",
-     *     "doc_url": "https://www.fspbx.com/docs/api/v1/errors/"
+     *     "param": "domain_description"
      *   }
      * }
      *

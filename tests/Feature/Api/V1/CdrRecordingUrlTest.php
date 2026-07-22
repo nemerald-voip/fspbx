@@ -2,7 +2,9 @@
 
 namespace Tests\Feature\Api\V1;
 
+use App\Exceptions\ApiException;
 use App\Services\CallRecordingUrlService;
+use Illuminate\Support\Facades\Route;
 use Mockery;
 use Tests\TestCase;
 
@@ -44,6 +46,24 @@ class CdrRecordingUrlTest extends TestCase
             ->assertStatus(401)
             ->assertJsonPath('error.type', 'authentication_error')
             ->assertJsonPath('error.code', 'unauthenticated');
+    }
+
+    public function test_api_exception_response_omits_doc_url(): void
+    {
+        Route::get('/api/v1/test-api-error-response', function () {
+            throw new ApiException(400, 'invalid_request_error', 'Invalid request.', 'invalid_request', 'example');
+        });
+
+        $this->getJson('/api/v1/test-api-error-response')
+            ->assertStatus(400)
+            ->assertExactJson([
+                'error' => [
+                    'type' => 'invalid_request_error',
+                    'message' => 'Invalid request.',
+                    'code' => 'invalid_request',
+                    'param' => 'example',
+                ],
+            ]);
     }
 
     public function test_invalid_domain_uuid_returns_400(): void

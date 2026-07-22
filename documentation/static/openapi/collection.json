@@ -10,7 +10,7 @@
     ],
     "info": {
         "name": "FS PBX",
-        "_postman_id": "fdee5b77-eaad-4c8c-8a63-0d936cd37680",
+        "_postman_id": "3d97c031-234f-4282-848a-588832f9214f",
         "description": "",
         "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
     },
@@ -780,7 +780,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"device_address\":\"0004f23a5bc7\",\"serial_number\":\"8603123456789\",\"device_profile_uuid\":\"51759db8-c8bf-4b2f-b48a-6577d7ad6a1a\",\"device_template\":\"Yealink T46U\",\"device_template_uuid\":\"a6cf59ba-4b2b-4bdd-b870-35cc55bca146\",\"device_keys\":[\"optio\"],\"phonebook_mode\":\"custom\",\"phonebook_uuids\":[\"bcc77733-d8c7-35e6-861a-8a7cf3a91411\"],\"device_description\":\"Reception desk device\",\"device_lines\":[[]]}"
+                            "raw": "{\"device_address\":\"0004f23a5bc7\",\"serial_number\":\"8603123456789\",\"device_profile_uuid\":\"51759db8-c8bf-4b2f-b48a-6577d7ad6a1a\",\"device_template\":\"Yealink T46U\",\"device_template_uuid\":\"a6cf59ba-4b2b-4bdd-b870-35cc55bca146\",\"device_keys\":[\"inventore\"],\"phonebook_mode\":\"custom\",\"phonebook_uuids\":[\"a6603e7c-f9b6-3036-bc6b-a28ba3577c16\"],\"device_description\":\"Reception desk device\",\"device_lines\":[[]]}"
                         },
                         "description": "Creates a new device in the specified domain.\n\nNotes:\n- `device_template` is deprecated and retained for backward compatibility.\n- Use `device_template_uuid` as its successor."
                     },
@@ -1190,7 +1190,7 @@
                         {
                             "header": [],
                             "code": 400,
-                            "body": "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"message\": \"Please enter a domain label.\",\n    \"code\": \"invalid_parameter\",\n    \"param\": \"domain_description\",\n    \"doc_url\": \"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"\n  }\n}",
+                            "body": "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"message\": \"Please enter a domain label.\",\n    \"code\": \"invalid_parameter\",\n    \"param\": \"domain_description\"\n  }\n}",
                             "name": "Validation error"
                         },
                         {
@@ -1797,25 +1797,25 @@
                         {
                             "header": [],
                             "code": 400,
-                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"No controllable registrations matched the selection.\",\"code\":\"invalid_request\",\"param\":\"selection\",\"doc_url\":\"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"}}",
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"No controllable registrations matched the selection.\",\"code\":\"invalid_request\",\"param\":\"selection\"}}",
                             "name": "Invalid selection"
                         },
                         {
                             "header": [],
                             "code": 400,
-                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"The destination field is required.\",\"code\":\"invalid_parameter\",\"param\":\"destination\",\"doc_url\":\"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"}}",
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"The destination field is required.\",\"code\":\"invalid_parameter\",\"param\":\"destination\"}}",
                             "name": "Validation error"
                         },
                         {
                             "header": [],
                             "code": 401,
-                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\",\"doc_url\":\"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"}}",
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\"}}",
                             "name": "Unauthenticated"
                         },
                         {
                             "header": [],
                             "code": 403,
-                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"You do not have access to this domain.\",\"code\":\"forbidden_domain\",\"param\":\"domain_uuid\",\"doc_url\":\"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"}}",
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"You do not have access to this domain.\",\"code\":\"forbidden_domain\",\"param\":\"domain_uuid\"}}",
                             "name": "Forbidden (domain access)"
                         },
                         {
@@ -1827,25 +1827,25 @@
                         {
                             "header": [],
                             "code": 404,
-                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Domain not found.\",\"code\":\"resource_missing\",\"param\":\"domain_uuid\",\"doc_url\":\"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"}}",
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Domain not found.\",\"code\":\"resource_missing\",\"param\":\"domain_uuid\"}}",
                             "name": "Domain not found"
                         },
                         {
                             "header": [],
                             "code": 404,
-                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Extension not found.\",\"code\":\"resource_missing\",\"param\":\"extension\",\"doc_url\":\"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"}}",
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Extension not found.\",\"code\":\"resource_missing\",\"param\":\"extension\"}}",
                             "name": "Extension not found"
                         },
                         {
                             "header": [],
                             "code": 409,
-                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"No controllable registrations found for 1001@pbx.example.com.\",\"code\":\"no_controllable_registrations\",\"param\":\"extension\",\"doc_url\":\"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"}}",
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"No controllable registrations found for 1001@pbx.example.com.\",\"code\":\"no_controllable_registrations\",\"param\":\"extension\"}}",
                             "name": "No controllable registrations"
                         },
                         {
                             "header": [],
                             "code": 500,
-                            "body": "{\"error\":{\"type\":\"api_error\",\"message\":\"An unexpected error occurred.\",\"doc_url\":\"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"}}",
+                            "body": "{\"error\":{\"type\":\"api_error\",\"message\":\"An unexpected error occurred.\"}}",
                             "name": "Internal server error"
                         }
                     ]
@@ -1898,25 +1898,25 @@
                         {
                             "header": [],
                             "code": 400,
-                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid domain UUID.\",\"code\":\"invalid_request\",\"param\":\"domain_uuid\",\"doc_url\":\"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"}}",
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid domain UUID.\",\"code\":\"invalid_request\",\"param\":\"domain_uuid\"}}",
                             "name": "Invalid domain UUID"
                         },
                         {
                             "header": [],
                             "code": 400,
-                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"The extension field is required.\",\"code\":\"invalid_parameter\",\"param\":\"extension\",\"doc_url\":\"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"}}",
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"The extension field is required.\",\"code\":\"invalid_parameter\",\"param\":\"extension\"}}",
                             "name": "Validation error"
                         },
                         {
                             "header": [],
                             "code": 401,
-                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\",\"doc_url\":\"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"}}",
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\"}}",
                             "name": "Unauthenticated"
                         },
                         {
                             "header": [],
                             "code": 403,
-                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"You do not have access to this domain.\",\"code\":\"forbidden_domain\",\"param\":\"domain_uuid\",\"doc_url\":\"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"}}",
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"You do not have access to this domain.\",\"code\":\"forbidden_domain\",\"param\":\"domain_uuid\"}}",
                             "name": "Forbidden (domain access)"
                         },
                         {
@@ -1928,19 +1928,19 @@
                         {
                             "header": [],
                             "code": 404,
-                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Domain not found.\",\"code\":\"resource_missing\",\"param\":\"domain_uuid\",\"doc_url\":\"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"}}",
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Domain not found.\",\"code\":\"resource_missing\",\"param\":\"domain_uuid\"}}",
                             "name": "Domain not found"
                         },
                         {
                             "header": [],
                             "code": 404,
-                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Extension not found.\",\"code\":\"resource_missing\",\"param\":\"extension\",\"doc_url\":\"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"}}",
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Extension not found.\",\"code\":\"resource_missing\",\"param\":\"extension\"}}",
                             "name": "Extension not found"
                         },
                         {
                             "header": [],
                             "code": 500,
-                            "body": "{\"error\":{\"type\":\"api_error\",\"message\":\"An unexpected error occurred.\",\"doc_url\":\"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"}}",
+                            "body": "{\"error\":{\"type\":\"api_error\",\"message\":\"An unexpected error occurred.\"}}",
                             "name": "Internal server error"
                         }
                     ]
@@ -1993,25 +1993,25 @@
                         {
                             "header": [],
                             "code": 400,
-                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid domain UUID.\",\"code\":\"invalid_request\",\"param\":\"domain_uuid\",\"doc_url\":\"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"}}",
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid domain UUID.\",\"code\":\"invalid_request\",\"param\":\"domain_uuid\"}}",
                             "name": "Invalid domain UUID"
                         },
                         {
                             "header": [],
                             "code": 400,
-                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"The extension field is required.\",\"code\":\"invalid_parameter\",\"param\":\"extension\",\"doc_url\":\"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"}}",
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"The extension field is required.\",\"code\":\"invalid_parameter\",\"param\":\"extension\"}}",
                             "name": "Validation error"
                         },
                         {
                             "header": [],
                             "code": 401,
-                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\",\"doc_url\":\"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"}}",
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\"}}",
                             "name": "Unauthenticated"
                         },
                         {
                             "header": [],
                             "code": 403,
-                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"You do not have access to this domain.\",\"code\":\"forbidden_domain\",\"param\":\"domain_uuid\",\"doc_url\":\"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"}}",
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"You do not have access to this domain.\",\"code\":\"forbidden_domain\",\"param\":\"domain_uuid\"}}",
                             "name": "Forbidden (domain access)"
                         },
                         {
@@ -2023,19 +2023,19 @@
                         {
                             "header": [],
                             "code": 404,
-                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Domain not found.\",\"code\":\"resource_missing\",\"param\":\"domain_uuid\",\"doc_url\":\"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"}}",
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Domain not found.\",\"code\":\"resource_missing\",\"param\":\"domain_uuid\"}}",
                             "name": "Domain not found"
                         },
                         {
                             "header": [],
                             "code": 404,
-                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Extension not found.\",\"code\":\"resource_missing\",\"param\":\"extension\",\"doc_url\":\"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"}}",
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Extension not found.\",\"code\":\"resource_missing\",\"param\":\"extension\"}}",
                             "name": "Extension not found"
                         },
                         {
                             "header": [],
                             "code": 500,
-                            "body": "{\"error\":{\"type\":\"api_error\",\"message\":\"An unexpected error occurred.\",\"doc_url\":\"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"}}",
+                            "body": "{\"error\":{\"type\":\"api_error\",\"message\":\"An unexpected error occurred.\"}}",
                             "name": "Internal server error"
                         }
                     ]
@@ -2090,25 +2090,25 @@
                         {
                             "header": [],
                             "code": 400,
-                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"No supported phone-control registrations matched the selection.\",\"code\":\"invalid_request\",\"param\":\"selection\",\"doc_url\":\"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"}}",
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"No supported phone-control registrations matched the selection.\",\"code\":\"invalid_request\",\"param\":\"selection\"}}",
                             "name": "Invalid selection"
                         },
                         {
                             "header": [],
                             "code": 400,
-                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"The destination field is required when action is blind transfer.\",\"code\":\"invalid_parameter\",\"param\":\"destination\",\"doc_url\":\"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"}}",
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"The destination field is required when action is blind transfer.\",\"code\":\"invalid_parameter\",\"param\":\"destination\"}}",
                             "name": "Validation error"
                         },
                         {
                             "header": [],
                             "code": 401,
-                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\",\"doc_url\":\"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"}}",
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\"}}",
                             "name": "Unauthenticated"
                         },
                         {
                             "header": [],
                             "code": 403,
-                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"You do not have access to this domain.\",\"code\":\"forbidden_domain\",\"param\":\"domain_uuid\",\"doc_url\":\"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"}}",
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"You do not have access to this domain.\",\"code\":\"forbidden_domain\",\"param\":\"domain_uuid\"}}",
                             "name": "Forbidden (domain access)"
                         },
                         {
@@ -2120,37 +2120,37 @@
                         {
                             "header": [],
                             "code": 404,
-                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Domain not found.\",\"code\":\"resource_missing\",\"param\":\"domain_uuid\",\"doc_url\":\"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"}}",
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Domain not found.\",\"code\":\"resource_missing\",\"param\":\"domain_uuid\"}}",
                             "name": "Domain not found"
                         },
                         {
                             "header": [],
                             "code": 404,
-                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Extension not found.\",\"code\":\"resource_missing\",\"param\":\"extension\",\"doc_url\":\"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"}}",
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Extension not found.\",\"code\":\"resource_missing\",\"param\":\"extension\"}}",
                             "name": "Extension not found"
                         },
                         {
                             "header": [],
                             "code": 409,
-                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"No supported phone-control registrations found for 1001@pbx.example.com.\",\"code\":\"no_supported_registrations\",\"param\":\"extension\",\"doc_url\":\"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"}}",
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"No supported phone-control registrations found for 1001@pbx.example.com.\",\"code\":\"no_supported_registrations\",\"param\":\"extension\"}}",
                             "name": "No supported registrations"
                         },
                         {
                             "header": [],
                             "code": 409,
-                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Action [dnd-on] is not supported for Poly.\",\"code\":\"unsupported_action\",\"param\":\"action\",\"doc_url\":\"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"}}",
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Action [dnd-on] is not supported for Poly.\",\"code\":\"unsupported_action\",\"param\":\"action\"}}",
                             "name": "Unsupported action"
                         },
                         {
                             "header": [],
                             "code": 409,
-                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"The call on 1001@pbx.example.com is already on hold.\",\"code\":\"invalid_call_state\",\"param\":\"action\",\"doc_url\":\"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"}}",
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"The call on 1001@pbx.example.com is already on hold.\",\"code\":\"invalid_call_state\",\"param\":\"action\"}}",
                             "name": "Invalid call state"
                         },
                         {
                             "header": [],
                             "code": 500,
-                            "body": "{\"error\":{\"type\":\"api_error\",\"message\":\"An unexpected error occurred.\",\"doc_url\":\"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"}}",
+                            "body": "{\"error\":{\"type\":\"api_error\",\"message\":\"An unexpected error occurred.\"}}",
                             "name": "Internal server error"
                         }
                     ]

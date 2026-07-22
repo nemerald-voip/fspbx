@@ -33,7 +33,6 @@ class Handler extends ExceptionHandler
                     'message' => $message,
                     'code'    => 'invalid_parameter',
                     'param'   => $param,
-                    'doc_url' => 'https://www.fspbx.com/docs/api/v1/errors/',
                 ]),
             ]);
 
@@ -49,7 +48,6 @@ class Handler extends ExceptionHandler
                     'type'    => 'invalid_request_error',
                     'message' => $e->getMessage() ?: 'Forbidden.',
                     'code'    => 'forbidden',
-                    'doc_url' => 'https://www.fspbx.com/docs/api/v1/errors/',
                 ]),
             ]);
 
@@ -65,7 +63,6 @@ class Handler extends ExceptionHandler
                     'type'    => 'authentication_error',
                     'message' => 'Unauthenticated.',
                     'code'    => 'unauthenticated',
-                    'doc_url' => 'https://www.fspbx.com/docs/api/v1/errors/',
                 ]),
             ]);
 
@@ -81,7 +78,6 @@ class Handler extends ExceptionHandler
                     'type'    => 'forbidden_method',
                     'message' => $e->getMessage(),
                     'code'    => 'forbidden',
-                    'doc_url' => 'https://www.fspbx.com/docs/api/v1/errors/',
                 ]),
             ]);
 
@@ -102,7 +98,6 @@ class Handler extends ExceptionHandler
                     'message' => "{$resource} not found.",
                     'code'    => 'resource_missing',
                     'param'   => '',
-                    'doc_url' => 'https://www.fspbx.com/docs/api/v1/errors/',
                 ]),
             ]);
 
@@ -120,7 +115,6 @@ class Handler extends ExceptionHandler
                     'message' => "Resource not found.",
                     'code'    => 'resource_not_found',
                     'param'   => '',
-                    'doc_url' => 'https://www.fspbx.com/docs/api/v1/errors/',
                 ]),
             ]);
 
@@ -137,7 +131,6 @@ class Handler extends ExceptionHandler
                     'message' => $e->getMessage(),
                     'code'    => $e->error_code,
                     'param'   => $e->param,
-                    'doc_url' => 'https://www.fspbx.com/docs/api/v1/errors/',
                 ]),
             ]);
 
@@ -154,7 +147,6 @@ class Handler extends ExceptionHandler
                 'error' => ErrorData::from([
                     'type'    => 'api_error',
                     'message' => 'An unexpected error occurred.',
-                    'doc_url' => 'https://www.fspbx.com/docs/api/v1/errors/',
                 ]),
             ]);
 

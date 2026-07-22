@@ -1749,7 +1749,7 @@ paths:
                   type: array
                   description: ''
                   example:
-                    - optio
+                    - inventore
                   items:
                     type: integer
                 phonebook_mode:
@@ -1763,7 +1763,7 @@ paths:
                   type: array
                   description: 'Must be a valid UUID.'
                   example:
-                    - bcc77733-d8c7-35e6-861a-8a7cf3a91411
+                    - a6603e7c-f9b6-3036-bc6b-a28ba3577c16
                   items:
                     type: string
                 device_description:
@@ -2662,7 +2662,6 @@ paths:
                     message: 'Please enter a domain label.'
                     code: invalid_parameter
                     param: domain_description
-                    doc_url: 'https://www.fspbx.com/docs/api/v1/errors/'
                 properties:
                   error:
                     type: object
@@ -2679,9 +2678,6 @@ paths:
                       param:
                         type: string
                         example: domain_description
-                      doc_url:
-                        type: string
-                        example: 'https://www.fspbx.com/docs/api/v1/errors/'
         401:
           description: Unauthenticated
           content:
@@ -4634,7 +4630,6 @@ paths:
                     message: 'The destination field is required.'
                     code: invalid_parameter
                     param: destination
-                    doc_url: 'https://www.fspbx.com/docs/api/v1/errors/'
                 properties:
                   error:
                     type: object
@@ -4651,9 +4646,6 @@ paths:
                       param:
                         type: string
                         example: destination
-                      doc_url:
-                        type: string
-                        example: 'https://www.fspbx.com/docs/api/v1/errors/'
         401:
           description: Unauthenticated
           content:
@@ -4665,7 +4657,6 @@ paths:
                     type: authentication_error
                     message: Unauthenticated.
                     code: unauthenticated
-                    doc_url: 'https://www.fspbx.com/docs/api/v1/errors/'
                 properties:
                   error:
                     type: object
@@ -4679,9 +4670,6 @@ paths:
                       code:
                         type: string
                         example: unauthenticated
-                      doc_url:
-                        type: string
-                        example: 'https://www.fspbx.com/docs/api/v1/errors/'
         403:
           description: 'Forbidden (missing permission)'
           content:
@@ -4722,7 +4710,6 @@ paths:
                     message: 'Extension not found.'
                     code: resource_missing
                     param: extension
-                    doc_url: 'https://www.fspbx.com/docs/api/v1/errors/'
                 properties:
                   error:
                     type: object
@@ -4739,9 +4726,6 @@ paths:
                       param:
                         type: string
                         example: extension
-                      doc_url:
-                        type: string
-                        example: 'https://www.fspbx.com/docs/api/v1/errors/'
         409:
           description: 'No controllable registrations'
           content:
@@ -4754,7 +4738,6 @@ paths:
                     message: 'No controllable registrations found for 1001@pbx.example.com.'
                     code: no_controllable_registrations
                     param: extension
-                    doc_url: 'https://www.fspbx.com/docs/api/v1/errors/'
                 properties:
                   error:
                     type: object
@@ -4771,9 +4754,6 @@ paths:
                       param:
                         type: string
                         example: extension
-                      doc_url:
-                        type: string
-                        example: 'https://www.fspbx.com/docs/api/v1/errors/'
         500:
           description: 'Internal server error'
           content:
@@ -4784,7 +4764,6 @@ paths:
                   error:
                     type: api_error
                     message: 'An unexpected error occurred.'
-                    doc_url: 'https://www.fspbx.com/docs/api/v1/errors/'
                 properties:
                   error:
                     type: object
@@ -4795,9 +4774,6 @@ paths:
                       message:
                         type: string
                         example: 'An unexpected error occurred.'
-                      doc_url:
-                        type: string
-                        example: 'https://www.fspbx.com/docs/api/v1/errors/'
       tags:
         - 'Phone Control'
       requestBody:
@@ -4978,7 +4954,6 @@ paths:
                     message: 'The extension field is required.'
                     code: invalid_parameter
                     param: extension
-                    doc_url: 'https://www.fspbx.com/docs/api/v1/errors/'
                 properties:
                   error:
                     type: object
@@ -4995,9 +4970,6 @@ paths:
                       param:
                         type: string
                         example: extension
-                      doc_url:
-                        type: string
-                        example: 'https://www.fspbx.com/docs/api/v1/errors/'
         401:
           description: Unauthenticated
           content:
@@ -5009,7 +4981,6 @@ paths:
                     type: authentication_error
                     message: Unauthenticated.
                     code: unauthenticated
-                    doc_url: 'https://www.fspbx.com/docs/api/v1/errors/'
                 properties:
                   error:
                     type: object
@@ -5023,9 +4994,6 @@ paths:
                       code:
                         type: string
                         example: unauthenticated
-                      doc_url:
-                        type: string
-                        example: 'https://www.fspbx.com/docs/api/v1/errors/'
         403:
           description: 'Forbidden (missing permission)'
           content:
@@ -5066,7 +5034,6 @@ paths:
                     message: 'Extension not found.'
                     code: resource_missing
                     param: extension
-                    doc_url: 'https://www.fspbx.com/docs/api/v1/errors/'
                 properties:
                   error:
                     type: object
@@ -5083,9 +5050,6 @@ paths:
                       param:
                         type: string
                         example: extension
-                      doc_url:
-                        type: string
-                        example: 'https://www.fspbx.com/docs/api/v1/errors/'
         500:
           description: 'Internal server error'
           content:
@@ -5096,7 +5060,6 @@ paths:
                   error:
                     type: api_error
                     message: 'An unexpected error occurred.'
-                    doc_url: 'https://www.fspbx.com/docs/api/v1/errors/'
                 properties:
                   error:
                     type: object
@@ -5107,9 +5070,6 @@ paths:
                       message:
                         type: string
                         example: 'An unexpected error occurred.'
-                      doc_url:
-                        type: string
-                        example: 'https://www.fspbx.com/docs/api/v1/errors/'
       tags:
         - 'Phone Control'
     parameters:
@@ -5204,7 +5164,6 @@ paths:
                     message: 'The extension field is required.'
                     code: invalid_parameter
                     param: extension
-                    doc_url: 'https://www.fspbx.com/docs/api/v1/errors/'
                 properties:
                   error:
                     type: object
@@ -5221,9 +5180,6 @@ paths:
                       param:
                         type: string
                         example: extension
-                      doc_url:
-                        type: string
-                        example: 'https://www.fspbx.com/docs/api/v1/errors/'
         401:
           description: Unauthenticated
           content:
@@ -5235,7 +5191,6 @@ paths:
                     type: authentication_error
                     message: Unauthenticated.
                     code: unauthenticated
-                    doc_url: 'https://www.fspbx.com/docs/api/v1/errors/'
                 properties:
                   error:
                     type: object
@@ -5249,9 +5204,6 @@ paths:
                       code:
                         type: string
                         example: unauthenticated
-                      doc_url:
-                        type: string
-                        example: 'https://www.fspbx.com/docs/api/v1/errors/'
         403:
           description: 'Forbidden (missing permission)'
           content:
@@ -5292,7 +5244,6 @@ paths:
                     message: 'Extension not found.'
                     code: resource_missing
                     param: extension
-                    doc_url: 'https://www.fspbx.com/docs/api/v1/errors/'
                 properties:
                   error:
                     type: object
@@ -5309,9 +5260,6 @@ paths:
                       param:
                         type: string
                         example: extension
-                      doc_url:
-                        type: string
-                        example: 'https://www.fspbx.com/docs/api/v1/errors/'
         500:
           description: 'Internal server error'
           content:
@@ -5322,7 +5270,6 @@ paths:
                   error:
                     type: api_error
                     message: 'An unexpected error occurred.'
-                    doc_url: 'https://www.fspbx.com/docs/api/v1/errors/'
                 properties:
                   error:
                     type: object
@@ -5333,9 +5280,6 @@ paths:
                       message:
                         type: string
                         example: 'An unexpected error occurred.'
-                      doc_url:
-                        type: string
-                        example: 'https://www.fspbx.com/docs/api/v1/errors/'
       tags:
         - 'Phone Control'
     parameters:
@@ -5419,7 +5363,6 @@ paths:
                     message: 'The destination field is required when action is blind transfer.'
                     code: invalid_parameter
                     param: destination
-                    doc_url: 'https://www.fspbx.com/docs/api/v1/errors/'
                 properties:
                   error:
                     type: object
@@ -5436,9 +5379,6 @@ paths:
                       param:
                         type: string
                         example: destination
-                      doc_url:
-                        type: string
-                        example: 'https://www.fspbx.com/docs/api/v1/errors/'
         401:
           description: Unauthenticated
           content:
@@ -5450,7 +5390,6 @@ paths:
                     type: authentication_error
                     message: Unauthenticated.
                     code: unauthenticated
-                    doc_url: 'https://www.fspbx.com/docs/api/v1/errors/'
                 properties:
                   error:
                     type: object
@@ -5464,9 +5403,6 @@ paths:
                       code:
                         type: string
                         example: unauthenticated
-                      doc_url:
-                        type: string
-                        example: 'https://www.fspbx.com/docs/api/v1/errors/'
         403:
           description: 'Forbidden (missing permission)'
           content:
@@ -5507,7 +5443,6 @@ paths:
                     message: 'Extension not found.'
                     code: resource_missing
                     param: extension
-                    doc_url: 'https://www.fspbx.com/docs/api/v1/errors/'
                 properties:
                   error:
                     type: object
@@ -5524,9 +5459,6 @@ paths:
                       param:
                         type: string
                         example: extension
-                      doc_url:
-                        type: string
-                        example: 'https://www.fspbx.com/docs/api/v1/errors/'
         409:
           description: 'Invalid call state'
           content:
@@ -5539,7 +5471,6 @@ paths:
                     message: 'The call on 1001@pbx.example.com is already on hold.'
                     code: invalid_call_state
                     param: action
-                    doc_url: 'https://www.fspbx.com/docs/api/v1/errors/'
                 properties:
                   error:
                     type: object
@@ -5556,9 +5487,6 @@ paths:
                       param:
                         type: string
                         example: action
-                      doc_url:
-                        type: string
-                        example: 'https://www.fspbx.com/docs/api/v1/errors/'
         500:
           description: 'Internal server error'
           content:
@@ -5569,7 +5497,6 @@ paths:
                   error:
                     type: api_error
                     message: 'An unexpected error occurred.'
-                    doc_url: 'https://www.fspbx.com/docs/api/v1/errors/'
                 properties:
                   error:
                     type: object
@@ -5580,9 +5507,6 @@ paths:
                       message:
                         type: string
                         example: 'An unexpected error occurred.'
-                      doc_url:
-                        type: string
-                        example: 'https://www.fspbx.com/docs/api/v1/errors/'
       tags:
         - 'Phone Control'
       requestBody:

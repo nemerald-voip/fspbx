@@ -108,15 +108,15 @@ class ClickToDialController extends Controller
      *   ]
      * }
      *
-     * @response 400 scenario="Invalid selection" {"error":{"type":"invalid_request_error","message":"No controllable registrations matched the selection.","code":"invalid_request","param":"selection","doc_url":"https://www.fspbx.com/docs/api/v1/errors/"}}
-     * @response 400 scenario="Validation error" {"error":{"type":"invalid_request_error","message":"The destination field is required.","code":"invalid_parameter","param":"destination","doc_url":"https://www.fspbx.com/docs/api/v1/errors/"}}
-     * @response 401 scenario="Unauthenticated" {"error":{"type":"authentication_error","message":"Unauthenticated.","code":"unauthenticated","doc_url":"https://www.fspbx.com/docs/api/v1/errors/"}}
-     * @response 403 scenario="Forbidden (domain access)" {"error":{"type":"invalid_request_error","message":"You do not have access to this domain.","code":"forbidden_domain","param":"domain_uuid","doc_url":"https://www.fspbx.com/docs/api/v1/errors/"}}
+     * @response 400 scenario="Invalid selection" {"error":{"type":"invalid_request_error","message":"No controllable registrations matched the selection.","code":"invalid_request","param":"selection"}}
+     * @response 400 scenario="Validation error" {"error":{"type":"invalid_request_error","message":"The destination field is required.","code":"invalid_parameter","param":"destination"}}
+     * @response 401 scenario="Unauthenticated" {"error":{"type":"authentication_error","message":"Unauthenticated.","code":"unauthenticated"}}
+     * @response 403 scenario="Forbidden (domain access)" {"error":{"type":"invalid_request_error","message":"You do not have access to this domain.","code":"forbidden_domain","param":"domain_uuid"}}
      * @response 403 scenario="Forbidden (missing permission)" {"success":false,"message":"Forbidden (missing permission).","error":{"code":"forbidden_permission","permission":"phone_control_call"}}
-     * @response 404 scenario="Domain not found" {"error":{"type":"invalid_request_error","message":"Domain not found.","code":"resource_missing","param":"domain_uuid","doc_url":"https://www.fspbx.com/docs/api/v1/errors/"}}
-     * @response 404 scenario="Extension not found" {"error":{"type":"invalid_request_error","message":"Extension not found.","code":"resource_missing","param":"extension","doc_url":"https://www.fspbx.com/docs/api/v1/errors/"}}
-     * @response 409 scenario="No controllable registrations" {"error":{"type":"invalid_request_error","message":"No controllable registrations found for 1001@pbx.example.com.","code":"no_controllable_registrations","param":"extension","doc_url":"https://www.fspbx.com/docs/api/v1/errors/"}}
-     * @response 500 scenario="Internal server error" {"error":{"type":"api_error","message":"An unexpected error occurred.","doc_url":"https://www.fspbx.com/docs/api/v1/errors/"}}
+     * @response 404 scenario="Domain not found" {"error":{"type":"invalid_request_error","message":"Domain not found.","code":"resource_missing","param":"domain_uuid"}}
+     * @response 404 scenario="Extension not found" {"error":{"type":"invalid_request_error","message":"Extension not found.","code":"resource_missing","param":"extension"}}
+     * @response 409 scenario="No controllable registrations" {"error":{"type":"invalid_request_error","message":"No controllable registrations found for 1001@pbx.example.com.","code":"no_controllable_registrations","param":"extension"}}
+     * @response 500 scenario="Internal server error" {"error":{"type":"api_error","message":"An unexpected error occurred."}}
      */
     public function store(
         StoreClickToDialCallRequest $request,
