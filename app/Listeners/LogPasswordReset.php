@@ -20,6 +20,7 @@ class LogPasswordReset
             'timestamp'      => Carbon::now(get_local_time_zone($event->user->domain_uuid)),
             'user_uuid'      => $user->user_uuid,
             'username'       => $user->username,
+            'email'          => $user->user_email,
             'type'           => 'password_reset',
             'result'         => 'success',
             'remote_address' => $request->ip(),

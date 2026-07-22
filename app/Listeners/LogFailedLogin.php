@@ -21,6 +21,7 @@ class LogFailedLogin
             'timestamp'      => Carbon::now(get_local_time_zone($event->user->domain_uuid ?? null)),
             'user_uuid'      => optional($user)->user_uuid,
             'username'       => $credentials['email'] ?? $credentials['username'] ?? null,
+            'email'          => optional($user)->user_email ?? $credentials['email'] ?? null,
             'type'           => 'login_attempt',
             'result'         => 'failed',
             'remote_address' => $request->ip(),

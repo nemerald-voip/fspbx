@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property \Illuminate\Support\Carbon|null $timestamp
  * @property string|null                 $user_uuid
  * @property string|null                 $username
+ * @property string|null                 $email
  * @property string|null                 $type
  * @property string|null                 $result
  * @property string|null                 $remote_address
@@ -78,6 +79,7 @@ class UserLog extends Model
         'timestamp',
         'user_uuid',
         'username',
+        'email',
         'type',
         'result',
         'remote_address',
