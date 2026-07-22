@@ -270,7 +270,7 @@ class SendFaxJob implements ShouldQueue
         }
 
         $faxUri = $routes[0];
-        $originateEndpoint = "loopback/{$routeDestination}/{$domainName}/XML";
+//        $originateEndpoint = "loopback/{$routeDestination}/{$domainName}/XML";
         $selectedRoute = $routeResult['selected_route'] ?? null;
 
         fax_webhook_debug('Selected fax route', [
@@ -282,7 +282,7 @@ class SendFaxJob implements ShouldQueue
             'route_destination' => $routeDestination,
             'fallback_used'     => $fallbackUsed,
             'fax_uri'           => $faxUri,
-            'originate_endpoint' => $originateEndpoint,
+//            'originate_endpoint' => $originateEndpoint,
             'lua_actions'       => $selectedRoute['lua_actions'] ?? [],
         ]);
 
@@ -361,7 +361,9 @@ class SendFaxJob implements ShouldQueue
 
         $dialplanContext = $domainName !== '' ? ' inline ' . $e($domainName) : '';
 
-        return '{' . implode(',', $vars) . '}' . $originateEndpoint . " 'txfax:{$e($fax->file_path)}'" . $dialplanContext;
+return '{' . implode(',', $vars) . '}' . $faxUri
+    . " 'txfax:{$e($fax->file_path)}'"
+    . $dialplanContext;
     }
 
     /**
