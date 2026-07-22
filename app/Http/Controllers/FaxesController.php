@@ -31,6 +31,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Requests\CreateNewFaxRequest;
 use App\Services\FaxSendService;
+use App\Services\FaxSettingsResolver;
 use Illuminate\Validation\ValidationException;
 use Exception;
 
@@ -659,7 +660,7 @@ class FaxesController extends Controller
         ]);
     }
 
-    public function getNewFaxOptions(Request $request)
+    public function getNewFaxOptions(Request $request, FaxSettingsResolver $faxSettings)
     {
         $itemUuid = $request->input('item_uuid');
 
@@ -700,6 +701,10 @@ class FaxesController extends Controller
             'permissions' => $permissions,
             'routes'      => $routes,
             'phone_numbers' => $phone_numbers,
+            'send_confirmation_default' => $faxSettings->boolean(
+                'send_confirmation',
+                $currentDomain
+            ),
         ]);
     }
 

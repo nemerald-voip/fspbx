@@ -1425,6 +1425,14 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'default_setting_category'      => 'fax',
+                'default_setting_subcategory'   => 'send_confirmation',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => 'false',
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => 'Enable email confirmation by default when sending a fax from the New Fax form.',
+            ],
+            [
+                'default_setting_category'      => 'fax',
                 'default_setting_subcategory'   => 'notify_in_transit',
                 'default_setting_name'          => 'text',
                 'default_setting_value'         => 'true',

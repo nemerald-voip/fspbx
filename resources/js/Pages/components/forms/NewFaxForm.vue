@@ -45,11 +45,7 @@
 
                             <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
                                 @error="handleError" @response="handleResponse" :display-errors="false" :default="{
-                                    // group_name: options.item.group_name ?? null,
-                                    // members: options.item.domain_group_relations
-                                    //     ? options.item.domain_group_relations.map(r => r.domain_uuid)
-                                    //     : []
-
+                                    send_confirmation: options.send_confirmation_default ?? false,
                                 }">
 
 
