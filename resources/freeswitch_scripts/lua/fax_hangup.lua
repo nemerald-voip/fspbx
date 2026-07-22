@@ -44,6 +44,15 @@ local function first_present(...)
     return ""
 end
 
+-- Loopback A/B legs end with NORMAL_UNSPECIFIED when FreeSWITCH bows out and
+-- replaces them with the real gateway channel. Only that gateway channel has
+-- the final fax result.
+local is_loopback = header("is_loopback")
+if is_loopback == "true" or is_loopback == "1" then
+    log("NOTICE", "Ignoring temporary loopback channel")
+    return
+end
+
 local uuid = clean(header("uuid"))
 local domain_uuid = clean(header("domain_uuid"))
 local domain_name = clean(header("domain_name"))

@@ -8,9 +8,12 @@ use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\QueryBuilder;
 use App\Data\Api\V1\CdrCallFlowStepData;
 use App\Exceptions\ApiException;
+use App\Models\BasicDialerCampaignAttempt;
 use App\Models\Dialplans;
 use App\Models\Extensions;
+use App\Models\OutboundFax;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 
 class CdrDataService
 {
@@ -696,7 +699,10 @@ class CdrDataService
 
     public function buildCallFlowSummary(CDR $cdr)
     {
-        $mainCallFlowData = collect(json_decode($cdr->call_flow, true) ?: []);
+        $mainCallFlowData = $this->normalizeMainCallFlowData(
+            $cdr,
+            collect(json_decode($cdr->call_flow, true) ?: [])
+        );
         $combinedCallFlowData = $mainCallFlowData;
 
         $windowStart = null;
@@ -790,6 +796,92 @@ class CdrDataService
                 return $this->getAppDetails($row, (string) $cdr->domain_uuid);
             })
             ->values();
+    }
+
+    private function normalizeMainCallFlowData(CDR $cdr, Collection $callFlowData): Collection
+    {
+        if ($this->isBasicDialerCdr($cdr)) {
+            $callFlowData = $callFlowData->map(function (array $profile) {
+                $callerProfile = $profile['caller_profile'] ?? [];
+                $callee = trim((string) ($callerProfile['callee_id_number'] ?? ''));
+                $destination = trim((string) ($callerProfile['destination_number'] ?? ''));
+
+                if (($callerProfile['source'] ?? null) === 'mod_loopback'
+                    && strcasecmp($callee, 'XML') === 0
+                    && $destination !== ''
+                    && strcasecmp($destination, 'XML') !== 0) {
+                    $profile['caller_profile']['callee_id_number'] = $destination;
+                }
+
+                return $profile;
+            });
+
+            return $callFlowData;
+        }
+
+        if (! $this->isOutboundFaxCdr($cdr)) {
+            return $callFlowData;
+        }
+
+        return $callFlowData->reduce(function (Collection $profiles, array $profile) {
+            $previous = $profiles->last();
+
+            if (! is_array($previous) || ! $this->sameFaxChannelProfile($previous, $profile)) {
+                return $profiles->push($profile);
+            }
+
+            if ($this->callFlowProfileDuration($profile) >= $this->callFlowProfileDuration($previous)) {
+                $profiles->pop();
+                $profiles->push($profile);
+            }
+
+            return $profiles;
+        }, collect());
+    }
+
+    protected function isBasicDialerCdr(CDR $cdr): bool
+    {
+        return $cdr->direction === 'outbound'
+            && BasicDialerCampaignAttempt::query()
+                ->where('call_uuid', $cdr->xml_cdr_uuid)
+                ->exists();
+    }
+
+    protected function isOutboundFaxCdr(CDR $cdr): bool
+    {
+        return $cdr->direction === 'outbound'
+            && OutboundFax::query()->where('call_uuid', $cdr->xml_cdr_uuid)->exists();
+    }
+
+    private function sameFaxChannelProfile(array $left, array $right): bool
+    {
+        $leftProfile = $left['caller_profile'] ?? [];
+        $rightProfile = $right['caller_profile'] ?? [];
+        $leftUuid = (string) ($leftProfile['uuid'] ?? '');
+        $rightUuid = (string) ($rightProfile['uuid'] ?? '');
+        $leftChannel = (string) ($leftProfile['chan_name'] ?? '');
+        $rightChannel = (string) ($rightProfile['chan_name'] ?? '');
+        $leftDestination = preg_replace('/\D+/', '', (string) ($leftProfile['destination_number'] ?? ''));
+        $rightDestination = preg_replace('/\D+/', '', (string) ($rightProfile['destination_number'] ?? ''));
+
+        return ($leftProfile['source'] ?? null) === 'mod_loopback'
+            && ($rightProfile['source'] ?? null) === 'mod_loopback'
+            && $leftUuid !== ''
+            && $leftUuid === $rightUuid
+            && $leftChannel !== ''
+            && $leftChannel === $rightChannel
+            && $leftDestination !== ''
+            && $leftDestination === $rightDestination;
+    }
+
+    private function callFlowProfileDuration(array $profile): int
+    {
+        $times = $profile['times'] ?? [];
+
+        return max(
+            0,
+            (int) ($times['profile_end_time'] ?? 0) - (int) ($times['profile_created_time'] ?? 0)
+        );
     }
 
 

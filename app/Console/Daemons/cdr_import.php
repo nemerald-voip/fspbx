@@ -727,7 +727,13 @@ if (!class_exists('cdr_import')) {
 						$this->array[$key]['leg'] = $leg;
 
 					//store the originating leg uuid
-						$this->array[$key]['originating_leg_uuid'] = urldecode($xml->variables->originating_leg_uuid);
+						if (isset($xml->variables->outbound_fax_uuid)
+							&& is_uuid(urldecode($xml->variables->outbound_fax_uuid))
+							&& urldecode($xml->variables->call_direction) === 'outbound') {
+							$this->array[$key]['originating_leg_uuid'] = null;
+						} else {
+							$this->array[$key]['originating_leg_uuid'] = urldecode($xml->variables->originating_leg_uuid);
+						}
 
 					//store post dial delay, in milliseconds
 						$this->array[$key]['pdd_ms'] = urldecode((int)$xml->variables->progress_mediamsec) + (int)urldecode($xml->variables->progressmsec);

@@ -270,6 +270,7 @@ class SendFaxJob implements ShouldQueue
         }
 
         $faxUri = $routes[0];
+        $originateEndpoint = "loopback/{$routeDestination}/{$domainName}/XML";
         $selectedRoute = $routeResult['selected_route'] ?? null;
 
         fax_webhook_debug('Selected fax route', [
@@ -281,6 +282,7 @@ class SendFaxJob implements ShouldQueue
             'route_destination' => $routeDestination,
             'fallback_used'     => $fallbackUsed,
             'fax_uri'           => $faxUri,
+            'originate_endpoint' => $originateEndpoint,
             'lua_actions'       => $selectedRoute['lua_actions'] ?? [],
         ]);
 
@@ -300,6 +302,8 @@ class SendFaxJob implements ShouldQueue
             "call_direction='outbound'",
             "domain_uuid={$e($fax->domain_uuid)}",
             "domain_name={$e($domainName)}",
+            "outbound_caller_id_name='{$e($callerIdName)}'",
+            "outbound_caller_id_number='{$e($fax->source)}'",
             "origination_caller_id_name='{$e($callerIdName)}'",
             "origination_caller_id_number='{$e($fax->source)}'",
             "fax_ident='{$e($fax->source)}'",
@@ -307,11 +311,17 @@ class SendFaxJob implements ShouldQueue
             "fax_file='{$e($fax->file_path)}'",
             "hangup_after_bridge=true",
             "continue_on_fail=true",
+            "skip_cdr_causes=NORMAL_UNSPECIFIED",
+            "force_process_cdr=true",
             "media_mix_inbound_outbound_codecs=true",
             "sip_renegotiate-codec-on-reinvite=true",
             "absolute_codec_string='PCMU,PCMA'",
             "caller_destination={$e($fax->destination)}",
         ];
+
+        if (!empty($tollAllow)) {
+            $vars[] = "toll_allow='{$e($tollAllow)}'";
+        }
 
         // Verbose fax logging only when admin has enabled FAX_WEBHOOK_DEBUG —
         // keeps FreeSWITCH logs quiet in production.
@@ -351,7 +361,7 @@ class SendFaxJob implements ShouldQueue
 
         $dialplanContext = $domainName !== '' ? ' inline ' . $e($domainName) : '';
 
-        return '{' . implode(',', $vars) . '}' . $faxUri . " 'txfax:{$e($fax->file_path)}'" . $dialplanContext;
+        return '{' . implode(',', $vars) . '}' . $originateEndpoint . " 'txfax:{$e($fax->file_path)}'" . $dialplanContext;
     }
 
     /**

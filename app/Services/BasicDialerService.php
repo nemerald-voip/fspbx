@@ -436,7 +436,8 @@ class BasicDialerService
             return null;
         }
 
-        $recipientEndpoint = $routes[0];
+        $routeDestination = $routeResult['route_destination'] ?? $recipient->phone_number;
+        $recipientEndpoint = "loopback/{$routeDestination}/{$domainName}/XML";
         $application = $this->answeredApplication($campaign, $domainName);
         $vars = [
             'origination_uuid' => $attempt->call_uuid,
@@ -454,6 +455,7 @@ class BasicDialerService
             'effective_caller_id_name' => $callerIdName,
             'effective_caller_id_number' => $callerIdNumber,
             'caller_destination' => $recipient->phone_number,
+            'loopback_bowout' => 'false',
             'ignore_early_media' => 'true',
             'hangup_after_bridge' => 'true',
             'continue_on_fail' => 'true',
