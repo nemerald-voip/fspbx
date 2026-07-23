@@ -1,3 +1,1 @@
-<?php
-echo $data['content'];
-?>
+{!! $data['content'] !!}

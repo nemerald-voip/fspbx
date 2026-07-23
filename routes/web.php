@@ -33,6 +33,7 @@ use App\Http\Controllers\DialplanController;
 use App\Http\Controllers\DomainController;
 use App\Http\Controllers\DomainGroupsController;
 use App\Http\Controllers\EmailQueueController;
+use App\Http\Controllers\EmailTemplateController;
 use App\Http\Controllers\ExtensionsController;
 use App\Http\Controllers\ExtensionStatisticsController;
 use App\Http\Controllers\FaxesController;
@@ -250,6 +251,9 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('music-on-hold/{music_on_hold}/files/{file}', [MusicOnHoldController::class, 'download'])
         ->where('file', '[^/]+')
         ->name('music-on-hold.files.download');
+
+    // Email Templates
+    Route::get('email-templates', [EmailTemplateController::class, 'index'])->name('email-templates.index');
 
     // Modules
     Route::get('modules', [SwitchModuleController::class, 'index'])->name('modules.index');

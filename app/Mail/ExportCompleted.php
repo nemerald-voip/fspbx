@@ -4,23 +4,19 @@ namespace App\Mail;
 
 use Illuminate\Mail\Mailables\Content;
 
-
 class ExportCompleted extends BaseMailable
 {
-
-    public function __construct($params)
+    public function __construct(array $params)
     {
         parent::__construct($params);
+        $this->useEmailTemplate('export', 'completed');
     }
 
-    /**
-     * Get the message content definition.
-     */
     public function content(): Content
     {
-        return new Content(
-            view: 'emails.export.export-completed',
-            text: 'emails.export.export-completed-text'
-        );
+        return $this->databaseTemplateContent(new Content(
+            view: 'emails.export.completed',
+            text: 'emails.export.completed-text',
+        ));
     }
 }

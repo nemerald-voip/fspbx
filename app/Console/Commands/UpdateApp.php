@@ -50,6 +50,7 @@ use App\Console\Commands\Updates\Update192;
 use App\Console\Commands\Updates\Update193;
 use App\Console\Commands\Updates\Update194;
 use App\Console\Commands\Updates\Update195;
+use App\Console\Commands\Updates\Update196;
 use App\Console\Commands\Updates\Update0917;
 use App\Console\Commands\Updates\Update0918;
 use App\Console\Commands\Updates\Update0924;
@@ -176,6 +177,7 @@ class UpdateApp extends Command
             '1.9.3' => Update193::class,
             '1.9.4' => Update194::class,
             '1.9.5' => Update195::class,
+            '1.9.6' => Update196::class,
             // Add more versions as needed
         ];
 
@@ -231,6 +233,7 @@ class UpdateApp extends Command
         $this->info("Seeding Templates...");
         // Run prov:templates:seed in a subprocess too
         $this->executeCommand('php artisan prov:templates:seed --no-interaction', 300);
+        $this->executeCommand('php artisan email:templates:seed --no-interaction', 300);
 
         // Create storage link
         $this->runArtisanCommand('storage:link', ['--force' => true]);

@@ -1,3 +1,7 @@
+{{-- email-template
+format: text
+layout: none
+--}}
 Welcome to your {{ config('app.name', 'Laravel') }} app. Make sure to keep a copy of this email for future reference. Below are the simple steps to get started using the app:
 
 Download the app for your device(s):

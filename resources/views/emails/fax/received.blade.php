@@ -1,21 +1,24 @@
+{{-- email-template
+version: 1.1.0
+language: en-us
+category: fax
+subcategory: received
+format: html
+layout: standard
+subject: {{ $email_subject }}
+description: Inbound fax received notification
+--}}
 @extends('emails.email_layout')
 
 @section('content')
-@php
-    $senderName = $attributes['caller_id_name'] ?? '';
-    $senderNumber = $attributes['caller_id_number'] ?? '';
-    $sender = trim($senderName . ($senderNumber ? ' <' . $senderNumber . '>' : ''));
-    $destination = $attributes['fax_destination'] ?? ($attributes['fax_extension'] ?? 'your fax line');
-@endphp
-
 <h1>Fax received{{ $attributes['caller_id_number'] ? ' from ' . $attributes['caller_id_number'] : '' }}.</h1>
 
-<p>A new fax was received for {{ $destination }} and is attached to this email.</p>
+<p>A new fax was received for {{ $attributes['fax_destination'] }} and is attached to this email.</p>
 
 <ul>
     {{-- <li><strong>Domain:</strong> {{ $attributes['domain_name'] ?? '' }}</li> --}}
-    <li><strong>From:</strong> {{ $sender }}</li>
-    <li><strong>To:</strong> {{ $destination }}</li>
+    <li><strong>From:</strong> {{ $attributes['caller_display'] }}</li>
+    <li><strong>To:</strong> {{ $attributes['fax_destination'] }}</li>
     <li><strong>Pages:</strong> {{ $attributes['fax_pages'] ?? '' }}</li>
     @if (!empty($attributes['fax_date']))
         <li><strong>Received:</strong> {{ $attributes['fax_date'] }}</li>

@@ -37,6 +37,7 @@ use App\Http\Controllers\DomainGroupsController;
 use App\Http\Controllers\DomainSettingsController;
 use App\Http\Controllers\EmailLogsController;
 use App\Http\Controllers\EmailQueueController;
+use App\Http\Controllers\EmailTemplateController;
 use App\Http\Controllers\ExtensionsController;
 use App\Http\Controllers\ExtensionStatisticsController;
 use App\Http\Controllers\FaxesController;
@@ -125,6 +126,17 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/email-logs/retry', [EmailLogsController::class, 'retry'])->name('email-logs.retry');
     Route::get('/email-logs/{uuid}/delivery-details', [EmailLogsController::class, 'deliveryDetails'])->name('email-logs.delivery-details');
     Route::post('/test-email-send', [TestEmailController::class, 'store'])->name('test-email-send.store');
+
+    // Email templates
+    Route::get('/email-templates/data', [EmailTemplateController::class, 'getData'])->name('email-templates.data');
+    Route::post('/email-templates', [EmailTemplateController::class, 'store'])->name('email-templates.store');
+    Route::put('/email-templates/{email_template}', [EmailTemplateController::class, 'update'])->name('email-templates.update');
+    Route::post('/email-templates/item-options', [EmailTemplateController::class, 'getItemOptions'])->name('email-templates.item.options');
+    Route::post('/email-templates/preview', [EmailTemplateController::class, 'preview'])->name('email-templates.preview');
+    Route::post('/email-templates/select-all', [EmailTemplateController::class, 'selectAll'])->name('email-templates.select.all');
+    Route::post('/email-templates/copy', [EmailTemplateController::class, 'copy'])->name('email-templates.copy');
+    Route::post('/email-templates/bulk-toggle', [EmailTemplateController::class, 'bulkToggle'])->name('email-templates.bulk.toggle');
+    Route::post('/email-templates/bulk-delete', [EmailTemplateController::class, 'bulkDelete'])->name('email-templates.bulk.delete');
 
     // TigerTMS logs
     Route::get('/tigertms-logs', [TigerTmsLogsController::class, 'index'])->name('tigertms-logs.index');

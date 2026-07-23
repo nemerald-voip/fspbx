@@ -4,23 +4,19 @@ namespace App\Mail;
 
 use Illuminate\Mail\Mailables\Content;
 
-
 class FaxQueueStatus extends BaseMailable
 {
-
-    public function __construct($params)
+    public function __construct(array $params)
     {
         parent::__construct($params);
+        $this->useEmailTemplate('fax', 'service-alert');
     }
 
-    /**
-     * Get the message content definition.
-     */
     public function content(): Content
     {
-        return new Content(
-            view: 'emails.fax.fax-queue-status',
-            text: 'emails.fax.fax-queue-status-text'
-        );
+        return $this->databaseTemplateContent(new Content(
+            view: 'emails.fax.service-alert',
+            text: 'emails.fax.service-alert-text',
+        ));
     }
 }

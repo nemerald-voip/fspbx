@@ -136,6 +136,10 @@ class FSPBXInitialDBSeed extends Command
         Artisan::call('prov:templates:seed');
         $this->info("Provisioning templates seeded successfully.");
 
+        $this->info("Seeding email templates...");
+        Artisan::call('email:templates:seed');
+        $this->info("Email templates seeded successfully.");
+
         // Step 13: Install & Build Frontend (NPM)
         $this->installAndBuildNpm();
 

@@ -12,6 +12,12 @@ import ace from 'ace-builds'
 // ace.config.set('basePath', '/ace'); // make sure assets are available at this path
 
 // --- Modes ---
+import modeHtmlUrl from 'ace-builds/src-noconflict/mode-html?url'
+ace.config.setModuleUrl('ace/mode/html', modeHtmlUrl)
+
+import modeTextUrl from 'ace-builds/src-noconflict/mode-text?url'
+ace.config.setModuleUrl('ace/mode/text', modeTextUrl)
+
 import modeXmlUrl from 'ace-builds/src-noconflict/mode-xml?url'
 ace.config.setModuleUrl('ace/mode/xml', modeXmlUrl)
 
@@ -38,6 +44,9 @@ ace.config.setModuleUrl('ace/theme/one_dark', themeGithubUrl)
 // --- Workers ---
 import workerBaseUrl from 'ace-builds/src-noconflict/worker-base?url'
 ace.config.setModuleUrl('ace/mode/base', workerBaseUrl)
+
+import workerHtmlUrl from 'ace-builds/src-noconflict/worker-html?url'
+ace.config.setModuleUrl('ace/mode/html_worker', workerHtmlUrl)
 
 import workerXmlUrl from 'ace-builds/src-noconflict/worker-xml?url'
 ace.config.setModuleUrl('ace/mode/xml_worker', workerXmlUrl)

@@ -1,17 +1,14 @@
-@php
-    $senderName = $attributes['caller_id_name'] ?? '';
-    $senderNumber = $attributes['caller_id_number'] ?? '';
-    $sender = trim($senderName . ($senderNumber ? ' <' . $senderNumber . '>' : ''));
-    $destination = $attributes['fax_destination'] ?? ($attributes['fax_extension'] ?? 'your fax line');
-@endphp
-
+{{-- email-template
+format: text
+layout: none
+--}}
 Fax received{{ $attributes['caller_id_number'] ? ' from ' . $attributes['caller_id_number'] : '' }}.
 
-A new fax was received for {{ $destination }} and is attached to this email.
+A new fax was received for {{ $attributes['fax_destination'] }} and is attached to this email.
 
 {{-- Domain: {{ $attributes['domain_name'] ?? '' }} --}}
-From: {{ $sender }}
-To: {{ $destination }}
+From: {{ $attributes['caller_display'] }}
+To: {{ $attributes['fax_destination'] }}
 Pages: {{ $attributes['fax_pages'] ?? '' }}
 @if (!empty($attributes['fax_date']))
 Received: {{ $attributes['fax_date'] }}

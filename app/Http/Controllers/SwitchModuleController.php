@@ -49,6 +49,8 @@ class SwitchModuleController extends Controller
         $service->syncFromDisk();
         $service->writeXml();
 
+        $perPage = min(max((int) $request->input('per_page', $this->perPage), 1), 5000);
+
         $modules = $this->moduleQuery($request)
             ->allowedSorts([
                 'module_category',
@@ -57,7 +59,7 @@ class SwitchModuleController extends Controller
                 'module_enabled',
             ])
             ->defaultSort('module_category', 'module_label')
-            ->paginate($this->perPage)
+            ->paginate($perPage)
             ->appends($request->query());
 
         $activeNames = $service->activeModuleNames($modules->getCollection()->pluck('module_name'));

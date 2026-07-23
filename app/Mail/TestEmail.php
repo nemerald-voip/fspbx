@@ -8,16 +8,19 @@ class TestEmail extends BaseMailable
 {
     public function __construct(array $attributes = [])
     {
-        parent::__construct(array_merge([
+        $attributes = array_merge([
             'email_subject' => 'Test email',
-        ], $attributes));
+            'sent_at' => now()->toDateTimeString(),
+        ], $attributes);
+        parent::__construct($attributes);
+        $this->useEmailTemplate('system', 'test');
     }
 
     public function content(): Content
     {
-        return new Content(
-            view: 'emails.test-email',
-            text: 'emails.test-email-text',
-        );
+        return $this->databaseTemplateContent(new Content(
+            view: 'emails.system.test',
+            text: 'emails.system.test-text',
+        ));
     }
 }

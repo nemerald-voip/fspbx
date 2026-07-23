@@ -5,7 +5,6 @@ namespace App\Jobs;
 use App\Models\EmailLog;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
-use App\Models\EmailTemplate;
 use Illuminate\Bus\Queueable;
 use App\Models\DomainSettings;
 use Illuminate\Support\Carbon;
@@ -210,28 +209,10 @@ class SendNewVoicemailNotificationByEmail implements ShouldQueue
                 $downloadUrl = app(VoicemailMessageUrlService::class)->downloadUrlForMessage($message);
             }
 
-            $template = EmailTemplate::where(function ($q) use ($domain_uuid) {
-                $q->where('domain_uuid', $domain_uuid)
-                    ->orWhereNull('domain_uuid');
-            })
-                ->select([
-                    'template_subject',
-                    'template_body',
-                ])
-                ->where('template_language', $this->params['default_language'] . '-' . $this->params['default_dialect'])
-                ->where('template_category', 'voicemail')
-                ->where('template_subcategory', $subcategory)
-                ->where('template_enabled', 'true')
-                // Prefer domain-specific rows over global rows:
-                ->orderBy('domain_uuid', 'desc')
-                ->first();
-
-
-            $subjectTpl = $template->template_subject ?? 'New Voicemail from {{ caller_id_number }}';
-            $bodyTpl    = $template->template_body ?? '<p>You have a new voicemail from {{ caller_id_number }}</p>';
             $timezone = get_local_time_zone($domain_uuid);
 
             $vars = [
+                'app_name' => config('app.name', 'FS PBX'),
                 'caller_id_number' => (string) $message->caller_id_number,
                 'caller_id_name'   => (string) $message->caller_id_name,
                 'voicemail_id'     => (string) ($message->voicemail?->voicemail_id ?? ''),
@@ -241,38 +222,26 @@ class SendNewVoicemailNotificationByEmail implements ShouldQueue
                 'message_duration'   => gmdate('i\m s\s', (int) $message->message_length),
                 'message_text'    => (string) $message->message_transcription,
                 'voicemail_download_url' => (string) $downloadUrl,
-                // add more as needed…
+                'voicemail_file_mode' => $voicemailFileMode,
             ];
 
-            if (strpos($bodyTpl, '${origination_callee_id_name}') !== false) {
-                $extension = Extensions::where('extension', $message->voicemail?->voicemail_id ?? null)
-                    ->where('domain_uuid', $domain_uuid)
-                    ->select('extension_uuid', 'extension', 'effective_caller_id_name')
-                    ->first();
-                $vars['origination_callee_id_name'] = $extension->name_formatted ?? null;
-            }
+            $extension = Extensions::where('extension', $message->voicemail?->voicemail_id ?? null)
+                ->where('domain_uuid', $domain_uuid)
+                ->select('extension_uuid', 'extension', 'effective_caller_id_name')
+                ->first();
+            $vars['origination_callee_id_name'] = $extension?->name_formatted;
+            $vars['new_messages'] = VoicemailMessages::where('voicemail_uuid', $message->voicemail->voicemail_uuid)
+                ->whereNull('message_status')
+                ->count();
 
-            if (strpos($subjectTpl, '${new_messages}') !== false) {
-                $voicemail_id = $message->voicemail?->voicemail_id ?? null;
-                $newMessagesCount = VoicemailMessages::where('voicemail_uuid', $message->voicemail->voicemail_uuid)
-                    ->whereNull('message_status')
-                    ->count();
-                $vars['new_messages'] = $newMessagesCount;
-            }
-
-            $replacements = [];
-            foreach ($vars as $k => $v) {
-                $replacements['${' . $k . '}'] = e($v);
-            }
-            $subject = strtr($subjectTpl, $replacements);
-            $bodyHtml = strtr($bodyTpl, $replacements);
-            $bodyHtml = $this->applyVoicemailDeliveryInstructions($bodyHtml, $voicemailFileMode, $downloadUrl, $bodyTpl);
-
-            $attributes['email_subject'] = $subject;
-            $attributes['bodyHtml'] = $bodyHtml;
-            $attributes['domain_uuid'] = $domain_uuid;
-            $attributes['logId'] = $this->logId;
-            $attributes['attachment_path'] = $voicemailFileMode === 'attach' ? $attachment_path : null;
+            $attributes = array_merge($vars, [
+                'template_subcategory' => $subcategory,
+                'language' => $this->params['default_language'].'-'.$this->params['default_dialect'],
+                'email_subject' => 'New voicemail from '.($message->caller_id_number ?: 'unknown caller'),
+                'domain_uuid' => $domain_uuid,
+                'logId' => $this->logId,
+                'attachment_path' => $voicemailFileMode === 'attach' ? $attachment_path : null,
+            ]);
 
             $uuid    = (string) $message->voicemail_message_uuid;
             $sentKey = "vm:sent:$uuid";
@@ -518,53 +487,6 @@ class SendNewVoicemailNotificationByEmail implements ShouldQueue
         }
 
         return mb_substr($message, 0, $max - 3) . '...';
-    }
-
-    private function applyVoicemailDeliveryInstructions(
-        string $bodyHtml,
-        string $voicemailFileMode,
-        ?string $downloadUrl,
-        string $bodyTpl
-    ): string {
-        $legacyInstructions = '<p>Listen to this voicemail over your phone or by opening the attached sound file. You can also sign in to your account with your credentials to manage and listen to voicemails.</p>';
-
-        if ($voicemailFileMode === 'attach') {
-            return $bodyHtml;
-        }
-
-        $replacement = '<p>Listen to this voicemail over your phone. You can also sign in to your account with your credentials to manage and listen to voicemails.</p>';
-
-        if ($voicemailFileMode === 'link' && $downloadUrl) {
-            $replacement = '<p>Listen to this voicemail over your phone or by using the secure download link below. You can also sign in to your account with your credentials to manage and listen to voicemails.</p>';
-
-            if (strpos($bodyTpl, '${voicemail_download_url}') === false) {
-                $replacement .= $this->voicemailDownloadLinkHtml($downloadUrl);
-            }
-        }
-
-        if (strpos($bodyHtml, $legacyInstructions) !== false) {
-            return str_replace($legacyInstructions, $replacement, $bodyHtml);
-        }
-
-        if ($voicemailFileMode === 'link' && $downloadUrl && strpos($bodyTpl, '${voicemail_download_url}') === false) {
-            return $this->insertBeforeBodyClose($bodyHtml, $this->voicemailDownloadLinkHtml($downloadUrl));
-        }
-
-        return $bodyHtml;
-    }
-
-    private function voicemailDownloadLinkHtml(string $downloadUrl): string
-    {
-        return '<p><a href="' . e($downloadUrl) . '">Download voicemail recording</a></p>';
-    }
-
-    private function insertBeforeBodyClose(string $bodyHtml, string $html): string
-    {
-        if (stripos($bodyHtml, '</body>') !== false) {
-            return preg_replace('/<\/body>/i', $html . '</body>', $bodyHtml, 1);
-        }
-
-        return $bodyHtml . $html;
     }
 
     private function deleteVoicemailSilently(\App\Models\VoicemailMessages $message): void

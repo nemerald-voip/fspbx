@@ -21,6 +21,7 @@ class InstallSchema
         $this->ensureRingGroupsSchema();
         $this->ensureIvrMenusSchema();
         $this->ensureFollowMeSchema();
+        $this->ensureEmailTemplatesSchema();
     }
 
     public function ensureMetadata(): void
@@ -34,6 +35,53 @@ class InstallSchema
         $this->seedFollowMePermissions();
         $this->seedFollowMeDefaultSettings();
         $this->seedActiveCallPermissions();
+    }
+
+    public function ensureEmailTemplatesSchema(): void
+    {
+        if (Schema::hasTable('email_templates')) {
+            if (! Schema::hasColumn('email_templates', 'template_layout')) {
+                Schema::table('email_templates', function (Blueprint $table) {
+                    $table->string('template_layout', 20)->default('standard');
+                });
+            }
+
+            return;
+        }
+
+        Schema::create('email_templates', function (Blueprint $table) {
+            $table->uuid('email_template_uuid')
+                ->primary()
+                ->default(DB::raw('uuid_generate_v4()'));
+            $table->uuid('domain_uuid')->nullable()->index();
+            $table->uuid('base_template_uuid')->nullable()->index();
+            $table->string('base_version', 50)->nullable();
+            $table->string('template_key');
+            $table->string('template_type', 20)->default('custom');
+            $table->string('template_language', 20)->default('en-us');
+            $table->string('template_category');
+            $table->string('template_subcategory');
+            $table->string('template_layout', 20)->default('standard');
+            $table->string('version', 50)->nullable();
+            $table->text('template_subject');
+            $table->text('template_html');
+            $table->text('template_text')->nullable();
+            $table->boolean('template_enabled')->default(true);
+            $table->text('template_description')->nullable();
+            $table->string('checksum', 64)->nullable()->index();
+            $table->uuid('created_by')->nullable();
+            $table->uuid('updated_by')->nullable();
+            $table->timestampsTz();
+
+            $table->index(
+                ['template_key', 'template_language', 'template_type'],
+                'email_templates_lookup_index'
+            );
+            $table->unique(
+                ['template_type', 'domain_uuid', 'template_key', 'template_language'],
+                'email_templates_scope_unique'
+            );
+        });
     }
 
     private function ensureExtensionsSchema(): void

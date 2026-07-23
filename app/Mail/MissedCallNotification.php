@@ -11,16 +11,24 @@ class MissedCallNotification extends BaseMailable
     public function __construct(array $params)
     {
         $params = $this->applyDomainSender($params);
-
+        $params['caller_display'] = trim(
+            ($params['caller_id_name'] ?? '').
+            (filled($params['caller_id_number'] ?? null) ? ' <'.$params['caller_id_number'].'>' : '')
+        ) ?: 'Unknown caller';
+        $params['ring_group_display'] = trim(
+            ($params['ring_group_name'] ?? '').
+            (filled($params['ring_group_extension'] ?? null) ? ' ext '.$params['ring_group_extension'] : '')
+        ) ?: 'Ring group';
         parent::__construct($params);
+        $this->useEmailTemplate('missed', 'ring-group');
     }
 
     public function content(): Content
     {
-        return new Content(
-            view: 'emails.missed-call.notification',
-            text: 'emails.missed-call.notification-text',
-        );
+        return $this->databaseTemplateContent(new Content(
+            view: 'emails.missed.ring-group',
+            text: 'emails.missed.ring-group-text',
+        ));
     }
 
     private function applyDomainSender(array $params): array

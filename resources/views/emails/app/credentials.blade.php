@@ -1,3 +1,13 @@
+{{-- email-template
+version: 1.1.0
+language: en-us
+category: app
+subcategory: credentials
+format: html
+layout: standard
+subject: {{ $email_subject }}
+description: Mobile and desktop app credentials
+--}}
 @extends('emails.email_layout')
 
 @section('content')

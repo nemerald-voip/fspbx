@@ -1,3 +1,13 @@
+{{-- email-template
+version: 1.2.0
+language: en-us
+category: fax
+subcategory: failed
+format: html
+layout: standard
+subject: Re: fax to {{ $fax_destination }} Failed
+description: Failed outbound fax notification
+--}}
 @extends('emails.email_layout')
 
 @section('content')

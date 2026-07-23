@@ -16,16 +16,17 @@ class FaxSent extends BaseMailable
             ?? 'Fax sent'
                 . ($destination ? ' to ' . $destination : '')
                 . ($pages !== '' ? ' (' . $pages . ' page' . ((string) $pages === '1' ? '' : 's') . ')' : '');
-
+        $attributes['fax_date'] = $attributes['fax_date'] ?? now()->format('Y-m-d H:i');
         parent::__construct($attributes);
+        $this->useEmailTemplate('fax', 'sent');
     }
 
     public function content(): Content
     {
-        return new Content(
-            view: 'emails.fax.success',
-            text: 'emails.fax.success-text',
-        );
+        return $this->databaseTemplateContent(new Content(
+            view: 'emails.fax.sent',
+            text: 'emails.fax.sent-text',
+        ));
     }
 
     public function attachments(): array
