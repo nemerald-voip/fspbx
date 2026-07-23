@@ -446,6 +446,8 @@ class BasicDialerService
             'basic_dialer_campaign_attempt_uuid' => $attempt->basic_dialer_campaign_attempt_uuid,
             'domain_uuid' => $campaign->domain_uuid,
             'domain_name' => $domainName,
+            'sip_h_X-accountcode' => $domainName,
+            'sip_h_X-customacc' => $domainName,
             'call_direction' => 'outbound',
             'originate_timeout' => (string) $campaign->originate_timeout,
             'outbound_caller_id_name' => $callerIdName,
