@@ -131,6 +131,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
 
     // FreeSWITCH logs
     Route::get('/freeswitch-logs', [FreeswitchLogController::class, 'index'])->name('freeswitch-logs.index');
+    Route::get('/external-freeswitch-logs', [FreeswitchLogController::class, 'externalIndex'])->name('external-freeswitch-logs.index');
     Route::post('/freeswitch-logs/sip-trace', [FreeswitchLogController::class, 'sipTrace'])->name('freeswitch-logs.sip-trace');
 
     // Nginx logs
