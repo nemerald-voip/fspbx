@@ -34,6 +34,10 @@ class RecordingsManagerController extends Controller
                 'select_all' => route('recordings-manager.select.all'),
             ],
             'permissions' => $this->getRecordingPermissions(),
+            'pagination' => [
+                'per_page' => fspbx_pagination_per_page(),
+                'per_page_options' => fspbx_pagination_options(),
+            ],
             'recording_options' => [
                 'routes' => [
                     'text_to_speech_route' => route('greetings.textToSpeech'),
@@ -62,7 +66,7 @@ class RecordingsManagerController extends Controller
 
         $paginator = $this->buildQuery()
             ->defaultSort('-insert_date')
-            ->paginate(50)
+            ->paginate(fspbx_pagination_per_page($request))
             ->appends($request->query());
 
         $paginator->setCollection(

@@ -6,14 +6,19 @@ use App\Http\Requests\StoreRecordingBlobRequest;
 use App\Http\Requests\StoreRecordingRequest;
 use App\Http\Requests\UpdateRecordingRequest;
 use App\Models\CallCenterQueues;
+use App\Models\Domain;
 use App\Models\Recordings;
 use App\Models\RingGroups;
+use App\Services\RecordingService;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
 
 class RecordingsController extends Controller
 {
+    public function __construct(private RecordingService $recordings) {}
+
     /**
      * Store a newly created resource in storage.
      *
@@ -23,7 +28,12 @@ class RecordingsController extends Controller
     public function index()
     {
         $output = [];
-        $recordingsCollection = Recordings::where('domain_uuid', Session::get('domain_uuid'))->orderBy('insert_date')->get();
+        $recordingsCollection = $this->recordings->list(
+            (string) Session::get('domain_uuid'),
+            null,
+            null,
+            'insert_date'
+        );
         if ($recordingsCollection) {
             foreach ($recordingsCollection as $recording) {
                 $path = Session::get('domain_name').'/'.$recording->recording_filename;
@@ -49,68 +59,47 @@ class RecordingsController extends Controller
      */
     public function store(StoreRecordingRequest $request)
     {
-        // Validate the request
         $attributes = $request->validated();
+        $domain = Domain::query()->whereKey(Session::get('domain_uuid'))->firstOrFail();
+        $audio = $request->file('greeting_filename');
+        $temporaryRecording = null;
 
-        // Process the greeting file if it exists
-        if ($request->greeting_filename) {
-            // Store the greeting file temporarily
-            $tempPath = $request->greeting_filename->store(
-                Session::get('domain_name')
+        if (! $audio && $request->filled('greeting_recorded_file') && Storage::exists($request->greeting_recorded_file)) {
+            $temporaryRecording = $request->greeting_recorded_file;
+            $audio = new UploadedFile(
+                Storage::path($temporaryRecording),
+                basename($temporaryRecording),
+                null,
+                null,
+                true
             );
+        }
 
-            // Get the input file path
-            $inputPath = Storage::path($tempPath);
+        if (! $audio) {
+            return response()->json(['error' => 422, 'message' => 'Failed to upload file'], 422);
+        }
 
-            // Generate the encoded filename
-            $encodedFilename = Session::get('domain_name').'/uploaded_'.md5(Session::get('domain_name').'_'.uniqid()).'.wav';
-
-            // Get the output file path
-            $path = Storage::disk('recordings')->path($encodedFilename);
-
-            // Convert the input file to the desired format
-            shell_exec('ffmpeg -i '.$inputPath.' -acodec pcm_s16le -ac 1 -ar 16000 '.$path);
-
-            // Delete the temporary file
-            Storage::delete($tempPath);
-
-            // Update the path variable with the encoded filename
-            $path = $encodedFilename;
-        } else {
-            // Process the recorded greeting file
-            if (Storage::exists($request->greeting_recorded_file)) {
-                // Generate the path for the recorded greeting file
-                $path = Session::get('domain_name').'/recorded_'.md5($request->greeting_recorded_file).'.'.pathinfo($request->greeting_recorded_file, PATHINFO_EXTENSION);
-
-                // Store the recorded greeting file
-                Storage::disk('recordings')->put($path, Storage::get($request->greeting_recorded_file));
+        try {
+            $result = $this->recordings->create(
+                $domain,
+                $attributes['greeting_name'],
+                $attributes['greeting_description'],
+                $audio,
+                (string) Session::get('user_uuid')
+            );
+            $recording = $result['recording'];
+        } finally {
+            if ($temporaryRecording) {
+                Storage::delete($temporaryRecording);
             }
         }
-
-        // Check if the recording file exists
-        if (!Storage::disk('recordings')->exists($path)) {
-            return response()->json([
-                'error' => 401,
-                'message' => 'Failed to upload file'
-            ]);
-        }
-
-        // Remove the domain name from the path
-        $path = trim(str_replace(Session::get('domain_name'), "", $path), '/');
-
-        // Create a new recording
-        $recording = new Recordings();
-        $recording->recording_filename = $path;
-        $recording->recording_name = $attributes['greeting_name'];
-        $recording->recording_description = $attributes['greeting_description'];
-        $recording->save();
 
         // Return the JSON response
         return response()->json([
             'status' => "success",
             'id' => $recording->recording_uuid,
             'name' => $recording->recording_name,
-            'filename' => $path,
+            'filename' => $recording->recording_filename,
             'message' => 'Greeting created successfully'
         ]);
     }
@@ -152,6 +141,12 @@ class RecordingsController extends Controller
      */
     public function show(Recordings $recording)
     {
+        $recording = $this->recordings->find(
+            (string) Session::get('domain_uuid'),
+            (string) $recording->recording_uuid
+        );
+        abort_unless($recording, 404);
+
         return response()->json([
             'id' => $recording->recording_uuid,
             'filename' => $recording->recording_filename,
@@ -170,10 +165,15 @@ class RecordingsController extends Controller
     public function update(UpdateRecordingRequest $request, Recordings $recording)
     {
         $attributes = $request->validated();
+        $domain = Domain::query()->whereKey(Session::get('domain_uuid'))->firstOrFail();
+        $recording = $this->recordings->find((string) $domain->domain_uuid, (string) $recording->recording_uuid);
+        abort_unless($recording, 404);
 
-        $recording->recording_name = $attributes['greeting_name'];
-        $recording->recording_description = $attributes['greeting_description'];
-        $recording->save();
+        $result = $this->recordings->update($recording, $domain, [
+            'recording_name' => $attributes['greeting_name'],
+            'recording_description' => $attributes['greeting_description'],
+        ], null, (string) Session::get('user_uuid'));
+        $recording = $result['recording'];
 
         return response()->json([
             'status' => "success",
@@ -243,10 +243,11 @@ class RecordingsController extends Controller
 
     public function destroy(Recordings $recording)
     {
-        $path = Session::get('domain_name').'/'.$recording->recording_filename;
-        $deleted = $recording->delete();
+        $domain = Domain::query()->whereKey(Session::get('domain_uuid'))->firstOrFail();
+        $recording = $this->recordings->find((string) $domain->domain_uuid, (string) $recording->recording_uuid);
+        abort_unless($recording, 404);
+        $deleted = $this->recordings->delete($recording, $domain);
         if ($deleted) {
-            Storage::disk('recordings')->delete($path);
             return response()->json([
                 'status' => 'success',
                 'id' => $recording->recording_uuid,
