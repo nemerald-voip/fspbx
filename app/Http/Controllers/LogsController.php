@@ -35,7 +35,6 @@ class LogsController extends Controller
         $domain_uuid = session('domain_uuid');
         $startPeriod = Carbon::now(get_local_time_zone($domain_uuid))->startOfDay()->setTimeZone('UTC');
         $endPeriod = Carbon::now(get_local_time_zone($domain_uuid))->endOfDay()->setTimeZone('UTC');
-        $postmarkDeliveryDetailsEnabled = $this->postmarkDeliveryDetailsEnabled();
 
         return Inertia::render(
             $this->viewName,
@@ -57,9 +56,7 @@ class LogsController extends Controller
                     'dashboard_route' => route('dashboard'),
                     'email_logs' => route('email-logs.index'),
                     'email_retry' => route('email-logs.retry'),
-                    'email_delivery_details' => $postmarkDeliveryDetailsEnabled
-                        ? route('email-logs.delivery-details', ['uuid' => '__UUID__'])
-                        : null,
+                    'email_delivery_details' => route('email-logs.delivery-details', ['uuid' => '__UUID__']),
                     'test_email_send' => route('test-email-send.store'),
                     'tigertms_logs' => $this->tigerTmsLogsEnabled() ? route('tigertms-logs.index') : null,
                     'inbound_webhooks' => route('inbound-webhooks.index'),
@@ -70,6 +67,7 @@ class LogsController extends Controller
                     'fax_logs_bulk_delete' => route('fax-logs.bulk.delete'),
                     'fax_logs_retry' => route('fax-logs.retry', ['faxLog' => ':faxLog']),
                     'freeswitch_logs' => route('freeswitch-logs.index'),
+                    'external_freeswitch_logs' => route('external-freeswitch-logs.index'),
                     'freeswitch_sip_trace' => route('freeswitch-logs.sip-trace'),
                     'nginx_logs' => route('nginx-logs.index'),
                     'laravel_logs' => route('laravel-logs.index'),
@@ -80,32 +78,11 @@ class LogsController extends Controller
                 },
                 'features' => [
                     'tigertms_logs' => $this->tigerTmsLogsEnabled(),
-                    'postmark_delivery_details' => $postmarkDeliveryDetailsEnabled,
+                    'opensearch_logs' => $this->externalFreeswitchLogsEnabled(),
                 ],
 
             ]
         );
-    }
-
-    private function postmarkDeliveryDetailsEnabled(): bool
-    {
-        if (blank(config('services.postmark.token'))) {
-            return false;
-        }
-
-        $defaultMailer = config('mail.default');
-        $mailer = config("mail.mailers.{$defaultMailer}", []);
-
-        if (($mailer['transport'] ?? null) === 'postmark') {
-            return true;
-        }
-
-        if (($mailer['transport'] ?? null) === 'failover') {
-            return collect($mailer['mailers'] ?? [])
-                ->contains(fn ($name) => (config("mail.mailers.{$name}.transport") === 'postmark'));
-        }
-
-        return str_contains((string) ($mailer['host'] ?? ''), 'postmarkapp.com');
     }
 
     private function tigerTmsLogsEnabled(): bool
@@ -113,6 +90,14 @@ class LogsController extends Controller
         return filled(config('tigertms.base_url'))
             && filled(config('tigertms.username'))
             && filled(config('tigertms.password'));
+    }
+
+    private function externalFreeswitchLogsEnabled(): bool
+    {
+        return filled(config('services.opensearch_logs.url'))
+            && filled(config('services.opensearch_logs.index'))
+            && filled(config('services.opensearch_logs.username'))
+            && filled(config('services.opensearch_logs.password'));
     }
 
     /**
