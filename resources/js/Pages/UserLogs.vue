@@ -134,14 +134,14 @@
                                     :value="row.user_log_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                                 <div class="ml-9">
                                     <span class="flex items-center">
-                                        {{ row.user?.name_formatted ?? 'User missing?' }}
+                                        {{ row.user?.name_formatted ?? row.username ?? 'User missing?' }}
                                     </span>
                                 </div>
                             </div>
                         </TableField>
 
                         <!-- Email -->
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.user?.user_email ?? ''" />
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.email ?? row.user?.user_email ?? ''" />
 
                         <TableField v-if="filterData.showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                             :text="row.domain?.domain_description">

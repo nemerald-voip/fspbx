@@ -132,6 +132,8 @@ class UserLogsController extends Controller
             'domain_uuid',
             'timestamp',
             'user_uuid',
+            'username',
+            'email',
             'type',
             'result',
             'remote_address',
