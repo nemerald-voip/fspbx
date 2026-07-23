@@ -122,6 +122,8 @@ class ExtensionsController extends Controller
                     'create_contact_center_user' => (Module::has('ContactCenter') && Module::collections()->has('ContactCenter') && Route::has('contact-center.user.store')) ? route('contact-center.user.store') : null,
                     'export' => route('extensions.export'),
                     'duplicate' => route('extensions.duplicate'),
+                    'welcome_email_options' => route('extensions.welcome-email.options'),
+                    'welcome_email_send' => route('extensions.welcome-email.send'),
                 ]
             ]
         );
@@ -2415,6 +2417,7 @@ public function store(StoreExtensionRequest $request)
 
         $permissions['create_user'] = userCheckPermission('extension_create_user');
         $permissions['create_admin'] = userCheckPermission('extension_create_admin');
+        $permissions['welcome_email_send'] = userCheckPermission('extension_welcome_email_send');
 
 
         $permissions['extension_export'] = userCheckPermission('extension_export');

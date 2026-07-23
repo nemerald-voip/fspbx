@@ -39,6 +39,7 @@ use App\Http\Controllers\EmailLogsController;
 use App\Http\Controllers\EmailQueueController;
 use App\Http\Controllers\EmailTemplateController;
 use App\Http\Controllers\ExtensionsController;
+use App\Http\Controllers\ExtensionWelcomeEmailController;
 use App\Http\Controllers\ExtensionStatisticsController;
 use App\Http\Controllers\FaxesController;
 use App\Http\Controllers\FaxInboxController;
@@ -334,6 +335,8 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/extensions/import', [ExtensionsController::class, 'import'])->name('extensions.import');
     Route::post('/extensions/make-user', [ExtensionsController::class, 'makeUser'])->name('extensions.make.user');
     Route::post('/extensions/password', [ExtensionsController::class, 'updatePassword'])->name('extensions.password.update');
+    Route::post('/extensions/welcome-email/options', [ExtensionWelcomeEmailController::class, 'options'])->name('extensions.welcome-email.options');
+    Route::post('/extensions/welcome-email/send', [ExtensionWelcomeEmailController::class, 'send'])->name('extensions.welcome-email.send');
 
     // Mobile Apps
     Route::post('/apps/users/bulk-action', [AppsController::class, 'bulkUserAction'])->name('apps.users.bulk-action');

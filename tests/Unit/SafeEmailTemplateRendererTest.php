@@ -4,16 +4,32 @@ namespace Tests\Unit;
 
 use App\Services\EmailTemplateSourceService;
 use App\Services\SafeEmailTemplateRenderer;
+use Illuminate\Support\Facades\File;
+use Illuminate\View\Compilers\Compiler;
+use ReflectionProperty;
 use RuntimeException;
 use Tests\TestCase;
 
 class SafeEmailTemplateRendererTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $compiledPath = '/tmp/fspbx-safe-email-template-tests';
+        File::ensureDirectoryExists($compiledPath);
+        config(['view.compiled' => $compiledPath]);
+
+        $cachePath = new ReflectionProperty(Compiler::class, 'cachePath');
+        $cachePath->setValue(app('blade.compiler'), $compiledPath);
+    }
+
     public function test_all_notification_template_sources_are_safe_and_discoverable(): void
     {
         $definitions = app(EmailTemplateSourceService::class)->definitions();
 
-        $this->assertCount(19, $definitions);
+        $this->assertCount(20, $definitions);
+        $this->assertArrayHasKey('extension.welcome|en-us', $definitions);
         $this->assertArrayHasKey('voicemail.default|en-us', $definitions);
         $this->assertArrayHasKey('voicemail.transcription|en-us', $definitions);
 

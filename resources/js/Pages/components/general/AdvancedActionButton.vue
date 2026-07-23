@@ -16,7 +16,7 @@
             leave-from-class="transform opacity-100 scale-100"
             leave-to-class="transform opacity-0 scale-95">
             <MenuItems ref="container"
-                class="z-50 w-56 origin-top-right rounded-md bg-white py-2 shadow-xl ring-1 ring-gray-900/5 focus:outline-none">
+                class="z-50 w-64 origin-top-right rounded-md bg-white py-2 shadow-xl ring-1 ring-gray-900/5 focus:outline-none">
                 <div v-for="(group, idx) in actions" :key="group.category">
                     <!-- Dynamic category name -->
                     <div class="px-4 py-3">
@@ -28,14 +28,14 @@
                             <button
                                 @click="$emit('advancedAction', action.id)"
                                 :class="[
-                                    'group flex items-center px-8 py-2 text-sm min-w-full transition',
+                                    'group flex w-full items-center px-8 py-2 text-left text-sm transition',
                                     active ? 'bg-gray-100 text-gray-900' : 'text-gray-500'
                                 ]"
                             >
                                 <component :is="getIconComponent(action.icon)"
-                                    class="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500"
+                                    class="mr-3 h-5 w-5 shrink-0 text-gray-400 group-hover:text-gray-500"
                                     aria-hidden="true" />
-                                {{ action.label }}
+                                <span class="whitespace-nowrap">{{ action.label }}</span>
                             </button>
                         </MenuItem>
                     </div>
@@ -73,6 +73,7 @@ const KeyIcon = defineAsyncComponent(() => import('@heroicons/vue/24/outline/Key
 const TrashIcon = defineAsyncComponent(() => import('@heroicons/vue/20/solid/TrashIcon'));
 const DocumentDuplicateIcon = defineAsyncComponent(() => import('@heroicons/vue/24/outline/DocumentDuplicateIcon'));
 const NoSymbolIcon = defineAsyncComponent(() => import('@heroicons/vue/24/outline/NoSymbolIcon'));
+const EnvelopeIcon = defineAsyncComponent(() => import('@heroicons/vue/24/outline/EnvelopeIcon'));
 
 
 const props = defineProps({
@@ -90,7 +91,8 @@ const iconMap = {
   KeyIcon,
   SupportAgent,
   DocumentDuplicateIcon,
-  NoSymbolIcon
+  NoSymbolIcon,
+  EnvelopeIcon
 };
 
 const getIconComponent = (iconKey) => {

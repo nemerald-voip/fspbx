@@ -57,6 +57,7 @@ class EmailTemplatePreviewService
 
         return [
             'email_subject' => 'Sample email notification',
+            'app_name' => config('app.name', 'FS PBX'),
             'product_url' => 'https://example.test',
             'company_name' => 'Example Company',
             'company_address' => '100 Main Street',
@@ -74,6 +75,16 @@ class EmailTemplatePreviewService
             'apple_store_link' => 'https://www.apple.com/app-store/',
             'windows_link' => 'https://example.test/download/windows',
             'mac_link' => 'https://example.test/download/mac',
+
+            'recipient_name' => 'Jordan Lee',
+            'account_name' => 'Example Company',
+            'phone_system_address' => 'pbx.example.test',
+            'direct_numbers' => ['+1 202-555-0101', '+1 202-555-0102'],
+            'voicemail_id' => '1001',
+            'voicemail_pin' => '4829',
+            'portal_email' => 'jordan@example.test',
+            'portal_login_url' => 'https://example.test/login',
+            'password_request_url' => 'https://example.test/forgot-password',
 
             'hostname' => 'pbx.example.test',
             'success' => ['recording-001.wav', 'recording-002.wav'],

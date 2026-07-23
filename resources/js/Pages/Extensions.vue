@@ -343,6 +343,16 @@
         :header="'Bulk Update'" :loading="isModalLoading" @close="handleModalClose"
         @error="handleErrorResponse" @success="showNotification" @refresh-data="refreshCurrentPage" />
 
+    <SendExtensionWelcomeEmailModal
+        :show="showWelcomeEmailModal"
+        :loading="isWelcomeEmailLoading"
+        :submitting="isWelcomeEmailSubmitting"
+        :options="welcomeEmailOptions"
+        :error="welcomeEmailError"
+        @close="closeWelcomeEmailModal"
+        @send="sendWelcomeEmails"
+    />
+
     <ConfirmationModal 
         :show="showDeleteConfirmationModal" 
         @close="showDeleteConfirmationModal = false"
@@ -399,6 +409,7 @@ import Notification from "./components/notifications/Notification.vue";
 import Badge from "@generalComponents/Badge.vue";
 import { MicrophoneIcon } from "@heroicons/vue/24/outline";
 import UploadModal from "./components/modal/UploadModal.vue";
+import SendExtensionWelcomeEmailModal from "./components/modal/SendExtensionWelcomeEmailModal.vue";
 import { DocumentArrowUpIcon, DocumentArrowDownIcon, DevicePhoneMobileIcon } from "@heroicons/vue/24/outline";
 
 
@@ -421,6 +432,12 @@ const isRingotelLoading = ref(false)
 const showUploadModal = ref(false);
 const isUploadingFile = ref(null);
 const uploadErrors = ref(null);
+const showWelcomeEmailModal = ref(false);
+const isWelcomeEmailLoading = ref(false);
+const isWelcomeEmailSubmitting = ref(false);
+const welcomeEmailOptions = ref(null);
+const welcomeEmailError = ref(null);
+const welcomeEmailItems = ref([]);
 
 const props = defineProps({
     routes: Object,
@@ -488,6 +505,14 @@ const bulkActions = computed(() => {
         });
     }
 
+    if (permissions.value.welcome_email_send) {
+        actions.push({
+            id: 'send_welcome_email',
+            label: 'Send welcome emails',
+            icon: 'EnvelopeIcon'
+        });
+    }
+
     return actions;
 });
 
@@ -528,6 +553,15 @@ const advancedActions = computed(() => {
             actions: [
                 { id: 'make_cc_agent', label: 'Make Agent', icon: 'SupportAgent' },
                 { id: 'make_cc_admin', label: 'Make Admin', icon: 'KeyIcon' },
+            ],
+        });
+    }
+
+    if (permissions.value.welcome_email_send) {
+        actions.push({
+            category: "Communication",
+            actions: [
+                { id: 'send_welcome_email', label: 'Send welcome email', icon: 'EnvelopeIcon' },
             ],
         });
     }
@@ -734,9 +768,17 @@ const handleBulkActionRequest = (action) => {
         getItemOptions(null, { include_mobile_app_bulk: true, mode: 'bulk_update' });
         bulkUpdateModalTrigger.value = true;
     }
+    if (action === 'send_welcome_email') {
+        openWelcomeEmailModal(selectedItems.value);
+    }
 };
 
 const handleAdvancedActionRequest = (action, extension_uuid) => {
+
+    if (action === 'send_welcome_email') {
+        openWelcomeEmailModal([extension_uuid]);
+        return;
+    }
 
     if (action === 'duplicate') {
         const url = props.routes.duplicate || '/extensions/duplicate';
@@ -795,6 +837,60 @@ const handleAdvancedActionRequest = (action, extension_uuid) => {
         .finally(() => {
             // reset loading state, close modal, etc.
         });
+};
+
+const openWelcomeEmailModal = async (items) => {
+    welcomeEmailItems.value = [...items];
+    welcomeEmailOptions.value = null;
+    welcomeEmailError.value = null;
+    showWelcomeEmailModal.value = true;
+    isWelcomeEmailLoading.value = true;
+
+    try {
+        const response = await axios.post(props.routes.welcome_email_options, {
+            items: welcomeEmailItems.value,
+        });
+        welcomeEmailOptions.value = response.data;
+    } catch (error) {
+        closeWelcomeEmailModal();
+        handleErrorResponse(error);
+    } finally {
+        isWelcomeEmailLoading.value = false;
+    }
+};
+
+const sendWelcomeEmails = async (recipient = null) => {
+    isWelcomeEmailSubmitting.value = true;
+    welcomeEmailError.value = null;
+
+    try {
+        const payload = {
+            items: welcomeEmailItems.value,
+            ...(recipient ? { recipient } : {}),
+        };
+        const response = await axios.post(props.routes.welcome_email_send, payload);
+        const wasBulkSend = welcomeEmailItems.value.length > 1;
+
+        showNotification('success', response.data.messages);
+        closeWelcomeEmailModal();
+
+        if (wasBulkSend) {
+            handleClearSelection();
+        }
+    } catch (error) {
+        welcomeEmailError.value = error.response?.data?.messages?.error?.[0]
+            ?? error.response?.data?.errors?.recipient?.[0]
+            ?? 'The welcome email could not be queued.';
+    } finally {
+        isWelcomeEmailSubmitting.value = false;
+    }
+};
+
+const closeWelcomeEmailModal = () => {
+    showWelcomeEmailModal.value = false;
+    welcomeEmailOptions.value = null;
+    welcomeEmailError.value = null;
+    welcomeEmailItems.value = [];
 };
 
 
@@ -953,6 +1049,7 @@ const handleModalClose = () => {
     showDeleteConfirmationModal.value = false;
     bulkUpdateModalTrigger.value = false;
     showUploadModal.value = false;
+    closeWelcomeEmailModal();
 }
 
 const hideNotification = () => {

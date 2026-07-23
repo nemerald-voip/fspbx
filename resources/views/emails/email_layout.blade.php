@@ -464,20 +464,30 @@
                 </table>
               </td>
             </tr>
-            <tr>
-              <td>
-                <table class="email-footer" align="center" width="570" cellpadding="0" cellspacing="0" role="presentation">
-                  <tr>
-                    <td class="content-cell" align="center">
-                      <p class="f-fallback sub align-center">&copy; {{ $attributes['company_name'] ?? ''}}, {{ $attributes['company_address'] ?? ''}}</p>
-                      <p class="f-fallback sub align-center"> 
-                        <a href="mailto:{{ $attributes['support_email'] ?? '' }}">Unsubscribe from this list</a>
-                      </p>
-                    </td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
+            @if (!empty($attributes['company_name']) || !empty($attributes['company_address']) || !empty($attributes['unsubscribe_email']))
+              <tr>
+                <td>
+                  <table class="email-footer" align="center" width="570" cellpadding="0" cellspacing="0" role="presentation">
+                    <tr>
+                      <td class="content-cell" align="center">
+                        @if (!empty($attributes['company_name']) || !empty($attributes['company_address']))
+                          <p class="f-fallback sub align-center">
+                            &copy;
+                            {{ $attributes['company_name'] ?? '' }}@if (!empty($attributes['company_name']) && !empty($attributes['company_address'])),@endif
+                            {{ $attributes['company_address'] ?? '' }}
+                          </p>
+                        @endif
+                        @if (!empty($attributes['unsubscribe_email']))
+                          <p class="f-fallback sub align-center">
+                            <a href="mailto:{{ $attributes['unsubscribe_email'] }}">Unsubscribe from this list</a>
+                          </p>
+                        @endif
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            @endif
           </table>
         </td>
       </tr>
