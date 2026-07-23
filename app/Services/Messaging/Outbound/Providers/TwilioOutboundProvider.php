@@ -58,9 +58,16 @@ class TwilioOutboundProvider implements OutboundProviderInterface
             $payload['Body'] = $text;
         }
 
-        foreach (array_slice($mediaUrls, 0, 10) as $url) {
-            $payload['MediaUrl[]'] = $url;
+        // Twilio expects the MediaUrl parameter repeated for each attachment,
+        // which PHP form encoding cannot express, so build the body manually.
+        $formPairs = [];
+        foreach ($payload as $key => $value) {
+            $formPairs[] = urlencode($key) . '=' . urlencode($value);
         }
+        foreach (array_slice($mediaUrls, 0, 10) as $url) {
+            $formPairs[] = 'MediaUrl=' . urlencode($url);
+        }
+        $formBody = implode('&', $formPairs);
 
         $endpoint = "{$baseUrl}/Accounts/{$accountSid}/Messages.json";
 
@@ -68,14 +75,15 @@ class TwilioOutboundProvider implements OutboundProviderInterface
             'message_uuid' => $message->message_uuid,
             'endpoint'     => $endpoint,
             'payload'      => $payload,
+            'media_urls'   => array_slice($mediaUrls, 0, 10),
         ]);
 
         try {
             $response = Http::withBasicAuth($accountSid, $authToken)
-                ->asForm()
+                ->withBody($formBody, 'application/x-www-form-urlencoded')
                 ->acceptJson()
                 ->timeout(30)
-                ->post($endpoint, $payload);
+                ->post($endpoint);
 
             $result = $response->json();
 
