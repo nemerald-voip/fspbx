@@ -68,11 +68,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # skip_untranslated_strings/files: true so an untranslated key is
-      # omitted (falls through the LocaleRegistry chain to its parent/en-us)
-      # instead of being filled with source-language text -- which would
-      # both shadow a parent dialect's real translation and make a 0%-
-      # translated locale falsely read as 100% complete by key count alone.
+      # skip_untranslated_strings: true so an untranslated key is omitted
+      # (falls through the LocaleRegistry chain to its parent/en-us) instead
+      # of being filled with source-language text -- which would both shadow
+      # a parent dialect's real translation and make a 0%-translated locale
+      # falsely read as 100% complete by key count alone. A fully-untranslated
+      # locale still gets a near-empty {} file rather than no file at all --
+      # Crowdin CLI rejects skip_untranslated_files combined with this option.
       - uses: crowdin/github-action@v2
         if: env.CROWDIN_PROJECT_ID != ''
         with:
@@ -80,7 +82,6 @@ jobs:
           upload_translations: false
           download_translations: true
           skip_untranslated_strings: true
-          skip_untranslated_files: true
           localization_branch_name: l10n_crowdin_translations
           create_pull_request: true
           pull_request_title: 'New Crowdin translations'
