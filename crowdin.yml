@@ -1,0 +1,54 @@
+"project_id_env": "CROWDIN_PROJECT_ID"
+"api_token_env": "CROWDIN_PERSONAL_TOKEN"
+"base_path": "."
+"preserve_hierarchy": true
+
+"files": [
+  {
+    "source": "/resources/lang/en-us.json",
+    "translation": "/resources/lang/%locale%.json",
+    # Crowdin's own locale identifiers (left, case-sensitive -- from
+    # https://api.crowdin.com/api/v2/languages) are mapped to the file names
+    # this app actually reads (right, lowercased, see config/locales.php).
+    # Crowdin has no bare "es"; its generic "Spanish" target language IS
+    # es-ES, which is why es-ES is this app's Spanish parent locale rather
+    # than an invented neutral code. Adding a locale to config/locales.php
+    # also needs its Crowdin target language enabled on the project and an
+    # entry added here.
+    "languages_mapping": {
+      "locale": {
+        "es-ES": "es-es",
+        "es-419": "es-419",
+        "es-MX": "es-mx",
+        "af": "af",
+        "ar": "ar",
+        "ca": "ca",
+        "zh-CN": "zh-cn",
+        "zh-TW": "zh-tw",
+        "cs": "cs",
+        "da": "da",
+        "nl": "nl",
+        "fi": "fi",
+        "fr": "fr",
+        "de": "de",
+        "el": "el",
+        "he": "he",
+        "hu": "hu",
+        "it": "it",
+        "ja": "ja",
+        "ko": "ko",
+        "no": "no",
+        "pl": "pl",
+        "pt-PT": "pt-pt",
+        "pt-BR": "pt-br",
+        "ro": "ro",
+        "ru": "ru",
+        "sr": "sr",
+        "sv-SE": "sv-se",
+        "tr": "tr",
+        "uk": "uk",
+        "vi": "vi"
+      }
+    }
+  }
+]

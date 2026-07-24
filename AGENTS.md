@@ -217,6 +217,18 @@ This repo is a Laravel, Vue/Inertia, VueForm, and FreeSWITCH application. Before
 - Preserve call routing safety: avoid blocking calls from unsupported or malformed rules unless behavior is explicit.
 - Use atomic SQL for counters where concurrent calls can update the same row.
 
+## Localization
+
+- Backend and frontend share one translation catalog: `resources/lang/{locale}.json`, keyed by the literal English source string, not an invented dot-namespaced key. Wrap new UI copy with `__()`/`trans()`/`@lang()` in PHP/Blade or `$t()`/`$tChoice()`/`trans()` in Vue, then run `php artisan lang:sync` to add it to `resources/lang/en-us.json`. See `docs/translations.md`.
+- `resources/lang/en-us.json` is the source manifest everything else (including Crowdin) is translated against. `config('app.locale')`/`fallback_locale` are `en-us`, matching the FusionPBX `domain_setting_category=domain, subcategory=language, name=code` convention that already existed (seeded, and already read by legacy `get_domain_setting('language')`). Laravel's own framework translation files live at `resources/lang/en-us/*.php`, not `resources/lang/en/` -- don't recreate an `en/` directory.
+- Locale is a per-domain setting, not a per-user preference. `App\Http\Middleware\SetApplicationLocale` (registered in the `web` group, after `CheckFusionPBXLogin` and before `HandleInertiaRequests`) resolves it from `session('domain.language.code')`, falling back to `get_domain_setting('language')` for guests, and calls `App::setLocale()`. Like every other domain setting, a change takes effect on next login or an explicit "Reload Settings" action, not mid-session.
+- Dialects fall back to a parent locale instead of requiring a full retranslation. `config/locales.php` registers each locale's `fallback`; `App\Support\Localization\LocaleFileLoader` (bound over Laravel's `translation.loader` in `AppServiceProvider`) merges a locale's JSON over its whole fallback chain (e.g. `es-mx` -> `es-419` -> `es-es` -> `en-us`) via `LocaleRegistry::chain()`. A new dialect only needs to override the handful of strings that differ from its parent -- don't require a full retranslation to add one. Only the Spanish family chains today; every other registered locale falls back straight to `en-us`.
+- Locale codes are Crowdin's own locale IDs, lowercased (from `https://api.crowdin.com/api/v2/languages`), not invented codes -- Crowdin has no bare `es`; its generic "Spanish" target language IS `es-ES`. Look up the exact ID before registering a new locale in `config/locales.php` and `languages_mapping` in `crowdin.yml`; a mismatch means Crowdin downloads into a file this app never reads.
+- A locale only appears in a domain's language picker once `LocaleRegistry::available()` reports its own keys (not inherited ones) at or above `config('locales.minimum_completion')` coverage of `en-us.json`. Below that it still renders correctly via fallback and can still be worked on across multiple PRs -- don't block partial translation work on this threshold, only picker visibility.
+- `.github/workflows/validate-translations.yml` fails a PR only for invalid JSON, a key not present in `en-us.json`, or a `:placeholder` mismatch between a source string and its translation -- never for incomplete coverage.
+- Crowdin sync (`crowdin.yml`, `.github/workflows/crowdin.yml`) needs `CROWDIN_PROJECT_ID`, `CROWDIN_PERSONAL_TOKEN`, and `GH_TOKEN` repo secrets before it does anything; both jobs skip quietly until those exist rather than failing CI.
+- Modules under `Modules/` and legacy `/public/app/...` pages (which have their own older FusionPBX-native translation system) are out of scope for this catalog.
+
 ## Verification
 
 - Run `php -l` on changed PHP files when practical.

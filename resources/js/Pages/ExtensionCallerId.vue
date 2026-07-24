@@ -2,15 +2,15 @@
     <div class="min-h-screen bg-gray-50">
         <div class="mx-auto max-w-3xl px-4 py-6 sm:px-6 lg:px-8">
             <div class="mb-6">
-                <h1 class="text-2xl font-bold text-gray-900">Caller ID</h1>
+                <h1 class="text-2xl font-bold text-gray-900">{{ $t('Caller ID') }}</h1>
                 <p class="mt-1 text-sm text-gray-500">
-                    Choose which phone number should be used as your outbound caller ID.
+                    {{ $t('Choose which phone number should be used as your outbound caller ID.') }}
                 </p>
             </div>
 
             <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
                 <div class="border-b border-gray-200 px-4 py-4 sm:px-6">
-                    <h2 class="text-sm font-semibold text-gray-900">Available Numbers</h2>
+                    <h2 class="text-sm font-semibold text-gray-900">{{ $t('Available Numbers') }}</h2>
                 </div>
 
                 <div v-if="items.length" class="divide-y divide-gray-200">
@@ -51,7 +51,7 @@
                 </div>
 
                 <div v-else class="px-6 py-10 text-center">
-                    <p class="text-sm text-gray-500">No caller ID numbers are available.</p>
+                    <p class="text-sm text-gray-500">{{ $t('No caller ID numbers are available.') }}</p>
                 </div>
             </div>
         </div>

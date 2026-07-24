@@ -1,0 +1,61 @@
+name: Crowdin
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'resources/lang/en-us.json'
+  workflow_dispatch: {}
+  schedule:
+    # Pull whatever translators have completed on Crowdin since the last run
+    # and open a PR with it. Uploading sources (below) happens on every push
+    # to main instead, so new/changed English strings reach Crowdin quickly.
+    - cron: '0 13 * * 1'
+
+jobs:
+  upload-sources:
+    name: Upload source strings to Crowdin
+    # Skips quietly (rather than failing) until CROWDIN_PROJECT_ID and
+    # CROWDIN_PERSONAL_TOKEN are added under repo Settings > Secrets and
+    # variables > Actions -- see docs/translations.md.
+    if: github.event_name == 'push' && secrets.CROWDIN_PROJECT_ID != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: crowdin/github-action@v2
+        with:
+          upload_sources: true
+          upload_translations: false
+          download_translations: false
+        env:
+          CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
+          CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
+
+  download-translations:
+    name: Open a PR with translations from Crowdin
+    if: (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') && secrets.CROWDIN_PROJECT_ID != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: crowdin/github-action@v2
+        with:
+          upload_sources: false
+          upload_translations: false
+          download_translations: true
+          localization_branch_name: l10n_crowdin_translations
+          create_pull_request: true
+          pull_request_title: 'New Crowdin translations'
+          pull_request_body: |
+            Translations pulled from [Crowdin](https://crowdin.com).
+
+            CI will validate placeholder tokens and JSON structure on this PR
+            (see .github/workflows/validate-translations.yml). A locale only
+            becomes selectable in Domain Settings once it clears the
+            completion threshold in `config('locales.minimum_completion')`.
+          pull_request_base_branch_name: 'main'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
+          CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}

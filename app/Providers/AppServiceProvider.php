@@ -38,6 +38,8 @@ use App\Observers\UserObserver;
 use App\Services\PmsOutboundSyncContext;
 use App\Services\PolycomCloudProvider;
 use App\Services\RingotelApiService;
+use App\Support\Localization\LocaleFileLoader;
+use App\Support\Localization\LocaleRegistry;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Http;
@@ -60,6 +62,19 @@ class AppServiceProvider extends ServiceProvider
         Sanctum::ignoreMigrations();
 
         $this->app->singleton(PmsOutboundSyncContext::class);
+
+        $this->app->singleton(LocaleRegistry::class);
+
+        // Merge a locale's JSON strings over its LocaleRegistry::chain() so
+        // regional dialects (e.g. es-mx) only need to override what differs
+        // from their parent locale instead of shipping a full retranslation.
+        $this->app->extend('translation.loader', function ($loader, $app) {
+            return new LocaleFileLoader(
+                $app['files'],
+                [$app->basePath('vendor/laravel/framework/src/Illuminate/Translation/lang'), $app['path.lang']],
+                $app->make(LocaleRegistry::class)
+            );
+        });
     }
 
     /**

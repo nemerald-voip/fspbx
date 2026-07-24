@@ -998,7 +998,7 @@ class ExtensionsController extends Controller
             return response()->json([
                 'status' => 401,
                 'error' => [
-                    'message' => 'Invalid extension. Please, contact administrator'
+                    'message' => __('Invalid extension. Please, contact administrator')
                 ]
             ], 401);
         }
@@ -1009,7 +1009,7 @@ class ExtensionsController extends Controller
             return response()->json([
                 'status' => 401,
                 'error' => [
-                    'message' => 'Invalid phone number ID submitted. Please, contact your administrator'
+                    'message' => __('Invalid phone number ID submitted. Please, contact your administrator')
                 ]
             ], 401);
         }
@@ -1036,7 +1036,7 @@ class ExtensionsController extends Controller
             return response()->json([
                 'status' => 200,
                 'success' => [
-                    'message' => 'The caller ID was successfully updated'
+                    'message' => __('The caller ID was successfully updated')
                 ]
             ]);
         } catch (\Exception $e) {
@@ -1045,7 +1045,7 @@ class ExtensionsController extends Controller
             return response()->json([
                 'status' => 500,
                 'error' => [
-                    'message' => 'There was an error updating the caller ID'
+                    'message' => __('There was an error updating the caller ID')
                 ]
             ], 500);
         }

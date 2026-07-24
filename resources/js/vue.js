@@ -3,6 +3,7 @@ import { createInertiaApp, router } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import Vueform from '@vueform/vueform';
 import vueformConfig from './vueform.config.js';
+import { i18nVue, loadLanguageAsync, getActiveLanguage } from 'laravel-vue-i18n';
 
 
 import './bootstrap';
@@ -42,13 +43,30 @@ createInertiaApp({
     resolve: async (name) => await resolvePage(name),
     setup({ el, App, props, plugin }) {
       syncAxiosCsrfToken(props.initialPage);
-      router.on('navigate', (event) => syncAxiosCsrfToken(event.detail.page));
+      router.on('navigate', (event) => {
+        syncAxiosCsrfToken(event.detail.page);
+
+        // Locale is a per-domain setting (see SetApplicationLocale), so this
+        // only actually reloads a language bundle when it changes -- e.g.
+        // an admin with access to multiple domains switching between them.
+        const nextLocale = event.detail.page?.props?.locale;
+        if (nextLocale && nextLocale !== getActiveLanguage()) {
+            loadLanguageAsync(nextLocale);
+        }
+      });
 
       const vueApp = createApp({ render: () => h(App, props) });
-  
+
       vueApp.use(plugin);
       vueApp.use(Vueform, vueformConfig); // ✅ register Vueform IMMEDIATELY here
-  
+      vueApp.use(i18nVue, {
+        lang: props.initialPage.props.locale,
+        resolve: async (lang) => {
+            const langs = import.meta.glob('../lang/*.json');
+            return await langs[`../lang/${lang}.json`]();
+        },
+      });
+
       // MOUNT FIRST (no await for CSRF token)
       vueApp.mount(el);
   

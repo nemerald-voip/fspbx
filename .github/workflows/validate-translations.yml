@@ -1,0 +1,27 @@
+name: Validate Translations
+
+on:
+  pull_request:
+    paths:
+      - 'resources/lang/**'
+      - 'config/locales.php'
+      - '.github/scripts/validate-translations.php'
+  push:
+    branches: [ main ]
+    paths:
+      - 'resources/lang/**'
+      - 'config/locales.php'
+
+jobs:
+  validate:
+    name: Validate resources/lang/*.json
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+
+      - name: Validate translation files
+        run: php .github/scripts/validate-translations.php | tee "$GITHUB_STEP_SUMMARY"
