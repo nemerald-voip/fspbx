@@ -15,31 +15,43 @@ on:
 jobs:
   upload-sources:
     name: Upload source strings to Crowdin
-    # Skips quietly (rather than failing) until CROWDIN_PROJECT_ID and
-    # CROWDIN_PERSONAL_TOKEN are added under repo Settings > Secrets and
-    # variables > Actions -- see docs/translations.md.
-    if: github.event_name == 'push' && secrets.CROWDIN_PROJECT_ID != ''
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
+    # `if:` can't reference `secrets` directly (GitHub Actions restriction --
+    # only env/github/inputs/job/matrix/needs/runner/steps/strategy/vars are
+    # allowed there). Surfacing it through job-level `env:` first, which CAN
+    # read secrets, works around that: skips quietly instead of failing until
+    # CROWDIN_PROJECT_ID and CROWDIN_PERSONAL_TOKEN are added under repo
+    # Settings > Secrets and variables > Actions -- see docs/translations.md.
+    env:
+      CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
+      CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
     steps:
       - uses: actions/checkout@v4
 
       - uses: crowdin/github-action@v2
+        if: env.CROWDIN_PROJECT_ID != ''
         with:
           upload_sources: true
           upload_translations: false
           download_translations: false
         env:
-          CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
-          CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
+          CROWDIN_PROJECT_ID: ${{ env.CROWDIN_PROJECT_ID }}
+          CROWDIN_PERSONAL_TOKEN: ${{ env.CROWDIN_PERSONAL_TOKEN }}
 
   download-translations:
     name: Open a PR with translations from Crowdin
-    if: (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule') && secrets.CROWDIN_PROJECT_ID != ''
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
     runs-on: ubuntu-latest
+    env:
+      CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
+      CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
+      GH_TOKEN: ${{ secrets.GH_TOKEN }}
     steps:
       - uses: actions/checkout@v4
 
       - uses: crowdin/github-action@v2
+        if: env.CROWDIN_PROJECT_ID != ''
         with:
           upload_sources: false
           upload_translations: false
@@ -56,6 +68,6 @@ jobs:
             completion threshold in `config('locales.minimum_completion')`.
           pull_request_base_branch_name: 'main'
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-          CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
-          CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
+          GITHUB_TOKEN: ${{ env.GH_TOKEN }}
+          CROWDIN_PROJECT_ID: ${{ env.CROWDIN_PROJECT_ID }}
+          CROWDIN_PERSONAL_TOKEN: ${{ env.CROWDIN_PERSONAL_TOKEN }}
