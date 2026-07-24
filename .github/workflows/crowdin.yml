@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main ]
     paths:
-      - 'resources/lang/en-us.json'
+      - 'resources/lang/*.json'
   workflow_dispatch: {}
   schedule:
     # Pull whatever translators have completed on Crowdin since the last run
@@ -14,10 +14,9 @@ on:
 
 jobs:
   upload-sources:
-    name: Upload source strings to Crowdin
-    # workflow_dispatch too, so a manual run can bootstrap/refresh the
-    # source file on Crowdin without waiting for a push that touches
-    # resources/lang/en-us.json.
+    name: Upload strings to Crowdin
+    # workflow_dispatch too, so a manual run can bootstrap/refresh Crowdin
+    # without waiting for a push that touches resources/lang/*.json.
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     # `if:` can't reference `secrets` directly (GitHub Actions restriction --
@@ -32,11 +31,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # upload_translations: true so hand-written/PR-reviewed content already
+      # committed to resources/lang/{code}.json (e.g. es-es.json, which was
+      # seeded directly in the repo, not through Crowdin) is pushed into
+      # Crowdin's translation memory. Without this, Crowdin has no record of
+      # that content and download-translations exports every locale as 0%
+      # translated -- overwriting real translations with source-language
+      # placeholder text. auto_approve_imported: true because this only
+      # uploads what's already on `main`, which went through the same PR
+      # review/CI validation as everything else.
       - uses: crowdin/github-action@v2
         if: env.CROWDIN_PROJECT_ID != ''
         with:
           upload_sources: true
-          upload_translations: false
+          upload_translations: true
+          auto_approve_imported: true
           download_translations: false
         env:
           CROWDIN_PROJECT_ID: ${{ env.CROWDIN_PROJECT_ID }}
@@ -59,12 +68,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # skip_untranslated_strings/files: true so an untranslated key is
+      # omitted (falls through the LocaleRegistry chain to its parent/en-us)
+      # instead of being filled with source-language text -- which would
+      # both shadow a parent dialect's real translation and make a 0%-
+      # translated locale falsely read as 100% complete by key count alone.
       - uses: crowdin/github-action@v2
         if: env.CROWDIN_PROJECT_ID != ''
         with:
           upload_sources: false
           upload_translations: false
           download_translations: true
+          skip_untranslated_strings: true
+          skip_untranslated_files: true
           localization_branch_name: l10n_crowdin_translations
           create_pull_request: true
           pull_request_title: 'New Crowdin translations'
