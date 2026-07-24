@@ -44,7 +44,13 @@ jobs:
 
   download-translations:
     name: Open a PR with translations from Crowdin
-    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+    needs: upload-sources
+    # always(): without it, GitHub implicitly ANDs a bare if: with success()
+    # of `needs`, which would skip this job on the weekly `schedule` trigger
+    # (upload-sources doesn't run then, so it reports as skipped, not
+    # successful). `needs: upload-sources` still sequences the two jobs on a
+    # workflow_dispatch run so download can't race ahead of a fresh upload.
+    if: always() && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule')
     runs-on: ubuntu-latest
     env:
       CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
