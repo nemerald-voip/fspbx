@@ -15,7 +15,10 @@ on:
 jobs:
   upload-sources:
     name: Upload source strings to Crowdin
-    if: github.event_name == 'push'
+    # workflow_dispatch too, so a manual run can bootstrap/refresh the
+    # source file on Crowdin without waiting for a push that touches
+    # resources/lang/en-us.json.
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     # `if:` can't reference `secrets` directly (GitHub Actions restriction --
     # only env/github/inputs/job/matrix/needs/runner/steps/strategy/vars are
