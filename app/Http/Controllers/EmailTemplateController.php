@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreEmailTemplateRequest;
 use App\Http\Requests\UpdateEmailTemplateRequest;
 use App\Models\EmailTemplate;
+use App\Services\EmailTemplateDefaultsInitializer;
 use App\Services\EmailTemplatePreviewService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -18,10 +19,16 @@ use Spatie\QueryBuilder\QueryBuilder;
 
 class EmailTemplateController extends Controller
 {
-    public function index()
+    public function index(EmailTemplateDefaultsInitializer $defaultsInitializer)
     {
         if (! userCheckPermission('email_templates_view')) {
             return redirect('/');
+        }
+
+        try {
+            $defaultsInitializer->ensureSeeded();
+        } catch (\Throwable $exception) {
+            report($exception);
         }
 
         return Inertia::render('EmailTemplates', [

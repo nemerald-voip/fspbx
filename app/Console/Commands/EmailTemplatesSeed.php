@@ -5,13 +5,15 @@ namespace App\Console\Commands;
 use App\Models\EmailTemplate;
 use App\Services\EmailTemplateSourceService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class EmailTemplatesSeed extends Command
 {
     protected $signature = 'email:templates:seed
-        {--dry-run : Show changes without writing them}';
+        {--dry-run : Show changes without writing them}
+        {--dedupe-only : Skip seeding and only run checksum-based dedupe}';
 
     protected $description = 'Seed locked default email templates from existing Laravel email views';
 
@@ -23,18 +25,24 @@ class EmailTemplatesSeed extends Command
             return self::SUCCESS;
         }
 
+        $dryRun = (bool) $this->option('dry-run');
         $counts = ['inserted' => 0, 'updated' => 0, 'skipped' => 0, 'failed' => 0];
 
-        foreach (app(EmailTemplateSourceService::class)->definitions() as $definition) {
-            try {
-                $counts[$this->seedTemplate($definition, (bool) $this->option('dry-run'))]++;
-            } catch (\Throwable $exception) {
-                $counts['failed']++;
-                $this->error('['.$definition['template_key'].'] '.$exception->getMessage());
+        if (! $this->option('dedupe-only')) {
+            foreach (app(EmailTemplateSourceService::class)->definitions() as $definition) {
+                try {
+                    $counts[$this->seedTemplate($definition, $dryRun)]++;
+                } catch (\Throwable $exception) {
+                    $counts['failed']++;
+                    $this->error('['.$definition['template_key'].'] '.$exception->getMessage());
+                }
             }
+
+            $this->info("Email template seed complete. Inserted: {$counts['inserted']}, Updated: {$counts['updated']}, Skipped: {$counts['skipped']}, Failed: {$counts['failed']}.");
         }
 
-        $this->info("Email template seed complete. Inserted: {$counts['inserted']}, Updated: {$counts['updated']}, Skipped: {$counts['skipped']}, Failed: {$counts['failed']}.");
+        [$removed, $repointed] = $this->runDedupe($dryRun);
+        $this->info("Dedupe complete. Removed duplicates: {$removed}, Re-pointed custom templates: {$repointed}.");
 
         return $counts['failed'] === 0 ? self::SUCCESS : self::FAILURE;
     }
@@ -120,5 +128,60 @@ class EmailTemplatesSeed extends Command
         }
 
         return 'updated';
+    }
+
+    private function runDedupe(bool $dryRun): array
+    {
+        $duplicateChecksums = DB::table('email_templates')
+            ->select('checksum')
+            ->where('template_type', 'default')
+            ->groupBy('checksum')
+            ->havingRaw('COUNT(*) > 1')
+            ->pluck('checksum');
+
+        $removed = 0;
+        $repointed = 0;
+
+        foreach ($duplicateChecksums as $checksum) {
+            $templates = EmailTemplate::query()
+                ->where('template_type', 'default')
+                ->where('checksum', $checksum)
+                ->orderBy('created_at')
+                ->get();
+
+            if ($templates->count() < 2) {
+                continue;
+            }
+
+            $keep = $templates->first();
+            $duplicateUuids = $templates
+                ->slice(1)
+                ->pluck('email_template_uuid')
+                ->all();
+
+            $this->line(sprintf(
+                '[dedupe] checksum=%s keep=%s delete=%s',
+                substr((string) $checksum, 0, 12).'…',
+                $keep->email_template_uuid,
+                implode(',', $duplicateUuids)
+            ));
+
+            if (! $dryRun) {
+                DB::transaction(function () use ($duplicateUuids, $keep, &$repointed, &$removed) {
+                    $repointed += EmailTemplate::query()
+                        ->where('template_type', 'custom')
+                        ->whereIn('base_template_uuid', $duplicateUuids)
+                        ->update(['base_template_uuid' => $keep->email_template_uuid]);
+
+                    $removed += EmailTemplate::query()
+                        ->whereIn('email_template_uuid', $duplicateUuids)
+                        ->delete();
+                });
+            } else {
+                $removed += count($duplicateUuids);
+            }
+        }
+
+        return [$removed, $repointed];
     }
 }
