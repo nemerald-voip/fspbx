@@ -3,6 +3,8 @@
 
 ## Overview
 
+[![Crowdin](https://badges.crowdin.net/fs-pbx/localized.svg)](https://crowdin.com/project/fs-pbx)
+
 This project started as a fork of the FusionPBX system but has been extensively redesigned. The backend has been redeveloped using Laravel and Vue.js for the frontend. This new implementation aims to enhance user experience, improve performance, and provide a more modern and maintainable codebase.
 
 ## Features
@@ -98,6 +100,12 @@ Unlock the full potential of your PBX with our two exciting premium modules desi
 **STIR/SHAKEN Module**: Ensure call authenticity with the STIR/SHAKEN module, giving you the power to sign all your calls with Attestation A using your very own certificate.
 
 Experience enhanced functionality and seamless control like never before!
+
+## Translations
+
+FS PBX is translated by its community through [Crowdin](https://crowdin.com/project/fs-pbx). If you'd like to help translate the interface into your language, join the project there and start translating through the web UI — no coding or Git required. Regional variants (for example, Spanish and Spanish (Mexico)) automatically inherit the base language, so you only translate what's genuinely different.
+
+See the [Translations guide](https://www.fspbx.com/docs/additional-information/translations/) for how it works and how administrators set a tenant's language.
 
 ## Contact
 For any questions or feedback, please contact us for support.
