@@ -198,7 +198,11 @@
                     :currentPage="data.current_page"
                     :lastPage="data.last_page"
                     :links="data.links"
+                    :page-size="perPage"
+                    :page-size-options="props.pagination?.per_page_options ?? []"
+                    :show-page-size-selector="true"
                     @pagination-change-page="changePage"
+                    @page-size-change="handlePageSizeChange"
                 />
             </template>
         </DataTable>
@@ -303,8 +307,11 @@ import { ArrowDownTrayIcon, ChevronDownIcon, ChevronUpIcon, MagnifyingGlassIcon,
 const props = defineProps({
     routes: Object,
     permissions: Object,
+    pagination: Object,
     recording_options: Object,
 });
+
+const perPage = ref(props.pagination?.per_page);
 
 const data = ref({
     data: [],
@@ -398,6 +405,7 @@ const fetchData = (page = 1) => {
             filter: filterData.value,
             sort: sortParam.value,
             page,
+            per_page: perPage.value,
         },
     })
         .then((response) => {
@@ -410,6 +418,11 @@ const fetchData = (page = 1) => {
 };
 
 const handleSearch = () => fetchData(1);
+
+const handlePageSizeChange = (newPerPage) => {
+    perPage.value = newPerPage;
+    fetchData(1);
+};
 
 const resetFilters = () => {
     filterData.value.search = null;
