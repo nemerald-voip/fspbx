@@ -48,6 +48,11 @@ class Kernel extends HttpKernel
             \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
             'throttle:api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            // Applies the active domain's language to API responses too, so
+            // __() messages from controllers/validation returned to the SPA
+            // are localized. Falls back to the default locale for stateless
+            // (token) requests that have no session/domain.
+            \App\Http\Middleware\SetApplicationLocale::class,
         ],
     ];
 

@@ -233,7 +233,7 @@ class PhoneNumbersController extends Controller
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to fetch item details']]
+                'errors' => ['server' => [__('Failed to fetch item details')]]
             ], 500);  // 500 Internal Server Error for any other errors
         }
     }
@@ -388,7 +388,7 @@ class PhoneNumbersController extends Controller
 
                 return response()->json([
                     'success' => true,
-                    'messages' => ['success' => ['Phone numbers have been successfully imported.']]
+                    'messages' => ['success' => [__('Phone numbers have been successfully imported.')]]
                 ], 200);
             } catch (Throwable $e) {
                 logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
@@ -474,7 +474,7 @@ public function importCommit(Request $request)
         $domain_name = session('domain_name');
 
         if (empty($items)) {
-            return response()->json(['success' => false, 'messages' => ['error' => ['No items to import']]], 422);
+            return response()->json(['success' => false, 'messages' => ['error' => [__('No items to import')]]], 422);
         }
 
         // --- DUPLICATE CHECKING ---
@@ -486,7 +486,7 @@ public function importCommit(Request $request)
         if (!empty($duplicatesInFile)) {
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['The import list contains duplicate numbers: ' . implode(', ', $duplicatesInFile)]]
+                'errors' => ['server' => [__('The import list contains duplicate numbers: :numbers', ['numbers' => implode(', ', $duplicatesInFile)])]]
             ], 422);
         }
 
@@ -498,7 +498,7 @@ public function importCommit(Request $request)
         if (!empty($existingNumbers)) {
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['The following numbers already exist in the system: ' . implode(', ', $existingNumbers)]]
+                'errors' => ['server' => [__('The following numbers already exist in the system: :numbers', ['numbers' => implode(', ', $existingNumbers)])]]
             ], 422);
         }
         // --------------------------
@@ -540,7 +540,7 @@ public function importCommit(Request $request)
 
             return response()->json([
                 'success' => true,
-                'messages' => ['success' => [count($items) . ' phone numbers imported successfully.']]
+                'messages' => ['success' => [__(':count phone numbers imported successfully.', ['count' => count($items)])]]
             ], 200);
 
         } catch (\Exception $e) {
@@ -548,7 +548,7 @@ public function importCommit(Request $request)
             logger($e);
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Error saving phone numbers: ' . $e->getMessage()]]
+                'errors' => ['server' => [__('Error saving phone numbers: :error', ['error' => $e->getMessage()])]]
             ], 500);
         }
     }
@@ -637,7 +637,7 @@ public function importCommit(Request $request)
             dispatch(new \App\Jobs\BuildDialplanForPhoneNumber($instance->destination_uuid, session('domain_name')));
 
             return response()->json([
-                'messages' => ['success' => ['New phone number succesfully created']]
+                'messages' => ['success' => [__('New phone number succesfully created')]]
             ], 201);
         } catch (\Exception $e) {
             // Log the error message
@@ -646,7 +646,7 @@ public function importCommit(Request $request)
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to create new item'], 'ss' => $e->getMessage()]
+                'errors' => ['server' => [__('Failed to create new item')], 'ss' => $e->getMessage()]
             ], 500);  // 500 Internal Server Error for any other errors
         }
     }
@@ -669,7 +669,7 @@ public function importCommit(Request $request)
         if (empty($ids) || empty($data)) {
             return response()->json([
                 'success' => false,
-                'errors' => ['input' => ['No phone numbers or fields provided for update.']]
+                'errors' => ['input' => [__('No phone numbers or fields provided for update.')]]
             ], 422);
         }
 
@@ -706,14 +706,14 @@ public function importCommit(Request $request)
             DB::commit();
 
             return response()->json([
-                'messages' => ['success' => ['Selected phone numbers updated']],
+                'messages' => ['success' => [__('Selected phone numbers updated')]],
             ], 200);
         } catch (\Exception $e) {
             DB::rollBack();
             logger('PhoneNumbersController@bulkUpdate error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to update selected items']]
+                'errors' => ['server' => [__('Failed to update selected items')]]
             ], 500);
         }
     }
@@ -732,7 +732,7 @@ public function importCommit(Request $request)
             // If the model is not found, return an error response
             return response()->json([
                 'success' => false,
-                'errors' => ['model' => ['Model not found']]
+                'errors' => ['model' => [__('Model not found')]]
             ], 404); // 404 Not Found if the model does not exist
         }
 
@@ -756,7 +756,7 @@ public function importCommit(Request $request)
             dispatch(new \App\Jobs\BuildDialplanForPhoneNumber($phone_number->destination_uuid, session('domain_name')));
 
             return response()->json([
-                'messages' => ['success' => ['Phone number updated successfully']],
+                'messages' => ['success' => [__('Phone number updated successfully')]],
                 'phone_number' => $phone_number,
             ], 200);
         } catch (\Exception $e) {
@@ -764,7 +764,7 @@ public function importCommit(Request $request)
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to update this item']]
+                'errors' => ['server' => [__('Failed to update this item')]]
             ], 500); // 500 Internal Server Error for any other errors
         }
     }
@@ -804,7 +804,7 @@ public function importCommit(Request $request)
             DB::commit();
 
             return response()->json([
-                'messages' => ['server' => ['All selected items have been deleted successfully.']],
+                'messages' => ['server' => [__('All selected items have been deleted successfully.')]],
             ], 200);
         } catch (\Exception $e) {
             // Rollback Transaction if any error occurs
@@ -814,7 +814,7 @@ public function importCommit(Request $request)
             logger('PhoneNumbersController@bulkDelete error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Server returned an error while deleting the selected items.']]
+                'errors' => ['server' => [__('Server returned an error while deleting the selected items.')]]
             ], 500); // 500 Internal Server Error for any other errors
         }
     }
@@ -940,7 +940,7 @@ public function importCommit(Request $request)
 
             // Return a JSON response indicating success
             return response()->json([
-                'messages' => ['success' => ['All items selected']],
+                'messages' => ['success' => [__('All items selected')]],
                 'items' => $data,
             ], 200);
         } catch (\Exception $e) {
@@ -948,7 +948,7 @@ public function importCommit(Request $request)
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to select all items']]
+                'errors' => ['server' => [__('Failed to select all items')]]
             ], 500); // 500 Internal Server Error for any other errors
         }
     }

@@ -24,7 +24,7 @@
                                 <button type="button"
                                     class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                     @click="emit('close')">
-                                    <span class="sr-only">Close</span>
+                                    <span class="sr-only">{{ $t('Close') }}</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
@@ -42,7 +42,7 @@
                                             </path>
                                         </svg>
                                     </div>
-                                    <div class="text-lg text-blue-600 m-auto">Loading...</div>
+                                    <div class="text-lg text-blue-600 m-auto">{{ $t('Loading...') }}</div>
                                 </div>
                             </div>
 
@@ -69,7 +69,7 @@
                                     <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
                                         <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
                                             <FormTabs view="vertical" @select="handleTabSelected">
-                                                <FormTab name="page0" label="Settings" :elements="[
+                                                <FormTab name="page0" :label="$t('Settings')" :elements="[
                                                     'h4',
                                                     'uuid_clean',
                                                     'destination_enabled',
@@ -83,7 +83,7 @@
                                                     'submit',
 
                                                 ]" />
-                                                <FormTab name="page1" label="Advanced" :elements="[
+                                                <FormTab name="page1" :label="$t('Advanced')" :elements="[
                                                     'destination_record',
                                                     'destination_type_fax',
                                                     'fax_uuid',
@@ -103,7 +103,7 @@
                                             class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
                                             <FormElements>
 
-                                                <StaticElement name="h4" tag="h4" content="Settings" />
+                                                <StaticElement name="h4" tag="h4" :content="$t('Settings')" />
 
                                                 <StaticElement name="uuid_clean" :conditions="[() => options.permissions.is_superadmin]">
                                                     <div class="mb-1">
@@ -123,10 +123,10 @@
                                                     </div>
                                                 </StaticElement>
 
-                                                <ToggleElement name="destination_enabled" text="Status"
+                                                <ToggleElement name="destination_enabled" :text="$t('Status')"
                                                     true-value="true" false-value="false" />
 
-                                                <TextElement name="destination_prefix" label="Country Code"
+                                                <TextElement name="destination_prefix" :label="$t('Country Code')"
                                                     :floating="false" :columns="{
                                                         default: {
                                                             container: 6,
@@ -138,7 +138,7 @@
                                                             container: 2,
                                                         }
                                                     }" />
-                                                <TextElement name="destination_number" label="Phone Number" :columns="{
+                                                <TextElement name="destination_number" :label="$t('Phone Number')" :columns="{
                                                     sm: {
                                                         container: 8,
                                                     },
@@ -146,15 +146,15 @@
                                                         container: 5,
                                                     },
                                                 }" />
-                                                <TextElement name="destination_description" label="Description"
-                                                    placeholder="Enter Description" :floating="false" />
+                                                <TextElement name="destination_description" :label="$t('Description')"
+                                                    :placeholder="$t('Enter Description')" :floating="false" />
 
 
 
                                                 <GroupElement name="routing_container" />
 
-                                                <StaticElement name="call_routing_title" tag="h4" content="Call routing"
-                                                    description="Ensure calls are routed to the right team every time. Select a routing option below to fit your business needs." />
+                                                <StaticElement name="call_routing_title" tag="h4" :content="$t('Call routing')"
+                                                    :description="$t('Ensure calls are routed to the right team every time. Select a routing option below to fit your business needs.')" />
 
                                                 <ListElement name="routing_options" :sort="true" size="sm"
                                                     :controls="{ add: true, remove: true, sort: true }"
@@ -164,8 +164,8 @@
 
                                                             <SelectElement name="type" :items="options.routing_types"
                                                                 label-prop="name" :search="true" :native="false"
-                                                                label="Choose Action" input-type="search"
-                                                                autocomplete="off" placeholder="Choose Action"
+                                                                :label="$t('Choose Action')" input-type="search"
+                                                                autocomplete="off" :placeholder="$t('Choose Action')"
                                                                 :floating="false" :strict="false" :columns="{
                                                                     sm: {
                                                                         container: 6,
@@ -200,9 +200,9 @@
                                                                 }
 
                                                             }" :search="true" label-prop="name" :native="false"
-                                                                value-prop="extension" label="Target"
+                                                                value-prop="extension" :label="$t('Target')"
                                                                 input-type="search" allow-absent autocomplete="off"
-                                                                placeholder="Choose Target" :floating="false"
+                                                                :placeholder="$t('Choose Target')" :floating="false"
                                                                 :strict="false" :columns="{
 
                                                                     sm: {
@@ -222,31 +222,31 @@
 
                                                 <GroupElement name="container_3" />
 
-                                                <ButtonElement name="submit" button-label="Save" :submits="true"
+                                                <ButtonElement name="submit" :button-label="$t('Save')" :submits="true"
                                                     align="right" />
 
 
-                                                <ToggleElement name="destination_record" text="Record Inbound Calls"
-                                                    description="Enable this setting to automatically record all inbound calls for this phone number. Once activated, every incoming call will be captured and stored for future reference, ensuring that no important conversation is missed. Note: Ensure compliance with local call recording laws before enabling."
+                                                <ToggleElement name="destination_record" :text="$t('Record Inbound Calls')"
+                                                    :description="$t('Enable this setting to automatically record all inbound calls for this phone number. Once activated, every incoming call will be captured and stored for future reference, ensuring that no important conversation is missed. Note: Ensure compliance with local call recording laws before enabling.')"
                                                     true-value="true" false-value="false"
                                                     :conditions="[() => options?.permissions?.manage_recording_setting]" />
 
-                                                <ToggleElement name="destination_type_fax" text="Enable Fax Machine"
-                                                    description="Activate this setting if calls will be routed directly to a physical fax machine. This ensures proper handling of fax transmissions."
+                                                <ToggleElement name="destination_type_fax" :text="$t('Enable Fax Machine')"
+                                                    :description="$t('Activate this setting if calls will be routed directly to a physical fax machine. This ensures proper handling of fax transmissions.')"
                                                     :true-value="'1'" />
                                                 <SelectElement name="fax_uuid" :items="options.faxes" :search="true"
-                                                    :native="false" label="Fax detection" input-type="search"
+                                                    :native="false" :label="$t('Fax detection')" input-type="search"
                                                     autocomplete="off" />
                                                 <TextElement name="destination_cid_name_prefix"
-                                                    label="Caller ID name prefix" />
-                                                <TextElement name="destination_accountcode" label="Account code"
+                                                    :label="$t('Caller ID name prefix')" />
+                                                <TextElement name="destination_accountcode" :label="$t('Account code')"
                                                     :columns="{
                                                         sm: {
                                                             container: 6,
                                                         },
                                                     }" />
                                                 <TextElement name="destination_distinctive_ring"
-                                                    label="Distinctive ring" :columns="{
+                                                    :label="$t('Distinctive ring')" :columns="{
                                                         sm: {
                                                             container: 6,
                                                         },
@@ -254,7 +254,7 @@
 
                                                 <SelectElement name="destination_hold_music"
                                                     :items="options.music_on_hold_options" :groups="true" default=""
-                                                    :search="true" :native="false" label="Select custom Music On Hold"
+                                                    :search="true" :native="false" :label="$t('Select custom Music On Hold')"
                                                     input-type="search" autocomplete="off" :strict="false" :columns="{
                                                         sm: {
                                                             wrapper: 6,
@@ -263,13 +263,13 @@
                                                     :conditions="[() => options.permissions.destination_hold_music]" />
 
                                                 <SelectElement name="domain_uuid" :items="options.domains"
-                                                    :search="true" :native="false" label="Assigned To (Account)"
+                                                    :search="true" :native="false" :label="$t('Assigned To (Account)')"
                                                     :conditions="[() => options?.permissions?.manage_destination_domain]"
                                                     input-type="search" autocomplete="off" />
 
                                                 <GroupElement name="advanced_container2" />
 
-                                                <ButtonElement name="submit_advanced" button-label="Save"
+                                                <ButtonElement name="submit_advanced" :button-label="$t('Save')"
                                                     :submits="true" align="right" />
 
 

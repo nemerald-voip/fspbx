@@ -24,7 +24,7 @@
                                 <button type="button"
                                     class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                     @click="emit('close')">
-                                    <span class="sr-only">Close</span>
+                                    <span class="sr-only">{{ $t('Close') }}</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
@@ -42,7 +42,7 @@
                                             </path>
                                         </svg>
                                     </div>
-                                    <div class="text-lg text-blue-600 m-auto">Loading...</div>
+                                    <div class="text-lg text-blue-600 m-auto">{{ $t('Loading...') }}</div>
                                 </div>
                             </div>
 
@@ -69,7 +69,7 @@
                                     <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
                                         <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
                                             <FormTabs view="vertical" @select="handleTabSelected">
-                                                <FormTab name="page0" label="Settings" :elements="[
+                                                <FormTab name="page0" :label="$t('Settings')" :elements="[
                                                     'h4',
                                                     'destination_enabled_checkbox',
                                                     'destination_enabled',
@@ -87,7 +87,7 @@
                                                     'submit',
 
                                                 ]" />
-                                                <FormTab name="page1" label="Advanced" :elements="[
+                                                <FormTab name="page1" :label="$t('Advanced')" :elements="[
                                                     'destination_record_checkbox',
                                                     'destination_record',
                                                     'destination_type_fax_checkbox',
@@ -116,14 +116,14 @@
                                             <FormElements>
                                                 <HiddenElement name="items" :meta="true" />
 
-                                                <StaticElement name="h4" tag="h4" content="Settings" />
+                                                <StaticElement name="h4" tag="h4" :content="$t('Settings')" />
 
                                                 <CheckboxElement name="destination_enabled_checkbox" :submit="false"
                                                     :columns="{
                                                         container: 1,
                                                     }" />
 
-                                                <ToggleElement name="destination_enabled" text="Status"
+                                                <ToggleElement name="destination_enabled" :text="$t('Status')"
                                                     true-value="true" false-value="false"
                                                     :disabled="[['destination_enabled_checkbox', false]]" :columns="{
                                                         container: 11,
@@ -134,7 +134,7 @@
                                                         container: 1,
                                                     }" />
 
-                                                <TextElement name="destination_prefix" label="Country Code"
+                                                <TextElement name="destination_prefix" :label="$t('Country Code')"
                                                     :floating="false" :columns="{
                                                         default: {
                                                             wrapper: 6,
@@ -155,7 +155,7 @@
                                                         container: 1,
                                                     }" />
 
-                                                <TextElement name="destination_number" label="Phone Number" :columns="{
+                                                <TextElement name="destination_number" :label="$t('Phone Number')" :columns="{
                                                     default: {
                                                         container: 11,
                                                     },
@@ -171,8 +171,8 @@
                                                         container: 1,
                                                     }" />
 
-                                                <TextElement name="destination_description" label="Description"
-                                                    placeholder="Enter Description" :floating="false"
+                                                <TextElement name="destination_description" :label="$t('Description')"
+                                                    :placeholder="$t('Enter Description')" :floating="false"
                                                     :disabled="[['destination_description_checkbox', false]]" :columns="{
                                                         container: 11,
                                                     }" />
@@ -192,8 +192,8 @@
                                                         }
                                                     }" />
 
-                                                <StaticElement name="call_routing_title" tag="h4" content="Call routing"
-                                                    description="Ensure calls are routed to the right team every time. Select a routing option below to fit your business needs."
+                                                <StaticElement name="call_routing_title" tag="h4" :content="$t('Call routing')"
+                                                    :description="$t('Ensure calls are routed to the right team every time. Select a routing option below to fit your business needs.')"
                                                     :columns="{
                                                         container: 11,
                                                     }" />
@@ -209,8 +209,8 @@
 
                                                             <SelectElement name="type" :items="options.routing_types"
                                                                 label-prop="name" :search="true" :native="false"
-                                                                label="Choose Action" input-type="search"
-                                                                autocomplete="off" placeholder="Choose Action"
+                                                                :label="$t('Choose Action')" input-type="search"
+                                                                autocomplete="off" :placeholder="$t('Choose Action')"
                                                                 :floating="false" :strict="false" :columns="{
                                                                     sm: {
                                                                         container: 6,
@@ -245,9 +245,9 @@
                                                                 }
 
                                                             }" :search="true" label-prop="name" :native="false"
-                                                                value-prop="extension" label="Target"
+                                                                value-prop="extension" :label="$t('Target')"
                                                                 input-type="search" allow-absent autocomplete="off"
-                                                                placeholder="Choose Target" :floating="false"
+                                                                :placeholder="$t('Choose Target')" :floating="false"
                                                                 :strict="false" :columns="{
 
                                                                     sm: {
@@ -267,7 +267,7 @@
 
                                                 <GroupElement name="container_3" />
 
-                                                <ButtonElement name="submit" button-label="Save" :submits="true"
+                                                <ButtonElement name="submit" :button-label="$t('Save')" :submits="true"
                                                     align="right" />
 
                                                 <CheckboxElement name="destination_record_checkbox" :submit="false"
@@ -276,8 +276,8 @@
                                                         container: 1,
                                                     }" />
 
-                                                <ToggleElement name="destination_record" text="Record Inbound Calls"
-                                                    description="Enable this setting to automatically record all inbound calls for this phone number. Once activated, every incoming call will be captured and stored for future reference, ensuring that no important conversation is missed. Note: Ensure compliance with local call recording laws before enabling."
+                                                <ToggleElement name="destination_record" :text="$t('Record Inbound Calls')"
+                                                    :description="$t('Enable this setting to automatically record all inbound calls for this phone number. Once activated, every incoming call will be captured and stored for future reference, ensuring that no important conversation is missed. Note: Ensure compliance with local call recording laws before enabling.')"
                                                     true-value="true" false-value="false"
                                                     :conditions="[() => options?.permissions?.manage_recording_setting]"
                                                     :disabled="[['destination_record_checkbox', false]]" :columns="{
@@ -290,8 +290,8 @@
                                                         container: 1,
                                                     }" />
 
-                                                <ToggleElement name="destination_type_fax" text="Enable Fax Machine"
-                                                    description="Activate this setting if calls will be routed directly to a physical fax machine. This ensures proper handling of fax transmissions."
+                                                <ToggleElement name="destination_type_fax" :text="$t('Enable Fax Machine')"
+                                                    :description="$t('Activate this setting if calls will be routed directly to a physical fax machine. This ensures proper handling of fax transmissions.')"
                                                     :true-value="'1'"
                                                     :disabled="[['destination_type_fax_checkbox', false]]" :columns="{
                                                         container: 11,
@@ -303,7 +303,7 @@
                                                     }" />
 
                                                 <SelectElement name="fax_uuid" :items="options.faxes" :search="true"
-                                                    :native="false" label="Fax detection" input-type="search"
+                                                    :native="false" :label="$t('Fax detection')" input-type="search"
                                                     autocomplete="off" :disabled="[['fax_uuid_checkbox', false]]"
                                                     :columns="{
                                                         container: 11,
@@ -315,7 +315,7 @@
                                                     }" />
 
                                                 <TextElement name="destination_cid_name_prefix"
-                                                    label="Caller ID name prefix" autocomplete="off"
+                                                    :label="$t('Caller ID name prefix')" autocomplete="off"
                                                     :disabled="[['destination_cid_name_prefix_checkbox', false]]"
                                                     :columns="{
                                                         container: 11,
@@ -326,7 +326,7 @@
                                                         container: 1,
                                                     }" />
 
-                                                <TextElement name="destination_accountcode" label="Account code"
+                                                <TextElement name="destination_accountcode" :label="$t('Account code')"
                                                     :disabled="[['destination_accountcode_checkbox', false]]" :columns="{
                                                         container: 11,
                                                     }" />
@@ -337,7 +337,7 @@
                                                     }" />
 
                                                 <TextElement name="destination_distinctive_ring"
-                                                    label="Distinctive ring"
+                                                    :label="$t('Distinctive ring')"
                                                     :disabled="[['destination_distinctive_ring_checkbox', false]]"
                                                     :columns="{
                                                         container: 11,
@@ -350,7 +350,7 @@
 
                                                 <SelectElement name="destination_hold_music"
                                                     :items="options.music_on_hold_options" :groups="true" default=""
-                                                    :search="true" :native="false" label="Select custom Music On Hold"
+                                                    :search="true" :native="false" :label="$t('Select custom Music On Hold')"
                                                     :disabled="[['destination_hold_music_checkbox', false]]"
                                                     input-type="search" autocomplete="off" :strict="false" :columns="{
                                                         sm: {
@@ -366,7 +366,7 @@
                                                     }" />
 
                                                 <SelectElement name="domain_uuid" :items="options.domains"
-                                                    :search="true" :native="false" label="Assigned To (Account)"
+                                                    :search="true" :native="false" :label="$t('Assigned To (Account)')"
                                                     input-type="search" autocomplete="off"
                                                     :conditions="[() => options?.permissions?.manage_destination_domain]"
                                                     :disabled="[['domain_uuid_checkbox', false]]" :columns="{
@@ -375,7 +375,7 @@
 
                                                 <GroupElement name="advanced_container2" />
 
-                                                <ButtonElement name="submit_advanced" button-label="Save"
+                                                <ButtonElement name="submit_advanced" :button-label="$t('Save')"
                                                     :submits="true" align="right" />
 
 

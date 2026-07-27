@@ -19,11 +19,11 @@
       />
       <!-- Prompt text when no file is selected -->
       <p v-if="!fileName" class="text-gray-600">
-        <span class="font-semibold text-gray-700">Drag & drop</span> an Excel/CSV file here, or <span class="text-blue-600 underline">browse</span>
+        <span class="font-semibold text-gray-700">{{ $t('Drag & drop') }}</span> {{ $t('an Excel/CSV file here, or') }} <span class="text-blue-600 underline">{{ $t('browse') }}</span>
       </p>
       <!-- Display selected file name -->
       <p v-else class="text-gray-700">
-        Selected file: <span class="font-medium">{{ fileName }}</span>
+        {{ $t('Selected file:') }} <span class="font-medium">{{ fileName }}</span>
       </p>
     </div>
     <!-- Error message display -->
@@ -32,7 +32,8 @@
   
   <script setup>
   import { ref } from 'vue'
-  
+  import { trans } from 'laravel-vue-i18n'
+
   // Define an emitter to send the valid file to the parent
   const emit = defineEmits(['file-selected'])
   
@@ -76,14 +77,14 @@
     const allowedExtensions = ['xlsx', 'xls', 'csv']
     const fileExt = file.name.split('.').pop().toLowerCase()
     if (!allowedExtensions.includes(fileExt)) {
-      error.value = 'Invalid file type. Only .xlsx, .xls, and .csv files are allowed.'
+      error.value = trans('Invalid file type. Only .xlsx, .xls, and .csv files are allowed.')
       return
     }
     
     // Validate file size (max 5MB)
     const maxSize = 5 * 1024 * 1024  // 5MB in bytes
     if (file.size > maxSize) {
-      error.value = 'File size exceeds the 5MB limit.'
+      error.value = trans('File size exceeds the 5MB limit.')
       return
     }
     

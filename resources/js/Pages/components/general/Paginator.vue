@@ -27,29 +27,17 @@
             </div>
             <button type="button" @click="$emit('pagination-change-page', previous)"
                 class="relative inline-flex items-center rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                Previous
+                {{ $t('Previous') }}
             </button>
             <button type="button" @click="$emit('pagination-change-page', next)"
                 class="relative ml-3 inline-flex items-center rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                Next
+                {{ $t('Next') }}
             </button>
         </div>
         <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
             <div class="flex items-center gap-3">
                 <p class="text-sm text-gray-700">
-                    Showing
-                    {{ ' ' }}
-                    <span class="font-medium">{{ from ?? 0 }}</span>
-                    {{ ' ' }}
-                    to
-                    {{ ' ' }}
-                    <span class="font-medium">{{ to ?? 0 }}</span>
-                    {{ ' ' }}
-                    of
-                    {{ ' ' }}
-                    <span class="font-medium">{{ total ?? 0 }}</span>
-                    {{ ' ' }}
-                    results
+                    {{ $t('Showing :from to :to of :total results', { from: from ?? 0, to: to ?? 0, total: total ?? 0 }) }}
                 </p>
                 <div v-if="showPageSizeSelector && pageSizeOptions.length" class="relative">
                     <button type="button" aria-haspopup="listbox" :aria-expanded="pageSizeMenuOpen"

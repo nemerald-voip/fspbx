@@ -19,32 +19,32 @@
 
                             <div class="flex justify-between items-center mb-5">
                                 <DialogTitle as="h3" class="text-base font-semibold leading-6 text-gray-900">
-                                    Import Preview & Edit
+                                    {{ $t('Import Preview & Edit') }}
                                 </DialogTitle>
                                 <button type="button"
                                     class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                     @click="emit('close')">
-                                    <span class="sr-only">Close</span>
+                                    <span class="sr-only">{{ $t('Close') }}</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
 
                             <div v-if="loading" class="flex justify-center items-center p-10">
                                 <svg class="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                <span class="ml-2 text-gray-600">Processing...</span>
+                                <span class="ml-2 text-gray-600">{{ $t('Processing...') }}</span>
                             </div>
 
                             <div v-else class="w-full">
                                 <Vueform ref="form$" :endpoint="false" :display-errors="false" :default="{ items: importData }">
 
-                                    <StaticElement name="bulk_header" tag="h4" content="Bulk Apply" class="text-sm font-semibold text-gray-700 mb-2 mt-2" />
+                                    <StaticElement name="bulk_header" tag="h4" :content="$t('Bulk Apply')" class="text-sm font-semibold text-gray-700 mb-2 mt-2" />
                                     
                                     <GroupElement name="bulk_group" :columns="{ lg: 12, md: 12, sm: 12 }" class="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6 flex items-start">
                                         
-                                        <SelectElement name="bulk_type" label="Action" :floating="false"
+                                        <SelectElement name="bulk_type" :label="$t('Action')" :floating="false"
                                             :items="props.options?.routing_types || []" label-prop="name" value-prop="value"
                                             :search="true" :native="false" input-type="search" autocomplete="off"
-                                            placeholder="Select Action..." :columns="{ lg: 3, md: 3, sm: 12 }"
+                                            :placeholder="$t('Select Action...')" :columns="{ lg: 3, md: 3, sm: 12 }"
                                             @change="(newValue, oldValue, el$) => {
                                                 let target = el$.form$.el$('bulk_group.bulk_extension');
                                                 if (target) {
@@ -53,9 +53,9 @@
                                                 }
                                             }" />
 
-                                        <SelectElement name="bulk_extension" label="Target" :floating="false"
+                                        <SelectElement name="bulk_extension" :label="$t('Target')" :floating="false"
                                             :search="true" :native="false" input-type="search" autocomplete="off"
-                                            placeholder="Select Target..." label-prop="name" value-prop="extension"
+                                            :placeholder="$t('Select Target...')" label-prop="name" value-prop="extension"
                                             :columns="{ lg: 3, md: 3, sm: 12 }"
                                             :items="async (query, input) => {
                                                 let formInst = input.form$ || input.$parent?.el$?.form$;
@@ -68,8 +68,8 @@
                                             }" 
                                         />
 
-                                        <TextElement name="bulk_description" label="Description" :floating="false"
-                                            placeholder="e.g. Main Office" 
+                                        <TextElement name="bulk_description" :label="$t('Description')" :floating="false"
+                                            :placeholder="$t('e.g. Main Office')"
                                             :columns="{ lg: 4, md: 4, sm: 12 }" />
 
                                         <StaticElement name="apply_bulk_btn" :columns="{ lg: 2, md: 2, sm: 12 }">
@@ -77,7 +77,7 @@
                                                 <div class="pt-[26px]">
                                                     <button type="button" @click.prevent="handleBulkApply"
                                                         class="w-full whitespace-nowrap inline-flex justify-center rounded-md bg-indigo-600 px-3 py-[9px] text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                                                        Apply to All
+                                                        {{ $t('Apply to All') }}
                                                     </button>
                                                 </div>
                                             </template>
@@ -88,10 +88,10 @@
                                     <StaticElement name="table_header_row">
                                         <template #default>
                                             <div class="hidden lg:grid grid-cols-12 gap-4 px-2 py-2 bg-white border-b border-gray-200 text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                                                <div class="col-span-3 pl-2">Phone Number</div>
-                                                <div class="col-span-3 pl-2">Action</div>
-                                                <div class="col-span-3 pl-2">Target</div>
-                                                <div class="col-span-3 pl-2">Description</div>
+                                                <div class="col-span-3 pl-2">{{ $t('Phone Number') }}</div>
+                                                <div class="col-span-3 pl-2">{{ $t('Action') }}</div>
+                                                <div class="col-span-3 pl-2">{{ $t('Target') }}</div>
+                                                <div class="col-span-3 pl-2">{{ $t('Description') }}</div>
                                             </div>
                                         </template>
                                     </StaticElement>
@@ -106,7 +106,7 @@
                                                 <SelectElement name="routing_type" :floating="false"
                                                     :items="props.options?.routing_types || []" label-prop="name" value-prop="value"
                                                     :search="true" :native="false" input-type="search" autocomplete="off"
-                                                    placeholder="Select Action..."
+                                                    :placeholder="$t('Select Action...')"
                                                     :columns="{ lg: 3, md: 3, sm: 12 }" 
                                                     @change="(newValue, oldValue, el$) => {
                                                         let extension = el$.form$.el$('items.' + index + '.routing_extension');
@@ -118,7 +118,7 @@
 
                                                 <SelectElement name="routing_extension" :floating="false"
                                                     :search="true" :native="false" input-type="search" autocomplete="off"
-                                                    placeholder="Select Target..." label-prop="name" value-prop="extension"
+                                                    :placeholder="$t('Select Target...')" label-prop="name" value-prop="extension"
                                                     :columns="{ lg: 3, md: 3, sm: 12 }"
                                                     :items="async (query, input) => {
                                                         let formInst = input.form$ || input.$parent?.el$?.form$;
@@ -132,7 +132,7 @@
                                                 />
 
                                                 <TextElement name="destination_description" :floating="false"
-                                                    placeholder="Description" 
+                                                    :placeholder="$t('Description')"
                                                     :columns="{ lg: 3, md: 3, sm: 12 }" />
 
                                             </ObjectElement>
@@ -145,12 +145,12 @@
                                     <button type="button" 
                                         class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
                                         @click="emit('close')">
-                                        Cancel
+                                        {{ $t('Cancel') }}
                                     </button>
                                     <button type="button" 
                                         class="rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600"
                                         @click.prevent="manualSubmit">
-                                        {{ loading ? 'Importing...' : 'Confirm Import' }}
+                                        {{ loading ? $t('Importing...') : $t('Confirm Import') }}
                                     </button>
                                 </div>
                             </div>
@@ -167,6 +167,7 @@
 import { ref } from 'vue';
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
 import { XMarkIcon } from "@heroicons/vue/24/solid";
+import { trans } from 'laravel-vue-i18n';
 import axios from 'axios';
 
 const props = defineProps({
@@ -263,7 +264,7 @@ const manualSubmit = async () => {
         console.error("Submission failed:", error);
         if(error.response && error.response.data && error.response.data.errors) {
              const errorMsg = Object.values(error.response.data.errors).flat().join('\n');
-             alert("Import Failed:\n" + errorMsg);
+             alert(trans("Import Failed:") + "\n" + errorMsg);
         }
     }
 };

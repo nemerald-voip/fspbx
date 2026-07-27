@@ -18,7 +18,7 @@
                                 <button type="button"
                                     class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                     @click="emit('close')">
-                                    <span class="sr-only">Close</span>
+                                    <span class="sr-only">{{ $t('Close') }}</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
@@ -32,7 +32,7 @@
                             </div>
 
                             <div class=" pb-4">
-                                <button @click="downloadTemplate" type="link" class="font-medium text-sm text-blue-600 hover:text-blue-500">Download template.csv</button>
+                                <button @click="downloadTemplate" type="link" class="font-medium text-sm text-blue-600 hover:text-blue-500">{{ $t('Download template.csv') }}</button>
                             </div>
 
                             <div v-if="localErrors && Object.keys(localErrors).length > 0"
@@ -42,8 +42,7 @@
                                         <XCircleIcon class="size-5 text-red-400" aria-hidden="true" />
                                     </div>
                                     <div class="ml-3">
-                                        <h3 class="text-sm font-medium text-red-800">There were errors with your
-                                            submission</h3>
+                                        <h3 class="text-sm font-medium text-red-800">{{ $t('There were errors with your submission') }}</h3>
                                         <div class="mt-2 text-sm text-red-700">
                                             <ul role="list" class="list-disc space-y-1 pl-5">
                                                 <li v-for="(error, index) in localErrors" :key="index">
@@ -59,12 +58,12 @@
 
                                 <button type="button"
                                     class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
-                                    @click="emit('close')" ref="cancelButtonRef">Cancel</button>
+                                    @click="emit('close')" ref="cancelButtonRef">{{ $t('Cancel') }}</button>
 
                                 <button type="button" :disabled="isSubmitting"
                                     class="inline-flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 sm:ml-3 sm:w-auto focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
                                     @click="uploadFile()">
-                                    Upload
+                                    {{ $t('Upload') }}
                                     <Spinner class="ml-2" :color="'text-gray-700'" :show="isSubmitting" />
                                 </button>
                             </div>

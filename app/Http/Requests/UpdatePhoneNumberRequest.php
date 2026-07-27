@@ -133,9 +133,9 @@ class UpdatePhoneNumberRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'destination_conditions.*.condition_expression' => 'Please use valid US phone number on condition',
-            'destination_conditions.*.condition_target.targetValue' => 'Please select action on condition',
-            'domain_uuid.required' => 'Acccount must be selected.'
+            'destination_conditions.*.condition_expression' => __('Please use valid US phone number on condition'),
+            'destination_conditions.*.condition_target.targetValue' => __('Please select action on condition'),
+            'domain_uuid.required' => __('Acccount must be selected.')
         ];
     }
 

@@ -135,10 +135,10 @@ class StorePhoneNumberRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'destination_number.required' => 'Phone number is required',
-            'destination_number.unique' => 'This phone number already exists',
-            'destination_conditions.*.condition_expression' => 'Please use valid US phone number on condition',
-            'destination_conditions.*.condition_target.targetValue' => 'Please select action on condition',
+            'destination_number.required' => __('Phone number is required'),
+            'destination_number.unique' => __('This phone number already exists'),
+            'destination_conditions.*.condition_expression' => __('Please use valid US phone number on condition'),
+            'destination_conditions.*.condition_target.targetValue' => __('Please select action on condition'),
         ];
     }
 
