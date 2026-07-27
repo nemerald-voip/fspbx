@@ -201,7 +201,7 @@
                         </div>
                     </TableField>
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-600" :text="formatLabel(row.template_subcategory)" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-600" :text="row.template_language" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-600" :text="languageLabel(row.template_language)" />
                     <TableField class="max-w-sm px-2 py-2 text-sm text-gray-600">
                         <span class="line-clamp-2">{{ row.template_subject }}</span>
                     </TableField>
@@ -455,6 +455,16 @@ const sortData = ref({
 
 const categoryOptions = computed(() => props.options?.categories ?? []);
 const languageOptions = computed(() => props.options?.languages ?? []);
+
+// Map a stored template_language code to its friendly label (e.g. "en-us" ->
+// "English (en-us)") using the same registry-backed options that feed the
+// filter, so the table column reads consistently with the create form.
+// languageOptions covers every language present in the data; unknown codes
+// fall back to showing the raw code.
+const languageLabelMap = computed(() =>
+    Object.fromEntries(languageOptions.value.map((o) => [o.value, o.label]))
+);
+const languageLabel = (code) => languageLabelMap.value[code] ?? code;
 const columnCount = computed(() => (activeTab.value === "default" ? 6 : 7));
 
 const bulkActions = computed(() => {

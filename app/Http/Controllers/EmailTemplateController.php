@@ -7,11 +7,11 @@ use App\Http\Requests\UpdateEmailTemplateRequest;
 use App\Models\EmailTemplate;
 use App\Services\EmailTemplateDefaultsInitializer;
 use App\Services\EmailTemplatePreviewService;
+use App\Support\Localization\LocaleRegistry;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Spatie\QueryBuilder\AllowedFilter;
@@ -53,7 +53,7 @@ class EmailTemplateController extends Controller
             ],
             'options' => [
                 'categories' => $this->distinctOptions('template_category'),
-                'languages' => $this->distinctOptions('template_language'),
+                'languages' => $this->languageFilterOptions(),
                 'default_language' => get_domain_setting('language') ?: 'en-us',
             ],
         ]);
@@ -522,32 +522,58 @@ class EmailTemplateController extends Controller
     }
 
     /**
-     * Languages a custom template can be created in: the locales FS PBX
-     * supports (v_menu_languages), plus any already used by templates,
-     * with the account default guaranteed to be present.
+     * Language filter options for the index: only the languages actually
+     * present in stored templates (so the filter never lists a language
+     * with no rows), but labeled from LocaleRegistry so they read the same
+     * as the create form ("English (en-us)") instead of a bare code. An
+     * unregistered legacy code falls back to showing the raw code.
      */
-    private function supportedLanguageOptions(): array
+    private function languageFilterOptions(): array
     {
-        $fromTemplates = EmailTemplate::query()
+        $labels = collect(app(LocaleRegistry::class)->options())->pluck('label', 'value');
+
+        return $this->visibleQuery()
             ->whereNotNull('template_language')
             ->where('template_language', '<>', '')
             ->distinct()
-            ->pluck('template_language');
+            ->orderBy('template_language')
+            ->pluck('template_language')
+            ->map(fn ($code) => [
+                'value' => $code,
+                'label' => $labels[$code] ?? $code,
+            ])
+            ->values()
+            ->all();
+    }
 
-        $fromMenu = Schema::hasTable('v_menu_languages')
-            ? DB::table('v_menu_languages')->whereNotNull('menu_language')->distinct()->pluck('menu_language')
-            : collect();
+    /**
+     * Languages a custom template can be created in: the locales FS PBX's UI
+     * i18n supports (config/locales.php via LocaleRegistry), so a template's
+     * language code is drawn from the same vocabulary as the domain
+     * "language" setting that selects it at send time. Any code already
+     * used by an existing template but no longer registered is appended so
+     * those rows stay editable rather than losing their selected value.
+     */
+    private function supportedLanguageOptions(): array
+    {
+        $options = app(LocaleRegistry::class)->options();
+        $registered = array_column($options, 'value');
 
-        return $fromTemplates
-            ->merge($fromMenu)
-            ->push(get_domain_setting('language') ?: 'en-us')
+        $extra = EmailTemplate::query()
+            ->whereNotNull('template_language')
+            ->where('template_language', '<>', '')
+            ->distinct()
+            ->pluck('template_language')
             ->map(fn ($code) => strtolower(trim((string) $code)))
             ->filter()
+            ->reject(fn ($code) => in_array($code, $registered, true))
             ->unique()
             ->sort()
             ->values()
             ->map(fn ($code) => ['value' => $code, 'label' => $code])
             ->all();
+
+        return array_merge($options, $extra);
     }
 
     private function templateKey(array $data): string

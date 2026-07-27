@@ -2,16 +2,13 @@
 
 namespace App\Http\Requests;
 
+use App\Services\Settings\SystemSettingsSchema;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 
 class UpdateSystemSettingsRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     *
-     * @return bool
-     */
     public function authorize(): bool
     {
         return Auth::check();
@@ -20,69 +17,46 @@ class UpdateSystemSettingsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'domain_uuid' => [
-                'required',
-                'uuid',
+            'settings' => [
+                'present',
+                'array',
             ],
-            'domain_name' => [
+            // A global default is the root of the inheritance chain -- there
+            // is nothing below it to fall back to -- so its value cannot be
+            // blank, unlike a per-account override.
+            'settings.*' => [
                 'required',
                 'string',
             ],
-            'domain_description' => [
-                'required',
-                'string'
-            ],
-            'domain_enabled' => [
-                'present',
-                'boolean',
-            ],
-            'updatedSettings' => [
-                'present',
-                'array',
-            ],
-            'newSettings' => [
-                'present',
-                'array',
-            ],
         ];
-    }
-
-
-    public function messages(): array
-    {
-        return [
-        ];
-    }
-
-    public function prepareForValidation(): void
-    {
-        // Sanitize description
-        if ($this->has('domain_description') && $this->domain_description) {
-            $sanitizedDescription = $this->sanitizeInput($this->domain_description);
-            $this->merge(['domain_description' => $sanitizedDescription]);
-        }
     }
 
     /**
-     * Sanitize the input field to prevent XSS and remove unwanted characters.
-     *
-     * @param string $input
-     * @return string
+     * Validate the submitted settings map against the system settings schema:
+     * every key must be a known field, and a value for a field backed by a
+     * fixed list (e.g. language) must be one of that list's values.
      */
-    protected function sanitizeInput(string $input): string
+    public function withValidator(Validator $validator): void
     {
-        // Trim whitespace
-        $input = trim($input);
+        $validator->after(function (Validator $validator) {
+            $schema = app(SystemSettingsSchema::class);
+            $keys = collect($schema->fields())->pluck('key')->all();
+            $allowed = $schema->allowedValues();
 
-        // Strip HTML tags
-        $input = strip_tags($input);
+            foreach ((array) $this->input('settings', []) as $key => $value) {
+                if (! in_array($key, $keys, true)) {
+                    $validator->errors()->add("settings.{$key}", 'Unknown setting.');
+                    continue;
+                }
 
-        // Escape special characters
-        $input = htmlspecialchars($input, ENT_QUOTES, 'UTF-8');
+                if ($value === null || $value === '') {
+                    continue; // the 'required' rule already reports this
+                }
 
-        // Remove any non-ASCII characters if necessary (optional)
-        $input = preg_replace('/[^\x20-\x7E]/', '', $input);
-
-        return $input;
+                if (isset($allowed[$key]) && ! in_array($value, $allowed[$key], true)) {
+                    $validator->errors()->add("settings.{$key}", 'The selected value is invalid.');
+                }
+            }
+        });
     }
 }

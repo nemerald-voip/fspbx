@@ -3,6 +3,48 @@
         :initial-menu-option="initialMenuOption" @update-selected-menu-option="handleUpdateSelectedMenuOption">
 
         <template #default="{ selectedMenuOption }">
+            <!-- GENERAL: system-wide default settings (default_settings) -->
+            <section v-show="selectedMenuOption === 'general'">
+                <Vueform ref="generalForm$" :endpoint="submitForm" @success="handleSuccess" @error="handleError"
+                    @response="handleResponse" :display-errors="false">
+                    <template #empty>
+                        <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
+                            <div class="lg:col-span-12">
+                                <FormElements>
+                                    <StaticElement name="general_tab_label" tag="h4" content="General"
+                                        description="System-wide defaults. Every account inherits these unless it sets its own." />
+
+                                    <!-- Schema-driven defaults, grouped. Add a field in
+                                         SystemSettingsSchema and it renders here. -->
+                                    <template v-for="group in settingGroups" :key="group">
+                                        <StaticElement :name="`settings_group_${group}`" tag="h4" :content="group" />
+                                        <template v-for="field in settingsByGroup[group]" :key="field.key">
+                                            <SelectElement v-if="field.type === 'select'" :name="field.key"
+                                                :label="field.label" :items="settings_options[field.options] ?? []"
+                                                :groups="!!field.grouped" :search="!!field.searchable" :native="false"
+                                                input-type="search" autocomplete="off" :placeholder="field.placeholder"
+                                                :floating="false" :strict="false" :info="field.info || undefined"
+                                                :disabled="!permissions?.default_setting_edit"
+                                                :columns="{ sm: { container: 6 } }" />
+                                            <TextElement v-else-if="field.type === 'text'" :name="field.key"
+                                                :label="field.label" :placeholder="field.placeholder" :floating="false"
+                                                :info="field.info || undefined"
+                                                :disabled="!permissions?.default_setting_edit"
+                                                :columns="{ sm: { container: 6 } }" />
+                                            <ToggleElement v-else-if="field.type === 'toggle'" :name="field.key"
+                                                :text="field.label" :disabled="!permissions?.default_setting_edit" />
+                                        </template>
+                                    </template>
+
+                                    <ButtonElement v-if="permissions?.default_setting_edit" name="general_submit"
+                                        button-label="Save" :submits="true" align="right" />
+                                </FormElements>
+                            </div>
+                        </div>
+                    </template>
+                </Vueform>
+            </section>
+
             <section v-show="selectedMenuOption === 'payment_gateways'">
                 <Vueform ref="form$" :endpoint="submitForm" @success="handleSuccess" @error="handleError"
                     @response="handleResponse" :display-errors="false">
@@ -83,7 +125,7 @@
 </template>
 
 <script setup>
-import { ref, markRaw, onMounted } from 'vue'
+import { ref, computed, markRaw, onMounted } from 'vue'
 import PageWithSideMenu from '../Layouts/PageWithSideMenu.vue'
 import Notification from "./components/notifications/Notification.vue";
 import UpdateStripeSettingsModal from "./components/modal/UpdateStripeSettingsModal.vue";
@@ -98,15 +140,41 @@ import { AdjustmentsVerticalIcon } from "@heroicons/vue/24/outline";
 const props = defineProps({
     routes: Object,
     permissions: Object,
+    // Declarative system-default fields (SystemSettingsSchema), the option
+    // lists they reference, and the current global default values. The
+    // General tab renders and saves from these.
+    settings_schema: {
+        type: Array,
+        default: () => [],
+    },
+    settings_options: {
+        type: Object,
+        default: () => ({}),
+    },
+    settings_values: {
+        type: Object,
+        default: () => ({}),
+    },
 })
 
 const form$ = ref(null)
+const generalForm$ = ref(null)
 const showStripeSettingsModal = ref(false);
 const gatewaySettings = ref(null);
 const gatewayUuid = ref(null);
 const gatewayEnabled = ref(null);
 const navigation = ref([])
 const initialMenuOption = ref(null)
+
+// Group the schema fields for grouped rendering in the General tab.
+const settingsByGroup = computed(() => {
+    const map = {}
+    ;(props.settings_schema ?? []).forEach((field) => {
+        ;(map[field.group] ??= []).push(field)
+    })
+    return map
+})
+const settingGroups = computed(() => Object.keys(settingsByGroup.value))
 
 const pages = [
     { name: 'Dashboard', href: props.routes.dashboard_route, current: true },
@@ -123,6 +191,10 @@ const notificationMessages = ref(null);
 
 onMounted(() => {
     navigation.value = [] // reset if needed
+
+    if (props.permissions?.default_setting_view) {
+        navigation.value.push({ key: 'general', name: 'General', icon: Cog6ToothIcon })
+    }
 
     if (props.permissions?.payment_gateways_view) {
         navigation.value.push({ key: 'payment_gateways', name: 'Payment Gateways', icon: CreditCardIcon })
@@ -143,6 +215,15 @@ onMounted(() => {
     if (navigation.value.length) {
         initialMenuOption.value = navigation.value[0].key
         // handleUpdateSelectedMenuOption(navigation.value[0].key)
+    }
+
+    // Populate the General tab with the current global default values.
+    if (generalForm$.value) {
+        const settingValues = Object.fromEntries(
+            (props.settings_schema ?? []).map((field) => [field.key, props.settings_values?.[field.key] ?? null])
+        )
+        generalForm$.value.update(settingValues)
+        generalForm$.value.clean()
     }
 })
 
@@ -186,73 +267,18 @@ const handlePaymentGatewayDeactivateClick = (index) => {
 }
 
 const submitForm = async (FormData, form$) => {
-    // Using form$.requestData will EXCLUDE conditional elements and it 
-    // will submit the form as Content-Type: application/json . 
+    // form$.requestData EXCLUDES conditional elements and submits as JSON.
     const requestData = form$.requestData
 
-    // Build a lookup of original settings by subcategory
-    const originalMap = props.data.settings.reduce((map, s) => {
-        map[s.domain_setting_subcategory] = {
-            value: s.domain_setting_value,
-            category: s.domain_setting_category,
-            uuid: s.domain_setting_uuid,
-            enabled: s.domain_setting_enabled,
-        }
-        return map
-    }, {})
-
-    const updatedSettings = []
-    const newSettings = []
-
-    // Meta‐fields that are NOT “settings”
-    const metaKeys = [
-        'domain_uuid',
-        'domain_enabled',
-        'domain_description',
-        'domain_name',
-        // plus anything else your form has at top‐level
-    ]
-
-    // Handle updates to EXISTING settings
-    Object.entries(originalMap).forEach(([subcat, orig]) => {
-        // if the form actually sent us this subcat...
-        if (requestData.hasOwnProperty(subcat)) {
-            const newValue = requestData[subcat]
-            if (newValue !== orig.value) {
-                updatedSettings.push({
-                    domain_uuid: props.data.domain_uuid,
-                    domain_setting_uuid: orig.uuid,
-                    domain_setting_category: orig.category,
-                    domain_setting_subcategory: subcat,
-                    domain_setting_value: newValue,
-                    domain_setting_enabled: true,
-                })
-            }
-        }
+    // Collect the schema fields into a clean {key: value} map. The backend
+    // (SystemSettingsController::applyDefaults) maps each key to its
+    // default_settings row via the schema and updates it in place.
+    const settings = {}
+    ;(props.settings_schema ?? []).forEach((field) => {
+        settings[field.key] = requestData[field.key] ?? null
     })
 
-    // Handle brand-new settings
-    Object.keys(requestData).forEach(key => {
-        // if it’s not one of the meta-fields AND not in originalMap
-        if (!metaKeys.includes(key) && !originalMap.hasOwnProperty(key)) {
-            newSettings.push({
-                domain_uuid: props.data.domain_uuid,
-                domain_setting_subcategory: key,
-                domain_setting_value: requestData[key],
-                domain_setting_enabled: true,
-            })
-        }
-    })
-
-    // Overwrite the “settings” payload and add “newSettings”
-    const payload = {
-        ...requestData,
-        updatedSettings,
-        newSettings
-    }
-
-    // console.log(requestData);
-    return await form$.$vueform.services.axios.put(props.routes.settings_update, payload)
+    return await form$.$vueform.services.axios.put(props.routes.settings_update, { settings })
 };
 
 function clearErrorsRecursive(el$) {

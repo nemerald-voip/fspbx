@@ -37,21 +37,34 @@ handful of things that are genuinely different.
 If you'd rather not use Crowdin, you're also welcome to open a pull request
 directly against the [FS PBX GitHub repository](https://github.com/nemerald-voip/fspbx).
 
-## For administrators: setting a tenant's language
+## For administrators: switching the language
 
-Language is set per account (domain), not per user -- everyone signed into
-the same account sees the same language. An administrator with access to
-Domain Settings can set it there, under the domain-level "language" setting.
+Language is set per account, not per user -- everyone signed into the same
+account sees the same language. There are two levels:
 
-A few things worth knowing:
+### System-wide default (all accounts)
 
-- A language only becomes available to choose once it's translated enough to
-  be usable. Partially-translated languages exist and are being worked on,
-  but aren't offered until they clear that bar -- so you won't accidentally
-  switch a tenant into a half-finished interface.
+**System Settings → General → Language** sets the default language for the
+whole system. Every account that hasn't chosen its own language inherits it.
+This is the setting to change if you want to switch the language of the
+system as a whole. (Changing it needs the default-settings edit permission.)
+
+### Per-account (one account)
+
+**Account Settings → General → Language** overrides the system default for
+that one account. Leave it empty to inherit the system-wide default; pick a
+language to override it just for this account. Time Zone works the same way,
+right next to it.
+
+### Things worth knowing
+
+- A language only appears in these dropdowns once it's translated enough to
+  be usable. Partially-translated languages still exist and are being worked
+  on, but aren't offered until they clear that bar -- so you won't
+  accidentally switch into a half-finished interface.
 - A language change takes effect the next time affected users log in, or
-  after using the account's "Reload Settings" action -- the same as other
-  account-level settings.
-- Anything not yet translated for a given language simply falls back and
-  displays in English (or in a closely related language, for regional
-  variants) until the community finishes it.
+  after a "Reload Settings" action -- the same as other settings, not
+  mid-session.
+- Anything not yet translated for the chosen language falls back to English
+  (or to a closely related language, for regional variants) until the
+  community finishes it.

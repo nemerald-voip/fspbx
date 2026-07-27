@@ -13,6 +13,7 @@ use App\Models\VoicemailMessages;
 use App\Models\Extensions;
 use App\Mail\VoicemailNotification;
 use App\Services\VoicemailMessageUrlService;
+use App\Support\Localization\LocaleRegistry;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Redis;
@@ -236,7 +237,13 @@ class SendNewVoicemailNotificationByEmail implements ShouldQueue
 
             $attributes = array_merge($vars, [
                 'template_subcategory' => $subcategory,
-                'language' => $this->params['default_language'].'-'.$this->params['default_dialect'],
+                // Voicemail emails follow the account's UI language (the same
+                // config/locales.php vocabulary the email-template picker uses)
+                // rather than FreeSWITCH's default_language/default_dialect,
+                // which only govern call-audio prompt paths. Resolved through
+                // LocaleRegistry so it's always a registered code, en-us fallback.
+                'language' => app(LocaleRegistry::class)
+                    ->resolve(get_domain_setting('language', $domain_uuid)),
                 'email_subject' => 'New voicemail from '.($message->caller_id_number ?: 'unknown caller'),
                 'domain_uuid' => $domain_uuid,
                 'logId' => $this->logId,

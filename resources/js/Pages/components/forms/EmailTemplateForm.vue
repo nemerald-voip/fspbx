@@ -338,7 +338,7 @@ const defaultTemplateMap = computed(() => {
 // Each field is sized to its content and packs left, keeping the toggles adjacent.
 const baseColumns = { sm: { container: 6 }, lg: { container: 4 } };
 const primaryColumns = { sm: { container: 6 }, lg: { container: 3 } };
-const languageColumns = { sm: { container: 4 }, lg: { container: 2 } };
+const languageColumns = { sm: { container: 8 }, lg: { container: 4 } };
 const toggleColumns = { sm: { container: 4 }, lg: { container: 2 } };
 const shareColumns = { sm: { container: 6 }, lg: { container: 3 } };
 const subjectColumns = { sm: { container: 12 }, lg: { container: 5 } };

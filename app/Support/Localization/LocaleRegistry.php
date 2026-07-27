@@ -105,6 +105,31 @@ class LocaleRegistry
     }
 
     /**
+     * Every registered locale as a {value, label} row for admin dropdowns
+     * (e.g. the email-template language picker), so a template's language
+     * code is drawn from the same vocabulary as the domain "language"
+     * setting that selects it at send time. Unlike available(), this is not
+     * gated by UI-translation completeness -- an email template can be
+     * authored in a language before the UI itself is translated. Order
+     * follows config/locales.php (default and its dialects first).
+     *
+     * @return array<int, array{value: string, label: string}>
+     */
+    public function options(): array
+    {
+        $rows = [];
+
+        foreach ($this->locales() as $code => $meta) {
+            $rows[] = [
+                'value' => $code,
+                'label' => sprintf('%s (%s)', $meta['name'] ?? $code, $code),
+            ];
+        }
+
+        return $rows;
+    }
+
+    /**
      * Keys defined directly in a locale's own file, ignoring inherited
      * fallback keys. Used only to measure translation completion.
      *
