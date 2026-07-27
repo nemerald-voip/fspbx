@@ -25,6 +25,19 @@ A provisioned phone will automatically download and apply:
 - **Consistency:** Ensures every device on your network adheres to the same security standards and baseline configurations.
 - **Zero-Touch Deployment:** When paired with cloud provisioning (like Yealink RPS, Polycom ZTP or Grandstream GDMS), you can ship a brand new phone directly to a remote worker. The moment they plug it into the internet, it finds FS PBX and configures itself automatically.
 
+### Vendor cloud redirection
+
+Vendor cloud services solve the first-contact problem: how a new or factory-reset phone learns the address of your FS PBX provisioning server when you cannot configure the phone or the local DHCP server in advance.
+
+- [Polycom ZTP](/phone-provisioning/polycom-ztp) redirects supported Poly phones to FS PBX.
+- [Yealink RPS](/phone-provisioning/yealink-rps) redirects supported Yealink phones to FS PBX.
+
+These services store a cloud record for the phone's MAC address and provisioning destination. They do not replace FS PBX provisioning. After redirection, the phone still contacts FS PBX, downloads its generated configuration, and registers its SIP lines.
+
+:::warning A cloud listing is not proof that the phone is ready
+A **Listed** Vendor Cloud status only confirms that the provider accepted a record for the device. Use **Last Contact** on the Devices page to confirm that the phone reached FS PBX, and use **Registrations** to confirm that its SIP account registered.
+:::
+
 ---
 
 ## Before you start
