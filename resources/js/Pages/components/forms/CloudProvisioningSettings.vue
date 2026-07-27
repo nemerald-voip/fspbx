@@ -1,7 +1,7 @@
 <template>
     <TransitionRoot as="div" :show="show">
         <Dialog as="div" class="relative z-10"
-            :inert="showPairModal || showUpdateModal || showApiTokenModal || showCreateModal">
+            :inert="showPairModal || showUpdateModal || showApiTokenModal || showCreateModal || showYealinkCreateModal || showYealinkUpdateModal">
             <TransitionChild as="div" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100"
                 leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0">
                 <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
@@ -94,6 +94,18 @@
                                                     'reset',
                                                     'submit',
 
+                                                ]" />
+
+                                                <FormTab name="yealink" :label="$t('Yealink')" :elements="[
+                                                    'yealink_title',
+                                                    'yealink_loading',
+                                                    'yealink_status',
+                                                    'yealink_provider_error',
+                                                    'yealink_create_server',
+                                                    'yealink_update_server',
+                                                    'yealink_credentials',
+                                                    'yealink_destroy_server',
+                                                    'yealink_sync_devices',
                                                 ]" />
 
 
@@ -204,6 +216,100 @@
                                                     description="Click to add or update your Polycom ZTP API Token."
                                                     :secondary="true" :conditions="[() => !isFormLoading]" />
 
+                                                <StaticElement name="yealink_title" tag="h4" :content="$t('Yealink RPS')"
+                                                    :description="$t('Manage the Yealink redirection server and device registrations for this account.')" />
+
+                                                <StaticElement name="yealink_loading"
+                                                    :conditions="[() => isFormLoading]">
+                                                    <div class="my-5 space-y-4">
+                                                        <div class="h-2 animate-pulse rounded bg-slate-200" />
+                                                        <div class="h-2 animate-pulse rounded bg-slate-200" />
+                                                        <div class="h-2 animate-pulse rounded bg-slate-200" />
+                                                    </div>
+                                                </StaticElement>
+
+                                                <StaticElement name="yealink_status"
+                                                    :conditions="[() => !isFormLoading]">
+                                                    <div v-if="options?.organization_id && options?.credentials_configured"
+                                                        class="flex items-center gap-x-3">
+                                                        <div class="flex-none rounded-full bg-green-400/10 p-1 text-green-400">
+                                                            <div class="size-3 rounded-full bg-current" />
+                                                        </div>
+                                                        <h1 class="flex gap-x-3 text-lg">
+                                                            <span class="font-semibold">{{ $t('Status:') }}</span>
+                                                            <Badge backgroundColor="bg-green-100"
+                                                                textColor="text-green-700" :text="$t('Active')"
+                                                                ringColor="ring-green-400/20"
+                                                                class="px-2 py-1 text-xs font-semibold" />
+                                                        </h1>
+                                                    </div>
+
+                                                    <div v-else-if="options && !options.credentials_configured"
+                                                        class="flex items-center gap-x-3">
+                                                        <div class="flex-none rounded-full bg-amber-400/10 p-1 text-amber-400">
+                                                            <div class="size-3 rounded-full bg-current" />
+                                                        </div>
+                                                        <h1 class="flex gap-x-3 text-lg">
+                                                            <span class="font-semibold">{{ $t('Status:') }}</span>
+                                                            <Badge backgroundColor="bg-amber-100"
+                                                                textColor="text-amber-700"
+                                                                :text="$t('API Credentials Required')"
+                                                                ringColor="ring-amber-400/20"
+                                                                class="px-2 py-1 text-xs font-semibold" />
+                                                        </h1>
+                                                    </div>
+
+                                                    <div v-else class="flex items-center gap-x-3">
+                                                        <div class="flex-none rounded-full bg-gray-400/10 p-1 text-gray-400">
+                                                            <div class="size-3 rounded-full bg-current" />
+                                                        </div>
+                                                        <h1 class="flex gap-x-3 text-lg">
+                                                            <span class="font-semibold">{{ $t('Status:') }}</span>
+                                                            <Badge backgroundColor="bg-gray-100"
+                                                                textColor="text-gray-700" :text="$t('Not Registered')"
+                                                                ringColor="ring-gray-400/20"
+                                                                class="px-2 py-1 text-xs font-semibold" />
+                                                        </h1>
+                                                    </div>
+                                                </StaticElement>
+
+                                                <StaticElement name="yealink_provider_error"
+                                                    :conditions="[() => !isFormLoading && options?.provider_error]">
+                                                    <div class="rounded-md bg-red-50 p-4 text-sm text-red-700">
+                                                        {{ options?.provider_error }}
+                                                    </div>
+                                                </StaticElement>
+
+                                                <ButtonElement name="yealink_create_server"
+                                                    :button-label="$t('Create RPS Server')"
+                                                    @click="handleCreateButtonClick('yealink')"
+                                                    :description="$t('Create a Yealink RPS server or connect this account to an existing one.')"
+                                                    :conditions="[() => options?.credentials_configured && !options?.organization_id]" />
+
+                                                <ButtonElement name="yealink_update_server"
+                                                    :button-label="$t('Server Settings')"
+                                                    @click="handleUpdateButtonClick('yealink')"
+                                                    :description="$t('Update the provisioning URL and HTTP credentials sent to Yealink phones.')"
+                                                    :conditions="[() => options?.organization_id]" />
+
+                                                <ButtonElement name="yealink_destroy_server"
+                                                    :button-label="$t('Delete RPS Server')"
+                                                    @click="handleDestroyButtonClick('yealink')"
+                                                    :description="$t('Delete this server from Yealink RPS and disconnect it from the account.')"
+                                                    :danger="true" :conditions="[() => options?.organization_id]" />
+
+                                                <ButtonElement name="yealink_sync_devices"
+                                                    :button-label="$t('Sync Devices')" :loading="isLoading.sync"
+                                                    @click="handleSyncButtonClick('yealink')"
+                                                    :description="$t('Replace local Yealink cloud status with the current device list from RPS.')"
+                                                    :secondary="true" :conditions="[() => options?.organization_id]" />
+
+                                                <ButtonElement name="yealink_credentials"
+                                                    :button-label="$t('API Credentials')"
+                                                    @click="handleApiTokenButtonClick('yealink')"
+                                                    :description="$t('Add or update the Yealink RPS AccessKey credentials.')"
+                                                    :secondary="true" :conditions="[() => !isFormLoading]" />
+
 
 
 
@@ -232,36 +338,54 @@
         :loading="loadingModal" @close="showUpdateModal = false" @error="emitErrorToParentFromChild"
         @success="emitSuccessToParentFromChild" @clear-errors="handleClearErrors" />
 
+    <YealinkRpsServerForm :options="itemOptions" :show="showYealinkCreateModal"
+        :header="$t('Create Yealink RPS Server')" :loading="loadingModal" mode="create"
+        @close="handleModalClose" @error="emitErrorToParentFromChild"
+        @success="emitSuccessToParentFromChild" @refresh-data="getCloudProvisioningItemOptions" />
+
+    <YealinkRpsServerForm :options="itemOptions" :show="showYealinkUpdateModal"
+        :header="$t('Edit Yealink RPS Server')" :loading="loadingModal" mode="update"
+        @close="handleModalClose" @error="emitErrorToParentFromChild"
+        @success="emitSuccessToParentFromChild" @refresh-data="getCloudProvisioningItemOptions" />
+
 
     <PairPolycomOrganizationForm :show="showPairModal" :loading="loadingModal" :orgs="ztpOrganizations"
         :selected-provider="selectedProvider" :route="options?.routes?.cloud_provisioning_pair_organization"
+        :header="pairModalHeader" :description="pairModalDescription" :item-label="pairModalItemLabel"
         @close="handleModalClose" @error="emitErrorToParentFromChild" @success="emitSuccessToParentFromChild"
         @refresh-data="getCloudProvisioningItemOptions" />
 
-    <AddEditItemModal :customClass="'sm:max-w-xl'" :show="showApiTokenModal" :header="'Polycom Api Token'"
+    <AddEditItemModal :customClass="'sm:max-w-xl'" :show="showApiTokenModal" :header="credentialsModalHeader"
         :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <UpdatePolycomApiTokenForm :token="apiToken" :errors="formErrors" :selected-provider="selectedProvider"
+            <UpdatePolycomApiTokenForm v-if="selectedProvider === 'polycom'" :token="apiToken"
+                :errors="formErrors" :selected-provider="selectedProvider"
                 :is-submitting="updateApiTokenFormSubmitting" @submit="handleUpdateApiTokenRequest"
                 @cancel="handleModalClose" @error="emitErrorToParentFromChild" @refresh-data="getItemOptions"
                 @success="emitSuccessToParentFromChild" @clear-errors="handleClearErrors" />
+            <UpdateYealinkRpsCredentialsForm v-else-if="selectedProvider === 'yealink'"
+                :credentials="providerCredentials"
+                :route="props.routes.cloud_provisioning_update_api_token"
+                @cancel="handleModalClose" @error="emitErrorToParentFromChild"
+                @success="handleCredentialsSuccess" />
         </template>
     </AddEditItemModal>
 
     <ConfirmationModal :show="showConfirmationModal" @close="showConfirmationModal = false"
-        @confirm="confirmDeleteAction" :header="'Confirm Action'"
-        :text="'Are you sure you want to delete this organization? This action may impact account functionality.'"
-        confirm-button-label="Delete" cancel-button-label="Cancel" :loading="showDeactivateSpinner" />
+        @confirm="confirmDeleteAction" :header="$t('Confirm Action')"
+        :text="deleteConfirmationText"
+        :confirm-button-label="$t('Delete')" :cancel-button-label="$t('Cancel')" :loading="showDeactivateSpinner" />
 
-    <ConfirmationModal :show="showPolycomConfirmationModal" @close="cancelPolycomAction" @confirm="confirmPolycomAction"
-        :header="'Select a method to set up your Polycom organization.'"
-        :text="'Would you like to connect to an existing Polycom organization or create a new one?'"
-        confirm-button-label="Create New Organization" cancel-button-label="Connect to Existing"
+    <ConfirmationModal :show="showPolycomConfirmationModal" @close="dismissSetupConfirmation"
+        @cancel="cancelPolycomAction" @confirm="confirmPolycomAction"
+        :header="setupConfirmationHeader"
+        :text="setupConfirmationText"
+        :confirm-button-label="setupCreateLabel" :cancel-button-label="$t('Connect to Existing')"
         :loading="showConnectSpinner || showCreateSpinner" :color="'blue'" />
 </template>
 
 <script setup>
-import { onMounted, ref } from "vue";
+import { computed, ref } from "vue";
 import axios from "axios";
 import PairPolycomOrganizationForm from "../forms/PairPolycomOrganizationForm.vue";
 import AddEditItemModal from "../modal/AddEditItemModal.vue";
@@ -269,9 +393,12 @@ import UpdatePolycomOrgForm from "../forms/UpdatePolycomOrgForm.vue";
 import CreatePolycomOrgForm from "../forms/CreatePolycomOrgForm.vue";
 import ConfirmationModal from "../modal/ConfirmationModal.vue";
 import UpdatePolycomApiTokenForm from "../forms/UpdatePolycomApiTokenForm.vue";
+import UpdateYealinkRpsCredentialsForm from "../forms/UpdateYealinkRpsCredentialsForm.vue";
+import YealinkRpsServerForm from "../forms/YealinkRpsServerForm.vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { XMarkIcon } from "@heroicons/vue/24/solid";
 import Badge from "@generalComponents/Badge.vue";
+import { trans } from 'laravel-vue-i18n';
 
 const props = defineProps({
     show: Boolean,
@@ -286,6 +413,8 @@ const props = defineProps({
 const loadingModal = ref(false)
 const showCreateModal = ref(false);
 const showUpdateModal = ref(false);
+const showYealinkCreateModal = ref(false);
+const showYealinkUpdateModal = ref(false);
 const showApiTokenModal = ref(false);
 const showPairModal = ref(false);
 const bulkUpdateModalTrigger = ref(false);
@@ -303,6 +432,7 @@ const ztpOrganizations = ref({})
 const selectedProvider = ref(null)
 const itemOptions = ref({})
 const apiToken = ref(null)
+const providerCredentials = ref({})
 const syncDevicesSubmitting = ref(null);
 const options = ref(null)
 const isFormLoading = ref(false)
@@ -312,6 +442,30 @@ const isLoading = ref({
     destroy: false,
     sync: false,
 })
+
+const isYealinkSelected = computed(() => selectedProvider.value === 'yealink')
+const credentialsModalHeader = computed(() => isYealinkSelected.value
+    ? trans('Yealink RPS API Credentials')
+    : trans('Polycom API Token'))
+const pairModalHeader = computed(() => isYealinkSelected.value
+    ? trans('Connect to Existing Yealink RPS Server')
+    : trans('Connect to Existing ZTP Organization'))
+const pairModalDescription = computed(() => isYealinkSelected.value
+    ? trans('Select the Yealink RPS server to use for this account.')
+    : trans('Select the organization you want to connect to.'))
+const pairModalItemLabel = computed(() => isYealinkSelected.value ? trans('RPS Server') : trans('Organization'))
+const deleteConfirmationText = computed(() => isYealinkSelected.value
+    ? trans('Delete this Yealink RPS server? Devices assigned to it may stop redirecting to FS PBX.')
+    : trans('Delete this Polycom organization? This action may impact account functionality.'))
+const setupConfirmationHeader = computed(() => isYealinkSelected.value
+    ? trans('Set up Yealink RPS')
+    : trans('Set up Polycom ZTP'))
+const setupConfirmationText = computed(() => isYealinkSelected.value
+    ? trans('Create a new RPS server or connect this account to an existing server.')
+    : trans('Create a new Polycom organization or connect this account to an existing organization.'))
+const setupCreateLabel = computed(() => isYealinkSelected.value
+    ? trans('Create New Server')
+    : trans('Create New Organization'))
 
 const emit = defineEmits(['close', 'cancel', 'error', 'success']);
 
@@ -337,15 +491,24 @@ const getCloudProvisioningItemOptions = (provider) => {
 }
 
 const handleCreateButtonClick = (provider) => {
+    selectedProvider.value = provider;
     showPolycomConfirmationModal.value = true;
     confirmPolycomAction.value = () => executeNewOrgAction(provider);
     cancelPolycomAction.value = () => executeExistingOrgAction(provider);
 };
 
+const dismissSetupConfirmation = () => {
+    showPolycomConfirmationModal.value = false;
+}
+
 const executeNewOrgAction = (provider) => {
     showPolycomConfirmationModal.value = false;
     selectedProvider.value = provider;
-    showCreateModal.value = true
+    if (provider === 'yealink') {
+        showYealinkCreateModal.value = true
+    } else {
+        showCreateModal.value = true
+    }
     loadingModal.value = true
     getItemOptions(provider);
 }
@@ -359,7 +522,12 @@ const executeExistingOrgAction = (provider) => {
 }
 
 const handleUpdateButtonClick = (provider) => {
-    showUpdateModal.value = true
+    selectedProvider.value = provider;
+    if (provider === 'yealink') {
+        showYealinkUpdateModal.value = true
+    } else {
+        showUpdateModal.value = true
+    }
     loadingModal.value = true
     getItemOptions(provider);
 }
@@ -383,6 +551,7 @@ const handleSyncButtonClick = (provider) => {
 
 
 const handleDestroyButtonClick = (provider) => {
+    selectedProvider.value = provider;
     showConfirmationModal.value = true;
     confirmDeleteAction.value = () => executeSingleDelete(provider);
 }
@@ -449,6 +618,7 @@ const getApiToken = (provider) => {
     })
         .then((response) => {
             apiToken.value = response.data.token;
+            providerCredentials.value = response.data.credentials ?? {};
             // console.log(apiToken.value)
 
         }).catch((error) => {
@@ -476,6 +646,12 @@ const handleUpdateApiTokenRequest = (form) => {
         })
 
 };
+
+const handleCredentialsSuccess = (messages) => {
+    emit('success', 'success', messages);
+    handleModalClose();
+    getCloudProvisioningItemOptions('yealink');
+}
 
 const submitForm = async (FormData, form$) => {
     // Using form$.requestData will EXCLUDE conditional elements and it 
@@ -570,7 +746,8 @@ const handleError = (error, details, form$) => {
 }
 
 const handleTabSelected = (activeTab, previousTab) => {
-    if (activeTab.name == 'polycom') {
+    if (activeTab.name == 'polycom' || activeTab.name == 'yealink') {
+        selectedProvider.value = activeTab.name
         getCloudProvisioningItemOptions(activeTab.name)
     }
 
@@ -579,6 +756,8 @@ const handleTabSelected = (activeTab, previousTab) => {
 const handleModalClose = () => {
     showCreateModal.value = false;
     showUpdateModal.value = false;
+    showYealinkCreateModal.value = false;
+    showYealinkUpdateModal.value = false;
     showApiTokenModal.value = false;
     showPolycomConfirmationModal.value = false;
     showConfirmationModal.value = false;

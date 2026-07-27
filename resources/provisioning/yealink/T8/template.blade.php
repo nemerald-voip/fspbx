@@ -1,4 +1,4 @@
-{{-- version: 1.0.8 --}}
+{{-- version: 1.0.9 --}}
 
 @switch($flavor)
 
@@ -294,8 +294,8 @@ call_waiting.tone = {{ $settings['yealink_call_waiting_tone'] ?? 1 }}
 sip.rfc2543_hold = {{ $settings['yealink_rfc2543_hold'] ?? 0 }}
 features.hide_feature_access_codes.enable = {{ $settings['yealink_hide_feature_access_codes_enable'] ?? 0 }}
 phone_setting.missed_call_power_led_flash.enable = {{ $settings['yealink_missed_call_power_led_flash_enable'] ?? 1 }}
-phone_setting.backlight_time = {{ $settings['yealink_backlight_time'] ?? 30 }} 
-phone_setting.inactive_backlight_level = {{ $settings['yealink_inactive_backlight_level'] ?? 1 }}
+phone_setting.backlight_time = {{ $settings['yealink_backlight_time'] ?? '600' }} 
+phone_setting.inactive_backlight_level = {{ $settings['yealink_inactive_backlight_level'] ?? 0 }}
 phone_setting.predial_autodial = {{ $settings['yealink_predial_autodial'] ?? 1 }}
 ringtone.url = {{ $settings['yealink_ringtone_url'] ?? '' }}
 ringtone.delete = {{ $settings['yealink_ringtone_delete'] ?? 0 }}
@@ -303,7 +303,7 @@ phone_setting.ring_type = {{ $settings['yealink_ring_type'] ?? 1 }}
 phone_setting.inter_digit_time = {{ $settings['yealink_inter_digit_time'] ?? 4 }}
 lang.gui = "{{ $settings['yealink_language_gui'] ?? 'English' }}"
 features.blf_active_backlight.enable = {{ $settings['yealink_blf_active_backlight'] ?? 1 }}
-screensaver.wait_time = {{ $settings['yealink_screensaver_wait'] ?? 600 }}
+screensaver.wait_time = {{ $settings['yealink_screensaver_wait'] ?? '6h' }}
 features.blf_led_mode = {{ $settings['yealink_blf_led_mode'] ?? 0 }}
 features.pickup.direct_pickup_enable = {{ $settings['yealink_direct_pickup_enable'] ?? 1 }}
 features.pickup.direct_pickup_code = **
@@ -345,16 +345,8 @@ distinctive_ring_tones.alert_info.{{ $i }}.ringer = {{ $settings["yealink_ring_f
 ################################################################
 ##                      Backgrounds  Settings                 ##
 ################################################################
-##File Formate:
-##SIP-T57W/T54W/T54S/T52S/T48S/T48G/T46G/T46S/T29G/T46U/T48U: .jpg/.png/.bmp/.jpeg;
-##Resolution:
-##SIP-T57W/T48S/T48G/T48U/T46U:<=2.0 megapixels;
-##for SIP-T54W/T46G/T46S/T29G: <=1.8 megapixels;SIP-T54S/T52S:<=4.2 megapixels;
-##Single File Size: <=5MB
-##2MB of space should bereserved for the phone
-wallpaper_upload.url = {{ $settings['yealink_t74u_wallpaper'] ?? '' }}
-phone_setting.backgrounds = Config:{{ $settings['yealink_t74u_wallpaper_filename'] ?? '' }}
-
+wallpaper_upload.url = {{ $settings['yealink_t8_wallpaper'] ?? '' }}
+phone_setting.backgrounds = Config:{{ $settings['yealink_t8_wallpaper_filename'] ?? '' }}
 
 ################################################################
 ##                      Network Basic                         ##
@@ -393,18 +385,12 @@ static.firmware.url = {{ $settings['yealink_firmware_t46u'] ?? '' }}
 #################################################################
 static.security.default_ssl_method = {{ $settings['yealink_security_default_ssl_method'] ?? '3' }}
 static.security.trust_certificates = {{ $settings['yealink_trust_certificates'] ?? '0' }}
-@if (isset($settings['user_name']))
-    static.security.user_name.user = {{ $settings['user_name'] }}
-    static.security.user_password = {{ $settings['user_password'] }}
-@endif
-@if (isset($settings['admin_name']))
-    static.security.user_name.admin = {{ $settings['admin_name'] }}
-    static.security.user_password = {{ $settings['admin_password'] }}
-@endif
-@if (isset($settings['var_name']))
-    static.security.user_name.var = {{ $settings['var_name'] }}
-    static.security.user_password = {{ $settings['var_password'] }}
-@endif
+
+static.security.user_name.user = {{ $settings['user_name'] ?? 'user'}}
+static.security.user_password = {{ $settings['user_name'] ?? 'user'}}:{{ $settings['user_password'] ?? '1234'}}
+static.security.user_name.admin = {{ $settings['admin_name'] ?? 'admin'}}
+static.security.user_password = {{ $settings['admin_name'] ?? 'admin'}}:{{ $settings['admin_password'] ?? '123456'}}
+
 sip.trust_ctrl = {{ $settings['yealink_trust_ctrl'] ?? '1' }}
 sip.listen_port = {{ $settings['yealink_sip_listen_port'] ?? '5060' }}
 phone_setting.called_party_info_display.enable = 0

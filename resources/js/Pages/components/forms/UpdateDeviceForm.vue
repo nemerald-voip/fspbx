@@ -161,7 +161,7 @@
                                                 ]"
                                                     :conditions="[() => options?.item?.device_vendor == 'grandstream' || options?.item?.device_vendor == 'yealink']" />
 
-                                                <FormTab name="cloud_provisioning" label="Cloud Provisioning" :elements="[
+                                                <FormTab name="cloud_provisioning" :label="vendorCloudServiceName" :elements="[
                                                     'cloud_provisioning_title',
                                                     'cloud_provisioning_status',
                                                     'cloud_provisioning_register',
@@ -1064,8 +1064,8 @@
 
                                                 <!-- Cloud Provisioning tab-->
                                                 <StaticElement name="cloud_provisioning_title" tag="h4"
-                                                    content="Cloud Provisioning"
-                                                    description="View and manage this device’s status in the external cloud provisioning service." />
+                                                    :content="vendorCloudServiceName"
+                                                    :description="vendorCloudDescription" />
 
                                                 <StaticElement name="provisioning_loading"
                                                     :conditions="[() => isCloudProvisioningLoading.loading]">
@@ -1094,7 +1094,7 @@
                                                         <h1 class="flex gap-x-3 text-lg">
                                                             <span class="font-semibold ">Status:</span>
                                                             <Badge backgroundColor="bg-green-100"
-                                                                textColor="text-green-700" :text="'Active'"
+                                                                textColor="text-green-700" :text="vendorCloudListedLabel"
                                                                 ringColor="ring-green-400/20"
                                                                 class="px-2 py-1 text-xs font-semibold" />
                                                         </h1>
@@ -1108,7 +1108,8 @@
                                                         <h1 class="flex gap-x-3 text-lg">
                                                             <span class="font-semibold ">Status:</span>
                                                             <Badge backgroundColor="bg-rose-100"
-                                                                textColor="text-rose-700" :text="'Error'"
+                                                                textColor="text-rose-700"
+                                                                :text="provisioning.last_action === 'deregister' ? vendorCloudRemoveFailedLabel : vendorCloudAddFailedLabel"
                                                                 ringColor="ring-rose-400/20"
                                                                 class="px-2 py-1 text-xs font-semibold" />
                                                         </h1>
@@ -1126,8 +1127,8 @@
                                                                 <!-- <h3 class="text-sm font-medium text-red-800">There were
                                                                     2 errors with your submission</h3> -->
                                                                 <div class="text-sm text-red-700">
-                                                                    <span>Last Action: {{ provisioning.last_action
-                                                                        }}</span>
+                                                                    <span>{{ $t('Last operation:') }}
+                                                                        {{ provisioning.last_action === 'deregister' ? $t('Remove') : $t('Add') }}</span>
                                                                 </div>
                                                                 <div class="text-sm text-red-700">
                                                                     <span>Error: {{ provisioning.error }}</span>
@@ -1145,7 +1146,8 @@
                                                         <h1 class="flex gap-x-3 text-lg">
                                                             <span class="font-semibold ">Status:</span>
                                                             <Badge backgroundColor="bg-amber-100"
-                                                                textColor="text-amber-700" :text="'Pending'"
+                                                                textColor="text-amber-700"
+                                                                :text="provisioning.last_action === 'deregister' ? vendorCloudRemovingLabel : vendorCloudAddingLabel"
                                                                 ringColor="ring-amber-400/20"
                                                                 class="px-2 py-1 text-xs font-semibold" />
                                                         </h1>
@@ -1160,7 +1162,7 @@
                                                         <h1 class="flex gap-x-3 text-lg">
                                                             <span class="font-semibold ">Status:</span>
                                                             <Badge backgroundColor="bg-gray-100"
-                                                                textColor="text-gray-700" :text="'Not Registered'"
+                                                                textColor="text-gray-700" :text="vendorCloudNotListedLabel"
                                                                 ringColor="ring-gray-400/20"
                                                                 class="px-2 py-1 text-xs font-semibold" />
                                                         </h1>
@@ -1168,10 +1170,10 @@
                                                 </StaticElement>
 
                                                 <ButtonElement name="cloud_provisioning_register"
-                                                    button-label="Register device"
+                                                    :button-label="vendorCloudAddButtonLabel"
                                                     :loading="isCloudProvisioningLoading.register"
                                                     @click="handleCloudProvisioningRegisterButtonClick"
-                                                    description="Register device in the external cloud provisioning service."
+                                                    :description="vendorCloudAddDescription"
                                                     :conditions="[() => !provisioning || (provisioning?.last_action != 'register' && provisioning?.status == 'success')]" />
 
                                                 <GroupElement name="cloud_provisioning_container"
@@ -1180,27 +1182,28 @@
                                                 <ButtonElement name="cloud_provisioning_refresh" button-label="Refresh"
                                                     :loading="isCloudProvisioningLoading.refresh"
                                                     @click="handleCloudProvisioningRefreshButtonClick"
-                                                    description="Refresh status." :secondary="true"
+                                                    :description="vendorCloudRefreshDescription" :secondary="true"
                                                     :conditions="[() => provisioning && provisioning?.status == 'pending']" />
 
                                                 <ButtonElement name="cloud_provisioning_deregister"
-                                                    button-label="Deregister"
+                                                    :button-label="vendorCloudRemoveButtonLabel"
                                                     :loading="isCloudProvisioningLoading.deregister"
                                                     @click="handleCloudProvisioningDeregisterButtonClick"
-                                                    description="Remove this device from the external cloud provisioning service."
+                                                    :description="vendorCloudRemoveDescription"
                                                     :danger="true"
                                                     :conditions="[() => provisioning && provisioning?.last_action == 'register' && provisioning?.status == 'success']" />
 
 
                                                 <ButtonElement name="cloud_provisioning_retry" button-label="Retry"
                                                     @click="handleCloudProvisioningRetryButtonClick"
-                                                    description="Retry the last provisioning action."
+                                                    :description="vendorCloudRetryDescription"
                                                     :loading="isCloudProvisioningLoading.retry"
                                                     :conditions="[() => provisioning && provisioning?.status == 'error']" />
 
-                                                <ButtonElement name="cloud_provisioning_reset" button-label="Reset"
+                                                <ButtonElement name="cloud_provisioning_reset"
+                                                    :button-label="$t('Clear Status')"
                                                     @click="handleCloudProvisioningResetButtonClick"
-                                                    description="Reset local cache for this device."
+                                                    :description="vendorCloudClearStatusDescription"
                                                     :loading="isCloudProvisioningLoading.reset" :danger="true"
                                                     :conditions="[() => provisioning && (provisioning?.status == 'error' || provisioning?.status == 'pending')]" />
 
@@ -1388,6 +1391,7 @@ import { Cog8ToothIcon, DocumentDuplicateIcon } from "@heroicons/vue/24/outline"
 import Badge from "@generalComponents/Badge.vue";
 import { XCircleIcon } from '@heroicons/vue/20/solid'
 import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
+import { trans } from 'laravel-vue-i18n';
 
 
 const props = defineProps({
@@ -1396,6 +1400,67 @@ const props = defineProps({
     header: String,
     loading: Boolean,
 });
+
+const vendorCloudServiceName = computed(() => {
+    const provider = String(props.options?.item?.device_vendor ?? '').toLowerCase()
+
+    if (provider === 'yealink') {
+        return trans('Yealink RPS')
+    }
+
+    if (provider === 'polycom') {
+        return trans('Polycom ZTP')
+    }
+
+    return trans('Vendor Cloud')
+})
+
+const vendorCloudDescription = computed(() =>
+    trans('View and manage this device’s listing in :service.', {
+        service: vendorCloudServiceName.value,
+    })
+)
+const vendorCloudListedLabel = computed(() =>
+    trans('Listed in :service', { service: vendorCloudServiceName.value })
+)
+const vendorCloudNotListedLabel = computed(() =>
+    trans('Not listed in :service', { service: vendorCloudServiceName.value })
+)
+const vendorCloudAddingLabel = computed(() =>
+    trans('Adding to :service', { service: vendorCloudServiceName.value })
+)
+const vendorCloudRemovingLabel = computed(() =>
+    trans('Removing from :service', { service: vendorCloudServiceName.value })
+)
+const vendorCloudAddFailedLabel = computed(() =>
+    trans('Could not add to :service', { service: vendorCloudServiceName.value })
+)
+const vendorCloudRemoveFailedLabel = computed(() =>
+    trans('Could not remove from :service', { service: vendorCloudServiceName.value })
+)
+const vendorCloudAddButtonLabel = computed(() =>
+    trans('Add to :service', { service: vendorCloudServiceName.value })
+)
+const vendorCloudRemoveButtonLabel = computed(() =>
+    trans('Remove from :service', { service: vendorCloudServiceName.value })
+)
+const vendorCloudAddDescription = computed(() =>
+    trans('Add a record for this device to :service.', { service: vendorCloudServiceName.value })
+)
+const vendorCloudRemoveDescription = computed(() =>
+    trans('Remove this device’s record from :service.', { service: vendorCloudServiceName.value })
+)
+const vendorCloudRefreshDescription = computed(() =>
+    trans('Refresh :service status.', { service: vendorCloudServiceName.value })
+)
+const vendorCloudRetryDescription = computed(() =>
+    trans('Retry the last :service action.', { service: vendorCloudServiceName.value })
+)
+const vendorCloudClearStatusDescription = computed(() =>
+    trans('Clear the locally cached :service status for this device.', {
+        service: vendorCloudServiceName.value,
+    })
+)
 
 const form$ = ref(null)
 const advModalIndex = ref(null)

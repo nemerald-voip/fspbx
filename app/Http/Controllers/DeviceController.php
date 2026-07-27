@@ -70,6 +70,7 @@ class DeviceController extends Controller
                     'bulk_update' => route('devices.bulk.update'),
                     'item_options' => route('devices.item.options'),
                     'restart' => route('devices.restart'),
+                    'sync' => route('devices.sync'),
                     'key_templates' => route('device-key-templates.index'),
                     'cloud_provisioning_item_options' => route('cloud-provisioning.item.options'),
                     'cloud_provisioning_get_token' => route('cloud-provisioning.token.get'),
@@ -190,6 +191,7 @@ class DeviceController extends Controller
                 'device_uuid',
                 'device_template',
                 'device_template_uuid',
+                'device_vendor',
                 'device_label',
                 'device_profile_uuid',
                 'device_key_template_uuid',
@@ -205,12 +207,13 @@ class DeviceController extends Controller
             ->allowedFilters([
                 AllowedFilter::callback('search', function ($query, $value) {
                     $needle = trim((string) $value);
+                    $templateParts = array_map('trim', explode('/', $needle, 2));
 
                     // Normalize MAC like "00:04:F2-3A:5B:C7" -> "0004f23a5bc7"
                     // This strips ':' and '-' (and any non-hex) and lowercases.
                     $norm = strtolower(preg_replace('/[^0-9a-f]/i', '', $needle));
 
-                    $query->where(function ($q) use ($needle, $norm) {
+                    $query->where(function ($q) use ($needle, $norm, $templateParts) {
                         // 1) device_address (DB stores normalized 12-hex)
                         $q->where(function ($q2) use ($needle, $norm) {
                             // partial match on normalized MAC
@@ -226,6 +229,21 @@ class DeviceController extends Controller
 
                             // 2) free-text on other columns (keep raw needle to preserve text searches)
                             ->orWhere('device_template', 'ilike', "%{$needle}%")
+                            ->orWhereHas('template', function ($q2) use ($needle, $templateParts) {
+                                if (count($templateParts) === 2
+                                    && $templateParts[0] !== ''
+                                    && $templateParts[1] !== '') {
+                                    $q2->where('vendor', 'ilike', "%{$templateParts[0]}%")
+                                        ->where('name', 'ilike', "%{$templateParts[1]}%");
+
+                                    return;
+                                }
+
+                                $q2->where(function ($q3) use ($needle) {
+                                    $q3->where('vendor', 'ilike', "%{$needle}%")
+                                        ->orWhere('name', 'ilike', "%{$needle}%");
+                                });
+                            })
                             ->orWhereHas('profile', function ($q2) use ($needle) {
                                 $q2->where('device_profile_name', 'ilike', "%{$needle}%");
                             })
@@ -264,7 +282,7 @@ class DeviceController extends Controller
                 $query->select('device_key_template_uuid', 'name', 'description');
             }])
             ->with(['cloudProvisioning' => function ($query) {
-                $query->select('uuid', 'device_uuid', 'last_action', 'status');
+                $query->select('uuid', 'device_uuid', 'provider', 'last_action', 'status');
             }])
             ->with(['domain' => function ($query) {
                 $query->select('domain_uuid', 'domain_name', 'domain_description');
@@ -872,8 +890,31 @@ class DeviceController extends Controller
 
     public function restart(FreeswitchEslService $eslService, DeviceActionService $deviceActionService)
     {
-        try {
+        return $this->sendRegisteredDeviceAction(
+            $eslService,
+            $deviceActionService,
+            'reboot',
+            __('Selected device(s) scheduled for reboot')
+        );
+    }
 
+    public function sync(FreeswitchEslService $eslService, DeviceActionService $deviceActionService)
+    {
+        return $this->sendRegisteredDeviceAction(
+            $eslService,
+            $deviceActionService,
+            'provision',
+            __('Selected device(s) scheduled for synchronization')
+        );
+    }
+
+    private function sendRegisteredDeviceAction(
+        FreeswitchEslService $eslService,
+        DeviceActionService $deviceActionService,
+        string $action,
+        string $successMessage
+    ): JsonResponse {
+        try {
             // Get a collection of SIP registrations
             $regs = $eslService->getAllSipRegistrations();
 
@@ -897,18 +938,18 @@ class DeviceController extends Controller
             // logger($devices);
 
             // Filter and process $regs based on $linesCollection
-            $filteredRegs = collect($regs)->filter(function ($reg) use ($linesCollection) {
+            collect($regs)->filter(function ($reg) use ($linesCollection) {
                 [$authId, $domain] = explode('@', $reg['user'], 2);
                 return $linesCollection->contains(function ($line) use ($authId, $domain) {
                     return $line['auth_id'] === $authId && $line['server_address'] === $domain;
                 });
-            })->each(function ($reg) use ($deviceActionService) {
-                $deviceActionService->handleDeviceAction($reg, 'reboot');
+            })->each(function ($reg) use ($deviceActionService, $action) {
+                $deviceActionService->handleDeviceAction($reg, $action);
             });
 
             // Return a JSON response indicating success
             return response()->json([
-                'messages' => ['success' => ['Selected device(s) scheduled for reboot']]
+                'messages' => ['success' => [$successMessage]]
             ], 201);
         } catch (\Exception $e) {
             logger($e->getMessage() . PHP_EOL);

@@ -44,6 +44,21 @@ class PolycomCloudProvider implements CloudProviderInterface
         return null;
     }
 
+    public function getCredentials(): array
+    {
+        return ['token' => $this->getApiToken()];
+    }
+
+    public function setCredentials(array $credentials): void
+    {
+        $this->setApiToken($credentials['token']);
+    }
+
+    public function hasCredentials(): bool
+    {
+        return filled($this->getApiToken());
+    }
+
     /**
      * Create or update the Polycom API token in the database.
      *
@@ -98,7 +113,7 @@ class PolycomCloudProvider implements CloudProviderInterface
      * @return array The list of devices.
      * @throws \Exception If the API request fails.
      */
-    public function getDevices(int $limit = 50, string $cursor = null): array
+    public function getDevices(int $limit = 50, ?string $cursor = null): array
     {
         $this->ensureApiTokenExists();
 
@@ -422,6 +437,27 @@ class PolycomCloudProvider implements CloudProviderInterface
         } else {
             throw new \Exception($response['error']);
         }
+    }
+
+    public function organizationDeletionRemovesDevices(): bool
+    {
+        return false;
+    }
+
+    public function pairOrganization(string $domainUuid, string $organizationId): void
+    {
+        DomainSettings::updateOrCreate(
+            [
+                'domain_uuid' => $domainUuid,
+                'domain_setting_category' => 'cloud provision',
+                'domain_setting_subcategory' => 'polycom_ztp_profile_id',
+            ],
+            [
+                'domain_setting_name' => 'text',
+                'domain_setting_value' => $organizationId,
+                'domain_setting_enabled' => true,
+            ]
+        );
     }
 
     /**

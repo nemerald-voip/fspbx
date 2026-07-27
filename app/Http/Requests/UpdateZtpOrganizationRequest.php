@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateZtpOrganizationRequest extends FormRequest
 {
@@ -19,6 +20,7 @@ class UpdateZtpOrganizationRequest extends FormRequest
 
     public function rules(): array
     {
+        $isYealink = strtolower((string) $this->input('provider')) === 'yealink';
         $dhcpOption60TypeList = ['ASCII', 'BINARY'];
         $dhcpBootServerOptionList = ['OPTION66', 'CUSTOM', 'STATIC', 'CUSTOM_OPTION66'];
         $locales = [
@@ -44,19 +46,19 @@ class UpdateZtpOrganizationRequest extends FormRequest
         ];
 
         return [
-            'provider' => 'present',
+            'provider' => ['required', 'string', Rule::in(['polycom', 'yealink'])],
             'organization_id' => 'required|string',
-            'enabled' => 'required|boolean',
-            'name' => 'required|string|max:100',
+            'enabled' => [$isYealink ? 'nullable' : 'required', 'boolean'],
+            'name' => ['required', 'string', 'max:' . ($isYealink ? 20 : 100)],
             'software' => 'nullable|string|max:100',
             'bootServerOption' => 'nullable|string|in:' . implode(',', $dhcpBootServerOptionList),
             'option60Type' => 'nullable|string|in:' . implode(',', $dhcpOption60TypeList),
             'localization' => 'nullable|string|in:' . implode(',', $locales),
-            'address' => 'required|string|max:255',
-            'prov_un' => 'required|string|max:64',
-            'prov_pw' => 'required|string|max:64',
-            'username' => 'nullable|string|max:64',
-            'password' => 'nullable|string|max:64',
+            'address' => $isYealink ? 'required|string|url|max:512' : 'required|string|max:255',
+            'prov_un' => 'required|string|max:' . ($isYealink ? 32 : 64),
+            'prov_pw' => 'required|string|max:' . ($isYealink ? 32 : 64),
+            'username' => 'nullable|string|max:' . ($isYealink ? 32 : 64),
+            'password' => 'nullable|string|max:' . ($isYealink ? 32 : 64),
             'quickSetup' => 'nullable|boolean',
             'polling' => 'nullable|boolean',
             'ucs' => 'nullable|string',

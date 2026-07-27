@@ -154,7 +154,7 @@ class Devices extends Model
 
         $domainSettings = match ($this->device_vendor) {
             'polycom' => $domainSettings->where('domain_setting_subcategory', 'polycom_ztp_profile_id'),
-            //'yealink' => $domainSettings->where('domain_setting_subcategory', 'yealink_ztp_profile_id'),
+            'yealink' => $domainSettings->where('domain_setting_subcategory', 'yealink_rps_server_id'),
             default => throw new \Exception("Unsupported provider"),
         };
 

@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Session;
 use App\Services\DeviceCloudProvisioningService;
 use App\Http\Requests\PairZtpOrganizationRequest;
 use App\Http\Requests\StoreZtpOrganizationRequest;
-use App\Http\Requests\UpdatePolycomApiTokenRequest;
+use App\Http\Requests\UpdateCloudProviderCredentialsRequest;
 use App\Http\Requests\UpdateZtpOrganizationRequest;
 
 class DeviceCloudProvisioningController extends Controller
@@ -35,6 +35,33 @@ class DeviceCloudProvisioningController extends Controller
     public function __construct()
     {
         $this->model = new Domain();
+
+        $this->middleware(function ($request, $next) {
+            abort_unless(userCheckPermission('manage_cloud_provision_providers'), 403);
+
+            return $next($request);
+        })->only([
+            'getItemOptions',
+            'getToken',
+            'updateToken',
+            'createOrganization',
+            'pairOrganization',
+            'updateOrganization',
+            'destroyOrganization',
+            'getOrganizations',
+            'syncDevices',
+        ]);
+
+        $this->middleware(function ($request, $next) {
+            abort_unless(userCheckPermission('manage_device_cloud_provisioning_settings'), 403);
+
+            return $next($request);
+        })->only([
+            'status',
+            'reset',
+            'register',
+            'deregister',
+        ]);
     }
 
     public function index(): void {}
@@ -99,13 +126,18 @@ class DeviceCloudProvisioningController extends Controller
             }
 
             $providerSettings = $cloudProvider::getSettings();
+            $providerError = null;
 
             if ($domain_uuid) {
                 $organization_id = $cloudProvider::getOrgIdByDomainUuid($domain_uuid);
             }
 
             if ($organization_id) {
-                $organization = $cloudProvider->getOrganization($organization_id);
+                try {
+                    $organization = $cloudProvider->getOrganization($organization_id);
+                } catch (\Throwable $exception) {
+                    $providerError = $exception->getMessage();
+                }
             }
 
             $routes = [
@@ -147,6 +179,8 @@ class DeviceCloudProvisioningController extends Controller
                 'organization' => $organization ?? null,
                 'organization_id' => $organization_id ?? null,
                 'provider_settings' => $providerSettings ?? null,
+                'credentials_configured' => $cloudProvider->hasCredentials(),
+                'provider_error' => $providerError,
                 // 'permissions' => $permissions,
                 'routes' => $routes,
             ];
@@ -174,11 +208,16 @@ class DeviceCloudProvisioningController extends Controller
             $cloudProviderSelector = app()->make(CloudProviderSelector::class);
             $cloudProvider = $cloudProviderSelector->getCloudProvider(request('provider'));
 
-            $token = $cloudProvider->getApiToken();
+            if (!$cloudProvider) {
+                throw new \Exception('Unsupported cloud provisioning provider.');
+            }
+
+            $credentials = $cloudProvider->getCredentials();
 
             return response()->json([
                 'success' => true,
-                'token' => $token,
+                'credentials' => $credentials,
+                'token' => $credentials['token'] ?? null,
             ]); // 200 OK with the token value
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
@@ -193,10 +232,10 @@ class DeviceCloudProvisioningController extends Controller
         /**
      * Update or create the Polycom API token in DefaultSettings.
      *
-     * @param UpdatePolycomApiTokenRequest $request
+     * @param UpdateCloudProviderCredentialsRequest $request
      * @return JsonResponse
      */
-    public function updateToken(UpdatePolycomApiTokenRequest $request)
+    public function updateToken(UpdateCloudProviderCredentialsRequest $request)
     {
         $data = $request->validated();
 
@@ -204,11 +243,15 @@ class DeviceCloudProvisioningController extends Controller
             $cloudProviderSelector = app()->make(CloudProviderSelector::class);
             $cloudProvider = $cloudProviderSelector->getCloudProvider($data['provider']);
 
-            $cloudProvider->setApiToken($data['token']);
+            if (!$cloudProvider) {
+                throw new \Exception('Unsupported cloud provisioning provider.');
+            }
+
+            $cloudProvider->setCredentials($data);
 
             // Return a JSON response indicating success
             return response()->json([
-                'messages' => ['success' => ['API Token was successfully updated']]
+                'messages' => ['success' => ['Cloud provisioning credentials were successfully updated.']]
             ], 201);
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
@@ -269,32 +312,20 @@ class DeviceCloudProvisioningController extends Controller
 
     public function pairOrganization(PairZtpOrganizationRequest $request)
     {
-        // Extract data from the request
-        $orgId = $request->input('org_id');
-        $domainUuid = session('domain_uuid');
+        $data = $request->validated();
 
         try {
-            // Store or update the domain setting record
-            $domainSettings = DomainSettings::updateOrCreate(
-                [
-                    'domain_uuid' => $domainUuid,
-                    'domain_setting_category' => 'cloud provision',
-                    'domain_setting_subcategory' => 'polycom_ztp_profile_id',
-                ],
-                [
-                    'domain_setting_name' => 'text',
-                    'domain_setting_value' => $orgId,
-                    'domain_setting_enabled' => true,
-                ]
-            );
+            $cloudProviderSelector = app()->make(CloudProviderSelector::class);
+            $cloudProvider = $cloudProviderSelector->getCloudProvider($data['provider']);
 
-            // Check if the record was saved successfully
-            if (!$domainSettings) {
-                throw new \Exception('Unable to connect this organization');
+            if (!$cloudProvider) {
+                throw new \Exception('Unsupported cloud provisioning provider.');
             }
 
+            $cloudProvider->pairOrganization(session('domain_uuid'), $data['org_id']);
+
             return response()->json([
-                'messages' => ['success' => ['Organizations has been succesfully registered']]
+                'messages' => ['success' => ['Cloud provisioning account was successfully connected.']]
             ], 200);
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
@@ -352,6 +383,10 @@ class DeviceCloudProvisioningController extends Controller
             $cloudProviderSelector = app()->make(CloudProviderSelector::class);
             $cloudProvider = $cloudProviderSelector->getCloudProvider(request('provider'));
 
+            if (!$cloudProvider) {
+                throw new \Exception('Unsupported cloud provisioning provider.');
+            }
+
             // Get Org ID from database
             $domain_uuid = session('domain_uuid');
             $org_id = $cloudProvider->getOrgIdByDomainUuid($domain_uuid);
@@ -366,7 +401,19 @@ class DeviceCloudProvisioningController extends Controller
             // Delete the organization
             $deleteResponse =  $cloudProvider->deleteOrganization($org_id);
             if ($deleteResponse) {
+                if ($cloudProvider->organizationDeletionRemovesDevices()) {
+                    DeviceCloudProvisioning::query()
+                        ->where('domain_uuid', $domain_uuid)
+                        ->where('provider', $cloudProvider->getProviderName())
+                        ->delete();
+
+                    return response()->json([
+                        'messages' => ['success' => ['Organization was successfully deleted.']]
+                    ], 200);
+                }
+
                 $devices = Devices::where('domain_uuid', $domain_uuid)
+                    ->where('device_vendor', $cloudProvider->getProviderName())
                     ->select(
                         'device_uuid',
                         'domain_uuid',
@@ -515,13 +562,25 @@ class DeviceCloudProvisioningController extends Controller
             $cloudProviderSelector = app()->make(CloudProviderSelector::class);
             $cloudProvider = $cloudProviderSelector->getCloudProvider(request('provider'));
 
+            if (!$cloudProvider) {
+                throw new \Exception('Unsupported cloud provisioning provider.');
+            }
+
             // 1. Get local devices (mac => uuid)
             $localDevices = Devices::where('domain_uuid', $domain_uuid)
-                ->pluck('device_uuid', 'device_address') // device_address is MAC
-                ->toArray();
+                ->where('device_vendor', $cloudProvider->getProviderName())
+                ->get(['device_uuid', 'device_address'])
+                ->mapWithKeys(fn (Devices $device) => [
+                    strtolower(preg_replace('/[^a-z0-9]/i', '', $device->device_address)) => $device->device_uuid,
+                ])
+                ->all();
+
+            $organizationId = $cloudProvider::getOrgIdByDomainUuid($domain_uuid);
 
             // 2. Remove all provisioning records for this domain
-            DeviceCloudProvisioning::where('domain_uuid', $domain_uuid)->delete();
+            DeviceCloudProvisioning::where('domain_uuid', $domain_uuid)
+                ->where('provider', $cloudProvider->getProviderName())
+                ->delete();
 
             $next = null; // Start with no next token
             $limit = 50;  // Define the batch size
@@ -529,15 +588,26 @@ class DeviceCloudProvisioningController extends Controller
             $insertRows = [];
             do {
                 $response = $cloudProvider->getDevices($limit, $next);
+                if (!($response['success'] ?? false)) {
+                    throw new \Exception($response['error'] ?? 'Unable to sync cloud provisioning devices.');
+                }
                 if (isset($response['data']['results']) && is_array($response['data']['results'])) {
                     foreach ($response['data']['results'] as $providerDevice) {
+                        $providerOrganizationId = $providerDevice['serverId']
+                            ?? $providerDevice['profile']
+                            ?? null;
+
+                        if ($organizationId && $providerOrganizationId && $providerOrganizationId !== $organizationId) {
+                            continue;
+                        }
+
                         // Normalize MAC from provider (lowercase, remove any non-alphanum just in case)
                         $mac = strtolower(preg_replace('/[^a-z0-9]/i', '', $providerDevice['mac'] ?? $providerDevice['id']));
                         if (isset($localDevices[$mac])) {
                             $insertRows[] = [
                                 'domain_uuid' => $domain_uuid,
                                 'device_uuid' => $localDevices[$mac],
-                                'provider' => request('provider'),
+                                'provider' => $cloudProvider->getProviderName(),
                                 'last_action' => 'register',
                                 'status' => 'success',
                                 'error' => null,
@@ -579,7 +649,9 @@ class DeviceCloudProvisioningController extends Controller
     {
         try {
             //Get devices info as a collection
-            $items = Devices::whereIn('device_uuid', request('items'))->get();
+            $items = Devices::where('domain_uuid', session('domain_uuid'))
+                ->whereIn('device_uuid', request('items'))
+                ->get();
 
             foreach ($items as $device) {
 
@@ -618,7 +690,9 @@ class DeviceCloudProvisioningController extends Controller
     {
         try {
             //Get devices info as a collection
-            $items = Devices::whereIn('device_uuid', request('items'))->get();
+            $items = Devices::where('domain_uuid', session('domain_uuid'))
+                ->whereIn('device_uuid', request('items'))
+                ->get();
 
             foreach ($items as $device) {
                 $original = $device->getOriginal();

@@ -82,7 +82,10 @@ return [
     'ztp' => [
         'polycom' => [
             'api_url' => env('POLYCOM_API_URL', 'https://api.ztp.poly.com/v1'),
-        ]
+        ],
+        'yealink' => [
+            'api_url' => env('YEALINK_RPS_API_URL', 'https://api-dm.yealink.com:8443'),
+        ],
     ],
     'ceretax' => [
         'env' => env('CERETAX_ENV', 'sandbox'),

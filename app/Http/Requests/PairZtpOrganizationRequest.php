@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class PairZtpOrganizationRequest extends FormRequest
 {
@@ -21,7 +22,7 @@ class PairZtpOrganizationRequest extends FormRequest
     {
         return [
             'org_id' => 'required|string',
-            'provider' => 'present',
+            'provider' => ['required', 'string', Rule::in(['polycom', 'yealink'])],
         ];
     }
 

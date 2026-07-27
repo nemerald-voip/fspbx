@@ -17,7 +17,7 @@
                         <DialogPanel
                             class="relative transform rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-xl sm:p-6">
                             <DialogTitle as="h3" class="mb-4 pr-8 text-base font-semibold leading-6 text-gray-900">
-                                Connect to existing ZTP Organization
+                                {{ header ?? 'Connect to existing ZTP Organization' }}
                             </DialogTitle>
 
                             <div class="absolute right-0 top-0 pr-4 pt-4 sm:block">
@@ -48,13 +48,13 @@
                                 }">
                                 <StaticElement name="intro">
                                     <p class="text-sm text-gray-500">
-                                        Select the organization you want to connect to from the dropdown below.
+                                        {{ description ?? 'Select the organization you want to connect to from the dropdown below.' }}
                                     </p>
                                 </StaticElement>
 
                                 <HiddenElement name="provider" :meta="true" />
 
-                                <SelectElement name="org_id" label="Organization" :items="organizationOptions"
+                                <SelectElement name="org_id" :label="itemLabel ?? 'Organization'" :items="organizationOptions"
                                     label-prop="name" value-prop="value" :search="true" :native="false"
                                     input-type="search" autocomplete="off" placeholder="Select an organization"
                                     :rules="['required']" />
@@ -86,6 +86,9 @@ const props = defineProps({
     show: Boolean,
     loading: Boolean,
     route: [String, null],
+    header: [String, null],
+    description: [String, null],
+    itemLabel: [String, null],
 });
 
 const emit = defineEmits(['close', 'error', 'success', 'refresh-data']);
