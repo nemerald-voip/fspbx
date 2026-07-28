@@ -33,7 +33,7 @@
                     v-model="filterData.log_file"
                     class="block w-full rounded-md border-0 py-2 pl-3 pr-10 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600"
                 >
-                    <option v-for="file in fileOptions" :key="file.value" :value="file.value">
+                    <option v-for="file in availableFileOptions" :key="file.value" :value="file.value">
                         {{ file.label }}
                     </option>
                 </select>
@@ -99,7 +99,7 @@
                 </select>
             </label>
 
-            <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+            <label v-if="!usingOpenSearch" class="inline-flex items-center gap-2 text-sm text-gray-700">
                 <span title="How much of the end of each selected log file to scan.">Read per file</span>
                 <input
                     v-model.number="filterData.read_size_mb"
@@ -133,7 +133,7 @@
                 <option value="desc">Newest first</option>
             </select>
 
-            <div v-if="permissions?.log_view && routes?.freeswitch_sip_trace" class="ml-auto flex flex-wrap items-center gap-2">
+            <div v-if="!usingOpenSearch && permissions?.log_view && routes?.freeswitch_sip_trace" class="ml-auto flex flex-wrap items-center gap-2">
                 <span class="text-sm font-medium text-gray-700">SIP packets</span>
                 <button
                     type="button"
@@ -190,15 +190,20 @@
 
         <div class="mt-4 overflow-hidden rounded-md bg-white ring-1 ring-gray-200">
             <div class="flex flex-col gap-3 border-b border-gray-200 px-4 py-3 text-sm text-gray-500 sm:flex-row sm:items-center sm:justify-between">
-                <div>
+                <div v-if="!usingOpenSearch">
                     <span class="font-medium text-gray-900">{{ meta.matched_lines || 0 }}</span>
                     matched line{{ (meta.matched_lines || 0) === 1 ? '' : 's' }}
                     <span v-if="meta.truncated_matches">, showing latest {{ filterData.max_lines }}</span>
                 </div>
                 <div class="flex flex-wrap items-center gap-3">
-                    <div>
+                    <div v-if="!usingOpenSearch">
                         {{ formatBytes(meta.bytes_read || 0) }} read
                         <span v-if="meta.log_dir"> from {{ meta.log_dir }}</span>
+                    </div>
+                    <div v-else>
+                        {{ meta.took_ms || 0 }} ms
+                        <span v-if="meta.index"> across {{ meta.index }}</span>
+                        <span v-if="meta.timed_out" class="text-amber-600"> (timed out)</span>
                     </div>
                     <button
                         type="button"
@@ -258,6 +263,10 @@ const props = defineProps({
     routes: Object,
     trigger: Boolean,
     permissions: Object,
+    features: {
+        type: Object,
+        default: () => ({}),
+    },
 })
 
 const KB_PER_MB = 1024
@@ -265,6 +274,7 @@ const DEFAULT_READ_SIZE_MB = 100
 const MAX_READ_SIZE_MB = 100
 
 const isDataLoading = ref(false)
+let searchRequestSequence = 0
 const isSipTraceLoading = ref(false)
 const hasLoaded = ref(false)
 const lines = ref([])
@@ -283,6 +293,25 @@ const meta = ref({
     bytes_read: 0,
     matched_lines: 0,
     truncated_matches: false,
+    errors: [],
+})
+
+const emptyCorrelation = () => ({
+    seed: null,
+    whole_call: true,
+    uuids: [],
+    sip_call_ids: [],
+    cdrs: [],
+    time_window: null,
+})
+
+const emptyMeta = () => ({
+    bytes_read: 0,
+    matched_lines: 0,
+    truncated_matches: false,
+    took_ms: 0,
+    timed_out: false,
+    index: null,
     errors: [],
 })
 
@@ -309,47 +338,97 @@ const correlationIdentifiers = computed(() => [
     ...(correlation.value.sip_call_ids || []),
 ])
 
+const usingOpenSearch = computed(() => filterData.value.log_file === 'opensearch')
+
+const availableFileOptions = computed(() => {
+    const options = [...fileOptions.value]
+
+    if (props.routes?.external_freeswitch_logs) {
+        options.push({ value: 'opensearch', label: 'OpenSearch (External)' })
+    }
+
+    return options
+})
+
 const requestParams = computed(() => {
     const readSizeMb = Number(filterData.value.read_size_mb)
     const normalizedReadSizeMb = Number.isFinite(readSizeMb)
         ? Math.max(1, Math.min(Math.round(readSizeMb), MAX_READ_SIZE_MB))
         : DEFAULT_READ_SIZE_MB
 
-    return {
+    const params = {
         seed_uuid: filterData.value.seed_uuid,
         whole_call: filterData.value.whole_call,
         search: filterData.value.search,
-        log_file: filterData.value.log_file,
         level: filterData.value.level,
         max_lines: filterData.value.max_lines,
         sort: filterData.value.sort,
         correlation_padding_minutes: filterData.value.correlation_padding_minutes,
-        size_kb: normalizedReadSizeMb * KB_PER_MB,
     }
+
+    if (!usingOpenSearch.value) {
+        params.log_file = filterData.value.log_file
+        params.size_kb = normalizedReadSizeMb * KB_PER_MB
+    }
+
+    return params
 })
 
 watch(() => props.trigger, () => {
     fetchData()
 })
 
+watch(() => filterData.value.log_file, () => {
+    searchRequestSequence++
+    isDataLoading.value = false
+    lines.value = []
+    correlation.value = emptyCorrelation()
+    meta.value = emptyMeta()
+
+    if (usingOpenSearch.value && !props.features?.opensearch_logs) {
+        meta.value.errors = ['OpenSearch external log search is not configured.']
+    }
+})
+
 const fetchData = async () => {
-    isDataLoading.value = true
+    const requestSequence = ++searchRequestSequence
     copiedLog.value = false
+    lines.value = []
+    correlation.value = emptyCorrelation()
+    meta.value = emptyMeta()
+
+    if (usingOpenSearch.value && !props.features?.opensearch_logs) {
+        meta.value.errors = ['OpenSearch external log search is not configured.']
+        hasLoaded.value = true
+        isDataLoading.value = false
+        return
+    }
+
+    isDataLoading.value = true
 
     try {
-        const response = await axios.get(props.routes.freeswitch_logs, {
+        const route = usingOpenSearch.value
+            ? props.routes.external_freeswitch_logs
+            : props.routes.freeswitch_logs
+        const response = await axios.get(route, {
             params: requestParams.value,
         })
 
+        if (requestSequence !== searchRequestSequence) return
+
         lines.value = response.data.lines || []
-        fileOptions.value = response.data.files?.length ? response.data.files : fileOptions.value
+        if (!usingOpenSearch.value) {
+            fileOptions.value = response.data.files?.length ? response.data.files : fileOptions.value
+        }
         correlation.value = response.data.correlation || correlation.value
         meta.value = response.data.meta || meta.value
 
-        if (!fileOptions.value.some((file) => file.value === filterData.value.log_file)) {
+        if (!usingOpenSearch.value && !fileOptions.value.some((file) => file.value === filterData.value.log_file)) {
             filterData.value.log_file = fileOptions.value[0]?.value || 'freeswitch.log'
         }
     } catch (error) {
+        if (requestSequence !== searchRequestSequence) return
+
         meta.value = {
             ...meta.value,
             errors: Object.values(error.response?.data?.messages || error.response?.data?.errors || {})
@@ -357,6 +436,8 @@ const fetchData = async () => {
                 .filter(Boolean),
         }
     } finally {
+        if (requestSequence !== searchRequestSequence) return
+
         hasLoaded.value = true
         isDataLoading.value = false
     }

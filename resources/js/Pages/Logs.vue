@@ -20,7 +20,7 @@
 
                 <EmailLogs :trigger="emailsTrigger" :startPeriod="startPeriod" :endPeriod="endPeriod"
                     :timezone="timezone" :routes="routes" :permissions="permissions" :domain-options="domainOptions"
-                    :selected-domain-uuid="selectedDomainUuid" :features="features" />
+                    :selected-domain-uuid="selectedDomainUuid" />
             </section>
 
             <!-- WEBHOOKS -->
@@ -64,6 +64,7 @@
                     :trigger="freeswitchLogsTrigger"
                     :routes="routes"
                     :permissions="permissions"
+                    :features="features"
                     @success="showSuccessNotification"
                     @error="showErrorNotification"
                 />
@@ -151,7 +152,7 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref, onMounted } from 'vue'
+import { computed, reactive, ref, onMounted, onUnmounted } from 'vue'
 import axios from 'axios'
 import PageWithSideMenu from '../Layouts/PageWithSideMenu.vue'
 import Notification from "./components/notifications/Notification.vue";
@@ -213,6 +214,9 @@ const testEmailErrors = ref({})
 const testEmailForm = reactive({
     email: '',
 })
+const testEmailRefreshTimers = []
+
+
 const pages = [
     { name: 'Dashboard', href: props.routes.dashboard_route, current: true },
     { name: 'Logs', href: '#', current: true },
@@ -266,6 +270,11 @@ onMounted(() => {
     }
 })
 
+onUnmounted(() => {
+    testEmailRefreshTimers.forEach((timer) => clearTimeout(timer))
+})
+
+
 const notificationType = ref(null);
 const notificationShow = ref(null);
 const notificationMessages = ref(null);
@@ -315,6 +324,7 @@ const sendTestEmail = () => {
         notificationMessages.value = response.data.messages
         notificationShow.value = true
         emailsTrigger.value = !emailsTrigger.value
+        scheduleTestEmailRefreshes(response.data.log_uuid)
     }).catch((error) => {
         testEmailErrors.value = error.response?.data?.errors ?? {}
         notificationType.value = 'error'
@@ -326,5 +336,27 @@ const sendTestEmail = () => {
         testEmailLoading.value = false
     })
 }
+
+const scheduleTestEmailRefreshes = (logUuid = null) => {
+    ;[15000, 60000].forEach((delay) => {
+        testEmailRefreshTimers.push(setTimeout(() => {
+            refreshTestEmailLog(logUuid)
+        }, delay))
+    })
+}
+
+const refreshTestEmailLog = (logUuid = null) => {
+    if (!logUuid || !props.routes.email_delivery_details) {
+        emailsTrigger.value = !emailsTrigger.value
+        return
+    }
+
+    axios.get(props.routes.email_delivery_details.replace('__UUID__', logUuid))
+        .finally(() => {
+            emailsTrigger.value = !emailsTrigger.value
+        })
+}
+
+
 
 </script>
