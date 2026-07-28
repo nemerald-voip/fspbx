@@ -1782,7 +1782,7 @@ class ProvisioningController extends Controller
                     'speed_dial' => '13',
                     'dtmf' => '11',
                     '' => '0',
-                    'park' => '16',
+                    'park' => '10',
                     'check_voicemail' => '16',
                     default      => $t,
                 };

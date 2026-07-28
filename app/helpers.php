@@ -1735,7 +1735,7 @@ if (!function_exists('buildDestinationAction')) {
                     'speed_dial' => '13',
                     'dtmf' => '11',
                     'blf', 'check_voicemail' => '16',
-                    'park' => '16',
+                    'park' => '10',
                     '' => '0',
                     default => '0',
                 };
