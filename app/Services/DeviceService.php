@@ -10,6 +10,7 @@ use App\Models\DeviceLines;
 use App\Services\DeviceCloudProvisioningService;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Session;
 
 class DeviceService
 {
@@ -227,6 +228,84 @@ class DeviceService
         }
 
         return (string) $value;
+    }
+
+    /**
+     * Apply connectivity settings (SIP port, transport, ...) to the lines of many devices at once.
+     *
+     * $scope controls which lines of each device are touched:
+     *   - mode: 'all' | 'first' | 'list'
+     *   - line_numbers: string[] used when mode is 'list'
+     *   - include_external: whether lines registered to a third party provider are included
+     *
+     * @param  string[]  $deviceUuids
+     * @param  array<string, mixed>  $attributes  keyed by v_device_lines column
+     * @return array{lines_updated:int, devices_affected:int, devices_skipped:int, device_uuids:string[]}
+     */
+    public function bulkUpdateLineSettings(array $deviceUuids, array $attributes, array $scope = []): array
+    {
+        $selectedCount = count(array_unique($deviceUuids));
+
+        $empty = [
+            'lines_updated' => 0,
+            'devices_affected' => 0,
+            'devices_skipped' => $selectedCount,
+            'device_uuids' => [],
+        ];
+
+        if (empty($deviceUuids) || empty($attributes)) {
+            return $empty;
+        }
+
+        $mode = $scope['mode'] ?? 'all';
+        $lineNumbers = $scope['line_numbers'] ?? [];
+        $includeExternal = (bool) ($scope['include_external'] ?? false);
+
+        if ($mode === 'list' && empty($lineNumbers)) {
+            return $empty;
+        }
+
+        // Rebuilt per use: the same constraints back both the lookup and the update.
+        $matching = function () use ($deviceUuids, $mode, $lineNumbers, $includeExternal) {
+            return DeviceLines::query()
+                ->whereIn('device_uuid', $deviceUuids)
+                ->unless($includeExternal, function ($query) {
+                    // External lines register to a third party server - their port and
+                    // transport belong to that provider, not to this PBX.
+                    $query->where(function ($inner) {
+                        $inner->whereNull('external_line')
+                            ->orWhere('external_line', false);
+                    });
+                })
+                ->when($mode === 'first', fn ($query) => $query->where('line_number', '1'))
+                ->when($mode === 'list', fn ($query) => $query->whereIn('line_number', $lineNumbers));
+        };
+
+        $affectedDevices = $matching()
+            ->distinct()
+            ->pluck('device_uuid')
+            ->map(fn ($uuid) => (string) $uuid)
+            ->all();
+
+        if (empty($affectedDevices)) {
+            return $empty;
+        }
+
+        $payload = $attributes;
+        $payload['update_date'] = date('Y-m-d H:i:s');
+
+        if ($updateUser = Session::get('user_uuid')) {
+            $payload['update_user'] = $updateUser;
+        }
+
+        $linesUpdated = $matching()->update($payload);
+
+        return [
+            'lines_updated' => $linesUpdated,
+            'devices_affected' => count($affectedDevices),
+            'devices_skipped' => max(0, $selectedCount - count($affectedDevices)),
+            'device_uuids' => $affectedDevices,
+        ];
     }
 
     private function createDeviceLine(Devices $device, array $line, string $domainUuid, ?string $domainName): void

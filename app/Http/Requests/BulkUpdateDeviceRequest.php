@@ -11,6 +11,26 @@ use Illuminate\Foundation\Http\FormRequest;
 class BulkUpdateDeviceRequest extends FormRequest
 {
     /**
+     * Line settings that can be applied in bulk, mapped to their v_device_lines column.
+     * These are "connectivity" attributes: identical across every line of a device, so
+     * they need a single value rather than a per-line editor.
+     */
+    public const LINE_ATTRIBUTE_MAP = [
+        'line_sip_port' => 'sip_port',
+        'line_sip_transport' => 'sip_transport',
+    ];
+
+    /**
+     * Inputs that modify how the line settings are applied, but are not written to a column.
+     */
+    public const LINE_CONTROL_FIELDS = [
+        'line_scope',
+        'line_numbers',
+        'include_external_lines',
+        'resync_devices',
+    ];
+
+    /**
      * Determine if the user is authorized to make this request.
      *
      * @return bool
@@ -85,7 +105,113 @@ class BulkUpdateDeviceRequest extends FormRequest
             'device_description' => [
                 'nullable',
             ],
+
+            // Line settings (applied to v_device_lines rows of the selected devices)
+            'line_scope' => [
+                'nullable',
+                Rule::in(['all', 'first', 'list']),
+            ],
+            'line_numbers' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+            'include_external_lines' => [
+                'nullable',
+                'boolean',
+            ],
+            'resync_devices' => [
+                'nullable',
+                'boolean',
+            ],
+            'line_sip_port' => [
+                'nullable',
+                'integer',
+                'min:1',
+                'max:65535',
+            ],
+            'line_sip_transport' => [
+                'nullable',
+                'string',
+                Rule::in(['udp', 'tcp', 'tls', 'dns srv']),
+            ],
         ];
+    }
+
+    /**
+     * The line columns the caller opted into, keyed by database column name.
+     */
+    public function lineAttributes(): array
+    {
+        $attributes = [];
+
+        foreach (self::LINE_ATTRIBUTE_MAP as $input => $column) {
+            $value = $this->input($input);
+
+            if ($value !== null && $value !== '') {
+                $attributes[$column] = $value;
+            }
+        }
+
+        return $attributes;
+    }
+
+    /**
+     * Which lines of each selected device the update applies to.
+     */
+    public function lineScope(): array
+    {
+        return [
+            'mode' => $this->input('line_scope') ?: 'all',
+            'line_numbers' => $this->lineNumbers(),
+            'include_external' => $this->boolean('include_external_lines'),
+        ];
+    }
+
+    /**
+     * Parse a line number expression such as "1,3-4" into ['1', '3', '4'].
+     * line_number is a text column, so values are returned as strings.
+     */
+    public function lineNumbers(): array
+    {
+        $raw = trim((string) ($this->input('line_numbers') ?? ''));
+
+        if ($raw === '') {
+            return [];
+        }
+
+        $numbers = [];
+
+        foreach (explode(',', $raw) as $part) {
+            $part = trim($part);
+
+            if ($part === '') {
+                continue;
+            }
+
+            if (preg_match('/^(\d+)\s*-\s*(\d+)$/', $part, $matches)) {
+                $start = (int) $matches[1];
+                $end = (int) $matches[2];
+
+                if ($start > $end) {
+                    [$start, $end] = [$end, $start];
+                }
+
+                // Keep a pathological range like "1-99999" from exploding the query
+                $end = min($end, $start + 99);
+
+                for ($i = $start; $i <= $end; $i++) {
+                    $numbers[] = (string) $i;
+                }
+            } elseif (ctype_digit($part)) {
+                $numbers[] = (string) (int) $part;
+            } else {
+                // Unparseable token - surfaced as a validation error in withValidator()
+                return [];
+            }
+        }
+
+        return array_values(array_unique($numbers));
     }
 
     public function messages(): array
@@ -94,6 +220,10 @@ class BulkUpdateDeviceRequest extends FormRequest
             'items.required' => 'No items selected to update',
             'domain_uuid.required' => 'Acccount must be selected.',
             'device_key_template_uuid.exists' => 'Selected key template was not found.',
+            'line_sip_port.integer' => 'SIP port must be a number between 1 and 65535.',
+            'line_sip_port.min' => 'SIP port must be a number between 1 and 65535.',
+            'line_sip_port.max' => 'SIP port must be a number between 1 and 65535.',
+            'line_sip_transport.in' => 'Selected SIP transport is not supported.',
         ];
     }
 
@@ -107,6 +237,26 @@ class BulkUpdateDeviceRequest extends FormRequest
                 $validator->errors()->add(
                     'device_key_template_uuid',
                     'Choose either a key template or a device profile, not both.'
+                );
+            }
+
+            if (empty($this->lineAttributes())) {
+                return;
+            }
+
+            if ($this->input('line_scope') !== 'list') {
+                return;
+            }
+
+            if (trim((string) $this->input('line_numbers')) === '') {
+                $validator->errors()->add(
+                    'line_numbers',
+                    'Enter the line numbers to update, for example 1,3-4.'
+                );
+            } elseif (empty($this->lineNumbers())) {
+                $validator->errors()->add(
+                    'line_numbers',
+                    'Line numbers must be digits or ranges separated by commas, for example 1,3-4.'
                 );
             }
         });

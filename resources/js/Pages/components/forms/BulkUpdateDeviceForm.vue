@@ -80,6 +80,22 @@
                                                     'submit',
 
                                                 ]" />
+
+                                                <FormTab name="line_settings" label="Line Settings" :elements="[
+                                                    'line_settings_title',
+                                                    'line_scope',
+                                                    'line_numbers',
+                                                    'include_external_lines',
+                                                    'line_sip_port_checkbox',
+                                                    'line_sip_port',
+                                                    'line_sip_transport_checkbox',
+                                                    'line_sip_transport',
+                                                    'resync_devices',
+                                                    'line_container',
+                                                    'submit_lines',
+
+                                                ]"
+                                                    :conditions="[() => options?.permissions?.device_line_update]" />
                                                 <!-- <FormTab name="page1" label="Keys" :elements="[
                                                     'password_reset',
                                                     'security_title',
@@ -202,6 +218,73 @@
                                                 <GroupElement name="container_3" />
 
                                                 <ButtonElement name="submit" button-label="Save" :submits="true"
+                                                    align="right" />
+
+
+                                                <!-- Line Settings tab-->
+                                                <StaticElement name="line_settings_title" tag="h4"
+                                                    content="Line Settings"
+                                                    description="Applied to the lines of every selected device. Only the fields you check are changed." />
+
+                                                <RadiogroupElement name="line_scope" label="Apply To" :items="[
+                                                    { value: 'all', label: 'All lines' },
+                                                    { value: 'first', label: 'First line only' },
+                                                    { value: 'list', label: 'Specific line numbers' },
+                                                ]" default="all" :columns="{
+                                                    container: 12,
+                                                }" />
+
+                                                <TextElement name="line_numbers" label="Line Numbers"
+                                                    placeholder="e.g. 1,3-4" :floating="false"
+                                                    description="Devices with fewer lines are updated as far as they go."
+                                                    :conditions="[['line_scope', ['list']]]" :columns="{
+                                                        container: 12,
+                                                    }" />
+
+                                                <ToggleElement name="include_external_lines"
+                                                    text="Include external lines"
+                                                    description="External lines register to a third-party provider, so their port and transport belong to that provider. Leave off unless you mean to change those too."
+                                                    :default="false" :columns="{
+                                                        container: 12,
+                                                    }" />
+
+                                                <CheckboxElement name="line_sip_port_checkbox" :submit="false"
+                                                    label="&nbsp;" :columns="{
+                                                        container: 1,
+                                                    }" />
+
+                                                <TextElement name="line_sip_port" label="SIP Port"
+                                                    placeholder="Enter SIP port" :floating="false"
+                                                    :disabled="[['line_sip_port_checkbox', false]]" :columns="{
+                                                        container: 11,
+                                                    }" />
+
+                                                <CheckboxElement name="line_sip_transport_checkbox" :submit="false"
+                                                    label="&nbsp;" :columns="{
+                                                        container: 1,
+                                                    }" />
+
+                                                <SelectElement name="line_sip_transport" label="SIP Transport"
+                                                    :items="options.sip_transport_types" :search="true" :native="false"
+                                                    input-type="search" autocomplete="off" label-prop="name"
+                                                    value-prop="value" placeholder="Select SIP Transport"
+                                                    :floating="false"
+                                                    :disabled="[['line_sip_transport_checkbox', false]]" :columns="{
+                                                        container: 11,
+                                                    }" />
+
+                                                <ToggleElement name="resync_devices"
+                                                    text="Re-sync affected devices after saving"
+                                                    description="Line settings only reach a phone on its next provisioning fetch. Registered devices will be told to re-provision."
+                                                    :default="true"
+                                                    :conditions="[(form$) => !!form$.data?.line_sip_port_checkbox || !!form$.data?.line_sip_transport_checkbox]"
+                                                    :columns="{
+                                                        container: 12,
+                                                    }" />
+
+                                                <GroupElement name="line_container" />
+
+                                                <ButtonElement name="submit_lines" button-label="Save" :submits="true"
                                                     align="right" />
 
 
