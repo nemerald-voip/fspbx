@@ -12,7 +12,7 @@ use App\Http\Controllers\Api\V1\VoicemailController;
 use App\Http\Controllers\Api\V1\PhoneNumberController;
 use App\Http\Controllers\Api\V1\CdrController;
 use App\Http\Controllers\Api\V1\ClickToDialController;
-use App\Http\Controllers\Api\V1\PhoneControlController;
+use App\Http\Controllers\Api\V1\RecordingController;
 
 /*
 |--------------------------------------------------------------------------
@@ -172,15 +172,6 @@ Route::middleware(['auth:sanctum', 'api.token.auth', 'throttle:api'])->group(fun
     Route::post('/domains/{domain_uuid}/click-to-dial', [ClickToDialController::class, 'store'])
         ->middleware('user.authorize:phone_control_call');
 
-    Route::get('/domains/{domain_uuid}/phone-control/targets', [PhoneControlController::class, 'targets'])
-        ->middleware('user.authorize:phone_control_view');
-
-    Route::get('/domains/{domain_uuid}/phone-control/calls', [PhoneControlController::class, 'calls'])
-        ->middleware('user.authorize:phone_control_view');
-
-    Route::post('/domains/{domain_uuid}/phone-control/actions', [PhoneControlController::class, 'store'])
-        ->middleware('user.authorize:phone_control_call');
-
     /*
     |--------------------------------------------------------------------------
     | Phone Numbers (domain-scoped)
@@ -214,4 +205,20 @@ Route::middleware(['auth:sanctum', 'api.token.auth', 'throttle:api'])->group(fun
 
     Route::get('/domains/{domain_uuid}/cdrs/{xml_cdr_uuid}/recording-url', [CdrController::class, 'recordingUrl'])
         ->middleware('user.authorize:xml_cdr_view');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Recording Manager (domain-scoped)
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/domains/{domain_uuid}/recordings', [RecordingController::class, 'index'])
+        ->middleware('user.authorize:recording_view');
+    Route::post('/domains/{domain_uuid}/recordings', [RecordingController::class, 'store'])
+        ->middleware('user.authorize:recording_upload');
+    Route::get('/domains/{domain_uuid}/recordings/{recording_uuid}', [RecordingController::class, 'show'])
+        ->middleware('user.authorize:recording_view');
+    Route::patch('/domains/{domain_uuid}/recordings/{recording_uuid}', [RecordingController::class, 'update'])
+        ->middleware('user.authorize:recording_upload');
+    Route::delete('/domains/{domain_uuid}/recordings/{recording_uuid}', [RecordingController::class, 'destroy'])
+        ->middleware('user.authorize:recording_delete');
 });
