@@ -29,8 +29,8 @@ A provisioned phone will automatically download and apply:
 
 Vendor cloud services solve the first-contact problem: how a new or factory-reset phone learns the address of your FS PBX provisioning server when you cannot configure the phone or the local DHCP server in advance.
 
-- [Polycom ZTP](/phone-provisioning/polycom-ztp) redirects supported Poly phones to FS PBX.
-- [Yealink RPS](/phone-provisioning/yealink-rps) redirects supported Yealink phones to FS PBX.
+- [Polycom ZTP](/docs/phone-provisioning/polycom-ztp/) redirects supported Poly phones to FS PBX.
+- [Yealink RPS](/docs/phone-provisioning/yealink-rps/) redirects supported Yealink phones to FS PBX.
 
 These services store a cloud record for the phone's MAC address and provisioning destination. They do not replace FS PBX provisioning. After redirection, the phone still contacts FS PBX, downloads its generated configuration, and registers its SIP lines.
 
