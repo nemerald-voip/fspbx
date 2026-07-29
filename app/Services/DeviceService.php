@@ -61,11 +61,18 @@ class DeviceService
             $this->normalizeKeyTemplateValue($inputs);
 
             $domainUuid = (string) ($inputs['domain_uuid'] ?? $device->domain_uuid);
+            $previousDomainUuid = (string) $device->domain_uuid;
 
             $device->update($inputs);
 
             if (array_key_exists('device_lines', $inputs)) {
                 $this->syncDeviceLines($device, $inputs['device_lines'], $domainUuid);
+            }
+
+            // The edit form round-trips whatever line values it loaded, so a domain change
+            // has to re-resolve them afterwards - including when no lines were submitted.
+            if ($domainUuid !== '' && $domainUuid !== $previousDomainUuid) {
+                $this->cascadeDomainToLines($device, $domainUuid);
             }
 
             if (array_key_exists('device_settings', $inputs)) {
@@ -228,6 +235,69 @@ class DeviceService
         }
 
         return (string) $value;
+    }
+
+    /**
+     * The line columns that describe how a line reaches the PBX. They are derived from
+     * the owning domain, so they have to be re-resolved whenever a device changes domain.
+     */
+    public const DOMAIN_DERIVED_LINE_SETTINGS = [
+        'server_address_primary' => 'server_address_primary',
+        'server_address_secondary' => 'server_address_secondary',
+        'outbound_proxy_primary' => 'outbound_proxy_primary',
+        'outbound_proxy_secondary' => 'outbound_proxy_secondary',
+        'sip_port' => 'line_sip_port',
+        'sip_transport' => 'line_sip_transport',
+        'register_expires' => 'line_register_expires',
+    ];
+
+    /**
+     * Re-point a device's lines at the domain the device now belongs to.
+     *
+     * Every line follows the device's domain_uuid. Connectivity settings and the SIP
+     * domain are additionally re-resolved from the new domain's settings, except on
+     * external lines: those register to a third party, so their server address, proxy,
+     * port and transport belong to that provider and must survive the move.
+     *
+     * @return int number of lines re-pointed
+     */
+    public function cascadeDomainToLines(Devices $device, ?string $domainUuid = null): int
+    {
+        $domainUuid = (string) ($domainUuid ?: $device->domain_uuid);
+
+        if ($domainUuid === '') {
+            return 0;
+        }
+
+        $domainName = $this->resolveDomainName($domainUuid);
+
+        $derived = ['domain_uuid' => $domainUuid, 'server_address' => $domainName];
+
+        foreach (self::DOMAIN_DERIVED_LINE_SETTINGS as $column => $setting) {
+            $derived[$column] = get_domain_setting($setting, $domainUuid);
+        }
+
+        $isExternal = function ($query) {
+            $query->where('external_line', true);
+        };
+
+        // External lines: only the owning domain moves, their connection details stay put.
+        $externalCount = DeviceLines::query()
+            ->where('device_uuid', $device->device_uuid)
+            ->where($isExternal)
+            ->update([
+                'domain_uuid' => $domainUuid,
+                'update_date' => date('Y-m-d H:i:s'),
+            ]);
+
+        $internalCount = DeviceLines::query()
+            ->where('device_uuid', $device->device_uuid)
+            ->where(function ($query) {
+                $query->whereNull('external_line')->orWhere('external_line', false);
+            })
+            ->update($derived + ['update_date' => date('Y-m-d H:i:s')]);
+
+        return $externalCount + $internalCount;
     }
 
     /**

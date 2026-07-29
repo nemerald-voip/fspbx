@@ -641,7 +641,12 @@ class DeviceController extends Controller
 
             // $device = $this->model::find(request('itemUuid'));
 
-            $domain_uuid = request('domain_uuid') ?? session('domain_uuid');
+            // An existing device is edited in the context of ITS account, not whichever
+            // account the operator happens to be viewing - otherwise the extension list
+            // and the line defaults come from the wrong domain.
+            $domain_uuid = request('domain_uuid')
+                ?? ($deviceDto->domain_uuid ?? null)
+                ?? session('domain_uuid');
 
             // Define the options for the 'extensions' field
             $extensions = Extensions::where('domain_uuid', $domain_uuid)
@@ -743,14 +748,15 @@ class DeviceController extends Controller
                 ],
             ];
             $defaultLineOptions = [
-                'server_address' => session('domain_name'),
-                'server_address_primary' => get_domain_setting('server_address_primary'),
-                'server_address_secondary' => get_domain_setting('server_address_secondary'),
-                'outbound_proxy_primary' => get_domain_setting('outbound_proxy_primary'),
-                'outbound_proxy_secondary' => get_domain_setting('outbound_proxy_secondary'),
-                'sip_port' => get_domain_setting('line_sip_port'),
-                'sip_transport' => get_domain_setting('line_sip_transport'),
-                'register_expires' => get_domain_setting('line_register_expires'),
+                'server_address' => \App\Models\Domain::where('domain_uuid', $domain_uuid)
+                    ->value('domain_name') ?? session('domain_name'),
+                'server_address_primary' => get_domain_setting('server_address_primary', $domain_uuid),
+                'server_address_secondary' => get_domain_setting('server_address_secondary', $domain_uuid),
+                'outbound_proxy_primary' => get_domain_setting('outbound_proxy_primary', $domain_uuid),
+                'outbound_proxy_secondary' => get_domain_setting('outbound_proxy_secondary', $domain_uuid),
+                'sip_port' => get_domain_setting('line_sip_port', $domain_uuid),
+                'sip_transport' => get_domain_setting('line_sip_transport', $domain_uuid),
+                'register_expires' => get_domain_setting('line_register_expires', $domain_uuid),
                 'domain_uuid' => $domain_uuid,
             ];
 
@@ -887,18 +893,33 @@ class DeviceController extends Controller
         try {
             DB::beginTransaction();
 
+            $domainsCascaded = 0;
+
             if (!empty($data)) {
                 Devices::whereIn('device_uuid', $ids)
-                    ->chunk(10, function ($devices) use ($data) {
+                    ->chunk(10, function ($devices) use ($data, $deviceService, &$domainsCascaded) {
                         foreach ($devices as $device) {
                             $device->fill($data);
+
+                            // Must be read before save() clears the dirty state
+                            $domainChanged = $device->isDirty('domain_uuid');
+
                             if ($device->isDirty()) {
                                 $device->save();
+                            }
+
+                            // A device's lines carry the SIP domain and its connectivity
+                            // settings, so reassigning the account has to re-resolve them.
+                            if ($domainChanged) {
+                                $deviceService->cascadeDomainToLines($device);
+                                $domainsCascaded++;
                             }
                         }
                     });
             }
 
+            // Applied after the cascade so an explicit port/transport choice wins over
+            // the values inherited from the new domain.
             $lineResult = null;
             if (!empty($lineAttributes)) {
                 $lineResult = $deviceService->bulkUpdateLineSettings($ids, $lineAttributes, $lineScope);
@@ -918,6 +939,11 @@ class DeviceController extends Controller
 
         if (!empty($data)) {
             $messages[] = 'Selected items updated';
+        }
+
+        if ($domainsCascaded > 0) {
+            $messages[] = 'Lines on ' . $domainsCascaded
+                . ' reassigned device(s) were re-pointed at the new account.';
         }
 
         if ($lineResult !== null) {
