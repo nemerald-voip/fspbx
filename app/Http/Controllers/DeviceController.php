@@ -33,11 +33,7 @@ class DeviceController extends Controller
     use ChecksLimits;
 
     public $model;
-    public $filters = [];
-    public $sortField;
-    public $sortOrder;
     protected $viewName = 'Devices';
-    protected $searchable = ['device_address', 'device_label', 'device_template'];
 
     public function __construct()
     {
@@ -83,9 +79,15 @@ class DeviceController extends Controller
 
                 ],
                 'permissions' => [
+                    'device_create' => userCheckPermission('device_add'),
+                    'device_view_global' => userCheckPermission('device_all'),
+                    'device_destroy' => userCheckPermission('device_delete'),
+                    'device_update' => userCheckPermission('device_edit'),
                     'device_key_template_view' => userCheckPermission('device_key_template_view'),
                     'device_provisioning_preview' => userCheckPermission('device_provisioning_preview'),
                     'device_import' => userCheckPermission('device_import'),
+                    'device_profile_index' => userCheckPermission('device_profile_view'),
+                    'manage_cloud_provision_providers' => userCheckPermission('manage_cloud_provision_providers'),
                 ],
             ]
         );
@@ -206,55 +208,7 @@ class DeviceController extends Controller
             // allow ?filter[username]=foo or ?filter[user_email]=bar
             ->allowedFilters([
                 AllowedFilter::callback('search', function ($query, $value) {
-                    $needle = trim((string) $value);
-                    $templateParts = array_map('trim', explode('/', $needle, 2));
-
-                    // Normalize MAC like "00:04:F2-3A:5B:C7" -> "0004f23a5bc7"
-                    // This strips ':' and '-' (and any non-hex) and lowercases.
-                    $norm = strtolower(preg_replace('/[^0-9a-f]/i', '', $needle));
-
-                    $query->where(function ($q) use ($needle, $norm, $templateParts) {
-                        // 1) device_address (DB stores normalized 12-hex)
-                        $q->where(function ($q2) use ($needle, $norm) {
-                            // partial match on normalized MAC
-                            if ($norm !== '') {
-                                $q2->orWhereRaw('lower(device_address) LIKE ?', ["%{$norm}%"]);
-
-                                // exact match when a full 12-hex MAC was provided
-                                if (strlen($norm) === 12) {
-                                    $q2->orWhereRaw('lower(device_address) = ?', [$norm]);
-                                }
-                            }
-                        })
-
-                            // 2) free-text on other columns (keep raw needle to preserve text searches)
-                            ->orWhere('device_template', 'ilike', "%{$needle}%")
-                            ->orWhereHas('template', function ($q2) use ($needle, $templateParts) {
-                                if (count($templateParts) === 2
-                                    && $templateParts[0] !== ''
-                                    && $templateParts[1] !== '') {
-                                    $q2->where('vendor', 'ilike', "%{$templateParts[0]}%")
-                                        ->where('name', 'ilike', "%{$templateParts[1]}%");
-
-                                    return;
-                                }
-
-                                $q2->where(function ($q3) use ($needle) {
-                                    $q3->where('vendor', 'ilike', "%{$needle}%")
-                                        ->orWhere('name', 'ilike', "%{$needle}%");
-                                });
-                            })
-                            ->orWhereHas('profile', function ($q2) use ($needle) {
-                                $q2->where('device_profile_name', 'ilike', "%{$needle}%");
-                            })
-                            ->orWhereHas('keyTemplate', function ($q2) use ($needle) {
-                                $q2->where('name', 'ilike', "%{$needle}%");
-                            })
-                            ->orWhereHas('lines.extension', function ($q3) use ($needle) {
-                                $q3->where('extension', 'ilike', "%{$needle}%")
-                                    ->orWhere('effective_caller_id_name', 'ilike', "%{$needle}%");
-                            });
-                    });
+                    $this->applySearchFilter($query, $value);
                 }),
                 AllowedFilter::callback('showGlobal', function ($query, $value) use ($currentDomain) {
                     // If showGlobal is falsey (0, '0', false, null), restrict to the current domain
@@ -1090,12 +1044,17 @@ class DeviceController extends Controller
     public function selectAll()
     {
         try {
-            if (request()->get('showGlobal')) {
-                $uuids = $this->model::get($this->model->getKeyName())->pluck($this->model->getKeyName());
-            } else {
-                $uuids = $this->model::where('domain_uuid', session('domain_uuid'))
-                    ->get($this->model->getKeyName())->pluck($this->model->getKeyName());
+            $query = $this->model::query();
+
+            if (!request()->boolean('showGlobal')) {
+                $query->where('domain_uuid', session('domain_uuid'));
             }
+
+            if (request()->filled('search')) {
+                $this->applySearchFilter($query, request()->input('search'));
+            }
+
+            $uuids = $query->pluck($this->model->getKeyName());
 
             // Return a JSON response indicating success
             return response()->json([
@@ -1110,6 +1069,61 @@ class DeviceController extends Controller
                 'errors' => ['server' => ['Failed to select all items']]
             ], 500); // 500 Internal Server Error for any other errors
         }
+    }
+
+    private function applySearchFilter($query, $value): void
+    {
+        $needle = trim((string) $value);
+        $templateParts = array_map('trim', explode('/', $needle, 2));
+
+        // Only treat hex characters and common separators as a full or partial MAC.
+        $looksLikeMac = preg_match('/^[0-9a-f:.\-\s]+$/i', $needle) === 1;
+        $norm = $looksLikeMac
+            ? strtolower(preg_replace('/[^0-9a-f]/i', '', $needle))
+            : '';
+
+        $query->where(function ($q) use ($needle, $norm, $templateParts) {
+            // 1) device_address (DB stores normalized 12-hex)
+            $q->where(function ($q2) use ($norm) {
+                // partial match on normalized MAC
+                if ($norm !== '') {
+                    $q2->orWhereRaw('lower(device_address) LIKE ?', ["%{$norm}%"]);
+
+                    // exact match when a full 12-hex MAC was provided
+                    if (strlen($norm) === 12) {
+                        $q2->orWhereRaw('lower(device_address) = ?', [$norm]);
+                    }
+                }
+            })
+
+                // 2) free-text on other columns (keep raw needle to preserve text searches)
+                ->orWhere('device_template', 'ilike', "%{$needle}%")
+                ->orWhereHas('template', function ($q2) use ($needle, $templateParts) {
+                    if (count($templateParts) === 2
+                        && $templateParts[0] !== ''
+                        && $templateParts[1] !== '') {
+                        $q2->where('vendor', 'ilike', "%{$templateParts[0]}%")
+                            ->where('name', 'ilike', "%{$templateParts[1]}%");
+
+                        return;
+                    }
+
+                    $q2->where(function ($q3) use ($needle) {
+                        $q3->where('vendor', 'ilike', "%{$needle}%")
+                            ->orWhere('name', 'ilike', "%{$needle}%");
+                    });
+                })
+                ->orWhereHas('profile', function ($q2) use ($needle) {
+                    $q2->where('device_profile_name', 'ilike', "%{$needle}%");
+                })
+                ->orWhereHas('keyTemplate', function ($q2) use ($needle) {
+                    $q2->where('name', 'ilike', "%{$needle}%");
+                })
+                ->orWhereHas('lines.extension', function ($q3) use ($needle) {
+                    $q3->where('extension', 'ilike', "%{$needle}%")
+                        ->orWhere('effective_caller_id_name', 'ilike', "%{$needle}%");
+                });
+        });
     }
 
 

@@ -22,13 +22,13 @@
             </template>
 
             <template #action>
-                <button v-if="page.props.auth.can.device_create" type="button"
+                <button v-if="permissions.device_create" type="button"
                     @click.prevent="handleCreateButtonClick()"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     Create
                 </button>
 
-                <button v-if="page.props.auth.can.manage_cloud_provision_providers" type="button"
+                <button v-if="permissions.manage_cloud_provision_providers" type="button"
                     @click.prevent="handleCloudProvisioningButtonClick()"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     {{ $t('Vendor Cloud') }}
@@ -45,18 +45,18 @@
                     Key Templates
                 </a>
 
-                <a v-if="page.props.auth.can.device_profile_index" type="button" href="app/devices/device_profiles.php"
+                <a v-if="permissions.device_profile_index" type="button" href="app/devices/device_profiles.php"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Profiles
                 </a>
 
-                <button v-if="!filterData.showGlobal && page.props.auth.can.device_view_global" type="button"
+                <button v-if="!filterData.showGlobal && permissions.device_view_global" type="button"
                     @click.prevent="handleShowGlobal()"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Show global
                 </button>
 
-                <button v-if="filterData.showGlobal && page.props.auth.can.device_view_global" type="button"
+                <button v-if="filterData.showGlobal && permissions.device_view_global" type="button"
                     @click.prevent="handleShowLocal()"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Show local
@@ -135,8 +135,8 @@
                             <input v-if="row.device_address" v-model="selectedItems" type="checkbox" name="action_box[]"
                                 :value="row.device_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                             <div class="ml-4"
-                                :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.device_update, }"
-                                @click="page.props.auth.can.device_update && handleEditButtonClick(row.device_uuid)">
+                                :class="{ 'cursor-pointer hover:text-gray-900': permissions.device_update, }"
+                                @click="permissions.device_update && handleEditButtonClick(row.device_uuid)">
                                 {{ row.device_address_formatted }}
                             </div>
                             <ejs-tooltip :content="tooltipCopyContent" position='TopLeft' class="ml-2"
@@ -251,7 +251,7 @@
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap justify-end">
-                                <ejs-tooltip v-if="page.props.auth.can.device_update" :content="'Edit'"
+                                <ejs-tooltip v-if="permissions.device_update" :content="'Edit'"
                                     position='TopCenter' target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
                                         <PencilSquareIcon @click="handleEditButtonClick(row.device_uuid)"
@@ -269,7 +269,7 @@
                                     </div>
                                 </ejs-tooltip>
 
-                                <ejs-tooltip v-if="page.props.auth.can.device_destroy" :content="'Delete'"
+                                <ejs-tooltip v-if="permissions.device_destroy" :content="'Delete'"
                                     position='TopCenter' target="#delete_tooltip_target">
                                     <div id="delete_tooltip_target">
                                         <TrashIcon @click="handleSingleItemDeleteRequest(row.device_uuid)"
@@ -480,7 +480,6 @@
 
 <script setup>
 import { computed, onMounted, ref } from "vue";
-import { usePage } from '@inertiajs/vue3'
 import axios from 'axios';
 import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
@@ -507,7 +506,6 @@ import UploadModal from "./components/modal/UploadModal.vue";
 import ImportDevicesModal from "./components/modal/ImportDevicesModal.vue";
 import { trans } from "laravel-vue-i18n";
 
-const page = usePage()
 const props = defineProps({
     routes: Object,
     permissions: {
@@ -883,7 +881,7 @@ const bulkActions = computed(() => {
     ];
 
     // Conditionally add the delete action if permission is granted
-    if (page.props.auth.can.device_destroy) {
+    if (permissions.device_destroy) {
         actions.push({
             id: 'bulk_delete',
             label: 'Delete',

@@ -52,7 +52,12 @@ class ActivityLogController extends Controller
                     'current_page' => route('activities.index'),
                     'select_all' => route('activities.select.all'),
                     'bulk_delete' => route('activities.bulk.delete'),
-                ]
+                ],
+                'permissions' => [
+                    'device_view_global' => userCheckPermission('device_all'),
+                    'device_destroy' => userCheckPermission('device_delete'),
+                    'device_update' => userCheckPermission('device_edit'),
+                ],
             ]
         );
     }

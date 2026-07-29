@@ -22,13 +22,13 @@
             </template>
 
             <template #action>
-                <button v-if="!showGlobal && page.props.auth.can.device_view_global" type="button"
+                <button v-if="!showGlobal && permissions.device_view_global" type="button"
                     @click.prevent="handleShowGlobal()"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Show global
                 </button>
 
-                <button v-if="showGlobal && page.props.auth.can.device_view_global" type="button"
+                <button v-if="showGlobal && permissions.device_view_global" type="button"
                     @click.prevent="handleShowLocal()"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Show local
@@ -120,7 +120,7 @@
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap justify-center">
-                                <ejs-tooltip v-if="page.props.auth.can.device_update" :content="'Edit'" position='TopCenter'
+                                <ejs-tooltip v-if="permissions.device_update" :content="'Edit'" position='TopCenter'
                                     target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
                                         <PencilSquareIcon @click="handleEditRequest(row.device_uuid)"
@@ -130,7 +130,7 @@
                                 </ejs-tooltip>
 
 
-                                <ejs-tooltip v-if="page.props.auth.can.device_destroy" :content="'Delete'"
+                                <ejs-tooltip v-if="permissions.device_destroy" :content="'Delete'"
                                     position='TopCenter' target="#delete_tooltip_target">
                                     <div id="delete_tooltip_target">
                                         <TrashIcon @click="handleSingleItemDeleteRequest(row.destroy_route)"
@@ -263,10 +263,15 @@ const props = defineProps({
     data: Object,
     showGlobal: Boolean,
     routes: Object,
+    permissions: {
+        type: Object,
+        default: () => ({}),
+    },
     itemData: Object,
     itemOptions: Object,
 });
 
+const permissions = props.permissions;
 
 const filterData = ref({
     search: null,
@@ -291,7 +296,7 @@ const bulkActions = computed(() => {
     ];
 
     // Conditionally add the delete action if permission is granted
-    if (page.props.auth.can.device_destroy) {
+    if (permissions.device_destroy) {
         actions.push({
             id: 'bulk_delete',
             label: 'Delete',

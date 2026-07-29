@@ -104,7 +104,7 @@
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap">
-                                <ejs-tooltip v-if="page.props.auth.can.device_update" :content="'Edit'" position='TopCenter'
+                                <ejs-tooltip v-if="permissions.device_update" :content="'Edit'" position='TopCenter'
                                     target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
                                         <PencilSquareIcon @click="handleEditRequest(row.uuid)"
@@ -168,7 +168,6 @@
 
 <script setup>
 import { computed, onMounted, ref, onUnmounted } from "vue";
-import { usePage } from '@inertiajs/vue3'
 import axios from 'axios';
 import { router } from "@inertiajs/vue3";
 import DataTable from "./components/general/DataTable.vue";
@@ -190,7 +189,6 @@ import Notification from "./components/notifications/Notification.vue";
 import { PencilSquareIcon } from "@heroicons/vue/24/solid";
 import UpdateProFeatureForm from "./components/forms/UpdateProFeatureForm.vue";
 
-const page = usePage()
 const loading = ref(false)
 const isRefreshing = ref(false)
 const selectAll = ref(false);
@@ -214,10 +212,15 @@ const isUninstalling = ref(null);
 const props = defineProps({
     data: Object,
     routes: Object,
+    permissions: {
+        type: Object,
+        default: () => ({}),
+    },
     // itemData: Object,
     // itemOptions: Object,
 });
 
+const permissions = props.permissions;
 
 const filterData = ref({
     search: null,

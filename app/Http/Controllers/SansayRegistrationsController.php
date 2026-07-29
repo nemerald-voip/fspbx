@@ -48,7 +48,10 @@ class SansayRegistrationsController extends Controller
                     // 'bulk_delete' => route('sansay.registrations.bulk.delete'),
                     // 'bulk_update' => route('messages.bulk.update'),
                     // 'action' => route('registrations.action'),
-                ]
+                ],
+                'permissions' => [
+                    'device_destroy' => userCheckPermission('device_delete'),
+                ],
             ]
         );
     }

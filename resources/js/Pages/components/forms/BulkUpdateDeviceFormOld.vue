@@ -63,7 +63,7 @@
                     forwarded.</p> -->
                     </div>
 
-                    <div v-if="page.props.auth.can.domain_select && page.props.auth.can.device_edit_domain"
+                    <div v-if="page.props.domainSelectPermission && options.permissions.device_domain_update"
                         class="sm:col-span-12">
                         <LabelInputRequired :target="'domain'" :label="'Owned By (Company Name)'" />
                         <div class="mt-2">

@@ -149,7 +149,7 @@
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap">
-                                <ejs-tooltip v-if="page.props.auth.can.device_destroy" :content="'Delete'"
+                                <ejs-tooltip v-if="permissions.device_destroy" :content="'Delete'"
                                     position='TopCenter' target="#delete_tooltip_target">
                                     <div id="delete_tooltip_target">
                                         <TrashIcon @click="handleSingleItemDeleteRequest(row.id)"
@@ -208,7 +208,6 @@
 
 <script setup>
 import { computed, onMounted, ref } from "vue";
-import { usePage } from '@inertiajs/vue3'
 import axios from 'axios';
 import { router } from "@inertiajs/vue3";
 import DataTable from "./components/general/DataTable.vue";
@@ -226,7 +225,6 @@ import Notification from "./components/notifications/Notification.vue";
 import ComboBox from "./components/general/ComboBox.vue"
 
 
-const page = usePage()
 const loading = ref(false)
 const selectAll = ref(false);
 const selectedItems = ref([]);
@@ -239,8 +237,13 @@ const props = defineProps({
     data: Object,
     routes: Object,
     pagination: Object,
+    permissions: {
+        type: Object,
+        default: () => ({}),
+    },
 });
 
+const permissions = props.permissions;
 const perPage = ref(props.pagination?.per_page);
 
 

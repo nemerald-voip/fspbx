@@ -51,7 +51,10 @@ class ProFeaturesController extends Controller
                     // 'bulk_update' => route('messages.bulk.update'),
                     // 'action' => route('active-calls.action'),
                     'item_options' => route('pro-features.item.options')
-                ]
+                ],
+                'permissions' => [
+                    'device_update' => userCheckPermission('device_edit'),
+                ],
             ]
         );
     }
