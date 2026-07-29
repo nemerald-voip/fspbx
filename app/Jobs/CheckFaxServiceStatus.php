@@ -94,12 +94,13 @@ class CheckFaxServiceStatus implements ShouldQueue
                 ->value('default_setting_value') ?? null;
 
             // Calculate the time threshold
-            $timeThreshold = now()->subMinutes($waitTimeThreshold)->toIso8601String();
+            $timeThreshold = now()->subMinutes($waitTimeThreshold);
 
-            // Get pending outbound faxes that have not advanced recently.
+            // Count all non-terminal faxes by their total age. Retries update the
+            // row, so updated_at would hide a fax that has been cycling for hours.
             $pendingFaxes = OutboundFax::query()
-                ->whereIn('status', ['waiting', 'trying', 'busy'])
-                ->where('updated_at', '<', $timeThreshold)
+                ->whereIn('status', ['waiting', 'trying', 'busy', 'sending'])
+                ->where('created_at', '<', $timeThreshold)
                 ->count();
 
             // logger('Threshold - ' . $threshold);
@@ -120,9 +121,11 @@ class CheckFaxServiceStatus implements ShouldQueue
                 }
             }
 
-            // Get last $threshold outbound faxes and check failure rate
+            // In-progress rows are not outcomes and must not dilute the failure
+            // rate. updated_at reflects when a terminal result was recorded.
             $recentFaxes = OutboundFax::query()
-                ->orderBy('created_at', 'desc')
+                ->whereIn('status', ['sent', 'failed'])
+                ->orderBy('updated_at', 'desc')
                 ->take($threshold)
                 ->pluck('status');
 

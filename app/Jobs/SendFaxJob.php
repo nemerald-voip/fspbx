@@ -47,6 +47,28 @@ class SendFaxJob implements ShouldQueue
     private const ORIGINATE_THROTTLE_BLOCK_SECONDS = 60;
     private const ORIGINATE_THROTTLE_RELEASE_SECONDS = 10;
 
+    /**
+     * The loopback B leg runs the account outbound dialplan and then creates
+     * the real gateway channel. Export the completion hook and correlation
+     * fields so that final channel can report the actual fax result.
+     */
+    private const FAX_WEBHOOK_EXPORT_VARIABLES = [
+        'api_hangup_hook',
+        'fax_uuid',
+        'outbound_fax_uuid',
+        'outbound_fax_attempt_uuid',
+        'domain_uuid',
+        'domain_name',
+        'call_direction',
+        'fax_file',
+        'fax_uri',
+        'caller_destination',
+        'fax_retry_attempts',
+        'fax_retry_limit',
+        'fax_ident',
+        'fax_header',
+    ];
+
     public function __construct(public string $outboundFaxUuid)
     {
         $this->onQueue('faxes');
@@ -357,11 +379,9 @@ class SendFaxJob implements ShouldQueue
             "api_hangup_hook='lua lua/fax_hangup.lua'",
         ]);
 
-        $vars = $this->dedupeChannelVariables($vars);
-
         $dialplanContext = $domainName !== '' ? ' inline ' . $e($domainName) : '';
 
-        return '{' . implode(',', $vars) . '}' . $originateEndpoint . " 'txfax:{$e($fax->file_path)}'" . $dialplanContext;
+        return '{' . $this->buildOriginateVariableBlock($vars) . '}' . $originateEndpoint . " 'txfax:{$e($fax->file_path)}'" . $dialplanContext;
     }
 
     /**
@@ -480,5 +500,35 @@ class SendFaxJob implements ShouldQueue
         }
 
         return $deduped;
+    }
+
+    /**
+     * Build the originate variable block and ensure the fax result hook is
+     * inherited by the gateway channel created inside the outbound dialplan.
+     */
+    private function buildOriginateVariableBlock(array $variables): string
+    {
+        $variables = $this->dedupeChannelVariables($variables);
+        $exportVariables = self::FAX_WEBHOOK_EXPORT_VARIABLES;
+
+        foreach ($variables as $index => $variable) {
+            [$name, $value] = array_pad(explode('=', (string) $variable, 2), 2, '');
+
+            if (trim($name) !== 'export_vars') {
+                continue;
+            }
+
+            $configuredExports = explode(',', trim($value, " \t\n\r\0\x0B'\""));
+            $exportVariables = array_merge($configuredExports, $exportVariables);
+            unset($variables[$index]);
+        }
+
+        $exportVariables = array_values(array_unique(array_filter(
+            array_map('trim', $exportVariables)
+        )));
+
+        $variables[] = "export_vars='" . implode(',', $exportVariables) . "'";
+
+        return implode(',', $variables);
     }
 }

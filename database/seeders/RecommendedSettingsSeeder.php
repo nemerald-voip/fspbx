@@ -734,7 +734,7 @@ class RecommendedSettingsSeeder extends Seeder
                 'default_setting_name'          => 'boolean',
                 'default_setting_value'         => "false",
                 'default_setting_enabled'       => false,
-                'default_setting_description'   => "Monitors pending faxes and identifies those exceeding the allowed threshold.",
+                'default_setting_description'   => "Monitors failed faxes and active outbound faxes exceeding the allowed threshold.",
             ],
             [
                 'default_setting_category'      => 'scheduled_jobs',
@@ -742,7 +742,7 @@ class RecommendedSettingsSeeder extends Seeder
                 'default_setting_name'          => 'text',
                 'default_setting_value'         => "5",
                 'default_setting_enabled'       => true,
-                'default_setting_description'   => "Defines the maximum number of pending faxes allowed before exceeding the threshold.",
+                'default_setting_description'   => "Defines the completed-fax sample size and maximum number of aged active faxes before alerting.",
             ],
             [
                 'default_setting_category'      => 'scheduled_jobs',
@@ -750,7 +750,7 @@ class RecommendedSettingsSeeder extends Seeder
                 'default_setting_name'          => 'text',
                 'default_setting_value'         => "60",
                 'default_setting_enabled'       => true,
-                'default_setting_description'   => "Specifies the number of minutes a fax can remain in waiting status before being counted against the threshold.",
+                'default_setting_description'   => "Specifies the maximum total age in minutes for an active outbound fax before it is counted against the threshold.",
             ],
             [
                 'default_setting_category'      => 'scheduled_jobs',
@@ -758,7 +758,7 @@ class RecommendedSettingsSeeder extends Seeder
                 'default_setting_name'          => 'text',
                 'default_setting_value'         => "",
                 'default_setting_enabled'       => true,
-                'default_setting_description'   => "Email address to receive notifications when pending faxes exceed the allowed wait time threshold.",
+                'default_setting_description'   => "Email address to receive failed-fax and aged active-fax notifications.",
             ],
             [
                 'default_setting_category'      => 'scheduled_jobs',

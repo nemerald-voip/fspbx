@@ -44,9 +44,9 @@ local function first_present(...)
     return ""
 end
 
--- Loopback A/B legs end with NORMAL_UNSPECIFIED when FreeSWITCH bows out and
--- replaces them with the real gateway channel. Only that gateway channel has
--- the final fax result.
+-- SendFaxJob exports this hook and the fax correlation variables to the real
+-- gateway channel created by the outbound dialplan. Ignore the temporary
+-- loopback routing legs so they cannot submit an early, false failure.
 local is_loopback = header("is_loopback")
 if is_loopback == "true" or is_loopback == "1" then
     log("NOTICE", "Ignoring temporary loopback channel")
