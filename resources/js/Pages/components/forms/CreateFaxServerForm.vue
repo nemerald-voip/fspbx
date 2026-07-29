@@ -24,7 +24,7 @@
                                 <button type="button"
                                     class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                     @click="emit('close')">
-                                    <span class="sr-only">Close</span>
+                                    <span class="sr-only">{{ $t('Close') }}</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
@@ -42,7 +42,7 @@
                                             </path>
                                         </svg>
                                     </div>
-                                    <div class="text-lg text-blue-600 m-auto">Loading...</div>
+                                    <div class="text-lg text-blue-600 m-auto">{{ $t('Loading...') }}</div>
                                 </div>
                             </div>
 
@@ -81,7 +81,7 @@
                                     <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
                                         <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
                                             <FormTabs view="vertical" @select="handleTabSelected">
-                                                <FormTab name="page0" label="Settings" :elements="[
+                                                <FormTab name="page0" :label="$t('Settings')" :elements="[
                                                     'h4',
                                                     'fax_name',
                                                     'fax_extension',
@@ -103,7 +103,7 @@
                                                     'authorized_domains_container',
 
                                                 ]" />
-                                                <FormTab name="page1" label="Advanced" :elements="[
+                                                <FormTab name="page1" :label="$t('Advanced')" :elements="[
                                                     'fax_forward_number',
                                                     'fax_prefix',
                                                     'fax_toll_allow',
@@ -124,17 +124,17 @@
 
                                                 <HiddenElement name="fax_email" :meta="true" />
 
-                                                <StaticElement name="h4" tag="h4" content="Settings" />
+                                                <StaticElement name="h4" tag="h4" :content="$t('Settings')" />
 
 
-                                                <TextElement name="fax_name" label="Name" placeholder="Enter name"
+                                                <TextElement name="fax_name" :label="$t('Name')" :placeholder="$t('Enter name')"
                                                     :floating="false" :columns="{
                                                         sm: {
                                                             container: 6,
                                                         },
                                                     }" />
-                                                <TextElement name="fax_extension" label="Extension"
-                                                    placeholder="Enter extension" :floating="false" :columns="{
+                                                <TextElement name="fax_extension" :label="$t('Extension')"
+                                                    :placeholder="$t('Enter extension')" :floating="false" :columns="{
                                                         sm: {
                                                             container: 6,
                                                         },
@@ -142,13 +142,13 @@
 
 
 
-                                                <TextElement name="fax_caller_id_name" label="Caller ID Name"
-                                                    placeholder="Enter caller ID name" :floating="false" :columns="{
+                                                <TextElement name="fax_caller_id_name" :label="$t('Caller ID Name')"
+                                                    :placeholder="$t('Enter caller ID name')" :floating="false" :columns="{
                                                         sm: {
                                                             container: 6,
                                                         },
                                                     }" />
-                                                <SelectElement name="fax_caller_id_number" label="Caller ID Number"
+                                                <SelectElement name="fax_caller_id_number" :label="$t('Caller ID Number')"
                                                     :items="options.phone_numbers" :search="true" :native="false"
                                                     input-type="search" autocomplete="off" :columns="{
                                                         sm: {
@@ -156,72 +156,72 @@
                                                         },
                                                     }" />
 
-                                                <TextElement name="fax_description" label="Description" :columns="{
+                                                <TextElement name="fax_description" :label="$t('Description')" :columns="{
                                                     sm: {
                                                         container: 12,
                                                     },
-                                                }" placeholder="Enter description" :floating="false" />
+                                                }" :placeholder="$t('Enter description')" :floating="false" />
 
-                                                <StaticElement name="advanced_title" tag="h4" content="Advanced" />
+                                                <StaticElement name="advanced_title" tag="h4" :content="$t('Advanced')" />
 
 
                                                 <TextElement name="fax_forward_number"
-                                                    placeholder="Enter forward number" :floating="false"
-                                                    label="Forward Number" :columns="{
+                                                    :placeholder="$t('Enter forward number')" :floating="false"
+                                                    :label="$t('Forward Number')" :columns="{
                                                         sm: {
                                                             container: 12,
                                                             wrapper: 6,
                                                         },
                                                     }"
-                                                    description="Enter the forward number here. Used to forward the fax to a registered extension or external number." />
+                                                    :description="$t('Enter the forward number here. Used to forward the fax to a registered extension or external number.')" />
 
-                                                <TextElement name="fax_prefix" placeholder="Enter prefix"
-                                                    :floating="false" label="Number Prefix" :columns="{
+                                                <TextElement name="fax_prefix" :placeholder="$t('Enter prefix')"
+                                                    :floating="false" :label="$t('Number Prefix')" :columns="{
                                                         sm: {
                                                             container: 12,
                                                             wrapper: 6,
                                                         },
                                                     }"
-                                                    description="The prefix specified here will be prepended to all outbound fax calls." />
+                                                    :description="$t('The prefix specified here will be prepended to all outbound fax calls.')" />
 
-                                                <TextElement name="fax_toll_allow" label="Toll Allow" :floating="false"
+                                                <TextElement name="fax_toll_allow" :label="$t('Toll Allow')" :floating="false"
                                                     :columns="{
                                                         sm: {
                                                             container: 6,
                                                         },
                                                     }"
-                                                    description="Enter the toll allow value here. (Examples: domestic,international,local)" />
-                                                <TextElement name="fax_send_channels" label="Number of Channels"
+                                                    :description="$t('Enter the toll allow value here. (Examples: domestic,international,local)')" />
+                                                <TextElement name="fax_send_channels" :label="$t('Number of Channels')"
                                                     :floating="false" :columns="{
                                                         sm: {
                                                             container: 6,
                                                         },
-                                                    }" description="Enter the maximum number of channels to use." />
+                                                    }" :description="$t('Enter the maximum number of channels to use.')" />
 
                                                 <TagsElement name="locations" :close-on-select="false" :search="true"
                                                     label-prop="name" value-prop="location_uuid" :items="locations"
                                                     :track-by="['name', 'description']"
-                                                    label="Locations"
-                                                    input-type="search" autocomplete="off" placeholder="Select Locations"
+                                                    :label="$t('Locations')"
+                                                    input-type="search" autocomplete="off" :placeholder="$t('Select Locations')"
                                                     :floating="false" :loading="isLocationsLoading"
-                                                    description="Assign one or more locations. If none are selected, this resource is visible to all users." />
+                                                    :description="$t('Assign one or more locations. If none are selected, this resource is visible to all users.')" />
 
                                                 <GroupElement name="advanced_container" />
 
-                                                <ButtonElement name="advanced_submit" button-label="Save"
+                                                <ButtonElement name="advanced_submit" :button-label="$t('Save')"
                                                     :submits="true" align="right" />
 
 
 
                                                 <StaticElement name="fax_recipients_title" tag="h4"
-                                                    content="Forward incoming faxes to email" top="3"
-                                                    description="Add up to 5 email addresses to automatically forward every incoming fax." />
+                                                    :content="$t('Forward incoming faxes to email')" top="3"
+                                                    :description="$t('Add up to 5 email addresses to automatically forward every incoming fax.')" />
 
                                                 <ListElement name="emailList" :initial="0" :submit="false" :sort="true"
                                                     @change="handleEmailListChange">
                                                     <template #default="{ index }">
                                                         <ObjectElement :name="index">
-                                                            <TextElement name="email" placeholder="Enter email address"
+                                                            <TextElement name="email" :placeholder="$t('Enter email address')"
                                                                 :floating="false" />
                                                         </ObjectElement>
                                                     </template>
@@ -232,15 +232,15 @@
                                                 <StaticElement name="divider" tag="hr" />
 
                                                 <StaticElement name="authorized_domains_title" tag="h4"
-                                                    content="Domains allowed to use email-to-fax" top="2"
-                                                    description="This feature allows accepting faxes from specific email domains. All messages sent from addresses on those domains will be allowed. You may enter multiple domains." />
+                                                    :content="$t('Domains allowed to use email-to-fax')" top="2"
+                                                    :description="$t('This feature allows accepting faxes from specific email domains. All messages sent from addresses on those domains will be allowed. You may enter multiple domains.')" />
 
 
                                                 <ListElement name="authorized_domains" :initial="0" :sort="true">
                                                     <template #default="{ index }">
                                                         <ObjectElement :name="index">
                                                             <TextElement name="email"
-                                                                placeholder="Enter domain name (example.com)"
+                                                                :placeholder="$t('Enter domain name (example.com)')"
                                                                 :floating="false" />
                                                         </ObjectElement>
                                                     </template>
@@ -251,15 +251,15 @@
                                                 <StaticElement name="divider2" tag="hr" />
 
                                                 <StaticElement name="authorized_emails_title" tag="h4"
-                                                    content="Additional authorized email addresses for email-to-fax"
+                                                    :content="$t('Additional authorized email addresses for email-to-fax')"
                                                     top="2"
-                                                    description="Enter any trusted email addresses not covered by authorized domains." />
+                                                    :description="$t('Enter any trusted email addresses not covered by authorized domains.')" />
 
 
                                                 <ListElement name="authorized_emails" :initial="0" :sort="true">
                                                     <template #default="{ index }">
                                                         <ObjectElement :name="index">
-                                                            <TextElement name="email" placeholder="Enter email address"
+                                                            <TextElement name="email" :placeholder="$t('Enter email address')"
                                                                 :floating="false" />
                                                         </ObjectElement>
                                                     </template>
@@ -268,7 +268,7 @@
 
                                                 <GroupElement name="container_3" />
 
-                                                <ButtonElement name="submit" button-label="Save" :submits="true"
+                                                <ButtonElement name="submit" :button-label="$t('Save')" :submits="true"
                                                     align="right" />
                                             </FormElements>
                                         </div>
@@ -290,6 +290,7 @@
 import { ref } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { XMarkIcon } from "@heroicons/vue/24/solid";
+import { trans } from "laravel-vue-i18n";
 
 
 const emit = defineEmits(['close', 'error', 'success', 'refresh-data'])
@@ -400,7 +401,7 @@ const handleError = (error, details, form$) => {
         case 'prepare':
             console.log(error) // Error object
 
-            form$.messageBag.append('Could not prepare form')
+            form$.messageBag.append(trans('Could not prepare form'))
             break
 
         // Error occured because response status is outside of 2xx
@@ -420,14 +421,14 @@ const handleError = (error, details, form$) => {
         case 'cancel':
             console.log(error) // Error object
 
-            form$.messageBag.append('Request cancelled')
+            form$.messageBag.append(trans('Request cancelled'))
             break
 
         // Some other errors happened (no response object)
         case 'other':
             console.log(error) // Error object
 
-            form$.messageBag.append('Couldn\'t submit form')
+            form$.messageBag.append(trans('Couldn\'t submit form'))
             break
     }
 }

@@ -32,12 +32,12 @@
                             <button type="button" @click.prevent="$emit('search-action')"
                                 class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500
                                 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                                Search
+                                {{ $t('Search') }}
                             </button>
 
                             <button type="button" @click.prevent="$emit('reset-filters')"
                                 class="rounded-md bg-white px-2.5 py-1.5 ml-2  sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                                Reset
+                                {{ $t('Reset') }}
                             </button>
                         </div>
                     </div>

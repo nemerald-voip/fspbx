@@ -8,7 +8,7 @@
         <div class="sm:flex sm:items-center sm:justify-between">
             <div>
                 <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
-                    Fax Dashboard
+                    {{ $t('Fax Dashboard') }}
                 </h2>
             </div>
             <div class="mt-4 flex flex-col gap-3 sm:ml-4 sm:mt-0 sm:flex-row sm:items-center">
@@ -18,14 +18,14 @@
                         <MultiselectElement name="locations" :items="locationFilterOptions"
                             :default="filterData.locations" :native="false" :search="true" input-type="search"
                             autocomplete="off" :close-on-select="false" :hide-selected="false" :floating="false"
-                            placeholder="All locations" @change="handleUpdateLocationFilter" />
+                            :placeholder="$t('All locations')" @change="handleUpdateLocationFilter" />
                     </Vueform>
                 </div>
 
                 <button type="button" @click.prevent="handleNewFaxButtonClick()"
                     class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     <DocumentPlusIcon class="-ml-0.5 mr-1.5 h-5 w-5" aria-hidden="true" />
-                    Send New Fax
+                    {{ $t('Send New Fax') }}
                 </button>
             </div>
         </div>
@@ -50,7 +50,7 @@
 
         <div class="m-3">
             <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-                <template #title>Recent Outbound Faxes
+                <template #title>{{ $t('Recent Outbound Faxes') }}
                 </template>
 
                 <template #table-header>
@@ -58,18 +58,18 @@
                     <TableColumnHeader
                         class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
 
-                        <span class="pl-2">From</span>
+                        <span class="pl-2">{{ $t('From') }}</span>
                     </TableColumnHeader>
 
                     <!-- To column -->
-                    <TableColumnHeader header="To" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader :header="$t('To')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
                     <!-- Date column -->
-                    <TableColumnHeader header="Date"
+                    <TableColumnHeader :header="$t('Date')"
                         class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
                     <!-- Status column -->
-                    <TableColumnHeader header="Status"
+                    <TableColumnHeader :header="$t('Status')"
                         class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
 
@@ -98,7 +98,7 @@
 
                         <!-- Status -->
                         <TableField class="px-2 py-2 text-sm">
-                            <Badge :text="row.status"
+                            <Badge :text="statusLabel(row.status)"
                                 :backgroundColor="determineColor(row.status).backgroundColor"
                                 :textColor="determineColor(row.status).textColor"
                                 :ringColor="determineColor(row.status).ringColor" />
@@ -116,7 +116,7 @@
                     <div v-if="!recentOutboundLoading && recentOutboundFaxes?.data?.length === 0"
                         class="text-center my-5 ">
                         <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                        <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
+                        <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ $t('No results found') }}</h3>
                         <!-- <p class="mt-1 text-sm text-gray-500">
                             Adjust your search and try again.
                         </p> -->
@@ -134,16 +134,16 @@
 
         <div class="m-3 -mt-10 lg:mt-3">
             <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-                <template #title>Recent Inbound Faxes
+                <template #title>{{ $t('Recent Inbound Faxes') }}
                 </template>
 
                 <template #table-header>
                     <TableColumnHeader
                         class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
-                        <span class="pl-2">From</span>
+                        <span class="pl-2">{{ $t('From') }}</span>
                     </TableColumnHeader>
-                    <TableColumnHeader header="To" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="Date"
+                    <TableColumnHeader :header="$t('To')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader :header="$t('Date')"
                         class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 </template>
 
@@ -175,7 +175,7 @@
                     <div v-if="!recentInboundLoading && recentInboundFaxes?.data?.length === 0"
                         class="text-center my-5 ">
                         <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                        <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
+                        <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ $t('No results found') }}</h3>
                         <!-- <p class="mt-1 text-sm text-gray-500">
                             Adjust your search and try again.
                         </p> -->
@@ -194,7 +194,7 @@
 
     <div class="m-3 -mt-10">
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-            <template #title>Fax Servers
+            <template #title>{{ $t('Fax Servers') }}
 
             </template>
 
@@ -207,11 +207,11 @@
                     <input type="text" v-model="filterData.search" name="mobile-search-candidate"
                         id="mobile-search-candidate"
                         class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                        :placeholder="$t('Search')" @keydown.enter="handleSearchButtonClick" />
                     <input type="text" v-model="filterData.search" name="desktop-search-candidate"
                         id="desktop-search-candidate"
                         class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                        :placeholder="$t('Search')" @keydown.enter="handleSearchButtonClick" />
                 </div>
             </template>
 
@@ -219,7 +219,7 @@
                 <button v-if="permissions.fax_server_create" type="button"
                     @click.prevent="handleCreateButtonClick()"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                    Create Fax Server
+                    {{ $t('Create Fax Server') }}
                 </button>
 
 
@@ -241,7 +241,7 @@
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                     <div class="pl-4 flex items-center cursor-pointer select-none"
                         @click="handleSortRequest('fax_name')">
-                        <span class="mr-2">Name</span>
+                        <span class="mr-2">{{ $t('Name') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'fax_name' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'fax_name' && sortData.order === 'desc'"
@@ -254,7 +254,7 @@
                     class="hidden lg:table-cell px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none"
                         @click="handleSortRequest('fax_extension')">
-                        <span class="mr-2">Extension</span>
+                        <span class="mr-2">{{ $t('Extension') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'fax_extension' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'fax_extension' && sortData.order === 'desc'"
@@ -267,7 +267,7 @@
                     class="hidden lg:table-cell px-2 py-3.5 text-left text-sm font-semibold text-gray-900 min-w-32">
                     <div class="flex items-center cursor-pointer select-none"
                         @click="handleSortRequest('fax_caller_id_number')">
-                        <span class="mr-2 whitespace-nowrap">Caller ID</span>
+                        <span class="mr-2 whitespace-nowrap">{{ $t('Caller ID') }}</span>
                         <ChevronUpIcon
                             v-if="sortData.name === 'fax_caller_id_number' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
@@ -281,7 +281,7 @@
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none"
                         @click="handleSortRequest('fax_email')">
-                        <span class="mr-2">Email</span>
+                        <span class="mr-2">{{ $t('Email') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'fax_email' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'fax_email' && sortData.order === 'desc'"
@@ -290,7 +290,7 @@
                 </TableColumnHeader>
 
                 <!-- Tools column -->
-                <TableColumnHeader header="Tools" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t('Tools')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
                 <!-- Actions column -->
                 <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
@@ -299,16 +299,18 @@
             <template v-if="selectPageItems" v-slot:current-selection>
                 <td colspan="9">
                     <div class="text-sm text-center m-2">
-                        <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
+                        <span class="font-semibold">
+                            {{ $t(':count items are selected.', { count: selectedItems.length }) }}
+                        </span>
                         <button v-if="!selectAll && selectedItems.length != data.total"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleSelectAll">
-                            Select all {{ data.total }} items
+                            {{ $t('Select all :total items', { total: data.total }) }}
                         </button>
                         <button v-if="selectAll"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleClearSelection">
-                            Clear selection
+                            {{ $t('Clear selection') }}
                         </button>
                     </div>
                 </td>
@@ -350,7 +352,9 @@
                             <button v-if="hiddenFaxEmailCount(row) > 0" type="button"
                                 class="inline-flex items-center rounded-md bg-indigo-50 px-2 py-1 text-xs font-semibold text-indigo-700 ring-1 ring-inset ring-indigo-200 hover:bg-indigo-100"
                                 @click="toggleEmailExpansion(row.fax_uuid)">
-                                {{ isEmailExpanded(row.fax_uuid) ? 'Show less' : `+${hiddenFaxEmailCount(row)} more` }}
+                                {{ isEmailExpanded(row.fax_uuid)
+                                    ? $t('Show less')
+                                    : $t('+:count more', { count: hiddenFaxEmailCount(row) }) }}
                             </button>
                         </div>
                     </TableField>
@@ -361,36 +365,36 @@
                         <template v-if="permissions.fax_send">
                             <button @click.prevent="handleNewFaxButtonClick()"
                                 class="inline-flex items-center px-2 py-1 rounded text-gray-700 hover:bg-gray-100 transition text-xs font-medium"
-                                title="New Fax">
+                                :title="$t('New Fax')">
                                 <DocumentPlusIcon class="w-4 h-4 mr-1" />
-                                <span class="text-nowrap">New Fax</span>
+                                <span class="text-nowrap">{{ $t('New Fax') }}</span>
                             </button>
                         </template>
 
                         <template v-if="permissions.fax_inbox_view">
                             <a :href="`/fax/${row.fax_uuid}/inbox`"
                                 class="inline-flex items-center px-2 py-1 rounded text-gray-700 hover:bg-gray-100 transition text-xs font-medium"
-                                title="Inbox">
+                                :title="$t('Inbox')">
                                 <EnvelopeIcon class="w-4 h-4 mr-1" />
-                                Inbox
+                                {{ $t('Inbox') }}
                             </a>
                         </template>
 
                         <template v-if="permissions.fax_sent_view">
                             <a :href="`/fax/${row.fax_uuid}/sent`"
                                 class="inline-flex items-center px-2 py-1 rounded text-gray-700 hover:bg-gray-100 transition text-xs font-medium"
-                                title="Sent">
+                                :title="$t('Sent')">
                                 <DocumentArrowUpIcon class="w-4 h-4 mr-1" />
-                                Sent
+                                {{ $t('Sent') }}
                             </a>
                         </template>
 
                         <template v-if="permissions.fax_log_view">
                             <a :href="`/fax/${row.fax_uuid}/log`"
                                 class="inline-flex items-center px-2 py-1 rounded text-gray-700 hover:bg-gray-100 transition text-xs font-medium"
-                                title="Logs">
+                                :title="$t('Logs')">
                                 <DocumentTextIcon class="w-4 h-4 mr-1" />
-                                Logs
+                                {{ $t('Logs') }}
                             </a>
                         </template>
                     </TableField>
@@ -400,7 +404,7 @@
 
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap justify-end">
-                                <ejs-tooltip v-if="permissions.fax_server_update" :content="'Edit'"
+                                <ejs-tooltip v-if="permissions.fax_server_update" :content="$t('Edit')"
                                     position='TopCenter' target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
                                         <PencilSquareIcon @click="handleEditButtonClick(row.fax_uuid)"
@@ -409,7 +413,7 @@
                                     </div>
                                 </ejs-tooltip>
 
-                                <ejs-tooltip v-if="permissions.fax_server_destroy" :content="'Delete'"
+                                <ejs-tooltip v-if="permissions.fax_server_destroy" :content="$t('Delete')"
                                     position='TopCenter' target="#delete_tooltip_target">
                                     <div id="delete_tooltip_target">
                                         <TrashIcon @click="handleSingleItemDeleteRequest(row.fax_uuid)"
@@ -428,9 +432,9 @@
                 <!-- Conditional rendering for 'no records' message -->
                 <div v-if="data.data.length === 0" class="text-center my-5 ">
                     <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
+                    <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ $t('No results found') }}</h3>
                     <p class="mt-1 text-sm text-gray-500">
-                        Adjust your search and try again.
+                        {{ $t('Adjust your search and try again.') }}
                     </p>
                 </div>
             </template>
@@ -451,22 +455,22 @@
     </div>
 
     <UpdateFaxServerForm :show="showUpdateModal" :options="itemOptions" :loading="isModalLoading"
-        :header="'Update Fax Server - ' + (itemOptions?.item?.fax_name ?? 'loading')" @close="showUpdateModal = false"
+        :header="$t('Update Fax Server - :name', { name: itemOptions?.item?.fax_name ?? $t('Loading...') })" @close="showUpdateModal = false"
         @error="handleErrorResponse" @success="showNotification" @refresh-data="refreshCurrentPage" />
 
     <CreateFaxServerForm :show="showCreateModal" :options="itemOptions" :loading="isModalLoading"
-        :header="'Create New Fax Server'" @close="showCreateModal = false" @error="handleErrorResponse"
+        :header="$t('Create New Fax Server')" @close="showCreateModal = false" @error="handleErrorResponse"
         @success="showNotification" @refresh-data="refreshCurrentPage" />
 
     <NewFaxForm :show="showNewFaxModal" :options="newFaxOptions" :loading="isModalLoading"
-        :header="'Create New Fax Server'" @close="showNewFaxModal = false" @error="handleErrorResponse"
-        @success="showNotification" @refresh-data="getRecentOutboundFaxes" />
+        @close="showNewFaxModal = false" @error="handleErrorResponse" @success="showNotification"
+        @refresh-data="getRecentOutboundFaxes" />
 
 
     <ConfirmationModal :show="showDeleteConfirmationModal" @close="showDeleteConfirmationModal = false"
-        @confirm="confirmDeleteAction" :header="'Confirm Deletion'"
-        :text="'This action will permanently delete the selected fax server(s). Are you sure you want to proceed?'"
-        :confirm-button-label="'Delete'" cancel-button-label="Cancel" />
+        @confirm="confirmDeleteAction" :header="$t('Confirm Deletion')"
+        :text="$t('This action will permanently delete the selected fax server(s). Are you sure you want to proceed?')"
+        :confirm-button-label="$t('Delete')" :cancel-button-label="$t('Cancel')" />
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
@@ -492,6 +496,7 @@ import NewFaxForm from "./components/forms/NewFaxForm.vue";
 import Notification from "./components/notifications/Notification.vue";
 import Badge from "@generalComponents/Badge.vue";
 import { DocumentPlusIcon, EnvelopeIcon, DocumentArrowUpIcon, DocumentTextIcon } from "@heroicons/vue/24/outline";
+import { trans } from "laravel-vue-i18n";
 
 
 
@@ -687,7 +692,7 @@ const bulkActions = computed(() => {
     if (permissions.fax_server_destroy) {
         actions.push({
             id: 'bulk_delete',
-            label: 'Delete',
+            label: trans('Delete'),
             icon: 'TrashIcon'
         });
     }
@@ -949,6 +954,19 @@ const determineColor = (status) => {
             };
     }
 };
+
+const statusLabel = (status) => {
+    const labels = {
+        sent: trans('Sent'),
+        sending: trans('Sending'),
+        trying: trans('Trying'),
+        busy: trans('Busy'),
+        failed: trans('Failed'),
+        waiting: trans('Waiting'),
+    }
+
+    return labels[String(status ?? '').toLowerCase()] ?? String(status ?? '')
+}
 
 
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');

@@ -12,7 +12,7 @@
                     </path>
                 </svg>
             </div>
-            <div class="text-lg text-blue-600 m-auto">Loading...</div>
+            <div class="text-lg text-blue-600 m-auto">{{ $t('Loading...') }}</div>
         </div>
     </div>
 </template>

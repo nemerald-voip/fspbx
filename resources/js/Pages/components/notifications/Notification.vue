@@ -19,8 +19,8 @@
                                     <XCircleIcon class="h-6 w-6 text-red-400" aria-hidden="true" />
                                 </div>
                                 <div class="ml-3 w-0 flex-1 pt-0.5">
-                                    <p v-if="type == 'success'" class="text-sm font-medium text-gray-900 mb-1">Success!</p>
-                                    <p v-if="type == 'error'" class="text-sm font-medium text-gray-900 mb-1">Error!</p>
+                                    <p v-if="type == 'success'" class="text-sm font-medium text-gray-900 mb-1">{{ $t('Success!') }}</p>
+                                    <p v-if="type == 'error'" class="text-sm font-medium text-gray-900 mb-1">{{ $t('Error!') }}</p>
                                     <div v-if="messages && Object.keys(messages).length > 0" class="text-sm text-gray-500">
                                         <ul role="list" class="list-disc space-y-1 pl-5">
                                             <li v-for="(message, index) in messages" :key="index">
@@ -32,7 +32,7 @@
                                 <div class="ml-4 flex flex-shrink-0">
                                     <button type="button" @click="closeNotification"
                                         class="inline-flex rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-                                        <span class="sr-only">Close</span>
+                                        <span class="sr-only">{{ $t('Close') }}</span>
                                         <XMarkIcon class="h-5 w-5" aria-hidden="true" />
                                     </button>
                                 </div>

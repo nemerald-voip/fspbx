@@ -3,7 +3,7 @@
         <div>
             <MenuButton
                 class="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-gray-300 ring-inset hover:bg-gray-50">
-                Bulk Actions
+                {{ $t('Bulk Actions') }}
                 <ChevronDownIcon class="-mr-1 size-5 text-gray-400" aria-hidden="true" />
             </MenuButton>
         </div>
@@ -15,7 +15,7 @@
             <MenuItems
                 class="absolute z-20 shadow-2xl mt-1 -ml-4 origin-top-right divide-y divide-gray-100 rounded-md bg-white font-normal ring-1 ring-black ring-opacity-15 focus:outline-none">
                 <div class="px-4 py-3">
-                    <p class="text-sm font-semibold">Bulk Actions</p>
+                    <p class="text-sm font-semibold">{{ $t('Bulk Actions') }}</p>
                 </div>
                 <div v-if="hasSelectedItems" class="py-1">
                     <MenuItem v-for="action in actions" :key="action.id" v-slot="{ active }">
@@ -28,7 +28,7 @@
                     </MenuItem>
                 </div>
                 <div v-else class="text-gray-500 italic group flex items-center px-4 py-2 text-sm min-w-full">
-                    No items selected
+                    {{ $t('No items selected') }}
                 </div>
             </MenuItems>
         </transition>

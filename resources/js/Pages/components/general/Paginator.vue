@@ -59,7 +59,7 @@
                 </div>
             </div>
             <div>
-                <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" :aria-label="$t('Pagination')">
                     <button v-for="(link, index) in visibleLinks" :key="index" type="button"
                         @click="link.url ? $emit('pagination-change-page', link.url) : null"
                         :class="linkClass(index, link.active)">

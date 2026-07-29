@@ -34,7 +34,7 @@ class CreateNewFaxRequest extends FormRequest
     {
         return [
             // 'directory_first_name.required' => 'The first name field is required.',
-            'files.required' => 'You must select at least one file.',
+            'files.required' => __('You must select at least one file.'),
             // You can add more custom messages here as needed
         ];
     }

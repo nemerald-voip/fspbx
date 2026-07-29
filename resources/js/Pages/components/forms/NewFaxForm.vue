@@ -20,7 +20,7 @@
                                 <button type="button"
                                     class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                     @click="emit('close')">
-                                    <span class="sr-only">Close</span>
+                                    <span class="sr-only">{{ $t('Close') }}</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
@@ -38,7 +38,7 @@
                                             </path>
                                         </svg>
                                     </div>
-                                    <div class="text-lg text-blue-600 m-auto">Loading...</div>
+                                    <div class="text-lg text-blue-600 m-auto">{{ $t('Loading...') }}</div>
                                 </div>
                             </div>
 
@@ -49,20 +49,134 @@
                                 }">
 
 
-                                <SelectElement name="sender_fax_number" label="Select Your Fax Number"
+                                <SelectElement name="sender_fax_number" :label="$t('Select Your Fax Number')"
                                     :items="options.phone_numbers" :search="true" :native="false" input-type="search"
                                     autocomplete="off" />
-                                <TextElement name="recipient" label="Add Fax Recipient" />
-                                <CheckboxElement name="cover_letter_checkbox" text="Cover Letter" :submit="false" />
-                                <TextareaElement name="fax_message" label="Cover Letter Text" :conditions="[
+                                <!-- Kept flat (no GroupElement): form$.el$() only resolves top-level names. -->
+                                <TextElement name="recipient" :label="$t('Fax recipient')" :floating="false"
+                                    input-type="tel" autocomplete="off" :rules="['required']"
+                                    :placeholder="$t('Enter a fax number')"
+                                    :columns="{ default: { container: 12 }, sm: { container: 9 } }"
+                                    @change="handleRecipientChange" />
+
+                                <!-- The blank label keeps the button aligned with the input beside it. -->
+                                <ButtonElement name="open_phone_book" label="&nbsp;" :secondary="true" :full="true"
+                                    :columns="{ default: { container: 12 }, sm: { container: 3 } }"
+                                    @click="showContactPicker = true">
+                                    <span class="inline-flex items-center gap-1.5 whitespace-nowrap">
+                                        <BookOpenIcon class="h-4 w-4" aria-hidden="true" />
+                                        {{ $t('Phone book') }}
+                                    </span>
+                                </ButtonElement>
+
+                                <StaticElement name="recipient_status" :columns="{ default: { container: 12 } }">
+                                    <!-- Negative margins pull this under the input and reclaim the space the
+                                         element's own box would otherwise leave below it. -->
+                                    <div
+                                        class="-mt-4 -mb-2 flex min-h-[1.25rem] flex-wrap items-center gap-x-2 gap-y-1">
+                                        <template v-if="matchedContact">
+                                            <span
+                                                class="inline-flex items-center gap-1.5 rounded-full bg-teal-50 px-2 py-0.5 text-xs font-medium text-teal-700 ring-1 ring-inset ring-teal-600/20">
+                                                <CheckCircleIcon class="h-3.5 w-3.5" aria-hidden="true" />
+                                                {{ matchedContact.name }}
+                                            </span>
+                                            <span v-if="matchedContact.organization" class="text-xs text-gray-500">
+                                                {{ matchedContact.organization }}
+                                            </span>
+                                        </template>
+
+                                        <span v-else-if="lookupState === 'checking'" class="text-xs text-gray-400">
+                                            {{ $t('Checking your phone book...') }}
+                                        </span>
+
+                                        <template v-else-if="lookupState === 'unknown'">
+                                            <span class="text-xs text-gray-500">
+                                                {{ $t('Not in your phone book.') }}
+                                            </span>
+                                            <button type="button"
+                                                class="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 transition hover:text-indigo-500"
+                                                @click="openAddContact()">
+                                                <UserPlusIcon class="h-3.5 w-3.5" aria-hidden="true" />
+                                                {{ $t('Save to phone book') }}
+                                            </button>
+                                        </template>
+                                    </div>
+
+                                    <!--
+                                        Stays inside this dialog so Headless UI portals it into the same
+                                        PortalGroup and the parent focus trap includes it - at the template
+                                        root its search box becomes unfocusable.
+                                    -->
+                                    <ContactPickerModal :show="showContactPicker"
+                                        :route="options?.routes?.contact_options_route"
+                                        :destroy-route="options?.routes?.contact_destroy_route" channel="fax"
+                                        @close="showContactPicker = false" @select="applyContact"
+                                        @create="handleCreateFromPicker" @deleted="handleContactDeleted"
+                                        @error="emit('error', $event)" />
+                                </StaticElement>
+
+                                <!--
+                                    Add-to-phone-book lives in a FormChildModal holding THIS form's elements
+                                    (all :submit="false", so they never reach the fax endpoint) - the same
+                                    shape as the device forms' advanced line settings. A nested <Vueform>
+                                    here sends Headless UI's Dialog into a recursive update loop.
+                                -->
+                                <GroupElement name="new_contact">
+                                    <FormChildModal :show="showAddContact" :header="$t('Add to phone book')"
+                                        :loading="false" @close="showAddContact = false">
+                                        <p class="mb-4 text-sm text-gray-500">
+                                            {{ $t('Save this recipient to reuse it on your next fax') }}
+                                        </p>
+
+                                        <!--
+                                            FormChildModal's slot is a plain div, so this group re-establishes
+                                            Vueform's row grid - without it every element renders full width.
+                                        -->
+                                        <GroupElement name="new_contact_fields">
+                                            <!-- Defaults apply on mount, and the modal remounts on every open. -->
+                                            <TextElement name="new_contact_number" :label="$t('Fax number')"
+                                                :floating="false" :submit="false" autocomplete="off" input-type="tel"
+                                                :default="newContact.number" @change="newContact.number = $event" />
+
+                                            <TextElement name="new_contact_first_name" :label="$t('First name')"
+                                                :floating="false" :submit="false" autocomplete="off"
+                                                :columns="{ default: { container: 12 }, sm: { container: 6 } }"
+                                                @change="newContact.first_name = $event" />
+
+                                            <TextElement name="new_contact_last_name" :label="$t('Last name')"
+                                                :floating="false" :submit="false" autocomplete="off"
+                                                :columns="{ default: { container: 12 }, sm: { container: 6 } }"
+                                                @change="newContact.last_name = $event" />
+
+                                            <SelectElement name="new_contact_company" :label="$t('Company')"
+                                                :items="searchOrganizations" :search="true" :native="false"
+                                                :create="true" input-type="search" autocomplete="off"
+                                                :floating="false" :strict="false" allow-absent :submit="false"
+                                                :placeholder="$t('Search or add a company (optional)')"
+                                                :description="canSaveContact ? null : $t('Enter a first name or choose a company.')"
+                                                @change="newContact.company = $event" />
+
+                                            <ButtonElement name="new_contact_cancel" :button-label="$t('Cancel')"
+                                                :secondary="true" :columns="{ container: 6 }" :full="true"
+                                                @click="showAddContact = false" />
+
+                                            <ButtonElement name="new_contact_save" :button-label="$t('Save contact')"
+                                                :columns="{ container: 6 }" align="right" :full="true"
+                                                :disabled="!canSaveContact" :loading="savingContact"
+                                                @click="saveNewContact" />
+                                        </GroupElement>
+                                    </FormChildModal>
+                                </GroupElement>
+                                <CheckboxElement name="cover_letter_checkbox" :text="$t('Cover Letter')" :submit="false" />
+                                <TextareaElement name="fax_message" :label="$t('Cover Letter Text')" :conditions="[
                                     [
                                         'cover_letter_checkbox',
                                         '==',
                                         true,
                                     ],
                                 ]" />
-                                <MultifileElement name="files" label="Upload files" :upload-temp-endpoint="false"
-                                    description="Supported file types: .pdf, .doc, .docx, .rtf, .xls, .xlsx, .csv, .txt, .jpg"
+                                <MultifileElement name="files" :label="$t('Upload files')" :upload-temp-endpoint="false"
+                                    :description="$t('Supported file types: .pdf, .doc, .docx, .rtf, .xls, .xlsx, .csv, .txt, .jpg')"
                                     :urls="{}" :drop="true"
                                     accept=".pdf,.doc,.docx,.rtf,.xls,.xlsx,.csv,.txt,.jpeg,.jpg" :rules="[
                                         'max:5',
@@ -71,12 +185,12 @@
                                             listItem: '!bg-teal-50 !border !border-teal-200 rounded-md !p-2 mt-2 shadow-sm !text-teal-700 font-semibold [&_.form-bg-passive]:!bg-teal-200 hover:[&_.form-bg-passive]:!bg-teal-300 [&_.form-bg-passive>span]:!bg-teal-800'
                                         }
                                     }" />
-                                <ToggleElement name="send_confirmation" text="Send fax confirmation to my email"
-                                    description="You will receive a fax confirmation either when it is successfully sent or if it fails to send." />
-                                <ButtonElement name="cancel" button-label="Cancel" :secondary="true" :columns="{
+                                <ToggleElement name="send_confirmation" :text="$t('Send fax confirmation to my email')"
+                                    :description="$t('You will receive a fax confirmation either when it is successfully sent or if it fails to send.')" />
+                                <ButtonElement name="cancel" :button-label="$t('Cancel')" :secondary="true" :columns="{
                                     container: 6,
-                                }" :resets="true" :full="true" />
-                                <ButtonElement name="submit" button-label="Send Fax" :columns="{
+                                }" :resets="true" :full="true" @click="resetRecipientState" />
+                                <ButtonElement name="submit" :button-label="$t('Send Fax')" :columns="{
                                     container: 6,
                                 }" align="right" :submits="true" :full="true" />
                             </Vueform>
@@ -91,9 +205,14 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { XMarkIcon } from "@heroicons/vue/24/solid";
+import { BookOpenIcon, CheckCircleIcon, UserPlusIcon } from "@heroicons/vue/24/outline";
+import { trans } from "laravel-vue-i18n";
+import axios from "axios";
+import ContactPickerModal from "../modal/ContactPickerModal.vue";
+import FormChildModal from "../FormChildModal.vue";
 
 
 const emit = defineEmits(['close', 'error', 'success', 'refresh-data'])
@@ -105,6 +224,224 @@ const props = defineProps({
 });
 
 const form$ = ref(null)
+
+const showContactPicker = ref(false)
+const showAddContact = ref(false)
+const recipient = ref('')
+const matchedContact = ref(null)
+// idle | checking | found | unknown
+const lookupState = ref('idle')
+
+// Mirrors the new_contact_* elements shown inside the add-to-phone-book modal.
+const emptyNewContact = () => ({ number: '', first_name: '', last_name: '', company: null })
+const newContact = ref(emptyNewContact())
+const savingContact = ref(false)
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/**
+ * Digit count only, to decide when a number is worth looking up. Anything to do
+ * with the shape of a number - E.164 on save, formatting on display - belongs to
+ * the server, which knows the domain's country.
+ */
+const digitCount = (value) => String(value ?? '').replace(/\D+/g, '').length
+
+const canSaveContact = computed(() => {
+    const hasNumber = digitCount(newContact.value.number) >= 7
+    const hasIdentity = !!String(newContact.value.first_name ?? '').trim() || !!newContact.value.company
+
+    return hasNumber && hasIdentity
+})
+
+let lookupTimer = null
+let lookupRequest = 0
+
+/**
+ * Look the typed number up in the phone book so the user gets confirmation
+ * of who they are faxing - or the chance to save a new recipient. The server
+ * resolves the number against the domain's country, so no shape is assumed here.
+ */
+const handleRecipientChange = (newValue) => {
+    recipient.value = newValue ?? ''
+
+    // Still the contact we already resolved - leave the confirmation in place.
+    if (matchedContact.value && matchedContact.value.typed === recipient.value) {
+        lookupState.value = 'found'
+        return
+    }
+
+    // Invalidate anything already in flight - it describes an older number.
+    clearTimeout(lookupTimer)
+    lookupRequest++
+    matchedContact.value = null
+
+    if (digitCount(recipient.value) < 7) {
+        lookupState.value = 'idle'
+        return
+    }
+
+    lookupState.value = 'checking'
+    lookupTimer = setTimeout(() => lookupRecipient(recipient.value), 400)
+}
+
+const lookupRecipient = async (number) => {
+    const route = props.options?.routes?.contact_show_route
+
+    if (!route) {
+        lookupState.value = 'idle'
+        return
+    }
+
+    const requestId = ++lookupRequest
+
+    try {
+        const response = await axios.get(route.replace(':phoneNumber', encodeURIComponent(number)))
+
+        if (requestId !== lookupRequest) return
+
+        const contact = response.data?.contact ?? null
+
+        matchedContact.value = contact
+            ? {
+                contact_uuid: contact.contact_uuid,
+                name: contact.name,
+                organization: contact.organization,
+                value: contact.phone_number_formatted || contact.phone_number,
+                typed: number,
+            }
+            : null
+        lookupState.value = contact ? 'found' : 'unknown'
+    } catch (error) {
+        if (requestId !== lookupRequest) return
+
+        // A failed lookup should never block sending a fax.
+        lookupState.value = 'idle'
+    }
+}
+
+const setRecipient = (value) => {
+    recipient.value = value
+    // Form-level update merges by field name and works regardless of layout nesting.
+    form$.value?.update({ recipient: value })
+}
+
+const applyContact = (contact) => {
+    // The server already formatted the number for this domain's country.
+    const display = contact.number_formatted || contact.value
+
+    matchedContact.value = { ...contact, value: display, typed: display }
+    lookupState.value = 'found'
+    setRecipient(display)
+    showContactPicker.value = false
+}
+
+const openAddContact = (number = null) => {
+    // Set the state first: the modal's elements read it as their default on mount.
+    // Whatever shape it is in, the server stores it as E.164.
+    newContact.value = { ...emptyNewContact(), number: String(number ?? recipient.value ?? '').trim() }
+
+    showContactPicker.value = false
+    showAddContact.value = true
+}
+
+const handleCreateFromPicker = (query) => {
+    // Whatever they typed in the search box is a fax number if it looks like one.
+    if (digitCount(query) >= 7) {
+        openAddContact(query)
+        return
+    }
+
+    // Otherwise carry over the number being faxed - but only if it isn't already a
+    // saved contact, since then they are adding a different, new one.
+    openAddContact(matchedContact.value ? '' : recipient.value)
+}
+
+const searchOrganizations = async (query) => {
+    const route = props.options?.routes?.organization_options_route
+
+    if (!route) return []
+
+    const response = await axios.get(route, { params: { query: query ?? '' } })
+
+    return Array.isArray(response.data) ? response.data : []
+}
+
+const saveNewContact = async () => {
+    const route = props.options?.routes?.contact_store_route
+
+    if (!route || !canSaveContact.value || savingContact.value) return
+
+    // The company select holds a uuid when an existing company was picked, and the
+    // raw text when a new one was typed - the server creates the latter.
+    const company = newContact.value.company
+    const isExisting = typeof company === 'string' && UUID_PATTERN.test(company)
+
+    savingContact.value = true
+
+    try {
+        const response = await axios.post(route, {
+            phone_number: newContact.value.number,
+            first_name: String(newContact.value.first_name ?? '').trim() || null,
+            last_name: String(newContact.value.last_name ?? '').trim() || null,
+            organization_uuid: isExisting ? company : null,
+            organization_name: !isExisting && company ? String(company).trim() : null,
+            phone_label: 'fax',
+        })
+
+        showAddContact.value = false
+        handleContactSaved(response.data?.contact ?? null)
+    } catch (error) {
+        emit('error', error)
+    } finally {
+        savingContact.value = false
+    }
+}
+
+const handleContactSaved = (contact) => {
+    if (!contact) return
+
+    // The store response carries the number formatted for this domain's country.
+    const display = contact.phone_number_formatted || contact.phone_number
+
+    matchedContact.value = {
+        contact_uuid: contact.contact_uuid,
+        name: contact.name,
+        organization: contact.organization,
+        value: display,
+        typed: display,
+    }
+    lookupState.value = 'found'
+    setRecipient(display)
+
+    // Notification renders message[0] of each entry, so each must be an array.
+    emit('success', 'success', { success: [trans('Contact saved to your phone book.')] })
+}
+
+const handleContactDeleted = (contact) => {
+    // If the number in the field belonged to that contact, it is no longer saved.
+    if (matchedContact.value?.contact_uuid === contact.contact_uuid) {
+        matchedContact.value = null
+        lookupState.value = digitCount(recipient.value) >= 7 ? 'unknown' : 'idle'
+    }
+
+    emit('success', 'success', { success: [trans('Contact removed from your phone book.')] })
+}
+
+const resetRecipientState = () => {
+    clearTimeout(lookupTimer)
+    lookupRequest++
+    recipient.value = ''
+    matchedContact.value = null
+    lookupState.value = 'idle'
+    newContact.value = emptyNewContact()
+    savingContact.value = false
+    showContactPicker.value = false
+    showAddContact.value = false
+}
+
+watch(() => props.show, (show) => {
+    if (!show) resetRecipientState()
+})
 
 const submitForm = async (FormData, form$) => {
     // Using FormData will EXCLUDE conditional elements and it
@@ -164,7 +501,7 @@ const handleError = (error, details, form$) => {
         case 'prepare':
             console.log(error) // Error object
 
-            form$.messageBag.append('Could not prepare form')
+            form$.messageBag.append(trans('Could not prepare form'))
             break
 
         // Error occured because response status is outside of 2xx
@@ -184,14 +521,14 @@ const handleError = (error, details, form$) => {
         case 'cancel':
             console.log(error) // Error object
 
-            form$.messageBag.append('Request cancelled')
+            form$.messageBag.append(trans('Request cancelled'))
             break
 
         // Some other errors happened (no response object)
         case 'other':
             console.log(error) // Error object
 
-            form$.messageBag.append('Couldn\'t submit form')
+            form$.messageBag.append(trans('Couldn\'t submit form'))
             break
     }
 }
