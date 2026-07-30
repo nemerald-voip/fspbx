@@ -14,5 +14,7 @@ class InboundMessageEventData extends MessagingEventData
         public string $text = '',
         public array $mediaUrls = [],
         public ?string $providerEvent = null,
+        public array $storedMedia = [],
+        public bool $isMms = false,
     ) {}
 }

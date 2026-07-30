@@ -216,7 +216,10 @@ class FiberneticsOutboundProvider implements OutboundProviderInterface
         $namespace = 'http://www.3gpp.org/ftp/Specs/archive/23_series/23.140/schema/REL-6-MM7-1-4';
         $version = $this->xml((string) config('fibernetics.mm7_version', '6.8.0'));
         $subject = trim((string) ($message->message ?? ''));
-        $subject = $subject !== '' ? $subject : (string) config('fibernetics.mm7_subject', config('app.name', 'Message'));
+        $subject = $subject !== '' ? $subject : trim((string) config('fibernetics.mm7_subject'));
+        $subjectElement = $subject !== ''
+            ? '<mm7:Subject>' . $this->xml($subject) . '</mm7:Subject>'
+            : '';
 
         return '<?xml version="1.0" encoding="UTF-8"?>'
             . '<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:mm7="' . $namespace . '">'
@@ -232,7 +235,7 @@ class FiberneticsOutboundProvider implements OutboundProviderInterface
             . '</mm7:SenderIdentification>'
             . '<mm7:Recipients><mm7:To><mm7:Number>' . $this->xml($this->formatE164($message->destination)) . '</mm7:Number></mm7:To></mm7:Recipients>'
             . '<mm7:TimeStamp>' . now()->toIso8601String() . '</mm7:TimeStamp>'
-            . '<mm7:Subject>' . $this->xml($subject) . '</mm7:Subject>'
+            . $subjectElement
             . '<mm7:Content href="cid:' . $this->xml($contentId) . '"/>'
             . '</mm7:SubmitReq>'
             . '</soapenv:Body>'

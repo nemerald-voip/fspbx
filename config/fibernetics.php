@@ -9,7 +9,7 @@ return [
     'mm7_username' => env('FIBERNETICS_MM7_USERNAME'),
     'mm7_password' => env('FIBERNETICS_MM7_PASSWORD'),
     'mm7_version' => env('FIBERNETICS_MM7_VERSION', '6.8.0'),
-    'mm7_subject' => env('FIBERNETICS_MM7_SUBJECT', env('APP_NAME', 'Message')),
+    'mm7_subject' => env('FIBERNETICS_MM7_SUBJECT'),
     'mm7_verify_ssl' => filter_var(env('FIBERNETICS_MM7_VERIFY_SSL', false), FILTER_VALIDATE_BOOL),
 
     'timeout' => (int) env('FIBERNETICS_TIMEOUT', 60),
@@ -19,5 +19,9 @@ return [
             'FIBERNETICS_WEBHOOK_IPS',
             '74.205.214.128/29,74.205.214.136/29,107.150.228.32/29,107.150.228.40/29'
         ))
+    ))),
+    'mms_webhook_ips' => array_values(array_filter(array_map(
+        'trim',
+        explode(',', (string) env('FIBERNETICS_MMS_WEBHOOK_IPS', ''))
     ))),
 ];

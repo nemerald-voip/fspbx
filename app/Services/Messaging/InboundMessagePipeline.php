@@ -31,6 +31,41 @@ class InboundMessagePipeline
 
     protected function handleInbound(InboundMessageEventData $event, MessagingWebhookParser $parser): void
     {
+        if ($event->providerReferenceId
+            && $this->messages->inboundReferenceExists($event->provider, $event->providerReferenceId)) {
+            messaging_webhook_debug('Inbound message event already processed', [
+                'provider' => $event->provider,
+                'provider_reference_id' => $event->providerReferenceId,
+            ]);
+
+            return;
+        }
+
+        $this->handleResolvedInbound(
+            event: $event,
+            storeMedia: function ($route) use ($event, $parser): array {
+                if ($event->storedMedia !== []) {
+                    return $event->storedMedia[$route->destination] ?? [];
+                }
+
+                return $this->mediaIngestor->store(
+                    parser: $parser,
+                    provider: $event->provider,
+                    domainUuid: $route->domainUuid,
+                    mediaUrls: $event->mediaUrls,
+                );
+            },
+            isMms: $event->isMms
+                || ! empty($event->mediaUrls)
+                || ! empty($event->storedMedia),
+        );
+    }
+
+    private function handleResolvedInbound(
+        InboundMessageEventData $event,
+        callable $storeMedia,
+        bool $isMms
+    ): void {
         messaging_webhook_debug('handleInbound started', [
             'provider' => $event->provider,
             'from' => $event->from,
@@ -55,12 +90,7 @@ class InboundMessagePipeline
                 'org_id' => $route->orgId,
             ]);
 
-            $storedMedia = $this->mediaIngestor->store(
-                parser: $parser,
-                provider: $event->provider,
-                domainUuid: $route->domainUuid,
-                mediaUrls: $event->mediaUrls,
-            );
+            $storedMedia = $storeMedia($route);
 
             messaging_webhook_debug('Media ingested', [
                 'stored_media_count' => count($storedMedia),
@@ -72,7 +102,7 @@ class InboundMessagePipeline
                 source: $event->from,
                 destination: $route->destination,
                 text: $event->text,
-                type: !empty($event->mediaUrls) ? 'mms' : 'sms',
+                type: $isMms ? 'mms' : 'sms',
                 providerName: $event->provider,
                 providerReferenceId: $event->providerReferenceId,
                 media: $storedMedia,

@@ -46,15 +46,15 @@
                     :from="data.from" :to="data.to" :total="data.total" :currentPage="data.current_page"
                     :lastPage="data.last_page" :links="data.links" @pagination-change-page="renderRequestedPage" />
 
-                <div class="overflow-hidden-t border-l border-r border-gray-200">
-                    <table class="min-w-full divide-y divide-gray-200 mb-4">
+                <div class="overflow-hidden border-l border-r border-gray-200">
+                    <table class="w-full min-w-[64rem] table-fixed divide-y divide-gray-200 mb-4">
                         <thead class="bg-gray-100">
                             <tr>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Date</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Name</th>
+                                <th class="w-56 px-6 py-3 text-left text-sm font-semibold text-gray-900">Date</th>
+                                <th class="w-56 px-6 py-3 text-left text-sm font-semibold text-gray-900">Name</th>
                                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">URL</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Payload</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Exception</th>
+                                <th class="w-44 px-6 py-3 text-left text-sm font-semibold text-gray-900">Payload</th>
+                                <th class="w-56 px-6 py-3 text-left text-sm font-semibold text-gray-900">Exception</th>
                             </tr>
                         </thead>
 
@@ -67,8 +67,10 @@
                                     <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
                                         {{ row.name }}
                                     </td>
-                                    <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
-                                        {{ row.url }}
+                                    <td class="max-w-0 px-6 py-2 text-sm text-gray-500">
+                                        <div class="truncate" :title="row.url">
+                                            {{ row.url }}
+                                        </div>
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-2 text-sm text-blue-600">
                                         <span class="underline">Click for details…</span>
@@ -81,6 +83,8 @@
                                 <!-- EXPANDED DETAILS -->
                                 <tr v-if="expandedRow === row.id">
                                     <td :colspan="5" class="bg-gray-50 px-6 py-4">
+                                        <div class="text-gray-500 text-sm mb-1">URL</div>
+                                        <div class="mb-4 break-all text-sm text-gray-700">{{ row.url }}</div>
                                         <div class="text-gray-500 text-sm mb-1">Payload</div>
                                         <pre
                                             class="text-gray-700 text-sm whitespace-pre-wrap break-words">{{ row.payload }}</pre>

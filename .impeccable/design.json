@@ -1,0 +1,322 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-30T06:47:15Z",
+  "title": "Design System: FS PBX",
+  "extensions": {
+    "colorMeta": {
+      "signal-indigo": {
+        "role": "primary",
+        "displayName": "Signal Indigo",
+        "canonical": "#4F46E5",
+        "tonalRamp": ["#312E81", "#3730A3", "#4338CA", "#4F46E5", "#6366F1", "#818CF8", "#C7D2FE", "#EEF2FF"]
+      },
+      "signal-indigo-hover": {
+        "role": "primary",
+        "displayName": "Signal Indigo Lift",
+        "canonical": "#6366F1",
+        "tonalRamp": ["#312E81", "#3730A3", "#4338CA", "#4F46E5", "#6366F1", "#818CF8", "#C7D2FE", "#EEF2FF"]
+      },
+      "signal-indigo-deep": {
+        "role": "primary",
+        "displayName": "Signal Indigo Depth",
+        "canonical": "#3730A3",
+        "tonalRamp": ["#312E81", "#3730A3", "#4338CA", "#4F46E5", "#6366F1", "#818CF8", "#C7D2FE", "#EEF2FF"]
+      },
+      "working-blue": {
+        "role": "secondary",
+        "displayName": "Working Blue",
+        "canonical": "#2563EB",
+        "tonalRamp": ["#1E3A8A", "#1E40AF", "#1D4ED8", "#2563EB", "#3B82F6", "#60A5FA", "#BFDBFE", "#EFF6FF"]
+      },
+      "paper-surface": {
+        "role": "neutral",
+        "displayName": "Paper Surface",
+        "canonical": "#FFFFFF",
+        "tonalRamp": ["#111827", "#1F2937", "#374151", "#6B7280", "#9CA3AF", "#D1D5DB", "#F3F4F6", "#FFFFFF"]
+      },
+      "quiet-surface": {
+        "role": "neutral",
+        "displayName": "Quiet Surface",
+        "canonical": "#F9FAFB",
+        "tonalRamp": ["#111827", "#1F2937", "#374151", "#6B7280", "#9CA3AF", "#D1D5DB", "#F3F4F6", "#F9FAFB"]
+      },
+      "console-canvas": {
+        "role": "neutral",
+        "displayName": "Console Canvas",
+        "canonical": "#F3F4F6",
+        "tonalRamp": ["#111827", "#1F2937", "#374151", "#6B7280", "#9CA3AF", "#D1D5DB", "#E5E7EB", "#F9FAFB"]
+      },
+      "divider": {
+        "role": "neutral",
+        "displayName": "Divider",
+        "canonical": "#E5E7EB",
+        "tonalRamp": ["#111827", "#1F2937", "#374151", "#6B7280", "#9CA3AF", "#D1D5DB", "#E5E7EB", "#F9FAFB"]
+      },
+      "control-border": {
+        "role": "neutral",
+        "displayName": "Control Border",
+        "canonical": "#D1D5DB",
+        "tonalRamp": ["#111827", "#1F2937", "#374151", "#6B7280", "#9CA3AF", "#D1D5DB", "#E5E7EB", "#F9FAFB"]
+      },
+      "operator-ink": {
+        "role": "neutral",
+        "displayName": "Operator Ink",
+        "canonical": "#111827",
+        "tonalRamp": ["#111827", "#1F2937", "#374151", "#6B7280", "#9CA3AF", "#D1D5DB", "#E5E7EB", "#F9FAFB"]
+      },
+      "secondary-text": {
+        "role": "neutral",
+        "displayName": "Secondary Text",
+        "canonical": "#6B7280",
+        "tonalRamp": ["#111827", "#1F2937", "#374151", "#6B7280", "#9CA3AF", "#D1D5DB", "#E5E7EB", "#F9FAFB"]
+      },
+      "muted-text": {
+        "role": "neutral",
+        "displayName": "Muted Text",
+        "canonical": "#9CA3AF",
+        "tonalRamp": ["#111827", "#1F2937", "#374151", "#6B7280", "#9CA3AF", "#D1D5DB", "#E5E7EB", "#F9FAFB"]
+      },
+      "success": {
+        "role": "semantic",
+        "displayName": "Success Green",
+        "canonical": "#15803D",
+        "tonalRamp": ["#14532D", "#166534", "#15803D", "#16A34A", "#22C55E", "#4ADE80", "#BBF7D0", "#F0FDF4"]
+      },
+      "success-surface": {
+        "role": "semantic",
+        "displayName": "Success Surface",
+        "canonical": "#F0FDF4",
+        "tonalRamp": ["#14532D", "#166534", "#15803D", "#16A34A", "#22C55E", "#4ADE80", "#BBF7D0", "#F0FDF4"]
+      },
+      "danger": {
+        "role": "semantic",
+        "displayName": "Danger Red",
+        "canonical": "#B91C1C",
+        "tonalRamp": ["#7F1D1D", "#991B1B", "#B91C1C", "#DC2626", "#EF4444", "#F87171", "#FECACA", "#FEF2F2"]
+      },
+      "danger-surface": {
+        "role": "semantic",
+        "displayName": "Danger Surface",
+        "canonical": "#FEF2F2",
+        "tonalRamp": ["#7F1D1D", "#991B1B", "#B91C1C", "#DC2626", "#EF4444", "#F87171", "#FECACA", "#FEF2F2"]
+      },
+      "warning": {
+        "role": "semantic",
+        "displayName": "Warning Amber",
+        "canonical": "#A16207",
+        "tonalRamp": ["#713F12", "#854D0E", "#A16207", "#CA8A04", "#EAB308", "#FACC15", "#FEF08A", "#FEFCE8"]
+      },
+      "warning-surface": {
+        "role": "semantic",
+        "displayName": "Warning Surface",
+        "canonical": "#FEFCE8",
+        "tonalRamp": ["#713F12", "#854D0E", "#A16207", "#CA8A04", "#EAB308", "#FACC15", "#FEF08A", "#FEFCE8"]
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Page and section headings."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Dialogs, panels, and emphasized row groups."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Tables, forms, buttons, navigation, and descriptions."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Badges, metadata, and compact utility controls."
+      }
+    },
+    "shadows": [
+      {
+        "name": "control-lift",
+        "value": "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+        "purpose": "Primary and secondary buttons."
+      },
+      {
+        "name": "contained-surface",
+        "value": "0 1px 3px 0 rgb(0 0 0 / 0.10), 0 1px 2px -1px rgb(0 0 0 / 0.10)",
+        "purpose": "Tables and page-level working panels."
+      },
+      {
+        "name": "floating-menu",
+        "value": "0 20px 25px -5px rgb(0 0 0 / 0.10), 0 8px 10px -6px rgb(0 0 0 / 0.10)",
+        "purpose": "Menus, dialogs, side panels, and transient overlays."
+      }
+    ],
+    "motion": [
+      {
+        "name": "state-fast",
+        "value": "100ms ease-out",
+        "purpose": "Menu and compact state feedback."
+      },
+      {
+        "name": "state-standard",
+        "value": "150ms ease-in-out",
+        "purpose": "Buttons, controls, and icon actions."
+      },
+      {
+        "name": "panel-standard",
+        "value": "300ms ease-in-out",
+        "purpose": "Dialogs, notifications, and side-navigation changes."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
+      },
+      {
+        "name": "2xl",
+        "value": "1536px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The single emphasized action in a toolbar or form.",
+      "html": "<button class=\"ds-btn-primary\">Save</button>",
+      "css": ".ds-btn-primary { border: 0; border-radius: 0.375rem; background: #4F46E5; color: #FFFFFF; padding: 0.375rem 0.625rem; font: 600 0.875rem/1.5 Nunito, sans-serif; box-shadow: 0 1px 2px rgb(0 0 0 / 0.05); transition: background-color 150ms ease-in-out; } .ds-btn-primary:hover { background: #6366F1; } .ds-btn-primary:focus-visible { outline: 2px solid #4F46E5; outline-offset: 2px; } .ds-btn-primary:active { background: #3730A3; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "A supporting or reset action beside the primary action.",
+      "html": "<button class=\"ds-btn-secondary\">Reset</button>",
+      "css": ".ds-btn-secondary { border: 1px solid #D1D5DB; border-radius: 0.375rem; background: #FFFFFF; color: #111827; padding: 0.375rem 0.625rem; font: 600 0.875rem/1.5 Nunito, sans-serif; box-shadow: 0 1px 2px rgb(0 0 0 / 0.05); transition: background-color 150ms ease-in-out; } .ds-btn-secondary:hover { background: #F9FAFB; } .ds-btn-secondary:focus-visible { outline: 2px solid #4F46E5; outline-offset: 2px; } .ds-btn-secondary:active { background: #F3F4F6; }"
+    },
+    {
+      "name": "Destructive Button",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "An explicit destructive confirmation action.",
+      "html": "<button class=\"ds-btn-danger\">Delete</button>",
+      "css": ".ds-btn-danger { border: 0; border-radius: 0.375rem; background: #B91C1C; color: #FFFFFF; padding: 0.5rem 0.75rem; font: 600 0.875rem/1.5 Nunito, sans-serif; box-shadow: 0 1px 2px rgb(0 0 0 / 0.05); transition: background-color 150ms ease-in-out; } .ds-btn-danger:hover { background: #991B1B; } .ds-btn-danger:focus-visible { outline: 2px solid #B91C1C; outline-offset: 2px; } .ds-btn-danger:active { background: #7F1D1D; }"
+    },
+    {
+      "name": "Search Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "The canonical compact search and filter field.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field-label\">Search</span><span class=\"ds-input-wrap\"><svg class=\"ds-input-icon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" aria-hidden=\"true\"><circle cx=\"11\" cy=\"11\" r=\"8\"></circle><path d=\"m21 21-4.35-4.35\"></path></svg><input class=\"ds-input\" type=\"search\" placeholder=\"Search\"></span></label>",
+      "css": ".ds-field { display: grid; gap: 0.25rem; color: #374151; font: 600 0.75rem/1.25 Nunito, sans-serif; } .ds-input-wrap { position: relative; display: block; } .ds-input-icon { position: absolute; left: 0.75rem; top: 50%; width: 1.25rem; height: 1.25rem; color: #9CA3AF; stroke-width: 2; transform: translateY(-50%); pointer-events: none; } .ds-input { width: 16rem; border: 1px solid #D1D5DB; border-radius: 0.375rem; background: #FFFFFF; color: #111827; padding: 0.375rem 0.75rem 0.375rem 2.5rem; font: 400 0.875rem/1.5 Nunito, sans-serif; } .ds-input::placeholder { color: #9CA3AF; } .ds-input:focus-visible { border-color: #2563EB; outline: 2px solid #2563EB; outline-offset: -1px; }"
+    },
+    {
+      "name": "Status Badge",
+      "kind": "chip",
+      "refersTo": "badge-success",
+      "description": "A labeled semantic state with color used as reinforcement.",
+      "html": "<span class=\"ds-badge-success\"><span class=\"ds-badge-dot\" aria-hidden=\"true\"></span>Enabled</span>",
+      "css": ".ds-badge-success { display: inline-flex; align-items: center; gap: 0.375rem; border: 1px solid rgb(21 128 61 / 0.20); border-radius: 0.375rem; background: #F0FDF4; color: #15803D; padding: 0.25rem 0.5rem; font: 600 0.75rem/1.25 Nunito, sans-serif; } .ds-badge-dot { width: 0.375rem; height: 0.375rem; border-radius: 9999px; background: #15803D; }"
+    },
+    {
+      "name": "Data Table",
+      "kind": "custom",
+      "refersTo": "panel",
+      "description": "A dense operational table with quiet headers and bounded values.",
+      "html": "<div class=\"ds-table-wrap\"><table class=\"ds-table\"><thead><tr><th>Date</th><th>Name</th><th>URL</th><th>Status</th></tr></thead><tbody><tr><td>11:39 PM</td><td>fibernetics_messaging</td><td class=\"ds-table-truncate\" title=\"https://example.test/webhook?message=full-value\">https://example.test/webhook?message=full-value</td><td><span class=\"ds-table-state\">Received</span></td></tr></tbody></table></div>",
+      "css": ".ds-table-wrap { overflow-x: auto; border: 1px solid #E5E7EB; border-radius: 0.375rem; background: #FFFFFF; box-shadow: 0 1px 3px rgb(0 0 0 / 0.10); } .ds-table { width: 100%; min-width: 48rem; border-collapse: collapse; table-layout: fixed; color: #6B7280; font: 400 0.875rem/1.5 Nunito, sans-serif; } .ds-table th { background: #F9FAFB; color: #111827; padding: 0.75rem 1rem; text-align: left; font-weight: 600; } .ds-table td { border-top: 1px solid #E5E7EB; padding: 0.5rem 1rem; white-space: nowrap; } .ds-table tbody tr:hover { background: #F9FAFB; } .ds-table-truncate { overflow: hidden; text-overflow: ellipsis; } .ds-table-state { color: #15803D; font-weight: 600; }"
+    },
+    {
+      "name": "Side Navigation Item",
+      "kind": "nav",
+      "refersTo": "panel",
+      "description": "A compact navigation row with a quiet active surface and signal icon.",
+      "html": "<button class=\"ds-nav-item ds-nav-item-active\"><svg class=\"ds-nav-icon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" aria-hidden=\"true\"><path d=\"M4 5h16v14H4z\"></path><path d=\"M8 9h8M8 13h5\"></path></svg><span>Messages</span></button>",
+      "css": ".ds-nav-item { display: flex; width: 100%; align-items: center; gap: 0.75rem; border: 0; border-radius: 0.375rem; background: transparent; color: #374151; padding: 0.5rem; text-align: left; font: 600 0.875rem/1.5 Nunito, sans-serif; transition: background-color 150ms ease-in-out; } .ds-nav-item:hover { background: #F3F4F6; } .ds-nav-item:focus-visible { outline: 2px solid #4F46E5; outline-offset: 2px; } .ds-nav-item-active { background: #F3F4F6; } .ds-nav-icon { width: 1.5rem; height: 1.5rem; flex: none; color: #4F46E5; stroke-width: 1.75; }"
+    },
+    {
+      "name": "Modal",
+      "kind": "custom",
+      "refersTo": "panel",
+      "description": "A focused operational dialog with explicit title and close action.",
+      "html": "<section class=\"ds-modal\" role=\"dialog\" aria-labelledby=\"ds-modal-title\"><header class=\"ds-modal-header\"><h2 id=\"ds-modal-title\">Update setting</h2><button class=\"ds-modal-close\" aria-label=\"Close\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\"><path d=\"M6 6l12 12M18 6 6 18\"></path></svg></button></header><p>Change the persisted configuration for this account.</p><footer><button class=\"ds-modal-action\">Save</button></footer></section>",
+      "css": ".ds-modal { width: min(32rem, calc(100vw - 2rem)); border-radius: 0.5rem; background: #FFFFFF; color: #6B7280; padding: 1.5rem; box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.10), 0 8px 10px -6px rgb(0 0 0 / 0.10); font: 400 0.875rem/1.5 Nunito, sans-serif; } .ds-modal-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; } .ds-modal h2 { margin: 0; color: #111827; font-size: 1rem; font-weight: 600; } .ds-modal-close { border: 0; border-radius: 0.375rem; background: #FFFFFF; color: #9CA3AF; padding: 0.25rem; } .ds-modal-close svg { display: block; width: 1.25rem; height: 1.25rem; stroke-width: 2; } .ds-modal-close:hover { color: #6B7280; } .ds-modal-close:focus-visible { outline: 2px solid #4F46E5; outline-offset: 2px; } .ds-modal footer { display: flex; justify-content: flex-end; margin-top: 1rem; } .ds-modal-action { border: 0; border-radius: 0.375rem; background: #4F46E5; color: #FFFFFF; padding: 0.5rem 0.75rem; font-weight: 600; } .ds-modal-action:hover { background: #6366F1; } .ds-modal-action:focus-visible { outline: 2px solid #4F46E5; outline-offset: 2px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Operations Console",
+    "overview": "FS PBX is a calm, compact working surface for PBX administrators and communications operators. Picture an administrator scanning routes, registrations, messages, and logs on a desktop monitor in a bright office or equipment room: the light theme keeps dense operational data legible, while restrained Signal Indigo marks the few controls and states that require attention.\n\nThe interface is practical, dependable, and direct. Familiar tables, filters, side navigation, forms, and dialogs should disappear into the task. FS PBX explicitly rejects marketing-style admin UI, decorative dashboards, novelty interactions, inconsistent component patterns, and visual treatments that compete with operational data.",
+    "keyCharacteristics": [
+      "Compact, scannable information density.",
+      "Quiet gray surfaces with Signal Indigo used sparingly.",
+      "Familiar administrative controls with explicit states and permissions.",
+      "Technical detail preserved through truncation, expansion, tooltips, and progressive disclosure.",
+      "Responsive structure based on breakpoints, not fluid type or decorative rearrangement."
+    ],
+    "rules": [
+      {
+        "name": "The Signal, Not Decoration Rule",
+        "body": "Signal Indigo must remain under roughly 10% of a normal screen. Use it for primary action, selection, and focus, never to decorate inactive surfaces.",
+        "section": "colors"
+      },
+      {
+        "name": "The Semantic Pair Rule",
+        "body": "Status must combine color with a text label, icon, or both. Color alone is never sufficient.",
+        "section": "colors"
+      },
+      {
+        "name": "The Fixed Scale Rule",
+        "body": "Product typography uses fixed rem sizes. Never introduce fluid display type, oversized marketing headings, or a second decorative font.",
+        "section": "typography"
+      },
+      {
+        "name": "The Technical Detail Rule",
+        "body": "Long prose should stay within 65–75 characters per line. Tables may remain dense, but identifiers and URLs must truncate in-row and remain fully available in an expanded view or tooltip.",
+        "section": "typography"
+      },
+      {
+        "name": "The Structural Elevation Rule",
+        "body": "Use borders and tonal changes for persistent structure. Reserve strong shadows for elements that physically float above the working surface.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Single Container Rule",
+        "body": "One page-level working surface is sufficient. Nested cards and repeated shadow boxes are prohibited.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do use Signal Indigo (`#4F46E5`) for the primary action, active state, and focus indication.",
+      "Do use Paper Surface, Quiet Surface, Console Canvas, Divider, and Control Border to establish hierarchy before adding shadows.",
+      "Do keep tables compact and scannable, with responsive horizontal overflow and bounded columns.",
+      "Do preserve technical detail through expandable rows, tooltips, copy controls, and monospace output.",
+      "Do pass page-specific permissions into the page and hide or disable unavailable actions explicitly.",
+      "Do provide default, hover, focus, active, disabled, loading, error, and empty states for interactive components.",
+      "Do use text labels and icons alongside semantic color.",
+      "Do reuse VueForm, Headless UI, Heroicons, DataTable, Paginator, Badge, Notification, and established FS PBX page patterns."
+    ],
+    "donts": [
+      "Don't create marketing-style admin UI, decorative dashboards, or oversized hero metrics.",
+      "Don't add novelty interactions, gratuitous animation, or motion unrelated to state.",
+      "Don't introduce inconsistent component patterns; the same action must look and behave the same across pages.",
+      "Don't use visual treatments that compete with operational data.",
+      "Don't disguise technical state or destructive actions.",
+      "Don't use gradient text, decorative glassmorphism, colored side-stripe borders, or repeated identical card grids.",
+      "Don't wrap every content group in a card or nest cards inside cards.",
+      "Don't let unbounded URLs, payloads, identifiers, or descriptions expand a table beyond the viewport.",
+      "Don't rely on color alone for status, error, warning, selection, or health.",
+      "Don't introduce a second display font, fluid product typography, or decorative uppercase tracking in ordinary controls."
+    ]
+  }
+}

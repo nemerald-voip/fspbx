@@ -17,6 +17,13 @@ class FiberneticsWebhookParser implements MessagingWebhookParser
     public function parse(WebhookCall $webhookCall): iterable
     {
         $payload = $webhookCall->payload ?? [];
+
+        if (($payload['protocol'] ?? null) === 'mm7') {
+            yield from $this->parseMm7($payload);
+
+            return;
+        }
+
         $from = $this->normalizePhoneNumber($payload['from'] ?? null);
         $to = $this->normalizePhoneNumber($payload['to'] ?? null);
 
@@ -41,6 +48,35 @@ class FiberneticsWebhookParser implements MessagingWebhookParser
             'text' => $text,
             'mediaUrls' => [],
             'providerEvent' => 'incoming_sms',
+        ]);
+    }
+
+    private function parseMm7(array $payload): iterable
+    {
+        $from = $this->normalizePhoneNumber($payload['sender'] ?? null);
+        $to = array_values(array_filter(array_map(
+            fn ($recipient): ?string => is_string($recipient)
+                ? $this->normalizePhoneNumber($recipient)
+                : null,
+            $payload['recipients'] ?? []
+        )));
+
+        if ($from === null || $to === []) {
+            return;
+        }
+
+        yield InboundMessageEventData::from([
+            'provider' => 'fibernetics',
+            'providerReferenceId' => $payload['transaction_id'] ?? null,
+            'from' => $from,
+            'to' => $to,
+            'text' => trim((string) ($payload['text'] ?? '')),
+            'mediaUrls' => [],
+            'providerEvent' => 'incoming_mms',
+            'storedMedia' => is_array($payload['stored_media'] ?? null)
+                ? $payload['stored_media']
+                : [],
+            'isMms' => true,
         ]);
     }
 

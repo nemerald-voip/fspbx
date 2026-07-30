@@ -41,6 +41,7 @@ use App\Http\Controllers\FaxInboxController;
 use App\Http\Controllers\FaxLogController;
 use App\Http\Controllers\FaxQueueController;
 use App\Http\Controllers\FaxSentController;
+use App\Http\Controllers\FiberneticsMmsWebhookController;
 use App\Http\Controllers\FirewallController;
 use App\Http\Controllers\GatewayController;
 use App\Http\Controllers\GroupsController;
@@ -112,6 +113,8 @@ Route::webhooks('webhook/apidaze/sms', 'apidaze_messaging');
 Route::webhooks('webhook/bulkvs/sms', 'bulkvs_messaging');
 Route::webhooks('webhook/voipms/sms', 'voipms_messaging');
 Route::webhooks('webhook/fibernetics/sms', 'fibernetics_messaging', 'get');
+Route::post('webhook/fibernetics/sms', FiberneticsMmsWebhookController::class)
+    ->name('webhook.fibernetics.mms');
 Route::webhooks('/sms/ringotelwebhook', 'ringotel_messaging');
 Route::webhooks('/webhook/freeswitch', 'freeswitch');
 Route::webhooks('/webhook/stripe', 'stripe');

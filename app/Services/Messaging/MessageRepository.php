@@ -82,6 +82,15 @@ class MessageRepository
         return $message;
     }
 
+    public function inboundReferenceExists(string $provider, string $referenceId): bool
+    {
+        return Messages::query()
+            ->where('direction', 'in')
+            ->where('reference_id', $referenceId)
+            ->where('delivery_meta->provider->name', $provider)
+            ->exists();
+    }
+
     public function applyProviderStatus(
         string $provider,
         string $referenceId,

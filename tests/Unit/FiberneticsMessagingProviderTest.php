@@ -78,7 +78,7 @@ class FiberneticsMessagingProviderTest extends TestCase
             ),
         ]);
 
-        $message = $this->message('Photo');
+        $message = $this->message('');
         $message->media = [[
             'bucket' => 'messages',
             'object_key' => 'messages/photo.jpg',
@@ -102,6 +102,7 @@ class FiberneticsMessagingProviderTest extends TestCase
                 && str_contains($body, '<mm7:Number>+19052398716</mm7:Number>')
                 && str_contains($body, '<mm7:Number>+12266664782</mm7:Number>')
                 && str_contains($body, '<mm7:Content href="cid:')
+                && ! str_contains($body, '<mm7:Subject>')
                 && str_contains($body, base64_encode('image-bytes'));
         });
     }
@@ -146,6 +147,39 @@ class FiberneticsMessagingProviderTest extends TestCase
         $this->assertSame('café', $events[0]->text);
     }
 
+    public function test_parses_staged_mm7_webhook(): void
+    {
+        $storedMedia = [[
+            'bucket' => 'messages',
+            'object_key' => 'message-media/photo.jpg',
+            'original_name' => 'photo.jpg',
+            'mime_type' => 'image/jpeg',
+            'size' => 11,
+        ]];
+        $call = new WebhookCall();
+        $call->payload = [
+            'protocol' => 'mm7',
+            'transaction_id' => 'mms-inbound-123',
+            'sender' => '16465552200',
+            'recipients' => ['19055550100'],
+            'text' => 'Test image',
+            'stored_media' => [
+                '+19055550100' => $storedMedia,
+            ],
+        ];
+
+        $events = iterator_to_array(app(FiberneticsWebhookParser::class)->parse($call));
+
+        $this->assertCount(1, $events);
+        $this->assertSame('mms-inbound-123', $events[0]->providerReferenceId);
+        $this->assertSame('+16465552200', $events[0]->from);
+        $this->assertSame(['+19055550100'], $events[0]->to);
+        $this->assertSame('Test image', $events[0]->text);
+        $this->assertSame($storedMedia, $events[0]->storedMedia['+19055550100']);
+        $this->assertTrue($events[0]->isMms);
+        $this->assertSame('incoming_mms', $events[0]->providerEvent);
+    }
+
     public function test_only_accepts_fibernetics_source_networks(): void
     {
         config(['fibernetics.webhook_ips' => ['74.205.214.128/29']]);
@@ -173,6 +207,7 @@ class FiberneticsMessagingProviderTest extends TestCase
             'fibernetics.mm7_username' => 'mm7-user',
             'fibernetics.mm7_password' => 'mm7-password',
             'fibernetics.mm7_version' => '6.8.0',
+            'fibernetics.mm7_subject' => null,
             'fibernetics.timeout' => 30,
         ]);
     }
