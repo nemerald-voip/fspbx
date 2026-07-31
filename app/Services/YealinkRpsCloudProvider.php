@@ -16,12 +16,7 @@ class YealinkRpsCloudProvider implements CloudProviderInterface
 {
     protected string $providerName = 'yealink';
     protected int $timeout = 60;
-
-    public function __construct(
-        protected ?YealinkRpsRequestSigner $signer = null,
-    ) {
-        $this->signer ??= new YealinkRpsRequestSigner();
-    }
+    protected ?string $accessToken = null;
 
     public function getCredentials(): array
     {
@@ -31,12 +26,15 @@ class YealinkRpsCloudProvider implements CloudProviderInterface
             ->whereIn('default_setting_subcategory', [
                 'yealink_rps_access_key_id',
                 'yealink_rps_access_key_secret',
+                'yealink_rps_api_url',
             ])
             ->pluck('default_setting_value', 'default_setting_subcategory');
 
         return [
             'access_key_id' => $settings->get('yealink_rps_access_key_id'),
             'access_key_secret' => $settings->get('yealink_rps_access_key_secret'),
+            'api_url' => $settings->get('yealink_rps_api_url')
+                ?: config('services.ztp.yealink.api_url', 'https://us-api.ymcs.yealink.com'),
         ];
     }
 
@@ -44,6 +42,12 @@ class YealinkRpsCloudProvider implements CloudProviderInterface
     {
         $this->storeCredential('yealink_rps_access_key_id', $credentials['access_key_id']);
         $this->storeCredential('yealink_rps_access_key_secret', $credentials['access_key_secret']);
+        $this->storeCredential(
+            'yealink_rps_api_url',
+            $credentials['api_url'] ?? config('services.ztp.yealink.api_url', 'https://us-api.ymcs.yealink.com')
+        );
+
+        $this->accessToken = null;
     }
 
     public function hasCredentials(): bool
@@ -61,32 +65,34 @@ class YealinkRpsCloudProvider implements CloudProviderInterface
     public function getDevices(int $limit = 50, ?string $cursor = null): array
     {
         $skip = max(0, (int) ($cursor ?? 0));
-        $response = $this->post('/api/open/v1/device/list', [
+        $page = $this->requestJson('POST', '/v2/rps/listDevices', [
             'skip' => $skip,
             'limit' => $limit,
             'autoCount' => true,
+            'filter' => (object) [],
         ]);
 
-        if (! $response['success']) {
-            return $response;
-        }
-
-        $page = is_array($response['data']) ? $response['data'] : [];
         $devices = is_array($page['data'] ?? null) ? $page['data'] : [];
         $nextOffset = $skip + count($devices);
         $total = (int) ($page['total'] ?? $nextOffset);
 
-        $response['data'] = [
-            'results' => $devices,
-            'next' => count($devices) > 0 && $nextOffset < $total ? (string) $nextOffset : null,
+        return [
+            'success' => true,
+            'data' => [
+                'results' => $devices,
+                'next' => count($devices) > 0 && $nextOffset < $total ? (string) $nextOffset : null,
+            ],
+            'status' => 200,
         ];
-
-        return $response;
     }
 
     public function getDevice(string $id): array
     {
-        return $this->get('/api/open/v1/device/detail', ['id' => $id]);
+        return [
+            'success' => true,
+            'data' => $this->requestJson('GET', '/v2/rps/devices/' . rawurlencode($id)),
+            'status' => 200,
+        ];
     }
 
     public function createDevice(array $params): array
@@ -97,17 +103,22 @@ class YealinkRpsCloudProvider implements CloudProviderInterface
             throw new RuntimeException('Yealink RPS server is not configured for this account.');
         }
 
-        return $this->post('/api/open/v1/device/add', [
-            'macs' => [$this->normalizeMac($params['device_address'])],
+        $result = $this->requestJson('POST', '/v2/rps/addDevicesByMac', [[
+            'mac' => $this->normalizeMac($params['device_address']),
             'serverId' => $serverId,
-        ]);
+        ]]);
+
+        return $this->batchResult($result, 'Unable to add the device to Yealink RPS.');
     }
 
     public function deleteDevice(array $params): array
     {
-        return $this->post('/api/open/v1/device/delete', [
-            'macs' => [$this->normalizeMac($params['device_address'])],
+        $result = $this->requestJson('POST', '/v2/rps/delDevices', [
+            'deviceIdType' => 'mac',
+            'deviceIds' => [$this->normalizeMac($params['device_address'])],
         ]);
+
+        return $this->batchResult($result, 'Unable to remove the device from Yealink RPS.');
     }
 
     public function getOrganizations(): Collection
@@ -117,14 +128,12 @@ class YealinkRpsCloudProvider implements CloudProviderInterface
         $limit = 100;
 
         do {
-            $response = $this->post('/api/open/v1/server/list', [
+            $page = $this->requestJson('POST', '/v2/rps/listServers', [
                 'skip' => $skip,
                 'limit' => $limit,
                 'autoCount' => true,
+                'filter' => (object) [],
             ]);
-            $this->throwIfFailed($response, 'Unable to retrieve Yealink RPS servers.');
-
-            $page = is_array($response['data']) ? $response['data'] : [];
             $items = is_array($page['data'] ?? null) ? $page['data'] : [];
             $servers->push(...array_map(
                 fn (array $item) => YealinkRpsServerDTO::fromArray($item),
@@ -140,10 +149,7 @@ class YealinkRpsCloudProvider implements CloudProviderInterface
 
     public function createOrganization(array $params)
     {
-        $response = $this->post('/api/open/v1/server/add', $this->serverPayload($params));
-        $this->throwIfFailed($response, 'Unable to create the Yealink RPS server.');
-
-        $server = is_array($response['data']) ? $response['data'] : [];
+        $server = $this->requestJson('POST', '/v2/rps/servers', $this->serverPayload($params));
         $serverId = $server['id'] ?? null;
 
         if (blank($serverId)) {
@@ -157,25 +163,24 @@ class YealinkRpsCloudProvider implements CloudProviderInterface
 
     public function getOrganization(string $id): OrganizationDTOInterface
     {
-        $response = $this->get('/api/open/v1/server/detail', ['id' => $id]);
-        $this->throwIfFailed($response, 'Unable to retrieve the Yealink RPS server.');
+        $server = $this->requestJson('GET', '/v2/rps/servers/' . rawurlencode($id));
 
-        if (! is_array($response['data'])) {
+        if (blank($server['id'] ?? null)) {
             throw new RuntimeException('Yealink RPS returned an invalid server response.');
         }
 
-        return YealinkRpsServerDTO::fromArray($response['data']);
+        return YealinkRpsServerDTO::fromArray($server);
     }
 
     public function updateOrganization(array $params)
     {
-        $response = $this->post('/api/open/v1/server/edit', array_merge(
-            ['id' => $params['organization_id']],
+        $this->requestJson(
+            'PATCH',
+            '/v2/rps/servers/' . rawurlencode($params['organization_id']),
             $this->serverPayload($params)
-        ));
-        $this->throwIfFailed($response, 'Unable to update the Yealink RPS server.');
+        );
 
-        return $response['data'];
+        return true;
     }
 
     public function deleteOrganization(string $id)
@@ -185,9 +190,8 @@ class YealinkRpsCloudProvider implements CloudProviderInterface
 
         do {
             $page = $this->getDevices(100, $cursor);
-            $this->throwIfFailed($page, 'Unable to retrieve devices assigned to the Yealink RPS server.');
-
             $devices = $page['data']['results'] ?? [];
+
             foreach ($devices as $device) {
                 if (($device['serverId'] ?? null) === $id && filled($device['id'] ?? null)) {
                     $deviceIds->push($device['id']);
@@ -198,12 +202,15 @@ class YealinkRpsCloudProvider implements CloudProviderInterface
         } while ($cursor !== null);
 
         foreach ($deviceIds->chunk(100) as $ids) {
-            $response = $this->post('/api/open/v1/device/delete', ['ids' => $ids->values()->all()]);
-            $this->throwIfFailed($response, 'Unable to remove devices assigned to the Yealink RPS server.');
+            $result = $this->requestJson('POST', '/v2/rps/delDevices', [
+                'deviceIdType' => 'id',
+                'deviceIds' => $ids->values()->all(),
+            ]);
+            $this->throwIfBatchFailed($result, 'Unable to remove devices assigned to the Yealink RPS server.');
         }
 
-        $response = $this->post('/api/open/v1/server/delete', ['ids' => [$id]]);
-        $this->throwIfFailed($response, 'Unable to delete the Yealink RPS server.');
+        $result = $this->requestJson('POST', '/v2/rps/delServers', ['serverIds' => [$id]]);
+        $this->throwIfBatchFailed($result, 'Unable to delete the Yealink RPS server.');
 
         DomainSettings::query()
             ->where('domain_uuid', session('domain_uuid'))
@@ -255,96 +262,108 @@ class YealinkRpsCloudProvider implements CloudProviderInterface
         ];
     }
 
-    protected function post(string $path, array $payload): array
+    protected function requestJson(string $method, string $path, ?array $payload = null): array
     {
-        $body = json_encode($payload, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
-        $credentials = $this->ensureCredentialsExist();
-        $headers = $this->signer->headers(
-            'POST',
-            $path,
-            $credentials['access_key_id'],
-            $credentials['access_key_secret'],
-            $body,
-        );
+        $response = $this->sendRequest($method, $path, $payload);
 
-        $response = Http::baseUrl(config('services.ztp.yealink.api_url', 'https://api-dm.yealink.com:8443'))
-            ->timeout($this->timeout)
-            ->acceptJson()
-            ->withHeaders($headers)
-            ->withBody($body, 'application/json;charset=UTF-8')
-            ->post($path);
+        if (! $response->successful()) {
+            $message = $this->responseMessage($response, 'Yealink RPS returned an error.');
 
-        return $this->handleResponse($response);
-    }
-
-    protected function get(string $path, array $query): array
-    {
-        $credentials = $this->ensureCredentialsExist();
-        $headers = $this->signer->headers(
-            'GET',
-            $path,
-            $credentials['access_key_id'],
-            $credentials['access_key_secret'],
-            null,
-            $query,
-        );
-
-        $response = Http::baseUrl(config('services.ztp.yealink.api_url', 'https://api-dm.yealink.com:8443'))
-            ->timeout($this->timeout)
-            ->acceptJson()
-            ->withHeaders($headers)
-            ->get($path, $query);
-
-        return $this->handleResponse($response);
-    }
-
-    protected function handleResponse(Response $response): array
-    {
-        $json = $response->json();
-        $providerSuccess = is_array($json) && (int) ($json['ret'] ?? -1) >= 0;
-
-        if ($response->successful() && $providerSuccess) {
-            return [
-                'success' => true,
-                'data' => $json['data'] ?? null,
+            logger()->warning('Yealink RPS API error', [
                 'status' => $response->status(),
-            ];
+                'error' => $message,
+                'path' => (string) $response->effectiveUri(),
+            ]);
+
+            throw new RuntimeException($message);
         }
 
-        $error = is_array($json)
-            ? ($json['error'] ?? $json['errors'] ?? null)
-            : null;
-        $message = is_array($error)
-            ? ($error['msg'] ?? null)
-            : null;
-
-        if (blank($message) && is_array($error) && is_array($error['fieldErrors'] ?? null)) {
-            $message = collect($error['fieldErrors'])
-                ->pluck('msg')
-                ->filter()
-                ->implode(', ');
+        if ($response->status() === 204 || blank($response->body())) {
+            return [];
         }
 
-        $message = $message ?: $response->body() ?: 'Yealink RPS returned an error.';
+        $json = $response->json();
 
-        logger()->warning('Yealink RPS API error', [
-            'status' => $response->status(),
-            'error' => $message,
-            'path' => (string) $response->effectiveUri(),
-        ]);
+        if (! is_array($json)) {
+            throw new RuntimeException('Yealink RPS returned an invalid JSON response.');
+        }
 
+        return $json;
+    }
+
+    protected function sendRequest(string $method, string $path, ?array $payload = null): Response
+    {
+        for ($attempt = 0; $attempt < 2; $attempt++) {
+            $request = Http::baseUrl($this->apiUrl())
+                ->timeout($this->timeout)
+                ->acceptJson()
+                ->asJson()
+                ->withToken($this->accessToken())
+                ->withHeaders($this->requestHeaders());
+
+            $options = $payload === null ? [] : ['json' => $payload];
+            $response = $request->send(strtoupper($method), $path, $options);
+
+            if ($response->status() !== 401 || $attempt === 1) {
+                return $response;
+            }
+
+            $this->accessToken = null;
+        }
+
+        throw new RuntimeException('Yealink RPS request failed.');
+    }
+
+    protected function accessToken(): string
+    {
+        if (filled($this->accessToken)) {
+            return $this->accessToken;
+        }
+
+        $credentials = $this->ensureCredentialsExist();
+        $response = Http::baseUrl($this->apiUrl())
+            ->timeout($this->timeout)
+            ->acceptJson()
+            ->asJson()
+            ->withBasicAuth($credentials['access_key_id'], $credentials['access_key_secret'])
+            ->withHeaders($this->requestHeaders())
+            ->post('/v2/token', ['grant_type' => 'client_credentials']);
+
+        $token = $response->json('access_token');
+
+        if (! $response->successful() || blank($token)) {
+            $message = $this->responseMessage($response, 'Unable to authenticate with the Yealink YMCS API.');
+
+            logger()->warning('Yealink RPS authentication error', [
+                'status' => $response->status(),
+                'error' => $message,
+                'path' => (string) $response->effectiveUri(),
+            ]);
+
+            throw new RuntimeException($message);
+        }
+
+        return $this->accessToken = $token;
+    }
+
+    private function requestHeaders(): array
+    {
         return [
-            'success' => false,
-            'error' => $message,
-            'status' => $response->status(),
+            'timestamp' => (string) (int) floor(microtime(true) * 1000),
+            'nonce' => bin2hex(random_bytes(16)),
         ];
+    }
+
+    private function apiUrl(): string
+    {
+        return rtrim((string) $this->getCredentials()['api_url'], '/');
     }
 
     private function ensureCredentialsExist(): array
     {
         $credentials = $this->getCredentials();
 
-        if (! $this->hasCredentials()) {
+        if (blank($credentials['access_key_id']) || blank($credentials['access_key_secret'])) {
             throw new RuntimeException('Yealink RPS API credentials are missing.');
         }
 
@@ -376,11 +395,64 @@ class YealinkRpsCloudProvider implements CloudProviderInterface
         ];
     }
 
-    private function throwIfFailed(array $response, string $fallback): void
+    private function batchResult(array $result, string $fallback): array
     {
-        if (! $response['success']) {
-            throw new RuntimeException($response['error'] ?: $fallback);
+        if ((int) ($result['failureCount'] ?? 0) > 0) {
+            return [
+                'success' => false,
+                'error' => $this->batchErrorMessage($result, $fallback),
+                'status' => 200,
+            ];
         }
+
+        return [
+            'success' => true,
+            'data' => $result,
+            'status' => 200,
+        ];
+    }
+
+    private function throwIfBatchFailed(array $result, string $fallback): void
+    {
+        if ((int) ($result['failureCount'] ?? 0) > 0) {
+            throw new RuntimeException($this->batchErrorMessage($result, $fallback));
+        }
+    }
+
+    private function batchErrorMessage(array $result, string $fallback): string
+    {
+        $messages = collect($result['errors'] ?? [])
+            ->map(fn (array $error) => $error['errorInfo'] ?? $error['msg'] ?? null)
+            ->filter()
+            ->unique()
+            ->implode(', ');
+
+        return $messages ?: $fallback;
+    }
+
+    private function responseMessage(Response $response, string $fallback): string
+    {
+        $json = $response->json();
+
+        if (! is_array($json)) {
+            return $response->body() ?: $fallback;
+        }
+
+        $details = collect($json['details'] ?? [])
+            ->map(function (array $detail) {
+                $message = $detail['message'] ?? $detail['msg'] ?? null;
+                $field = $detail['field'] ?? null;
+
+                return $field && $message ? "{$field}: {$message}" : $message;
+            })
+            ->filter()
+            ->implode(', ');
+
+        return $details
+            ?: ($json['message'] ?? null)
+            ?: ($json['error_description'] ?? null)
+            ?: (is_string($json['error'] ?? null) ? $json['error'] : null)
+            ?: $fallback;
     }
 
     private function normalizeMac(string $mac): string

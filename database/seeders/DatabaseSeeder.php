@@ -1373,6 +1373,14 @@ class DatabaseSeeder extends Seeder
                 'default_setting_description'   => "Yealink RPS AccessKey Secret",
             ],
             [
+                'default_setting_category'      => 'cloud_provision',
+                'default_setting_subcategory'   => 'yealink_rps_api_url',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "https://us-api.ymcs.yealink.com",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Yealink YMCS API domain",
+            ],
+            [
                 'default_setting_category'      => 's3_storage',
                 'default_setting_subcategory'   => 'access_key',
                 'default_setting_name'          => 'text',

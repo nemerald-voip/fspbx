@@ -49,7 +49,7 @@ class UpdateZtpOrganizationRequest extends FormRequest
             'provider' => ['required', 'string', Rule::in(['polycom', 'yealink'])],
             'organization_id' => 'required|string',
             'enabled' => [$isYealink ? 'nullable' : 'required', 'boolean'],
-            'name' => ['required', 'string', 'max:' . ($isYealink ? 20 : 100)],
+            'name' => ['required', 'string', 'max:100'],
             'software' => 'nullable|string|max:100',
             'bootServerOption' => 'nullable|string|in:' . implode(',', $dhcpBootServerOptionList),
             'option60Type' => 'nullable|string|in:' . implode(',', $dhcpOption60TypeList),

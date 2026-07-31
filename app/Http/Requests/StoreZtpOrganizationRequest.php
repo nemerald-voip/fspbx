@@ -48,7 +48,7 @@ class StoreZtpOrganizationRequest extends FormRequest
         return [
             'provider' => ['required', 'string', Rule::in(['polycom', 'yealink'])],
             'enabled' => [$isYealink ? 'nullable' : 'required', 'boolean'],
-            'name' => ['required', 'string', 'max:' . ($isYealink ? 20 : 100)],
+            'name' => ['required', 'string', 'max:100'],
             'software' => 'nullable|string|max:100',
             'bootServerOption' => 'nullable|string|in:' . implode(',', $dhcpBootServerOptionList),
             'option60Type' => 'nullable|string|in:' . implode(',', $dhcpOption60TypeList),

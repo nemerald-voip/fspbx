@@ -7,7 +7,6 @@ use App\Services\YealinkRpsCloudProvider;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
@@ -67,15 +66,21 @@ class YealinkRpsCloudProviderTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_it_registers_a_device_to_the_accounts_rps_server(): void
+    public function test_it_authenticates_with_ymcs_and_registers_a_device_by_mac(): void
     {
         $this->pairServer();
 
         Http::fake([
-            'https://yealink-rps.test/api/open/v1/device/add' => Http::response([
-                'ret' => 1,
-                'data' => [['id' => 'device-id', 'mac' => '001565123123']],
-                'error' => null,
+            'https://yealink-rps.test/v2/token' => Http::response([
+                'access_token' => 'access-token',
+                'token_type' => 'bearer',
+                'expires_in' => 86400,
+            ]),
+            'https://yealink-rps.test/v2/rps/addDevicesByMac' => Http::response([
+                'total' => 1,
+                'successCount' => 1,
+                'failureCount' => 0,
+                'errors' => [],
             ]),
         ]);
 
@@ -86,26 +91,30 @@ class YealinkRpsCloudProviderTest extends TestCase
 
         $this->assertTrue($result['success']);
 
-        Http::assertSent(fn ($request) => $request->url() === 'https://yealink-rps.test/api/open/v1/device/add'
-            && $request['macs'] === ['001565123123']
-            && $request['serverId'] === 'server-id'
-            && $request->hasHeader('X-Ca-Key', 'access-key-id')
-            && $request->hasHeader('Content-MD5')
-            && $request->hasHeader('X-Ca-Signature'));
+        Http::assertSent(fn ($request) => $request->url() === 'https://yealink-rps.test/v2/token'
+            && $request->hasHeader('Authorization', 'Basic ' . base64_encode('access-key-id:access-key-secret'))
+            && $request->hasHeader('timestamp')
+            && $request->hasHeader('nonce')
+            && $request['grant_type'] === 'client_credentials');
+
+        Http::assertSent(fn ($request) => $request->url() === 'https://yealink-rps.test/v2/rps/addDevicesByMac'
+            && $request->hasHeader('Authorization', 'Bearer access-token')
+            && $request->hasHeader('timestamp')
+            && $request->hasHeader('nonce')
+            && $request[0]['mac'] === '001565123123'
+            && $request[0]['serverId'] === 'server-id'
+            && ! $request->hasHeader('X-Ca-Signature'));
     }
 
-    public function test_it_normalizes_rps_device_paging_for_the_shared_sync_flow(): void
+    public function test_it_normalizes_ymcs_device_paging_for_the_shared_sync_flow(): void
     {
         Http::fake([
-            'https://yealink-rps.test/api/open/v1/device/list' => Http::response([
-                'ret' => 1,
-                'data' => [
-                    'skip' => 0,
-                    'limit' => 1,
-                    'total' => 2,
-                    'data' => [['id' => 'device-id', 'mac' => '001565123123']],
-                ],
-                'error' => null,
+            'https://yealink-rps.test/v2/token' => Http::response(['access_token' => 'access-token']),
+            'https://yealink-rps.test/v2/rps/listDevices' => Http::response([
+                'skip' => 0,
+                'limit' => 1,
+                'total' => 2,
+                'data' => [['id' => 'device-id', 'mac' => '001565123123']],
             ]),
         ]);
 
@@ -116,21 +125,21 @@ class YealinkRpsCloudProviderTest extends TestCase
         $this->assertSame('1', $result['data']['next']);
     }
 
-    public function test_it_treats_a_semantic_rps_error_as_a_failed_request(): void
+    public function test_it_treats_a_ymcs_batch_error_as_a_failed_request(): void
     {
         $this->pairServer();
-        Log::spy();
 
         Http::fake([
-            'https://yealink-rps.test/api/open/v1/device/add' => Http::response([
-                'ret' => -1,
-                'data' => '001565123123',
-                'error' => [
-                    'msg' => 'device.mac.added.by.other',
-                    'errorCode' => 409,
-                    'fieldErrors' => [],
-                ],
-            ], 200),
+            'https://yealink-rps.test/v2/token' => Http::response(['access_token' => 'access-token']),
+            'https://yealink-rps.test/v2/rps/addDevicesByMac' => Http::response([
+                'total' => 1,
+                'successCount' => 0,
+                'failureCount' => 1,
+                'errors' => [[
+                    'mac' => '001565123123',
+                    'errorInfo' => 'Device already exists.',
+                ]],
+            ]),
         ]);
 
         $result = $this->provider()->createDevice([
@@ -139,43 +148,43 @@ class YealinkRpsCloudProviderTest extends TestCase
         ]);
 
         $this->assertFalse($result['success']);
-        $this->assertSame('device.mac.added.by.other', $result['error']);
+        $this->assertSame('Device already exists.', $result['error']);
     }
 
     public function test_it_removes_bound_devices_before_deleting_an_rps_server(): void
     {
         Http::fake([
-            'https://yealink-rps.test/api/open/v1/device/list' => Http::response([
-                'ret' => 1,
+            'https://yealink-rps.test/v2/token' => Http::response(['access_token' => 'access-token']),
+            'https://yealink-rps.test/v2/rps/listDevices' => Http::response([
+                'skip' => 0,
+                'limit' => 100,
+                'total' => 2,
                 'data' => [
-                    'skip' => 0,
-                    'limit' => 100,
-                    'total' => 2,
-                    'data' => [
-                        ['id' => 'bound-device', 'serverId' => 'server-id'],
-                        ['id' => 'other-device', 'serverId' => 'other-server'],
-                    ],
+                    ['id' => 'bound-device', 'serverId' => 'server-id'],
+                    ['id' => 'other-device', 'serverId' => 'other-server'],
                 ],
-                'error' => null,
             ]),
-            'https://yealink-rps.test/api/open/v1/device/delete' => Http::response([
-                'ret' => 0,
-                'data' => null,
-                'error' => null,
+            'https://yealink-rps.test/v2/rps/delDevices' => Http::response([
+                'total' => 1,
+                'successCount' => 1,
+                'failureCount' => 0,
+                'errors' => [],
             ]),
-            'https://yealink-rps.test/api/open/v1/server/delete' => Http::response([
-                'ret' => 0,
-                'data' => null,
-                'error' => null,
+            'https://yealink-rps.test/v2/rps/delServers' => Http::response([
+                'total' => 1,
+                'successCount' => 1,
+                'failureCount' => 0,
+                'errors' => [],
             ]),
         ]);
 
         $this->assertTrue($this->provider()->deleteOrganization('server-id'));
 
-        Http::assertSent(fn ($request) => $request->url() === 'https://yealink-rps.test/api/open/v1/device/delete'
-            && $request['ids'] === ['bound-device']);
-        Http::assertSent(fn ($request) => $request->url() === 'https://yealink-rps.test/api/open/v1/server/delete'
-            && $request['ids'] === ['server-id']);
+        Http::assertSent(fn ($request) => $request->url() === 'https://yealink-rps.test/v2/rps/delDevices'
+            && $request['deviceIdType'] === 'id'
+            && $request['deviceIds'] === ['bound-device']);
+        Http::assertSent(fn ($request) => $request->url() === 'https://yealink-rps.test/v2/rps/delServers'
+            && $request['serverIds'] === ['server-id']);
     }
 
     private function provider(): YealinkRpsCloudProvider

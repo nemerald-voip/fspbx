@@ -9,7 +9,7 @@ sidebar_position: 4
 
 Yealink RPS is Yealink's **Redirection and Provisioning Service**. It stores a phone MAC address and the provisioning server assigned to that phone. On initial startup or after a factory reset, a supported Yealink phone can contact RPS and be redirected to FS PBX.
 
-FS PBX integrates with the Yealink RPS Enterprise REST API to create servers, connect existing servers, and add or remove device MAC addresses.
+FS PBX integrates with the Yealink Management Cloud Service (YMCS) Open API v2 to create RPS servers, connect existing servers, and add or remove device MAC addresses.
 
 ## Why use Yealink RPS?
 
@@ -39,15 +39,15 @@ A device can be listed in Yealink RPS without ever contacting RPS or FS PBX. **L
 
 You need:
 
-- Access to Yealink Device Management Cloud Service for RPS Enterprise.
-- An **AccessKey ID** and **AccessKey Secret** for the RPS Enterprise API.
+- Access to the Yealink RPS Service portal with API Service enabled.
+- The **Domain**, **AccessKey ID**, and **AccessKey Secret** shown under **Authentication Info** at **System > Integration > API**.
 - A supported Yealink phone and its MAC address.
 - A public FS PBX hostname with a trusted HTTPS certificate.
 - Network access from the phone to Yealink RPS and FS PBX.
 - An FS PBX device record with the correct Yealink template and line assignment.
 - FS PBX provisioning HTTP credentials, if authentication is enabled.
 
-The AccessKey credentials are API credentials for FS PBX to manage RPS. They are not the credentials a phone uses to download its configuration. Yealink documents these API prerequisites in its [JSON API guide for the RPS Management Platform](https://support.yealink.com/forward2filesystem/attachment/upload/attachment/2021-2-3/5/49bdb7cd-55de-40c4-a2c6-c88f6e3598f9/Yealink%2BJson%2BAPI%2Bfor%2BRPS%2BManagement%2BPlatform%2BV3.6.0.30.pdf).
+The AccessKey credentials are API credentials for FS PBX to manage RPS. They are not the credentials a phone uses to download its configuration.
 
 ## Prepare FS PBX provisioning
 
@@ -70,23 +70,31 @@ Provisioning HTTP credentials are separate from the Yealink AccessKey credential
 
 ## Connect FS PBX to Yealink RPS
 
-### 1. Add the RPS Enterprise API credentials
+### 1. Add the YMCS API credentials
 
-1. Open **Devices**.
-2. Click **Vendor Cloud**.
-3. Open the **Yealink** tab.
-4. Click **API Credentials**.
-5. Enter the **AccessKey ID** and **AccessKey Secret** issued by Yealink RPS Enterprise.
-6. Click **Save**.
+1. Sign in to the Yealink **RPS Service** portal.
+2. In the left navigation, expand **System**.
+3. Expand **Integration**.
+4. Click **API**.
+5. On the **API Service** page, locate **Authentication Info** at the top.
+6. Note the **Domain**, then reveal or copy the **AccessKey ID** and **AccessKey Secret**.
+7. Open **Devices** in FS PBX.
+8. Click **Vendor Cloud** and open the **Yealink** tab.
+9. Click **API Credentials**.
+10. Select the **API Domain** matching the Domain shown by Yealink.
+11. Enter the **AccessKey ID** and **AccessKey Secret** from the same **Authentication Info** section.
+12. Click **Save**.
 
-The AccessKey credentials are stored as global FS PBX cloud-provider credentials. Restrict access to administrators who are authorized to manage every account using this RPS integration.
+Use only the three values in the top **Authentication Info** section. Do not use the **Event Subscription** token or the username and password under **RPS XML API**. If the portal also shows **Historical authentication > RPS Json**, do not use those credentials either.
+
+The AccessKey credentials and API Domain are stored as global FS PBX cloud-provider settings. Restrict access to administrators who are authorized to manage every account using this RPS integration.
 
 ### 2. Create or connect an RPS server
 
 1. On the Yealink tab, click **Create RPS Server**.
 2. Choose one of the following:
    - **Create New Server** creates a server in Yealink RPS and connects it to the current FS PBX account.
-   - **Connect to Existing** selects a server already available through the connected RPS Enterprise account.
+   - **Connect to Existing** selects a server already available through the connected YMCS account.
 
 When creating a server, configure:
 
@@ -97,7 +105,7 @@ When creating a server, configure:
 
 FS PBX prefills the URL from its application URL and prefills the HTTP credentials from the account's provisioning settings. Verify all three values before saving.
 
-Each FS PBX account is paired with one Yealink RPS server. The AccessKey credentials can access all servers permitted by the connected RPS Enterprise account.
+Each FS PBX account is paired with one Yealink RPS server. The AccessKey credentials can access all servers permitted by the connected YMCS account.
 
 ## Add a phone to Yealink RPS
 
@@ -144,7 +152,10 @@ Sync Devices:
 
 ### API Credentials Required
 
-- Confirm that you entered credentials from **RPS Enterprise**, not credentials for a different Yealink portal.
+- Confirm that the selected API Domain matches the Domain under **Authentication Info** in Yealink API Service.
+- Confirm that you entered the AccessKey ID and AccessKey Secret from the top **Authentication Info** section.
+- Do not use the **Event Subscription** token or the **RPS XML API** username and password.
+- Do not use **Historical authentication > RPS Json** credentials; those belong to the previous API.
 - Verify both the AccessKey ID and AccessKey Secret.
 - If Yealink rotated the secret, update it in FS PBX.
 
@@ -152,7 +163,7 @@ Sync Devices:
 
 - Verify the current FS PBX account is connected to the intended RPS server.
 - Confirm that the MAC address contains 12 hexadecimal characters.
-- Check whether the MAC is already assigned to another RPS Enterprise account or server.
+- Check whether the MAC is already assigned to another YMCS account or server.
 - Review the error shown in the Yealink RPS tab and the Laravel log.
 
 ### The device is listed but Last Contact is empty
@@ -189,4 +200,3 @@ Be careful with **Delete RPS Server**. FS PBX removes devices assigned to that s
 - Never reuse SIP passwords as provisioning HTTP passwords.
 - Update both FS PBX and the Yealink RPS server when rotating provisioning HTTP credentials.
 - Remove a phone from RPS before transferring it to another customer or provider.
-

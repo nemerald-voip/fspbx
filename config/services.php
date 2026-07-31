@@ -95,7 +95,12 @@ return [
             'api_url' => env('POLYCOM_API_URL', 'https://api.ztp.poly.com/v1'),
         ],
         'yealink' => [
-            'api_url' => env('YEALINK_RPS_API_URL', 'https://api-dm.yealink.com:8443'),
+            'api_url' => env('YEALINK_RPS_API_URL', 'https://us-api.ymcs.yealink.com'),
+            'api_urls' => [
+                'https://us-api.ymcs.yealink.com',
+                'https://eu-api.ymcs.yealink.com',
+                'https://au-api.ymcs.yealink.com',
+            ],
         ],
     ],
     'ceretax' => [

@@ -46,18 +46,14 @@
                                 <HiddenElement name="provider" :meta="true" />
                                 <HiddenElement v-if="isUpdate" name="organization_id" :meta="true" />
 
-                                <TextElement name="name" :label="$t('Server Name')"
-                                    :rules="['required', 'max:20']" />
+                                <TextElement name="name" :label="$t('Server Name')" />
 
-                                <TextElement name="address" :label="$t('Provisioning URL')"
-                                    :rules="['required', 'url', 'max:512']" />
+                                <TextElement name="address" :label="$t('Provisioning URL')" />
 
-                                <TextElement name="prov_un" :label="$t('Provisioning Username')"
-                                    :rules="['required', 'max:32']" />
+                                <TextElement name="prov_un" :label="$t('Provisioning Username')" />
 
                                 <TextElement name="prov_pw" :label="$t('Provisioning Password')"
-                                    :attrs="{ type: 'password', autocomplete: 'new-password' }"
-                                    :rules="['required', 'max:32']" />
+                                    :attrs="{ type: 'password', autocomplete: 'new-password' }" />
 
                                 <StaticElement name="credential_note">
                                     <p class="text-sm text-gray-500">
