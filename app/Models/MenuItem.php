@@ -7,13 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class MenuItem extends Model
 {
-    use HasFactory;
+    use HasFactory, \App\Models\Traits\TraitUuid;
 
     protected $table = 'v_menu_items';
 
     public $timestamps = false;
 
     protected $primaryKey = 'menu_item_uuid';
+
+    public $incrementing = false;
 
     protected $keyType = 'string';
 

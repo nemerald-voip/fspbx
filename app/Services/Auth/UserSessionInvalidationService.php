@@ -9,6 +9,41 @@ use Illuminate\Support\Facades\Schema;
 
 class UserSessionInvalidationService
 {
+    public function refreshCurrentUserMenuSession(): void
+    {
+        if (! request()->hasSession()) {
+            return;
+        }
+
+        $user = Auth::user();
+
+        if (! $user) {
+            return;
+        }
+
+        $groupUuids = collect(session('user.groups', []))
+            ->pluck('group_uuid')
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($groupUuids->isEmpty()) {
+            $groupUuids = DB::table('v_user_groups')
+                ->where('user_uuid', $user->user_uuid)
+                ->where('domain_uuid', $user->domain_uuid)
+                ->pluck('group_uuid')
+                ->filter()
+                ->unique()
+                ->values();
+        }
+
+        $this->refreshCurrentUserMenu(
+            (string) $user->user_uuid,
+            (string) $user->domain_uuid,
+            $groupUuids
+        );
+    }
+
     public function invalidateByUserUuids(iterable $userUuids): void
     {
         $userUuids = collect($userUuids)
@@ -139,13 +174,43 @@ class UserSessionInvalidationService
                 ->value('default_setting_value');
         }
 
-        if (!$menuUuid || $groupUuids->isEmpty()) {
+        $activeMenu = $menuUuid
+            ? DB::table('v_menus')
+                ->where('menu_uuid', $menuUuid)
+                ->first(['menu_uuid', 'menu_name', 'menu_language'])
+            : null;
+
+        $activeMenu ??= DB::table('v_menus')
+            ->where('menu_name', 'fspbx')
+            ->first(['menu_uuid', 'menu_name', 'menu_language']);
+
+        if (!$activeMenu) {
             session()->put('menu', collect());
+            session()->forget([
+                'user.menu_uuid',
+                'user.menu_name',
+                'user.menu_language',
+                'user.menu_uses_catalog_translations',
+            ]);
+            unset($_SESSION['domain']['menu']['uuid']);
             return;
         }
 
+        $menuUuid = $activeMenu->menu_uuid;
+
         session()->put('user.menu_uuid', $menuUuid);
+        session()->put('user.menu_name', $activeMenu->menu_name);
+        session()->put('user.menu_language', $activeMenu->menu_language);
+        session()->put(
+            'user.menu_uses_catalog_translations',
+            $activeMenu->menu_name === 'fspbx'
+        );
         $_SESSION['domain']['menu']['uuid'] = $menuUuid;
+
+        if ($groupUuids->isEmpty()) {
+            session()->put('menu', collect());
+            return;
+        }
 
         $mainMenu = DB::table('v_menu_items')
             ->join('v_menu_item_groups', 'v_menu_item_groups.menu_item_uuid', '=', 'v_menu_items.menu_item_uuid')

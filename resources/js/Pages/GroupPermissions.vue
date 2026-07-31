@@ -110,9 +110,14 @@
                                 <div v-for="row in section.rows" :key="row.permission_name" class="flex items-center gap-3 bg-white px-4 py-2.5 transition hover:bg-gray-50">
                                     <input v-model="selectedItems" type="checkbox" :value="row.permission_name" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600" />
 
-                                    <h4 class="min-w-0 flex-1 truncate text-sm font-medium text-gray-900" :title="row.permission_name">
-                                        {{ formatPermissionLabel(row.permission_name) }}
-                                    </h4>
+                                    <div class="min-w-0 flex-1">
+                                        <h4 class="truncate text-sm font-medium text-gray-900">
+                                            {{ formatPermissionLabel(row.permission_name) }}
+                                        </h4>
+                                        <code class="mt-0.5 block truncate text-[11px] leading-4 text-gray-400" :title="row.permission_name">
+                                            {{ row.permission_name }}
+                                        </code>
+                                    </div>
 
                                     <button
                                         v-if="canToggleRow(row)"

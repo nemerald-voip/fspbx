@@ -194,11 +194,6 @@ class Domain extends Model
         return $this->hasMany(LegacyDeviceKey::class, 'domain_uuid', 'domain_uuid');
     }
 
-    public function deviceLogs()
-    {
-        return $this->hasMany(DeviceLog::class, 'domain_uuid', 'domain_uuid');
-    }
-
     public function deviceProfiles()
     {
         return $this->hasMany(DeviceProfile::class, 'domain_uuid', 'domain_uuid');

@@ -18,13 +18,13 @@
                     </div>
                     <div class="hidden lg:ml-6 lg:flex lg:space-x-4">
 
-                        <div v-for="item in visibleMenus" :key="page.props.menus.menu_item_id"
+                        <div v-for="item in visibleMenus" :key="item.menu_item_uuid"
                             class="inline-flex items-center">
                             <Menu as="div" class="">
                                 <MenuButton
                                     class="inline-flex  border-none text-sm font-medium text-gray-500 hover:text-gray-700 cursor-pointer">
 
-                                    <div class="font-nunito text-sm">{{ item.menu_item_title }}</div>
+                                    <div class="font-nunito text-sm">{{ menuTitle(item.menu_item_title) }}</div>
                                     <ChevronDownIcon class="h-5 w-5" />
                                 </MenuButton>
 
@@ -40,7 +40,7 @@
                                             <MenuItem v-slot="{ active }">
                                                 <a :href="child.menu_item_link"
                                                     :class="[active ? 'bg-gray-100' : '', 'block px-5 py-2 text-sm text-gray-600 whitespace-nowrap cursor-pointer no-underline']">
-                                                    {{ child.menu_item_title }}
+                                                    {{ menuTitle(child.menu_item_title) }}
                                                 </a>
                                             </MenuItem>
                                         </div>
@@ -110,23 +110,23 @@
                 <ul role="list" class="flex flex-1 flex-col gap-y-7 mx-3">
                     <li>
                         <ul role="list" class="-mx-2 space-y-1">
-                            <li v-for="item in visibleMenus" :key="page.props.menus.menu_item_id">
+                            <li v-for="item in visibleMenus" :key="item.menu_item_uuid">
                                 <a v-if="!item.child_menu" :href="item.href"
                                     :class="[item.current ? 'bg-gray-50' : 'hover:bg-gray-50', 'block rounded-md py-2 pr-2 pl-10 text-sm leading-6 font-semibold text-gray-700']">{{
-                                    item.menu_item_title }}</a>
+                                    menuTitle(item.menu_item_title) }}</a>
                                 <Disclosure as="div" v-else v-slot="{ open }">
                                     <DisclosureButton
                                         :class="'hover:bg-gray-50 flex items-center w-full text-left rounded-md p-2 gap-x-3 text-sm leading-6 font-semibold text-gray-700'">
                                         <ChevronRightIcon
                                             :class="[open ? 'rotate-90 text-gray-500' : 'text-gray-400', 'h-5 w-5 shrink-0']"
                                             aria-hidden="true" />
-                                        {{ item.menu_item_title }}
+                                        {{ menuTitle(item.menu_item_title) }}
                                     </DisclosureButton>
                                     <DisclosurePanel as="ul" class="mt-1 px-2">
                             <li v-for="child in item.child_menu" :key="child.menu_item_uuid">
                                 <DisclosureButton as="a" :href="child.menu_item_link"
                                     :class="'hover:bg-gray-50 block rounded-md py-2 pr-2 pl-9 text-sm leading-6 text-gray-700'">
-                                    {{ child.menu_item_title }}</DisclosureButton>
+                                    {{ menuTitle(child.menu_item_title) }}</DisclosureButton>
                             </li>
         </DisclosurePanel>
     </Disclosure>
@@ -207,6 +207,7 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { usePage } from '@inertiajs/vue3'
+import { trans } from 'laravel-vue-i18n'
 
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import { Bars3Icon, XMarkIcon, UserCircleIcon, ArrowRightOnRectangleIcon } from '@heroicons/vue/24/outline'
@@ -214,6 +215,77 @@ import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/vue/20/solid'
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot, } from '@headlessui/vue'
 
 const page = usePage()
+
+// Shipped FS PBX menu labels are literal calls so lang:sync can keep them in
+// the shared catalog. Titles from custom menus are always rendered as stored.
+const defaultMenuTitles = {
+    'Accounts': () => trans('Accounts'),
+    'Devices': () => trans('Devices'),
+    'Extensions': () => trans('Extensions'),
+    'Gateways': () => trans('Gateways'),
+    'Users': () => trans('Users'),
+    'Dialplan': () => trans('Dialplan'),
+    'Dialplan Manager': () => trans('Dialplan Manager'),
+    'Phone Numbers': () => trans('Phone Numbers'),
+    'Inbound Routes': () => trans('Inbound Routes'),
+    'Outbound Routes': () => trans('Outbound Routes'),
+    'Applications': () => trans('Applications'),
+    'Basic Dialer': () => trans('Basic Dialer'),
+    'Basic Queues': () => trans('Basic Queues'),
+    'Bridges': () => trans('Bridges'),
+    'Call Block': () => trans('Call Block'),
+    'Call History': () => trans('Call History'),
+    'Call Flows': () => trans('Call Flows'),
+    'Conference Centers': () => trans('Conference Centers'),
+    'Conferences': () => trans('Conferences'),
+    'Faxes': () => trans('Faxes'),
+    'Virtual Receptionists': () => trans('Virtual Receptionists'),
+    'Messages': () => trans('Messages'),
+    'Music on Hold': () => trans('Music on Hold'),
+    'Recordings Manager': () => trans('Recordings Manager'),
+    'Ring Groups': () => trans('Ring Groups'),
+    'Streams': () => trans('Streams'),
+    'Business Hours': () => trans('Business Hours'),
+    'Voicemails': () => trans('Voicemails'),
+    'Wakeup Calls': () => trans('Wakeup Calls'),
+    'Scheduled Announcements': () => trans('Scheduled Announcements'),
+    'Status': () => trans('Status'),
+    'Active Calls': () => trans('Active Calls'),
+    'Active Basic Queues': () => trans('Active Basic Queues'),
+    'Active Conferences': () => trans('Active Conferences'),
+    'Extension Statistics': () => trans('Extension Statistics'),
+    'Firewall': () => trans('Firewall'),
+    'Logs': () => trans('Logs'),
+    'Registrations': () => trans('Registrations'),
+    'SIP Status': () => trans('SIP Status'),
+    'System Status': () => trans('System Status'),
+    'User Logs': () => trans('User Logs'),
+    'Advanced': () => trans('Advanced'),
+    'Access Control': () => trans('Access Control'),
+    'Default Settings': () => trans('Default Settings'),
+    'Domains': () => trans('Domains'),
+    'Email templates': () => trans('Email templates'),
+    'Group Manager': () => trans('Group Manager'),
+    'Menu Manager': () => trans('Menu Manager'),
+    'Message Settings': () => trans('Message Settings'),
+    'Modules': () => trans('Modules'),
+    'Pro Features': () => trans('Pro Features'),
+    'Provision Templates': () => trans('Provision Templates'),
+    'Legacy Provision Templates': () => trans('Legacy Provision Templates'),
+    'Ringotel App Settings': () => trans('Ringotel App Settings'),
+    'SIP Profiles': () => trans('SIP Profiles'),
+    'System Settings': () => trans('System Settings'),
+    'Transactions': () => trans('Transactions'),
+    'Variables': () => trans('Variables'),
+}
+
+const menuTitle = (title) => {
+    if (!page.props.menuUsesCatalogTranslations) {
+        return title
+    }
+
+    return defaultMenuTitles[title]?.() ?? title
+}
 
 // Logged-in user info (shown in the top-right user menu)
 const userName = computed(() => page.props.auth?.user?.name ?? '')

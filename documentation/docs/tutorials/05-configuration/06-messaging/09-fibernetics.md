@@ -4,6 +4,7 @@ title: Fibernetics SMS Provider Configuration
 slug: /configuration/messaging/fibernetics
 description: Configure Fibernetics HTTP SMS and MM7 MMS in FS PBX.
 sidebar_position: 9
+unlisted: true
 ---
 
 # Fibernetics SMS and MMS Provider Configuration

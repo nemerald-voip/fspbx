@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class MenuItemGroup extends Model
 {
-    use HasFactory;
+    use HasFactory, \App\Models\Traits\TraitUuid;
 
     protected $table = 'v_menu_item_groups';
 

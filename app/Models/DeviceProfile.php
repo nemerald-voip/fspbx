@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -34,5 +35,27 @@ class DeviceProfile extends Model
         return $this->hasMany(DeviceProfileKey::class, 'device_profile_uuid', 'device_profile_uuid');
     }
 
+    /**
+     * Get the settings associated with this profile.
+     */
+    public function settings(): HasMany
+    {
+        return $this->hasMany(DeviceProfileSetting::class, 'device_profile_uuid', 'device_profile_uuid');
+    }
 
+    /**
+     * Get the devices currently assigned to this profile.
+     */
+    public function devices(): HasMany
+    {
+        return $this->hasMany(Devices::class, 'device_profile_uuid', 'device_profile_uuid');
+    }
+
+    /**
+     * Get the account that owns this profile.
+     */
+    public function domain(): BelongsTo
+    {
+        return $this->belongsTo(Domain::class, 'domain_uuid', 'domain_uuid');
+    }
 }

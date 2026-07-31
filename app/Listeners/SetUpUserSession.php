@@ -5,6 +5,7 @@ namespace App\Listeners;
 use App\Models\Domain;
 use App\Models\DomainSettings;
 use App\Models\DefaultSettings;
+use App\Models\Menu;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\DB;
 use App\Providers\RouteServiceProvider;
@@ -103,13 +104,37 @@ class SetUpUserSession
                 ->value('default_setting_value');
         }
 
-        if (!is_null($menu_uuid)) {
+        $activeMenu = $menu_uuid
+            ? Menu::query()->find($menu_uuid)
+            : null;
+
+        $activeMenu ??= Menu::query()
+            ->where('menu_name', 'fspbx')
+            ->first();
+
+        $menu_uuid = $activeMenu?->menu_uuid;
+
+        if ($activeMenu) {
             Session::put('user.menu_uuid', $menu_uuid);
+            Session::put('user.menu_name', $activeMenu->menu_name);
+            Session::put('user.menu_language', $activeMenu->menu_language);
+            Session::put(
+                'user.menu_uses_catalog_translations',
+                $activeMenu->menu_name === 'fspbx'
+            );
 
             // Add variables required by Fusion to built the menu
             $_SESSION['domain']['menu']['uuid'] = $menu_uuid;
             $_SESSION['domain']['language']['code'] = get_domain_setting('language');
             // $_SESSION['groups'][0]['group_name'] = Session::get('user.group_name');
+        } else {
+            Session::forget([
+                'user.menu_uuid',
+                'user.menu_name',
+                'user.menu_language',
+                'user.menu_uses_catalog_translations',
+            ]);
+            unset($_SESSION['domain']['menu']['uuid']);
         }
 
         // Build top level menu

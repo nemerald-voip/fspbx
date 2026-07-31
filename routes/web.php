@@ -29,6 +29,7 @@ use App\Http\Controllers\DeviceCloudProvisioningController;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\DeviceImportExportController;
 use App\Http\Controllers\DeviceKeyTemplateController;
+use App\Http\Controllers\DeviceProfileController;
 use App\Http\Controllers\DialplanController;
 use App\Http\Controllers\DomainController;
 use App\Http\Controllers\DomainGroupsController;
@@ -46,9 +47,11 @@ use App\Http\Controllers\FirewallController;
 use App\Http\Controllers\GatewayController;
 use App\Http\Controllers\GroupsController;
 use App\Http\Controllers\LogsController;
+use App\Http\Controllers\LegacyProvisionTemplateController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\MessageMediaController;
 use App\Http\Controllers\MessageSettingsController;
+use App\Http\Controllers\MenuManagerController;
 use App\Http\Controllers\MusicOnHoldController;
 use App\Http\Controllers\PhoneNumbersController;
 use App\Http\Controllers\PinNumberController;
@@ -220,6 +223,9 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('groups', [GroupsController::class, 'index'])->name('groups.index');
     Route::get('groups/{group}/permissions', [GroupsController::class, 'permissionsIndex'])->name('groups.permissions.index');
 
+    // Menu Manager
+    Route::get('menus', [MenuManagerController::class, 'index'])->name('menus.index');
+
     // Domains
     Route::get('domains', [DomainController::class, 'index'])->name('domains.index');
 
@@ -257,6 +263,10 @@ Route::group(['middleware' => 'auth'], function () {
 
     // Email Templates
     Route::get('email-templates', [EmailTemplateController::class, 'index'])->name('email-templates.index');
+
+    // Legacy Provisioning Templates
+    Route::get('legacy-provision-templates', [LegacyProvisionTemplateController::class, 'index'])
+        ->name('legacy-provision-templates.index');
 
     // Modules
     Route::get('modules', [SwitchModuleController::class, 'index'])->name('modules.index');
@@ -345,6 +355,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/devices/import', [DeviceImportExportController::class, 'importPreview'])->name('devices.import.preview');
     Route::post('/devices/import/commit', [DeviceImportExportController::class, 'importCommit'])->name('devices.import.commit');
     Route::get('device-key-templates', [DeviceKeyTemplateController::class, 'index'])->name('device-key-templates.index');
+    Route::get('device-profiles', [DeviceProfileController::class, 'index'])->name('device-profiles.index');
 
     //Phonebooks
     Route::get('phonebooks', [PhonebookManagerController::class, 'index'])->name('phonebooks.index');
