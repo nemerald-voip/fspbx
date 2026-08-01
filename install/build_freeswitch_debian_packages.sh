@@ -4,7 +4,7 @@ set -euo pipefail
 
 # Build this once on a Debian build host, then copy ARTIFACT_DIR to target
 # servers. Target servers should run install_freeswitch_packages.sh instead.
-# run sudo ./install/build_freeswitch_debian_packages.sh to create .deb packages for the current Debian release codename (bookworm or trixie).
+# run sudo bash install/build_freeswitch_debian_packages.sh to create .deb packages for the current Debian release codename (bookworm or trixie).
 
 print_success() {
     echo -e "\e[32m$1 \e[0m"
@@ -140,4 +140,4 @@ dpkg-buildpackage -b -us -uc -j"$JOBS"
 cp "$BUILD_ROOT"/*.deb "$ARTIFACT_DIR"/
 
 print_success "Package artifacts written to $ARTIFACT_DIR"
-print_success "Copy that directory to target servers and run install/install_freeswitch_packages.sh."
+print_success "Copy that directory to target servers and run: sudo bash install/install_freeswitch_packages.sh"

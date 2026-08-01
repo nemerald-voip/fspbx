@@ -591,10 +591,10 @@ else
     exit 1
 fi
 
-# Set permissions to ug+rwx for storage and bootstrap/cache
-sudo chmod -R ug+rwx /var/www/fspbx/storage /var/www/fspbx/bootstrap/cache
+# Set permissions to ug+rwX for storage and bootstrap/cache
+sudo chmod -R ug+rwX /var/www/fspbx/storage /var/www/fspbx/bootstrap/cache
 if [ $? -eq 0 ]; then
-    print_success "Permissions set to ug+rwx for storage and bootstrap/cache successfully."
+    print_success "Permissions set to ug+rwX for storage and bootstrap/cache successfully."
 else
     print_error "Error occurred while setting permissions for storage and bootstrap/cache."
     exit 1
