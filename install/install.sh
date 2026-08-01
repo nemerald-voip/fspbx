@@ -609,77 +609,6 @@ else
     exit 1
 fi
 
-# Update settings for email_queue service
-# Copy email_queue service file
-sudo cp /var/www/fspbx/public/app/email_queue/resources/service/debian.service /etc/systemd/system/email_queue.service
-if [ $? -eq 0 ]; then
-    print_success "email_queue service file copied successfully."
-else
-    print_error "Error occurred while copying fax_queue service file."
-    exit 1
-fi
-
-# Update settings for email_queue service
-sudo sed -i "s|WorkingDirectory=/var/www/fusionpbx|WorkingDirectory=/var/www/fspbx/public|" /etc/systemd/system/email_queue.service
-if [ $? -eq 0 ]; then
-    print_success "Updated WorkingDirectory for email_queue service successfully."
-else
-    print_error "Error occurred while updating WorkingDirectory for email_queue service."
-    exit 1
-fi
-
-sudo sed -i "s|ExecStart=/usr/bin/php /var/www/fusionpbx/app/email_queue/resources/service/email_queue.php|ExecStart=/usr/bin/php /var/www/fspbx/public/app/email_queue/resources/service/email_queue.php|" /etc/systemd/system/email_queue.service
-if [ $? -eq 0 ]; then
-    print_success "Updated ExecStart for email_queue service successfully."
-else
-    print_error "Error occurred while updating ExecStart for email_queue service."
-    exit 1
-fi
-
-# Update settings for fax_queue service
-# Copy fax_queue service file
-sudo cp /var/www/fspbx/public/app/fax_queue/resources/service/debian.service /etc/systemd/system/fax_queue.service
-if [ $? -eq 0 ]; then
-    print_success "fax_queue service file copied successfully."
-else
-    print_error "Error occurred while copying fax_queue service file."
-    exit 1
-fi
-
-# Enable fax_queue service
-sudo systemctl enable fax_queue
-if [ $? -eq 0 ]; then
-    print_success "fax_queue service enabled successfully."
-else
-    print_error "Error occurred while enabling fax_queue service."
-    exit 1
-fi
-
-# Enable email_queue service
-sudo systemctl enable email_queue
-if [ $? -eq 0 ]; then
-    print_success "email_queue service enabled successfully."
-else
-    print_error "Error occurred while enabling email_queue service."
-    exit 1
-fi
-
-sudo sed -i "s|WorkingDirectory=/var/www/fusionpbx|WorkingDirectory=/var/www/fspbx/public|" /etc/systemd/system/fax_queue.service
-if [ $? -eq 0 ]; then
-    print_success "Updated WorkingDirectory for fax_queue service successfully."
-else
-    print_error "Error occurred while updating WorkingDirectory for fax_queue service."
-    exit 1
-fi
-
-sudo sed -i "s|ExecStart=/usr/bin/php /var/www/fusionpbx/app/fax_queue/resources/service/fax_queue.php|ExecStart=/usr/bin/php /var/www/fspbx/public/app/fax_queue/resources/service/fax_queue.php|" /etc/systemd/system/fax_queue.service
-if [ $? -eq 0 ]; then
-    print_success "Updated ExecStart for fax_queue service successfully."
-else
-    print_error "Error occurred while updating ExecStart for fax_queue service."
-    exit 1
-fi
-
 # Update settings for event_guard service
 # Copy event_guard service file
 sudo cp /var/www/fspbx/public/app/event_guard/resources/service/debian.service /etc/systemd/system/event_guard.service
@@ -722,41 +651,6 @@ if [ $? -eq 0 ]; then
     print_success "systemd daemon reloaded successfully."
 else
     print_error "Error occurred while reloading systemd daemon."
-    exit 1
-fi
-
-
-# Restart email_queue service
-sudo service email_queue stop
-if [ $? -eq 0 ]; then
-    print_success "email_queue service stopped successfully."
-else
-    print_error "Error occurred while stopping email_queue service."
-    exit 1
-fi
-
-sudo service email_queue start
-if [ $? -eq 0 ]; then
-    print_success "email_queue service started successfully."
-else
-    print_error "Error occurred while starting email_queue service."
-    exit 1
-fi
-
-# Restart fax_queue service
-sudo service fax_queue stop
-if [ $? -eq 0 ]; then
-    print_success "fax_queue service stopped successfully."
-else
-    print_error "Error occurred while stopping fax_queue service."
-    exit 1
-fi
-
-sudo service fax_queue start
-if [ $? -eq 0 ]; then
-    print_success "fax_queue service started successfully."
-else
-    print_error "Error occurred while starting fax_queue service."
     exit 1
 fi
 
