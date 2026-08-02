@@ -9,19 +9,18 @@ use Throwable;
 
 class Update181
 {
-    private const LOCAL_STREAM_URL = 'https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/switch/resources/scripts/app/xml_handler/resources/scripts/configuration/local_stream.conf.lua';
-    private const LOCAL_STREAM_PATHS = [
-        'future-install local_stream.conf.lua' => 'public/app/switch/resources/scripts/app/xml_handler/resources/scripts/configuration/local_stream.conf.lua',
-        'installed local_stream.conf.lua' => '/usr/share/freeswitch/scripts/app/xml_handler/resources/scripts/configuration/local_stream.conf.lua',
-    ];
+    // FreeSWITCH scripts are now committed under resources/freeswitch_scripts.
+    // Update183 links /usr/share/freeswitch/scripts to that directory, so old
+    // upgrades must not download the removed public script copy.
+    // private const LOCAL_STREAM_URL = 'https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/switch/resources/scripts/app/xml_handler/resources/scripts/configuration/local_stream.conf.lua';
+    // private const LOCAL_STREAM_PATHS = [
+    //     'future-install local_stream.conf.lua' => 'public/app/switch/resources/scripts/app/xml_handler/resources/scripts/configuration/local_stream.conf.lua',
+    //     'installed local_stream.conf.lua' => '/usr/share/freeswitch/scripts/app/xml_handler/resources/scripts/configuration/local_stream.conf.lua',
+    // ];
 
     public function apply(): bool
     {
-        foreach (self::LOCAL_STREAM_PATHS as $label => $path) {
-            if (! $this->downloadAndReplaceFile(self::LOCAL_STREAM_URL, $this->targetPath($path), $label)) {
-                return false;
-            }
-        }
+        // The current committed local_stream.conf.lua is deployed by Update183's symlink.
 
         $this->updateSettingsNavigation();
 

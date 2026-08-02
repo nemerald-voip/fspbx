@@ -9,7 +9,9 @@ use Illuminate\Support\Facades\Artisan;
 
 class Update0969
 {
-    protected $file1 = 'https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/switch/resources/scripts/app/voicemail/resources/functions/send_email.lua';
+    // FreeSWITCH scripts are now committed under resources/freeswitch_scripts
+    // and deployed through the symlink created by Update183.
+    // protected $file1 = 'https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/switch/resources/scripts/app/voicemail/resources/functions/send_email.lua';
     protected $file2 = 'https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/devices/device_edit.php';
     protected $file3 = 'https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/devices/device_profile_edit.php';
     protected $filePath1;
@@ -18,7 +20,7 @@ class Update0969
 
     public function __construct()
     {
-        $this->filePath1 = base_path('public/app/switch/resources/scripts/app/voicemail/resources/functions/send_email.lua');
+        // $this->filePath1 = base_path('public/app/switch/resources/scripts/app/voicemail/resources/functions/send_email.lua');
         $this->filePath2 = base_path('public/app/devices/device_edit.php');
         $this->filePath3 = base_path('public/app/devices/device_profile_edit.php');
     }
@@ -30,9 +32,7 @@ class Update0969
      */
     public function apply()
     {
-        if (!$this->downloadAndReplaceFile($this->file1, $this->filePath1, 'send_email.lua')) {
-            return false;
-        }
+        // The current committed send_email.lua is deployed by Update183's symlink.
         if (!$this->downloadAndReplaceFile($this->file2, $this->filePath2, 'device_edit.php')) {
             return false;
         }

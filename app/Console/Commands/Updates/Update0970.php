@@ -7,15 +7,17 @@ use Illuminate\Support\Facades\Http;
 
 class Update0970
 {
-    protected $file1 = 'https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/switch/resources/scripts/app/voicemail/resources/functions/send_email.lua';
+    // FreeSWITCH scripts are now committed under resources/freeswitch_scripts
+    // and deployed through the symlink created by Update183.
+    // protected $file1 = 'https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/switch/resources/scripts/app/voicemail/resources/functions/send_email.lua';
     protected $filePath1;
     protected $filePath2;
 
 
     public function __construct()
     {
-        $this->filePath1 = base_path('public/app/switch/resources/scripts/app/voicemail/resources/functions/send_email.lua');
-        $this->filePath2 = '/usr/share/freeswitch/scripts/app/voicemail/resources/functions/send_email.lua';
+        // $this->filePath1 = base_path('public/app/switch/resources/scripts/app/voicemail/resources/functions/send_email.lua');
+        // $this->filePath2 = '/usr/share/freeswitch/scripts/app/voicemail/resources/functions/send_email.lua';
     }
 
     /**
@@ -25,12 +27,7 @@ class Update0970
      */
     public function apply()
     {
-        if (!$this->downloadAndReplaceFile($this->file1, $this->filePath1, 'send_email.lua')) {
-            return false;
-        }
-        if (!$this->downloadAndReplaceFile($this->file1, $this->filePath2, 'send_email.lua')) {
-            return false;
-        }
+        // The current committed send_email.lua is deployed by Update183's symlink.
 
         return true;
     }

@@ -8,13 +8,15 @@ use Symfony\Component\Process\Process;
 
 class Update112
 {
-    protected $fileUrl = 'https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/switch/resources/scripts/app/ring_groups/index.lua';
+    // FreeSWITCH scripts are now committed under resources/freeswitch_scripts
+    // and deployed through the symlink created by Update183.
+    // protected $fileUrl = 'https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/switch/resources/scripts/app/ring_groups/index.lua';
     protected $filePath;
 
 
     public function __construct()
     {
-        $this->filePath = '/usr/share/freeswitch/scripts/app/ring_groups/index.lua';
+        // $this->filePath = '/usr/share/freeswitch/scripts/app/ring_groups/index.lua';
     }
 
     /**
@@ -23,9 +25,7 @@ class Update112
      */
     public function apply()
     {
-        if (!$this->downloadAndReplaceFile($this->fileUrl, $this->filePath, 'index.lua')) {
-            return false;
-        }
+        // The current committed ring group script is deployed by Update183's symlink.
 
         // Restart Horizon queue workers (graceful first, then Supervisor fallback)
         echo "Restarting Horizon queue workers...\n";

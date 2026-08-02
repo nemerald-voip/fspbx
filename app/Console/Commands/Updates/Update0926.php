@@ -8,7 +8,9 @@ use Illuminate\Support\Facades\File;
 class Update0926
 {
     protected $file1 = 'https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/fax_queue/resources/job/fax_send.php';
-    protected $file2 = 'https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/switch/resources/scripts/app/fax/resources/scripts/hangup_tx.lua';
+    // FreeSWITCH scripts are now committed under resources/freeswitch_scripts
+    // and deployed through the symlink created by Update183.
+    // protected $file2 = 'https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/switch/resources/scripts/app/fax/resources/scripts/hangup_tx.lua';
     protected $filePath1;
     protected $filePath2;
     protected $filePath3;
@@ -17,8 +19,8 @@ class Update0926
     public function __construct()
     {
         $this->filePath3 = base_path('public/app/fax_queue/resources/job/fax_send.php');
-        $this->filePath1 = base_path('public/app/switch/resources/scripts/app/fax/resources/scripts/hangup_tx.lua');
-        $this->filePath2 = '/usr/share/freeswitch/scripts/app/fax/resources/scripts/hangup_tx.lua';
+        // $this->filePath1 = base_path('public/app/switch/resources/scripts/app/fax/resources/scripts/hangup_tx.lua');
+        // $this->filePath2 = '/usr/share/freeswitch/scripts/app/fax/resources/scripts/hangup_tx.lua';
     }
 
     /**
@@ -31,12 +33,7 @@ class Update0926
         if (!$this->downloadAndReplaceFile($this->file1, $this->filePath3, 'fax_send.php')) {
             return false;
         }
-        if (!$this->downloadAndReplaceFile($this->file2, $this->filePath1, 'hangup_tx.lua')) {
-            return false;
-        }
-        if (!$this->downloadAndReplaceFile($this->file2, $this->filePath2, 'hangup_tx.lua')) {
-            return false;
-        }
+        // The current committed hangup_tx.lua is deployed by Update183's symlink.
 
         return true;
     }

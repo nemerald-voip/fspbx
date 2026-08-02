@@ -11,14 +11,16 @@ use App\Models\FusionCache;
 class Update131
 {
 
-    protected $file1 = 'https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/switch/resources/scripts/app/voicemail/resources/functions/mwi_notify.lua';
+    // FreeSWITCH scripts are now committed under resources/freeswitch_scripts
+    // and deployed through the symlink created by Update183.
+    // protected $file1 = 'https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/switch/resources/scripts/app/voicemail/resources/functions/mwi_notify.lua';
     protected $filePath1;
     protected $filePath2;
 
     public function __construct()
     {
-        $this->filePath1 = base_path('public/app/switch/resources/scripts/app/voicemail/resources/functions/mwi_notify.lua');
-        $this->filePath2 = '/usr/share/freeswitch/scripts/app/voicemail/resources/functions/mwi_notify.lua';
+        // $this->filePath1 = base_path('public/app/switch/resources/scripts/app/voicemail/resources/functions/mwi_notify.lua');
+        // $this->filePath2 = '/usr/share/freeswitch/scripts/app/voicemail/resources/functions/mwi_notify.lua';
     }
 
     /**
@@ -28,12 +30,7 @@ class Update131
      */
     public function apply()
     {
-        if (!$this->downloadAndReplaceFile($this->file1, $this->filePath1, 'mwi_notify.lua')) {
-            return false;
-        }
-        if (!$this->downloadAndReplaceFile($this->file1, $this->filePath2, 'mwi_notify.lua')) {
-            return false;
-        }
+        // The current committed mwi_notify.lua is deployed by Update183's symlink.
 
         // --- Update voicemail regex in existing vmain dialplan(s) ---
 

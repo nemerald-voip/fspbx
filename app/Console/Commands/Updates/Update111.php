@@ -7,13 +7,15 @@ use Illuminate\Support\Facades\File;
 
 class Update111
 {
-    protected $fileUrl = 'https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/switch/resources/scripts/app/ring_groups/index.lua';
+    // FreeSWITCH scripts are now committed under resources/freeswitch_scripts
+    // and deployed through the symlink created by Update183.
+    // protected $fileUrl = 'https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/switch/resources/scripts/app/ring_groups/index.lua';
     protected $filePath;
 
 
     public function __construct()
     {
-        $this->filePath = base_path('public/app/switch/resources/scripts/app/ring_groups/index.lua');
+        // $this->filePath = base_path('public/app/switch/resources/scripts/app/ring_groups/index.lua');
     }
 
     /**
@@ -22,9 +24,7 @@ class Update111
      */
     public function apply()
     {
-        if (!$this->downloadAndReplaceFile($this->fileUrl, $this->filePath, 'index.lua')) {
-            return false;
-        }
+        // The current committed ring group script is deployed by Update183's symlink.
 
         return true;
     }

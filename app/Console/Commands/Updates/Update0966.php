@@ -11,7 +11,9 @@ use Illuminate\Support\Facades\Artisan;
 
 class Update0966
 {
-    protected $file1 = 'https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/switch/resources/scripts/app/ring_groups/index.lua';
+    // FreeSWITCH scripts are now committed under resources/freeswitch_scripts
+    // and deployed through the symlink created by Update183.
+    // protected $file1 = 'https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/switch/resources/scripts/app/ring_groups/index.lua';
     protected $file2 = 'https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/dialplans/resources/switch/conf/dialplan/511_hotel-room-status-update.xml';
     protected $filePath1;
     protected $filePath2;
@@ -21,8 +23,8 @@ class Update0966
 
     public function __construct()
     {
-        $this->filePath1 = base_path('public/app/switch/resources/scripts/app/ring_groups/index.lua');
-        $this->filePath2 = '/usr/share/freeswitch/scripts/app/ring_groups/index.lua';
+        // $this->filePath1 = base_path('public/app/switch/resources/scripts/app/ring_groups/index.lua');
+        // $this->filePath2 = '/usr/share/freeswitch/scripts/app/ring_groups/index.lua';
         $this->filePath3 = 'public/app/dialplans/resources/switch/conf/dialplan/511_hotel-room-status-update.xml';
     }
 
@@ -33,12 +35,7 @@ class Update0966
      */
     public function apply()
     {
-        if (!$this->downloadAndReplaceFile($this->file1, $this->filePath1, 'index.lua')) {
-            return false;
-        }
-        if (!$this->downloadAndReplaceFile($this->file1, $this->filePath2, 'index.lua')) {
-            return false;
-        }
+        // The current committed ring group script is deployed by Update183's symlink.
         if (!$this->downloadAndReplaceFile($this->file2, $this->filePath3, '511_hotel-room-status-update.xml')) {
             return false;
         }

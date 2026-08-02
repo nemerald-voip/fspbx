@@ -7,15 +7,18 @@ use Illuminate\Support\Facades\File;
 
 class Update0925
 {
-    protected $ivrConfFileUrl = 'https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/switch/resources/scripts/app/xml_handler/resources/scripts/configuration/ivr.conf.lua';
+    // FreeSWITCH scripts are now committed under resources/freeswitch_scripts.
+    // Update183 links /usr/share/freeswitch/scripts to that directory, so old
+    // upgrades must not download the removed public script copy.
+    // protected $ivrConfFileUrl = 'https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/switch/resources/scripts/app/xml_handler/resources/scripts/configuration/ivr.conf.lua';
     protected $ivrConfFilePath;
     protected $ivrConfFilePath2;
 
 
     public function __construct()
     {
-        $this->ivrConfFilePath = base_path('public/app/switch/resources/scripts/app/xml_handler/resources/scripts/configuration/ivr.conf.lua');
-        $this->ivrConfFilePath2 = '/usr/share/freeswitch/scripts/app/xml_handler/resources/scripts/configuration/ivr.conf.lua';
+        // $this->ivrConfFilePath = base_path('public/app/switch/resources/scripts/app/xml_handler/resources/scripts/configuration/ivr.conf.lua');
+        // $this->ivrConfFilePath2 = '/usr/share/freeswitch/scripts/app/xml_handler/resources/scripts/configuration/ivr.conf.lua';
     }
 
     /**
@@ -25,12 +28,7 @@ class Update0925
      */
     public function apply()
     {
-        if (!$this->downloadAndReplaceFile($this->ivrConfFileUrl, $this->ivrConfFilePath, 'ivr.conf.lua')) {
-            return false;
-        }
-        if (!$this->downloadAndReplaceFile($this->ivrConfFileUrl, $this->ivrConfFilePath2, 'ivr.conf.lua')) {
-            return false;
-        }
+        // The current committed script is deployed by Update183's symlink.
 
         return true;
     }

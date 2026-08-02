@@ -8,21 +8,23 @@ use Illuminate\Support\Facades\Http;
 class Update160
 {
 
-    protected $file1 = 'https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/switch/resources/scripts/intercept.lua';
+    // FreeSWITCH scripts are now committed under resources/freeswitch_scripts
+    // and deployed through the symlink created by Update183.
+    // protected $file1 = 'https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/switch/resources/scripts/intercept.lua';
     protected $filePath1;
     protected $filePath2;
 
-    protected $file2 = 'https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/switch/resources/scripts/app/ring_groups/index.lua';
+    // protected $file2 = 'https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/switch/resources/scripts/app/ring_groups/index.lua';
     protected $filePath3;
     protected $filePath4;
 
     public function __construct()
     {
-        $this->filePath1 = base_path('public/app/switch/resources/scripts/intercept.lua');
-        $this->filePath2 = '/usr/share/freeswitch/scripts/intercept.lua';
+        // $this->filePath1 = base_path('public/app/switch/resources/scripts/intercept.lua');
+        // $this->filePath2 = '/usr/share/freeswitch/scripts/intercept.lua';
 
-        $this->filePath3 = base_path('public/app/switch/resources/scripts/app/ring_groups/index.lua');
-        $this->filePath4 = '/usr/share/freeswitch/scripts/app/ring_groups/index.lua';
+        // $this->filePath3 = base_path('public/app/switch/resources/scripts/app/ring_groups/index.lua');
+        // $this->filePath4 = '/usr/share/freeswitch/scripts/app/ring_groups/index.lua';
     }
 
     /**
@@ -32,19 +34,7 @@ class Update160
      */
     public function apply()
     {
-        if (!$this->downloadAndReplaceFile($this->file1, $this->filePath1, 'intercept.lua')) {
-            return false;
-        }
-        if (!$this->downloadAndReplaceFile($this->file1, $this->filePath2, 'intercept.lua')) {
-            return false;
-        }
-
-        if (!$this->downloadAndReplaceFile($this->file2, $this->filePath3, 'index.lua')) {
-            return false;
-        }
-        if (!$this->downloadAndReplaceFile($this->file2, $this->filePath4, 'index.lua')) {
-            return false;
-        }
+        // The current committed scripts are deployed by Update183's symlink.
 
 
 
