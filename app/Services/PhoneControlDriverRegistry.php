@@ -22,6 +22,16 @@ class PhoneControlDriverRegistry
         $this->register($poly);
         // Order matters: the specific match must be registered before the
         // catch-all, since forAgent() returns the first driver that matches.
+        // Modern Poly Edge and UCS 6.4.2+ agents are claimed by the native
+        // Poly driver above. Keep older Polycom and Ringotel registrations
+        // identifiable even though their controls use the PBX-assisted driver.
+        $this->register(new GenericPhoneControlDriver(
+            $pbx,
+            'polycom',
+            'Polycom (legacy UCS)',
+            ['polycom', 'vvx', 'soundpoint', 'soundstation', 'trio', 'ccx', 'poly']
+        ));
+        $this->register(new GenericPhoneControlDriver($pbx, 'ringotel', 'Ringotel', ['ringotel']));
         $this->register(new GenericPhoneControlDriver($pbx, 'grandstream', 'Grandstream', ['grandstream']));
         $this->register(new GenericPhoneControlDriver($pbx, 'generic', 'Generic (PBX-assisted)', []));
     }

@@ -73,13 +73,47 @@ class PhoneControlServiceTest extends TestCase
             new PhoneRegistrationTargetService()
         );
 
-        $this->assertSame(['yealink', 'snom', 'poly', 'grandstream', 'generic'], $service->supportedVendors());
+        $this->assertSame(
+            ['yealink', 'snom', 'poly', 'polycom', 'ringotel', 'grandstream', 'generic'],
+            $service->supportedVendors()
+        );
         $this->assertContains('hold', $service->supportedActions('yealink'));
         $this->assertContains('dnd-toggle', $service->supportedActions('snom'));
         $this->assertContains('answer-call', $service->supportedActions('poly'));
         $this->assertContains('conference', $service->supportedActions('poly'));
+        $this->assertContains('conference', $service->supportedActions('polycom'));
+        $this->assertContains('conference', $service->supportedActions('ringotel'));
         $this->assertContains('conference', $service->supportedActions('grandstream'));
         $this->assertContains('conference', $service->supportedActions('generic'));
+    }
+
+    public static function phoneControlVendorAgents(): array
+    {
+        return [
+            'Poly Edge' => ['PolyEdge-Edge_E350-UA/8.3.1.0614', 'poly'],
+            'modern Polycom UCS' => ['PolycomVVX-VVX_450-UA/6.4.2.1234', 'poly'],
+            'legacy Polycom UCS' => ['PolycomVVX-VVX_310-UA/5.9.3.1234', 'polycom'],
+            'Ringotel' => ['Ringotel/3.12.4', 'ringotel'],
+            'Grandstream' => ['Grandstream GXP2170 1.0.11.74', 'grandstream'],
+            'unknown phone' => ['Fanvil X5U 2.12.15', 'generic'],
+        ];
+    }
+
+    /**
+     * @dataProvider phoneControlVendorAgents
+     */
+    public function test_registry_preserves_specific_vendor_identity_before_generic_fallback(
+        string $agent,
+        string $expectedVendor
+    ): void {
+        $registry = new PhoneControlDriverRegistry(
+            new YealinkPhoneControlDriver(),
+            new SnomPhoneControlDriver(),
+            new PolyPhoneControlDriver(new PbxCallControl()),
+            new PbxCallControl()
+        );
+
+        $this->assertSame($expectedVendor, $registry->forAgent($agent)?->vendor());
     }
 
     public function test_transfer_requires_a_destination(): void

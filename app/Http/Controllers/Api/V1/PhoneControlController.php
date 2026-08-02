@@ -200,7 +200,7 @@ class PhoneControlController extends Controller
      * @bodyParam action string required Action to execute. Valid values: hold, resume, blind-transfer, attended-transfer, complete-transfer, cancel-transfer, conference, mute-toggle, mute-on, mute-off, end-call, answer-call, dnd-on, dnd-off, or dnd-toggle. Example: hold
      * @bodyParam destination string Optional. Required for blind-transfer and attended-transfer. Example: 2001
      * @bodyParam agent string Optional. Preferred selector for a specific phone. Use an `agent` value from the targets response; plain text matching is case-insensitive. Example: SIP-T53W
-     * @bodyParam vendor string Optional. Broader selector for a supported driver: yealink, snom, poly, grandstream, or generic. Example: yealink
+     * @bodyParam vendor string Optional. Broader selector for a supported driver: yealink, snom, poly, polycom, ringotel, grandstream, or generic. Example: yealink
      * @bodyParam lan_ip string Optional. Exact device IP selector from the targets response. Example: 10.0.0.25
      * @bodyParam call_id string Optional. Registration call ID selector from a target's `registration_call_ids`. Example: 8cc81337-3728-4b87-a507-f59627abf313
      * @bodyParam force boolean Optional. Skip normal single-call state checks. Default: false. Example: false

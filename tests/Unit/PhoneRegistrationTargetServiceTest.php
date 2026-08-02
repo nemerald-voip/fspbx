@@ -26,18 +26,41 @@ class PhoneRegistrationTargetServiceTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_click_to_dial_and_phone_control_share_candidate_resolution(): void
+    public static function sharedVendorAgents(): array
+    {
+        return [
+            'Yealink' => ['Yealink SIP-T53W 96.86.0.70', 'yealink'],
+            'Poly Edge' => ['PolyEdge-Edge_E350-UA/8.3.1.0614', 'poly'],
+            'modern Polycom UCS' => ['PolycomVVX-VVX_450-UA/6.4.2.1234', 'poly'],
+            'legacy Polycom UCS' => ['PolycomVVX-VVX_310-UA/5.9.3.1234', 'polycom'],
+            'Ringotel' => ['Ringotel/3.12.4', 'ringotel'],
+            'Grandstream' => ['Grandstream GXP2170 1.0.11.74', 'grandstream'],
+            'unknown phone' => ['Fanvil X5U 2.12.15', 'generic'],
+        ];
+    }
+
+    /**
+     * @dataProvider sharedVendorAgents
+     */
+    public function test_click_to_dial_and_phone_control_share_candidate_resolution(
+        string $agent,
+        string $expectedVendor
+    ): void
     {
         $esl = Mockery::mock(FreeswitchEslService::class);
         $targets = Mockery::mock(PhoneRegistrationTargetService::class);
-        $groups = collect([$this->group('yealink', '10.0.0.5', 'call-a', 10)]);
+        $groups = collect([$this->group($expectedVendor, '10.0.0.5', 'call-a', 10)]);
         $targets->shouldReceive('resolveCandidates')
             ->twice()
             ->with(
                 $esl,
                 '101',
                 'example.test',
-                Mockery::on(fn (callable $identifyVendor) => $identifyVendor('Yealink SIP-T53W')['vendor'] === 'yealink')
+                Mockery::on(function (callable $identifyVendor) use ($agent, $expectedVendor) {
+                    $identity = $identifyVendor($agent);
+
+                    return ($identity['vendor'] ?? null) === $expectedVendor;
+                })
             )
             ->andReturn([
                 'domain' => new Domain(),

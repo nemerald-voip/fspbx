@@ -72,7 +72,7 @@ class StorePhoneControlActionRequest extends FormRequest
                 'example' => 'SIP-T53W',
             ],
             'vendor' => [
-                'description' => 'Optional broader selector for a supported driver: yealink, snom, poly, grandstream, or generic.',
+                'description' => 'Optional broader selector for a supported driver: yealink, snom, poly, polycom, ringotel, grandstream, or generic.',
                 'example' => 'yealink',
             ],
             'lan_ip' => [

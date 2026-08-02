@@ -22,7 +22,7 @@ This guide covers `phone:control`. In every example, `101` is the extension bein
 
 The vendor is detected automatically from the phone's registration — you don't need to specify it. Support is not identical across vendors; some actions only make sense for phones with a particular remote-control mechanism. This table is exactly what's implemented today, not a general claim of "full support" — if you run an action a phone doesn't have, `phone:control` refuses with an error listing what that phone does support, the same way it would for a typo'd action name.
 
-| Action | Yealink | Snom | Poly Edge | Grandstream / other |
+| Action | Yealink | Snom | Poly | PBX-assisted phones |
 | --- | :---: | :---: | :---: | :---: |
 | `hold` | ✅ | ✅ | ✅ | ✅ |
 | `resume` | ✅ | ✅ | ✅ | ✅ |
@@ -41,14 +41,14 @@ The vendor is detected automatically from the phone's registration — you don't
 A few things this table is telling you:
 
 - **Mute is a toggle on Yealink/Snom, but a specific on/off state on Poly/Grandstream** — use `mute-toggle` on the first two, `mute-on`/`mute-off` on the other two.
-- **DND works the same way** — Yealink gets deterministic `dnd-on`/`dnd-off`, Snom only exposes a `dnd-toggle` (its phones ignore a deterministic DND setting pushed remotely), and Poly/Grandstream have no DND action at all.
-- **`answer-call`** (remotely answering a ringing call) works on every vendor except Grandstream/generic phones, which have no remote-control mechanism to answer with.
+- **DND works the same way** — Yealink gets deterministic `dnd-on`/`dnd-off`, Snom only exposes a `dnd-toggle` (its phones ignore a deterministic DND setting pushed remotely), and Poly/PBX-assisted phones have no DND action at all.
+- **`answer-call`** (remotely answering a ringing call) works on Yealink, Snom, and Poly. PBX-assisted phones have no remote-control mechanism to answer with.
 
-Yealink, Snom, and Poly phones show the change on their own screen, the same as if a button had been pressed on the handset. Grandstream phones — and any other phone FS PBX doesn't specifically recognize — have no such remote-control feature, so FS PBX manages the call directly instead. Everything supported in this guide still works the same way on these phones, with one difference worth knowing: **the phone's screen will not update.** No hold icon, no blinking transfer key, no mute indicator. The call state itself is real (the caller really is on hold, muted, etc.) — only the display doesn't reflect it. Use `--list-calls` (below) to check status instead of looking at the phone.
+Yealink, Snom, and Poly phones show the change on their own screen, the same as if a button had been pressed on the handset. Grandstream, Ringotel, older Polycom UCS phones, and phones FS PBX doesn't specifically recognize use PBX-assisted control instead. Everything supported in this guide still works the same way on these phones, with one difference worth knowing: **the phone's screen will not update.** No hold icon, no blinking transfer key, no mute indicator. The call state itself is real (the caller really is on hold, muted, etc.) — only the display doesn't reflect it. Use `--list-calls` (below) to check status instead of looking at the phone.
 
 Poly Edge additionally requires the phone's REST API to be enabled in provisioning — see Troubleshooting if commands don't seem to do anything.
 
-**Polycom VVX, Trio, and CCX phones** get the same Poly column above, but only on **UCS firmware 6.4.2 or newer** — that's the release Poly added REST-API delivery over SIP NOTIFY, the mechanism all of this relies on. Older firmware silently accepts the request without acting on it, so those phones are treated as unrecognized and fall back to the same PBX-managed control as Grandstream (screen won't update, see above). This uses the exact same REST commands already verified against a Poly Edge phone — what's specific to VVX/Trio/CCX is the firmware-version detection that routes them there, which hasn't been confirmed yet against real VVX/Trio/CCX hardware. If you have one of these phones, `--list-uas` will show whether it was picked up as `poly` or fell back to `generic` — worth a quick check the first time.
+**Polycom VVX, Trio, and CCX phones** get the same Poly column above, but only on **UCS firmware 6.4.2 or newer** — that's the release FS PBX currently treats as supporting REST-API delivery over SIP NOTIFY, the mechanism all of this relies on. Older firmware may silently accept the request without acting on it, so those phones are classified as `polycom` and use the same PBX-assisted control as Grandstream (screen won't update, see above). This uses the exact same REST commands already verified against a Poly Edge phone — what's specific to VVX/Trio/CCX is the firmware-version detection that routes them there, which hasn't been confirmed yet against real VVX/Trio/CCX hardware. If you have one of these phones, `--list-uas` will show whether it was picked up as `poly` or `polycom` — worth a quick check the first time.
 
 * * * * *
 

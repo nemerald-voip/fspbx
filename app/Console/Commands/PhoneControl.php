@@ -17,7 +17,7 @@ class PhoneControl extends Command
         {destination? : Action destination; currently used by transfer actions}
         {--list-uas : List registered phones supported by the phone-control drivers}
         {--list-calls : List the extension\'s active calls and their states}
-        {--vendor= : Vendor driver to use, for example yealink; detected from the agent when omitted}
+        {--vendor= : Vendor driver to use, for example yealink or ringotel; detected from the agent when omitted}
         {--lan-ip= : Narrow selection to a LAN IP when several phones match}
         {--agent= : Narrow selection to user agents matching this regex (case-insensitive; plain text works too)}
         {--call-id= : Narrow selection to a specific FreeSWITCH registration call-id}
