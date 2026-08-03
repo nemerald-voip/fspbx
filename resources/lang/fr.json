@@ -1,5 +1,5 @@
 {
-    "+:count more": "+:count autres",
+    "++:count more": "+:count autres",
     "1 key": "1 clé",
     "1 setting": "1 paramètre",
     ":count bytes": ":count octets",
