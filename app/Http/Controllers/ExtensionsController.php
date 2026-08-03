@@ -248,7 +248,7 @@ class ExtensionsController extends Controller
             $newExtension->extension = $newExtensionNumber;
 
             //do not copy the sip password; generate a new one
-            $newPassword = generate_password();
+            $newPassword = generate_sip_password();
             $newExtension->password = $newPassword;
 
             if (!empty($newExtension->effective_caller_id_name)) {
@@ -1193,13 +1193,15 @@ public function store(StoreExtensionRequest $request)
                 ->firstOrFail();
 
             // Generate new password
-            $newPassword = generate_password();
+            $newPassword = generate_sip_password();
 
             // Update the extension password
             $extension->password = $newPassword;
             $extension->save();
 
             DB::commit();
+
+            FusionCache::clear("directory:" . $extension->extension . "@" . $extension->user_context);
 
             // Return new credentials
             return response()->json([
@@ -2316,6 +2318,8 @@ public function store(StoreExtensionRequest $request)
             $extension->save();
 
             DB::commit();
+
+            FusionCache::clear("directory:" . $extension->extension . "@" . $extension->user_context);
 
             return response()->json([
                 'success' => true,

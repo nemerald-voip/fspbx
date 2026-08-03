@@ -656,7 +656,7 @@ class ExtensionController extends Controller
             'domain_uuid'  => (string) $domain->domain_uuid,
 
             // keep internal-only fields out of docs
-            'password'     => function_exists('generate_password') ? generate_password() : bin2hex(random_bytes(12)),
+            'password'     => function_exists('generate_sip_password') ? generate_sip_password() : bin2hex(random_bytes(12)),
             'user_context' => $validated['user_context'] ?? (string) $domain->domain_name,
             'accountcode'  => $validated['accountcode']  ?? (string) $domain->domain_name,
 

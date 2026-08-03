@@ -2622,7 +2622,7 @@ const handleSipCredentialsButtonClick = async () => {
 
 const handleSipCredentialsRegenerateClick = async () => {
     isSipCredentialsRegenerateLoading.value = true
-    axios.get(props.options.routes.regenerate_sip_credentials)
+    axios.post(props.options.routes.regenerate_sip_credentials)
         .then((response) => {
             sip_credentials.value = response.data.data;
             // console.log(sip_credentials.value);

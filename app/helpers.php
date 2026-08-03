@@ -964,11 +964,12 @@ if (!function_exists('generate_password')) {
     /**
      * Generate a secure password
      *
+     * @param string $special_characters
      * @return string
      */
-    function generate_password()
+    function generate_password(string $special_characters = '!^$%*?.')
     {
-        $characters = str_split('!^$%*?.');
+        $characters = str_split($special_characters);
         $random_keys = array_rand($characters, 3);
         $random_characters = array();
 
@@ -982,6 +983,19 @@ if (!function_exists('generate_password')) {
 
         $password = $random_string;
         return $password;
+    }
+}
+
+if (!function_exists('generate_sip_password')) {
+    /**
+     * Generate a SIP password compatible with supported phone vendors.
+     *
+     * Grandstream authenticated reboot NOTIFY requests fail when the SIP
+     * password contains a dollar sign.
+     */
+    function generate_sip_password(): string
+    {
+        return generate_password('!^%*?.');
     }
 }
 

@@ -74,7 +74,7 @@ class StoreExtensionRequest extends FormRequest
             'user_context' => $this->input('user_context', session('domain_name')),
             'accountcode' => $this->input('accountcode', session('domain_name')),
             'domain_uuid' => $this->input('domain_uuid', session('domain_uuid')),
-            'password' => generate_password(),
+            'password' => generate_sip_password(),
             'directory_visible' => 'true',
             'directory_exten_visible' => 'true',
 

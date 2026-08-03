@@ -168,7 +168,7 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
                 $extension = Extensions::create([
                     'domain_uuid' => $this->domain_uuid,
                     'extension' => $row['extension'],
-                    'password' => generate_password(),
+                    'password' => generate_sip_password(),
                     'directory_first_name' => $row['first_name'],
                     'directory_last_name' => $row['last_name'] ?? null,
                     'effective_caller_id_name' => trim(($row['first_name'] ?? '') . ' ' . ($row['last_name'] ?? '')),
