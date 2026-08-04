@@ -1,0 +1,17 @@
+<configuration name="hiredis.conf" description="mod_hiredis">
+  <profiles>
+    <profile name="default">
+      <connections>
+        <connection name="primary">
+          <param name="hostname" value="127.0.0.1"/>
+          <param name="port" value="6379"/>
+          <param name="timeout_ms" value="500"/>
+        </connection>
+      </connections>
+      <params>
+        <param name="ignore-connect-fail" value="true"/>
+        <param name="ignore-error" value="true"/>
+      </params>
+    </profile>
+  </profiles>
+</configuration>

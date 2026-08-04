@@ -7,7 +7,7 @@
             </p>
             <div class="flex flex-1 justify-end">
                 <button type="button" class="-m-3 p-3 focus-visible:outline-offset-[-4px]" @click="handleClose">
-                    <span class="sr-only">Dismiss</span>
+                    <span class="sr-only">{{ $t('Dismiss') }}</span>
                     <XMarkIcon class="h-5 w-5 text-white" aria-hidden="true" />
                 </button>
             </div>

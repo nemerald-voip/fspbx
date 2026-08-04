@@ -192,7 +192,7 @@ This repo is a Laravel, Vue/Inertia, VueForm, and FreeSWITCH application. Before
 ## FreeSWITCH Files
 
 - New Lua scripts belong in `resources/lua`.
-- Future-install FreeSWITCH config belongs under `public/app/switch/resources/conf/...`.
+- Future-install FreeSWITCH autoload config belongs under `resources/autoload_configs`; other FreeSWITCH config remains under `public/app/switch/resources/conf/...`.
 - Existing-install FreeSWITCH config usually needs to be written or patched under `/etc/freeswitch/...` from an update class.
 - Dialplan templates live under `public/app/dialplans/resources/switch/conf/dialplan`.
 - For Lua called by dialplan XML, use paths that match the FreeSWITCH runtime script directory, such as `lua/call_block.lua`.

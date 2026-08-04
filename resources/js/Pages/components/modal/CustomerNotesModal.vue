@@ -1,12 +1,12 @@
 <template>
-    <AddEditItemModal :show="show" header="Customer Notes" :loading="false" custom-class="sm:max-w-4xl"
+    <AddEditItemModal :show="show" :header="$t('Customer Notes')" :loading="false" custom-class="sm:max-w-4xl"
         body-class="max-h-[72vh] overflow-y-auto" @close="handleClose">
         <template #modal-body>
             <div v-if="!isEditing" class="space-y-4">
                 <div class="flex justify-end">
                     <button v-if="canEdit" type="button" @click="startEditing"
                         class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 transition hover:bg-gray-50">
-                        Edit
+                        {{ $t('Edit') }}
                     </button>
                 </div>
 
@@ -16,7 +16,7 @@
                         {{ note.label }}
                     </div>
                     <div v-if="note.content" class="customer-notes-content text-sm leading-6 text-gray-800" v-html="note.content"></div>
-                    <p v-else class="text-sm italic text-gray-500">No notes yet.</p>
+                    <p v-else class="text-sm italic text-gray-500">{{ $t('No notes yet.') }}</p>
                 </div>
             </div>
 
@@ -24,19 +24,19 @@
                 :display-errors="false" :float-placeholders="false">
                 <template #empty>
                     <FormElements>
-                        <EditorElement v-if="canEditLevel(1)" name="level_1" label="Level 1 notes"
-                            placeholder="Level 1 customer notes." :floating="false" />
+                        <EditorElement v-if="canEditLevel(1)" name="level_1" :label="$t('Level 1 notes')"
+                            :placeholder="$t('Level 1 customer notes.')" :floating="false" />
 
-                        <EditorElement v-if="canEditLevel(2)" name="level_2" label="Level 2 notes"
-                            placeholder="Level 2 customer notes." :floating="false" />
+                        <EditorElement v-if="canEditLevel(2)" name="level_2" :label="$t('Level 2 notes')"
+                            :placeholder="$t('Level 2 customer notes.')" :floating="false" />
 
-                        <EditorElement v-if="canEditLevel(3)" name="level_3" label="Level 3 notes"
-                            placeholder="Level 3 customer notes." :floating="false" />
+                        <EditorElement v-if="canEditLevel(3)" name="level_3" :label="$t('Level 3 notes')"
+                            :placeholder="$t('Level 3 customer notes.')" :floating="false" />
 
                         <GroupElement name="actions">
-                            <ButtonElement name="cancel" button-label="Cancel" :secondary="true" :submits="false" align="right"
+                            <ButtonElement name="cancel" :button-label="$t('Cancel')" :secondary="true" :submits="false" align="right"
                                 @click="cancelEditing" />
-                            <ButtonElement name="submit" button-label="Save" :submits="true" align="right" />
+                            <ButtonElement name="submit" :button-label="$t('Save')" :submits="true" align="right" />
                         </GroupElement>
                     </FormElements>
                 </template>
@@ -48,6 +48,7 @@
 <script setup>
 import { computed, nextTick, ref } from 'vue'
 import AddEditItemModal from './AddEditItemModal.vue'
+import { trans } from 'laravel-vue-i18n'
 
 const emit = defineEmits(['close', 'success', 'error', 'updated'])
 
@@ -68,7 +69,7 @@ const noteLayers = [
     {
         key: 'level_1',
         level: 1,
-        label: 'Level 1',
+        label: trans('Level 1'),
         borderClass: 'border-l-4 border-l-amber-600',
         labelClass: 'text-amber-800',
         dotClass: 'bg-amber-600',
@@ -76,7 +77,7 @@ const noteLayers = [
     {
         key: 'level_2',
         level: 2,
-        label: 'Level 2',
+        label: trans('Level 2'),
         borderClass: 'border-l-4 border-l-sky-600',
         labelClass: 'text-sky-800',
         dotClass: 'bg-sky-600',
@@ -84,7 +85,7 @@ const noteLayers = [
     {
         key: 'level_3',
         level: 3,
-        label: 'Level 3',
+        label: trans('Level 3'),
         borderClass: 'border-l-4 border-l-rose-600',
         labelClass: 'text-rose-800',
         dotClass: 'bg-rose-600',

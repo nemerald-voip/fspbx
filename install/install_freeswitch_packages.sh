@@ -64,7 +64,16 @@ if [ -d "/etc/freeswitch" ]; then
 fi
 
 mkdir -p /etc/freeswitch
-cp -R /var/www/fspbx/public/app/switch/resources/conf/* /etc/freeswitch
+legacy_conf_source=/var/www/fspbx/public/app/switch/resources/conf
+for source_path in "$legacy_conf_source"/*; do
+    if [[ "$source_path" == "$legacy_conf_source/autoload_configs" ]]; then
+        continue
+    fi
+
+    cp -R "$source_path" /etc/freeswitch/
+done
+mkdir -p /etc/freeswitch/autoload_configs
+cp -R /var/www/fspbx/resources/autoload_configs/. /etc/freeswitch/autoload_configs/
 
 chown -R www-data:www-data /etc/freeswitch
 chown -R www-data:www-data /var/lib/freeswitch

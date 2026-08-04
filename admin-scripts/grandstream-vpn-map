@@ -4,6 +4,9 @@ set -euo pipefail
 STATUS_FILE="${STATUS_FILE:-/var/log/openvpn/phones-status.log}"
 TIMEOUT="${TIMEOUT:-8}"
 RAW_DIR="${RAW_DIR:-}"
+ACTION=""
+ACTION_IP=""
+STATUS_FILE_SET=false
 jar=""
 
 cleanup() {
@@ -15,10 +18,32 @@ trap cleanup EXIT INT TERM
 
 usage() {
   cat <<'USAGE'
-Usage: grandstream-vpn-map [--raw-dir DIR] [status-file]
+Usage:
+  grandstream-vpn-map [--raw-dir DIR] [status-file]
+  grandstream-vpn-map --provision-ip IP [--raw-dir DIR] [status-file]
+  grandstream-vpn-map --restart-ip IP [--raw-dir DIR] [status-file]
 
 Maps connected Grandstream OpenVPN clients to MAC addresses by logging into
 each phone web UI over its VPN IP.
+
+Actions:
+  --provision-ip IP  Ask one phone to fetch and apply its provisioning config.
+  --restart-ip IP    Restart one phone through its authenticated web API.
+
+The target IP must be listed as a connected grandstream-phone client in the
+OpenVPN status file. Actions require compatible phone firmware and web-admin
+credentials. Normal mapping without an action remains read-only.
+
+Examples:
+  sudo grandstream-vpn-map
+  sudo grandstream-vpn-map --raw-dir /tmp/grandstream-vpn
+  sudo grandstream-vpn-map --provision-ip 10.89.0.51
+  sudo grandstream-vpn-map --restart-ip 10.89.0.51
+  sudo grandstream-vpn-map --provision-ip 10.89.0.51 /path/to/phones-status.log
+
+The command prompts for the Grandstream username and password. To provide only
+the username ahead of time while retaining the hidden password prompt:
+  sudo env GS_USER=admin grandstream-vpn-map --provision-ip 10.89.0.51
 
 Environment:
   GS_USER      Grandstream username. If omitted, prompts interactively.
@@ -35,6 +60,32 @@ while [[ $# -gt 0 ]]; do
       usage
       exit 0
       ;;
+    --provision-ip)
+      if [[ -n "$ACTION" ]]; then
+        echo "Only one of --provision-ip or --restart-ip may be used" >&2
+        exit 1
+      fi
+      ACTION="provision"
+      ACTION_IP="${2:-}"
+      if [[ -z "$ACTION_IP" ]]; then
+        echo "--provision-ip requires an IP address" >&2
+        exit 1
+      fi
+      shift 2
+      ;;
+    --restart-ip)
+      if [[ -n "$ACTION" ]]; then
+        echo "Only one of --provision-ip or --restart-ip may be used" >&2
+        exit 1
+      fi
+      ACTION="restart"
+      ACTION_IP="${2:-}"
+      if [[ -z "$ACTION_IP" ]]; then
+        echo "--restart-ip requires an IP address" >&2
+        exit 1
+      fi
+      shift 2
+      ;;
     --raw-dir)
       RAW_DIR="${2:-}"
       if [[ -z "$RAW_DIR" ]]; then
@@ -43,12 +94,51 @@ while [[ $# -gt 0 ]]; do
       fi
       shift 2
       ;;
+    --)
+      shift
+      if [[ $# -gt 1 ]]; then
+        echo "Only one status file may be supplied" >&2
+        exit 1
+      fi
+      if [[ $# -eq 1 ]]; then
+        STATUS_FILE="$1"
+        STATUS_FILE_SET=true
+        shift
+      fi
+      ;;
+    -*)
+      echo "Unknown option: $1" >&2
+      usage >&2
+      exit 1
+      ;;
     *)
+      if [[ "$STATUS_FILE_SET" == true ]]; then
+        echo "Only one status file may be supplied" >&2
+        exit 1
+      fi
       STATUS_FILE="$1"
+      STATUS_FILE_SET=true
       shift
       ;;
   esac
 done
+
+valid_ipv4() {
+  local ip="$1"
+  local octet
+  local -a octets
+
+  [[ "$ip" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]] || return 1
+  IFS=. read -r -a octets <<< "$ip"
+  for octet in "${octets[@]}"; do
+    ((10#$octet <= 255)) || return 1
+  done
+}
+
+if [[ -n "$ACTION_IP" ]] && ! valid_ipv4 "$ACTION_IP"; then
+  echo "Invalid IPv4 address: $ACTION_IP" >&2
+  exit 1
+fi
 
 if [[ ! -r "$STATUS_FILE" ]]; then
   echo "Cannot read status file: $STATUS_FILE" >&2
@@ -141,14 +231,30 @@ save_raw() {
   printf '%s\n' "$payload" > "$RAW_DIR/${phone}.${name}.json"
 }
 
-mapfile -t phones < <(awk -F, '/^CLIENT_LIST,grandstream-phone,/ {print $4 "," $3}' "$STATUS_FILE")
+if [[ -n "$ACTION_IP" ]]; then
+  mapfile -t phones < <(
+    awk -F, -v target="$ACTION_IP" \
+      '$1 == "CLIENT_LIST" && $2 == "grandstream-phone" && $4 == target {print $4 "," $3}' \
+      "$STATUS_FILE"
+  )
+else
+  mapfile -t phones < <(
+    awk -F, '$1 == "CLIENT_LIST" && $2 == "grandstream-phone" {print $4 "," $3}' "$STATUS_FILE"
+  )
+fi
 
 if [[ "${#phones[@]}" -eq 0 ]]; then
+  if [[ -n "$ACTION_IP" ]]; then
+    echo "Target $ACTION_IP is not a connected grandstream-phone client in $STATUS_FILE" >&2
+    exit 1
+  fi
   echo "No connected grandstream-phone clients found in $STATUS_FILE"
   exit 0
 fi
 
 printf "%-15s %-17s %-12s %-12s %-34s %-12s %s\n" "VPN IP" "MAC" "VERSION" "PHONE" "REGISTRATION" "CALLS" "REAL ADDRESS"
+
+action_failed=false
 
 for row in "${phones[@]}"; do
   IFS=, read -r phone real_address <<< "$row"
@@ -160,6 +266,7 @@ for row in "${phones[@]}"; do
   phone_status="unknown"
   accounts="unknown"
   lines="unknown"
+  action_response=""
 
   if curl -fsS --connect-timeout "$TIMEOUT" --max-time "$TIMEOUT" -c "$jar" "http://$phone/" >/dev/null; then
     if login="$(
@@ -200,16 +307,50 @@ for row in "${phones[@]}"; do
         [[ -n "$lines" ]] || lines="$(printf '%s\n' "$response" | compact)"
       fi
 
+      if [[ -n "$ACTION" ]]; then
+        if [[ "$ACTION" == "provision" ]]; then
+          action_request="PROV"
+        else
+          action_request="REBOOT"
+        fi
+
+        if response="$(api_get "$phone" "cgi-bin/api-sys_operation?request=$action_request")"; then
+          save_raw "$phone" "$ACTION" "$response"
+          action_response="$(printf '%s\n' "$response" | compact)"
+          if [[ "$(printf '%s\n' "$response" | json_value response)" != "success" ]]; then
+            action_failed=true
+          fi
+        else
+          action_response="request-failed-or-connection-closed"
+          action_failed=true
+        fi
+      fi
+
       curl -fsS --connect-timeout "$TIMEOUT" --max-time "$TIMEOUT" \
         -b "$jar" "http://$phone/cgi-bin/dologout" >/dev/null 2>&1 || true
     else
       mac="login-failed"
+      if [[ -n "$ACTION" ]]; then
+        action_response="login-failed"
+        action_failed=true
+      fi
     fi
   else
     mac="unreachable"
+    if [[ -n "$ACTION" ]]; then
+      action_response="unreachable"
+      action_failed=true
+    fi
   fi
 
   printf "%-15s %-17s %-12s %-12s %-34s %-12s %s\n" "$phone" "$mac" "$ver" "$phone_status" "$accounts" "$lines" "$real_address"
+  if [[ -n "$ACTION" ]]; then
+    printf "Action %-9s on %s: %s\n" "$ACTION" "$phone" "${action_response:-not-sent}"
+  fi
   rm -f "$jar"
   jar=""
 done
+
+if [[ "$action_failed" == true ]]; then
+  exit 1
+fi
