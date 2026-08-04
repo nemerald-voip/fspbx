@@ -30,19 +30,7 @@ class CallRoutingOptionsService
         // ['value' => 'other', 'name' => 'Other']
     ];
 
-    public array $forwardingTypes = [
-        ['value' => 'extensions', 'label' => 'Extension'],
-        ['value' => 'voicemails', 'label' => 'Voicemail'],
-        ['value' => 'ring_groups', 'label' => 'Ring Group'],
-        ['value' => 'ivrs', 'label' => 'Virtual Receptionist'],
-        ['value' => 'business_hours', 'label' => 'Business Hours'],
-        ['value' => 'time_conditions', 'label' => 'Schedule'],
-        ['value' => 'contact_centers', 'label' => 'Contact Center'],
-        ['value' => 'faxes', 'label' => 'Fax'],
-        ['value' => 'call_flows', 'label' => 'Call Flow'],
-        // ['value' => 'recordings', 'label' => 'Play Greeting'],
-        ['value' => 'external', 'label' => 'External Number'],
-    ];
+    public array $forwardingTypes;
 
     /**
      * Map of slot-action keys to their Eloquent model classes.
@@ -69,6 +57,19 @@ class CallRoutingOptionsService
     {
         $this->domainUuid = $domainUuid ?? session('domain_uuid');
         $this->domainName = session('domain_name');
+
+        $this->forwardingTypes = [
+            ['value' => 'extensions', 'label' => __('Extension')],
+            ['value' => 'voicemails', 'label' => __('Voicemail')],
+            ['value' => 'ring_groups', 'label' => __('Ring Group')],
+            ['value' => 'ivrs', 'label' => __('Virtual Receptionist')],
+            ['value' => 'business_hours', 'label' => __('Business Hours')],
+            ['value' => 'time_conditions', 'label' => __('Schedule')],
+            ['value' => 'contact_centers', 'label' => __('Contact Center')],
+            ['value' => 'faxes', 'label' => __('Fax')],
+            ['value' => 'call_flows', 'label' => __('Call Flow')],
+            ['value' => 'external', 'label' => __('External Number')],
+        ];
     }
 
 

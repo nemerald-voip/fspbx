@@ -24,7 +24,7 @@
                                 <button type="button"
                                     class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                     @click="emit('close')">
-                                    <span class="sr-only">Close</span>
+                                    <span class="sr-only">{{ $t('Close') }}</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
@@ -42,7 +42,7 @@
                                             </path>
                                         </svg>
                                     </div>
-                                    <div class="text-lg text-blue-600 m-auto">Loading...</div>
+                                    <div class="text-lg text-blue-600 m-auto">{{ $t('Loading...') }}</div>
                                 </div>
                             </div>
 
@@ -66,7 +66,7 @@
                                     <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
                                         <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
                                             <FormTabs view="vertical">
-                                                <FormTab name="page0" label="Settings" :elements="[
+                                                <FormTab name="page0" :label="$t('Settings')" :elements="[
                                                     'h4',
                                                     'device_address',
                                                     'device_template',
@@ -85,21 +85,21 @@
                                             <FormElements>
 
                                                 <HiddenElement name="device_lines" :meta="true" />
-                                                <StaticElement name="h4" tag="h4" content="Settings" />
+                                                <StaticElement name="h4" tag="h4" :content="$t('Settings')" />
 
-                                                <TextElement name="device_address" label="MAC Address"
-                                                    placeholder="Enter MAC Address" :floating="false" />
+                                                <TextElement name="device_address" :label="$t('MAC Address')"
+                                                    :placeholder="$t('Enter MAC Address')" :floating="false" />
 
                                                 <SelectElement name="device_template" :items="options.templates"
-                                                    label-prop="name" :search="true" :native="false" label="Template"
+                                                    label-prop="name" :search="true" :native="false" :label="$t('Template')"
                                                     input-type="search" autocomplete="off" :strict="false"
-                                                    placeholder="Select Template" :floating="false" />
+                                                    :placeholder="$t('Select Template')" :floating="false" />
 
                                                 <SelectElement name="device_key_template_uuid"
                                                     :items="options.key_templates" label-prop="name" :search="true"
-                                                    :native="false" label="Key Template" input-type="search"
+                                                    :native="false" :label="$t('Key Template')" input-type="search"
                                                     autocomplete="off"
-                                                    placeholder="Select Key Template" :floating="false"
+                                                    :placeholder="$t('Select Key Template')" :floating="false"
                                                     :strict="false"
                                                     :disabled="[['device_profile_uuid', 'not_in', [null, '', 'NULL']]]"
                                                     :conditions="[() => options?.permissions?.device_key_template_assign]"
@@ -110,8 +110,8 @@
                                                     }" />
 
                                                 <SelectElement name="device_profile_uuid" :items="options.profiles"
-                                                    label-prop="name" :search="true" :native="false" label="Profile"
-                                                    input-type="search" autocomplete="off" placeholder="Select Profile"
+                                                    label-prop="name" :search="true" :native="false" :label="$t('Profile')"
+                                                    input-type="search" autocomplete="off" :placeholder="$t('Select Profile')"
                                                     :floating="false" :strict="false"
                                                     :disabled="[['device_key_template_uuid', 'not_in', [null, '', 'NULL']]]"
                                                     @change="(newValue, oldValue, el$) => {
@@ -120,11 +120,11 @@
                                                         }
                                                     }" />
 
-                                                <ButtonElement name="cancel_button" button-label="Cancel" :secondary="true"
+                                                <ButtonElement name="cancel_button" :button-label="$t('Cancel')" :secondary="true"
                                                     @click="emit('close')" :columns="{
                                                         container: 6,
                                                     }" :resets="true" />
-                                                <ButtonElement name="save_button" button-label="Save" :columns="{
+                                                <ButtonElement name="save_button" :button-label="$t('Save')" :columns="{
                                                     container: 6,
                                                 }" align="right" :submits="true" />
                                             </FormElements>
@@ -146,6 +146,7 @@
 import { ref } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { XMarkIcon } from "@heroicons/vue/24/solid";
+import { trans } from "laravel-vue-i18n";
 
 
 const emit = defineEmits(['close', 'error', 'success', 'refresh-data'])
@@ -217,7 +218,7 @@ const handleError = (error, details, form$) => {
         case 'prepare':
             console.log(error) // Error object
 
-            form$.messageBag.append('Could not prepare form')
+            form$.messageBag.append(trans('Could not prepare form'))
             break
 
         // Error occured because response status is outside of 2xx
@@ -237,14 +238,14 @@ const handleError = (error, details, form$) => {
         case 'cancel':
             console.log(error) // Error object
 
-            form$.messageBag.append('Request cancelled')
+            form$.messageBag.append(trans('Request cancelled'))
             break
 
         // Some other errors happened (no response object)
         case 'other':
             console.log(error) // Error object
 
-            form$.messageBag.append('Couldn\'t submit form')
+            form$.messageBag.append(trans('Couldn\'t submit form'))
             break
     }
 }

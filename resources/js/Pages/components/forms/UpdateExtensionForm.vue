@@ -27,7 +27,7 @@
                                 <button type="button"
                                     class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                     @click="handleClose">
-                                    <span class="sr-only">Close</span>
+                                    <span class="sr-only">{{ $t('Close') }}</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
@@ -45,7 +45,7 @@
                                             </path>
                                         </svg>
                                     </div>
-                                    <div class="text-lg text-blue-600 m-auto">Loading...</div>
+                                    <div class="text-lg text-blue-600 m-auto">{{ $t('Loading...') }}</div>
                                 </div>
                             </div>
 
@@ -192,7 +192,7 @@
                                     <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
                                         <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
                                             <FormTabs view="vertical" @select="handleTabSelected">
-                                                <FormTab name="page0" label="Basic Info" :elements="[
+                                                <FormTab name="page0" :label="$t('Basic Info')" :elements="[
                                                     'basic_info_title',
                                                     'uuid_clean',
                                                     'directory_first_name',
@@ -217,7 +217,7 @@
                                                     'submit_basic',
 
                                                 ]" />
-                                                <FormTab name="caller_id" label="Caller ID" :elements="[
+                                                <FormTab name="caller_id" :label="$t('Caller ID')" :elements="[
                                                     'external_caller_id_title',
                                                     'emergency_caller_id_title',
                                                     'outbound_caller_id_number',
@@ -229,7 +229,7 @@
 
                                                 ]"
                                                     :conditions="[() => options.permissions.manage_external_caller_id_number || options.permissions.manage_emergency_caller_id_number]" />
-                                                <FormTab name="call_forward" label="Call Forward" :elements="[
+                                                <FormTab name="call_forward" :label="$t('Call Forward')" :elements="[
                                                     'forward_all_calls_title',
                                                     'forward_all_enabled',
                                                     'token_title',
@@ -267,7 +267,7 @@
                                                     'submit_forward',
 
                                                 ]" :conditions="[() => options.permissions.manage_forwarding]" />
-                                                <FormTab name="voicemail" label="Voicemail" :elements="[
+                                                <FormTab name="voicemail" :label="$t('Voicemail')" :elements="[
                                                     'voicemail_title',
                                                     'voicemail_enabled',
                                                     'voicemail_password',
@@ -300,7 +300,7 @@
 
                                                 ]" :conditions="[() => options.permissions.manage_voicemail]" />
 
-                                                <FormTab name="devices" label="Devices" :elements="[
+                                                <FormTab name="devices" :label="$t('Devices')" :elements="[
                                                     'devices_title',
                                                     'container1',
                                                     'assign_existing',
@@ -311,7 +311,7 @@
 
                                                 ]" />
 
-                                                <FormTab name="mobile_app" label="Mobile App" :elements="[
+                                                <FormTab name="mobile_app" :label="$t('Mobile App')" :elements="[
                                                     'mobile_app_title',
                                                     'mobile_app_status',
                                                     'mobile_app_ringotel_state',
@@ -336,7 +336,7 @@
 
                                                 ]" :conditions="[() => options.permissions.manage_mobile_app]" />
 
-                                                <FormTab name="sip_credentials" label="SIP Credentials" :elements="[
+                                                <FormTab name="sip_credentials" :label="$t('SIP Credentials')" :elements="[
                                                     'sip_credentials_title',
                                                     'show_sip_credentials',
                                                     'sip_credentials',
@@ -346,7 +346,7 @@
 
                                                 ]" :conditions="[() => options.permissions.extension_password]" />
 
-                                                <FormTab name="advanced" label="Advanced Settings" :elements="[
+                                                <FormTab name="advanced" :label="$t('Advanced Settings')" :elements="[
                                                     'advanced_title',
                                                     'directory_visible',
                                                     'directory_exten_visible',
@@ -389,7 +389,7 @@
 
                                                     <div class="mb-1">
                                                         <div class="text-sm font-medium text-gray-600 mb-1">
-                                                            Unique ID
+                                                            {{ $t('Unique ID') }}
                                                         </div>
 
                                                         <div class="flex items-center group">
@@ -399,7 +399,7 @@
                                                             <button type="button"
                                                                 @click="handleCopyToClipboard(options.item.extension_uuid)"
                                                                 class="ml-2 p-1 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
-                                                                title="Copy to clipboard">
+                                                                :title="$t('Copy to clipboard')">
                                                                 <!-- Small Copy Icon -->
                                                                 <ClipboardDocumentIcon
                                                                     class="h-4 w-4 text-gray-500 hover:text-gray-900  cursor-pointer" />
@@ -407,38 +407,38 @@
                                                         </div>
                                                     </div>
                                                 </StaticElement>
-                                                <StaticElement name="basic_info_title" tag="h4" content="Basic Info"
-                                                    description="Fill in basic details to identify and describe this extension." />
-                                                <TextElement name="directory_first_name" label="First Name"
-                                                    placeholder="Enter First Name" :floating="false" :columns="{
+                                                <StaticElement name="basic_info_title" tag="h4" :content="$t('Basic Info')"
+                                                    :description="$t('Fill in basic details to identify and describe this extension.')" />
+                                                <TextElement name="directory_first_name" :label="$t('First Name')"
+                                                    :placeholder="$t('Enter First Name')" :floating="false" :columns="{
                                                         sm: {
                                                             container: 6,
                                                         },
                                                     }" />
-                                                <TextElement name="directory_last_name" label="Last Name"
-                                                    placeholder="Enter Last Name" :floating="false" :columns="{
+                                                <TextElement name="directory_last_name" :label="$t('Last Name')"
+                                                    :placeholder="$t('Enter Last Name')" :floating="false" :columns="{
                                                         sm: {
                                                             container: 6,
                                                         },
                                                     }" />
-                                                <TextElement name="extension" label="Extension"
-                                                    placeholder="Enter Extension" :floating="false" :columns="{
+                                                <TextElement name="extension" :label="$t('Extension')"
+                                                    :placeholder="$t('Enter Extension')" :floating="false" :columns="{
                                                         sm: {
                                                             container: 6,
                                                         }
                                                     }" :disabled="!options.permissions.extension_extension" />
 
-                                                <TextElement name="voicemail_mail_to" label="Email"
-                                                    placeholder="Enter Email" :floating="false" :columns="{
+                                                <TextElement name="voicemail_mail_to" :label="$t('Email')"
+                                                    :placeholder="$t('Enter Email')" :floating="false" :columns="{
                                                         container: 6,
                                                     }" />
-                                                <TextElement name="description" label="Description"
-                                                    placeholder="Enter Description" :floating="false" />
+                                                <TextElement name="description" :label="$t('Description')"
+                                                    :placeholder="$t('Enter Description')" :floating="false" />
 
                                                 <GroupElement name="container_2" />
 
-                                                <ToggleElement name="suspended" text="Suspended"
-                                                    description="Prevents users from making or receiving calls, except for emergency calls. Typically used for billing or policy-related suspensions."
+                                                <ToggleElement name="suspended" :text="$t('Suspended')"
+                                                    :description="$t('Prevents users from making or receiving calls, except for emergency calls. Typically used for billing or policy-related suspensions.')"
                                                     :replace-class="{
                                                         'toggle.toggleOn': {
                                                             'form-bg-primary': 'bg-red-500',
@@ -450,7 +450,7 @@
 
                                                 <StaticElement name="divider" tag="hr" />
 
-                                                <ToggleElement name="do_not_disturb" text="Do Not Disturb"
+                                                <ToggleElement name="do_not_disturb" :text="$t('Do Not Disturb')"
                                                     true-value="true" false-value="false" :replace-class="{
                                                         'toggle.toggleOn': {
                                                             'form-bg-primary': 'bg-red-500',
@@ -464,61 +464,61 @@
                                                 <StaticElement name="divider1" tag="hr"
                                                     :conditions="[(form$) => options.permissions.extension_do_not_disturb && form$.el$('suspended')?.value != true]" />
 
-                                                <ToggleElement name="enabled" text="Status" true-value="true"
+                                                <ToggleElement name="enabled" :text="$t('Status')" true-value="true"
                                                     false-value="false"
-                                                    description="Activate or deactivate the extension. When deactivated, devices cannot connect and calls cannot be placed or received."
+                                                    :description="$t('Activate or deactivate the extension. When deactivated, devices cannot connect and calls cannot be placed or received.')"
                                                     :conditions="[() => options.permissions.extension_enabled]" />
 
                                                 <StaticElement name="divider2" tag="hr"
                                                     :conditions="[() => options.permissions.extension_enabled]" />
 
-                                                <ToggleElement name="recording" text="Record Calls" :submit="false"
-                                                    description="Activate or deactivate call recording for the extension."
+                                                <ToggleElement name="recording" :text="$t('Record Calls')" :submit="false"
+                                                    :description="$t('Activate or deactivate call recording for the extension.')"
                                                     :conditions="[() => options.permissions.extension_user_record]" />
 
                                                 <RadiogroupElement name="user_record" :items="[
                                                     {
                                                         value: 'all',
-                                                        label: 'All',
+                                                        label: $t('All'),
                                                     },
                                                     {
                                                         value: 'local',
-                                                        label: 'Local',
+                                                        label: $t('Local'),
                                                     },
                                                     {
                                                         value: 'outbound',
-                                                        label: 'Outbound',
+                                                        label: $t('Outbound'),
                                                     },
                                                     {
                                                         value: 'inbound',
-                                                        label: 'Inbound',
+                                                        label: $t('Inbound'),
                                                     },
-                                                ]" label="Record" :conditions="[['recording', '==', true,],]" />
+                                                ]" :label="$t('Record')" :conditions="[['recording', '==', true,],]" />
 
                                                 <StaticElement name="divider17" tag="hr"
                                                     :conditions="[() => options.permissions.extension_user_record]" />
 
                                                 <SelectElement name="call_timeout" :items="delayOptions" :search="true"
-                                                    :native="false" label="Send unanswered calls to voicemail after"
+                                                    :native="false" :label="$t('Send unanswered calls to voicemail after')"
                                                     input-type="search" allow-absent autocomplete="off" :columns="{
                                                         sm: {
                                                             container: 6,
                                                         },
                                                     }"
-                                                    info="Set how many seconds to ring before redirecting unanswered calls to voicemail."
-                                                    placeholder="Select option" :floating="false" />
+                                                    :info="$t('Set how many seconds to ring before redirecting unanswered calls to voicemail.')"
+                                                    :placeholder="$t('Select option')" :floating="false" />
 
 
                                                 <GroupElement name="container_basic" />
 
-                                                <ButtonElement name="submit_basic" button-label="Save" :submits="true"
+                                                <ButtonElement name="submit_basic" :button-label="$t('Save')" :submits="true"
                                                     align="right" />
 
 
                                                 <!-- Caller ID Tab -->
                                                 <StaticElement name="external_caller_id_title" tag="h4"
-                                                    content="External Caller ID"
-                                                    description="Define the External Caller ID that will be displayed on the recipient's device when dialing outside the company."
+                                                    :content="$t('External Caller ID')"
+                                                    :description="$t('Define the External Caller ID that will be displayed on the recipient\'s device when dialing outside the company.')"
                                                     :conditions="[() => options.permissions.manage_external_caller_id_number]" />
 
                                                 <SelectElement name="outbound_caller_id_number"
@@ -526,13 +526,13 @@
                                                     input-type="search" autocomplete="off"
                                                     :conditions="[() => options.permissions.manage_external_caller_id_number]" />
 
-                                                <TextElement name="outbound_caller_id_name" label="Name"
-                                                    placeholder="Enter External Caller ID Name" :floating="false"
+                                                <TextElement name="outbound_caller_id_name" :label="$t('Name')"
+                                                    :placeholder="$t('Enter External Caller ID Name')" :floating="false"
                                                     :conditions="[() => options.permissions.manage_external_caller_id_name]" />
 
                                                 <StaticElement name="emergency_caller_id_title" tag="h4"
-                                                    content="Emergency Caller ID"
-                                                    description="Define the Emergency Caller ID that will be displayed when dialing emergency services."
+                                                    :content="$t('Emergency Caller ID')"
+                                                    :description="$t('Define the Emergency Caller ID that will be displayed when dialing emergency services.')"
                                                     :conditions="[() => options.permissions.manage_emergency_caller_id_number]" />
 
                                                 <SelectElement name="emergency_caller_id_number"
@@ -540,32 +540,32 @@
                                                     input-type="search" autocomplete="off"
                                                     :conditions="[() => options.permissions.manage_emergency_caller_id_number]" />
 
-                                                <TextElement name="emergency_caller_id_name" label="Name"
-                                                    placeholder="Enter Emergency Caller ID Name" :floating="false"
+                                                <TextElement name="emergency_caller_id_name" :label="$t('Name')"
+                                                    :placeholder="$t('Enter Emergency Caller ID Name')" :floating="false"
                                                     :conditions="[() => options.permissions.manage_emergency_caller_id_name]" />
 
                                                 <GroupElement name="container_caller_id" />
 
-                                                <ButtonElement name="submit_caller_id" button-label="Save"
+                                                <ButtonElement name="submit_caller_id" :button-label="$t('Save')"
                                                     :submits="true" align="right" />
 
                                                 <!-- Call Forward Tab -->
 
                                                 <StaticElement name="forward_all_calls_title" tag="h4"
-                                                    content="Forward All Calls"
-                                                    description="Instantly and unconditionally forward all incoming calls to another destination. No calls will ring to your phone until forwarding is disabled."
+                                                    :content="$t('Forward All Calls')"
+                                                    :description="$t('Instantly and unconditionally forward all incoming calls to another destination. No calls will ring to your phone until forwarding is disabled.')"
                                                     :conditions="[() => options.permissions.extension_forward_all]" />
 
                                                 <ToggleElement name="forward_all_enabled" :labels="{
-                                                    on: 'On',
-                                                    off: 'Off',
+                                                    on: $t('On'),
+                                                    off: $t('Off'),
                                                 }" true-value="true" false-value="false"
                                                     :conditions="[() => options.permissions.extension_forward_all]" />
 
                                                 <SelectElement name="forward_all_action"
                                                     :items="options.forwarding_types" :search="true" :native="false"
-                                                    label="Choose Action" input-type="search" autocomplete="off"
-                                                    placeholder="Choose Action" :floating="false" :strict="false"
+                                                    :label="$t('Choose Action')" input-type="search" autocomplete="off"
+                                                    :placeholder="$t('Choose Action')" :floating="false" :strict="false"
                                                     :conditions="[['forward_all_enabled', '==', 'true'],]" :columns="{
                                                         sm: {
                                                             container: 6,
@@ -594,10 +594,10 @@
                                                         emit('error', error);
                                                         return [];  // Return an empty array in case of error
                                                     }
-                                                }" :search="true" label-prop="name" :native="false" label="Target"
+                                                }" :search="true" label-prop="name" :native="false" :label="$t('Target')"
                                                     input-type="search" allow-absent :object="true"
                                                     :format-data="formatTarget" autocomplete="off"
-                                                    placeholder="Choose Target" :floating="false" :strict="false"
+                                                    :placeholder="$t('Choose Target')" :floating="false" :strict="false"
                                                     :columns="{
                                                         sm: {
                                                             container: 6,
@@ -608,8 +608,8 @@
                                                         ['forward_all_action', 'not_in', ['external']]
                                                     ]" />
 
-                                                <TextElement name="forward_all_external_target" label="Target"
-                                                    placeholder="Enter External Number" :floating="false" :columns="{
+                                                <TextElement name="forward_all_external_target" :label="$t('Target')"
+                                                    :placeholder="$t('Enter External Number')" :floating="false" :columns="{
                                                         sm: {
                                                             container: 6,
                                                         },
@@ -624,20 +624,20 @@
 
 
                                                 <StaticElement name="forward_busy_title" tag="h4"
-                                                    content="When user is busy"
-                                                    description="Automatically redirect incoming calls to a different destination when your line is busy or Do Not Disturb is active."
+                                                    :content="$t('When user is busy')"
+                                                    :description="$t('Automatically redirect incoming calls to a different destination when your line is busy or Do Not Disturb is active.')"
                                                     :conditions="[() => options.permissions.extension_forward_busy]" />
 
                                                 <ToggleElement name="forward_busy_enabled" :labels="{
-                                                    on: 'On',
-                                                    off: 'Off',
+                                                    on: $t('On'),
+                                                    off: $t('Off'),
                                                 }" true-value="true" false-value="false"
                                                     :conditions="[() => options.permissions.extension_forward_busy]" />
 
                                                 <SelectElement name="forward_busy_action"
                                                     :items="options.forwarding_types" :search="true" :native="false"
-                                                    label="Choose Action" input-type="search" autocomplete="off"
-                                                    placeholder="Choose Action" :floating="false" :strict="false"
+                                                    :label="$t('Choose Action')" input-type="search" autocomplete="off"
+                                                    :placeholder="$t('Choose Action')" :floating="false" :strict="false"
                                                     :conditions="[['forward_busy_enabled', '==', 'true']]" :columns="{
                                                         sm: {
                                                             container: 6,
@@ -667,10 +667,10 @@
                                                         emit('error', error);
                                                         return [];  // Return an empty array in case of error
                                                     }
-                                                }" :search="true" label-prop="name" :native="false" label="Target"
+                                                }" :search="true" label-prop="name" :native="false" :label="$t('Target')"
                                                     input-type="search" allow-absent :object="true"
                                                     :format-data="formatTarget" autocomplete="off"
-                                                    placeholder="Choose Target" :floating="false" :strict="false"
+                                                    :placeholder="$t('Choose Target')" :floating="false" :strict="false"
                                                     :columns="{
                                                         sm: {
                                                             container: 6,
@@ -681,8 +681,8 @@
                                                         ['forward_busy_action', 'not_in', ['external']]
                                                     ]" />
 
-                                                <TextElement name="forward_busy_external_target" label="Target"
-                                                    placeholder="Enter External Number" :floating="false" :columns="{
+                                                <TextElement name="forward_busy_external_target" :label="$t('Target')"
+                                                    :placeholder="$t('Enter External Number')" :floating="false" :columns="{
                                                         sm: {
                                                             container: 6,
                                                         },
@@ -695,20 +695,20 @@
                                                     :conditions="[() => options.permissions.extension_forward_busy]" />
 
                                                 <StaticElement name="forward_no_answer_title" tag="h4"
-                                                    content="When user does not answer the call"
-                                                    description="Automatically redirect incoming calls to another number if you do not answer within a set time."
+                                                    :content="$t('When user does not answer the call')"
+                                                    :description="$t('Automatically redirect incoming calls to another number if you do not answer within a set time.')"
                                                     :conditions="[() => options.permissions.extension_forward_no_answer]" />
 
                                                 <ToggleElement name="forward_no_answer_enabled" :labels="{
-                                                    on: 'On',
-                                                    off: 'Off',
+                                                    on: $t('On'),
+                                                    off: $t('Off'),
                                                 }" true-value="true" false-value="false"
                                                     :conditions="[() => options.permissions.extension_forward_no_answer]" />
 
                                                 <SelectElement name="forward_no_answer_action"
                                                     :items="options.forwarding_types" :search="true" :native="false"
-                                                    label="Choose Action" input-type="search" autocomplete="off"
-                                                    placeholder="Choose Action" :floating="false" :strict="false"
+                                                    :label="$t('Choose Action')" input-type="search" autocomplete="off"
+                                                    :placeholder="$t('Choose Action')" :floating="false" :strict="false"
                                                     :conditions="[['forward_no_answer_enabled', '==', 'true']]"
                                                     :columns="{
                                                         sm: {
@@ -739,10 +739,10 @@
                                                         emit('error', error);
                                                         return [];  // Return an empty array in case of error
                                                     }
-                                                }" :search="true" label-prop="name" :native="false" label="Target"
+                                                }" :search="true" label-prop="name" :native="false" :label="$t('Target')"
                                                     input-type="search" allow-absent :object="true"
                                                     :format-data="formatTarget" autocomplete="off"
-                                                    placeholder="Choose Target" :floating="false" :strict="false"
+                                                    :placeholder="$t('Choose Target')" :floating="false" :strict="false"
                                                     :columns="{
                                                         sm: {
                                                             container: 6,
@@ -753,8 +753,8 @@
                                                         ['forward_no_answer_action', 'not_in', ['external']]
                                                     ]" />
 
-                                                <TextElement name="forward_no_answer_external_target" label="Target"
-                                                    placeholder="Enter External Number" :floating="false" :columns="{
+                                                <TextElement name="forward_no_answer_external_target" :label="$t('Target')"
+                                                    :placeholder="$t('Enter External Number')" :floating="false" :columns="{
                                                         sm: {
                                                             container: 6,
                                                         },
@@ -769,20 +769,20 @@
 
 
                                                 <StaticElement name="forward_user_not_registered_title" tag="h4"
-                                                    content="When Device Is Not Registered (Internet Outage)"
-                                                    description="Redirect calls to a different number if your device is not registered or unreachable."
+                                                    :content="$t('When Device Is Not Registered (Internet Outage)')"
+                                                    :description="$t('Redirect calls to a different number if your device is not registered or unreachable.')"
                                                     :conditions="[() => options.permissions.extension_forward_not_registered]" />
 
                                                 <ToggleElement name="forward_user_not_registered_enabled" :labels="{
-                                                    on: 'On',
-                                                    off: 'Off',
+                                                    on: $t('On'),
+                                                    off: $t('Off'),
                                                 }" true-value="true" false-value="false"
                                                     :conditions="[() => options.permissions.extension_forward_not_registered]" />
 
                                                 <SelectElement name="forward_user_not_registered_action"
                                                     :items="options.forwarding_types" :search="true" :native="false"
-                                                    label="Choose Action" input-type="search" autocomplete="off"
-                                                    placeholder="Choose Action" :floating="false" :strict="false"
+                                                    :label="$t('Choose Action')" input-type="search" autocomplete="off"
+                                                    :placeholder="$t('Choose Action')" :floating="false" :strict="false"
                                                     :conditions="[['forward_user_not_registered_enabled', '==', 'true']]"
                                                     :columns="{
                                                         sm: {
@@ -813,10 +813,10 @@
                                                         emit('error', error);
                                                         return [];  // Return an empty array in case of error
                                                     }
-                                                }" :search="true" label-prop="name" :native="false" label="Target"
+                                                }" :search="true" label-prop="name" :native="false" :label="$t('Target')"
                                                     input-type="search" allow-absent :object="true"
                                                     :format-data="formatTarget" autocomplete="off"
-                                                    placeholder="Choose Target" :floating="false" :strict="false"
+                                                    :placeholder="$t('Choose Target')" :floating="false" :strict="false"
                                                     :columns="{
                                                         sm: {
                                                             container: 6,
@@ -828,7 +828,7 @@
                                                     ]" />
 
                                                 <TextElement name="forward_user_not_registered_external_target"
-                                                    label="Target" placeholder="Enter External Number" :floating="false"
+                                                    :label="$t('Target')" :placeholder="$t('Enter External Number')" :floating="false"
                                                     :columns="{
                                                         sm: {
                                                             container: 6,
@@ -844,43 +844,43 @@
 
 
                                                 <StaticElement name="follow_me_title" tag="h4"
-                                                    content="Call Sequence (Follow Me)"
-                                                    description="Calls ring all your devices first, then your backup destinations one at a time until someone answers"
+                                                    :content="$t('Call Sequence (Follow Me)')"
+                                                    :description="$t('Calls ring all your devices first, then your backup destinations one at a time until someone answers')"
                                                     :conditions="[() => options.permissions.extension_call_sequence]" />
 
                                                 <ToggleElement name="follow_me_enabled" :labels="{
-                                                    on: 'On',
-                                                    off: 'Off',
+                                                    on: $t('On'),
+                                                    off: $t('Off'),
                                                 }" true-value="true" false-value="false"
                                                     :conditions="[() => options.permissions.extension_call_sequence]" />
 
                                                 <SelectElement name="follow_me_ring_my_phone_timeout"
                                                     :items="timeoutOptions" :search="true" :native="false"
-                                                    label="Ring my devices first for" input-type="search" allow-absent
+                                                    :label="$t('Ring my devices first for')" input-type="search" allow-absent
                                                     autocomplete="off" :columns="{
 
                                                         sm: {
                                                             container: 6,
                                                         },
                                                     }" size="sm"
-                                                    info="How long to ring your devices before trying your other destinations or contacts."
-                                                    placeholder="Select option" :floating="false"
+                                                    :info="$t('How long to ring your devices before trying your other destinations or contacts.')"
+                                                    :placeholder="$t('Select option')" :floating="false"
                                                     :conditions="[['follow_me_enabled', '==', 'true']]" />
 
 
                                                 <TagsElement name="selectedDestinations" :close-on-select="true"
                                                     :items="availableDestinations" :create="true" :search="true"
                                                     :groups="true" :native="false"
-                                                    label="Add Backup Destinations or Contacts" input-type="search"
+                                                    :label="$t('Add Backup Destinations or Contacts')" input-type="search"
                                                     autocomplete="off"
-                                                    placeholder="Search by name, extension, or enter a number"
+                                                    :placeholder="$t('Search by name, extension, or enter a number')"
                                                     :floating="false" :hide-selected="false" :object="true"
                                                     :group-hide-empty="true" :append-new-option="false" :submit="false"
-                                                    description="Choose from the list of available options or enter an external number manually."
+                                                    :description="$t('Choose from the list of available options or enter an external number manually.')"
                                                     :conditions="[['follow_me_enabled', '==', 'true']]" />
 
                                                 <ButtonElement @click="addSelectedDestinations"
-                                                    name="addFollowMeDestinationsButton" button-label="Add to Sequence"
+                                                    name="addFollowMeDestinationsButton" :button-label="$t('Add to Sequence')"
                                                     :secondary="true" align="center" :full="false"
                                                     :conditions="[['follow_me_enabled', '==', 'true']]" />
 
@@ -895,11 +895,11 @@
                                                                 const num = el$.parent.value.destination;
                                                                 return getDestinationLabel(num);
                                                             }" :columns="{ default: { container: 8, }, sm: { container: 4, }, }"
-                                                                label="Destination"
+                                                                :label="$t('Destination')"
                                                                 :attrs="{ class: 'text-base font-semibold' }" />
 
                                                             <SelectElement name="delay" :items="delayOptions"
-                                                                :search="true" :native="false" label="Delay"
+                                                                :search="true" :native="false" :label="$t('Delay')"
                                                                 input-type="search" allow-absent autocomplete="off"
                                                                 :columns="{
                                                                     default: {
@@ -909,12 +909,12 @@
                                                                         container: 4,
                                                                     },
                                                                 }" size="sm"
-                                                                info="How many seconds to wait before starting to ring this member."
-                                                                placeholder="Select option" :floating="false" />
+                                                                :info="$t('How many seconds to wait before starting to ring this member.')"
+                                                                :placeholder="$t('Select option')" :floating="false" />
 
 
                                                             <SelectElement name="timeout" :items="timeoutOptions"
-                                                                :search="true" :native="false" label="Ring for"
+                                                                :search="true" :native="false" :label="$t('Ring for')"
                                                                 input-type="search" allow-absent autocomplete="off"
                                                                 :columns="{
                                                                     default: {
@@ -924,15 +924,15 @@
                                                                         container: 4,
                                                                     },
                                                                 }" size="sm"
-                                                                info="How many seconds to keep ringing this member before giving up."
-                                                                placeholder="Select option" :floating="false" />
+                                                                :info="$t('How many seconds to keep ringing this member before giving up.')"
+                                                                :placeholder="$t('Select option')" :floating="false" />
 
 
                                                             <ToggleElement name="prompt" align="left" size="sm"
                                                                 true-value="1" false-value="false"
-                                                                text="Enable answer confirmation"
-                                                                description="This prevents voicemails and automated systems from answering a call."
-                                                                info="Enable answer confirmation to prevent voicemails and automated systems from answering a call." />
+                                                                :text="$t('Enable answer confirmation')"
+                                                                :description="$t('This prevents voicemails and automated systems from answering a call.')"
+                                                                :info="$t('Enable answer confirmation to prevent voicemails and automated systems from answering a call.')" />
 
 
                                                         </ObjectElement>
@@ -941,34 +941,34 @@
 
                                                 <GroupElement name="container_forward" />
 
-                                                <ButtonElement name="submit_forward" button-label="Save" :submits="true"
+                                                <ButtonElement name="submit_forward" :button-label="$t('Save')" :submits="true"
                                                     align="right" />
 
 
 
                                                 <!-- Voicemail Tab -->
 
-                                                <StaticElement name="voicemail_title" tag="h4" content="Voicemail"
-                                                    description="Customize voicemail preferences" />
-                                                <ToggleElement name="voicemail_enabled" text="Status" true-value="true"
+                                                <StaticElement name="voicemail_title" tag="h4" :content="$t('Voicemail')"
+                                                    :description="$t('Customize voicemail preferences')" />
+                                                <ToggleElement name="voicemail_enabled" :text="$t('Status')" true-value="true"
                                                     false-value="false" default="true" />
 
                                                 <HiddenElement name="voicemail_id" :meta="true"
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
-                                                <TextElement name="voicemail_password" label="Password" :columns="{
+                                                <TextElement name="voicemail_password" :label="$t('Password')" :columns="{
                                                     sm: {
                                                         container: 6,
                                                     },
                                                 }" :conditions="[['voicemail_enabled', '==', 'true']]" />
 
-                                                <TextElement name="voicemail_description" label="Description"
-                                                    placeholder="Enter Description" :floating="false"
+                                                <TextElement name="voicemail_description" :label="$t('Description')"
+                                                    :placeholder="$t('Enter Description')" :floating="false"
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
                                                 <ToggleElement name="voicemail_transcription_enabled"
-                                                    text="Voicemail Transcription" true-value="true" false-value="false"
-                                                    description="Convert voicemail messages to text using AI-powered transcription."
+                                                    :text="$t('Voicemail Transcription')" true-value="true" false-value="false"
+                                                    :description="$t('Convert voicemail messages to text using AI-powered transcription.')"
                                                     :conditions="[
                                                         (form$) => form$.el$('voicemail_enabled')?.value == 'true' && options.permissions.manage_voicemail_transcription
                                                     ]" />
@@ -977,9 +977,9 @@
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
                                                 <SelectElement name="voicemail_file" :items="voicemailFileOptions"
-                                                    :native="false" label="Voicemail Recording Delivery"
+                                                    :native="false" :label="$t('Voicemail Recording Delivery')"
                                                     value-prop="value" label-prop="label"
-                                                    description="Choose whether voicemail emails include the recording as an attachment, a download link, or not at all."
+                                                    :description="$t('Choose whether voicemail emails include the recording as an attachment, a download link, or not at all.')"
                                                     @change="handleVoicemailFileChange"
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
@@ -987,9 +987,9 @@
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
                                                 <ToggleElement name="voicemail_local_after_email"
-                                                    text="Automatically Delete Voicemail After Email" true-value="false"
+                                                    :text="$t('Automatically Delete Voicemail After Email')" true-value="false"
                                                     false-value="true"
-                                                    description="Remove voicemail from the cloud once the email is sent."
+                                                    :description="$t('Remove voicemail from the cloud once the email is sent.')"
                                                     :disabled="isAutoDeleteDisabled"
                                                     :conditions="[
                                                         (form$) => form$.el$('voicemail_enabled')?.value == 'true' && options.permissions.manage_voicemail_auto_delete
@@ -997,10 +997,10 @@
 
                                                 <TagsElement name="voicemail_copies" :search="true"
                                                     :items="options.all_voicemails"
-                                                    label="Copy Voicemail to Other Extensions" input-type="search"
+                                                    :label="$t('Copy Voicemail to Other Extensions')" input-type="search"
                                                     autocomplete="off"
-                                                    description="Automatically send a copy of the voicemail to selected additional extensions."
-                                                    :floating="false" placeholder="Enter name or extension"
+                                                    :description="$t('Automatically send a copy of the voicemail to selected additional extensions.')"
+                                                    :floating="false" :placeholder="$t('Enter name or extension')"
                                                     :conditions="[
                                                         (form$) => form$.el$('voicemail_enabled')?.value == 'true' && options.permissions.manage_voicemail_copies
                                                     ]" />
@@ -1010,14 +1010,14 @@
 
                                                 <!-- Voicemail Greetings -->
                                                 <StaticElement name="voicemail_greetings_title" tag="h4"
-                                                    content="Voicemail Greetings"
-                                                    description="Customize the message that callers hear when they reach your voicemail."
+                                                    :content="$t('Voicemail Greetings')"
+                                                    :description="$t('Customize the message that callers hear when they reach your voicemail.')"
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
 
                                                 <SelectElement name="greeting_id" :search="true" :native="false"
-                                                    label="Select Greeting" :items="fetchGreetings" input-type="search"
-                                                    autocomplete="off" placeholder="Select Greeting" :floating="false"
+                                                    :label="$t('Select Greeting')" :items="fetchGreetings" input-type="search"
+                                                    autocomplete="off" :placeholder="$t('Select Greeting')" :floating="false"
                                                     :strict="false" :columns="{
                                                         sm: {
                                                             container: 6,
@@ -1114,8 +1114,8 @@
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
                                                 <StaticElement name="voicemail_name_title" tag="h4"
-                                                    content="Dial-by-name Directory Name"
-                                                    description="Set the recorded name used by the dial-by-name directory to help callers locate this mailbox."
+                                                    :content="$t('Dial-by-name Directory Name')"
+                                                    :description="$t('Set the recorded name used by the dial-by-name directory to help callers locate this mailbox.')"
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
                                                 <StaticElement name="name_greeting_title" :columns="{
@@ -1128,14 +1128,14 @@
                                                     lg: {
                                                         container: 3,
                                                     },
-                                                }" label="Recorded Name" info=""
+                                                }" :label="$t('Recorded Name')" info=""
                                                     :conditions="[['voicemail_enabled', '==', 'true']]">
                                                     <div class="pt-2 flex items-center whitespace-nowrap space-x-2">
-                                                        <Badge v-if="recordedName == 'Custom recording'"
+                                                        <Badge v-if="hasCustomRecordedName"
                                                             :text="recordedName" backgroundColor="bg-green-50"
                                                             textColor="text-green-700" ringColor="ring-green-600/20" />
 
-                                                        <Badge v-if="recordedName == 'System Default'"
+                                                        <Badge v-if="!hasCustomRecordedName"
                                                             :text="recordedName" backgroundColor="bg-blue-50"
                                                             textColor="text-blue-700" ringColor="ring-blue-600/20" />
                                                     </div>
@@ -1150,7 +1150,7 @@
                                                         :columns="{
                                                             container: 2,
                                                         }" name="play_name_button" label="&nbsp;" :secondary="true"
-                                                        :conditions="[function () { return recordedName == 'Custom recording' }]"
+                                                        :conditions="[function () { return hasCustomRecordedName }]"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                                         <PlayCircleIcon
                                                             class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
@@ -1173,7 +1173,7 @@
                                                         label="&nbsp;" :secondary="true" :columns="{
                                                             container: 2,
                                                         }"
-                                                        :conditions="[function () { return recordedName == 'Custom recording' }]"
+                                                        :conditions="[function () { return hasCustomRecordedName }]"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                                         <CloudArrowDownIcon
                                                             class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
@@ -1206,7 +1206,7 @@
                                                         label="&nbsp;" :secondary="true" :columns="{
                                                             container: 2,
                                                         }"
-                                                        :conditions="[function () { return recordedName == 'Custom recording' }]"
+                                                        :conditions="[function () { return hasCustomRecordedName }]"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                                         <TrashIcon
                                                             class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
@@ -1233,23 +1233,23 @@
 
                                                 <!-- Voicemail Advanced -->
                                                 <StaticElement name="voicemail_advanced_title" tag="h4"
-                                                    content="Advanced"
-                                                    description="Set advanced settings for this voicemail."
+                                                    :content="$t('Advanced')"
+                                                    :description="$t('Set advanced settings for this voicemail.')"
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
 
-                                                <ToggleElement name="voicemail_tutorial" text="Play Voicemail Tutorial"
+                                                <ToggleElement name="voicemail_tutorial" :text="$t('Play Voicemail Tutorial')"
                                                     true-value="true" false-value="false"
-                                                    description="Provide user with a guided tutorial when accessing voicemail for the first time."
+                                                    :description="$t('Provide user with a guided tutorial when accessing voicemail for the first time.')"
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
                                                 <StaticElement name="divider15" tag="hr"
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
                                                 <ToggleElement name="voicemail_recording_instructions"
-                                                    text="Play Recording Instructions" true-value="true"
+                                                    :text="$t('Play Recording Instructions')" true-value="true"
                                                     false-value="false"
-                                                    description='Play a prompt instructing callers to "Record your message after the tone. Stop speaking to end the recording."'
+                                                    :description='$t("Play a prompt instructing callers to \"Record your message after the tone. Stop speaking to end the recording.\"")'
                                                     :conditions="[
                                                         (form$) => form$.el$('voicemail_enabled')?.value == 'true' && options.permissions.manage_voicemail_recording_instructions
                                                     ]" />
@@ -1261,7 +1261,7 @@
                                                 ]" />
 
                                                 <TextElement name="voicemail_sms_to"
-                                                    label="Mobile Number to Receive Voicemail Notifications" :columns="{
+                                                    :label="$t('Mobile Number to Receive Voicemail Notifications')" :columns="{
                                                         sm: {
                                                             container: 6,
                                                         },
@@ -1272,9 +1272,9 @@
                                                     ]" />
 
                                                 <TextElement name="voicemail_alternate_greet_id"
-                                                    label="Announce Voicemail Extension as"
-                                                    description="The parameter allows you to override the voicemail extension number spoken by the system in the voicemail greeting. This controls system greetings that read back an extension number, not user recorded greetings."
-                                                    :floating="false" placeholder="Enter extension" :columns="{
+                                                    :label="$t('Announce Voicemail Extension as')"
+                                                    :description="$t('The parameter allows you to override the voicemail extension number spoken by the system in the voicemail greeting. This controls system greetings that read back an extension number, not user recorded greetings.')"
+                                                    :floating="false" :placeholder="$t('Enter extension')" :columns="{
                                                         sm: {
                                                             wrapper: 6,
                                                         },
@@ -1284,24 +1284,24 @@
 
                                                 <GroupElement name="container_voicemail" />
 
-                                                <ButtonElement name="submit_voicemail" button-label="Save"
+                                                <ButtonElement name="submit_voicemail" :button-label="$t('Save')"
                                                     :submits="true" align="right" />
 
                                                 <!-- Devices tab-->
-                                                <StaticElement name="devices_title" tag="h4" content="Assigned Devices"
-                                                    description="View and manage devices assigned to this extension, or assign a new device." />
+                                                <StaticElement name="devices_title" tag="h4" :content="$t('Assigned Devices')"
+                                                    :description="$t('View and manage devices assigned to this extension, or assign a new device.')" />
 
 
                                                 <GroupElement name="container1" />
 
-                                                <ButtonElement name="assign_existing" button-label="Assign Existing"
+                                                <ButtonElement name="assign_existing" :button-label="$t('Assign Existing')"
                                                     @click="handleAssignDeviceButtonClick" :loading="isModalLoading"
                                                     :conditions="[() => options.permissions.extension_device_assign]"
                                                     :columns="{
                                                         container: 6,
                                                     }" align="left" :secondary="true" />
 
-                                                <ButtonElement name="add_device" button-label="Add Device" align="right"
+                                                <ButtonElement name="add_device" :button-label="$t('Add Device')" align="right"
                                                     @click="handleAddDeviceButtonClick" :loading="isModalLoading"
                                                     :conditions="[() => options.permissions.extension_device_create]"
                                                     :columns="{
@@ -1318,14 +1318,14 @@
 
                                                 <GroupElement name="container_devices" />
 
-                                                <ButtonElement name="submit_devices" button-label="Save" :submits="true"
+                                                <ButtonElement name="submit_devices" :button-label="$t('Save')" :submits="true"
                                                     align="right" />
 
                                                 <!-- Mobile App tab -->
 
                                                 <StaticElement name="mobile_app_title" tag="h4"
-                                                    content="Mobile App Settings"
-                                                    description="Manage mobile app assigned to this extension" />
+                                                    :content="$t('Mobile App Settings')"
+                                                    :description="$t('Manage mobile app assigned to this extension')" />
 
 
                                                 <StaticElement name="mobile_app_status"
@@ -1337,9 +1337,9 @@
                                                             <div class="size-2 rounded-full bg-current" />
                                                         </div>
                                                         <h1 class="flex gap-x-3 text-md">
-                                                            <span class="font-semibold ">Mobile App Status:</span>
+                                                            <span class="font-semibold ">{{ $t('Mobile App Status') }}:</span>
                                                             <Badge backgroundColor="bg-green-100"
-                                                                textColor="text-green-700" :text="'Active'"
+                                                                textColor="text-green-700" :text="$t('Active')"
                                                                 ringColor="ring-green-400/20"
                                                                 class="px-2 py-1 text-xs font-semibold" />
                                                         </h1>
@@ -1351,9 +1351,9 @@
                                                             <div class="size-2 rounded-full bg-current" />
                                                         </div>
                                                         <h1 class="flex gap-x-3 text-md">
-                                                            <span class="font-semibold ">Mobile App Status:</span>
+                                                            <span class="font-semibold ">{{ $t('Mobile App Status') }}:</span>
                                                             <Badge backgroundColor="bg-blue-100"
-                                                                textColor="text-blue-700" :text="'Contact Only'"
+                                                                textColor="text-blue-700" :text="$t('Contact Only')"
                                                                 ringColor="ring-blue-400/20"
                                                                 class="px-2 py-1 text-xs font-semibold" />
                                                         </h1>
@@ -1365,9 +1365,9 @@
                                                             <div class="size-2 rounded-full bg-current" />
                                                         </div>
                                                         <h1 class="flex gap-x-3 text-md">
-                                                            <span class="font-semibold ">Mobile App Status:</span>
+                                                            <span class="font-semibold ">{{ $t('Mobile App Status') }}:</span>
                                                             <Badge backgroundColor="bg-gray-100"
-                                                                textColor="text-gray-700" :text="'Not Enabled'"
+                                                                textColor="text-gray-700" :text="$t('Not Enabled')"
                                                                 ringColor="ring-gray-400/20"
                                                                 class="px-2 py-1 text-xs font-semibold" />
                                                         </h1>
@@ -1380,7 +1380,7 @@
                                                         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                                             <div>
                                                                 <div class="flex items-center gap-x-3">
-                                                                    <span class="font-semibold">User Status:</span>
+                                                                    <span class="font-semibold">{{ $t('User Status') }}:</span>
                                                                     <div class="relative inline-flex items-center gap-2">
                                                                         <button type="button"
                                                                             :disabled="!canChangeMobileAppState"
@@ -1390,7 +1390,7 @@
                                                                                 canChangeMobileAppState ? 'cursor-pointer' : 'cursor-default opacity-80'
                                                                             ]"
                                                                             @click.stop="toggleMobileAppStateMenu">
-                                                                            <span>{{ ringotelUser?.state_label ?? 'Unavailable' }}</span>
+                                                                            <span>{{ ringotelUser?.state_label ?? $t('Unavailable') }}</span>
                                                                             <ChevronDownIcon v-if="canChangeMobileAppState"
                                                                                 class="h-3 w-3" aria-hidden="true" />
                                                                         </button>
@@ -1406,45 +1406,45 @@
                                                                                 class="block w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
                                                                                 :class="{ 'font-semibold text-gray-900': isMobileAppAvailableState(ringotelUser) }"
                                                                                 @click="handleRingotelStateOptionClick(false)">
-                                                                                Available
+                                                                                {{ $t('Available') }}
                                                                             </button>
                                                                             <button type="button"
                                                                                 class="block w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
                                                                                 :class="{ 'font-semibold text-gray-900': isMobileAppDndState(ringotelUser) }"
                                                                                 @click="handleRingotelStateOptionClick(true)">
-                                                                                Do Not Disturb
+                                                                                {{ $t('Do Not Disturb') }}
                                                                             </button>
                                                                         </div>
                                                                     </div>
                                                                 </div>
                                                                 <p class="mt-1 text-xs text-gray-500">
-                                                                    Mobile App state controls whether DND should be toggled on or off.
+                                                                    {{ $t('Mobile App state controls whether DND should be toggled on or off.') }}
                                                                 </p>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </StaticElement>
 
-                                                <ButtonElement name="enable_mobile_app" button-label="Enable"
-                                                    label="Step 1: Enable Mobile App for Extension"
+                                                <ButtonElement name="enable_mobile_app" :button-label="$t('Enable')"
+                                                    :label="$t('Step 1: Enable Mobile App for Extension')"
                                                     @click="handleMobileAppEnableButtonClick"
-                                                    description="Allow this extension to sign in and use the mobile app."
+                                                    :description="$t('Allow this extension to sign in and use the mobile app.')"
                                                     :conditions="[() => !mobileAppOptions?.mobile_app && mobileAppOptions && !creatingInitiated]" />
 
                                                 <GroupElement name="container2"
                                                     :conditions="[() => !mobileAppOptions?.mobile_app && mobileAppOptions]" />
 
                                                 <ButtonElement name="enable_mobile_app_contact"
-                                                    button-label="Add Contact"
-                                                    label="OR Step 1: Add to Address Book (BLF)" :secondary="true"
+                                                    :button-label="$t('Add Contact')"
+                                                    :label="$t('OR Step 1: Add to Address Book (BLF)')" :secondary="true"
                                                     @click="handleMobileAppContactButtonClick"
-                                                    description="Create a new contact entry for this extension in the company address book."
+                                                    :description="$t('Create a new contact entry for this extension in the company address book.')"
                                                     :conditions="[() => !mobileAppOptions?.mobile_app && mobileAppOptions && !creatingInitiated]" />
 
 
                                                 <SelectElement name="mobile_app_connection"
                                                     :items="mobileAppOptions?.connections" :search="true"
-                                                    :native="false" label="Step 2: Select connection" label-prop="name"
+                                                    :native="false" :label="$t('Step 2: Select connection')" label-prop="name"
                                                     value-prop="id" input-type="search" autocomplete="off"
                                                     :strict="false" :columns="{
                                                         sm: {
@@ -1459,12 +1459,12 @@
                                                         class="flex bg-white p-6 rounded-lg shadow-md ">
 
                                                         <div class="grow">
-                                                            <h3 class="text-lg font-semibold mb-4">Mobile App Details
+                                                            <h3 class="text-lg font-semibold mb-4">{{ $t('Mobile App Details') }}
                                                             </h3>
                                                             <ul class="mb-4 space-y-1 text-sm">
                                                                 <li
                                                                     class="flex flex-col sm:flex-row sm:items-center mt-1 gap-1 text-sm ">
-                                                                    <strong>Username:</strong> {{
+                                                                    <strong>{{ $t('Username') }}:</strong> {{
                                                                         mobileApp.user.username }}
                                                                     <button type="button"
                                                                         @click="handleCopyToClipboard(mobileApp.user.username)">
@@ -1475,7 +1475,7 @@
 
                                                                 <li
                                                                     class="flex flex-col sm:flex-row sm:items-center mt-1 gap-1 text-sm ">
-                                                                    <strong>Domain:</strong> {{ mobileApp.user.domain }}
+                                                                    <strong>{{ $t('Domain') }}:</strong> {{ mobileApp.user.domain }}
                                                                     <button type="button"
                                                                         @click="handleCopyToClipboard(mobileApp.user.domain)">
                                                                         <ClipboardDocumentIcon
@@ -1485,7 +1485,7 @@
 
                                                                 <li
                                                                     class="flex flex-col sm:flex-row sm:items-center mt-1 gap-1 text-sm ">
-                                                                    <strong>Password:</strong>
+                                                                    <strong>{{ $t('Password') }}:</strong>
                                                                     <span v-if="mobileApp.user.password"
                                                                         class="font-mono">{{
                                                                             mobileApp.user.password }}</span>
@@ -1496,8 +1496,7 @@
                                                                     </button>
                                                                     <a v-if="mobileApp.user.password_url"
                                                                         :href="mobileApp.user.password_url"
-                                                                        target="_blank">Click here
-                                                                        to get password</a>
+                                                                        target="_blank">{{ $t('Click here to get password') }}</a>
                                                                     <span
                                                                         v-if="!mobileApp.user.password && !mobileApp.user.password_url"
                                                                         class="font-mono">**********</span>
@@ -1507,9 +1506,9 @@
                                                         </div>
 
                                                         <div v-if="mobileApp.qrcode" class="">
-                                                            <h4 class="text-md font-semibold mb-2">QR Code</h4>
+                                                            <h4 class="text-md font-semibold mb-2">{{ $t('QR Code') }}</h4>
                                                             <img :src="`data:image/png;base64,${mobileApp.qrcode}`"
-                                                                alt="QR Code" class="w-30 h-30 border rounded" />
+                                                                :alt="$t('QR Code')" class="w-30 h-30 border rounded" />
                                                             <!-- <p class="text-xs text-gray-400 mt-1">Scan this code in the
                                                                 mobile app to sign in.</p> -->
                                                         </div>
@@ -1517,43 +1516,43 @@
 
                                                 </StaticElement>
 
-                                                <ButtonElement name="submit_enabling_mobile_app" button-label="Submit"
+                                                <ButtonElement name="submit_enabling_mobile_app" :button-label="$t('Submit')"
                                                     @click="handleMobileAppSubmitButtonClick"
                                                     :loading="isMobileAppLoading.submit"
                                                     :conditions="[() => !mobileAppOptions?.mobile_app && mobileAppOptions && creatingInitiated]" />
 
                                                 <ButtonElement name="reset_mobile_app_password"
-                                                    button-label="Reset Credentials" label="Reset Mobile App Login"
+                                                    :button-label="$t('Reset Credentials')" :label="$t('Reset Mobile App Login')"
                                                     :loading="isMobileAppLoading.reset"
                                                     @click="handleMobileAppResetButtonClick"
-                                                    description="Generate new app credentials and sign out all currently logged-in devices."
+                                                    :description="$t('Generate new app credentials and sign out all currently logged-in devices.')"
                                                     :conditions="[() => !!mobileAppOptions?.mobile_app && mobileAppOptions?.mobile_app?.status == 1]" />
 
                                                 <GroupElement name="container3"
                                                     :conditions="[() => !!mobileAppOptions?.mobile_app && mobileAppOptions?.mobile_app?.status == 1]" />
 
-                                                <ButtonElement name="deactivate_mobile_app" button-label="Deactivate"
-                                                    label="Suspend Mobile App Access"
+                                                <ButtonElement name="deactivate_mobile_app" :button-label="$t('Deactivate')"
+                                                    :label="$t('Suspend Mobile App Access')"
                                                     :loading="isMobileAppLoading.deactivate"
                                                     @click="handleMobileAppDeactivateButtonClick"
-                                                    description="Prevent this extension from signing in to the mobile app. The user will remain visible in the address book."
+                                                    :description="$t('Prevent this extension from signing in to the mobile app. The user will remain visible in the address book.')"
                                                     :secondary="true"
                                                     :conditions="[() => !!mobileAppOptions?.mobile_app && mobileAppOptions?.mobile_app?.status == 1]" />
 
 
-                                                <ButtonElement name="activate_mobile_app" button-label="Activate"
-                                                    label="Activate Mobile App" :loading="isMobileAppLoading.activate"
+                                                <ButtonElement name="activate_mobile_app" :button-label="$t('Activate')"
+                                                    :label="$t('Activate Mobile App')" :loading="isMobileAppLoading.activate"
                                                     @click="handleMobileAppActivateButtonClick"
-                                                    description="Allow this extension to sign in and use the mobile app."
+                                                    :description="$t('Allow this extension to sign in and use the mobile app.')"
                                                     :conditions="[() => !!mobileAppOptions?.mobile_app && mobileAppOptions?.mobile_app?.status == -1]" />
 
                                                 <GroupElement name="container4"
                                                     :conditions="[() => !!mobileAppOptions?.mobile_app && mobileAppOptions?.mobile_app?.status == -1]" />
 
-                                                <ButtonElement name="remove_mobile_app" button-label="Remove"
-                                                    label="Remove Mobile App" @click="handleMobileAppRemoveButtonClick"
+                                                <ButtonElement name="remove_mobile_app" :button-label="$t('Remove')"
+                                                    :label="$t('Remove Mobile App')" @click="handleMobileAppRemoveButtonClick"
                                                     :loading="isMobileAppLoading.remove"
-                                                    description="Permanently delete the mobile app association for this extension."
+                                                    :description="$t('Permanently delete the mobile app association for this extension.')"
                                                     :danger="true"
                                                     :conditions="[() => !!mobileAppOptions?.mobile_app]" />
 
@@ -1563,14 +1562,14 @@
                                                 <StaticElement name="mobile_app_devices"
                                                     :conditions="[() => !!mobileAppOptions?.mobile_app && mobileAppOptions?.mobile_app?.status == 1]">
                                                     <div class="mt-5">
-                                                        <h3 class="text-sm font-semibold text-gray-900">Mobile App Devices</h3>
+                                                        <h3 class="text-sm font-semibold text-gray-900">{{ $t('Mobile App Devices') }}</h3>
                                                         <div v-if="ringotelUser?.devices?.length"
                                                             class="mt-3 overflow-hidden rounded-md border border-gray-200">
                                                             <table class="min-w-full divide-y divide-gray-200">
                                                                 <thead class="bg-gray-50">
                                                                     <tr>
-                                                                        <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700">Device</th>
-                                                                        <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700">Last Seen</th>
+                                                                        <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700">{{ $t('Device') }}</th>
+                                                                        <th class="px-3 py-2 text-left text-xs font-semibold text-gray-700">{{ $t('Last Seen') }}</th>
                                                                         <th class="px-3 py-2 text-right text-xs font-semibold text-gray-700"></th>
                                                                     </tr>
                                                                 </thead>
@@ -1584,7 +1583,7 @@
                                                                         <td class="px-3 py-2 text-right">
                                                                             <button v-if="canDeleteMobileAppDevice(device)"
                                                                                 type="button"
-                                                                                title="Remove device"
+                                                                                :title="$t('Remove device')"
                                                                                 :disabled="isMobileAppLoading.device"
                                                                                 @click="handleMobileAppDeviceDeleteClick(device)"
                                                                                 class="inline-flex h-7 w-7 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-rose-600 disabled:cursor-not-allowed disabled:text-gray-300">
@@ -1596,7 +1595,7 @@
                                                             </table>
                                                         </div>
                                                         <div v-else class="mt-3 rounded-md border border-gray-200 bg-gray-50 px-3 py-3 text-sm text-gray-500">
-                                                            No mobile app devices found.
+                                                            {{ $t('No mobile app devices found.') }}
                                                         </div>
                                                     </div>
                                                 </StaticElement>
@@ -1636,18 +1635,18 @@
 
                                                 <GroupElement name="container_mobile_app" />
 
-                                                <ButtonElement name="submit_mobile_app" button-label="Save"
+                                                <ButtonElement name="submit_mobile_app" :button-label="$t('Save')"
                                                     :submits="true" align="right" />
 
 
                                                 <!-- SIP Credentials -->
 
                                                 <StaticElement name="sip_credentials_title" tag="h4"
-                                                    content="Show SIP Credentials" description="" />
+                                                    :content="$t('Show SIP Credentials')" description="" />
 
-                                                <ButtonElement name="show_sip_credentials" button-label="Show"
+                                                <ButtonElement name="show_sip_credentials" :button-label="$t('Show')"
                                                     :conditions="[() => { return !sip_credentials }]"
-                                                    @click="handleSipCredentialsButtonClick" label="SIP Credentials"
+                                                    @click="handleSipCredentialsButtonClick" :label="$t('SIP Credentials')"
                                                     :loading="isSipCredentialsLoading" />
 
                                                 <StaticElement name="sip_credentials"
@@ -1656,7 +1655,7 @@
                                                         <div>
                                                             <dt
                                                                 class="text-sm font-medium text-gray-500 sm:w-40 sm:shrink-0">
-                                                                Domain</dt>
+                                                                {{ $t('Domain') }}</dt>
                                                             <dd
                                                                 class="flex flex-row items-center mt-1 gap-2 text-sm text-gray-900 sm:col-span-2">
                                                                 {{ sip_credentials?.context }}
@@ -1672,7 +1671,7 @@
                                                         <div>
                                                             <dt
                                                                 class="text-sm font-medium text-gray-500 sm:w-40 sm:shrink-0">
-                                                                Username</dt>
+                                                                {{ $t('Username') }}</dt>
                                                             <dd
                                                                 class="flex flex-row items-center mt-1 gap-2 text-sm text-gray-900 sm:col-span-2">
                                                                 {{ sip_credentials?.extension }}
@@ -1688,7 +1687,7 @@
                                                         <div>
                                                             <dt
                                                                 class="text-sm font-medium text-gray-500 sm:w-40 sm:shrink-0">
-                                                                Password</dt>
+                                                                {{ $t('Password') }}</dt>
                                                             <dd
                                                                 class="flex flex-row items-center mt-1 gap-2 text-sm text-gray-900 sm:col-span-2">
                                                                 {{ sip_credentials?.password }}
@@ -1706,28 +1705,28 @@
                                                 </StaticElement>
 
                                                 <ButtonElement name="regenerate_sip_credentials"
-                                                    button-label="Regenerate"
+                                                    :button-label="$t('Regenerate')"
                                                     :conditions="[() => { return !!sip_credentials }]"
                                                     @click="handleSipCredentialsRegenerateClick" :secondary="true"
                                                     :loading="isSipCredentialsRegenerateLoading" />
 
-                                                <ButtonElement name="edit_sip_password" button-label="Edit"
+                                                <ButtonElement name="edit_sip_password" :button-label="$t('Edit')"
                                                     :conditions="[() => { return !!sip_credentials }]"
                                                     @click="handleSipCredentialsEditClick" :secondary="true" />
 
                                                 <GroupElement name="container_sip_credentials" />
 
-                                                <ButtonElement name="submit_sip_credentials" button-label="Save"
+                                                <ButtonElement name="submit_sip_credentials" :button-label="$t('Save')"
                                                     :submits="true" align="right" />
 
                                                 <!-- Advaced settings -->
 
                                                 <StaticElement name="advanced_title" tag="h4"
-                                                    content="Advanced Settings" description="" />
+                                                    :content="$t('Advanced Settings')" description="" />
 
                                                 <ToggleElement name="directory_visible"
-                                                    text="Show in company dial-by-name directory"
-                                                    description="Controls whether this extension appears in the company’s dial-by-name directory. Hide extensions for devices (door phones, intercoms) or private users (e.g., executives)."
+                                                    :text="$t('Show in company dial-by-name directory')"
+                                                    :description="$t('Controls whether this extension appears in the company’s dial-by-name directory. Hide extensions for devices (door phones, intercoms) or private users (e.g., executives).')"
                                                     true-value="true" false-value="false"
                                                     :conditions="[() => options.permissions.extension_directory]" />
 
@@ -1735,16 +1734,16 @@
                                                     :conditions="[() => options.permissions.extension_directory]" />
 
                                                 <ToggleElement name="directory_exten_visible"
-                                                    text="Announce extension after name in directory"
-                                                    description="Controls whether the extension number is played after the user’s name in the directory. Useful for making it easier for callers to reach the extension directly. Disable for privacy or security reasons."
+                                                    :text="$t('Announce extension after name in directory')"
+                                                    :description="$t('Controls whether the extension number is played after the user’s name in the directory. Useful for making it easier for callers to reach the extension directly. Disable for privacy or security reasons.')"
                                                     true-value="true" false-value="false"
                                                     :conditions="[() => options.permissions.extension_directory]" />
 
                                                 <StaticElement name="divider4" tag="hr"
                                                     :conditions="[() => options.permissions.extension_directory]" />
 
-                                                <ToggleElement name="call_screen_enabled" text="Enable call screening"
-                                                    description="You can use Call Screen to find out who’s calling and why before you pick up a call."
+                                                <ToggleElement name="call_screen_enabled" :text="$t('Enable call screening')"
+                                                    :description="$t('You can use Call Screen to find out who’s calling and why before you pick up a call.')"
                                                     true-value="true" false-value="false"
                                                     :conditions="[() => options.permissions.extension_call_screen]" />
 
@@ -1754,8 +1753,8 @@
                                                 <TextElement name="max_registrations" input-type="number" :rules="[
                                                     'nullable',
                                                     'numeric',
-                                                ]" autocomplete="off" label="Maximum registrations"
-                                                    description="Enter the maximum registration allowed for this user"
+                                                ]" autocomplete="off" :label="$t('Maximum registrations')"
+                                                    :description="$t('Enter the maximum registration allowed for this user')"
                                                     :columns="{
                                                         default: {
                                                             wrapper: 6,
@@ -1770,8 +1769,8 @@
                                                 <TextElement name="limit_max" input-type="number" :rules="[
                                                     'nullable',
                                                     'numeric',
-                                                ]" autocomplete="off" label="Max number of outbound calls"
-                                                    description="Enter the max number of outgoing calls for this user."
+                                                ]" autocomplete="off" :label="$t('Max number of outbound calls')"
+                                                    :description="$t('Enter the max number of outgoing calls for this user.')"
                                                     :columns="{
                                                         default: {
                                                             wrapper: 6,
@@ -1783,23 +1782,23 @@
                                                     }" :conditions="[() => options.permissions.extension_limit]" />
 
                                                 <TextElement name="limit_destination"
-                                                    label="Hangup Cause when limit is reached" :columns="{
+                                                    :label="$t('Hangup Cause when limit is reached')" :columns="{
                                                         sm: {
                                                             container: 6,
                                                         }
                                                     }"
-                                                    description="Enter the destination to send the calls when the max number of outgoing calls has been reached."
+                                                    :description="$t('Enter the destination to send the calls when the max number of outgoing calls has been reached.')"
                                                     :conditions="[() => options.permissions.extension_limit]" />
 
-                                                <TextElement name="toll_allow" label="Toll Allow" :columns="{
+                                                <TextElement name="toll_allow" :label="$t('Toll Allow')" :columns="{
                                                     sm: {
                                                         container: 6,
                                                     }
-                                                }" description="Examples: domestic,international,local"
+                                                }" :description="$t('Examples: domestic,international,local')"
                                                     :conditions="[() => options.permissions.extension_toll]" />
 
-                                                <TextElement name="call_group" label="Call Group"
-                                                    description="A user in a call group can perform a call pickup (or an intercept) of a ringing phone belonging to another user who is also in the call group."
+                                                <TextElement name="call_group" :label="$t('Call Group')"
+                                                    :description="$t('A user in a call group can perform a call pickup (or an intercept) of a ringing phone belonging to another user who is also in the call group.')"
                                                     :columns="{
                                                         sm: {
                                                             wrapper: 6,
@@ -1810,7 +1809,7 @@
 
                                                 <SelectElement name="hold_music" :items="options.music_on_hold_options"
                                                     :groups="true" default="" :search="true" :native="false"
-                                                    label="Select custom Music On Hold" input-type="search"
+                                                    :label="$t('Select custom Music On Hold')" input-type="search"
                                                     autocomplete="off" :strict="false" :columns="{
                                                         sm: {
                                                             wrapper: 6,
@@ -1818,13 +1817,13 @@
                                                     }"
                                                     :conditions="[() => options.permissions.extension_hold_music]" />
 
-                                                <TextElement name="auth_acl" label="Auth ACL" :columns="{
+                                                <TextElement name="auth_acl" :label="$t('Auth ACL')" :columns="{
                                                     sm: {
                                                         container: 6,
                                                     }
                                                 }" />
 
-                                                <TextElement name="cidr" label="CIDR" :columns="{
+                                                <TextElement name="cidr" :label="$t('CIDR')" :columns="{
                                                     sm: {
                                                         container: 6,
                                                     }
@@ -1834,21 +1833,21 @@
                                                 <SelectElement name="sip_force_contact" :items="[
                                                     {
                                                         value: 'NDLB-connectile-dysfunction',
-                                                        label: 'Rewrite Contact IP and Port',
+                                                        label: $t('Rewrite Contact IP and Port'),
                                                     },
                                                     {
                                                         value: 'NDLB-connectile-dysfunction-2.0',
-                                                        label: 'Rewrite Contact IP and Port 2.0',
+                                                        label: $t('Rewrite Contact IP and Port 2.0'),
                                                     },
                                                     {
                                                         value: 'NDLB-tls-connectile-dysfunction',
-                                                        label: 'Rewrite TLS Contact Port',
+                                                        label: $t('Rewrite TLS Contact Port'),
                                                     },
-                                                ]" :search="true" :native="false" label="SIP Force Contact"
+                                                ]" :search="true" :native="false" :label="$t('SIP Force Contact')"
                                                     input-type="search" autocomplete="off"
                                                     :columns="{ sm: { container: 6 }, }" />
 
-                                                <TextElement name="sip_force_expires" label="SIP Force Expires"
+                                                <TextElement name="sip_force_expires" :label="$t('SIP Force Expires')"
                                                     :columns="{
                                                         sm: {
                                                             container: 6,
@@ -1857,60 +1856,60 @@
                                                 <SelectElement name="sip_bypass_media" :items="[
                                                     {
                                                         value: 'bypass-media',
-                                                        label: 'Bypass Media',
+                                                        label: $t('Bypass Media'),
                                                     },
                                                     {
                                                         value: 'bypass-media-after-bridge',
-                                                        label: 'Bypass Media After Bridge',
+                                                        label: $t('Bypass Media After Bridge'),
                                                     },
                                                     {
                                                         value: 'proxy-media',
-                                                        label: 'Proxy Media',
+                                                        label: $t('Proxy Media'),
                                                     },
-                                                ]" :search="true" :native="false" label="SIP Bypass Media "
+                                                ]" :search="true" :native="false" :label="$t('SIP Bypass Media ')"
                                                     input-type="search" autocomplete="off"
                                                     :columns="{ sm: { wrapper: 6, }, }" />
 
-                                                <TextElement name="mwi_account" label="Monitor MWI Account"
-                                                    description="MWI Account with user@domain of the voicemail to monitor." />
+                                                <TextElement name="mwi_account" :label="$t('Monitor MWI Account')"
+                                                    :description="$t('MWI Account with user@domain of the voicemail to monitor.')" />
 
-                                                <TextElement name="absolute_codec_string" label="Absolute Codec String"
-                                                    description="Absolute Codec String for the extension"
+                                                <TextElement name="absolute_codec_string" :label="$t('Absolute Codec String')"
+                                                    :description="$t('Absolute Codec String for the extension')"
                                                     :conditions="[() => options.permissions.extension_absolute_codec_string]" />
 
-                                                <TextElement name="dial_string" label="Dial String"
+                                                <TextElement name="dial_string" :label="$t('Dial String')"
                                                     :conditions="[() => options.permissions.extension_dial_string]" />
 
-                                                <ToggleElement name="force_ping" text="Force ping"
-                                                    description="Use OPTIONS to detect if extension is reachable"
+                                                <ToggleElement name="force_ping" :text="$t('Force ping')"
+                                                    :description="$t('Use OPTIONS to detect if extension is reachable')"
                                                     true-value="true" false-value="false"
                                                     :conditions="[() => options.permissions.extension_force_ping]" />
 
-                                                <TextElement name="user_context" label="Context" :columns="{
+                                                <TextElement name="user_context" :label="$t('Context')" :columns="{
                                                     sm: {
                                                         container: 6,
                                                     },
                                                 }" :conditions="[() => options.permissions.extension_user_context]" />
 
-                                                <TextElement name="accountcode" label="Account Code" :columns="{
+                                                <TextElement name="accountcode" :label="$t('Account Code')" :columns="{
                                                     sm: {
                                                         container: 6,
                                                     },
                                                 }" :conditions="[() => options.permissions.extension_accountcode]" />
 
                                                 <ToggleElement name="exclude_from_ringotel_stale_users"
-                                                    text="Exclude this user from the App Stale Users report"
-                                                    description="If enabled, this user will not appear in the App Stale Users report, preventing them from being flagged as inactive." />
+                                                    :text="$t('Exclude this user from the App Stale Users report')"
+                                                    :description="$t('If enabled, this user will not appear in the App Stale Users report, preventing them from being flagged as inactive.')" />
 
 
                                                 <GroupElement name="container_advanced" />
 
-                                                <ButtonElement name="submit_advanced" button-label="Save"
+                                                <ButtonElement name="submit_advanced" :button-label="$t('Save')"
                                                     :submits="true" align="right" />
 
 
 
-                                                <NewGreetingForm :header="'New Voicemail Greeting'"
+                                                <NewGreetingForm :header="$t('New Voicemail Greeting')"
                                                     :show="showNewGreetingModal" @close="showNewGreetingModal = false"
                                                     :voices="options.voices" :speeds="options.speeds"
                                                     :default_voice="options.default_voice"
@@ -1921,7 +1920,7 @@
                                                     @success="emitSuccessToParentFromChild"
                                                     @saved="handleNewGreetingAdded" />
 
-                                                <NewGreetingForm :header="'New Recorded Name'"
+                                                <NewGreetingForm :header="$t('New Recorded Name')"
                                                     :show="showNewNameGreetingModal"
                                                     @close="showNewNameGreetingModal = false" :voices="options.voices"
                                                     :speeds="options.speeds" :default_voice="options.default_voice"
@@ -1944,32 +1943,32 @@
     </TransitionRoot>
 
     <CreateExtensionDeviceForm :show="showDeviceCreateModal" :extension="options.item" :options="deviceItemOptions"
-        :loading="isModalLoading" :header="'Create New Device'" @close="showDeviceCreateModal = false"
+        :loading="isModalLoading" :header="$t('Create New Device')" @close="showDeviceCreateModal = false"
         @error="emitErrorToParentFromChild" @success="emitSuccessToParentFromChild" @refresh-data="getDevices" />
 
     <UpdateExtensionDeviceForm :show="showDeviceUpdateModal" :options="deviceItemOptions" :loading="isModalLoading"
-        :header="'Update Device Settings'" @close="showDeviceUpdateModal = false" @error="emitErrorToParentFromChild"
+        :header="$t('Update Device Settings')" @close="showDeviceUpdateModal = false" @error="emitErrorToParentFromChild"
         @success="emitSuccessToParentFromChild" @refresh-data="getDevices" />
 
     <AssignExtensionDeviceForm :show="showDeviceAssignModal" :extension="options.item" :devices="options.all_devices"
-        :options="deviceItemOptions" :loading="isModalLoading" :header="'Assign Existing Device'"
+        :options="deviceItemOptions" :loading="isModalLoading" :header="$t('Assign Existing Device')"
         @close="showDeviceAssignModal = false" @error="emitErrorToParentFromChild"
         @success="emitSuccessToParentFromChild" @refresh-data="getDevices" />
 
     <ConfirmationModal :show="showDeleteConfirmationModal" @close="showDeleteConfirmationModal = false"
-        @confirm="confirmGreetingDeleteAction" :header="'Confirm Deletion'"
-        :text="'This action will permanently delete this greeting. Are you sure you want to proceed?'"
-        :confirm-button-label="'Delete'" cancel-button-label="Cancel" />
+        @confirm="confirmGreetingDeleteAction" :header="$t('Confirm Deletion')"
+        :text="$t('This action will permanently delete this greeting. Are you sure you want to proceed?')"
+        :confirm-button-label="$t('Delete')" :cancel-button-label="$t('Cancel')" />
 
     <ConfirmationModal :show="showUnassignConfirmationModal" @close="showUnassignConfirmationModal = false"
-        @confirm="confirmUnassignAction" :header="'Confirm Unassigning Device'" :loading="isUnassignDeviceLoading"
-        :text="'This action will unassign this device and keep it in your inventory. Are you sure you want to proceed?'"
-        :confirm-button-label="'Unassign'" cancel-button-label="Cancel" />
+        @confirm="confirmUnassignAction" :header="$t('Confirm Unassigning Device')" :loading="isUnassignDeviceLoading"
+        :text="$t('This action will unassign this device and keep it in your inventory. Are you sure you want to proceed?')"
+        :confirm-button-label="$t('Unassign')" :cancel-button-label="$t('Cancel')" />
 
     <ConfirmationModal :show="showDeleteNameConfirmationModal" @close="showDeleteNameConfirmationModal = false"
-        @confirm="confirmDeleteNameAction" :header="'Confirm Deletion'"
-        :text="'This action will permanently delete this greeting. Are you sure you want to proceed?'"
-        :confirm-button-label="'Delete'" cancel-button-label="Cancel" />
+        @confirm="confirmDeleteNameAction" :header="$t('Confirm Deletion')"
+        :text="$t('This action will permanently delete this greeting. Are you sure you want to proceed?')"
+        :confirm-button-label="$t('Delete')" :cancel-button-label="$t('Cancel')" />
 
     <UpdateSipPasswordModal :show="showUpdatePasswordModal" :sip_credentials="sip_credentials"
         :extension_uuid="options?.item?.extension_uuid" :route="options?.routes?.update_password_route"
@@ -1995,6 +1994,7 @@ import Badge from "@generalComponents/Badge.vue";
 import AssignedDevices from "../AssignedDevices.vue";
 import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
 import { ExclamationTriangleIcon } from '@heroicons/vue/20/solid'
+import { trans } from 'laravel-vue-i18n';
 
 
 const emit = defineEmits(['close', 'error', 'success', 'refresh-data'])
@@ -2007,9 +2007,9 @@ const props = defineProps({
 });
 
 const voicemailFileOptions = [
-    { value: 'attach', label: 'Attach recording' },
-    { value: 'link', label: 'Send download link' },
-    { value: '', label: 'Do not include recording' },
+    { value: 'attach', label: trans('Attach recording') },
+    { value: 'link', label: trans('Send download link') },
+    { value: '', label: trans('Do not include recording') },
 ]
 
 const handleVoicemailFileChange = (newValue, oldValue, el$) => {
@@ -2087,6 +2087,7 @@ const isMobileAppLoading = reactive({
 const mobileAppContactOnly = ref(false)
 const showMobileAppStateMenu = ref(false)
 const recordedName = ref(props.options?.recorded_name)
+const hasCustomRecordedName = ref(Boolean(props.options?.has_custom_recorded_name))
 const availableGreetings = ref(null)
 const ringotelUser = computed(() => mobileAppOptions.value?.ringotel_user ?? null)
 const canChangeMobileAppState = computed(() => {
@@ -2161,7 +2162,7 @@ const isMobileAppDndState = (user) => {
 
 const formatRingotelTimestamp = (timestamp) => {
     if (!timestamp) {
-        return 'Never'
+        return trans('Never')
     }
 
     const normalized = Number(timestamp) > 9999999999 ? Number(timestamp) : Number(timestamp) * 1000
@@ -2176,6 +2177,14 @@ watch(
     () => props.options?.recorded_name,
     (newVal) => {
         recordedName.value = newVal
+    },
+    { immediate: true }
+)
+
+watch(
+    () => props.options?.has_custom_recorded_name,
+    (newVal) => {
+        hasCustomRecordedName.value = Boolean(newVal)
     },
     { immediate: true }
 )
@@ -2234,8 +2243,8 @@ const fetchGreetings = async () => {
 
     if (!route) {
         availableGreetings.value = [
-            { value: '0', label: 'None' },
-            { value: '-1', label: 'System Default' }
+            { value: '0', label: trans('None') },
+            { value: '-1', label: trans('System Default') }
         ];
         return availableGreetings.value;
     }
@@ -2247,8 +2256,8 @@ const fetchGreetings = async () => {
     } catch (error) {
         console.error("Failed to load greetings async", error);
         availableGreetings.value = [
-            { value: '0', label: 'None' },
-            { value: '-1', label: 'System Default' }
+            { value: '0', label: trans('None') },
+            { value: '-1', label: trans('System Default') }
         ];
         return availableGreetings.value;
     }
@@ -2640,10 +2649,10 @@ const handleSipCredentialsEditClick = () => {
 
 const handleCopyToClipboard = (text) => {
     navigator.clipboard.writeText(text).then(() => {
-        emit('success', 'success', { message: ['Copied to clipboard.'] });
+        emit('success', 'success', { message: [trans('Copied to clipboard.')] });
     }).catch((error) => {
         // Handle the error case
-        emit('error', { response: { data: { errors: { request: ['Failed to copy to clipboard.'] } } } });
+        emit('error', { response: { data: { errors: { request: [trans('Failed to copy to clipboard.')] } } } });
     });
 }
 
@@ -2662,7 +2671,7 @@ const delayOptions = Array.from({ length: 21 }, (_, i) => {
     const rings = Math.round(seconds / 5); // 1 ring = ~5 seconds
     return {
         value: String(seconds),
-        label: `${rings} ${rings === 1 ? 'Ring' : 'Rings'} (${seconds}s)`
+        label: trans(':count Ring(s) (:seconds s)', { count: rings, seconds })
     };
 });
 
@@ -2671,7 +2680,7 @@ const timeoutOptions = Array.from({ length: 21 }, (_, i) => {
     const rings = Math.round(seconds / 5);
     return {
         value: String(seconds),
-        label: `${rings} ${rings === 1 ? 'Ring' : 'Rings'} (${seconds}s)`
+        label: trans(':count Ring(s) (:seconds s)', { count: rings, seconds })
     };
 });
 
@@ -2740,7 +2749,7 @@ const playGreeting = () => {
 
                 currentAudio.value.play().catch(() => {
                     isAudioPlaying.value = false;
-                    emit('error', { message: 'Audio playback failed' });
+                    emit('error', { message: trans('Audio playback failed') });
                 });
 
                 currentAudio.value.addEventListener('ended', () => {
@@ -2845,7 +2854,8 @@ const confirmGreetingDeleteAction = async () => {
 // Handler for the greeting-saved event
 const handleNewNameAdded = async () => {
     stopRecordedNameAudio();
-    recordedName.value = 'Custom recording';
+    recordedName.value = trans('Custom recording');
+    hasCustomRecordedName.value = true;
 };
 
 // Methods for recorded name
@@ -2924,7 +2934,8 @@ const confirmDeleteNameAction = () => {
         .post(props.options.routes.delete_recorded_name_route, { voicemail_id: form$.value.data.voicemail_id })
         .then((response) => {
             if (response.data.success) {
-                recordedName.value = 'System Default';
+                recordedName.value = trans('System Default');
+                hasCustomRecordedName.value = false;
                 emit('success', 'success', response.data.messages);
             }
         })
@@ -3043,7 +3054,7 @@ const handleError = (error, details, form$) => {
         case 'prepare':
             console.log(error) // Error object
 
-            form$.messageBag.append('Could not prepare form')
+            form$.messageBag.append(trans('Could not prepare form'))
             break
 
         // Error occured because response status is outside of 2xx
@@ -3063,14 +3074,14 @@ const handleError = (error, details, form$) => {
         case 'cancel':
             console.log(error) // Error object
 
-            form$.messageBag.append('Request cancelled')
+            form$.messageBag.append(trans('Request cancelled'))
             break
 
         // Some other errors happened (no response object)
         case 'other':
             console.log(error) // Error object
 
-            form$.messageBag.append('Couldn\'t submit form')
+            form$.messageBag.append(trans('Couldn\'t submit form'))
             break
     }
 }

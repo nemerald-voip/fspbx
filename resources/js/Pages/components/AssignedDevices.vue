@@ -7,18 +7,18 @@
                         <thead class="bg-gray-200">
                             <tr>
                                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-900 sm:px-6">
-                                    MAC Address
+                                    {{ $t('MAC Address') }}
                                 </th>
                                 <th
                                     class="hidden px-6 py-3 text-left text-sm font-semibold text-gray-900 sm:table-cell">
-                                    Device Template
+                                    {{ $t('Device Template') }}
                                 </th>
                                 <th
                                     class="hidden px-6 py-3 text-left text-sm font-semibold text-gray-900 sm:table-cell">
-                                    Profile / Key Template
+                                    {{ $t('Profile / Key Template') }}
                                 </th>
                                 <th class="relative px-4 py-3 text-left text-sm font-medium text-gray-500 sm:px-6">
-                                    <span class="sr-only">Actions</span>
+                                    <span class="sr-only">{{ $t('Actions') }}</span>
                                 </th>
                             </tr>
                         </thead>
@@ -44,11 +44,11 @@
                                     <div class="px-6 py-2 text-sm text-gray-500 sm:hidden">
                                         <template v-if="device.profile?.device_profile_name || device.key_template?.name">
                                             <div v-if="device.profile?.device_profile_name">
-                                                <span class="font-semibold">Profile:</span>
+                                                <span class="font-semibold">{{ $t('Profile') }}:</span>
                                                 <span> {{ device.profile.device_profile_name }}</span>
                                             </div>
                                             <div v-if="device.key_template?.name">
-                                                <span class="font-semibold">Key Template:</span>
+                                                <span class="font-semibold">{{ $t('Key Template') }}:</span>
                                                 <span> {{ device.key_template.name }}</span>
                                             </div>
                                         </template>
@@ -70,11 +70,11 @@
                                 <td class="hidden px-6 py-2 text-sm text-gray-500 sm:table-cell">
                                     <template v-if="device.profile?.device_profile_name || device.key_template?.name">
                                         <div v-if="device.profile?.device_profile_name">
-                                            <span class="font-semibold">Profile:</span>
+                                            <span class="font-semibold">{{ $t('Profile') }}:</span>
                                             <span> {{ device.profile.device_profile_name }}</span>
                                         </div>
                                         <div v-if="device.key_template?.name">
-                                            <span class="font-semibold">Key Template:</span>
+                                            <span class="font-semibold">{{ $t('Key Template') }}:</span>
                                             <span> {{ device.key_template.name }}</span>
                                         </div>
                                     </template>
@@ -84,7 +84,7 @@
                                 <!-- Actions -->
                                 <td class="whitespace-nowrap px-4 py-2 text-right text-sm font-medium sm:px-6">
                                     <div class="flex items-center justify-end space-x-2">
-                                        <ejs-tooltip v-if="permissions.extension_device_update" :content="'Edit'"
+                                        <ejs-tooltip v-if="permissions.extension_device_update" :content="$t('Edit')"
                                             position='TopCenter' target="#destination_tooltip_target">
                                             <div id="destination_tooltip_target">
                                                 <PencilSquareIcon @click="handleEditButtonClick(device.device_uuid)"
@@ -93,7 +93,7 @@
                                             </div>
                                         </ejs-tooltip>
 
-                                        <ejs-tooltip v-if="permissions.extension_device_unassign" :content="'Unassign'"
+                                        <ejs-tooltip v-if="permissions.extension_device_unassign" :content="$t('Unassign')"
                                             position='TopCenter'>
                                             <TrashIcon @click="handleSingleItemDeleteRequest(device.device_uuid)"
                                                 class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
@@ -107,7 +107,7 @@
                     <!-- Empty State -->
                     <div v-if="!loading && devices.length === 0" class="text-center my-5">
                         <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                        <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
+                        <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ $t('No results found') }}</h3>
                         <!-- <p class="mt-1 text-sm text-gray-500">
                 Adjust your search and try again.
               </p> -->

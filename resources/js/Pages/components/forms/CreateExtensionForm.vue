@@ -24,7 +24,7 @@
                                 <button type="button"
                                     class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                     @click="emit('close')">
-                                    <span class="sr-only">Close</span>
+                                    <span class="sr-only">{{ $t('Close') }}</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
@@ -42,7 +42,7 @@
                                             </path>
                                         </svg>
                                     </div>
-                                    <div class="text-lg text-blue-600 m-auto">Loading...</div>
+                                    <div class="text-lg text-blue-600 m-auto">{{ $t('Loading...') }}</div>
                                 </div>
                             </div>
 
@@ -66,7 +66,7 @@
                                     <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
                                         <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
                                             <FormTabs view="vertical" @select="handleTabSelected">
-                                                <FormTab name="page0" label="Basic Info" :elements="[
+                                                <FormTab name="page0" :label="$t('Basic Info')" :elements="[
                                                     'basic_info_title',
                                                     'directory_first_name',
                                                     'directory_last_name',
@@ -88,38 +88,38 @@
 
                                                 <HiddenElement name="extension_uuid" :meta="true" />
 
-                                                <StaticElement name="basic_info_title" tag="h4" content="Basic Info"
-                                                    description="Fill in basic details to identify and describe this extension." />
-                                                <TextElement name="directory_first_name" label="First Name"
-                                                    placeholder="Enter First Name" :floating="false" :columns="{
+                                                <StaticElement name="basic_info_title" tag="h4" :content="$t('Basic Info')"
+                                                    :description="$t('Fill in basic details to identify and describe this extension.')" />
+                                                <TextElement name="directory_first_name" :label="$t('First Name')"
+                                                    :placeholder="$t('Enter First Name')" :floating="false" :columns="{
                                                         sm: {
                                                             container: 6,
                                                         },
                                                     }" />
-                                                <TextElement name="directory_last_name" label="Last Name"
-                                                    placeholder="Enter Last Name" :floating="false" :columns="{
+                                                <TextElement name="directory_last_name" :label="$t('Last Name')"
+                                                    :placeholder="$t('Enter Last Name')" :floating="false" :columns="{
                                                         sm: {
                                                             container: 6,
                                                         },
                                                     }" />
-                                                <TextElement name="extension" label="Extension"
-                                                    placeholder="Enter Extension" :floating="false" :columns="{
+                                                <TextElement name="extension" :label="$t('Extension')"
+                                                    :placeholder="$t('Enter Extension')" :floating="false" :columns="{
                                                         sm: {
                                                             container: 6,
                                                         }
                                                     }" :disabled="!options.permissions?.extension_extension"/>
-                                                    
-                                                <TextElement name="voicemail_mail_to" label="Email"
-                                                    placeholder="Enter Email" :floating="false" :columns="{
+
+                                                <TextElement name="voicemail_mail_to" :label="$t('Email')"
+                                                    :placeholder="$t('Enter Email')" :floating="false" :columns="{
                                                         container: 6,
                                                     }" />
-                                                <TextElement name="description" label="Description"
-                                                    placeholder="Enter Description" :floating="false" />
+                                                <TextElement name="description" :label="$t('Description')"
+                                                    :placeholder="$t('Enter Description')" :floating="false" />
 
-                                                
+
                                                 <GroupElement name="container_basic" />
 
-                                                <ButtonElement name="submit_basic" button-label="Save" :submits="true"
+                                                <ButtonElement name="submit_basic" :button-label="$t('Save')" :submits="true"
                                                     align="right" />
 
 
@@ -145,6 +145,7 @@
 import { ref } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { XMarkIcon } from "@heroicons/vue/24/solid";
+import { trans } from 'laravel-vue-i18n';
 
 
 
@@ -220,7 +221,7 @@ const handleError = (error, details, form$) => {
         case 'prepare':
             console.log(error) // Error object
 
-            form$.messageBag.append('Could not prepare form')
+            form$.messageBag.append(trans('Could not prepare form'))
             break
 
         // Error occured because response status is outside of 2xx
@@ -240,14 +241,14 @@ const handleError = (error, details, form$) => {
         case 'cancel':
             console.log(error) // Error object
 
-            form$.messageBag.append('Request cancelled')
+            form$.messageBag.append(trans('Request cancelled'))
             break
 
         // Some other errors happened (no response object)
         case 'other':
             console.log(error) // Error object
 
-            form$.messageBag.append('Couldn\'t submit form')
+            form$.messageBag.append(trans('Couldn\'t submit form'))
             break
     }
 }

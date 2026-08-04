@@ -8,18 +8,23 @@ use Symfony\Component\Finder\Finder;
 
 /**
  * Keeps resources/lang/{default}.json (the source-string manifest every other
- * locale, including Crowdin, is translated against) in sync with the literal
- * strings actually passed to __()/trans()/@lang() in PHP and Blade and to
- * $t()/$tChoice()/trans() in Vue/JS. Since the source locale's "translation"
- * of a key is just the key itself, running this after adding new UI copy is
- * enough to make it translatable -- no key naming or namespacing required.
+ * locale is translated against) in sync with the literal strings actually
+ * passed to __()/trans()/@lang() in PHP and Blade and to $t()/$tChoice()/
+ * trans() in Vue/JS. Since the source locale's "translation" of a key is just
+ * the key itself, running this after adding new UI copy is enough to make it
+ * translatable -- no key naming or namespacing required.
+ *
+ * Also propagates the resulting key set to every other registered locale
+ * file (see syncLocales()) so translators never have to notice or chase a
+ * key manually -- this is the automation that replaced Crowdin's own
+ * source-upload step.
  */
 class LangSyncCommand extends Command
 {
     protected $signature = 'lang:sync
-        {--prune : Remove keys from the source file that no longer appear in scanned source}';
+        {--prune : Also remove keys from the source file itself that no longer appear in scanned source (orphan keys are always removed from every other locale file, with or without this flag)}';
 
-    protected $description = 'Extract translatable strings into resources/lang/{default}.json';
+    protected $description = 'Extract translatable strings into resources/lang/{default}.json and propagate the key set to every other locale file';
 
     private const PHP_DIRECTORIES = ['app', 'resources/views', 'routes'];
 
@@ -74,7 +79,117 @@ class LangSyncCommand extends Command
             }
         }
 
+        $this->syncLocales($locale, array_keys($merged));
+
         return self::SUCCESS;
+    }
+
+    /**
+     * Propagates the source manifest's current key set to every other
+     * registered locale file, and clears out translations that can no
+     * longer be trusted, so a translator only ever has to fill in a blank
+     * -- never chase a key or clean up broken data by hand:
+     *
+     * - A newly added source key appears everywhere with an empty-string
+     *   placeholder ("" means "not translated yet" -- see LocaleFileLoader,
+     *   which treats it exactly like an absent key at runtime, so this is
+     *   always safe to add even to a dialect that mostly inherits from a
+     *   parent).
+     * - A key that isn't in the source manifest at all -- whether it was
+     *   removed from source, or (far more common in practice) never valid
+     *   to begin with, e.g. a typo introduced by hand-editing a locale file
+     *   -- is removed from every OTHER locale file unconditionally. This is
+     *   always safe: an orphan key can never be looked up by the running
+     *   app (nothing queries a key that isn't a literal source string), and
+     *   validate-translations.php already hard-fails a PR over it, so
+     *   leaving it in place has no upside. This is deliberately NOT gated
+     *   behind --prune, unlike removing a key from the source file itself
+     *   (still --prune-gated below), which is the bigger, more reversible
+     *   call: a string temporarily unused mid-refactor is still valid,
+     *   deleting it from the source manifest means retranslating from
+     *   scratch if it comes back.
+     * - An existing non-empty translation whose :placeholder tokens don't
+     *   match the source string's is reset back to "" rather than left in
+     *   place -- it's not translated correctly, so treating it as "not
+     *   translated yet" (which re-surfaces it for a translator, and passes
+     *   CI) is more useful than a silent, permanently-failing mismatch.
+     *
+     * @param array<int, string> $sourceKeys
+     */
+    private function syncLocales(string $defaultLocale, array $sourceKeys): void
+    {
+        $sourceKeySet = array_flip($sourceKeys);
+
+        foreach (array_keys(config('locales.locales', [])) as $otherLocale) {
+            if ($otherLocale === $defaultLocale) {
+                continue;
+            }
+
+            $path = lang_path("{$otherLocale}.json");
+            $own = File::exists($path)
+                ? (json_decode(File::get($path), true) ?: [])
+                : [];
+
+            $added = 0;
+            foreach ($sourceKeys as $key) {
+                if (! array_key_exists($key, $own)) {
+                    $own[$key] = '';
+                    $added++;
+                }
+            }
+
+            $removed = 0;
+            foreach (array_keys($own) as $key) {
+                if (! isset($sourceKeySet[$key])) {
+                    unset($own[$key]);
+                    $removed++;
+                }
+            }
+
+            $reset = 0;
+            foreach ($own as $key => $value) {
+                if ($value === '' || ! isset($sourceKeySet[$key])) {
+                    continue;
+                }
+
+                if ($this->placeholders($key) !== $this->placeholders($value)) {
+                    $own[$key] = '';
+                    $reset++;
+                }
+            }
+
+            if ($added === 0 && $removed === 0 && $reset === 0) {
+                continue;
+            }
+
+            ksort($own, SORT_STRING);
+
+            File::put(
+                $path,
+                json_encode($own, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n"
+            );
+
+            $this->line(sprintf(
+                '%s: %d key(s) added, %d removed, %d reset to blank (broken :placeholder).',
+                $path,
+                $added,
+                $removed,
+                $reset
+            ));
+        }
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function placeholders(string $text): array
+    {
+        preg_match_all('/:[a-zA-Z0-9_]+/', $text, $matches);
+
+        $tokens = array_unique($matches[0]);
+        sort($tokens);
+
+        return $tokens;
     }
 
     /**

@@ -3,7 +3,7 @@
 
     <div class="m-3">
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-            <template #title>Extensions</template>
+            <template #title>{{ $t('Extensions') }}</template>
 
             <template #filters>
                 <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
@@ -13,11 +13,11 @@
                     <input type="text" v-model="filterData.search" name="mobile-search-candidate"
                         id="mobile-search-candidate"
                         class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                        :placeholder="$t('Search')" @keydown.enter="handleSearchButtonClick" />
                     <input type="text" v-model="filterData.search" name="desktop-search-candidate"
                         id="desktop-search-candidate"
                         class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                        :placeholder="$t('Search')" @keydown.enter="handleSearchButtonClick" />
                 </div>
             </template>
 
@@ -25,21 +25,21 @@
                 <button v-if="permissions.extension_create" type="button"
                     @click.prevent="handleCreateButtonClick()"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                    Create
+                    {{ $t('Create') }}
                 </button>
 
                 <button v-if="permissions.extension_import"
                     type="button" @click.prevent="handleImportButtonClick()"
                     class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     <DocumentArrowUpIcon class="h-5 w-5" aria-hidden="true" />
-                    Import CSV
+                    {{ $t('Import CSV') }}
                 </button>
                 <button type="button"
                     v-if="permissions.extension_export"
                     @click.prevent="exportExtensionsCsv()"
                     class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     <DocumentArrowDownIcon class="h-5 w-5" aria-hidden="true" />
-                    Export CSV
+                    {{ $t('Export CSV') }}
                 </button>
             </template>
 
@@ -60,7 +60,7 @@
 
                 <div class="flex items-center cursor-pointer select-none pl-14"
                     @click="handleSortRequest('extension')">
-                    <span class="mr-2">Extension</span>
+                    <span class="mr-2">{{ $t('Extension') }}</span>
                     <ChevronUpIcon
                         v-if="sortData.name === 'extension' && sortData.order === 'asc'"
                         class="h-4 w-4 text-gray-500" />
@@ -70,13 +70,13 @@
                 </div>
             </TableColumnHeader>
 
-                <TableColumnHeader header="Email"
+                <TableColumnHeader :header="$t('Email')"
                     class="hidden px-2 py-3.5 text-left text-sm font-semibold text-gray-900 sm:table-cell" />
                 <TableColumnHeader header=""
                     class="whitespace-nowrap hidden px-2 py-3.5...text-left text-sm font-semibold text-gray-900 md:table-cell">
                     <div class="flex items-center cursor-pointer select-none"
                         @click="handleSortRequest('outbound_caller_id_number')">
-                        <span class="mr-2">Outbound Caller ID</span>
+                        <span class="mr-2">{{ $t('Outbound Caller ID') }}</span>
                         <ChevronUpIcon
                             v-if="sortData.name === 'outbound_caller_id_number' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
@@ -89,14 +89,14 @@
                     class="hidden px-2 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell">
                     <div class="flex items-center cursor-pointer select-none"
                         @click="handleSortRequest('description')">
-                        <span class="mr-2">Description</span>
+                        <span class="mr-2">{{ $t('Description') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'description' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'description' && sortData.order === 'desc'"
                             class="h-4 w-4 text-gray-500" />
                     </div>
                 </TableColumnHeader>
-                <TableColumnHeader header="Services"
+                <TableColumnHeader :header="$t('Services')"
                     class="hidden px-2 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell" />
                 <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
             </template>
@@ -105,16 +105,18 @@
             <template v-if="selectPageItems" v-slot:current-selection>
                 <td colspan="9">
                     <div class="text-sm text-center m-2">
-                        <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
+                        <span class="font-semibold">
+                            {{ $t(':count items are selected.', { count: selectedItems.length }) }}
+                        </span>
                         <button v-if="!selectAll && selectedItems.length != data.total"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleSelectAll">
-                            Select all {{ data.total }} items
+                            {{ $t('Select all :count items', { count: data.total }) }}
                         </button>
                         <button v-if="selectAll"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleClearSelection">
-                            Clear selection
+                            {{ $t('Clear selection') }}
                         </button>
                     </div>
                 </td>
@@ -140,7 +142,7 @@
                                 </span>
                                 <span v-else
                                     class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-300 text-gray-600 text-xs"
-                                    title="Not registered" @click="toggleExpand(row.extension_uuid)">
+                                    :title="$t('Not registered')" @click="toggleExpand(row.extension_uuid)">
                                 </span>
 
                                 <div :class="{ 'cursor-pointer hover:text-gray-900': permissions.extension_update, }"
@@ -148,26 +150,26 @@
                                     <span class="flex flex-col lg:flex-row items-start gap-2">
                                         {{ row.name_formatted }}
                                         <span class="italic text-xs sm:hidden"> {{ row.email || '' }}</span>
-                                        <Badge v-if="row.suspended" :text="'Suspended'" :backgroundColor="'bg-rose-100'"
+                                        <Badge v-if="row.suspended" :text="$t('Suspended')" :backgroundColor="'bg-rose-100'"
                                             :textColor="'text-rose-800'" ringColor="ring-rose-400/20"
                                             class="px-2 py-1 text-xs" />
-                                        <Badge v-if="row.do_not_disturb == 'true' && !row.suspended" :text="'DND'"
+                                        <Badge v-if="row.do_not_disturb == 'true' && !row.suspended" :text="$t('DND')"
                                             :backgroundColor="'bg-rose-100'" :textColor="'text-rose-800'"
                                             ringColor="ring-rose-400/20" class="px-2 py-1 text-xs" />
-                                        <Badge v-if="row.forward_all_enabled == 'true'" :text="'FWD All'"
+                                        <Badge v-if="row.forward_all_enabled == 'true'" :text="$t('FWD All')"
                                             :backgroundColor="'bg-blue-100'" :textColor="'text-blue-800'"
                                             ringColor="ring-blue-400/20" class="px-2 py-1 text-xs" />
-                                        <Badge v-if="row.forward_busy_enabled == 'true'" :text="'FWD Busy'"
+                                        <Badge v-if="row.forward_busy_enabled == 'true'" :text="$t('FWD Busy')"
                                             :backgroundColor="'bg-blue-100'" :textColor="'text-blue-800'"
                                             ringColor="ring-blue-400/20" class="px-2 py-1 text-xs" />
-                                        <Badge v-if="row.forward_no_answer_enabled == 'true'" :text="'FWD no Ans'"
+                                        <Badge v-if="row.forward_no_answer_enabled == 'true'" :text="$t('FWD no Ans')"
                                             :backgroundColor="'bg-blue-100'" :textColor="'text-blue-800'"
                                             ringColor="ring-blue-400/20" class="px-2 py-1 text-xs" />
                                         <Badge v-if="row.forward_user_not_registered_enabled == 'true'"
-                                            :text="'FWD no Reg'" :backgroundColor="'bg-blue-100'"
+                                            :text="$t('FWD no Reg')" :backgroundColor="'bg-blue-100'"
                                             :textColor="'text-blue-800'" ringColor="ring-blue-400/20"
                                             class="px-2 py-1 text-xs" />
-                                        <Badge v-if="row.follow_me_enabled == 'true'" :text="'Sequence'"
+                                        <Badge v-if="row.follow_me_enabled == 'true'" :text="$t('Sequence')"
                                             :backgroundColor="'bg-blue-100'" :textColor="'text-blue-800'"
                                             ringColor="ring-blue-400/20" class="px-2 py-1 text-xs" />
                                     </span>
@@ -201,7 +203,7 @@
                                         <span class="relative inline-flex">
                                             <DevicePhoneMobileSolidIcon
                                                 class="h-5 w-5 text-blue-400 hover:text-blue-600 active:bg-blue-300"
-                                                aria-label="Mobile App (Activated)" />
+                                                :aria-label="$t('Mobile App (Activated)')" />
                                             <span v-if="ringotelStatusFor(row)"
                                                 :class="ringotelDotClass(ringotelStatusFor(row))"
                                                 class="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 shadow-sm">
@@ -222,22 +224,22 @@
                                         tabindex="0">
                                         <DevicePhoneMobileIcon
                                             class="h-5 w-5 text-gray-400 hover:text-gray-600 active:bg-gray-300"
-                                            aria-label="Mobile App (Phonebook Only)" />
+                                            :aria-label="$t('Mobile App (Phonebook Only)')" />
                                         <div
                                             class="invisible opacity-0 group-hover:visible group-hover:opacity-100 group-focus:visible group-focus:opacity-100 transition-opacity duration-300 absolute z-50 bottom-full left-1/2 -translate-x-1/2 pb-2">
                                             <div class="relative w-64 max-w-xs px-3 py-2 text-xs leading-relaxed text-white bg-gray-900 rounded shadow-lg whitespace-normal cursor-text select-text">
-                                                Mobile App (Phonebook Only)
+                                                {{ $t('Mobile App (Phonebook Only)') }}
                                                 <div
                                                     class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900">
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                    <ejs-tooltip v-if="!!row.user_record" :content="'Record Calls'"
+                                    <ejs-tooltip v-if="!!row.user_record" :content="$t('Record Calls')"
                                         position='TopCenter'>
                                         <MicrophoneIcon
                                             class="h-5 w-5 text-rose-400 hover:text-rose-600 active:bg-rose-300"
-                                            aria-label="Record Calls" />
+                                            :aria-label="$t('Record Calls')" />
                                     </ejs-tooltip>
 
                                 </div>
@@ -251,7 +253,7 @@
                             <template #action-buttons>
                                 <div class="flex items-center whitespace-nowrap justify-end">
 
-                                    <ejs-tooltip v-if="permissions.extension_update" :content="'Edit'"
+                                    <ejs-tooltip v-if="permissions.extension_update" :content="$t('Edit')"
                                         position='TopCenter' target="#destination_tooltip_target">
                                         <div id="destination_tooltip_target">
                                             <PencilSquareIcon @click="handleEditButtonClick(row.extension_uuid)"
@@ -260,7 +262,7 @@
                                         </div>
                                     </ejs-tooltip>
 
-                                    <ejs-tooltip v-if="permissions.extension_destroy" :content="'Delete'"
+                                    <ejs-tooltip v-if="permissions.extension_destroy" :content="$t('Delete')"
                                         position='TopCenter' target="#delete_tooltip_target">
                                         <div id="delete_tooltip_target">
                                             <TrashIcon @click="handleSingleItemDeleteRequest(row.extension_uuid)"
@@ -286,16 +288,16 @@
                                 <div class="ml-9 space-y-2 text-sm text-gray-500">
                                     <div v-for="(reg, idx) in registrations[String(row.extension)]" :key="idx"
                                         class="flex flex-col md:flex-row gap-4 border-b last:border-0 pb-2">
-                                        <div><span class="font-semibold">Device:</span> {{ reg.agent }}</div>
-                                        <div><span class="font-semibold">Remote IP Address:</span> {{ reg.wan_ip }}
+                                        <div><span class="font-semibold">{{ $t('Device') }}:</span> {{ reg.agent }}</div>
+                                        <div><span class="font-semibold">{{ $t('Remote IP Address') }}:</span> {{ reg.wan_ip }}
                                         </div>
-                                        <div><span class="font-semibold">Connection Type:</span> {{ reg.transport }}
+                                        <div><span class="font-semibold">{{ $t('Connection Type') }}:</span> {{ reg.transport }}
                                         </div>
-                                        <div><span class="font-semibold">Expires in:</span> {{ reg.expsecs }}s</div>
+                                        <div><span class="font-semibold">{{ $t('Expires in') }}:</span> {{ reg.expsecs }}s</div>
                                     </div>
                                 </div>
                             </div>
-                            <div v-else class="text-gray-400 text-sm ">No registered devices found.</div>
+                            <div v-else class="text-gray-400 text-sm ">{{ $t('No registered devices found.') }}</div>
                         </td>
                     </tr>
                 </template>
@@ -308,9 +310,9 @@
                 <!-- Conditional rendering for 'no records' message -->
                 <div v-if="data.data.length === 0" class="text-center my-5 ">
                     <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
+                    <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ $t('No results found') }}</h3>
                     <p class="mt-1 text-sm text-gray-500">
-                        Adjust your search and try again.
+                        {{ $t('Adjust your search and try again.') }}
                     </p>
                 </div>
             </template>
@@ -331,16 +333,16 @@
     </div>
 
     <UpdateExtensionForm :show="showUpdateModal" :options="itemOptions" :loading="isModalLoading"
-        :header="'Update Extension - ' + (itemOptions?.item?.name_formatted ?? 'loading')"
+        :header="$t('Update Extension - :name', { name: itemOptions?.item?.name_formatted ?? 'loading' })"
         @close="showUpdateModal = false" @error="handleErrorResponse" @success="showNotification"
         @refresh-data="refreshCurrentPage" />
 
     <CreateExtensionForm :show="showCreateModal" :options="itemOptions" :loading="isModalLoading"
-        :header="'Create Extension'" @close="showCreateModal = false" @error="handleErrorResponse"
+        :header="$t('Create Extension')" @close="showCreateModal = false" @error="handleErrorResponse"
         @success="showNotification" @open-edit-form="handleEditButtonClick" @refresh-data="refreshCurrentPage" />
 
     <BulkUpdateExtensionForm :items="selectedItems" :options="itemOptions" :show="bulkUpdateModalTrigger"
-        :header="'Bulk Update'" :loading="isModalLoading" @close="handleModalClose"
+        :header="$t('Bulk Update')" :loading="isModalLoading" @close="handleModalClose"
         @error="handleErrorResponse" @success="showNotification" @refresh-data="refreshCurrentPage" />
 
     <SendExtensionWelcomeEmailModal
@@ -353,29 +355,29 @@
         @send="sendWelcomeEmails"
     />
 
-    <ConfirmationModal 
-        :show="showDeleteConfirmationModal" 
+    <ConfirmationModal
+        :show="showDeleteConfirmationModal"
         @close="showDeleteConfirmationModal = false"
-        @confirm="confirmDeleteAction" 
-        :header="'Confirm Deletion'" 
+        @confirm="confirmDeleteAction"
+        :header="$t('Confirm Deletion')"
         :loading="isModalLoading"
-        :confirm-button-label="'Delete'" 
-        cancel-button-label="Cancel" 
+        :confirm-button-label="$t('Delete')"
+        :cancel-button-label="$t('Cancel')"
     >
         <div>
             <p class="text-sm text-gray-500 mb-5">
-                This action will permanently delete the selected extension(s). Are you sure you want to proceed?
+                {{ $t('This action will permanently delete the selected extension(s). Are you sure you want to proceed?') }}
             </p>
-            
+
             <div class="flex items-center bg-gray-50 p-3 rounded-md border border-gray-200">
-                <input 
-                    id="retain_voicemail" 
-                    v-model="retainVoicemail" 
-                    type="checkbox" 
+                <input
+                    id="retain_voicemail"
+                    v-model="retainVoicemail"
+                    type="checkbox"
                     class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer"
                 >
                 <label for="retain_voicemail" class="ml-3 block text-sm font-medium text-gray-700 cursor-pointer">
-                    Retain voicemail (convert to team inbox)
+                    {{ $t('Retain voicemail (convert to team inbox)') }}
                 </label>
             </div>
         </div>
@@ -384,13 +386,14 @@
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
 
-    <UploadModal :show="showUploadModal" @close="showUploadModal = false" :header="'Upload File'" @upload="uploadFile"
+    <UploadModal :show="showUploadModal" @close="showUploadModal = false" :header="$t('Upload File')" @upload="uploadFile"
         @download-template="downloadTemplateFile" :is-submitting="isUploadingFile" :errors="uploadErrors" />
 </template>
 
 <script setup>
 import { computed, onMounted, ref } from "vue";
 import axios from 'axios';
+import { trans } from 'laravel-vue-i18n';
 import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";
@@ -491,7 +494,7 @@ const bulkActions = computed(() => {
     if (permissions.value.extension_update) {
         actions.push({
             id: 'bulk_update',
-            label: 'Edit',
+            label: trans('Edit'),
             icon: 'PencilSquareIcon'
         });
     }
@@ -500,7 +503,7 @@ const bulkActions = computed(() => {
     if (permissions.value.extension_destroy) {
         actions.push({
             id: 'bulk_delete',
-            label: 'Delete',
+            label: trans('Delete'),
             icon: 'TrashIcon'
         });
     }
@@ -508,7 +511,7 @@ const bulkActions = computed(() => {
     if (permissions.value.welcome_email_send) {
         actions.push({
             id: 'send_welcome_email',
-            label: 'Send welcome emails',
+            label: trans('Send welcome emails'),
             icon: 'EnvelopeIcon'
         });
     }
@@ -519,13 +522,13 @@ const bulkActions = computed(() => {
 const advancedActions = computed(() => {
     const actions = [
         {
-            category: "Advanced",
+            category: trans("Advanced"),
             actions: [
-                { id: 'duplicate', label: 'Duplicate', icon: 'DocumentDuplicateIcon' },
+                { id: 'duplicate', label: trans('Duplicate'), icon: 'DocumentDuplicateIcon' },
             ],
         },
         {
-            category: "Users",
+            category: trans("Users"),
             actions: [],
         },
     ];
@@ -534,7 +537,7 @@ const advancedActions = computed(() => {
     if (permissions.value.create_user) {
         actions[1].actions.push({
             id: 'make_user',
-            label: 'Make User',
+            label: trans('Make User'),
             icon: 'UserPlusIcon',
         });
     }
@@ -542,26 +545,26 @@ const advancedActions = computed(() => {
     if (permissions.value.create_admin) {
         actions[1].actions.push({
             id: 'make_admin',
-            label: 'Make Admin',
+            label: trans('Make Admin'),
             icon: 'KeyIcon',
         });
     }
 
     if (props.routes?.create_contact_center_user) {
         actions.push({
-            category: "Contact Center",
+            category: trans("Contact Center"),
             actions: [
-                { id: 'make_cc_agent', label: 'Make Agent', icon: 'SupportAgent' },
-                { id: 'make_cc_admin', label: 'Make Admin', icon: 'KeyIcon' },
+                { id: 'make_cc_agent', label: trans('Make Agent'), icon: 'SupportAgent' },
+                { id: 'make_cc_admin', label: trans('Make Admin'), icon: 'KeyIcon' },
             ],
         });
     }
 
     if (permissions.value.welcome_email_send) {
         actions.push({
-            category: "Communication",
+            category: trans("Communication"),
             actions: [
-                { id: 'send_welcome_email', label: 'Send welcome email', icon: 'EnvelopeIcon' },
+                { id: 'send_welcome_email', label: trans('Send welcome email'), icon: 'EnvelopeIcon' },
             ],
         });
     }
@@ -624,7 +627,7 @@ const ringotelDotClass = (status) => {
 
 const formatRingotelTimestamp = (timestamp) => {
     if (!timestamp) {
-        return 'Never'
+        return trans('Never')
     }
 
     const normalized = Number(timestamp) > 9999999999 ? Number(timestamp) : Number(timestamp) * 1000
@@ -639,14 +642,17 @@ const mobileAppTooltip = (row) => {
     const status = ringotelStatusFor(row)
 
     if (isRingotelLoading.value && !status) {
-        return 'Mobile App (Activated). Mobile App status is loading.'
+        return trans('Mobile App (Activated). Mobile App status is loading.')
     }
 
     if (!status) {
-        return 'Mobile App (Activated). Mobile App status unavailable.'
+        return trans('Mobile App (Activated). Mobile App status unavailable.')
     }
 
-    return `Mobile App (Activated). State: ${status.state_label}. Last Seen: ${formatRingotelTimestamp(status.last_login_ts)}.`
+    return trans('Mobile App (Activated). State: :state. Last Seen: :lastSeen.', {
+        state: status.state_label,
+        lastSeen: formatRingotelTimestamp(status.last_login_ts),
+    })
 }
 
 
@@ -880,7 +886,7 @@ const sendWelcomeEmails = async (recipient = null) => {
     } catch (error) {
         welcomeEmailError.value = error.response?.data?.messages?.error?.[0]
             ?? error.response?.data?.errors?.recipient?.[0]
-            ?? 'The welcome email could not be queued.';
+            ?? trans('The welcome email could not be queued.');
     } finally {
         isWelcomeEmailSubmitting.value = false;
     }

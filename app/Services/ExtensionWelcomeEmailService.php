@@ -39,7 +39,8 @@ class ExtensionWelcomeEmailService
                     'voicemail_pin' => null,
                     'direct_numbers' => [],
                     'eligible' => false,
-                    'reason' => 'Extension not found.',
+                    'reason' => __('Extension not found.'),
+                    'needs_valid_email' => false,
                 ];
             }
 
@@ -58,6 +59,7 @@ class ExtensionWelcomeEmailService
                 'direct_numbers' => $directNumbers[(string) $extension->extension_uuid] ?? [],
                 'eligible' => $reason === null,
                 'reason' => $reason,
+                'needs_valid_email' => $this->needsValidRecipientEmail($extension, $recipient),
             ];
         })->values();
 
@@ -145,22 +147,38 @@ class ExtensionWelcomeEmailService
         $voicemail = $extension->voicemail;
 
         if (! $voicemail) {
-            return 'No voicemail mailbox is configured.';
+            return __('No voicemail mailbox is configured.');
         }
 
         if (! filter_var($voicemail->voicemail_enabled, FILTER_VALIDATE_BOOLEAN)) {
-            return 'Voicemail is disabled.';
+            return __('Voicemail is disabled.');
         }
 
         if (! filled($voicemail->voicemail_password)) {
-            return 'The voicemail mailbox has no PIN.';
+            return __('The voicemail mailbox has no PIN.');
         }
 
         if (! filter_var($recipient, FILTER_VALIDATE_EMAIL)) {
-            return 'A valid voicemail email is required.';
+            return __('A valid voicemail email is required.');
         }
 
         return null;
+    }
+
+    /**
+     * Whether the extension's only blocker is an invalid/missing recipient
+     * email -- i.e. every other eligibility gate already passes. Kept
+     * separate from ineligibleReason() so the frontend can detect this case
+     * without string-matching a translated message.
+     */
+    private function needsValidRecipientEmail(Extensions $extension, string $recipient): bool
+    {
+        $voicemail = $extension->voicemail;
+
+        return $voicemail
+            && filter_var($voicemail->voicemail_enabled, FILTER_VALIDATE_BOOLEAN)
+            && filled($voicemail->voicemail_password)
+            && ! filter_var($recipient, FILTER_VALIDATE_EMAIL);
     }
 
     private function extensionName(Extensions $extension): string

@@ -38,11 +38,24 @@ function resolvePage(name) {
     return typeof pages[pagePath] === 'function' ? pages[pagePath]() : pages[pagePath];
 }
 
+// Base-first chain of locale codes to merge for a given locale, e.g.
+// { 'es-mx': ['en-us', 'es-es', 'es-419', 'es-mx'] } -- keyed by every
+// locale we've actually seen in an Inertia page's props, since the active
+// domain (and so the active locale) can change without a full page reload.
+// Seeded from the initial page load; kept up to date in the 'navigate'
+// handler below, matching what App\Support\Localization\LocaleRegistry::
+// chain() computes server-side for the same locale.
+const localeChains = {};
+
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
     resolve: async (name) => await resolvePage(name),
     setup({ el, App, props, plugin }) {
       syncAxiosCsrfToken(props.initialPage);
+
+      const initialLocale = props.initialPage.props.locale;
+      localeChains[initialLocale] = props.initialPage.props.localeChain ?? [initialLocale];
+
       router.on('navigate', (event) => {
         syncAxiosCsrfToken(event.detail.page);
 
@@ -51,6 +64,7 @@ createInertiaApp({
         // an admin with access to multiple domains switching between them.
         const nextLocale = event.detail.page?.props?.locale;
         if (nextLocale && nextLocale !== getActiveLanguage()) {
+            localeChains[nextLocale] = event.detail.page?.props?.localeChain ?? [nextLocale];
             loadLanguageAsync(nextLocale);
         }
       });
@@ -63,13 +77,38 @@ createInertiaApp({
         lang: props.initialPage.props.locale,
         resolve: async (lang) => {
             const langs = import.meta.glob('../lang/*.json');
-            return await langs[`../lang/${lang}.json`]();
+            const chain = localeChains[lang] ?? [lang];
+
+            // Merge base-first (en-us, ..., lang) so a more specific dialect
+            // overrides its parent's translation, mirroring the backend's
+            // LocaleFileLoader merge. An empty string means "not translated
+            // yet" (lang:sync seeds every locale file with these so
+            // translators can see the full key list), not a real
+            // translation -- drop it at each link so it defers to whatever
+            // the next link up the chain has, instead of rendering blank
+            // text or shadowing a parent's real translation.
+            let merged = {};
+            for (const link of chain) {
+                const mod = await langs[`../lang/${link}.json`]?.();
+
+                if (!mod) {
+                    continue;
+                }
+
+                for (const [key, value] of Object.entries(mod.default)) {
+                    if (value !== '') {
+                        merged[key] = value;
+                    }
+                }
+            }
+
+            return { default: merged };
         },
       });
 
       // MOUNT FIRST (no await for CSRF token)
       vueApp.mount(el);
-  
+
       // THEN after mounting do CSRF, etc
       axios.defaults.withCredentials = true;
       axios.get('/sanctum/csrf-cookie');

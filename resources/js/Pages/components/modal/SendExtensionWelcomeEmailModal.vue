@@ -2,7 +2,7 @@
     <AddEditItemModal
         :show="show"
         :loading="loading"
-        header="Send welcome email"
+        :header="$t('Send welcome email')"
         custom-class="sm:max-w-2xl"
         @close="emit('close')"
     >
@@ -10,7 +10,7 @@
             <div v-if="options" class="space-y-5">
                 <div v-if="singleMode && firstItem">
                     <label for="welcome_email_recipient" class="block text-sm font-medium text-gray-700">
-                        Send to
+                        {{ $t('Send to') }}
                     </label>
                     <input
                         id="welcome_email_recipient"
@@ -29,23 +29,23 @@
                 >
                     <dl class="divide-y divide-gray-100">
                         <div class="grid grid-cols-3 gap-4 px-4 py-3 text-sm">
-                            <dt class="font-medium text-gray-600">Extension</dt>
+                            <dt class="font-medium text-gray-600">{{ $t('Extension') }}</dt>
                             <dd class="col-span-2 text-gray-900">
                                 {{ firstItem.name }} ({{ firstItem.extension }})
                             </dd>
                         </div>
                         <div class="grid grid-cols-3 gap-4 px-4 py-3 text-sm">
-                            <dt class="font-medium text-gray-600">Voicemail</dt>
-                            <dd class="col-span-2 text-gray-900">{{ firstItem.voicemail_id || "Not configured" }}</dd>
+                            <dt class="font-medium text-gray-600">{{ $t('Voicemail') }}</dt>
+                            <dd class="col-span-2 text-gray-900">{{ firstItem.voicemail_id || $t('Not configured') }}</dd>
                         </div>
                         <div class="grid grid-cols-3 gap-4 px-4 py-3 text-sm">
-                            <dt class="font-medium text-gray-600">Voicemail PIN</dt>
-                            <dd class="col-span-2 font-mono text-gray-900">{{ firstItem.voicemail_pin || "Not configured" }}</dd>
+                            <dt class="font-medium text-gray-600">{{ $t('Voicemail PIN') }}</dt>
+                            <dd class="col-span-2 font-mono text-gray-900">{{ firstItem.voicemail_pin || $t('Not configured') }}</dd>
                         </div>
                         <div class="grid grid-cols-3 gap-4 px-4 py-3 text-sm">
-                            <dt class="font-medium text-gray-600">Direct numbers</dt>
+                            <dt class="font-medium text-gray-600">{{ $t('Direct numbers') }}</dt>
                             <dd class="col-span-2 text-gray-900">
-                                {{ firstItem.direct_numbers?.length ? firstItem.direct_numbers.join(", ") : "None" }}
+                                {{ firstItem.direct_numbers?.length ? firstItem.direct_numbers.join(", ") : $t('None') }}
                             </dd>
                         </div>
                     </dl>
@@ -53,10 +53,10 @@
 
                 <div v-else-if="!singleMode">
                     <div class="flex flex-wrap gap-x-6 gap-y-2 text-sm">
-                        <p><span class="font-semibold text-gray-900">{{ options.summary.selected }}</span> selected</p>
-                        <p><span class="font-semibold text-green-700">{{ options.summary.eligible }}</span> ready</p>
+                        <p>{{ $t(':count selected', { count: options.summary.selected }) }}</p>
+                        <p><span class="font-semibold text-green-700">{{ options.summary.eligible }}</span> {{ $t('ready') }}</p>
                         <p v-if="options.summary.skipped">
-                            <span class="font-semibold text-amber-700">{{ options.summary.skipped }}</span> skipped
+                            <span class="font-semibold text-amber-700">{{ options.summary.skipped }}</span> {{ $t('skipped') }}
                         </p>
                     </div>
 
@@ -64,21 +64,21 @@
                         <table class="min-w-full divide-y divide-gray-200 text-sm">
                             <thead class="sticky top-0 bg-gray-50">
                                 <tr>
-                                    <th class="px-4 py-2 text-left font-semibold text-gray-700">Extension</th>
-                                    <th class="px-4 py-2 text-left font-semibold text-gray-700">Recipient</th>
-                                    <th class="px-4 py-2 text-left font-semibold text-gray-700">PIN</th>
-                                    <th class="px-4 py-2 text-left font-semibold text-gray-700">Status</th>
+                                    <th class="px-4 py-2 text-left font-semibold text-gray-700">{{ $t('Extension') }}</th>
+                                    <th class="px-4 py-2 text-left font-semibold text-gray-700">{{ $t('Recipient') }}</th>
+                                    <th class="px-4 py-2 text-left font-semibold text-gray-700">{{ $t('PIN') }}</th>
+                                    <th class="px-4 py-2 text-left font-semibold text-gray-700">{{ $t('Status') }}</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100 bg-white">
                                 <tr v-for="item in options.items" :key="item.extension_uuid">
                                     <td class="whitespace-nowrap px-4 py-2 text-gray-900">
-                                        {{ item.extension || "Unavailable" }}
+                                        {{ item.extension || $t('Unavailable') }}
                                     </td>
-                                    <td class="px-4 py-2 text-gray-600">{{ item.recipient || "No email" }}</td>
-                                    <td class="px-4 py-2 font-mono text-gray-700">{{ item.voicemail_pin || "None" }}</td>
+                                    <td class="px-4 py-2 text-gray-600">{{ item.recipient || $t('No email') }}</td>
+                                    <td class="px-4 py-2 font-mono text-gray-700">{{ item.voicemail_pin || $t('None') }}</td>
                                     <td class="px-4 py-2">
-                                        <span v-if="item.eligible" class="font-medium text-green-700">Ready</span>
+                                        <span v-if="item.eligible" class="font-medium text-green-700">{{ $t('Ready') }}</span>
                                         <span v-else class="text-amber-700">{{ item.reason }}</span>
                                     </td>
                                 </tr>
@@ -109,7 +109,7 @@
                         class="inline-flex justify-center rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                         @click="emit('close')"
                     >
-                        Cancel
+                        {{ $t('Cancel') }}
                     </button>
                     <button
                         type="button"
@@ -130,6 +130,7 @@
 import { computed, ref, watch } from "vue";
 import AddEditItemModal from "./AddEditItemModal.vue";
 import Spinner from "@generalComponents/Spinner.vue";
+import { trans } from 'laravel-vue-i18n';
 
 const props = defineProps({
     show: Boolean,
@@ -161,19 +162,19 @@ const recipientError = computed(() => {
         return null;
     }
 
-    return recipient.value === "" ? "Email address is required." : "Enter a valid email address.";
+    return recipient.value === "" ? trans("Email address is required.") : trans("Enter a valid email address.");
 });
 
 const blockingReason = computed(() => {
     if (!singleMode.value) {
         return Number(props.options?.summary?.eligible ?? 0) > 0
             ? null
-            : "None of the selected extensions can receive a welcome email.";
+            : trans("None of the selected extensions can receive a welcome email.");
     }
 
     const reason = firstItem.value?.reason;
 
-    return reason && reason !== "A valid voicemail email is required." ? reason : null;
+    return reason && !firstItem.value?.needs_valid_email ? reason : null;
 });
 
 const canSend = computed(() => {
@@ -186,11 +187,11 @@ const canSend = computed(() => {
 
 const sendLabel = computed(() => {
     if (singleMode.value) {
-        return "Send email";
+        return trans("Send email");
     }
 
     const count = Number(props.options?.summary?.eligible ?? 0);
-    return `Queue ${count} email${count === 1 ? "" : "s"}`;
+    return trans('Queue :count email(s)', { count });
 });
 
 const submit = () => {

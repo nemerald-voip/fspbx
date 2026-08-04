@@ -6,6 +6,7 @@ use Inertia\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
+use App\Support\Localization\LocaleRegistry;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -40,6 +41,14 @@ class HandleInertiaRequests extends Middleware
     {
         return array_merge(parent::share($request), [
             'locale' => fn() => app()->getLocale(),
+
+            // Base-first list of locale codes to merge for the frontend's
+            // $t()/trans() (e.g. ['en-us', 'es-es', 'es-419', 'es-mx']) --
+            // mirrors the dialect-chain merge LocaleFileLoader already does
+            // for backend __() calls, since the frontend loads its JSON
+            // bundle directly via Vite (see resources/js/vue.js) and has no
+            // other way to know a dialect's fallback parents.
+            'localeChain' => fn() => app(LocaleRegistry::class)->chain(app()->getLocale()),
 
             'menus' => Session::get('menu'),
 

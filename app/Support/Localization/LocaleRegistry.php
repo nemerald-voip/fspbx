@@ -130,8 +130,16 @@ class LocaleRegistry
     }
 
     /**
-     * Keys defined directly in a locale's own file, ignoring inherited
-     * fallback keys. Used only to measure translation completion.
+     * Keys actually translated directly in a locale's own file (ignoring
+     * inherited fallback keys) -- i.e. present with a non-empty value. Used
+     * only to measure translation completion.
+     *
+     * `lang:sync` seeds every registered locale file with every source key,
+     * using "" as a "not translated yet" placeholder (see
+     * LocaleFileLoader), so a bare `array_keys()` here would count every
+     * locale as 100% complete regardless of how much is actually
+     * translated -- excluding blanks is what keeps `available()`'s
+     * completion gate meaningful.
      *
      * @return array<int, string>
      */
@@ -145,7 +153,11 @@ class LocaleRegistry
 
         $decoded = json_decode(File::get($path), true);
 
-        return is_array($decoded) ? array_keys($decoded) : [];
+        if (! is_array($decoded)) {
+            return [];
+        }
+
+        return array_keys(array_filter($decoded, fn ($value) => $value !== ''));
     }
 
     /**

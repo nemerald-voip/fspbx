@@ -3,8 +3,6 @@
 
 ## Overview
 
-[![Crowdin](https://badges.crowdin.net/fs-pbx/localized.svg)](https://crowdin.com/project/fs-pbx)
-
 This project started as a fork of the FusionPBX system but has been extensively redesigned. The backend has been redeveloped using Laravel and Vue.js for the frontend. This new implementation aims to enhance user experience, improve performance, and provide a more modern and maintainable codebase.
 
 ## Features
@@ -103,7 +101,7 @@ Experience enhanced functionality and seamless control like never before!
 
 ## Translations
 
-FS PBX is translated by its community through [Crowdin](https://crowdin.com/project/fs-pbx). If you'd like to help translate the interface into your language, join the project there and start translating through the web UI — no coding or Git required. Regional variants (for example, Spanish and Spanish (Mexico)) automatically inherit the base language, so you only translate what's genuinely different.
+FS PBX is translated by its community directly through GitHub. Translations live in `resources/lang/{locale}.json`; open a PR editing the values for your language against the keys already present in `resources/lang/en-us.json`. Regional variants (for example, Spanish and Spanish (Mexico)) automatically inherit the base language, so you only need to translate what's genuinely different.
 
 See the [Translations guide](https://www.fspbx.com/docs/additional-information/translations/) for how it works and how administrators set a tenant's language.
 

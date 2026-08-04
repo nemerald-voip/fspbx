@@ -218,7 +218,7 @@ class ExtensionsController extends Controller
 
         if (!userCheckPermission('extension_add') && !userCheckPermission('extension_create')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']]
+                'messages' => ['error' => [__('Access denied.')]]
             ], 403);
         }
 
@@ -309,7 +309,7 @@ class ExtensionsController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages' => ['success' => ['Extension duplicated successfully', 'New Extension: ' . $newExtensionNumber]],
+                'messages' => ['success' => [__('Extension duplicated successfully'), __('New Extension: :number', ['number' => $newExtensionNumber])]],
                 'extension_uuid' => $newExtension->extension_uuid,
                 'extension' => $newExtensionNumber,
             ], 201);
@@ -320,7 +320,7 @@ class ExtensionsController extends Controller
 
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to duplicate extension.']]
+                'errors' => ['server' => [__('Failed to duplicate extension.')]]
             ], 500);
         }
     }
@@ -329,7 +329,7 @@ class ExtensionsController extends Controller
     {
         // Check permissions if needed
         if (!userCheckPermission('extension_view')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         try {
@@ -370,7 +370,7 @@ class ExtensionsController extends Controller
     public function ringotelStatus(RingotelApiService $ringotelApiService)
     {
         if (!userCheckPermission('extension_view')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $currentDomain = session('domain_uuid');
@@ -442,11 +442,11 @@ class ExtensionsController extends Controller
         $selfService = $itemUuid && !userCheckPermission('extension_edit') && $this->userOwnsExtension($itemUuid);
 
         if (!in_array($mode, ['create', 'update', 'bulk_update'], true)) {
-            abort(422, 'Invalid item options mode.');
+            abort(422, __('Invalid item options mode.'));
         }
 
         if ($mode === 'update' && !$itemUuid) {
-            abort(422, 'Item UUID is required for update mode.');
+            abort(422, __('Item UUID is required for update mode.'));
         }
 
         if ($mode === 'update' && !userCheckPermission('extension_edit') && !$selfService) {
@@ -759,7 +759,7 @@ class ExtensionsController extends Controller
 
             $followMeDestinationOptions = [
                 [
-                    'groupLabel' => 'Extensions',
+                    'groupLabel' => __('Extensions'),
                     'groupOptions' => $extensions->map(function ($extension) {
                         return [
                             'value' => $extension->extension_uuid,
@@ -770,7 +770,7 @@ class ExtensionsController extends Controller
                     })->toArray(),
                 ],
                 [
-                    'groupLabel' => 'Ring Groups',
+                    'groupLabel' => __('Ring Groups'),
                     'groupOptions' => $ringGroups->map(function ($group) {
                         return [
                             'value' => $group->ring_group_uuid,
@@ -788,32 +788,34 @@ class ExtensionsController extends Controller
 
             // Define the instructions for recording a voicemail greeting using a phone call
             $phoneCallInstructions = [
-                'Dial <strong>*98</strong> from your phone.',
-                'Enter the mailbox number and press <strong>#</strong>.',
-                'Enter the voicemail password and press <strong>#</strong>.',
-                'Press <strong>5</strong> for mailbox options.',
-                'Press <strong>1</strong> to record an unavailable message.',
-                'Choose a greeting number (1-9) to record, then follow the prompts.',
+                __('Dial <strong>*98</strong> from your phone.'),
+                __('Enter the mailbox number and press <strong>#</strong>.'),
+                __('Enter the voicemail password and press <strong>#</strong>.'),
+                __('Press <strong>5</strong> for mailbox options.'),
+                __('Press <strong>1</strong> to record an unavailable message.'),
+                __('Choose a greeting number (1-9) to record, then follow the prompts.'),
             ];
 
             // Define the instructions for recording a name using a phone call
             $phoneCallInstructionsForName = [
-                'Dial <strong>*98</strong> from your phone.',
-                'Enter the mailbox number and press <strong>#</strong>.',
-                'Enter the voicemail password and press <strong>#</strong>.',
-                'Press <strong>5</strong> for mailbox options.',
-                'Press <strong>3</strong> to record your name, then follow the prompts.',
+                __('Dial <strong>*98</strong> from your phone.'),
+                __('Enter the mailbox number and press <strong>#</strong>.'),
+                __('Enter the voicemail password and press <strong>#</strong>.'),
+                __('Press <strong>5</strong> for mailbox options.'),
+                __('Press <strong>3</strong> to record your name, then follow the prompts.'),
             ];
 
-            $sampleMessage = 'Thank you for calling. Please, leave us a message and will call you back as soon as possible';
+            $sampleMessage = __('Thank you for calling. Please, leave us a message and will call you back as soon as possible');
 
             $openAiService = app(\App\Services\OpenAIService::class);
 
-            $recordedName = 'System Default';
+            $recordedName = __('System Default');
+            $hasCustomRecordedName = false;
             if ($voicemailDto && $voicemailDto->voicemail_id) {
                 $filePath = session('domain_name') . '/' . $voicemailDto->voicemail_id . '/recorded_name.wav';
                 if (Storage::disk('voicemail')->exists($filePath)) {
-                    $recordedName = 'Custom recording';
+                    $recordedName = __('Custom recording');
+                    $hasCustomRecordedName = true;
                 }
             }
         } else {
@@ -851,7 +853,7 @@ class ExtensionsController extends Controller
             })
             ->prepend([
                 'value' => '',
-                'label' => 'Main Company Number',
+                'label' => __('Main Company Number'),
             ])
             ->values()
             ->toArray();
@@ -913,6 +915,7 @@ class ExtensionsController extends Controller
             'phone_call_instructions_for_name' => $phoneCallInstructionsForName ?? null,
             'sample_message' => $sampleMessage ?? null,
             'recorded_name' => $recordedName ?? null,
+            'has_custom_recorded_name' => $hasCustomRecordedName ?? false,
             'music_on_hold_options' => $music_on_hold_options ?? null,
         ]);
     }
@@ -927,13 +930,13 @@ class ExtensionsController extends Controller
         $appUser = MobileAppUsers::where('user_id', $request->user)->first();
 
         if (!$appUser) {
-            abort(403, 'Unauthorized user. Contact your administrator');
+            abort(403, __('Unauthorized user. Contact your administrator'));
         }
 
         $extension = Extensions::find($appUser->extension_uuid);
 
         if (!$extension) {
-            abort(403, 'Unauthorized extension. Contact your administrator');
+            abort(403, __('Unauthorized extension. Contact your administrator'));
         }
 
         $destinations = Destinations::where('destination_enabled', 'true')
@@ -1116,7 +1119,7 @@ public function store(StoreExtensionRequest $request)
 
             return response()->json([
                 'extension_uuid'    => $extension->extension_uuid,
-                'messages' => ['success' => ['Extension has been created']],
+                'messages' => ['success' => [__('Extension has been created')]],
             ], 201);
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -1124,7 +1127,7 @@ public function store(StoreExtensionRequest $request)
 
             return response()->json([
                 'status' => 'error',
-                'messages' => ['error' => ['Something went wrong while creating the extension.']]
+                'messages' => ['error' => [__('Something went wrong while creating the extension.')]]
             ], 500);
         }
     }
@@ -1473,14 +1476,14 @@ public function store(StoreExtensionRequest $request)
 
             // logger($extension->toArray());
             return response()->json([
-                'messages' => ['success' => ['Extension updated successfully']],
+                'messages' => ['success' => [__('Extension updated successfully')]],
                 'extension' => $freshExtension,
             ], 200);
         } catch (\Throwable $e) {
             DB::rollBack();
             logger('ExtensionsController@update error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json([
-                'messages' => ['error' => ['An error occurred while updating the extension.', $e->getMessage()]],
+                'messages' => ['error' => [__('An error occurred while updating the extension.'), $e->getMessage()]],
             ], 500);
         }
     }
@@ -1564,7 +1567,7 @@ public function store(StoreExtensionRequest $request)
         if (empty($ids) || empty($data)) {
             return response()->json([
                 'success' => false,
-                'errors' => ['input' => ['No extensions or fields provided for update.']]
+                'errors' => ['input' => [__('No extensions or fields provided for update.')]]
             ], 422);
         }
 
@@ -1614,7 +1617,7 @@ public function store(StoreExtensionRequest $request)
             DB::commit();
 
             return response()->json([
-                'messages' => ['success' => ['Selected extensions updated successfully.']],
+                'messages' => ['success' => [__('Selected extensions updated successfully.')]],
             ], 200);
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -1622,7 +1625,7 @@ public function store(StoreExtensionRequest $request)
 
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to update selected extensions.']]
+                'errors' => ['server' => [__('Failed to update selected extensions.')]]
             ], 500);
         }
     }
@@ -1838,8 +1841,11 @@ public function store(StoreExtensionRequest $request)
                     'success' => false,
                     'errors' => [
                         'extension' => [
-                            "Importing this file would exceed your extension limit of $maxLimit. " .
-                                "You currently have $currentCount extensions and are trying to import $importCount."
+                            __('Importing this file would exceed your extension limit of :max_limit. You currently have :current_count extensions and are trying to import :import_count.', [
+                                'max_limit' => $maxLimit,
+                                'current_count' => $currentCount,
+                                'import_count' => $importCount,
+                            ])
                         ]
                     ]
                 ], 422);
@@ -1860,7 +1866,7 @@ public function store(StoreExtensionRequest $request)
                     $errList = $failure->errors(); // Array of error messages
 
                     foreach ($errList as $errMsg) {
-                        $errors[] = "Row {$row}, '{$attr}': {$errMsg}";
+                        $errors[] = __("Row :row, ':attribute': :message", ['row' => $row, 'attribute' => $attr, 'message' => $errMsg]);
                     }
                 }
 
@@ -1872,7 +1878,7 @@ public function store(StoreExtensionRequest $request)
 
             return response()->json([
                 'success' => true,
-                'messages' => ['success' => ['Extensions have been successfully uploaded.']]
+                'messages' => ['success' => [__('Extensions have been successfully uploaded.')]]
             ], 200);
         } catch (Throwable $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
@@ -1889,7 +1895,7 @@ public function store(StoreExtensionRequest $request)
     {
         if (! userCheckPermission('extension_delete')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']]
+                'messages' => ['error' => [__('Access denied.')]]
             ], 403);
         }
 
@@ -1977,7 +1983,7 @@ public function store(StoreExtensionRequest $request)
             DB::commit();
 
             return response()->json([
-                'messages' => ['success' => ['Selected extension(s) were deleted successfully.']]
+                'messages' => ['success' => [__('Selected extension(s) were deleted successfully.')]]
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -1986,7 +1992,7 @@ public function store(StoreExtensionRequest $request)
                 . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['An error occurred while deleting the selected extension(s).']]
+                'messages' => ['error' => [__('An error occurred while deleting the selected extension(s).')]]
             ], 500);
         }
     }
@@ -2020,7 +2026,7 @@ public function store(StoreExtensionRequest $request)
 
             // Check if user exists
             if (User::where('user_email', $extension->email)->exists()) {
-                throw new \Exception('A user with this email already exists.');
+                throw new \Exception(__('A user with this email already exists.'));
             }
 
             // Create a new user
@@ -2090,7 +2096,7 @@ public function store(StoreExtensionRequest $request)
             DB::commit();
 
             return response()->json([
-                'messages' => ['success' => [ucfirst($group_name) . ' created successfully']],
+                'messages' => ['success' => [__(':name created successfully', ['name' => ucfirst($group_name)])]],
                 'agent' => $agent ?? null,
             ], 200);
         } catch (\Throwable $e) {
@@ -2147,7 +2153,7 @@ public function store(StoreExtensionRequest $request)
         return response()->json([
             'status' => 200,
             'success' => [
-                'message' => 'Successfully submitted restart request'
+                'message' => __('Successfully submitted restart request')
             ]
         ]);
     }
@@ -2216,7 +2222,7 @@ public function store(StoreExtensionRequest $request)
         return response()->json([
             'status' => 200,
             'success' => [
-                'message' => 'Successfully submitted bulk restart request'
+                'message' => __('Successfully submitted bulk restart request')
             ]
         ]);
     }
@@ -2276,7 +2282,7 @@ public function store(StoreExtensionRequest $request)
             default:
                 return response()->json([
                     'status' => 'alert',
-                    'message' => 'Unknown type.'
+                    'message' => __('Unknown type.')
                 ]);
         }
 
@@ -2284,7 +2290,7 @@ public function store(StoreExtensionRequest $request)
 
         return response()->json([
             'status' => 'success',
-            'message' => 'CallForward destination has been disabled successfully.'
+            'message' => __('CallForward destination has been disabled successfully.')
         ]);
     }
 
@@ -2298,7 +2304,7 @@ public function store(StoreExtensionRequest $request)
     {
         if (! userCheckPermission('extension_password')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']]
+                'messages' => ['error' => [__('Access denied.')]]
             ], 403);
         }
 
@@ -2323,7 +2329,7 @@ public function store(StoreExtensionRequest $request)
 
             return response()->json([
                 'success' => true,
-                'messages' => ['success' => ['Password updated successfully.']],
+                'messages' => ['success' => [__('Password updated successfully.')]],
                 'extension_uuid' => $extension->extension_uuid,
             ], 200);
         } catch (\Throwable $e) {
@@ -2351,7 +2357,7 @@ public function store(StoreExtensionRequest $request)
 
             // Return a JSON response indicating success
             return response()->json([
-                'messages' => ['success' => ['All items selected']],
+                'messages' => ['success' => [__('All items selected')]],
                 'items' => $uuids,
             ], 200);
         } catch (\Exception $e) {
@@ -2359,7 +2365,7 @@ public function store(StoreExtensionRequest $request)
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to select all items']]
+                'errors' => ['server' => [__('Failed to select all items')]]
             ], 500); // 500 Internal Server Error for any other errors
         }
     }

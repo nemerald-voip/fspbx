@@ -7,35 +7,54 @@ sidebar_position: 5
 
 # Translations
 
-[![Crowdin](https://badges.crowdin.net/fs-pbx/localized.svg)](https://crowdin.com/project/fs-pbx)
-
-FS PBX's interface is translated by its community. This page is for two
-audiences: people who'd like to help translate, and administrators who want
-to set the language a tenant sees.
+FS PBX's interface is translated by its community, directly through GitHub.
+This page is for two audiences: people who'd like to help translate, and
+administrators who want to set the language a tenant sees.
 
 ## Helping with translation
 
-Translation happens on [Crowdin](https://crowdin.com/project/fs-pbx) -- a
-free web-based tool, no coding or Git required. To get started:
+There's no separate translation website -- everything lives in the
+[FS PBX GitHub repository](https://github.com/nemerald-voip/fspbx), in
+`resources/lang/{locale}.json`. Each file is a flat list of
+`"English text": "Translated text"` pairs. To contribute:
 
-1. Open the [FS PBX Crowdin project](https://crowdin.com/project/fs-pbx) and
-   join it (sign up if you don't already have a Crowdin account).
-2. Pick a language and start translating strings. Crowdin shows you the
-   original English text next to a box for your translation.
-3. You don't need to translate everything in one sitting, and you don't need
-   to finish a whole language before your work counts -- every string you
-   translate is used as soon as it's approved.
+1. Open the file for your language, e.g. `resources/lang/es-es.json` for
+   Spanish. Every string the app knows how to translate is already listed
+   there, one `"English text": "..."` pair per line -- new strings are
+   added to every language file automatically the moment they're added in
+   English, so you never have to go hunting for what's new or add a key
+   yourself.
+2. An empty value (`""`) means nobody has translated that string yet --
+   it currently falls back to showing the English text. Search the file for
+   `": ""` to jump straight to what's left, and fill in your translation:
+   ```json
+   {
+       "Save": "Guardar",
+       "Extensions": "Extensiones"
+   }
+   ```
+3. If a source string contains a `:placeholder` (e.g. `":count items"`),
+   keep the same placeholder token in your translation, just move it to
+   wherever it reads naturally in your language -- CI checks that the
+   token survives translation, not its position.
+4. Open a pull request with your changes. A CI check validates the JSON and
+   the placeholder tokens automatically; someone will review and merge it.
+   You don't need to finish a whole language in one PR -- leaving the rest
+   blank is completely normal, and each string you fill in is used as soon
+   as it's merged.
+
+If your language doesn't have a file yet, don't create one by hand -- open
+an issue or PR asking for it to be added to `config/locales.php`, which
+generates the file for you (fully populated, ready to fill in) the next
+time `lang:sync` runs.
 
 **A note on regional variants:** some languages are listed more than once --
-for example, Spanish, plus Spanish (Mexico) and Spanish (Latin America).
-Those regional variants automatically inherit the generic version's
-translations, so you only need to translate a word or phrase for the
-variant if it's actually said differently there. You don't need to
-retranslate everything from scratch for a regional variant -- just the
-handful of things that are genuinely different.
-
-If you'd rather not use Crowdin, you're also welcome to open a pull request
-directly against the [FS PBX GitHub repository](https://github.com/nemerald-voip/fspbx).
+for example, Spanish, plus Spanish (Mexico) and Spanish (Latin America). Each
+one is a fully independent file with no connection to the others -- so if
+you're translating Spanish (Mexico), you're translating every string in
+`resources/lang/es-mx.json` yourself, not just the handful that differ from
+`es-es.json`. That's a deliberate choice: having one variant borrow from
+another was more confusing than helpful.
 
 ## For administrators: switching the language
 
@@ -66,5 +85,4 @@ right next to it.
   after a "Reload Settings" action -- the same as other settings, not
   mid-session.
 - Anything not yet translated for the chosen language falls back to English
-  (or to a closely related language, for regional variants) until the
-  community finishes it.
+  until the community finishes it.

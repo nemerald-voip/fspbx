@@ -23,7 +23,7 @@
                                 <button type="button"
                                     class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                     @click="emit('close')">
-                                    <span class="sr-only">Close</span>
+                                    <span class="sr-only">{{ $t('Close') }}</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
@@ -37,7 +37,7 @@
                                         <path class="opacity-75" fill="currentColor"
                                             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                     </svg>
-                                    <div class="text-lg text-blue-600">Loading...</div>
+                                    <div class="text-lg text-blue-600">{{ $t('Loading...') }}</div>
                                 </div>
                             </div>
 
@@ -55,11 +55,11 @@
                                     <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
                                         <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
                                             <FormTabs view="vertical">
-                                                <FormTab name="general" label="General" :elements="generalElements" />
-                                                <FormTab name="caller_id" label="Caller ID" :elements="callerIdElements" />
-                                                <FormTab name="call_forward" label="Call Forward" :elements="callForwardElements" />
-                                                <FormTab name="voicemail" label="Voicemail" :elements="voicemailElements" />
-                                                <FormTab name="mobile_app" label="Mobile App" :elements="mobileAppElements" :conditions="[() => permissions.manage_mobile_app]" />
+                                                <FormTab name="general" :label="$t('General')" :elements="generalElements" />
+                                                <FormTab name="caller_id" :label="$t('Caller ID')" :elements="callerIdElements" />
+                                                <FormTab name="call_forward" :label="$t('Call Forward')" :elements="callForwardElements" />
+                                                <FormTab name="voicemail" :label="$t('Voicemail')" :elements="voicemailElements" />
+                                                <FormTab name="mobile_app" :label="$t('Mobile App')" :elements="mobileAppElements" :conditions="[() => permissions.manage_mobile_app]" />
                                             </FormTabs>
                                         </div>
 
@@ -68,206 +68,206 @@
                                             <FormElements>
                                                 <HiddenElement name="items" :meta="true" />
                                                 
-                                                <StaticElement name="general_title" tag="h4" content="General" />
+                                                <StaticElement name="general_title" tag="h4" :content="$t('General')" />
 
                                                 <CheckboxElement name="directory_first_name_checkbox" :submit="false" label="&nbsp;" :columns="{ container: 1 }" />
-                                                <TextElement name="directory_first_name" label="First Name" :floating="false" :columns="{ container: 11 }" :disabled="[['directory_first_name_checkbox', false]]" />
+                                                <TextElement name="directory_first_name" :label="$t('First Name')" :floating="false" :columns="{ container: 11 }" :disabled="[['directory_first_name_checkbox', false]]" />
 
                                                 <CheckboxElement name="directory_last_name_checkbox" :submit="false" label="&nbsp;" :columns="{ container: 1 }" />
-                                                <TextElement name="directory_last_name" label="Last Name" :floating="false" :columns="{ container: 11 }" :disabled="[['directory_last_name_checkbox', false]]" />
+                                                <TextElement name="directory_last_name" :label="$t('Last Name')" :floating="false" :columns="{ container: 11 }" :disabled="[['directory_last_name_checkbox', false]]" />
 
                                                 <CheckboxElement name="voicemail_mail_to_checkbox" :submit="false" label="&nbsp;" :columns="{ container: 1 }" />
-                                                <TextElement name="voicemail_mail_to" label="Email" :floating="false" :columns="{ container: 11 }" :disabled="[['voicemail_mail_to_checkbox', false]]" />
+                                                <TextElement name="voicemail_mail_to" :label="$t('Email')" :floating="false" :columns="{ container: 11 }" :disabled="[['voicemail_mail_to_checkbox', false]]" />
 
                                                 <CheckboxElement name="description_checkbox" :submit="false" label="&nbsp;" :columns="{ container: 1 }" />
-                                                <TextElement name="description" label="Description" :floating="false" :columns="{ container: 11 }" :disabled="[['description_checkbox', false]]" />
+                                                <TextElement name="description" :label="$t('Description')" :floating="false" :columns="{ container: 11 }" :disabled="[['description_checkbox', false]]" />
 
                                                 <CheckboxElement v-if="permissions.extension_suspended" name="suspended_checkbox" :submit="false" :columns="{ container: 1 }" />
-                                                <ToggleElement v-if="permissions.extension_suspended" name="suspended" text="Suspended" true-value="true" false-value="false" :columns="{ container: 11 }" :disabled="[['suspended_checkbox', false]]" />
+                                                <ToggleElement v-if="permissions.extension_suspended" name="suspended" :text="$t('Suspended')" true-value="true" false-value="false" :columns="{ container: 11 }" :disabled="[['suspended_checkbox', false]]" />
 
                                                 <CheckboxElement v-if="permissions.extension_do_not_disturb" name="do_not_disturb_checkbox" :submit="false" :columns="{ container: 1 }" />
-                                                <ToggleElement v-if="permissions.extension_do_not_disturb" name="do_not_disturb" text="Do Not Disturb" true-value="true" false-value="false" :columns="{ container: 11 }" :disabled="[['do_not_disturb_checkbox', false]]" />
+                                                <ToggleElement v-if="permissions.extension_do_not_disturb" name="do_not_disturb" :text="$t('Do Not Disturb')" true-value="true" false-value="false" :columns="{ container: 11 }" :disabled="[['do_not_disturb_checkbox', false]]" />
 
                                                 <CheckboxElement v-if="permissions.extension_user_record" name="user_record_checkbox" :submit="false" :columns="{ container: 1 }" />
-                                                <ToggleElement v-if="permissions.extension_user_record" name="recording_enabled" text="Record Calls" :submit="false" :disabled="[['user_record_checkbox', false]]" :columns="{ container: 11 }" />
-                                                <RadiogroupElement v-if="permissions.extension_user_record" name="user_record" label="Record" :items="recordingOptions" :conditions="[['recording_enabled', '==', true]]" :disabled="[['user_record_checkbox', false]]" :columns="{ container: 12 }" />
+                                                <ToggleElement v-if="permissions.extension_user_record" name="recording_enabled" :text="$t('Record Calls')" :submit="false" :disabled="[['user_record_checkbox', false]]" :columns="{ container: 11 }" />
+                                                <RadiogroupElement v-if="permissions.extension_user_record" name="user_record" :label="$t('Record')" :items="recordingOptions" :conditions="[['recording_enabled', '==', true]]" :disabled="[['user_record_checkbox', false]]" :columns="{ container: 12 }" />
 
                                                 <CheckboxElement name="call_timeout_checkbox" :submit="false" label="&nbsp;" :columns="{ container: 1 }" />
-                                                <SelectElement name="call_timeout" :items="delayOptions" :search="true" :native="false" label="Send unanswered calls to voicemail after" input-type="search" placeholder="Select option" :floating="false" :columns="{ container: 11 }" :disabled="[['call_timeout_checkbox', false]]" />
+                                                <SelectElement name="call_timeout" :items="delayOptions" :search="true" :native="false" :label="$t('Send unanswered calls to voicemail after')" input-type="search" :placeholder="$t('Select option')" :floating="false" :columns="{ container: 11 }" :disabled="[['call_timeout_checkbox', false]]" />
 
                                                 <GroupElement name="general_footer" />
-                                                <ButtonElement name="submit_general" button-label="Save" :submits="true" align="right" />
+                                                <ButtonElement name="submit_general" :button-label="$t('Save')" :submits="true" align="right" />
 
-                                                <StaticElement name="caller_id_title" tag="h4" content="Caller ID" />
+                                                <StaticElement name="caller_id_title" tag="h4" :content="$t('Caller ID')" />
 
                                                 <CheckboxElement v-if="permissions.manage_external_caller_id_number" name="outbound_caller_id_number_checkbox" :submit="false" label="&nbsp;" :columns="{ container: 1 }" />
-                                                <SelectElement v-if="permissions.manage_external_caller_id_number" name="outbound_caller_id_number" :items="options.phone_numbers" :search="true" :native="false" label="External Caller ID" input-type="search" autocomplete="off" placeholder="Select number" :floating="false" :columns="{ container: 11 }" :disabled="[['outbound_caller_id_number_checkbox', false]]" />
+                                                <SelectElement v-if="permissions.manage_external_caller_id_number" name="outbound_caller_id_number" :items="options.phone_numbers" :search="true" :native="false" :label="$t('External Caller ID')" input-type="search" autocomplete="off" :placeholder="$t('Select number')" :floating="false" :columns="{ container: 11 }" :disabled="[['outbound_caller_id_number_checkbox', false]]" />
 
                                                 <CheckboxElement v-if="permissions.manage_emergency_caller_id_number" name="emergency_caller_id_number_checkbox" :submit="false" label="&nbsp;" :columns="{ container: 1 }" />
-                                                <SelectElement v-if="permissions.manage_emergency_caller_id_number" name="emergency_caller_id_number" :items="options.phone_numbers" :search="true" :native="false" label="Emergency Caller ID" input-type="search" autocomplete="off" placeholder="Select number" :floating="false" :columns="{ container: 11 }" :disabled="[['emergency_caller_id_number_checkbox', false]]" />
+                                                <SelectElement v-if="permissions.manage_emergency_caller_id_number" name="emergency_caller_id_number" :items="options.phone_numbers" :search="true" :native="false" :label="$t('Emergency Caller ID')" input-type="search" autocomplete="off" :placeholder="$t('Select number')" :floating="false" :columns="{ container: 11 }" :disabled="[['emergency_caller_id_number_checkbox', false]]" />
 
                                                 <GroupElement name="caller_id_footer" />
-                                                <ButtonElement name="submit_caller_id" button-label="Save" :submits="true" align="right" />
+                                                <ButtonElement name="submit_caller_id" :button-label="$t('Save')" :submits="true" align="right" />
 
-                                                <StaticElement name="call_forward_title" tag="h4" content="Call Forward" />
+                                                <StaticElement name="call_forward_title" tag="h4" :content="$t('Call Forward')" />
 
                                                 <CheckboxElement v-if="permissions.extension_forward_all" name="forward_all_checkbox" :submit="false" label="&nbsp;" :columns="{ container: 1 }" />
                                                 <StaticElement v-if="permissions.extension_forward_all" name="forward_all_info" :columns="{ container: 11 }">
                                                     <div>
-                                                        <div class="text-base font-semibold text-gray-800">Forward All Calls</div>
+                                                        <div class="text-base font-semibold text-gray-800">{{ $t('Forward All Calls') }}</div>
                                                         <div class="mt-1 text-sm text-gray-500">
-                                                            Instantly and unconditionally forward all incoming calls to another destination. No calls will ring to your phone until forwarding is disabled.
+                                                            {{ $t('Instantly and unconditionally forward all incoming calls to another destination. No calls will ring to your phone until forwarding is disabled.') }}
                                                         </div>
                                                     </div>
                                                 </StaticElement>
-                                                <ToggleElement v-if="permissions.extension_forward_all" name="forward_all_enabled" :labels="{ on: 'On', off: 'Off' }" true-value="true" false-value="false" text="Enabled"
+                                                <ToggleElement v-if="permissions.extension_forward_all" name="forward_all_enabled" :labels="{ on: $t('On'), off: $t('Off') }" true-value="true" false-value="false" :text="$t('Enabled')"
                                                     :columns="{ container: 12 }" :conditions="[['forward_all_checkbox', '==', true]]" />
                                                 <SelectElement v-if="permissions.extension_forward_all" name="forward_all_action" :items="forwardingTypeOptions" :search="true"
-                                                    :native="false" label="Choose Action" input-type="search" autocomplete="off" placeholder="Choose Action"
+                                                    :native="false" :label="$t('Choose Action')" input-type="search" autocomplete="off" :placeholder="$t('Choose Action')"
                                                     :floating="false" :strict="false" :columns="{ container: 12 }"
                                                     :conditions="[['forward_all_checkbox', '==', true]]"
                                                     @change="(newValue, oldValue, el$) => handleForwardActionChange('forward_all_target', newValue, oldValue, el$)" />
                                                 <SelectElement v-if="permissions.extension_forward_all" name="forward_all_target" :items="(query, input) => getRoutingOptions('forward_all_action', input)"
-                                                    :search="true" label-prop="name" :native="false" label="Target" input-type="search"
-                                                    allow-absent :object="true" :format-data="formatTarget" autocomplete="off" placeholder="Choose Target"
+                                                    :search="true" label-prop="name" :native="false" :label="$t('Target')" input-type="search"
+                                                    allow-absent :object="true" :format-data="formatTarget" autocomplete="off" :placeholder="$t('Choose Target')"
                                                     :floating="false" :strict="false" :columns="{ container: 12 }"
                                                     :conditions="[['forward_all_checkbox', '==', true], ['forward_all_action', 'not_empty'], ['forward_all_action', 'not_in', ['external']]]" />
-                                                <TextElement v-if="permissions.extension_forward_all" name="forward_all_external_target" label="Target" placeholder="Enter External Number"
+                                                <TextElement v-if="permissions.extension_forward_all" name="forward_all_external_target" :label="$t('Target')" :placeholder="$t('Enter External Number')"
                                                     :floating="false" :columns="{ container: 12 }"
                                                     :conditions="[['forward_all_checkbox', '==', true], ['forward_all_action', 'not_empty'], ['forward_all_action', 'in', ['external']]]" />
 
                                                 <CheckboxElement v-if="permissions.extension_forward_busy" name="forward_busy_checkbox" :submit="false" label="&nbsp;" :columns="{ container: 1 }" />
                                                 <StaticElement v-if="permissions.extension_forward_busy" name="forward_busy_info" :columns="{ container: 11 }">
                                                     <div>
-                                                        <div class="text-base font-semibold text-gray-800">When user is busy</div>
+                                                        <div class="text-base font-semibold text-gray-800">{{ $t('When user is busy') }}</div>
                                                         <div class="mt-1 text-sm text-gray-500">
-                                                            Automatically redirect incoming calls to a different destination when your line is busy or Do Not Disturb is active.
+                                                            {{ $t('Automatically redirect incoming calls to a different destination when your line is busy or Do Not Disturb is active.') }}
                                                         </div>
                                                     </div>
                                                 </StaticElement>
-                                                <ToggleElement v-if="permissions.extension_forward_busy" name="forward_busy_enabled" :labels="{ on: 'On', off: 'Off' }" true-value="true" false-value="false" text="Enabled"
+                                                <ToggleElement v-if="permissions.extension_forward_busy" name="forward_busy_enabled" :labels="{ on: $t('On'), off: $t('Off') }" true-value="true" false-value="false" :text="$t('Enabled')"
                                                     :columns="{ container: 12 }" :conditions="[['forward_busy_checkbox', '==', true]]" />
                                                 <SelectElement v-if="permissions.extension_forward_busy" name="forward_busy_action" :items="forwardingTypeOptions" :search="true"
-                                                    :native="false" label="Choose Action" input-type="search" autocomplete="off" placeholder="Choose Action"
+                                                    :native="false" :label="$t('Choose Action')" input-type="search" autocomplete="off" :placeholder="$t('Choose Action')"
                                                     :floating="false" :strict="false" :columns="{ container: 12 }"
                                                     :conditions="[['forward_busy_checkbox', '==', true]]"
                                                     @change="(newValue, oldValue, el$) => handleForwardActionChange('forward_busy_target', newValue, oldValue, el$)" />
                                                 <SelectElement v-if="permissions.extension_forward_busy" name="forward_busy_target" :items="(query, input) => getRoutingOptions('forward_busy_action', input)"
-                                                    :search="true" label-prop="name" :native="false" label="Target" input-type="search"
-                                                    allow-absent :object="true" :format-data="formatTarget" autocomplete="off" placeholder="Choose Target"
+                                                    :search="true" label-prop="name" :native="false" :label="$t('Target')" input-type="search"
+                                                    allow-absent :object="true" :format-data="formatTarget" autocomplete="off" :placeholder="$t('Choose Target')"
                                                     :floating="false" :strict="false" :columns="{ container: 12 }"
                                                     :conditions="[['forward_busy_checkbox', '==', true], ['forward_busy_action', 'not_empty'], ['forward_busy_action', 'not_in', ['external']]]" />
-                                                <TextElement v-if="permissions.extension_forward_busy" name="forward_busy_external_target" label="Target" placeholder="Enter External Number"
+                                                <TextElement v-if="permissions.extension_forward_busy" name="forward_busy_external_target" :label="$t('Target')" :placeholder="$t('Enter External Number')"
                                                     :floating="false" :columns="{ container: 12 }"
                                                     :conditions="[['forward_busy_checkbox', '==', true], ['forward_busy_action', 'not_empty'], ['forward_busy_action', 'in', ['external']]]" />
 
                                                 <CheckboxElement v-if="permissions.extension_forward_no_answer" name="forward_no_answer_checkbox" :submit="false" label="&nbsp;" :columns="{ container: 1 }" />
                                                 <StaticElement v-if="permissions.extension_forward_no_answer" name="forward_no_answer_info" :columns="{ container: 11 }">
                                                     <div>
-                                                        <div class="text-base font-semibold text-gray-800">When user does not answer the call</div>
+                                                        <div class="text-base font-semibold text-gray-800">{{ $t('When user does not answer the call') }}</div>
                                                         <div class="mt-1 text-sm text-gray-500">
-                                                            Automatically redirect incoming calls to another number if you do not answer within a set time.
+                                                            {{ $t('Automatically redirect incoming calls to another number if you do not answer within a set time.') }}
                                                         </div>
                                                     </div>
                                                 </StaticElement>
-                                                <ToggleElement v-if="permissions.extension_forward_no_answer" name="forward_no_answer_enabled" :labels="{ on: 'On', off: 'Off' }" true-value="true" false-value="false" text="Enabled"
+                                                <ToggleElement v-if="permissions.extension_forward_no_answer" name="forward_no_answer_enabled" :labels="{ on: $t('On'), off: $t('Off') }" true-value="true" false-value="false" :text="$t('Enabled')"
                                                     :columns="{ container: 12 }" :conditions="[['forward_no_answer_checkbox', '==', true]]" />
                                                 <SelectElement v-if="permissions.extension_forward_no_answer" name="forward_no_answer_action" :items="forwardingTypeOptions" :search="true"
-                                                    :native="false" label="Choose Action" input-type="search" autocomplete="off" placeholder="Choose Action"
+                                                    :native="false" :label="$t('Choose Action')" input-type="search" autocomplete="off" :placeholder="$t('Choose Action')"
                                                     :floating="false" :strict="false" :columns="{ container: 12 }"
                                                     :conditions="[['forward_no_answer_checkbox', '==', true]]"
                                                     @change="(newValue, oldValue, el$) => handleForwardActionChange('forward_no_answer_target', newValue, oldValue, el$)" />
                                                 <SelectElement v-if="permissions.extension_forward_no_answer" name="forward_no_answer_target" :items="(query, input) => getRoutingOptions('forward_no_answer_action', input)"
-                                                    :search="true" label-prop="name" :native="false" label="Target" input-type="search"
-                                                    allow-absent :object="true" :format-data="formatTarget" autocomplete="off" placeholder="Choose Target"
+                                                    :search="true" label-prop="name" :native="false" :label="$t('Target')" input-type="search"
+                                                    allow-absent :object="true" :format-data="formatTarget" autocomplete="off" :placeholder="$t('Choose Target')"
                                                     :floating="false" :strict="false" :columns="{ container: 12 }"
                                                     :conditions="[['forward_no_answer_checkbox', '==', true], ['forward_no_answer_action', 'not_empty'], ['forward_no_answer_action', 'not_in', ['external']]]" />
-                                                <TextElement v-if="permissions.extension_forward_no_answer" name="forward_no_answer_external_target" label="Target" placeholder="Enter External Number"
+                                                <TextElement v-if="permissions.extension_forward_no_answer" name="forward_no_answer_external_target" :label="$t('Target')" :placeholder="$t('Enter External Number')"
                                                     :floating="false" :columns="{ container: 12 }"
                                                     :conditions="[['forward_no_answer_checkbox', '==', true], ['forward_no_answer_action', 'not_empty'], ['forward_no_answer_action', 'in', ['external']]]" />
 
                                                 <CheckboxElement v-if="permissions.extension_forward_not_registered" name="forward_user_not_registered_checkbox" :submit="false" label="&nbsp;" :columns="{ container: 1 }" />
                                                 <StaticElement v-if="permissions.extension_forward_not_registered" name="forward_user_not_registered_info" :columns="{ container: 11 }">
                                                     <div>
-                                                        <div class="text-base font-semibold text-gray-800">When Device Is Not Registered (Internet Outage)</div>
+                                                        <div class="text-base font-semibold text-gray-800">{{ $t('When Device Is Not Registered (Internet Outage)') }}</div>
                                                         <div class="mt-1 text-sm text-gray-500">
-                                                            Redirect calls to a different number if your device is not registered or unreachable.
+                                                            {{ $t('Redirect calls to a different number if your device is not registered or unreachable.') }}
                                                         </div>
                                                     </div>
                                                 </StaticElement>
-                                                <ToggleElement v-if="permissions.extension_forward_not_registered" name="forward_user_not_registered_enabled" :labels="{ on: 'On', off: 'Off' }" true-value="true" false-value="false" text="Enabled"
+                                                <ToggleElement v-if="permissions.extension_forward_not_registered" name="forward_user_not_registered_enabled" :labels="{ on: $t('On'), off: $t('Off') }" true-value="true" false-value="false" :text="$t('Enabled')"
                                                     :columns="{ container: 12 }" :conditions="[['forward_user_not_registered_checkbox', '==', true]]" />
                                                 <SelectElement v-if="permissions.extension_forward_not_registered" name="forward_user_not_registered_action" :items="forwardingTypeOptions" :search="true"
-                                                    :native="false" label="Choose Action" input-type="search" autocomplete="off" placeholder="Choose Action"
+                                                    :native="false" :label="$t('Choose Action')" input-type="search" autocomplete="off" :placeholder="$t('Choose Action')"
                                                     :floating="false" :strict="false" :columns="{ container: 12 }"
                                                     :conditions="[['forward_user_not_registered_checkbox', '==', true]]"
                                                     @change="(newValue, oldValue, el$) => handleForwardActionChange('forward_user_not_registered_target', newValue, oldValue, el$)" />
                                                 <SelectElement v-if="permissions.extension_forward_not_registered" name="forward_user_not_registered_target" :items="(query, input) => getRoutingOptions('forward_user_not_registered_action', input)"
-                                                    :search="true" label-prop="name" :native="false" label="Target" input-type="search"
-                                                    allow-absent :object="true" :format-data="formatTarget" autocomplete="off" placeholder="Choose Target"
+                                                    :search="true" label-prop="name" :native="false" :label="$t('Target')" input-type="search"
+                                                    allow-absent :object="true" :format-data="formatTarget" autocomplete="off" :placeholder="$t('Choose Target')"
                                                     :floating="false" :strict="false" :columns="{ container: 12 }"
                                                     :conditions="[['forward_user_not_registered_checkbox', '==', true], ['forward_user_not_registered_action', 'not_empty'], ['forward_user_not_registered_action', 'not_in', ['external']]]" />
-                                                <TextElement v-if="permissions.extension_forward_not_registered" name="forward_user_not_registered_external_target" label="Target"
-                                                    placeholder="Enter External Number" :floating="false" :columns="{ container: 12 }"
+                                                <TextElement v-if="permissions.extension_forward_not_registered" name="forward_user_not_registered_external_target" :label="$t('Target')"
+                                                    :placeholder="$t('Enter External Number')" :floating="false" :columns="{ container: 12 }"
                                                     :conditions="[['forward_user_not_registered_checkbox', '==', true], ['forward_user_not_registered_action', 'not_empty'], ['forward_user_not_registered_action', 'in', ['external']]]" />
 
                                                 <GroupElement name="call_forward_footer" />
-                                                <ButtonElement name="submit_call_forward" button-label="Save" :submits="true" align="right" />
+                                                <ButtonElement name="submit_call_forward" :button-label="$t('Save')" :submits="true" align="right" />
 
-                                                <StaticElement name="voicemail_title" tag="h4" content="Voicemail" />
+                                                <StaticElement name="voicemail_title" tag="h4" :content="$t('Voicemail')" />
 
                                                 <CheckboxElement v-if="permissions.manage_voicemail" name="voicemail_enabled_checkbox" :submit="false" :columns="{ container: 1 }" />
-                                                <ToggleElement v-if="permissions.manage_voicemail" name="voicemail_enabled" text="Voicemail Enabled" true-value="true" false-value="false" :columns="{ container: 11 }" :disabled="[['voicemail_enabled_checkbox', false]]" />
+                                                <ToggleElement v-if="permissions.manage_voicemail" name="voicemail_enabled" :text="$t('Voicemail Enabled')" true-value="true" false-value="false" :columns="{ container: 11 }" :disabled="[['voicemail_enabled_checkbox', false]]" />
 
                                                 <CheckboxElement v-if="permissions.manage_voicemail" name="voicemail_password_checkbox" :submit="false" label="&nbsp;" :columns="{ container: 1 }" />
-                                                <TextElement v-if="permissions.manage_voicemail" name="voicemail_password" label="Voicemail Password" :floating="false" :columns="{ container: 11 }" :disabled="[['voicemail_password_checkbox', false]]" />
+                                                <TextElement v-if="permissions.manage_voicemail" name="voicemail_password" :label="$t('Voicemail Password')" :floating="false" :columns="{ container: 11 }" :disabled="[['voicemail_password_checkbox', false]]" />
 
                                                 <CheckboxElement v-if="permissions.manage_voicemail" name="voicemail_description_checkbox" :submit="false" label="&nbsp;" :columns="{ container: 1 }" />
-                                                <TextElement v-if="permissions.manage_voicemail" name="voicemail_description" label="Voicemail Description" :floating="false" :columns="{ container: 11 }" :disabled="[['voicemail_description_checkbox', false]]" />
+                                                <TextElement v-if="permissions.manage_voicemail" name="voicemail_description" :label="$t('Voicemail Description')" :floating="false" :columns="{ container: 11 }" :disabled="[['voicemail_description_checkbox', false]]" />
 
                                                 <CheckboxElement v-if="permissions.manage_voicemail_transcription" name="voicemail_transcription_enabled_checkbox" :submit="false" :columns="{ container: 1 }" />
-                                                <ToggleElement v-if="permissions.manage_voicemail_transcription" name="voicemail_transcription_enabled" text="Voicemail Transcription" true-value="true" false-value="false" :columns="{ container: 11 }" :disabled="[['voicemail_transcription_enabled_checkbox', false]]" />
+                                                <ToggleElement v-if="permissions.manage_voicemail_transcription" name="voicemail_transcription_enabled" :text="$t('Voicemail Transcription')" true-value="true" false-value="false" :columns="{ container: 11 }" :disabled="[['voicemail_transcription_enabled_checkbox', false]]" />
 
                                                 <CheckboxElement v-if="permissions.manage_voicemail" name="voicemail_file_checkbox" :submit="false" :columns="{ container: 1 }" />
-                                                <ToggleElement v-if="permissions.manage_voicemail" name="voicemail_file_toggle" text="Attach File To Email Notifications" :submit="false" :columns="{ container: 11 }" :disabled="[['voicemail_file_checkbox', false]]" />
+                                                <ToggleElement v-if="permissions.manage_voicemail" name="voicemail_file_toggle" :text="$t('Attach File To Email Notifications')" :submit="false" :columns="{ container: 11 }" :disabled="[['voicemail_file_checkbox', false]]" />
 
                                                 <CheckboxElement v-if="permissions.manage_voicemail_auto_delete" name="voicemail_local_after_email_checkbox" :submit="false" :columns="{ container: 1 }" />
-                                                <ToggleElement v-if="permissions.manage_voicemail_auto_delete" name="voicemail_local_after_email" text="Automatically Delete Voicemail After Email" true-value="false" false-value="true" :columns="{ container: 11 }" :disabled="[['voicemail_local_after_email_checkbox', false]]" />
+                                                <ToggleElement v-if="permissions.manage_voicemail_auto_delete" name="voicemail_local_after_email" :text="$t('Automatically Delete Voicemail After Email')" true-value="false" false-value="true" :columns="{ container: 11 }" :disabled="[['voicemail_local_after_email_checkbox', false]]" />
 
                                                 <GroupElement name="voicemail_footer" />
-                                                <ButtonElement name="submit_voicemail" button-label="Save" :submits="true" align="right" />
+                                                <ButtonElement name="submit_voicemail" :button-label="$t('Save')" :submits="true" align="right" />
 
-                                                <StaticElement name="mobile_app_title" tag="h4" content="Mobile App" />
+                                                <StaticElement name="mobile_app_title" tag="h4" :content="$t('Mobile App')" />
 
                                                 <StaticElement name="mobile_app_info">
                                                     <div class="text-sm text-gray-500">
-                                                        Choose one action to apply to the selected extensions. Extensions that are not eligible for the selected action will be skipped.
+                                                        {{ $t('Choose one action to apply to the selected extensions. Extensions that are not eligible for the selected action will be skipped.') }}
                                                     </div>
                                                 </StaticElement>
 
                                                 <SelectElement name="mobile_app_action" :items="mobileAppActionOptions"
-                                                    :native="false" label="Action" input-type="search"
-                                                    autocomplete="off" placeholder="Choose Action"
+                                                    :native="false" :label="$t('Action')" input-type="search"
+                                                    autocomplete="off" :placeholder="$t('Choose Action')"
                                                     :floating="false" :columns="{ container: 12 }" />
 
                                                 <SelectElement name="mobile_app_connection"
                                                     :items="options.mobile_app?.connections ?? []" :search="true"
-                                                    :native="false" label="Connection" label-prop="name"
+                                                    :native="false" :label="$t('Connection')" label-prop="name"
                                                     value-prop="id" input-type="search" autocomplete="off"
-                                                    placeholder="Choose Connection" :floating="false" :columns="{ container: 12 }"
+                                                    :placeholder="$t('Choose Connection')" :floating="false" :columns="{ container: 12 }"
                                                     :conditions="[['mobile_app_action', 'in', ['enable', 'add_contact']]]" />
 
                                                 <StaticElement name="mobile_app_unavailable"
                                                     :conditions="[() => !(options.mobile_app?.org_id)]">
                                                     <div class="border-l-4 border-yellow-400 bg-yellow-50 p-4">
                                                         <p class="text-sm text-yellow-700">
-                                                            Contact your administrator to enable mobile apps.
+                                                            {{ $t('Contact your administrator to enable mobile apps.') }}
                                                         </p>
                                                     </div>
                                                 </StaticElement>
 
                                                 <GroupElement name="mobile_app_footer" />
-                                                <ButtonElement name="submit_mobile_app" button-label="Apply"
+                                                <ButtonElement name="submit_mobile_app" :button-label="$t('Apply')"
                                                     :loading="isMobileAppSubmitting" align="right"
                                                     @click="handleBulkMobileAppActionButtonClick"
                                                     :conditions="[() => !!options.mobile_app?.org_id]" />
@@ -289,6 +289,7 @@ import { computed, ref } from "vue";
 import axios from "axios";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from "@headlessui/vue";
 import { XMarkIcon } from "@heroicons/vue/24/solid";
+import { trans } from 'laravel-vue-i18n';
 
 const props = defineProps({
     items: {
@@ -403,18 +404,18 @@ const mobileAppElements = [
 ];
 
 const mobileAppActionOptions = [
-    { value: 'enable', label: 'Enable/Activate' },
-    { value: 'add_contact', label: 'Add As BLF Contact' },
-    { value: 'deactivate', label: 'Deactivate' },
-    { value: 'remove', label: 'Remove' },
-    { value: 'reset_credentials', label: 'Reset Credentials' },
+    { value: 'enable', label: trans('Enable/Activate') },
+    { value: 'add_contact', label: trans('Add As BLF Contact') },
+    { value: 'deactivate', label: trans('Deactivate') },
+    { value: 'remove', label: trans('Remove') },
+    { value: 'reset_credentials', label: trans('Reset Credentials') },
 ];
 
 const recordingOptions = [
-    { value: 'all', label: 'All' },
-    { value: 'local', label: 'Local' },
-    { value: 'outbound', label: 'Outbound' },
-    { value: 'inbound', label: 'Inbound' },
+    { value: 'all', label: trans('All') },
+    { value: 'local', label: trans('Local') },
+    { value: 'outbound', label: trans('Outbound') },
+    { value: 'inbound', label: trans('Inbound') },
 ];
 
 const delayOptions = Array.from({ length: 21 }, (_, i) => {
@@ -423,7 +424,7 @@ const delayOptions = Array.from({ length: 21 }, (_, i) => {
 
     return {
         value: String(seconds),
-        label: `${rings} ${rings === 1 ? 'Ring' : 'Rings'} (${seconds}s)`,
+        label: trans(':count Ring(s) (:seconds s)', { count: rings, seconds }),
     };
 });
 
@@ -576,12 +577,12 @@ const handleBulkMobileAppActionButtonClick = async () => {
     const connection = form$.value?.el$('mobile_app_connection')?.value;
 
     if (!action) {
-        form$.value?.el$('mobile_app_action')?.messageBag?.append('Choose a mobile app action.');
+        form$.value?.el$('mobile_app_action')?.messageBag?.append(trans('Choose a mobile app action.'));
         return;
     }
 
     if (['enable', 'add_contact'].includes(action) && !connection) {
-        form$.value?.el$('mobile_app_connection')?.messageBag?.append('Choose a mobile app connection.');
+        form$.value?.el$('mobile_app_connection')?.messageBag?.append(trans('Choose a mobile app connection.'));
         return;
     }
 
@@ -613,15 +614,15 @@ const handleError = (error, details, form$) => {
     }
 
     if (details.type === 'prepare') {
-        form$.messageBag.append('Could not prepare form');
+        form$.messageBag.append(trans('Could not prepare form'));
         return;
     }
 
     if (details.type === 'cancel') {
-        form$.messageBag.append('Request cancelled');
+        form$.messageBag.append(trans('Request cancelled'));
         return;
     }
 
-    form$.messageBag.append("Couldn't submit form");
+    form$.messageBag.append(trans("Couldn't submit form"));
 };
 </script>
