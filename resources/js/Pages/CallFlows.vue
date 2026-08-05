@@ -3,10 +3,10 @@
 
     <div class="m-3">
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-            <template #title>Call Flows</template>
+            <template #title>{{ $t('Call Flows') }}</template>
 
             <template #subtitle>
-                Manage feature-code call flows and their enabled/status states.
+                {{ $t('Manage feature-code call flows and their enabled/status states.') }}
             </template>
 
             <template #filters>
@@ -17,18 +17,18 @@
                     <input type="text" v-model="filterData.search" name="mobile-search-call-flows"
                         id="mobile-search-call-flows"
                         class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                        :placeholder="$t('Search')" @keydown.enter="handleSearchButtonClick" />
                     <input type="text" v-model="filterData.search" name="desktop-search-call-flows"
                         id="desktop-search-call-flows"
                         class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                        :placeholder="$t('Search')" @keydown.enter="handleSearchButtonClick" />
                 </div>
             </template>
 
             <template #action>
                 <button v-if="permissions.create" type="button" @click.prevent="handleCreateButtonClick"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                    Create
+                    {{ $t('Create') }}
                 </button>
 
                 <!--
@@ -60,7 +60,7 @@
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                     <div class="pl-4 flex items-center cursor-pointer select-none"
                         @click="handleSortRequest('call_flow_name')">
-                        <span class="mr-2">Name</span>
+                        <span class="mr-2">{{ $t('Name') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'call_flow_name' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'call_flow_name' && sortData.order === 'desc'"
@@ -68,13 +68,13 @@
                     </div>
                 </TableColumnHeader>
 
-                <TableColumnHeader v-if="filterData.showGlobal" header="Domain"
+                <TableColumnHeader v-if="filterData.showGlobal" :header="$t('Domain')"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none"
                         @click="handleSortRequest('call_flow_extension')">
-                        <span class="mr-2">Extension</span>
+                        <span class="mr-2">{{ $t('Extension') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'call_flow_extension' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'call_flow_extension' && sortData.order === 'desc'"
@@ -85,7 +85,7 @@
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none"
                         @click="handleSortRequest('call_flow_feature_code')">
-                        <span class="mr-2">Feature Code</span>
+                        <span class="mr-2">{{ $t('Feature Code') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'call_flow_feature_code' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'call_flow_feature_code' && sortData.order === 'desc'"
@@ -95,7 +95,7 @@
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none"
                         @click="handleSortRequest('call_flow_status')">
-                        <span class="mr-2">Status</span>
+                        <span class="mr-2">{{ $t('Status') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'call_flow_status' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'call_flow_status' && sortData.order === 'desc'"
@@ -105,7 +105,7 @@
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none"
                         @click="handleSortRequest('call_flow_group')">
-                        <span class="mr-2">Group</span>
+                        <span class="mr-2">{{ $t('Group') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'call_flow_group' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'call_flow_group' && sortData.order === 'desc'"
@@ -115,7 +115,7 @@
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none"
                         @click="handleSortRequest('call_flow_enabled')">
-                        <span class="mr-2">Enabled</span>
+                        <span class="mr-2">{{ $t('Enabled') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'call_flow_enabled' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'call_flow_enabled' && sortData.order === 'desc'"
@@ -125,7 +125,7 @@
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none"
                         @click="handleSortRequest('call_flow_description')">
-                        <span class="mr-2">Description</span>
+                        <span class="mr-2">{{ $t('Description') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'call_flow_description' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'call_flow_description' && sortData.order === 'desc'"
@@ -138,16 +138,16 @@
             <template v-if="selectPageItems" v-slot:current-selection>
                 <td :colspan="selectionColspan">
                     <div class="text-sm text-center m-2">
-                        <span class="font-semibold">{{ selectedItems.length }}</span> items are selected.
+                        {{ $t(':count items are selected.', { count: selectedItems.length }) }}
                         <button v-if="!selectAll && selectedItems.length !== data.total"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleSelectAll">
-                            Select all {{ data.total }} items
+                            {{ $t('Select all :total items', { total: data.total }) }}
                         </button>
                         <button v-if="selectAll"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleClearSelection">
-                            Clear selection
+                            {{ $t('Clear selection') }}
                         </button>
                     </div>
                 </td>
@@ -168,7 +168,7 @@
                     </TableField>
 
                     <TableField v-if="filterData.showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.domain?.domain_description || 'Global'" />
+                        :text="row.domain?.domain_description || $t('Global')" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                         :text="row.call_flow_extension" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
@@ -188,10 +188,10 @@
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
                         <button v-if="permissions.update" type="button" class="cursor-pointer"
                             @click="executeToggle([row.call_flow_uuid], 'call_flow_enabled')">
-                            <Badge :text="row.call_flow_enabled === 'true' ? 'True' : 'False'"
+                            <Badge :text="row.call_flow_enabled === 'true' ? $t('True') : $t('False')"
                                 v-bind="enabledBadgeProps(row.call_flow_enabled)" />
                         </button>
-                        <Badge v-else :text="row.call_flow_enabled === 'true' ? 'True' : 'False'"
+                        <Badge v-else :text="row.call_flow_enabled === 'true' ? $t('True') : $t('False')"
                             v-bind="enabledBadgeProps(row.call_flow_enabled)" />
                     </TableField>
 
@@ -202,11 +202,11 @@
                             <div class="flex items-center whitespace-nowrap justify-end">
                                 <PencilSquareIcon v-if="permissions.update" @click="handleEditButtonClick(row.call_flow_uuid)"
                                     class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
-                                    title="Edit" />
+                                    :title="$t('Edit')" />
 
                                 <TrashIcon v-if="permissions.destroy" @click="handleSingleItemDeleteRequest(row.call_flow_uuid)"
                                     class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
-                                    title="Delete" />
+                                    :title="$t('Delete')" />
                             </div>
                         </template>
                     </TableField>
@@ -216,8 +216,8 @@
             <template #empty>
                 <div v-if="data.data.length === 0" class="text-center my-5">
                     <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
-                    <p class="mt-1 text-sm text-gray-500">Adjust your search and try again.</p>
+                    <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ $t('No results found') }}</h3>
+                    <p class="mt-1 text-sm text-gray-500">{{ $t('Adjust your search and try again.') }}</p>
                 </div>
             </template>
 
@@ -236,7 +236,7 @@
 
     <ConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
         @confirm="confirmAction" :header="confirmationHeader" :text="confirmationText"
-        :confirm-button-label="confirmationButtonLabel" cancel-button-label="Cancel" />
+        :confirm-button-label="confirmationButtonLabel" :cancel-button-label="$t('Cancel')" />
 
     <CallFlowForm :show="showForm" :options="itemOptions" :mode="formMode" :loading="loadingForm"
         :header="formHeader" @close="handleFormClose" @error="handleErrorResponse" @success="showNotification"
@@ -260,6 +260,7 @@ import CallFlowForm from "./components/forms/CallFlowForm.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
 import Badge from "@generalComponents/Badge.vue";
 import { ChevronDownIcon, ChevronUpIcon, MagnifyingGlassIcon, PencilSquareIcon, TrashIcon } from "@heroicons/vue/24/solid";
+import { trans } from "laravel-vue-i18n";
 
 const props = defineProps({
     routes: Object,
@@ -273,9 +274,9 @@ const selectedItems = ref([]);
 const selectPageItems = ref(false);
 const confirmationModalTrigger = ref(false);
 const confirmAction = ref(null);
-const confirmationHeader = ref("Are you sure?");
+const confirmationHeader = ref(trans("Are you sure?"));
 const confirmationText = ref("");
-const confirmationButtonLabel = ref("Continue");
+const confirmationButtonLabel = ref(trans("Continue"));
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(false);
@@ -318,16 +319,16 @@ const bulkActions = computed(() => {
     const actions = [];
 
     if (permissions.create) {
-        actions.push({ id: "bulk_copy", label: "Copy", icon: "PencilSquareIcon" });
+        actions.push({ id: "bulk_copy", label: trans("Copy"), icon: "PencilSquareIcon" });
     }
 
     if (permissions.update) {
-        actions.push({ id: "bulk_toggle_status", label: "Toggle Status", icon: "PencilSquareIcon" });
-        actions.push({ id: "bulk_toggle_enabled", label: "Toggle Enabled", icon: "PencilSquareIcon" });
+        actions.push({ id: "bulk_toggle_status", label: trans("Toggle Status"), icon: "PencilSquareIcon" });
+        actions.push({ id: "bulk_toggle_enabled", label: trans("Toggle Enabled"), icon: "PencilSquareIcon" });
     }
 
     if (permissions.destroy) {
-        actions.push({ id: "bulk_delete", label: "Delete", icon: "TrashIcon" });
+        actions.push({ id: "bulk_delete", label: trans("Delete"), icon: "TrashIcon" });
     }
 
     return actions;
@@ -341,10 +342,12 @@ const selectionColspan = computed(() => {
 
 const formHeader = computed(() => {
     if (formMode.value === "create") {
-        return "Create Call Flow";
+        return trans("Create Call Flow");
     }
 
-    return `Update Call Flow - ${itemOptions.value?.item?.call_flow_name || itemOptions.value?.item?.call_flow_extension || "Loading..."}`;
+    return trans("Update Call Flow - :name", {
+        name: itemOptions.value?.item?.call_flow_name || itemOptions.value?.item?.call_flow_extension || trans("Loading..."),
+    });
 });
 
 onMounted(() => {
@@ -488,9 +491,9 @@ const handleClearSelection = () => {
 
 const handleSingleItemDeleteRequest = (uuid) => {
     showConfirmation({
-        header: "Confirm Deletion",
-        text: "This action will permanently delete the selected call flow.",
-        button: "Delete",
+        header: trans("Confirm Deletion"),
+        text: trans("This action will permanently delete the selected call flow."),
+        button: trans("Delete"),
         action: () => executeBulkDelete([uuid]),
     });
 };
@@ -498,36 +501,36 @@ const handleSingleItemDeleteRequest = (uuid) => {
 const handleBulkActionRequest = (action) => {
     if (action === "bulk_delete") {
         showConfirmation({
-            header: "Confirm Deletion",
-            text: "This action will permanently delete the selected call flow(s).",
-            button: "Delete",
+            header: trans("Confirm Deletion"),
+            text: trans("This action will permanently delete the selected call flow(s)."),
+            button: trans("Delete"),
             action: () => executeBulkDelete(),
         });
     }
 
     if (action === "bulk_copy") {
         showConfirmation({
-            header: "Confirm Copy",
-            text: "Copy the selected call flow(s)?",
-            button: "Copy",
+            header: trans("Confirm Copy"),
+            text: trans("Copy the selected call flow(s)?"),
+            button: trans("Copy"),
             action: () => executeBulkCopy(),
         });
     }
 
     if (action === "bulk_toggle_status") {
         showConfirmation({
-            header: "Confirm Toggle",
-            text: "Toggle the status for the selected call flow(s)?",
-            button: "Toggle",
+            header: trans("Confirm Toggle"),
+            text: trans("Toggle the status for the selected call flow(s)?"),
+            button: trans("Toggle"),
             action: () => executeToggle(selectedItems.value, "call_flow_status"),
         });
     }
 
     if (action === "bulk_toggle_enabled") {
         showConfirmation({
-            header: "Confirm Toggle",
-            text: "Toggle enabled for the selected call flow(s)?",
-            button: "Toggle",
+            header: trans("Confirm Toggle"),
+            text: trans("Toggle enabled for the selected call flow(s)?"),
+            button: trans("Toggle"),
             action: () => executeToggle(selectedItems.value, "call_flow_enabled"),
         });
     }

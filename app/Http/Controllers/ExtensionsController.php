@@ -45,6 +45,8 @@ use Maatwebsite\Excel\HeadingRowImport;
 use App\Services\CallRoutingOptionsService;
 use Maatwebsite\Excel\Excel as ExcelWriter;
 use App\Http\Requests\BulkUpdateExtensionRequest;
+use App\Http\Requests\BulkMakeExtensionUsersRequest;
+use App\Http\Requests\MakeExtensionUserRequest;
 use App\Http\Requests\StoreExtensionRequest;
 use App\Http\Requests\UpdateExtensionRequest;
 use Spatie\Activitylog\Facades\CauserResolver;
@@ -64,6 +66,7 @@ class ExtensionsController extends Controller
     public $sortField;
     public $sortOrder;
     protected $viewName = 'Extensions';
+    protected ?bool $userExtensionColumnExists = null;
 
     public function export(Request $request)
     {
@@ -119,7 +122,9 @@ class ExtensionsController extends Controller
                     'download_template' => route('extensions.template.download'),
                     'import' => route('extensions.import'),
                     'create_user' => route('extensions.make.user'),
+                    'create_users' => Route::has('extensions.make.users') ? route('extensions.make.users') : null,
                     'create_contact_center_user' => (Module::has('ContactCenter') && Module::collections()->has('ContactCenter') && Route::has('contact-center.user.store')) ? route('contact-center.user.store') : null,
+                    'create_contact_center_agents' => (Module::has('ContactCenter') && Module::collections()->has('ContactCenter') && Route::has('contact-center.users.bulk.store')) ? route('contact-center.users.bulk.store') : null,
                     'export' => route('extensions.export'),
                     'duplicate' => route('extensions.duplicate'),
                     'welcome_email_options' => route('extensions.welcome-email.options'),
@@ -1997,116 +2002,163 @@ public function store(StoreExtensionRequest $request)
         }
     }
 
-    public function makeUser()
+    public function makeUser(MakeExtensionUserRequest $request)
     {
-        $group_name = request('role');
+        $validated = $request->validated();
 
         try {
-            DB::beginTransaction();
-
-            $currentDomain = session('domain_uuid');
-
-            $extension = QueryBuilder::for(Extensions::class)
-                // only extensions in the current domain
-                ->where('domain_uuid', $currentDomain)
-                ->with(['voicemail' => function ($query) use ($currentDomain) {
-                    $query->where('domain_uuid', $currentDomain)
-                        ->select('voicemail_id', 'domain_uuid', 'voicemail_mail_to');
-                }])
-                ->select([
-                    'extension_uuid',
-                    'domain_uuid',
-                    'extension',
-                    'directory_first_name',
-                    'directory_last_name',
-                ])
-                ->whereKey(request('extension_uuid'))
-                ->firstOrFail();
-
-
-            // Check if user exists
-            if (User::where('user_email', $extension->email)->exists()) {
-                throw new \Exception(__('A user with this email already exists.'));
-            }
-
-            // Create a new user
-            $user = new User();
-
-            $user->password      = Hash::make(Str::random(25));
-            $user->domain_uuid   = $currentDomain;
-            $user->add_user      = Auth::user()->username;
-            $user->insert_date   = now();
-            $user->insert_user   = session('user_uuid');
-            $user->username      = trim($user->first_name . (!empty($user->last_name) ? '_' . $user->last_name : ''));
-            $user->user_email    = $extension->email ?? '';
-            $user->user_enabled  = 'true';
-
-            $user->save();
-
-            $user->user_adv_fields()->create([
-                'user_uuid'   => $user->user_uuid,
-                'first_name'  => $extension->directory_first_name,
-                'last_name'   => $extension->directory_last_name,
-            ]);
-
-            $user->settings()->createMany([
-                [
-                    'user_uuid'                => $user->user_uuid,
-                    'domain_uuid'              => $user->domain_uuid,
-                    'user_setting_category'    => 'domain',
-                    'user_setting_subcategory' => 'language',
-                    'user_setting_name'        => 'code',
-                    'user_setting_value'       => get_domain_setting('language'),
-                    'user_setting_enabled'     => true,
-                    'insert_date'              => now(),
-                    'insert_user'              => session('user_uuid'),
-                ],
-                [
-                    'user_uuid'                => $user->user_uuid,
-                    'domain_uuid'              => $user->domain_uuid,
-                    'user_setting_category'    => 'domain',
-                    'user_setting_subcategory' => 'time_zone',
-                    'user_setting_name'        => 'name',
-                    'user_setting_value'       => get_local_time_zone($currentDomain),
-                    'user_setting_enabled'     => true,
-                    'insert_date'              => now(),
-                    'insert_user'              => session('user_uuid'),
-                ]
-            ]);
-
-            $group = Groups::where('group_name', $group_name)->first();
-
-            if ($group) {
-                UserGroup::firstOrCreate(
-                    [
-                        'group_uuid' => $group->group_uuid,
-                        'user_uuid'  => $user->user_uuid,
-                    ],
-                    [
-                        'domain_uuid' => $currentDomain,
-                        'group_name'  => $group_name,
-                        'insert_date' => now(),
-                        'insert_user' => session('user_uuid'),
-                    ]
-                );
-            }
-
-
-
-            DB::commit();
+            $user = DB::transaction(fn () => $this->createUserForExtension(
+                $validated['extension_uuid'],
+                $validated['role']
+            ));
 
             return response()->json([
-                'messages' => ['success' => [__(':name created successfully', ['name' => ucfirst($group_name)])]],
-                'agent' => $agent ?? null,
+                'messages' => ['success' => [__(':name created successfully', ['name' => ucfirst($validated['role'])])]],
+                'user_uuid' => $user->user_uuid,
             ], 200);
         } catch (\Throwable $e) {
-            DB::rollBack();
-            logger('UserController@store error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+            logger('ExtensionsController@makeUser error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
             return response()->json([
                 'success' => false,
                 'errors' => ['error' => [$e->getMessage()]],
             ], 500);
         }
+    }
+
+    public function bulkMakeUsers(BulkMakeExtensionUsersRequest $request)
+    {
+        $created = 0;
+        $skipped = 0;
+
+        foreach ($request->validated('items') as $extensionUuid) {
+            try {
+                DB::transaction(fn () => $this->createUserForExtension($extensionUuid, 'user'));
+                $created++;
+            } catch (\Throwable $e) {
+                $skipped++;
+                logger('ExtensionsController@bulkMakeUsers item error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine(), [
+                    'extension_uuid' => $extensionUuid,
+                ]);
+            }
+        }
+
+        if ($created === 0) {
+            return response()->json([
+                'success' => false,
+                'errors' => ['error' => [$skipped . ' ' . __('skipped') . '.']],
+            ], 422);
+        }
+
+        $message = __(':name created successfully', ['name' => $created]);
+        if ($skipped > 0) {
+            $message .= ' ' . $skipped . ' ' . __('skipped') . '.';
+        }
+
+        return response()->json([
+            'messages' => ['success' => [$message]],
+            'created' => $created,
+            'skipped' => $skipped,
+        ]);
+    }
+
+    private function createUserForExtension(string $extensionUuid, string $groupName): User
+    {
+        $currentDomain = session('domain_uuid');
+
+        $extension = QueryBuilder::for(Extensions::class)
+            ->where('domain_uuid', $currentDomain)
+            ->with(['voicemail' => function ($query) use ($currentDomain) {
+                $query->where('domain_uuid', $currentDomain)
+                    ->select('voicemail_id', 'domain_uuid', 'voicemail_mail_to');
+            }])
+            ->select([
+                'extension_uuid',
+                'domain_uuid',
+                'extension',
+                'directory_first_name',
+                'directory_last_name',
+            ])
+            ->whereKey($extensionUuid)
+            ->firstOrFail();
+
+        $email = trim((string) ($extension->email ?? ''));
+        if ($email !== '' && User::where('user_email', $email)->exists()) {
+            throw new \Exception(__('A user with this email already exists.'));
+        }
+
+        $firstName = trim((string) $extension->directory_first_name);
+        $lastName = trim((string) $extension->directory_last_name);
+        $username = trim($firstName . ($lastName !== '' ? '_' . $lastName : ''));
+
+        $user = new User();
+        $user->password = Hash::make(Str::random(25));
+        $user->domain_uuid = $currentDomain;
+        $user->add_user = Auth::user()->username;
+        $user->insert_date = now();
+        $user->insert_user = session('user_uuid');
+        $user->username = $username !== '' ? $username : 'user_' . $extension->extension;
+        $user->user_email = $email;
+        $user->user_enabled = 'true';
+
+        if ($this->userExtensionColumnExists()) {
+            $user->extension_uuid = $extension->extension_uuid;
+        }
+
+        $user->save();
+
+        $user->user_adv_fields()->create([
+            'user_uuid' => $user->user_uuid,
+            'first_name' => $firstName,
+            'last_name' => $lastName,
+        ]);
+
+        $user->settings()->createMany([
+            [
+                'user_uuid' => $user->user_uuid,
+                'domain_uuid' => $user->domain_uuid,
+                'user_setting_category' => 'domain',
+                'user_setting_subcategory' => 'language',
+                'user_setting_name' => 'code',
+                'user_setting_value' => get_domain_setting('language'),
+                'user_setting_enabled' => true,
+                'insert_date' => now(),
+                'insert_user' => session('user_uuid'),
+            ],
+            [
+                'user_uuid' => $user->user_uuid,
+                'domain_uuid' => $user->domain_uuid,
+                'user_setting_category' => 'domain',
+                'user_setting_subcategory' => 'time_zone',
+                'user_setting_name' => 'name',
+                'user_setting_value' => get_local_time_zone($currentDomain),
+                'user_setting_enabled' => true,
+                'insert_date' => now(),
+                'insert_user' => session('user_uuid'),
+            ],
+        ]);
+
+        $group = Groups::where('group_name', $groupName)->first();
+        if ($group) {
+            UserGroup::firstOrCreate(
+                [
+                    'group_uuid' => $group->group_uuid,
+                    'user_uuid' => $user->user_uuid,
+                ],
+                [
+                    'domain_uuid' => $currentDomain,
+                    'group_name' => $groupName,
+                    'insert_date' => now(),
+                    'insert_user' => session('user_uuid'),
+                ]
+            );
+        }
+
+        return $user;
+    }
+
+    private function userExtensionColumnExists(): bool
+    {
+        return $this->userExtensionColumnExists ??= Schema::hasColumn('v_users', 'extension_uuid');
     }
 
     /**
@@ -2427,6 +2479,8 @@ public function store(StoreExtensionRequest $request)
 
         $permissions['create_user'] = userCheckPermission('extension_create_user');
         $permissions['create_admin'] = userCheckPermission('extension_create_admin');
+        $permissions['create_contact_center_agent'] = userCheckPermission('contact_center_agent_create');
+        $permissions['create_contact_center_admin'] = userCheckPermission('contact_center_admin_create');
         $permissions['welcome_email_send'] = userCheckPermission('extension_welcome_email_send');
 
 

@@ -62,7 +62,7 @@ class VoicemailMessagesController extends Controller
             $mailboxLabel = $mailbox->extension->name_formatted;
         } else {
             // Fallback for team voicemails (e.g., "7001 - Team voicemail (Sales)")
-            $mailboxLabel = $mailbox->voicemail_id . " - Team voicemail" .
+            $mailboxLabel = __(':id - Team voicemail', ['id' => $mailbox->voicemail_id]) .
                 ($mailbox->voicemail_description ? ' (' . $mailbox->voicemail_description . ')' : '');
         }
 
@@ -221,14 +221,14 @@ class VoicemailMessagesController extends Controller
         VoicemailMessageUrlService $voicemailMessageUrlService
     ) {
         if (!$request->hasValidSignature()) {
-            abort(403, 'Invalid or expired link.');
+            abort(403, __('Invalid or expired link.'));
         }
 
         $message = VoicemailMessages::findOrFail($message_uuid);
         $file = $voicemailMessageUrlService->resolveMessageFile($message);
 
         if (!$file) {
-            abort(404, 'Voicemail recording not found.');
+            abort(404, __('Voicemail recording not found.'));
         }
 
         $disk = Storage::disk('voicemail');
@@ -264,7 +264,7 @@ class VoicemailMessagesController extends Controller
 
             // Check if the greeting exists
             if (!$message) {
-                throw new \Exception('File not found');
+                throw new \Exception(__('File not found'));
             }
 
 
@@ -281,7 +281,7 @@ class VoicemailMessagesController extends Controller
             } elseif (Storage::disk('voicemail')->exists($mp3Path)) {
                 $fileName = 'msg_' . $messageUuid . '.mp3';
             } else {
-                throw new \Exception('No file found');
+                throw new \Exception(__('No file found'));
             }
 
             // Generate the file URL using the defined route
@@ -360,7 +360,7 @@ class VoicemailMessagesController extends Controller
 
             return response()->json([
                 'success' => true,
-                'messages' => ['server' => ['Status updated successfully.']],
+                'messages' => ['server' => [__('Status updated successfully.')]],
             ], 200);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -369,7 +369,7 @@ class VoicemailMessagesController extends Controller
 
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Server returned an error while updating status.']]
+                'errors' => ['server' => [__('Server returned an error while updating status.')]]
             ], 500);
         }
     }
@@ -509,7 +509,7 @@ class VoicemailMessagesController extends Controller
             }
 
             return response()->json([
-                'messages' => ['server' => ['All selected items have been deleted successfully.']],
+                'messages' => ['server' => [__('All selected items have been deleted successfully.')]],
             ], 200);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -518,7 +518,7 @@ class VoicemailMessagesController extends Controller
 
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Server returned an error while deleting the selected items.']]
+                'errors' => ['server' => [__('Server returned an error while deleting the selected items.')]]
             ], 500);
         }
     }
@@ -573,7 +573,7 @@ class VoicemailMessagesController extends Controller
                 ->pluck('voicemail_message_uuid');
 
             return response()->json([
-                'messages' => ['success' => ['All items selected']],
+                'messages' => ['success' => [__('All items selected')]],
                 'items' => $data,
             ], 200);
         } catch (\Exception $e) {
@@ -581,7 +581,7 @@ class VoicemailMessagesController extends Controller
 
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to select all items']]
+                'errors' => ['server' => [__('Failed to select all items')]]
             ], 500);
         }
     }

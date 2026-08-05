@@ -499,6 +499,22 @@ const bulkActions = computed(() => {
         });
     }
 
+    if (permissions.value.create_user && props.routes?.create_users) {
+        actions.push({
+            id: 'make_users',
+            label: trans('Make User'),
+            icon: 'UserPlusIcon'
+        });
+    }
+
+    if (permissions.value.create_contact_center_agent && props.routes?.create_contact_center_agents) {
+        actions.push({
+            id: 'make_agents',
+            label: trans('Make Agent'),
+            icon: 'SupportAgent'
+        });
+    }
+
     // Conditionally add the delete action if permission is granted
     if (permissions.value.extension_destroy) {
         actions.push({
@@ -550,13 +566,20 @@ const advancedActions = computed(() => {
         });
     }
 
-    if (props.routes?.create_contact_center_user) {
+    const contactCenterActions = [];
+
+    if (permissions.value.create_contact_center_agent) {
+        contactCenterActions.push({ id: 'make_cc_agent', label: trans('Make Agent'), icon: 'SupportAgent' });
+    }
+
+    if (permissions.value.create_contact_center_admin) {
+        contactCenterActions.push({ id: 'make_cc_admin', label: trans('Make Admin'), icon: 'KeyIcon' });
+    }
+
+    if (props.routes?.create_contact_center_user && contactCenterActions.length) {
         actions.push({
             category: trans("Contact Center"),
-            actions: [
-                { id: 'make_cc_agent', label: trans('Make Agent'), icon: 'SupportAgent' },
-                { id: 'make_cc_admin', label: trans('Make Admin'), icon: 'KeyIcon' },
-            ],
+            actions: contactCenterActions,
         });
     }
 
@@ -776,6 +799,31 @@ const handleBulkActionRequest = (action) => {
     }
     if (action === 'send_welcome_email') {
         openWelcomeEmailModal(selectedItems.value);
+    }
+    if (action === 'make_users') {
+        executeBulkUserCreation(props.routes.create_users);
+    }
+    if (action === 'make_agents') {
+        executeBulkUserCreation(props.routes.create_contact_center_agents);
+    }
+};
+
+const executeBulkUserCreation = async (url) => {
+    if (!url || selectedItems.value.length === 0) {
+        return;
+    }
+
+    loading.value = true;
+
+    try {
+        const response = await axios.post(url, { items: [...selectedItems.value] });
+        showNotification('success', response.data.messages);
+        handleClearSelection();
+        await refreshCurrentPage();
+    } catch (error) {
+        handleErrorResponse(error);
+    } finally {
+        loading.value = false;
     }
 };
 

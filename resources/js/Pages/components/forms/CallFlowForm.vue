@@ -23,7 +23,7 @@
                                 <button type="button"
                                     class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                     @click="emit('close')">
-                                    <span class="sr-only">Close</span>
+                                    <span class="sr-only">{{ $t('Close') }}</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
@@ -37,7 +37,7 @@
                                         <path class="opacity-75" fill="currentColor"
                                             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                     </svg>
-                                    <div class="text-lg text-blue-600 m-auto">Loading...</div>
+                                    <div class="text-lg text-blue-600 m-auto">{{ $t('Loading...') }}</div>
                                 </div>
                             </div>
 
@@ -47,7 +47,7 @@
                 <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
                     <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
                         <FormTabs view="vertical">
-                            <FormTab name="settings" label="Settings" :elements="[
+                            <FormTab name="settings" :label="$t('Settings')" :elements="[
                                 'call_flow_uuid',
                                 'call_flow_uuid_clean',
                                 'settings_header',
@@ -75,7 +75,7 @@
                                 'button_container',
                                 'settings_submit',
                             ]" />
-                            <FormTab name="advanced" label="Advanced" :elements="[
+                            <FormTab name="advanced" :label="$t('Advanced')" :elements="[
                                 'advanced_header',
                                 'call_flow_group',
                                 'new_group_button',
@@ -91,14 +91,14 @@
                         <FormElements>
                             <HiddenElement name="call_flow_uuid" :meta="true" />
 
-                            <StaticElement name="settings_header" tag="h4" content="Call Flow Settings"
-                                description="Configure the feature code, current state, and call routing." />
+                            <StaticElement name="settings_header" tag="h4" :content="$t('Call Flow Settings')"
+                                :description="$t('Configure the feature code, current state, and call routing.')" />
 
                             <StaticElement name="call_flow_uuid_clean"
                                 :conditions="[() => props.options?.item?.call_flow_uuid]">
                                 <div class="mb-1">
                                     <div class="text-sm font-medium text-gray-600 mb-1">
-                                        Unique ID
+                                        {{ $t('Unique ID') }}
                                     </div>
 
                                     <div class="flex items-center group">
@@ -109,7 +109,7 @@
                                         <button type="button"
                                             @click="handleCopyToClipboard(props.options?.item?.call_flow_uuid)"
                                             class="ml-2 p-1 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
-                                            title="Copy to clipboard">
+                                            :title="$t('Copy to clipboard')">
                                             <ClipboardDocumentIcon
                                                 class="h-4 w-4 text-gray-500 hover:text-gray-900 cursor-pointer" />
                                         </button>
@@ -117,18 +117,18 @@
                                 </div>
                             </StaticElement>
 
-                            <TextElement name="call_flow_name" label="Name" placeholder="Enter call flow name"
+                            <TextElement name="call_flow_name" :label="$t('Name')" :placeholder="$t('Enter call flow name')"
                                 :floating="false" :columns="{ sm: { container: 6 } }" />
 
-                            <ToggleElement name="call_flow_enabled" text="Call Flow Enabled" true-value="true"
-                                false-value="false" :labels="{ on: 'On', off: 'Off' }"
+                            <ToggleElement name="call_flow_enabled" :text="$t('Call Flow Enabled')" true-value="true"
+                                false-value="false" :labels="{ on: $t('On'), off: $t('Off') }"
                                 :columns="{ sm: { container: 6 } }" label="&nbsp;" />
 
-                            <TextElement name="call_flow_extension" label="Extension" placeholder="Enter extension"
+                            <TextElement name="call_flow_extension" :label="$t('Extension')" :placeholder="$t('Enter extension')"
                                 :floating="false" :columns="{ sm: { container: 6 } }" @change="handleExtensionChange" />
 
-                            <TextElement name="call_flow_feature_code" label="Feature Code"
-                                placeholder="Enter feature code" :floating="false"
+                            <TextElement name="call_flow_feature_code" :label="$t('Feature Code')"
+                                :placeholder="$t('Enter feature code')" :floating="false"
                                 :columns="{ sm: { container: 6 } }" />
 
 
@@ -137,34 +137,34 @@
                             <StaticElement name="divider" tag="hr" />
                             <GroupElement name="settings_container2" />
 
-                            <RadiogroupElement name="call_flow_status" label="Calls Are Routing To" view="tabs" :items="[
+                            <RadiogroupElement name="call_flow_status" :label="$t('Calls Are Routing To')" view="tabs" :items="[
                                 {
                                     value: 'true',
-                                    label: 'Default Route',
+                                    label: $t('Default Route'),
                                 },
                                 {
                                     value: 'false',
-                                    label: 'Alternate Route',
+                                    label: $t('Alternate Route'),
                                 },
                             ]" :columns="{ sm: { wrapper: 6 } }"
-                                description="The Default route is your normal call path. The Alternate route is used when the flow is toggled for events like after hours, holidays, or temporary coverage." />
+                                :description="$t('The Default route is your normal call path. The Alternate route is used when the flow is toggled for events like after hours, holidays, or temporary coverage.')" />
 
                             <GroupElement name="settings_container3" />
 
-                            <StaticElement name="routing_header" tag="h4" content="Default Route"
-                                description="Calls use this path during normal operation." />
+                            <StaticElement name="routing_header" tag="h4" :content="$t('Default Route')"
+                                :description="$t('Calls use this path during normal operation.')" />
 
-                            <TextElement name="call_flow_label" label="Default Route Label"
-                                placeholder="Example: Day Mode" :floating="false" :columns="{ sm: { container: 6 } }" />
+                            <TextElement name="call_flow_label" :label="$t('Default Route Label')"
+                                :placeholder="$t('Example: Day Mode')" :floating="false" :columns="{ sm: { container: 6 } }" />
 
                             <SelectElement name="call_flow_sound" :items="soundOptions" :groups="true" :search="true"
-                                :native="false" label="Default Route Sound" input-type="search" allow-absent
-                                autocomplete="off" placeholder="Optional sound" :floating="false" :strict="false"
+                                :native="false" :label="$t('Default Route Sound')" input-type="search" allow-absent
+                                autocomplete="off" :placeholder="$t('Optional sound')" :floating="false" :strict="false"
                                 :columns="{ sm: { container: 6 } }" />
 
                             <SelectElement name="call_flow_action" :items="routingTypes" label-prop="name"
-                                :search="true" :native="false" label="Default Destination Type" input-type="search"
-                                autocomplete="off" placeholder="Choose type" :floating="false" :strict="false"
+                                :search="true" :native="false" :label="$t('Default Destination Type')" input-type="search"
+                                autocomplete="off" :placeholder="$t('Choose type')" :floating="false" :strict="false"
                                 :columns="{ sm: { container: 6 } }" @change="(newValue, oldValue, el$) => {
                                     const target = el$.form$.el$('call_flow_target');
 
@@ -177,9 +177,9 @@
 
                             <SelectElement name="call_flow_target"
                                 :items="(query, input) => fetchRoutingTargets(query, input, 'call_flow_action')"
-                                :search="true" label-prop="name" :native="false" label="Default Destination"
+                                :search="true" label-prop="name" :native="false" :label="$t('Default Destination')"
                                 input-type="search" allow-absent :object="true" :format-data="formatRoutingTarget"
-                                autocomplete="off" placeholder="Choose destination" :floating="false" :strict="false"
+                                autocomplete="off" :placeholder="$t('Choose destination')" :floating="false" :strict="false"
                                 :columns="{ sm: { container: 6 } }" :conditions="[
                                     ['call_flow_action', 'not_empty'],
                                     ['call_flow_action', 'not_in', destinationTypesWithoutTarget]
@@ -187,21 +187,21 @@
 
                                 <GroupElement name="settings_container4" />
 
-                            <StaticElement name="alternate_header" tag="h4" content="Alternate Route"
-                                description="Calls use this path when the call flow is switched away from the default route." />
+                            <StaticElement name="alternate_header" tag="h4" :content="$t('Alternate Route')"
+                                :description="$t('Calls use this path when the call flow is switched away from the default route.')" />
 
-                            <TextElement name="call_flow_alternate_label" label="Alternate Route Label"
-                                placeholder="Example: Night Mode" :floating="false"
+                            <TextElement name="call_flow_alternate_label" :label="$t('Alternate Route Label')"
+                                :placeholder="$t('Example: Night Mode')" :floating="false"
                                 :columns="{ sm: { container: 6 } }" />
 
                             <SelectElement name="call_flow_alternate_sound" :items="soundOptions" :groups="true"
-                                :search="true" :native="false" label="Alternate Route Sound" input-type="search"
-                                allow-absent autocomplete="off" placeholder="Optional sound" :floating="false"
+                                :search="true" :native="false" :label="$t('Alternate Route Sound')" input-type="search"
+                                allow-absent autocomplete="off" :placeholder="$t('Optional sound')" :floating="false"
                                 :strict="false" :columns="{ sm: { container: 6 } }" />
 
                             <SelectElement name="call_flow_alternate_action" :items="routingTypes" label-prop="name"
-                                :search="true" :native="false" label="Alternate Destination Type" input-type="search"
-                                autocomplete="off" placeholder="Choose type" :floating="false" :strict="false"
+                                :search="true" :native="false" :label="$t('Alternate Destination Type')" input-type="search"
+                                autocomplete="off" :placeholder="$t('Choose type')" :floating="false" :strict="false"
                                 :columns="{ sm: { container: 6 } }" @change="(newValue, oldValue, el$) => {
                                     const target = el$.form$.el$('call_flow_alternate_target');
 
@@ -214,9 +214,9 @@
 
                             <SelectElement name="call_flow_alternate_target"
                                 :items="(query, input) => fetchRoutingTargets(query, input, 'call_flow_alternate_action')"
-                                :search="true" label-prop="name" :native="false" label="Alternate Destination"
+                                :search="true" label-prop="name" :native="false" :label="$t('Alternate Destination')"
                                 input-type="search" allow-absent :object="true" :format-data="formatRoutingTarget"
-                                autocomplete="off" placeholder="Choose destination" :floating="false" :strict="false"
+                                autocomplete="off" :placeholder="$t('Choose destination')" :floating="false" :strict="false"
                                 :columns="{ sm: { container: 6 } }" :conditions="[
                                     ['call_flow_alternate_action', 'not_empty'],
                                     ['call_flow_alternate_action', 'not_in', destinationTypesWithoutTarget]
@@ -224,30 +224,30 @@
 
                                 <GroupElement name="settings_container5" />
 
-                            <TextareaElement name="call_flow_description" label="Description" :rows="2" />
+                            <TextareaElement name="call_flow_description" :label="$t('Description')" :rows="2" />
 
                             <GroupElement name="button_container" />
 
-                            <ButtonElement name="settings_submit" button-label="Save" :submits="true" align="right" />
+                            <ButtonElement name="settings_submit" :button-label="$t('Save')" :submits="true" align="right" />
 
-                            <StaticElement name="advanced_header" tag="h4" content="Advanced Settings"
-                                description="Configure optional grouping and PIN protection." />
+                            <StaticElement name="advanced_header" tag="h4" :content="$t('Advanced Settings')"
+                                :description="$t('Configure optional grouping and PIN protection.')" />
 
                             <SelectElement name="call_flow_group" :items="groupOptions" :search="true" :native="false"
-                                label="Group" input-type="search" autocomplete="off" placeholder="Select group"
+                                :label="$t('Group')" input-type="search" autocomplete="off" :placeholder="$t('Select group')"
                                 :floating="false" :strict="true" :columns="{ sm: { container: 6 } }"
-                                info="Optional. When a grouped call flow is switched to the alternate route, the other call flows in that group switch back to the default route." />
+                                :info="$t('Optional. When a grouped call flow is switched to the alternate route, the other call flows in that group switch back to the default route.')" />
 
-                            <ButtonElement name="new_group_button" button-label="New Group" :secondary="true"
+                            <ButtonElement name="new_group_button" :button-label="$t('New Group')" :secondary="true"
                                 :submits="false" align="left" :columns="{ sm: { container: 6 } }" label="&nbsp;"
                                 @click="startAddingGroup" />
 
-                            <TextElement name="call_flow_pin_number" label="PIN Number" placeholder="Optional PIN"
+                            <TextElement name="call_flow_pin_number" :label="$t('PIN Number')" :placeholder="$t('Optional PIN')"
                                 :floating="false" :columns="{ sm: { wrapper: 6 } }" />
 
                             <GroupElement name="advanced_button_container" />
 
-                            <ButtonElement name="advanced_submit" button-label="Save" :submits="true" align="right" />
+                            <ButtonElement name="advanced_submit" :button-label="$t('Save')" :submits="true" align="right" />
                         </FormElements>
                     </div>
                 </div>
@@ -270,6 +270,7 @@ import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } fro
 import CallFlowGroupModal from "../modal/CallFlowGroupModal.vue";
 import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
 import { XMarkIcon } from "@heroicons/vue/24/solid";
+import { trans } from "laravel-vue-i18n";
 
 const props = defineProps({
     show: Boolean,
@@ -277,7 +278,7 @@ const props = defineProps({
     loading: Boolean,
     header: {
         type: String,
-        default: "Call Flow",
+        default: () => trans("Call Flow"),
     },
     mode: {
         type: String,
@@ -295,9 +296,9 @@ const addedGroups = ref([]);
 
 const handleCopyToClipboard = (text) => {
     navigator.clipboard.writeText(text).then(() => {
-        emit("success", "success", { message: ["Copied to clipboard."] });
+        emit("success", "success", { message: [trans("Copied to clipboard.")] });
     }).catch(() => {
-        emit("error", { response: { data: { errors: { request: ["Failed to copy to clipboard."] } } } });
+        emit("error", { response: { data: { errors: { request: [trans("Failed to copy to clipboard.")] } } } });
     });
 };
 
@@ -395,7 +396,7 @@ const addNewGroup = async (groupName) => {
     const route = props.options?.routes?.group_store_route;
 
     if (!route) {
-        groupError.value = "Could not find the group save route.";
+        groupError.value = trans("Could not find the group save route.");
         return;
     }
 
@@ -418,7 +419,7 @@ const addNewGroup = async (groupName) => {
     } catch (error) {
         groupError.value = error?.response?.data?.errors?.name?.[0]
             ?? error?.response?.data?.messages?.error?.[0]
-            ?? "Could not save the group.";
+            ?? trans("Could not save the group.");
     } finally {
         isSavingGroup.value = false;
     }
@@ -476,6 +477,6 @@ const handleError = (error, details, form$) => {
         return;
     }
 
-    form$.messageBag.append("Could not submit form");
+    form$.messageBag.append(trans("Could not submit form"));
 };
 </script>

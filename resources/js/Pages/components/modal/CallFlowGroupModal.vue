@@ -18,10 +18,10 @@
                                 class="relative transform overflow-hidden rounded-lg bg-white px-6 pb-6 pt-6 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-xl sm:p-8">
                                 <div>
                                     <DialogTitle as="h3" class="text-base font-semibold leading-6 text-gray-900">
-                                        New Group
+                                        {{ $t('New Group') }}
                                     </DialogTitle>
                                     <p class="mt-1 text-sm text-gray-500">
-                                        Create a reusable group for related call flows.
+                                        {{ $t('Create a reusable group for related call flows.') }}
                                     </p>
                                 </div>
 
@@ -31,8 +31,8 @@
 
                                             <GroupElement name="name_container" />
 
-                                            <TextElement name="group_name" label="Group Name"
-                                                placeholder="Enter group name" :floating="false"
+                                            <TextElement name="group_name" :label="$t('Group Name')"
+                                                :placeholder="$t('Enter group name')" :floating="false"
                                                 :columns="{ container: 12 }" />
 
                                             <StaticElement v-if="error" name="group_error">
@@ -41,11 +41,11 @@
 
                                             <GroupElement name="button_container" />
 
-                                            <ButtonElement name="cancel" button-label="Cancel" :secondary="true"
+                                            <ButtonElement name="cancel" :button-label="$t('Cancel')" :secondary="true"
                                                 :submits="false" :columns="{ sm: { container: 6 } }"
                                                 @click="emit('close')" />
 
-                                            <ButtonElement name="save" button-label="Save" :submits="false"
+                                            <ButtonElement name="save" :button-label="$t('Save')" :submits="false"
                                                 :loading="loading" align="right"
                                                 :columns="{ sm: { container: 6 } }"
                                                 @click="saveGroup" />
@@ -64,6 +64,7 @@
 <script setup>
 import { ref, watch } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from "@headlessui/vue";
+import { trans } from "laravel-vue-i18n";
 
 const emit = defineEmits(["close", "confirm"]);
 
@@ -94,7 +95,7 @@ const saveGroup = () => {
     field?.messageBag?.clear();
 
     if (!name) {
-        field?.messageBag?.append("Enter a group name.");
+        field?.messageBag?.append(trans("Enter a group name."));
         return;
     }
 

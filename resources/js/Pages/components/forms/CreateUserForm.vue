@@ -24,7 +24,7 @@
                                 <button type="button"
                                     class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                     @click="emit('close')">
-                                    <span class="sr-only">Close</span>
+                                    <span class="sr-only">{{ $t('Close') }}</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
@@ -42,7 +42,7 @@
                                             </path>
                                         </svg>
                                     </div>
-                                    <div class="text-lg text-blue-600 m-auto">Loading...</div>
+                                    <div class="text-lg text-blue-600 m-auto">{{ $t('Loading...') }}</div>
                                 </div>
                             </div>
 
@@ -67,7 +67,7 @@
                                     <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
                                         <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
                                             <FormTabs view="vertical">
-                                                <FormTab name="page0" label="Basic Info" :elements="[
+                                                <FormTab name="page0" :label="$t('Basic Info')" :elements="[
                                                     'h4',
                                                     'first_name',
                                                     'last_name',
@@ -92,21 +92,21 @@
                                             class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
                                             <FormElements>
 
-                                                <StaticElement name="h4" tag="h4" content="Basic Info" />
+                                                <StaticElement name="h4" tag="h4" :content="$t('Basic Info')" />
 
-                                                <TextElement name="first_name" label="First Name"
-                                                    placeholder="Enter First Name" :floating="false" :columns="{
+                                                <TextElement name="first_name" :label="$t('First Name')"
+                                                    :placeholder="$t('Enter First Name')" :floating="false" :columns="{
                                                         sm: {
                                                             container: 6,
                                                         },
                                                     }" />
-                                                <TextElement name="last_name" label="Last Name"
-                                                    placeholder="Enter Last Name" :floating="false" :columns="{
+                                                <TextElement name="last_name" :label="$t('Last Name')"
+                                                    :placeholder="$t('Enter Last Name')" :floating="false" :columns="{
                                                         sm: {
                                                             container: 6,
                                                         },
                                                     }" />
-                                                <TextElement name="user_email" label="Email" placeholder="Enter Email"
+                                                <TextElement name="user_email" :label="$t('Email')" :placeholder="$t('Enter Email')"
                                                     :floating="false" :columns="{
                                                         sm: {
                                                             container: 6,
@@ -115,8 +115,8 @@
 
                                                 <SelectElement name="time_zone" :groups="true"
                                                     :items="options.timezones" :search="true" :native="false"
-                                                    label="Time Zone" input-type="search" autocomplete="off"
-                                                    :floating="false" :strict="false" placeholder="Select Time Zone"
+                                                    :label="$t('Time Zone')" input-type="search" autocomplete="off"
+                                                    :floating="false" :strict="false" :placeholder="$t('Select Time Zone')"
                                                     :columns="{
                                                         sm: {
                                                             container: 6,
@@ -124,26 +124,26 @@
                                                     }" />
 
                                                 <SelectElement name="extension_uuid" :items="options.extensions"
-                                                    :search="true" :native="false" label="Assigned extension"
+                                                    :search="true" :native="false" :label="$t('Assigned extension')"
                                                     input-type="search" autocomplete="off" :floating="false"
-                                                    placeholder="Select extension" :columns="{
+                                                    :placeholder="$t('Select extension')" :columns="{
                                                         sm: {
                                                             wrapper: 6,
                                                         },
                                                     }" />
 
                                                 <TagsElement name="groups" :search="true" :items="options.groups"
-                                                    label="Roles" input-type="search" autocomplete="off"
-                                                    placeholder="Select Roles" :floating="false" :strict="false"
+                                                    :label="$t('Roles')" input-type="search" autocomplete="off"
+                                                    :placeholder="$t('Select Roles')" :floating="false" :strict="false"
                                                     :conditions="[() => options.permissions.user_group_view]"
                                                     :disabled="[(el$, form$) => { return !options.permissions.user_group_edit }]" />
 
                                                 <TagsElement name="account_groups" :close-on-select="false"
                                                     :search="true" :items="options.domain_groups"
-                                                    label="Select account groups the user is allowed to manage"
+                                                    :label="$t('Select account groups the user is allowed to manage')"
                                                     input-type="search" autocomplete="off"
-                                                    placeholder="Select Account Groups" :floating="false"
-                                                    description="Selecting an account group gives the user management permissions for every account in that group."
+                                                    :placeholder="$t('Select Account Groups')" :floating="false"
+                                                    :description="$t('Selecting an account group gives the user management permissions for every account in that group.')"
                                                     :conditions="[
                                                         function (form$, el$) {
 
@@ -164,10 +164,10 @@
                                                     :disabled="[(el$, form$) => { return !options.permissions.user_update_managed_account_groups }]" />
                                                 <TagsElement name="accounts" :close-on-select="false" :search="true"
                                                     :items="options.domains"
-                                                    label="Select accounts the user is allowed to manage"
-                                                    input-type="search" autocomplete="off" placeholder="Select Accounts"
+                                                    :label="$t('Select accounts the user is allowed to manage')"
+                                                    input-type="search" autocomplete="off" :placeholder="$t('Select Accounts')"
                                                     :floating="false"
-                                                    description="Choose individual accounts that this user should have permission to manage. The user will have administrative access to the selected accounts."
+                                                    :description="$t('Choose individual accounts that this user should have permission to manage. The user will have administrative access to the selected accounts.')"
                                                     :conditions="[
                                                         function (form$, el$) {
 
@@ -193,7 +193,7 @@
 
                                                 <GroupElement name="container_3" />
 
-                                                <ButtonElement name="submit" button-label="Save" :submits="true"
+                                                <ButtonElement name="submit" :button-label="$t('Save')" :submits="true"
                                                     align="right" />
 
                                             </FormElements>
@@ -216,6 +216,7 @@
 import { ref } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { XMarkIcon } from "@heroicons/vue/24/solid";
+import { trans } from "laravel-vue-i18n";
 
 
 const emit = defineEmits(['close', 'error', 'success', 'refresh-data', 'open-edit-form'])
@@ -285,7 +286,7 @@ const handleError = (error, details, form$) => {
         case 'prepare':
             console.log(error) // Error object
 
-            form$.messageBag.append('Could not prepare form')
+            form$.messageBag.append(trans('Could not prepare form'))
             break
 
         // Error occured because response status is outside of 2xx
@@ -305,14 +306,14 @@ const handleError = (error, details, form$) => {
         case 'cancel':
             console.log(error) // Error object
 
-            form$.messageBag.append('Request cancelled')
+            form$.messageBag.append(trans('Request cancelled'))
             break
 
         // Some other errors happened (no response object)
         case 'other':
             console.log(error) // Error object
 
-            form$.messageBag.append('Couldn\'t submit form')
+            form$.messageBag.append(trans('Couldn\'t submit form'))
             break
     }
 }

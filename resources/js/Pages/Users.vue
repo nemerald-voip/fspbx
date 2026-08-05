@@ -3,7 +3,7 @@
 
     <div class="m-3">
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-            <template #title>Users</template>
+            <template #title>{{ $t('Users') }}</template>
 
             <template #filters>
                 <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
@@ -13,11 +13,11 @@
                     <input type="text" v-model="filterData.search" name="mobile-search-candidate"
                         id="mobile-search-candidate"
                         class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                        :placeholder="$t('Search')" @keydown.enter="handleSearchButtonClick" />
                     <input type="text" v-model="filterData.search" name="desktop-search-candidate"
                         id="desktop-search-candidate"
                         class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                        :placeholder="$t('Search')" @keydown.enter="handleSearchButtonClick" />
                 </div>
             </template>
 
@@ -25,7 +25,7 @@
                 <button v-if="permissions.user_create" type="button"
                     @click.prevent="handleCreateButtonClick()"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                    Create
+                    {{ $t('Create') }}
                 </button>
 
 
@@ -47,7 +47,7 @@
                     <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
                         :has-selected-items="selectedItems.length > 0" /> -->
                     <div class="pl-4 flex items-center cursor-pointer select-none" @click="handleSortRequest('username')">
-                        <span class="mr-2">Name</span>
+                        <span class="mr-2">{{ $t('Name') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'username' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'username' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
                     </div>
@@ -55,21 +55,21 @@
 
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('user_email')">
-                        <span class="mr-2">Email</span>
+                        <span class="mr-2">{{ $t('Email') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'user_email' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'user_email' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
                     </div>
                 </TableColumnHeader>
 
-                <TableColumnHeader header="Assigned Extension" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t('Assigned Extension')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
                 <!-- Roles -->
-                <TableColumnHeader header="Roles" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t('Roles')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
                 <!-- Enabled column -->
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('user_enabled')">
-                        <span class="mr-2">Status</span>
+                        <span class="mr-2">{{ $t('Status') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'user_enabled' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'user_enabled' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
                     </div>
@@ -82,16 +82,16 @@
             <template v-if="selectPageItems" v-slot:current-selection>
                 <td colspan="9">
                     <div class="text-sm text-center m-2">
-                        <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
+                        {{ $t(':count items are selected.', { count: selectedItems.length }) }}
                         <button v-if="!selectAll && selectedItems.length != data.total"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleSelectAll">
-                            Select all {{ data.total }} items
+                            {{ $t('Select all :total items', { total: data.total }) }}
                         </button>
                         <button v-if="selectAll"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleClearSelection">
-                            Clear selection
+                            {{ $t('Clear selection') }}
                         </button>
                     </div>
                 </td>
@@ -140,7 +140,7 @@
 
                     <!-- Enabled badge -->
                     <TableField class="px-2 py-2 text-sm">
-                        <Badge :text="row.user_enabled == 'true' ? 'Enabled' : 'Disabled'"
+                        <Badge :text="row.user_enabled == 'true' ? $t('Enabled') : $t('Disabled')"
                             :backgroundColor="row.user_enabled == 'true' ? 'bg-green-100' : 'bg-red-100'"
                             :textColor="row.user_enabled == 'true' ? 'text-green-800' : 'text-red-800'" class="px-2 py-1 text-xs " />
                     </TableField>
@@ -152,7 +152,7 @@
                             <div class="flex items-center whitespace-nowrap justify-end">
                                 <ejs-tooltip
                                     v-if="row.can_manage_target"
-                                    :content="'Edit'"
+                                    :content="$t('Edit')"
                                     position="TopCenter"
                                     target="#destination_tooltip_target"
                                 >
@@ -166,7 +166,7 @@
 
                                <ejs-tooltip
                                     v-if="row.can_delete_target"
-                                    :content="'Delete'"
+                                    :content="$t('Delete')"
                                     position="TopCenter"
                                     target="#delete_tooltip_target"
                                 >
@@ -189,9 +189,9 @@
                 <!-- Conditional rendering for 'no records' message -->
                 <div v-if="data.data.length === 0" class="text-center my-5 ">
                     <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
+                    <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ $t('No results found') }}</h3>
                     <p class="mt-1 text-sm text-gray-500">
-                        Adjust your search and try again.
+                        {{ $t('Adjust your search and try again.') }}
                     </p>
                 </div>
             </template>
@@ -211,19 +211,19 @@
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
-    <UpdateUserForm :show="showUpdateModal" :options="itemOptions" :loading="isModalLoading" :header="'Update User'"
+    <UpdateUserForm :show="showUpdateModal" :options="itemOptions" :loading="isModalLoading" :header="$t('Update User')"
         @close="showUpdateModal = false" @error="handleErrorResponse" @success="showNotification"
         @refresh-data="handleSearchButtonClick" />
 
-    <CreateUserForm :show="showCreateModal" :options="itemOptions" :loading="isModalLoading" :header="'Create User'"
+    <CreateUserForm :show="showCreateModal" :options="itemOptions" :loading="isModalLoading" :header="$t('Create User')"
         @close="showCreateModal = false" @error="handleErrorResponse" @success="showNotification" @open-edit-form="handleEditButtonClick"
         @refresh-data="handleSearchButtonClick" />
 
 
     <ConfirmationModal :show="showDeleteConfirmationModal" @close="showDeleteConfirmationModal = false"
-        @confirm="confirmDeleteAction" :header="'Confirm Deletion'"
-        :text="'This action will permanently delete the selected user(s). Are you sure you want to proceed?'"
-        :confirm-button-label="'Delete'" cancel-button-label="Cancel" />
+        @confirm="confirmDeleteAction" :header="$t('Confirm Deletion')"
+        :text="$t('This action will permanently delete the selected user(s). Are you sure you want to proceed?')"
+        :confirm-button-label="$t('Delete')" :cancel-button-label="$t('Cancel')" />
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
@@ -249,6 +249,7 @@ import CreateUserForm from "./components/forms/CreateUserForm.vue";
 import UpdateUserForm from "./components/forms/UpdateUserForm.vue";
 import Notification from "./components/notifications/Notification.vue";
 import Badge from "@generalComponents/Badge.vue";
+import { trans } from "laravel-vue-i18n";
 
 
 
@@ -301,7 +302,7 @@ const bulkActions = computed(() => {
     if (page.props.auth.can.user_destroy) {
         actions.push({
             id: 'bulk_delete',
-            label: 'Delete',
+            label: trans('Delete'),
             icon: 'TrashIcon'
         });
     }
@@ -492,7 +493,7 @@ const handleErrorResponse = (error) => {
 
         showNotification('error', { error: [error.message] });
     } else if (error.request) {
-        showNotification('error', { error: ['No response received from the server.'] });
+        showNotification('error', { error: [trans('No response received from the server.')] });
         console.log(error.request);
     } else {
         showNotification('error', { error: [error.message] });

@@ -27,17 +27,17 @@
 
                             <!-- Header -->
                             <div class="mb-6">
-                                <h1 class="text-2xl font-bold text-gray-900">Voicemail Message</h1>
+                                <h1 class="text-2xl font-bold text-gray-900">{{ $t('Voicemail Message') }}</h1>
                                 <p class="text-sm text-gray-500">{{ item?.start_date }}</p>
 
                                 <dl class="mt-4 grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-2 text-sm">
                                     <div class="flex gap-2">
-                                        <dt class="font-medium text-gray-500">From:</dt>
+                                        <dt class="font-medium text-gray-500">{{ $t('From:') }}</dt>
                                         <dd class="text-gray-900 font-semibold">{{ item?.caller_id_name }} ({{ item?.caller_id_number_formatted }})</dd>
                                     </div>
                                     <div class="flex gap-2">
-                                        <dt class="font-medium text-gray-500">To:</dt>
-                                        <dd class="text-gray-900">Extension {{ item?.caller_destination_formatted }}</dd>
+                                        <dt class="font-medium text-gray-500">{{ $t('To:') }}</dt>
+                                        <dd class="text-gray-900">{{ $t('Extension :number', { number: item?.caller_destination_formatted }) }}</dd>
                                     </div>
                                 </dl>
                             </div>
@@ -45,7 +45,7 @@
                             <!-- Player Area -->
                             <div v-if="loading" class="py-12 flex justify-center items-center gap-3 text-blue-600">
                                 <Spinner :show="true" class="h-8 w-8" />
-                                <span>Loading audio...</span>
+                                <span>{{ $t('Loading audio...') }}</span>
                             </div>
 
                             <div v-else class="space-y-6">
@@ -58,9 +58,9 @@
 
                                 <!-- Transcription Block -->
                                 <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
-                                    <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Transcription</h3>
+                                    <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">{{ $t('Transcription') }}</h3>
                                     <p class="text-gray-700 leading-relaxed italic">
-                                        {{ item?.transcription || 'No transcription available for this message.' }}
+                                        {{ item?.transcription || $t('No transcription available for this message.') }}
                                     </p>
                                 </div>
                             </div>

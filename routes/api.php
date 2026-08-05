@@ -355,6 +355,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::get('/extensions/template/download', [ExtensionsController::class, 'downloadTemplate'])->name('extensions.template.download');
     Route::post('/extensions/import', [ExtensionsController::class, 'import'])->name('extensions.import');
     Route::post('/extensions/make-user', [ExtensionsController::class, 'makeUser'])->name('extensions.make.user');
+    Route::post('/extensions/make-users', [ExtensionsController::class, 'bulkMakeUsers'])->name('extensions.make.users');
     Route::post('/extensions/password', [ExtensionsController::class, 'updatePassword'])->name('extensions.password.update');
     Route::post('/extensions/welcome-email/options', [ExtensionWelcomeEmailController::class, 'options'])->name('extensions.welcome-email.options');
     Route::post('/extensions/welcome-email/send', [ExtensionWelcomeEmailController::class, 'send'])->name('extensions.welcome-email.send');

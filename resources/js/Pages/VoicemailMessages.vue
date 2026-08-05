@@ -5,7 +5,7 @@
 <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
             <template #title>
                 <h1 class="text-xl font-bold text-gray-900 flex items-center">
-                    Voicemail messages
+                    {{ $t('Voicemail messages') }}
                     <span v-if="props.mailbox_label" class="flex items-center">
                         <svg class="mx-3 h-5 w-5 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -23,11 +23,11 @@
                     <input type="text" v-model="filterData.search" name="mobile-search-candidate"
                         id="mobile-search-candidate"
                         class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
-                        placeholder="Search" />
+                        :placeholder="$t('Search')" />
                     <input type="text" v-model="filterData.search" name="desktop-search-candidate"
                         id="desktop-search-candidate"
                         class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
-                        placeholder="Search" />
+                        :placeholder="$t('Search')" />
                 </div>
 
                 <div class="relative z-10 min-w-64 -mt-0.5 mb-2 scale-y-95 shrink-0 sm:mr-4">
@@ -52,20 +52,20 @@
                     <div class="flex items-center justify-start">
                         <input type="checkbox" v-model="selectPageItems"
                             class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                        <span class="pl-4">Caller ID</span>
+                        <span class="pl-4">{{ $t('Caller ID') }}</span>
                     </div>
                 </TableColumnHeader>
 
                 <TableColumnHeader class="hidden lg:table-cell lg:min-w-[150px] px-4 py-3.5 text-sm font-semibold text-gray-900">
                     <div class="flex items-center justify-center w-full">
-                        Status
+                        {{ $t('Status') }}
                     </div>
                 </TableColumnHeader>
-                
-                <TableColumnHeader header="Date"
+
+                <TableColumnHeader :header="$t('Date')"
                     class="hidden lg:table-cell whitespace-nowrap px-4 py-3.5 lg:min-w-[220px] text-left text-sm font-semibold text-gray-900" />
-                
-                <TableColumnHeader header="Transcription"
+
+                <TableColumnHeader :header="$t('Transcription')"
                     class="hidden lg:table-cell w-full px-4 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 
                 <TableColumnHeader header="" class="hidden lg:table-cell px-2 py-3.5" />
@@ -74,16 +74,16 @@
             <template v-if="selectPageItems" v-slot:current-selection>
                 <td colspan="6">
                     <div class="text-sm text-center m-2">
-                        <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
+                        {{ $t(':count items are selected.', { count: selectedItems.length }) }}
                         <button v-if="!selectAll && selectedItems.length != data.total"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleSelectAll">
-                            Select all {{ data.total }} items
+                            {{ $t('Select all :total items', { total: data.total }) }}
                         </button>
                         <button v-if="selectAll"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleClearSelection">
-                            Clear selection
+                            {{ $t('Clear selection') }}
                         </button>
                     </div>
                 </td>
@@ -97,7 +97,7 @@
                                 <input type="checkbox" v-model="selectPageItems"
                                     class="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
                                 <span class="text-sm font-semibold text-gray-900">
-                                    {{ selectPageItems ? 'Deselect All' : 'Select All' }}
+                                    {{ selectPageItems ? $t('Deselect All') : $t('Select All') }}
                                 </span>
                             </div>
 
@@ -129,11 +129,11 @@
                     </TableField>
 
                     <TableField class="block lg:table-cell lg:min-w-[150px] px-0 lg:px-4 py-2 text-sm align-middle border-t border-gray-100 lg:border-none mt-2 lg:mt-0 pt-2 lg:pt-0">
-                        <span class="lg:hidden font-semibold text-gray-400 uppercase text-[10px] block mb-1">Status:</span>
+                        <span class="lg:hidden font-semibold text-gray-400 uppercase text-[10px] block mb-1">{{ $t('Status:') }}</span>
                         <div class="flex items-center justify-start lg:justify-center w-full">
                             <Badge
                                 v-if="row.message_status !== 'saved'"
-                                :text="'New'"
+                                :text="$t('New')"
                                 :backgroundColor="'bg-blue-100'"
                                 :textColor="'text-blue-800'"
                                 class="inline-flex px-2 py-0.5 text-[10px]"
@@ -144,14 +144,14 @@
                     <TableField
                         class="flex lg:table-cell items-center gap-2 px-0 lg:px-4 py-2 lg:min-w-[220px] text-sm whitespace-nowrap border-t border-gray-100 lg:border-none mt-2 lg:mt-0 pt-2 lg:pt-0"
                         :class="row.message_status !== 'saved' ? 'font-bold text-gray-900' : 'text-gray-500'">
-                        <span class="lg:hidden font-semibold text-gray-400 uppercase text-[10px] block mb-1">Date:</span>
+                        <span class="lg:hidden font-semibold text-gray-400 uppercase text-[10px] block mb-1">{{ $t('Date:') }}</span>
                         <span>{{ row.created_epoch_formatted }}</span>
                     </TableField>
 
                     <TableField
                         class="block lg:table-cell px-0 lg:px-4 py-2 text-sm border-t border-gray-100 lg:border-none mt-2 lg:mt-0 pt-2 lg:pt-0">
                         <span
-                            class="lg:hidden font-semibold text-gray-400 uppercase text-[10px] block mb-1">Transcription</span>
+                            class="lg:hidden font-semibold text-gray-400 uppercase text-[10px] block mb-1">{{ $t('Transcription') }}</span>
                         <div
                             :class="['text-gray-600 leading-relaxed max-w-3xl', row.message_status !== 'saved' ? 'font-medium text-gray-800' : '']">
                             {{ row.message_transcription }}
@@ -161,11 +161,11 @@
                     <TableField
                         class="block lg:table-cell px-0 lg:px-2 py-2 text-sm border-t border-gray-100 lg:border-none mt-2 lg:mt-0 pt-2 lg:pt-0">
                         <div class="flex items-center justify-between lg:justify-end">
-                            <span class="lg:hidden font-semibold text-gray-400 uppercase text-[10px]">Actions</span>
+                            <span class="lg:hidden font-semibold text-gray-400 uppercase text-[10px]">{{ $t('Actions') }}</span>
 
                             <div class="flex items-center whitespace-nowrap justify-end">
 
-                                <ejs-tooltip :content="'Listen'" position='TopCenter'
+                                <ejs-tooltip :content="$t('Listen')" position='TopCenter'
                                     :target="'#play_tooltip_' + row.voicemail_message_uuid">
                                     <div :id="'play_tooltip_' + row.voicemail_message_uuid">
                                         <PlayCircleIcon @click="handlePlayVoicemail(row.voicemail_message_uuid)"
@@ -173,7 +173,7 @@
                                     </div>
                                 </ejs-tooltip>
 
-                                <ejs-tooltip :content="'Download'" position='TopCenter'
+                                <ejs-tooltip :content="$t('Download')" position='TopCenter'
                                     :target="'#download_tooltip_' + row.voicemail_message_uuid">
                                     <div :id="'download_tooltip_' + row.voicemail_message_uuid">
                                         <CloudArrowDownIcon v-if="!isDownloading"
@@ -185,7 +185,7 @@
                                 </ejs-tooltip>
 
                                 <ejs-tooltip v-if="props.permissions.voicemail_message_update"
-                                    :content="row.message_status === 'saved' ? 'Mark as unread' : 'Mark as read'"
+                                    :content="row.message_status === 'saved' ? $t('Mark as unread') : $t('Mark as read')"
                                     position='TopCenter' :target="'#status_tooltip_' + row.voicemail_message_uuid">
                                     <div :id="'status_tooltip_' + row.voicemail_message_uuid">
                                         <button
@@ -197,7 +197,7 @@
                                     </div>
                                 </ejs-tooltip>
 
-                                <ejs-tooltip v-if="props.permissions.voicemail_message_destroy" :content="'Delete'"
+                                <ejs-tooltip v-if="props.permissions.voicemail_message_destroy" :content="$t('Delete')"
                                     position='TopCenter' :target="'#delete_tooltip_' + row.voicemail_message_uuid">
                                     <div :id="'delete_tooltip_' + row.voicemail_message_uuid">
                                         <TrashIcon @click="handleSingleItemDeleteRequest(row.voicemail_message_uuid)"
@@ -214,12 +214,12 @@
             <template #empty>
                 <div v-if="data.data.length === 0" class="text-center my-6">
                     <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
+                    <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ $t('No results found') }}</h3>
                     <p class="mt-1 text-sm text-gray-500">
-                        Adjust your search or filters and try again.
+                        {{ $t('Adjust your search or filters and try again.') }}
                     </p>
                     <p class="mt-4 text-lg font-extrabold text-red-600">
-                        Note: voicemail messages from only the last 30 days are shown by default. To view older messages, expand the date range above.
+                        {{ $t('Note: voicemail messages from only the last 30 days are shown by default. To view older messages, expand the date range above.') }}
                     </p>
                 </div>
             </template>
@@ -243,9 +243,9 @@
         @update:show="hideNotification" />
 
     <ConfirmationModal :show="showConfirmationModal" @close="showConfirmationModal = false"
-        @confirm="confirmDeleteAction" :header="'Are you sure?'"
-        :text="'Confirm deleting selected messages. This action can not be undone.'" :confirm-button-label="'Delete'"
-        cancel-button-label="Cancel" />
+        @confirm="confirmDeleteAction" :header="$t('Are you sure?')"
+        :text="$t('Confirm deleting selected messages. This action can not be undone.')" :confirm-button-label="$t('Delete')"
+        :cancel-button-label="$t('Cancel')" />
 </template>
 
 <script setup>
@@ -268,6 +268,7 @@ import { registerLicense } from '@syncfusion/ej2-base';
 import Spinner from "@generalComponents/Spinner.vue";
 import Badge from "@generalComponents/Badge.vue";
 import VoicemailPlayerModal from "./components/modal/VoicemailPlayerModal.vue";
+import { trans } from "laravel-vue-i18n";
 import {
     PlayCircleIcon,
     CloudArrowDownIcon,
@@ -408,12 +409,12 @@ const bulkActions = computed(() => {
     if (props.permissions.voicemail_message_update) {
         actions.push({
             id: 'bulk_read',
-            label: 'Mark as read',
+            label: trans('Mark as read'),
             icon: 'EnvelopeOpenIcon'
         });
         actions.push({
             id: 'bulk_unread',
-            label: 'Mark as unread',
+            label: trans('Mark as unread'),
             icon: 'EnvelopeIcon'
         });
     }
@@ -422,7 +423,7 @@ const bulkActions = computed(() => {
     if (props.permissions.voicemail_message_destroy) {
         actions.push({
             id: 'bulk_delete',
-            label: 'Delete',
+            label: trans('Delete'),
             icon: 'TrashIcon'
         });
     }

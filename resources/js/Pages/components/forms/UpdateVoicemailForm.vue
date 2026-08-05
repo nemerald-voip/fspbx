@@ -24,7 +24,7 @@
                                 <button type="button"
                                     class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                     @click="handleClose">
-                                    <span class="sr-only">Close</span>
+                                    <span class="sr-only">{{ $t('Close') }}</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
@@ -42,7 +42,7 @@
                                             </path>
                                         </svg>
                                     </div>
-                                    <div class="text-lg text-blue-600 m-auto">Loading...</div>
+                                    <div class="text-lg text-blue-600 m-auto">{{ $t('Loading...') }}</div>
                                 </div>
                             </div>
 
@@ -99,7 +99,7 @@
                                     <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
                                         <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
                                             <FormTabs view="vertical">
-                                                <FormTab name="settings" label="Settings" :elements="[
+                                                <FormTab name="settings" :label="$t('Settings')" :elements="[
                                                     'voicemail_title',
                                                     'uuid_clean',
                                                     'voicemail_enabled',
@@ -117,7 +117,7 @@
                                                     'submit_settings'
 
                                                 ]" />
-                                                <FormTab name="greetings" label="Greetings" :elements="[
+                                                <FormTab name="greetings" :label="$t('Greetings')" :elements="[
                                                     'voicemail_greetings_title',
                                                     'greeting_id',
                                                     'voicemail_action_buttons',
@@ -128,7 +128,7 @@
                                                     'submit_greetings',
                                                 ]" :conditions="[['voicemail_enabled', '==', 'true']]" />
 
-                                                <FormTab name="advanced" label="Advanced" :elements="[
+                                                <FormTab name="advanced" :label="$t('Advanced')" :elements="[
                                                     'voicemail_advanced_title',
                                                     'voicemail_tutorial',
                                                     'divider15',
@@ -141,7 +141,7 @@
 
                                                 ]" :conditions="[['voicemail_enabled', '==', 'true']]" />
 
-                                                <FormTab name="escalation" label="Escalation" :elements="[
+                                                <FormTab name="escalation" :label="$t('Escalation')" :elements="[
                                                     'vm_notify_profile',
                                                     'submit_escalation',
                                                 ]" :conditions="[['voicemail_enabled', '==', 'true']]" />
@@ -153,14 +153,14 @@
                                             class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
                                             <FormElements>
 
-                                                <StaticElement name="voicemail_title" tag="h4" content="Settings"
-                                                    description="Customize voicemail preferences" />
+                                                <StaticElement name="voicemail_title" tag="h4" :content="$t('Settings')"
+                                                    :description="$t('Customize voicemail preferences')" />
                                                 <StaticElement name="uuid_clean"
                                                     :conditions="[() => options?.permissions?.is_superadmin ?? false]">
 
                                                     <div class="mb-1">
                                                         <div class="text-sm font-medium text-gray-600 mb-1">
-                                                            Unique ID
+                                                            {{ $t('Unique ID') }}
                                                         </div>
 
                                                         <div class="flex items-center group">
@@ -171,7 +171,7 @@
                                                             <button type="button"
                                                                 @click="handleCopyToClipboard(options?.item?.voicemail_uuid ?? null)"
                                                                 class="ml-2 p-1 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
-                                                                title="Copy to clipboard">
+                                                                :title="$t('Copy to clipboard')">
                                                                 <!-- Small Copy Icon -->
                                                                 <ClipboardDocumentIcon
                                                                     class="h-4 w-4 text-gray-500 hover:text-gray-900  cursor-pointer" />
@@ -182,42 +182,42 @@
                                                 </StaticElement>
 
 
-                                                <ToggleElement name="voicemail_enabled" text="Status" true-value="true"
+                                                <ToggleElement name="voicemail_enabled" :text="$t('Status')" true-value="true"
                                                     false-value="false" default="true" />
 
 
-                                                <TextElement name="voicemail_id" label="Voicemail Extension" :columns="{
+                                                <TextElement name="voicemail_id" :label="$t('Voicemail Extension')" :columns="{
                                                     sm: {
                                                         container: 6,
                                                     },
                                                 }" :conditions="[['voicemail_enabled', '==', 'true']]" />
 
-                                                <TextElement name="voicemail_password" label="Password" :columns="{
+                                                <TextElement name="voicemail_password" :label="$t('Password')" :columns="{
                                                     sm: {
                                                         container: 6,
                                                     },
                                                 }" :conditions="[['voicemail_enabled', '==', 'true']]" />
 
-                                                <TextElement name="voicemail_mail_to" label="Email Address"
-                                                    placeholder="Enter email address" :floating="false"
+                                                <TextElement name="voicemail_mail_to" :label="$t('Email Address')"
+                                                    :placeholder="$t('Enter email address')" :floating="false"
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
-                                                <TextElement name="voicemail_description" label="Description"
-                                                    placeholder="Enter description" :floating="false"
+                                                <TextElement name="voicemail_description" :label="$t('Description')"
+                                                    :placeholder="$t('Enter description')" :floating="false"
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
                                                 <ToggleElement name="voicemail_transcription_enabled"
-                                                    text="Voicemail Transcription" true-value="true" false-value="false"
-                                                    description="Convert voicemail messages to text using AI-powered transcription."
+                                                    :text="$t('Voicemail Transcription')" true-value="true" false-value="false"
+                                                    :description="$t('Convert voicemail messages to text using AI-powered transcription.')"
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
                                                 <StaticElement name="divider1" tag="hr"
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
                                                 <SelectElement name="voicemail_file" :items="voicemailFileOptions"
-                                                    :native="false" label="Voicemail Recording Delivery"
+                                                    :native="false" :label="$t('Voicemail Recording Delivery')"
                                                     value-prop="value" label-prop="label"
-                                                    description="Choose whether voicemail emails include the recording as an attachment, a download link, or not at all."
+                                                    :description="$t('Choose whether voicemail emails include the recording as an attachment, a download link, or not at all.')"
                                                     @change="handleVoicemailFileChange"
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
@@ -225,36 +225,36 @@
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
                                                 <ToggleElement name="voicemail_local_after_email"
-                                                    text="Automatically Delete Voicemail After Email" true-value="false"
+                                                    :text="$t('Automatically Delete Voicemail After Email')" true-value="false"
                                                     false-value="true"
-                                                    description="Remove voicemail from the cloud once the email is sent."
+                                                    :description="$t('Remove voicemail from the cloud once the email is sent.')"
                                                     :disabled="isAutoDeleteDisabled"
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
                                                 <TagsElement name="voicemail_copies" :search="true"
                                                     :items="options.all_voicemails"
-                                                    label="Copy Voicemail to Other Extensions" input-type="search"
+                                                    :label="$t('Copy Voicemail to Other Extensions')" input-type="search"
                                                     autocomplete="off"
-                                                    description="Automatically send a copy of the voicemail to selected additional extensions."
-                                                    :floating="false" placeholder="Enter name or extension"
+                                                    :description="$t('Automatically send a copy of the voicemail to selected additional extensions.')"
+                                                    :floating="false" :placeholder="$t('Enter name or extension')"
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
                                                 <GroupElement name="container_settings" />
 
-                                                <ButtonElement name="submit_settings" button-label="Save"
+                                                <ButtonElement name="submit_settings" :button-label="$t('Save')"
                                                     :submits="true" align="right" />
 
 
                                                 <!-- Voicemail Greetings -->
                                                 <StaticElement name="voicemail_greetings_title" tag="h4"
-                                                    content="Greetings"
-                                                    description="Customize the message that callers hear when they reach your voicemail."
+                                                    :content="$t('Greetings')"
+                                                    :description="$t('Customize the message that callers hear when they reach your voicemail.')"
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
 
                                                 <SelectElement name="greeting_id" :search="true" :native="false"
-                                                    label="Select Greeting" :items="fetchGreetings" input-type="search"
-                                                    autocomplete="off" placeholder="Select Greeting" :floating="false"
+                                                    :label="$t('Select Greeting')" :items="fetchGreetings" input-type="search"
+                                                    autocomplete="off" :placeholder="$t('Select Greeting')" :floating="false"
                                                     :strict="false" :columns="{
                                                         sm: {
                                                             container: 6,
@@ -352,8 +352,8 @@
 
 
                                                 <StaticElement name="voicemail_name_title" tag="h4"
-                                                    content="Dial-by-name Directory Name"
-                                                    description="Set the recorded name used by the dial-by-name directory to help callers locate this mailbox."
+                                                    :content="$t('Dial-by-name Directory Name')"
+                                                    :description="$t('Set the recorded name used by the dial-by-name directory to help callers locate this mailbox.')"
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
                                                 <StaticElement name="name_greeting_title" :columns="{
@@ -366,15 +366,15 @@
                                                     lg: {
                                                         container: 3,
                                                     },
-                                                }" label="Recorded Name" info=""
+                                                }" :label="$t('Recorded Name')" info=""
                                                     :conditions="[['voicemail_enabled', '==', 'true']]">
                                                     <div class="pt-2 flex items-center  whitespace-nowrap space-x-2">
                                                         <!-- <p>Recorded Name:</p> -->
-                                                        <Badge v-if="recordedName == 'Custom recording'"
+                                                        <Badge v-if="hasCustomRecordedName"
                                                             :text="recordedName" backgroundColor="bg-green-50"
                                                             textColor="text-green-700" ringColor="ring-green-600/20" />
 
-                                                        <Badge v-if="recordedName == 'System Default'"
+                                                        <Badge v-if="!hasCustomRecordedName"
                                                             :text="recordedName" backgroundColor="bg-blue-50"
                                                             textColor="text-blue-700" ringColor="ring-blue-600/20" />
 
@@ -390,7 +390,7 @@
                                                         :columns="{
                                                             container: 2,
                                                         }" name="play_name_button" label="&nbsp;" :secondary="true"
-                                                        :conditions="[function () { return recordedName == 'Custom recording' }]"
+                                                        :conditions="[function () { return hasCustomRecordedName }]"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                                         <PlayCircleIcon
                                                             class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
@@ -413,7 +413,7 @@
                                                         label="&nbsp;" :secondary="true" :columns="{
                                                             container: 2,
                                                         }"
-                                                        :conditions="[function () { return recordedName == 'Custom recording' }]"
+                                                        :conditions="[function () { return hasCustomRecordedName }]"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                                         <CloudArrowDownIcon
                                                             class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
@@ -446,7 +446,7 @@
                                                         label="&nbsp;" :secondary="true" :columns="{
                                                             container: 2,
                                                         }"
-                                                        :conditions="[function () { return recordedName == 'Custom recording' }]"
+                                                        :conditions="[function () { return hasCustomRecordedName }]"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                                         <TrashIcon
                                                             class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
@@ -466,29 +466,29 @@
 
                                                 </GroupElement>
 
-                                                <ButtonElement name="submit_greetings" button-label="Save"
+                                                <ButtonElement name="submit_greetings" :button-label="$t('Save')"
                                                     :submits="true" align="right" />
 
 
                                                 <!-- Voicemail Advanced -->
                                                 <StaticElement name="voicemail_advanced_title" tag="h4"
-                                                    content="Advanced"
-                                                    description="Set advanced settings for this voicemail."
+                                                    :content="$t('Advanced')"
+                                                    :description="$t('Set advanced settings for this voicemail.')"
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
 
-                                                <ToggleElement name="voicemail_tutorial" text="Play Voicemail Tutorial"
+                                                <ToggleElement name="voicemail_tutorial" :text="$t('Play Voicemail Tutorial')"
                                                     true-value="true" false-value="false"
-                                                    description="Provide user with a guided tutorial when accessing voicemail for the first time."
+                                                    :description="$t('Provide user with a guided tutorial when accessing voicemail for the first time.')"
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
                                                 <StaticElement name="divider15" tag="hr"
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
                                                 <ToggleElement name="voicemail_recording_instructions"
-                                                    text="Play Recording Instructions" true-value="true"
+                                                    :text="$t('Play Recording Instructions')" true-value="true"
                                                     false-value="false"
-                                                    description='Play a prompt instructing callers to "Record your message after the tone. Stop speaking to end the recording."'
+                                                    :description='$t("Play a prompt instructing callers to \"Record your message after the tone. Stop speaking to end the recording.\"")'
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
                                                 <StaticElement name="divider18" tag="hr" :conditions="[
@@ -498,7 +498,7 @@
                                                 ]" />
 
                                                 <TextElement name="voicemail_sms_to"
-                                                    label="Mobile Number to Receive Voicemail Notifications" :columns="{
+                                                    :label="$t('Mobile Number to Receive Voicemail Notifications')" :columns="{
                                                         sm: {
                                                             container: 6,
                                                         },
@@ -509,9 +509,9 @@
                                                     ]" />
 
                                                 <TextElement name="voicemail_alternate_greet_id"
-                                                    label="Announce Voicemail Extension as"
-                                                    description="The parameter allows you to override the voicemail extension number spoken by the system in the voicemail greeting. This controls system greetings that read back an extension number, not user recorded greetings."
-                                                    :floating="false" placeholder="Enter extension" :columns="{
+                                                    :label="$t('Announce Voicemail Extension as')"
+                                                    :description="$t('The parameter allows you to override the voicemail extension number spoken by the system in the voicemail greeting. This controls system greetings that read back an extension number, not user recorded greetings.')"
+                                                    :floating="false" :placeholder="$t('Enter extension')" :columns="{
                                                         sm: {
                                                             wrapper: 6,
                                                         },
@@ -519,10 +519,10 @@
 
                                                 <GroupElement name="container_advanced" />
 
-                                                <ButtonElement name="submit_advanced" button-label="Save"
+                                                <ButtonElement name="submit_advanced" :button-label="$t('Save')"
                                                     :submits="true" align="right" />
 
-                                                <NewGreetingForm :header="'New Voicemail Greeting'"
+                                                <NewGreetingForm :header="$t('New Voicemail Greeting')"
                                                     :show="showNewGreetingModal" @close="showNewGreetingModal = false"
                                                     :voices="options.voices" :speeds="options.speeds"
                                                     :default_voice="options.default_voice"
@@ -533,7 +533,7 @@
                                                     @success="emitSuccessToParentFromChild"
                                                     @saved="handleNewGreetingAdded" />
 
-                                                <NewGreetingForm :header="'New Recorded Name'"
+                                                <NewGreetingForm :header="$t('New Recorded Name')"
                                                     :show="showNewNameGreetingModal"
                                                     @close="showNewNameGreetingModal = false" :voices="options.voices"
                                                     :speeds="options.speeds" :default_voice="options.default_voice"
@@ -545,62 +545,62 @@
 
                                                 <ConfirmationModal :show="showDeleteConfirmationModal"
                                                     @close="showDeleteConfirmationModal = false"
-                                                    @confirm="confirmGreetingDeleteAction" :header="'Confirm Deletion'"
-                                                    :text="'This action will permanently delete this greeting. Are you sure you want to proceed?'"
-                                                    :confirm-button-label="'Delete'" cancel-button-label="Cancel" />
+                                                    @confirm="confirmGreetingDeleteAction" :header="$t('Confirm Deletion')"
+                                                    :text="$t('This action will permanently delete this greeting. Are you sure you want to proceed?')"
+                                                    :confirm-button-label="$t('Delete')" :cancel-button-label="$t('Cancel')" />
 
 
                                                 <ConfirmationModal :show="showDeleteNameConfirmationModal"
                                                     @close="showDeleteNameConfirmationModal = false"
-                                                    @confirm="confirmDeleteNameAction" :header="'Confirm Deletion'"
-                                                    :text="'This action will permanently delete the custom recorded name. Are you sure you want to proceed?'"
-                                                    :confirm-button-label="'Delete'" cancel-button-label="Cancel" />
+                                                    @confirm="confirmDeleteNameAction" :header="$t('Confirm Deletion')"
+                                                    :text="$t('This action will permanently delete the custom recorded name. Are you sure you want to proceed?')"
+                                                    :confirm-button-label="$t('Delete')" :cancel-button-label="$t('Cancel')" />
 
 
                                                 <!-- Escalation -->
                                                 <ObjectElement name="vm_notify_profile">
                                                     <StaticElement name="voicemail_escalation_title" tag="h4"
-                                                        content="Voicemail Escalation"
-                                                        description="Call designated recipients when a new voicemail arrives until someone accepts responsibility."
+                                                        :content="$t('Voicemail Escalation')"
+                                                        :description="$t('Call designated recipients when a new voicemail arrives until someone accepts responsibility.')"
                                                         :conditions="[['voicemail_enabled', '==', 'true']]" />
 
-                                                    <ToggleElement name="enabled" text="Enable Voicemail Escalation"
+                                                    <ToggleElement name="enabled" :text="$t('Enable Voicemail Escalation')"
                                                         :conditions="[['voicemail_enabled', '==', 'true']]" />
 
-                                                    <TextElement name="name" label="Rule Name"
-                                                        placeholder="Enter escalation rule name" :floating="false"
+                                                    <TextElement name="name" :label="$t('Rule Name')"
+                                                        :placeholder="$t('Enter escalation rule name')" :floating="false"
                                                         :columns="{ sm: { container: 6 } }"
                                                         :conditions="[['voicemail_enabled', '==', 'true'], ['vm_notify_profile.enabled', '==', true]]" />
 
-                                                    <TextElement name="description" label="Description"
-                                                        placeholder="Enter description" :floating="false"
+                                                    <TextElement name="description" :label="$t('Description')"
+                                                        :placeholder="$t('Enter description')" :floating="false"
                                                         :columns="{ sm: { container: 6 } }"
                                                         :conditions="[['voicemail_enabled', '==', 'true'], ['vm_notify_profile.enabled', '==', true]]" />
 
                                                     <SelectElement name="outbound_cid_mode"
-                                                        label="Outbound Caller ID Mode" :items="[
-                                                            { value: 'default', label: 'Default' },
-                                                            { value: 'mailbox', label: 'Mailbox' },
+                                                        :label="$t('Outbound Caller ID Mode')" :items="[
+                                                            { value: 'default', label: $t('Default') },
+                                                            { value: 'mailbox', label: $t('Mailbox') },
                                                         ]" :search="true" :native="false" input-type="search"
-                                                        autocomplete="off" placeholder="Select Caller ID Mode"
+                                                        autocomplete="off" :placeholder="$t('Select Caller ID Mode')"
                                                         :floating="false" :columns="{ sm: { wrapper: 6 } }"
                                                         :conditions="[['voicemail_enabled', '==', 'true'], ['vm_notify_profile.enabled', '==', true]]" />
 
                                                     <StaticElement name="caller_id_note" tag="blockquote"
-                                                        content="<div>Think of this as the Caller ID of the Voicemail Notification, not the Caller ID for the original caller. This is the caller ID that will be displayed on the recipient&#39;s phone (if supported). <br><strong>Default</strong>: Transmits the Caller ID set below. <br><strong>Mailbox</strong>: Transmits the CID of the extension associated with the mailbox that you are monitoring.</div>"
+                                                        :content="$t('<div>Think of this as the Caller ID of the Voicemail Notification, not the Caller ID for the original caller. This is the caller ID that will be displayed on the recipient\'s phone (if supported). <br><strong>Default</strong>: Transmits the Caller ID set below. <br><strong>Mailbox</strong>: Transmits the CID of the extension associated with the mailbox that you are monitoring.</div>')"
                                                         :conditions="[['voicemail_enabled', '==', 'true'], ['vm_notify_profile.enabled', '==', true]]" />
 
 
-                                                    <TextElement name="caller_id_number" label="Caller ID Number"
-                                                        placeholder="Enter caller ID number" :floating="false"
+                                                    <TextElement name="caller_id_number" :label="$t('Caller ID Number')"
+                                                        :placeholder="$t('Enter caller ID number')" :floating="false"
                                                         :columns="{ sm: { container: 6 } }" :conditions="[
                                                             ['voicemail_enabled', '==', 'true'],
                                                             ['vm_notify_profile.enabled', '==', true],
                                                             ['vm_notify_profile.outbound_cid_mode', '==', 'default']
                                                         ]" />
 
-                                                    <TextElement name="caller_id_name" label="Caller ID Name"
-                                                        placeholder="Defaults to mailbox name if blank"
+                                                    <TextElement name="caller_id_name" :label="$t('Caller ID Name')"
+                                                        :placeholder="$t('Defaults to mailbox name if blank')"
                                                         :floating="false" :columns="{ sm: { container: 6 } }"
                                                         :conditions="[['voicemail_enabled', '==', 'true'], ['vm_notify_profile.enabled', '==', true]]" />
 
@@ -608,21 +608,21 @@
                                                         :conditions="[['voicemail_enabled', '==', 'true'], ['vm_notify_profile.enabled', '==', true]]" />
 
                                                     <TextElement name="retry_count" input-type="number"
-                                                        label="Retry Count" placeholder="2" :floating="false"
-                                                        info="How many times to cycle through calling everyone in the Recipients list again before stopping, if no one accepts the voicemail after the first cycle. A 0 setting means do not retry – only call everyone once then stop. The default setting is 2, meaning the system will make a maximum of 3 total attempts."
+                                                        :label="$t('Retry Count')" placeholder="2" :floating="false"
+                                                        :info="$t('How many times to cycle through calling everyone in the Recipients list again before stopping, if no one accepts the voicemail after the first cycle. A 0 setting means do not retry – only call everyone once then stop. The default setting is 2, meaning the system will make a maximum of 3 total attempts.')"
                                                         :columns="{ sm: { container: 4 } }"
                                                         :conditions="[['voicemail_enabled', '==', 'true'], ['vm_notify_profile.enabled', '==', true]]" />
 
                                                     <TextElement name="retry_delay_minutes" input-type="number"
-                                                        label="Retry Delay (Minutes)" placeholder="5" :floating="false"
-                                                        info='How long to wait (in minutes) before retrying, after calling all recipients, if no one accepts the voicemail. (Default = 5 Min.)'
+                                                        :label="$t('Retry Delay (Minutes)')" placeholder="5" :floating="false"
+                                                        :info="$t('How long to wait (in minutes) before retrying, after calling all recipients, if no one accepts the voicemail. (Default = 5 Min.)')"
                                                         :columns="{ sm: { container: 4 } }"
                                                         :conditions="[['voicemail_enabled', '==', 'true'], ['vm_notify_profile.enabled', '==', true]]" />
 
                                                     <TextElement name="priority_delay_minutes" input-type="number"
-                                                        label="Priority Delay (Minutes)" placeholder="1"
+                                                        :label="$t('Priority Delay (Minutes)')" placeholder="1"
                                                         :floating="false"
-                                                        info="How long to wait (in minutes) after trying to call all recipients with the same priority setting before moving on to call the next priority group. This only has an effect if you have recipients with different priority levels."
+                                                        :info="$t('How long to wait (in minutes) after trying to call all recipients with the same priority setting before moving on to call the next priority group. This only has an effect if you have recipients with different priority levels.')"
                                                         :columns="{ sm: { container: 4 } }"
                                                         :conditions="[['voicemail_enabled', '==', 'true'], ['vm_notify_profile.enabled', '==', true]]" />
 
@@ -635,24 +635,24 @@
                                                     <GroupElement name="container_vm_notify_2"
                                                         :conditions="[['voicemail_enabled', '==', 'true'], ['vm_notify_profile.enabled', '==', true]]" />
 
-                                                    <StaticElement name="recipients_title" tag="h4" content="Recipients"
-                                                        description="Add internal extensions or external phone numbers. Recipients with the same priority are called at the same time."
+                                                    <StaticElement name="recipients_title" tag="h4" :content="$t('Recipients')"
+                                                        :description="$t('Add internal extensions or external phone numbers. Recipients with the same priority are called at the same time.')"
                                                         :conditions="[['voicemail_enabled', '==', 'true'], ['vm_notify_profile.enabled', '==', true]]" />
 
                                                     <TagsElement name="selected_recipients" :close-on-select="false"
                                                         :items="availableEscalationRecipients" :create="true"
                                                         :search="true" :groups="true" :native="false"
-                                                        label="Add Recipient(s)" input-type="search" autocomplete="off"
-                                                        placeholder="Search by name or extension, or enter external number"
+                                                        :label="$t('Add Recipient(s)')" input-type="search" autocomplete="off"
+                                                        :placeholder="$t('Search by name or extension, or enter external number')"
                                                         :floating="false" :hide-selected="false" :object="true"
                                                         :group-hide-empty="true" :append-new-option="false"
                                                         :submit="false"
-                                                        description="Choose internal extensions or enter an external number manually."
+                                                        :description="$t('Choose internal extensions or enter an external number manually.')"
                                                         :conditions="[['voicemail_enabled', '==', 'true'], ['vm_notify_profile.enabled', '==', true]]" />
 
                                                     <ButtonElement @click="addSelectedEscalationRecipients"
                                                         name="add_selected_recipients"
-                                                        button-label="Add Selected Recipients" :secondary="true"
+                                                        :button-label="$t('Add Selected Recipients')" :secondary="true"
                                                         align="center" :full="false"
                                                         :conditions="[['voicemail_enabled', '==', 'true'], ['vm_notify_profile.enabled', '==', true]]" />
 
@@ -694,7 +694,7 @@
                             </div>
                             <div class='flex flex-col min-w-0'>
                                 <span class='text-base font-bold text-gray-900 truncate'>${label}</span>
-                                <span class='text-xs font-medium text-gray-500'>${isInternal ? 'Internal Extension' : 'External Number'}</span>
+                                <span class='text-xs font-medium text-gray-500'>${isInternal ? trans('Internal Extension') : trans('External Number')}</span>
                             </div>
                         </div>
                     `;
@@ -702,7 +702,7 @@
 
                                                                 <!-- 2. Inline Priority Input -->
                                                                 <TextElement name="priority" input-type="number"
-                                                                    label="Priority" :columns="{
+                                                                    :label="$t('Priority')" :columns="{
                                                                         default: { container: 6, label: 4, wrapper: 5 },
                                                                         sm: { container: 4, label: 4, wrapper: 5 }
                                                                     }" :add-classes="{
@@ -715,7 +715,7 @@
                                                                     }" />
 
                                                                 <!-- 3. Right-aligned Active Toggle -->
-                                                                <ToggleElement name="enabled" text="Active"
+                                                                <ToggleElement name="enabled" :text="$t('Active')"
                                                                     :columns="{ default: { container: 6 }, sm: { container: 3 } }"
                                                                     size="md" :add-classes="{
                                                                         ElementLayout: {
@@ -730,26 +730,26 @@
                                                         :conditions="[['voicemail_enabled', '==', 'true'], ['vm_notify_profile.enabled', '==', true]]" />
 
                                                     <TagsElement name="email_success"
-                                                        label="Success Notification Emails" :create="true"
-                                                        :search="true" allow-absent placeholder="Add email address"
+                                                        :label="$t('Success Notification Emails')" :create="true"
+                                                        :search="true" allow-absent :placeholder="$t('Add email address')"
                                                         :floating="false"
-                                                        description="Send an email when someone accepts responsibility for the voicemail."
+                                                        :description="$t('Send an email when someone accepts responsibility for the voicemail.')"
                                                         :conditions="[['voicemail_enabled', '==', 'true'], ['vm_notify_profile.enabled', '==', true]]" />
 
-                                                    <TagsElement name="email_fail" label="Failure Notification Emails"
+                                                    <TagsElement name="email_fail" :label="$t('Failure Notification Emails')"
                                                         :create="true" :search="true" allow-absent
                                                         :add-option-on="['enter', 'space', 'tab', ';', ',']"
-                                                        placeholder="Add email address" :floating="false"
-                                                        description="Send an email when no one accepts responsibility for the voicemail."
+                                                        :placeholder="$t('Add email address')" :floating="false"
+                                                        :description="$t('Send an email when no one accepts responsibility for the voicemail.')"
                                                         :conditions="[['voicemail_enabled', '==', 'true'], ['vm_notify_profile.enabled', '==', true]]" />
 
                                                     <ToggleElement name="email_attach"
-                                                        text="Attach Voicemail to Completion Emails"
+                                                        :text="$t('Attach Voicemail to Completion Emails')"
                                                         :conditions="[['voicemail_enabled', '==', 'true'], ['vm_notify_profile.enabled', '==', true]]" />
 
                                                 </ObjectElement>
 
-                                                <ButtonElement name="submit_escalation" button-label="Save"
+                                                <ButtonElement name="submit_escalation" :button-label="$t('Save')"
                                                     :submits="true" align="right"
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
@@ -787,6 +787,7 @@ import Spinner from "@generalComponents/Spinner.vue";
 import Badge from "@generalComponents/Badge.vue";
 import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
 import ConfirmationModal from "../modal/ConfirmationModal.vue";
+import { trans } from "laravel-vue-i18n";
 
 
 const props = defineProps({
@@ -799,9 +800,9 @@ const props = defineProps({
 const form$ = ref(null)
 
 const voicemailFileOptions = [
-    { value: 'attach', label: 'Attach recording' },
-    { value: 'link', label: 'Send download link' },
-    { value: '', label: 'Do not include recording' },
+    { value: 'attach', label: trans('Attach recording') },
+    { value: 'link', label: trans('Send download link') },
+    { value: '', label: trans('Do not include recording') },
 ]
 
 const handleVoicemailFileChange = (newValue, oldValue, el$) => {
@@ -821,6 +822,7 @@ const currentNameAudio = ref(null);
 const showNewGreetingModal = ref(false);
 const showNewNameGreetingModal = ref(false);
 const recordedName = ref(props.options?.recorded_name)
+const hasCustomRecordedName = ref(props.options?.has_custom_recorded_name ?? false)
 const showDeleteConfirmationModal = ref(false);
 const showDeleteNameConfirmationModal = ref(false);
 const availableGreetings = ref(null)
@@ -831,10 +833,10 @@ const emit = defineEmits(['close', 'error', 'success', 'refresh-data'])
 
 const handleCopyToClipboard = (text) => {
     navigator.clipboard.writeText(text).then(() => {
-        emit('success', 'success', { message: ['Copied to clipboard.'] });
+        emit('success', 'success', { message: [trans('Copied to clipboard.')] });
     }).catch((error) => {
         // Handle the error case
-        emit('error', { response: { data: { errors: { request: ['Failed to copy to clipboard.'] } } } });
+        emit('error', { response: { data: { errors: { request: [trans('Failed to copy to clipboard.')] } } } });
     });
 }
 
@@ -844,8 +846,8 @@ const fetchGreetings = async (query, input) => {
 
     if (!route) {
         availableGreetings.value = [
-            { value: '0', label: 'None' },
-            { value: '-1', label: 'System Default' }
+            { value: '0', label: trans('None') },
+            { value: '-1', label: trans('System Default') }
         ];
         return availableGreetings.value;
     }
@@ -860,8 +862,8 @@ const fetchGreetings = async (query, input) => {
     } catch (error) {
         console.error("Failed to load greetings async", error);
         availableGreetings.value = [
-            { value: '0', label: 'None' },
-            { value: '-1', label: 'System Default' }
+            { value: '0', label: trans('None') },
+            { value: '-1', label: trans('System Default') }
         ];
         return availableGreetings.value;
     }
@@ -874,7 +876,16 @@ watch(
     (newVal) => {
         recordedName.value = newVal;
     },
-    { immediate: true } // Forces this to run instantly 
+    { immediate: true } // Forces this to run instantly
+)
+
+// Watch for changes in the prop and update the ref
+watch(
+    () => props.options?.has_custom_recorded_name,
+    (newVal) => {
+        hasCustomRecordedName.value = newVal ?? false;
+    },
+    { immediate: true } // Forces this to run instantly
 )
 
 const handleNewGreetingButtonClick = () => {
@@ -896,7 +907,8 @@ const handleNewGreetingAdded = async (greeting_id) => {
 
 const handleNewNameAdded = async () => {
     stopRecordedNameAudio()
-    recordedName.value = 'Custom recording'
+    recordedName.value = trans('Custom recording')
+    hasCustomRecordedName.value = true
 }
 
 const currentAudio = ref(null);
@@ -939,7 +951,7 @@ const playGreeting = () => {
 
                 currentAudio.value.play().catch(() => {
                     isAudioPlaying.value = false;
-                    emit('error', { message: 'Audio playback failed' });
+                    emit('error', { message: trans('Audio playback failed') });
                 });
 
                 currentAudio.value.addEventListener('ended', () => {
@@ -1162,7 +1174,8 @@ const confirmDeleteNameAction = () => {
         .post(props.options.routes.delete_recorded_name_route, { voicemail_id: form$.value.data.voicemail_id })
         .then((response) => {
             if (response.data.success) {
-                recordedName.value = 'System Default';
+                recordedName.value = trans('System Default');
+                hasCustomRecordedName.value = false;
                 emit('success', 'success', response.data.messages);
             }
         })
@@ -1251,10 +1264,10 @@ const getEscalationRecipientLabel = (row) => {
             (option) => String(option.value) === String(row.extension_uuid)
         );
 
-        return match?.label ?? row.display_name ?? row.extension_uuid ?? 'Extension';
+        return match?.label ?? row.display_name ?? row.extension_uuid ?? trans('Extension');
     }
 
-    return row.display_name || row.phone_number || 'External Number';
+    return row.display_name || row.phone_number || trans('External Number');
 };
 
 const addSelectedEscalationRecipients = () => {
@@ -1357,7 +1370,7 @@ const handleError = (error, details, form$) => {
         case 'prepare':
             console.log(error) // Error object
 
-            form$.messageBag.append('Could not prepare form')
+            form$.messageBag.append(trans('Could not prepare form'))
             break
 
         // Error occured because response status is outside of 2xx
@@ -1377,14 +1390,14 @@ const handleError = (error, details, form$) => {
         case 'cancel':
             console.log(error) // Error object
 
-            form$.messageBag.append('Request cancelled')
+            form$.messageBag.append(trans('Request cancelled'))
             break
 
         // Some other errors happened (no response object)
         case 'other':
             console.log(error) // Error object
 
-            form$.messageBag.append('Couldn\'t submit form')
+            form$.messageBag.append(trans('Couldn\'t submit form'))
             break
     }
 }

@@ -3,7 +3,7 @@
 
     <div class="m-3">
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-            <template #title>Voicemails</template>
+            <template #title>{{ $t('Voicemails') }}</template>
 
             <template #filters>
                 <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
@@ -13,18 +13,18 @@
                     <input type="text" v-model="filterData.search" name="mobile-search-candidate"
                         id="mobile-search-candidate"
                         class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                        :placeholder="$t('Search')" @keydown.enter="handleSearchButtonClick" />
                     <input type="text" v-model="filterData.search" name="desktop-search-candidate"
                         id="desktop-search-candidate"
                         class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                        :placeholder="$t('Search')" @keydown.enter="handleSearchButtonClick" />
                 </div>
             </template>
 
             <template #action>
                 <button v-if="permissions.voicemail_create" type="button" @click.prevent="handleCreateButtonClick()"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                    Create
+                    {{ $t('Create') }}
                 </button>
 
 
@@ -43,7 +43,7 @@
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems" @click.stop
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                     <div class="pl-4 flex items-center cursor-pointer select-none" @click="handleSortRequest('voicemail_id')">
-                        <span class="mr-2">Voicemail ID</span>
+                        <span class="mr-2">{{ $t('Voicemail ID') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'voicemail_id' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'voicemail_id' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
                     </div>
@@ -51,28 +51,28 @@
 
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('voicemail_mail_to')">
-                        <span class="mr-2">Email address</span>
+                        <span class="mr-2">{{ $t('Email address') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'voicemail_mail_to' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'voicemail_mail_to' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
                     </div>
                 </TableColumnHeader>
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('voicemail_description')">
-                        <span class="mr-2">Description</span>
+                        <span class="mr-2">{{ $t('Description') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'voicemail_description' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'voicemail_description' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
                     </div>
                 </TableColumnHeader>
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('messages_count')">
-                        <span class="mr-2">Messages</span>
+                        <span class="mr-2">{{ $t('Messages') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'messages_count' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'messages_count' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
                     </div>
                 </TableColumnHeader>
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('voicemail_enabled')">
-                        <span class="mr-2">Status</span>
+                        <span class="mr-2">{{ $t('Status') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'voicemail_enabled' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'voicemail_enabled' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
                     </div>
@@ -83,16 +83,16 @@
             <template v-if="selectPageItems" v-slot:current-selection>
                 <td colspan="9">
                     <div class="text-sm text-center m-2">
-                        <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
+                        {{ $t(':count items are selected.', { count: selectedItems.length }) }}
                         <button v-if="!selectAll && selectedItems.length != data.total"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleSelectAll">
-                            Select all {{ data.total }} items
+                            {{ $t('Select all :total items', { total: data.total }) }}
                         </button>
                         <button v-if="selectAll"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleClearSelection">
-                            Clear selection
+                            {{ $t('Clear selection') }}
                         </button>
                     </div>
                 </td>
@@ -113,7 +113,7 @@
                                 </span>
                                 <span v-else class="flex items-center">
                                     <UserGroupIcon class="mr-2 h-5 w-5 text-green-500" />
-                                    {{ row.voicemail_id }} - Team Voicemail
+                                    {{ $t(':id - Team Voicemail', { id: row.voicemail_id }) }}
                                 </span>
                             </div>
                         </div>
@@ -133,9 +133,9 @@
                     </TableField>
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.voicemail_enabled">
-                        <Badge v-if="row.voicemail_enabled == 'true'" text="Enabled" backgroundColor="bg-green-50"
+                        <Badge v-if="row.voicemail_enabled == 'true'" :text="$t('Enabled')" backgroundColor="bg-green-50"
                             textColor="text-green-700" ringColor="ring-green-600/20" />
-                        <Badge v-else text="Disabled" backgroundColor="bg-rose-50" textColor="text-rose-700"
+                        <Badge v-else :text="$t('Disabled')" backgroundColor="bg-rose-50" textColor="text-rose-700"
                             ringColor="ring-rose-600/20" />
 
                     </TableField>
@@ -144,7 +144,7 @@
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap justify-end">
-                                <ejs-tooltip v-if="permissions.voicemail_update" :content="'Edit'" position='TopCenter'
+                                <ejs-tooltip v-if="permissions.voicemail_update" :content="$t('Edit')" position='TopCenter'
                                     target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
                                         <PencilSquareIcon @click="handleEditButtonClick(row.voicemail_uuid)"
@@ -153,7 +153,7 @@
                                     </div>
                                 </ejs-tooltip>
 
-                                <ejs-tooltip v-if="permissions.voicemail_message_index" :content="'Check messages'"
+                                <ejs-tooltip v-if="permissions.voicemail_message_index" :content="$t('Check messages')"
                                     position='TopCenter' target="#restart_tooltip_target">
                                     <div id="restart_tooltip_target">
                                         <EnvelopeIcon @click="navigateToMessages(row.voicemail_uuid)"
@@ -161,7 +161,7 @@
                                     </div>
                                 </ejs-tooltip>
 
-                                <ejs-tooltip v-if="permissions.voicemail_destroy" :content="'Delete'"
+                                <ejs-tooltip v-if="permissions.voicemail_destroy" :content="$t('Delete')"
                                     position='TopCenter' target="#delete_tooltip_target">
                                     <div id="delete_tooltip_target">
                                         <TrashIcon @click="handleSingleItemDeleteRequest(row.voicemail_uuid)"
@@ -177,9 +177,9 @@
                 <!-- Conditional rendering for 'no records' message -->
                 <div v-if="data.data.length === 0" class="text-center my-5 ">
                     <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
+                    <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ $t('No results found') }}</h3>
                     <p class="mt-1 text-sm text-gray-500">
-                        Adjust your search and try again.
+                        {{ $t('Adjust your search and try again.') }}
                     </p>
                 </div>
             </template>
@@ -201,19 +201,19 @@
 
 
     <CreateVoicemailForm :show="showCreateModel" :options="itemOptions" :loading="loadingModal"
-        :header="'Create New Voicemail Extension'" @close="showCreateModel = false" @error="handleErrorResponse"
+        :header="$t('Create New Voicemail Extension')" @close="showCreateModel = false" @error="handleErrorResponse"
         @success="showNotification" @refresh-data="refreshCurrentPage" />
 
     <UpdateVoicemailForm :show="showUpdateModal" :options="itemOptions" :loading="loadingModal"
-        :header="'Update voicemail - ' + (itemOptions?.item?.voicemail_id ?? 'loading')"
+        :header="$t('Update voicemail - :id', { id: itemOptions?.item?.voicemail_id ?? $t('Loading...') })"
         @close="showUpdateModal = false" @error="handleErrorResponse" @success="showNotification"
         @refresh-data="refreshCurrentPage" />
 
 
     <ConfirmationModal :show="showDeleteConfirmationModal" @close="showDeleteConfirmationModal = false"
-        @confirm="confirmDeleteAction" :header="'Confirm Deletion'" :loading="isModalLoading"
-        :text="'This action will permanently delete the selected voicemail(s). Are you sure you want to proceed?'"
-        :confirm-button-label="'Delete'" cancel-button-label="Cancel" />
+        @confirm="confirmDeleteAction" :header="$t('Confirm Deletion')" :loading="isModalLoading"
+        :text="$t('This action will permanently delete the selected voicemail(s). Are you sure you want to proceed?')"
+        :confirm-button-label="$t('Delete')" :cancel-button-label="$t('Cancel')" />
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
@@ -238,6 +238,7 @@ import UpdateVoicemailForm from "./components/forms/UpdateVoicemailForm.vue";
 import Notification from "./components/notifications/Notification.vue";
 import Badge from "@generalComponents/Badge.vue";
 import { UserGroupIcon, UserIcon, EnvelopeIcon } from "@heroicons/vue/24/outline";
+import { trans } from "laravel-vue-i18n";
 
 
 
@@ -351,7 +352,7 @@ const bulkActions = computed(() => {
     if (props.permissions.voicemail_destroy) {
         actions.push({
             id: 'bulk_delete',
-            label: 'Delete',
+            label: trans('Delete'),
             icon: 'TrashIcon'
         });
     }
@@ -527,7 +528,7 @@ const getItemOptions = (itemUuid = null) => {
 
 const handleFormErrorResponse = (error) => {
     if (error.request?.status == 419) {
-        showNotification('error', { request: ["Session expired. Reload the page"] });
+        showNotification('error', { request: [trans("Session expired. Reload the page")] });
     } else if (error.response) {
         // The request was made and the server responded with a status code
         // that falls out of the range of 2xx

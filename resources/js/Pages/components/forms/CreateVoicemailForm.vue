@@ -24,7 +24,7 @@
                                 <button type="button"
                                     class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                     @click="handleClose">
-                                    <span class="sr-only">Close</span>
+                                    <span class="sr-only">{{ $t('Close') }}</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
@@ -42,7 +42,7 @@
                                             </path>
                                         </svg>
                                     </div>
-                                    <div class="text-lg text-blue-600 m-auto">Loading...</div>
+                                    <div class="text-lg text-blue-600 m-auto">{{ $t('Loading...') }}</div>
                                 </div>
                             </div>
 
@@ -71,7 +71,7 @@
                                     <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
                                         <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
                                             <FormTabs view="vertical">
-                                                <FormTab name="settings" label="Settings" :elements="[
+                                                <FormTab name="settings" :label="$t('Settings')" :elements="[
                                                     'voicemail_title',
                                                     'uuid_clean',
                                                     'voicemail_enabled',
@@ -90,7 +90,7 @@
 
                                                 ]" />
 
-                                                <FormTab name="advanced" label="Advanced" :elements="[
+                                                <FormTab name="advanced" :label="$t('Advanced')" :elements="[
                                                     'voicemail_advanced_title',
                                                     'voicemail_tutorial',
                                                     'divider15',
@@ -110,44 +110,44 @@
                                             class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
                                             <FormElements>
 
-                                                <StaticElement name="voicemail_title" tag="h4" content="Settings"
-                                                    description="Customize voicemail preferences" />
+                                                <StaticElement name="voicemail_title" tag="h4" :content="$t('Settings')"
+                                                    :description="$t('Customize voicemail preferences')" />
 
                                                 <HiddenElement name="voicemail_enabled" :meta="true"/>
 
 
-                                                <TextElement name="voicemail_id" label="Voicemail Extension" :columns="{
+                                                <TextElement name="voicemail_id" :label="$t('Voicemail Extension')" :columns="{
                                                     sm: {
                                                         container: 6,
                                                     },
                                                 }" :conditions="[['voicemail_enabled', '==', 'true']]" />
 
-                                                <TextElement name="voicemail_password" label="Password" :columns="{
+                                                <TextElement name="voicemail_password" :label="$t('Password')" :columns="{
                                                     sm: {
                                                         container: 6,
                                                     },
                                                 }" :conditions="[['voicemail_enabled', '==', 'true']]" />
 
-                                                <TextElement name="voicemail_mail_to" label="Email Address"
-                                                    placeholder="Enter email address" :floating="false"
+                                                <TextElement name="voicemail_mail_to" :label="$t('Email Address')"
+                                                    :placeholder="$t('Enter email address')" :floating="false"
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
-                                                <TextElement name="voicemail_description" label="Description"
-                                                    placeholder="Enter description" :floating="false"
+                                                <TextElement name="voicemail_description" :label="$t('Description')"
+                                                    :placeholder="$t('Enter description')" :floating="false"
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
                                                 <ToggleElement name="voicemail_transcription_enabled"
-                                                    text="Voicemail Transcription" true-value="true" false-value="false"
-                                                    description="Convert voicemail messages to text using AI-powered transcription."
+                                                    :text="$t('Voicemail Transcription')" true-value="true" false-value="false"
+                                                    :description="$t('Convert voicemail messages to text using AI-powered transcription.')"
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
                                                 <StaticElement name="divider1" tag="hr"
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
                                                 <SelectElement name="voicemail_file" :items="voicemailFileOptions"
-                                                    :native="false" label="Voicemail Recording Delivery"
+                                                    :native="false" :label="$t('Voicemail Recording Delivery')"
                                                     value-prop="value" label-prop="label"
-                                                    description="Choose whether voicemail emails include the recording as an attachment, a download link, or not at all."
+                                                    :description="$t('Choose whether voicemail emails include the recording as an attachment, a download link, or not at all.')"
                                                     @change="handleVoicemailFileChange"
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
@@ -155,23 +155,23 @@
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
                                                 <ToggleElement name="voicemail_local_after_email"
-                                                    text="Automatically Delete Voicemail After Email" true-value="false"
+                                                    :text="$t('Automatically Delete Voicemail After Email')" true-value="false"
                                                     false-value="true"
-                                                    description="Remove voicemail from the cloud once the email is sent."
+                                                    :description="$t('Remove voicemail from the cloud once the email is sent.')"
                                                     :disabled="isAutoDeleteDisabled"
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
                                                 <TagsElement name="voicemail_copies" :search="true"
                                                     :items="options.all_voicemails"
-                                                    label="Copy Voicemail to Other Extensions" input-type="search"
+                                                    :label="$t('Copy Voicemail to Other Extensions')" input-type="search"
                                                     autocomplete="off"
-                                                    description="Automatically send a copy of the voicemail to selected additional extensions."
-                                                    :floating="false" placeholder="Enter name or extension"
+                                                    :description="$t('Automatically send a copy of the voicemail to selected additional extensions.')"
+                                                    :floating="false" :placeholder="$t('Enter name or extension')"
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
                                                 <GroupElement name="container_settings" />
 
-                                                <ButtonElement name="submit_settings" button-label="Save"
+                                                <ButtonElement name="submit_settings" :button-label="$t('Save')"
                                                     :submits="true" align="right" />
 
                                                 <HiddenElement name="greeting_id" :meta="true" />
@@ -180,23 +180,23 @@
 
                                                 <!-- Voicemail Advanced -->
                                                 <StaticElement name="voicemail_advanced_title" tag="h4"
-                                                    content="Advanced"
-                                                    description="Set advanced settings for this voicemail."
+                                                    :content="$t('Advanced')"
+                                                    :description="$t('Set advanced settings for this voicemail.')"
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
 
-                                                <ToggleElement name="voicemail_tutorial" text="Play Voicemail Tutorial"
+                                                <ToggleElement name="voicemail_tutorial" :text="$t('Play Voicemail Tutorial')"
                                                     true-value="true" false-value="false"
-                                                    description="Provide user with a guided tutorial when accessing voicemail for the first time."
+                                                    :description="$t('Provide user with a guided tutorial when accessing voicemail for the first time.')"
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
                                                 <StaticElement name="divider15" tag="hr"
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
                                                 <ToggleElement name="voicemail_recording_instructions"
-                                                    text="Play Recording Instructions" true-value="true"
+                                                    :text="$t('Play Recording Instructions')" true-value="true"
                                                     false-value="false"
-                                                    description='Play a prompt instructing callers to "Record your message after the tone. Stop speaking to end the recording."'
+                                                    :description='$t("Play a prompt instructing callers to \"Record your message after the tone. Stop speaking to end the recording.\"")'
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
                                                 <StaticElement name="divider18" tag="hr" :conditions="[
@@ -206,7 +206,7 @@
                                                 ]" />
 
                                                 <TextElement name="voicemail_sms_to"
-                                                    label="Mobile Number to Receive Voicemail Notifications" :columns="{
+                                                    :label="$t('Mobile Number to Receive Voicemail Notifications')" :columns="{
                                                         sm: {
                                                             container: 6,
                                                         },
@@ -217,9 +217,9 @@
                                                     ]" />
 
                                                 <TextElement name="voicemail_alternate_greet_id"
-                                                    label="Announce Voicemail Extension as"
-                                                    description="The parameter allows you to override the voicemail extension number spoken by the system in the voicemail greeting. This controls system greetings that read back an extension number, not user recorded greetings."
-                                                    :floating="false" placeholder="Enter extension" :columns="{
+                                                    :label="$t('Announce Voicemail Extension as')"
+                                                    :description="$t('The parameter allows you to override the voicemail extension number spoken by the system in the voicemail greeting. This controls system greetings that read back an extension number, not user recorded greetings.')"
+                                                    :floating="false" :placeholder="$t('Enter extension')" :columns="{
                                                         sm: {
                                                             wrapper: 6,
                                                         },
@@ -227,10 +227,10 @@
 
                                                 <GroupElement name="container_advanced" />
 
-                                                <ButtonElement name="submit_advanced" button-label="Save"
+                                                <ButtonElement name="submit_advanced" :button-label="$t('Save')"
                                                     :submits="true" align="right" />
 
-                                                <NewGreetingForm :header="'New Voicemail Greeting'"
+                                                <NewGreetingForm :header="$t('New Voicemail Greeting')"
                                                     :show="showNewGreetingModal" @close="showNewGreetingModal = false"
                                                     :voices="options.voices" :speeds="options.speeds"
                                                     :default_voice="options.default_voice"
@@ -241,7 +241,7 @@
                                                     @success="emitSuccessToParentFromChild"
                                                     @saved="handleNewGreetingAdded" />
 
-                                                <NewGreetingForm :header="'New Recorded Name'"
+                                                <NewGreetingForm :header="$t('New Recorded Name')"
                                                     :show="showNewNameGreetingModal"
                                                     @close="showNewNameGreetingModal = false" :voices="options.voices"
                                                     :speeds="options.speeds" :default_voice="options.default_voice"
@@ -253,16 +253,16 @@
 
                                                 <ConfirmationModal :show="showDeleteConfirmationModal"
                                                     @close="showDeleteConfirmationModal = false"
-                                                    @confirm="confirmGreetingDeleteAction" :header="'Confirm Deletion'"
-                                                    :text="'This action will permanently delete this greeting. Are you sure you want to proceed?'"
-                                                    :confirm-button-label="'Delete'" cancel-button-label="Cancel" />
+                                                    @confirm="confirmGreetingDeleteAction" :header="$t('Confirm Deletion')"
+                                                    :text="$t('This action will permanently delete this greeting. Are you sure you want to proceed?')"
+                                                    :confirm-button-label="$t('Delete')" :cancel-button-label="$t('Cancel')" />
 
 
                                                 <ConfirmationModal :show="showDeleteNameConfirmationModal"
                                                     @close="showDeleteNameConfirmationModal = false"
-                                                    @confirm="confirmDeleteNameAction" :header="'Confirm Deletion'"
-                                                    :text="'This action will permanently delete the custom recorded name. Are you sure you want to proceed?'"
-                                                    :confirm-button-label="'Delete'" cancel-button-label="Cancel" />
+                                                    @confirm="confirmDeleteNameAction" :header="$t('Confirm Deletion')"
+                                                    :text="$t('This action will permanently delete the custom recorded name. Are you sure you want to proceed?')"
+                                                    :confirm-button-label="$t('Delete')" :cancel-button-label="$t('Cancel')" />
 
 
                                             </FormElements>
@@ -299,6 +299,7 @@ import Spinner from "@generalComponents/Spinner.vue";
 import Badge from "@generalComponents/Badge.vue";
 import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
 import ConfirmationModal from "../modal/ConfirmationModal.vue";
+import { trans } from "laravel-vue-i18n";
 
 
 const props = defineProps({
@@ -311,9 +312,9 @@ const props = defineProps({
 const form$ = ref(null)
 
 const voicemailFileOptions = [
-    { value: 'attach', label: 'Attach recording' },
-    { value: 'link', label: 'Send download link' },
-    { value: '', label: 'Do not include recording' },
+    { value: 'attach', label: trans('Attach recording') },
+    { value: 'link', label: trans('Send download link') },
+    { value: '', label: trans('Do not include recording') },
 ]
 
 const handleVoicemailFileChange = (newValue, oldValue, el$) => {
@@ -343,10 +344,10 @@ const emit = defineEmits(['close', 'error', 'success', 'refresh-data'])
 
 const handleCopyToClipboard = (text) => {
     navigator.clipboard.writeText(text).then(() => {
-        emit('success', 'success', { message: ['Copied to clipboard.'] });
+        emit('success', 'success', { message: [trans('Copied to clipboard.')] });
     }).catch((error) => {
         // Handle the error case
-        emit('error', { response: { data: { errors: { request: ['Failed to copy to clipboard.'] } } } });
+        emit('error', { response: { data: { errors: { request: [trans('Failed to copy to clipboard.')] } } } });
     });
 }
 
@@ -356,8 +357,8 @@ const fetchGreetings = async (query, input) => {
 
     if (!route) {
         availableGreetings.value = [
-            { value: '0', label: 'None' },
-            { value: '-1', label: 'System Default' }
+            { value: '0', label: trans('None') },
+            { value: '-1', label: trans('System Default') }
         ];
         return availableGreetings.value;
     }
@@ -372,8 +373,8 @@ const fetchGreetings = async (query, input) => {
     } catch (error) {
         console.error("Failed to load greetings async", error);
         availableGreetings.value = [
-            { value: '0', label: 'None' },
-            { value: '-1', label: 'System Default' }
+            { value: '0', label: trans('None') },
+            { value: '-1', label: trans('System Default') }
         ];
         return availableGreetings.value;
     }
@@ -408,7 +409,7 @@ const handleNewGreetingAdded = async (greeting_id) => {
 
 const handleNewNameAdded = async () => {
     stopRecordedNameAudio()
-    recordedName.value = 'Custom recording'
+    recordedName.value = trans('Custom recording')
 }
 
 const currentAudio = ref(null);
@@ -451,7 +452,7 @@ const playGreeting = () => {
 
                 currentAudio.value.play().catch(() => {
                     isAudioPlaying.value = false;
-                    emit('error', { message: 'Audio playback failed' });
+                    emit('error', { message: trans('Audio playback failed') });
                 });
 
                 currentAudio.value.addEventListener('ended', () => {
@@ -674,7 +675,7 @@ const confirmDeleteNameAction = () => {
         .post(props.options.routes.delete_recorded_name_route, { voicemail_id: form$.value.data.voicemail_id })
         .then((response) => {
             if (response.data.success) {
-                recordedName.value = 'System Default';
+                recordedName.value = trans('System Default');
                 emit('success', 'success', response.data.messages);
             }
         })
@@ -797,7 +798,7 @@ const handleError = (error, details, form$) => {
         case 'prepare':
             console.log(error) // Error object
 
-            form$.messageBag.append('Could not prepare form')
+            form$.messageBag.append(trans('Could not prepare form'))
             break
 
         // Error occured because response status is outside of 2xx
@@ -817,14 +818,14 @@ const handleError = (error, details, form$) => {
         case 'cancel':
             console.log(error) // Error object
 
-            form$.messageBag.append('Request cancelled')
+            form$.messageBag.append(trans('Request cancelled'))
             break
 
         // Some other errors happened (no response object)
         case 'other':
             console.log(error) // Error object
 
-            form$.messageBag.append('Couldn\'t submit form')
+            form$.messageBag.append(trans('Couldn\'t submit form'))
             break
     }
 }
