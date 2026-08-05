@@ -110,9 +110,7 @@ class ProFeaturesService
 
         $proFeature->update($inputs);
 
-        if ($licenseKey) {
-            $this->clearLicenseCaches($licenseKey);
-        }
+        $this->clearLicenseCaches($licenseKey);
 
         $result['updated'][] = 'License updated';
         return $result;
@@ -396,10 +394,14 @@ class ProFeaturesService
         return $matched[0] ?? null;
     }
 
-    protected function clearLicenseCaches(string $licenseKey): void
+    protected function clearLicenseCaches(?string $licenseKey): void
     {
-        Cache::forget("stir_shaken_license_validation_{$licenseKey}");
-        Cache::forget("license_validation_{$licenseKey}");
+        if ($licenseKey) {
+            Cache::forget("stir_shaken_license_validation_{$licenseKey}");
+            Cache::forget("license_validation_{$licenseKey}");
+        }
+
+        Cache::forget('pro_feature:fspbx:license');
     }
 
     protected function callIfExists(string $command): void

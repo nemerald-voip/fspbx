@@ -47,6 +47,16 @@ async function getConfig() {
                 usePolling: true,
                 interval: 1000,
             },
+            fs: {
+                strict: true,
+                deny: [
+                    '.env',
+                    '.env.*',
+                    '*.{crt,pem}',
+                    '**/.git/**',
+                    '**/.DS_Store',
+                ],
+            },
             cors: {
                 origin: VITE_ORIGIN,
             },
