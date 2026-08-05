@@ -146,7 +146,7 @@
                         </section>
 
                         <div v-if="my_extension_status"
-                            class="overflow-hidden rounded-lg bg-white ring-1 ring-gray-200">
+                            class="rounded-lg bg-white ring-1 ring-gray-200">
                             <div class="flex flex-col gap-4 border-b border-gray-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                                 <div>
                                     <p class="text-xs font-medium uppercase tracking-wide text-cyan-700">{{ $t('My Extension') }}</p>
@@ -180,6 +180,52 @@
                                         class="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
                                         {{ $t('Normal routing') }}
                                     </span>
+                                </div>
+                            </div>
+
+                            <div v-if="my_extension_status.agent && routes.agent_status_update"
+                                class="border-t border-gray-100 px-5 py-4">
+                                <div class="flex items-center justify-between gap-4">
+                                    <div class="flex min-w-0 items-center gap-3">
+                                        <SupportAgentIcon class="h-5 w-5 flex-none text-gray-400" aria-hidden="true" />
+                                        <div class="min-w-0">
+                                            <p class="truncate text-sm font-medium text-gray-700">{{ $t('Contact Center') }}</p>
+                                            <p class="text-xs text-gray-500">{{ $t('Status') }}</p>
+                                        </div>
+                                    </div>
+
+                                    <Menu as="div" class="relative flex-none">
+                                        <MenuButton type="button" :disabled="isAgentStatusUpdating"
+                                            class="inline-flex items-center rounded-md px-2.5 py-1.5 text-sm font-medium ring-1 ring-inset transition focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-60"
+                                            :class="agentStatusStyles.button">
+                                            <span :class="[agentStatusStyles.dot, 'mr-2 h-2 w-2 rounded-full']"
+                                                aria-hidden="true"></span>
+                                            {{ agentStatusLabel(my_extension_status.agent.status) }}
+                                            <Spinner v-if="isAgentStatusUpdating" class="ml-2" :show="true" />
+                                            <ChevronDownIcon v-else class="ml-2 h-4 w-4" aria-hidden="true" />
+                                        </MenuButton>
+
+                                        <transition enter-active-class="transition ease-out duration-100"
+                                            enter-from-class="transform opacity-0 scale-95"
+                                            enter-to-class="transform opacity-100 scale-100"
+                                            leave-active-class="transition ease-in duration-75"
+                                            leave-from-class="transform opacity-100 scale-100"
+                                            leave-to-class="transform opacity-0 scale-95">
+                                            <MenuItems
+                                                class="absolute right-0 z-20 mt-2 w-40 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-none">
+                                                <MenuItem v-for="option in agentStatusOptions" :key="option" v-slot="{ active }">
+                                                    <button type="button"
+                                                        class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700"
+                                                        :class="active ? 'bg-gray-50' : ''"
+                                                        @click="updateAgentStatus(option)">
+                                                        <span :class="[agentStatusStyle(option).dot, 'h-2 w-2 rounded-full']"
+                                                            aria-hidden="true"></span>
+                                                        {{ agentStatusLabel(option) }}
+                                                    </button>
+                                                </MenuItem>
+                                            </MenuItems>
+                                        </transition>
+                                    </Menu>
                                 </div>
                             </div>
                         </div>
@@ -245,9 +291,12 @@ import Notification from './components/notifications/Notification.vue'
 import ContactPhoneIcon from "./components/icons/ContactPhoneIcon.vue"
 import DialpadIcon from "./components/icons/DialpadIcon.vue"
 import FaxIcon from "./components/icons/FaxIcon.vue"
-import { ClockIcon } from '@heroicons/vue/20/solid'
+import { ChevronDownIcon, ClockIcon } from '@heroicons/vue/20/solid'
 import { CogIcon } from '@heroicons/vue/24/outline'
+import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import TopBanner from './components/notifications/TopBanner.vue';
+import SupportAgentIcon from './components/icons/SupportAgent.vue'
+import Spinner from '@generalComponents/Spinner.vue'
 
 
 const props = defineProps({
@@ -289,6 +338,7 @@ const extensionItemOptions = ref({});
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(false);
+const isAgentStatusUpdating = ref(false);
 
 const showTopBanner = ref(Boolean(props.company_data.billing_suspension));
 const topBannerText = ref(trans('Your account has been suspended. Reactivation requires payment for past-due invoice(s).'));
@@ -326,6 +376,35 @@ const hasActiveCallHandling = computed(() => {
         || activeForwarding.value.length
     );
 });
+
+const agentStatusOptions = ['Available', 'On Break', 'Logged Out'];
+const agentStatusLabels = {
+    'Available': trans('Available'),
+    'On Break': trans('On Break'),
+    'Logged Out': trans('Logged Out'),
+};
+const agentStatusStyleMap = {
+    'Available': {
+        button: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20 hover:bg-emerald-100',
+        dot: 'bg-emerald-500',
+    },
+    'On Break': {
+        button: 'bg-amber-50 text-amber-700 ring-amber-600/20 hover:bg-amber-100',
+        dot: 'bg-amber-500',
+    },
+    'Logged Out': {
+        button: 'bg-gray-50 text-gray-700 ring-gray-600/20 hover:bg-gray-100',
+        dot: 'bg-gray-400',
+    },
+};
+const fallbackAgentStatusStyle = {
+    button: 'bg-gray-50 text-gray-700 ring-gray-600/20 hover:bg-gray-100',
+    dot: 'bg-gray-400',
+};
+
+const agentStatusLabel = (status) => agentStatusLabels[status] || status;
+const agentStatusStyle = (status) => agentStatusStyleMap[status] || fallbackAgentStatusStyle;
+const agentStatusStyles = computed(() => agentStatusStyle(my_extension_status.value?.agent?.status));
 
 const customerNoteLayers = [
     {
@@ -515,7 +594,32 @@ const getMyExtensionStatus = () => {
         .then((response) => {
             my_extension_status.value = response.data || null;
         });
-}
+};
+
+const updateAgentStatus = async (status) => {
+    const agent = my_extension_status.value?.agent;
+    if (!agent || !props.routes.agent_status_update || status === agent.status || isAgentStatusUpdating.value) {
+        return;
+    }
+
+    isAgentStatusUpdating.value = true;
+
+    try {
+        const response = await axios.post(props.routes.agent_status_update, {
+            agentUuid: agent.call_center_agent_uuid,
+            status,
+        });
+
+        agent.status = response.data.status || status;
+        showNotification('success', response.data.messages || {
+            success: [trans('Status updated successfully.')],
+        });
+    } catch (error) {
+        handleErrorResponse(error);
+    } finally {
+        isAgentStatusUpdating.value = false;
+    }
+};
 </script>
 
 <style scoped>

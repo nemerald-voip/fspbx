@@ -18,6 +18,7 @@ use App\Models\Voicemails;
 use App\Models\Destinations;
 use Illuminate\Support\Carbon;
 use App\Models\CallCenterQueues;
+use App\Models\CallCenterAgents;
 use App\Models\WakeupCall;
 use App\Models\WhitelistedNumbers;
 use App\Services\CdrDataService;
@@ -28,6 +29,7 @@ use Illuminate\Support\Facades\Schema;
 use Laravel\Horizon\Contracts\MasterSupervisorRepository;
 use App\Services\FreeswitchEslService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
 
 class DashboardController extends Controller
 {
@@ -59,6 +61,7 @@ class DashboardController extends Controller
                     'my_extension_status_route' => route('dashboard.my-extension-status'),
                     'customer_notes_route' => route('dashboard.customer-notes'),
                     'extension_item_options' => route('extensions.item.options'),
+                    'agent_status_update' => $this->agentStatusUpdateRoute(),
                 ]
             ]
         );
@@ -412,6 +415,7 @@ class DashboardController extends Controller
             'name' => $extension->name_formatted,
             'do_not_disturb' => $extension->do_not_disturb === 'true',
             'call_sequence_enabled' => $extension->follow_me_enabled === 'true',
+            'agent' => $this->getMyAgentStatus($extension),
             'forwarding' => [
                 $this->formatForwardingStatus($extension, 'forward_all', __('All Calls')),
                 $this->formatForwardingStatus($extension, 'forward_busy', __('Busy')),
@@ -419,6 +423,56 @@ class DashboardController extends Controller
                 $this->formatForwardingStatus($extension, 'forward_user_not_registered', __('Offline')),
             ],
         ];
+    }
+
+    private function getMyAgentStatus(Extensions $extension): ?array
+    {
+        if (!$this->agentStatusUpdateRoute()) {
+            return null;
+        }
+
+        $agent = CallCenterAgents::query()
+            ->where('domain_uuid', $extension->domain_uuid)
+            ->where('agent_id', $extension->extension)
+            ->first([
+                'call_center_agent_uuid',
+                'agent_status',
+            ]);
+
+        if (!$agent) {
+            return null;
+        }
+
+        $status = $agent->agent_status ?: 'Logged Out';
+        $runtimeStatus = (new FreeswitchEslService())->executeCommand(
+            'callcenter_config agent get status ' . $agent->call_center_agent_uuid
+        );
+
+        if (
+            is_string($runtimeStatus)
+            && $runtimeStatus !== ''
+            && !str_starts_with($runtimeStatus, '-ERR')
+        ) {
+            $status = $runtimeStatus;
+        }
+
+        return [
+            'call_center_agent_uuid' => $agent->call_center_agent_uuid,
+            'status' => $status,
+        ];
+    }
+
+    private function agentStatusUpdateRoute(): ?string
+    {
+        if (
+            !Module::has('ContactCenter')
+            || !Module::collections()->has('ContactCenter')
+            || !Route::has('agent.status.update')
+        ) {
+            return null;
+        }
+
+        return route('agent.status.update');
     }
 
     private function formatForwardingStatus(Extensions $extension, string $prefix, string $label): array
