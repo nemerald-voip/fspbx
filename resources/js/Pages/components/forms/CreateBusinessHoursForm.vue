@@ -11,7 +11,7 @@
                 <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
                     <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
                         <FormTabs view="vertical">
-                            <FormTab name="page0" label="Business Hours" :elements="[
+                            <FormTab name="page0" :label="$t('Business Hours')" :elements="[
                                 'business_hours_header',
                                 'name',
                                 'extension',
@@ -40,52 +40,52 @@
                         class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
                         <FormElements>
 
-                            <StaticElement name="business_hours_header" tag="h4" content="Business Hours" />
-                            <TextElement name="name" label="Name" :columns="{
+                            <StaticElement name="business_hours_header" tag="h4" :content="$t('Business Hours')" />
+                            <TextElement name="name" :label="$t('Name')" :columns="{
                                 sm: {
                                     container: 6,
                                 },
-                            }" placeholder="Enter Name" :floating="false" />
+                            }" :placeholder="$t('Enter Name')" :floating="false" />
 
-                            <TextElement name="extension" label="Extension" :columns="{
+                            <TextElement name="extension" :label="$t('Extension')" :columns="{
                                 sm: {
                                     container: 6,
                                 },
-                            }" placeholder="Enter Extension" :floating="false" />
+                            }" :placeholder="$t('Enter Extension')" :floating="false" />
 
                             <SelectElement name="timezone" :groups="true" :items="options.timezones" :search="true"
-                                :native="false" label="Time Zone" input-type="search" autocomplete="off"
-                                placeholder="Choose time zone" :floating="false" :strict="false" :columns="{
+                                :native="false" :label="$t('Time Zone')" input-type="search" autocomplete="off"
+                                :placeholder="$t('Choose time zone')" :floating="false" :strict="false" :columns="{
                                     sm: {
                                         container: 6,
                                     },
                                 }" />
 
-                            <TextElement name="description" label="Description" :columns="{
+                            <TextElement name="description" :label="$t('Description')" :columns="{
                                 sm: {
                                     container: 6,
                                 },
-                            }" placeholder="Enter Description" :floating="false" />
+                            }" :placeholder="$t('Enter Description')" :floating="false" />
 
                             <GroupElement name="container" />
 
                             <RadiogroupElement name="custom_hours" :items="[
                                 {
                                     value: false,
-                                    label: 'Always take calls (24/7)',
+                                    label: trans('Always take calls (24/7)'),
                                 },
                                 {
                                     value: true,
-                                    label: 'Only during specific hours',
+                                    label: trans('Only during specific hours'),
                                 },
-                            ]" label="When do you want to receive calls?" default="false"
+                            ]" :label="$t('When do you want to receive calls?')" default="false"
                                 @change="handleCustomHoursUpdate" />
-                            <ListElement name="time_slots" :sort="true" label="Time Slots"
+                            <ListElement name="time_slots" :sort="true" :label="$t('Time Slots')"
                                 :conditions="[['custom_hours', true]]"
                                 :add-classes="{ ListElement: { listItem: 'bg-white p-3 sm:p-4 mb-4 rounded-lg shadow-md' } }">
                                 <template #default="{ index }">
                                     <ObjectElement :name="index">
-                                        <CheckboxgroupElement name="weekdays" view="tabs" label="Weekdays" :items="[
+                                        <CheckboxgroupElement name="weekdays" view="tabs" :label="$t('Weekdays')" :items="[
                                             { value: '1', label: 'S' },
                                             { value: '2', label: 'M' },
                                             { value: '3', label: 'T' },
@@ -97,7 +97,7 @@
     default: { container: 12 },
     sm: { container: 6 },
 }" />
-                                        <DateElement name="time_from" label="From" :time="true" :date="false"
+                                        <DateElement name="time_from" :label="$t('From')" :time="true" :date="false"
                                             :hour24="false" :columns="{
                                                 default: {
                                                     container: 12,
@@ -113,11 +113,11 @@
                                             sm: {
                                                 container: 3,
                                             },
-                                        }" size="sm" label="To" />
+                                        }" size="sm" :label="$t('To')" />
 
                                         <SelectElement name="action" :items="options.routing_types" label-prop="name"
-                                            :search="true" :native="false" label="Choose Action" input-type="search"
-                                            autocomplete="off" placeholder="Choose Action" :floating="false" :strict="false"
+                                            :search="true" :native="false" :label="$t('Choose Action')" input-type="search"
+                                            autocomplete="off" :placeholder="$t('Choose Action')" :floating="false" :strict="false"
                                             :columns="{ default: { container: 12 }, sm: { container: 6 } }" @change="(newValue, oldValue, el$) => {
                                                 let target = el$.form$.el$('time_slots').children$[index].children$['target']
 
@@ -145,9 +145,9 @@
                                                 emit('error', error);
                                                 return [];  // Return an empty array in case of error
                                             }
-                                        }" :search="true" label-prop="name" :native="false" label="Target"
+                                        }" :search="true" label-prop="name" :native="false" :label="$t('Target')"
                                             input-type="search" allow-absent :object="true"
-                                            autocomplete="off" placeholder="Choose Target" :floating="false" :strict="false"
+                                            autocomplete="off" :placeholder="$t('Choose Target')" :floating="false" :strict="false"
                                             :columns="{ default: { container: 12 }, sm: { container: 6 } }" :conditions="[
                                                 ['time_slots.*.action', 'not_empty'],
                                                 ['time_slots.*.action', 'not_in', ['check_voicemail', 'company_directory', 'hangup']]
@@ -161,17 +161,17 @@
                             <StaticElement name="divider1" tag="hr" :conditions="[['custom_hours', true]]" />
                             <GroupElement name="container_4" :conditions="[['custom_hours', true]]" />
 
-                            <StaticElement name="closed_hours_header" tag="h4" content="Closed Hours"
-                                description="Define how incoming calls are handled outside of your business hours."
+                            <StaticElement name="closed_hours_header" tag="h4" :content="$t('Closed Hours')"
+                                :description="$t('Define how incoming calls are handled outside of your business hours.')"
                                 :conditions="[['custom_hours', true]]" />
 
                             <StaticElement name="247_header" tag="h4" content=""
-                                description="Define how incoming calls are handled."
+                                :description="$t('Define how incoming calls are handled.')"
                                 :conditions="[['custom_hours', false]]" />
 
                             <SelectElement name="after_hours_action" :items="options.routing_types" label-prop="name"
-                                :search="true" :native="false" label="Choose Action" input-type="search" autocomplete="off"
-                                placeholder="Choose Action" :floating="false" :strict="false"
+                                :search="true" :native="false" :label="$t('Choose Action')" input-type="search" autocomplete="off"
+                                :placeholder="$t('Choose Action')" :floating="false" :strict="false"
                                 :columns="{ default: { container: 12 }, sm: { container: 6 } }" @change="(newValue, oldValue, el$) => {
                                     let after_hours_target = el$.form$.el$('after_hours_target')
 
@@ -211,15 +211,15 @@
                                     emit('error', error);
                                     return [];  // Return an empty array in case of error
                                 }
-                            }" :search="true" label-prop="name" :native="false" label="Target" input-type="search"
-                                allow-absent :object="true" autocomplete="off" placeholder="Choose Target" :floating="false"
+                            }" :search="true" label-prop="name" :native="false" :label="$t('Target')" input-type="search"
+                                allow-absent :object="true" autocomplete="off" :placeholder="$t('Choose Target')" :floating="false"
                                 :strict="false" :columns="{ default: { container: 12 }, sm: { container: 6 } }" :conditions="[
                                     ['after_hours_action', 'not_empty'],
                                     ['after_hours_action', 'not_in', ['check_voicemail', 'company_directory', 'hangup']]
                                 ]" />
 
 
-                            <ButtonElement name="submit" button-label="Save" :submits="true" align="right" />
+                            <ButtonElement name="submit" :button-label="$t('Save')" :submits="true" align="right" />
 
                         </FormElements>
                     </div>
@@ -231,6 +231,7 @@
 
 <script setup>
 import { ref } from "vue";
+import { trans } from "laravel-vue-i18n";
 
 const props = defineProps({
     options: Object,
@@ -315,7 +316,7 @@ const handleError = (error, details, form$) => {
         case 'prepare':
             console.log(error) // Error object
 
-            form$.messageBag.append('Could not prepare form')
+            form$.messageBag.append(trans('Could not prepare form'))
             break
 
         // Error occured because response status is outside of 2xx
@@ -335,14 +336,14 @@ const handleError = (error, details, form$) => {
         case 'cancel':
             console.log(error) // Error object
 
-            form$.messageBag.append('Request cancelled')
+            form$.messageBag.append(trans('Request cancelled'))
             break
 
         // Some other errors happened (no response object)
         case 'other':
             console.log(error) // Error object
 
-            form$.messageBag.append('Couldn\'t submit form')
+            form$.messageBag.append(trans('Couldn\'t submit form'))
             break
     }
 }

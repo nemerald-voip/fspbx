@@ -189,7 +189,7 @@ class BusinessHoursController extends Controller
 
                 // If a model exists, use it; otherwise, create a new one
                 if (!$item) {
-                    throw new \Exception("Failed to fetch item details. Item not found");
+                    throw new \Exception(__("Failed to fetch item details. Item not found"));
                 }
 
                 $item->after_hours_target = [
@@ -294,7 +294,7 @@ class BusinessHoursController extends Controller
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to fetch item details']]
+                'errors' => ['server' => [__('Failed to fetch item details')]]
             ], 500);  // 500 Internal Server Error for any other errors
         }
     }
@@ -322,7 +322,7 @@ class BusinessHoursController extends Controller
     {
         if (!userCheckPermission('business_hours_create')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']]
+                'messages' => ['error' => [__('Access denied.')]]
             ], 403);
         }
 
@@ -386,7 +386,7 @@ class BusinessHoursController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages' => ['success' => ['Business hours created.']],
+                'messages' => ['success' => [__('Business hours created.')]],
                 'business_hours_uuid' =>  $businessHour->uuid,
             ]);
         } catch (\Throwable $e) {
@@ -398,7 +398,7 @@ class BusinessHoursController extends Controller
             );
 
             return response()->json([
-                'messages' => ['error' => ['Something went wrong while saving business hours.']],
+                'messages' => ['error' => [__('Something went wrong while saving business hours.')]],
             ], 500);
         }
     }
@@ -487,7 +487,7 @@ class BusinessHoursController extends Controller
     {
         if (!userCheckPermission('business_hours_update')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']]
+                'messages' => ['error' => [__('Access denied.')]]
             ], 403);
         }
 
@@ -557,14 +557,14 @@ class BusinessHoursController extends Controller
             // FusionCache::clear("dialplan:" . $ringGroup->ring_group_context);
 
             return response()->json([
-                'messages' => ['success' => ['Business hours updated']]
+                'messages' => ['success' => [__('Business hours updated')]]
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
             logger('Business Hours update error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Something went wrong while updating.']]
+                'messages' => ['error' => [__('Something went wrong while updating.')]]
             ], 500);
         }
     }
@@ -581,7 +581,7 @@ class BusinessHoursController extends Controller
         // 1) Permission check
         if (! userCheckPermission('business_hours_delete')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']]
+                'messages' => ['error' => [__('Access denied.')]]
             ], 403);
         }
 
@@ -624,7 +624,7 @@ class BusinessHoursController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages' => ['success' => ['Selected business hour(s) deleted successfully.']]
+                'messages' => ['success' => [__('Selected business hour(s) deleted successfully.')]]
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -635,7 +635,7 @@ class BusinessHoursController extends Controller
             );
 
             return response()->json([
-                'messages' => ['error' => ['An error occurred while deleting business hours.']]
+                'messages' => ['error' => [__('An error occurred while deleting business hours.')]]
             ], 500);
         }
     }
@@ -694,7 +694,7 @@ class BusinessHoursController extends Controller
 
             // Return a JSON response indicating success
             return response()->json([
-                'messages' => ['success' => ['All items selected']],
+                'messages' => ['success' => [__('All items selected')]],
                 'items' => $uuids,
             ], 200);
         } catch (\Exception $e) {
@@ -702,7 +702,7 @@ class BusinessHoursController extends Controller
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to select all items']]
+                'errors' => ['server' => [__('Failed to select all items')]]
             ], 500); // 500 Internal Server Error for any other errors
         }
     }
@@ -723,7 +723,7 @@ class BusinessHoursController extends Controller
         // 2. Permission Check
         if (!userCheckPermission('business_hours_create')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']]
+                'messages' => ['error' => [__('Access denied.')]]
             ], 403);
         }
 
@@ -771,7 +771,10 @@ class BusinessHoursController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages' => ['success' => ['Business Hours duplicated successfully', 'New Extension: ' . $newBusinessHour->extension]],
+                'messages' => ['success' => [
+                    __('Business Hours duplicated successfully'),
+                    __('New Extension: :extension', ['extension' => $newBusinessHour->extension]),
+                ]],
                 'business_hour_uuid' => $newBusinessHour->uuid
             ], 201);
         } catch (\Throwable $e) {
@@ -780,7 +783,7 @@ class BusinessHoursController extends Controller
 
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to duplicate business hours.']]
+                'errors' => ['server' => [__('Failed to duplicate business hours.')]]
             ], 500);
         }
     }

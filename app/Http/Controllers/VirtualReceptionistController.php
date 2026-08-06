@@ -142,14 +142,14 @@ class VirtualReceptionistController extends Controller
 
             return response()->json([
                 'item_uuid' => $instance->ivr_menu_uuid,
-                'messages' => ['success' => ['Virtual receptionist created successfully.']]
+                'messages' => ['success' => [__('Virtual receptionist created successfully.')]]
             ], 201);
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Unable to create the virtual receptionist. Please try again.']]
+                'errors' => ['server' => [__('Unable to create the virtual receptionist. Please try again.')]]
             ], 500);
         }
     }
@@ -197,7 +197,7 @@ class VirtualReceptionistController extends Controller
 
             // Return a JSON response indicating success
             return response()->json([
-                'messages' => ['success' => ['Virtual receptionist settings have been updated successfully.']]
+                'messages' => ['success' => [__('Virtual receptionist settings have been updated successfully.')]]
             ], 200);  // 200 OK for successful update
         } catch (\Exception $e) {
             // Log the error message
@@ -206,7 +206,7 @@ class VirtualReceptionistController extends Controller
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Unable to update the virtual receptionist settings. Please try again.']]
+                'errors' => ['server' => [__('Unable to update the virtual receptionist settings. Please try again.')]]
             ], 500); // 500 Internal Server Error for any other errors
         }
     }
@@ -243,7 +243,7 @@ class VirtualReceptionistController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages' => ['server' => ['All selected items have been deleted successfully.']],
+                'messages' => ['server' => [__('All selected items have been deleted successfully.')]],
             ], 200);
         } catch (\Exception $e) {
             // Rollback Transaction if any error occurs
@@ -253,7 +253,7 @@ class VirtualReceptionistController extends Controller
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Server returned an error while deleting the selected items.']]
+                'errors' => ['server' => [__('Server returned an error while deleting the selected items.')]]
             ], 500); // 500 Internal Server Error for any other errors
         }
     }
@@ -302,7 +302,10 @@ class VirtualReceptionistController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages' => ['success' => ['Virtual Receptionist duplicated successfully', 'New Extension: ' . $newIvr->ivr_menu_extension]],
+                'messages' => ['success' => [
+                    __('Virtual Receptionist duplicated successfully'),
+                    __('New Extension: :extension', ['extension' => $newIvr->ivr_menu_extension]),
+                ]],
                 'ivr_menu_uuid' => $newIvr->ivr_menu_uuid
             ], 201);
         } catch (\Exception $e) {
@@ -311,7 +314,7 @@ class VirtualReceptionistController extends Controller
 
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to duplicate the virtual receptionist.']]
+                'errors' => ['server' => [__('Failed to duplicate the virtual receptionist.')]]
             ], 500);
         }
     }
@@ -473,19 +476,19 @@ class VirtualReceptionistController extends Controller
             $permissions = $this->getUserPermissions();
 
             $phoneCallInstructions = [
-                'Dial <strong>*732</strong> from your phone.',
-                'Enter the virtual receptionist extension number when prompted and press <strong>#</strong>.',
-                'Follow the prompts to record your greeting.',
+                __('Dial <strong>*732</strong> from your phone.'),
+                __('Enter the virtual receptionist extension number when prompted and press <strong>#</strong>.'),
+                __('Follow the prompts to record your greeting.'),
             ];
 
-            $sampleMessage = 'Thank you for calling. For Sales, press 1. For Support, press 2. To repeat this menu, press 9.';
+            $sampleMessage = __('Thank you for calling. For Sales, press 1. For Support, press 2. To repeat this menu, press 9.');
 
             $promptRepeatOptions = [
-                ['value' => '1', 'label' => '1 Time'],
-                ['value' => '2', 'label' => '2 Times'],
-                ['value' => '3', 'label' => '3 Times'],
-                ['value' => '4', 'label' => '4 Times'],
-                ['value' => '5', 'label' => '5 Times'],
+                ['value' => '1', 'label' => __(':count Time(s)', ['count' => 1])],
+                ['value' => '2', 'label' => __(':count Time(s)', ['count' => 2])],
+                ['value' => '3', 'label' => __(':count Time(s)', ['count' => 3])],
+                ['value' => '4', 'label' => __(':count Time(s)', ['count' => 4])],
+                ['value' => '5', 'label' => __(':count Time(s)', ['count' => 5])],
             ];
 
             $ringBackTones = getRingBackTonesCollectionGrouped($domainUuid);
@@ -512,7 +515,7 @@ class VirtualReceptionistController extends Controller
 
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to fetch item details.']]
+                'errors' => ['server' => [__('Failed to fetch item details.')]]
             ], 500);
         }
     }
@@ -568,7 +571,7 @@ class VirtualReceptionistController extends Controller
 
             return response()->json([
                 'success' => true,
-                'messages' => ['success' => ['Your AI-generated greeting has been saved and successfully activated.']]
+                'messages' => ['success' => [__('Your AI-generated greeting has been saved and successfully activated.')]]
             ], 200);
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
@@ -598,14 +601,14 @@ class VirtualReceptionistController extends Controller
             $this->clearCache($ivrMenuOption->ivrMenu);
 
             return response()->json([
-                'messages' => ['success' => ['Virtual Receptionist Key successfully created']],
+                'messages' => ['success' => [__('Virtual Receptionist Key successfully created')]],
                 'data' => $ivrMenuOption,
             ], 201);
         } catch (\Exception $e) {
             logger('VirtualReceptioninstController@createKey error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Unable to create Virtual Receptionist Key.']]
+                'errors' => ['server' => [__('Unable to create Virtual Receptionist Key.')]]
             ], 500);
         }
     }
@@ -622,7 +625,7 @@ class VirtualReceptionistController extends Controller
             if (!$ivrMenuOption) {
                 return response()->json([
                     'success' => false,
-                    'errors' => ['server' => ['Virtual Receptionist Key not found.']],
+                    'errors' => ['server' => [__('Virtual Receptionist Key not found.')]],
                 ], 404);
             }
 
@@ -637,13 +640,13 @@ class VirtualReceptionistController extends Controller
             $this->clearCache($ivrMenuOption->ivrMenu);
 
             return response()->json([
-                'messages' => ['success' => ['Virtual Receptionist Key successfully updated']],
+                'messages' => ['success' => [__('Virtual Receptionist Key successfully updated')]],
             ], 201);
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Unable to update Virtual Receptionist Key.']]
+                'errors' => ['server' => [__('Unable to update Virtual Receptionist Key.')]]
             ], 500);
         }
     }
@@ -660,7 +663,7 @@ class VirtualReceptionistController extends Controller
             if (!$ivrMenuOption) {
                 return response()->json([
                     'success' => false,
-                    'errors' => ['server' => ['Virtual Receptionist Key not found.']],
+                    'errors' => ['server' => [__('Virtual Receptionist Key not found.')]],
                 ], 404);
             }
 
@@ -668,13 +671,13 @@ class VirtualReceptionistController extends Controller
             $this->clearCache($ivrMenuOption->ivrMenu);
 
             return response()->json([
-                'messages' => ['success' => ['Virtual Receptionist Key successfully deleted']],
+                'messages' => ['success' => [__('Virtual Receptionist Key successfully deleted')]],
             ], 200);
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Unable to delete Virtual Receptionist Key.']]
+                'errors' => ['server' => [__('Unable to delete Virtual Receptionist Key.')]]
             ], 500);
         }
     }
@@ -748,14 +751,14 @@ class VirtualReceptionistController extends Controller
                 ->get($this->model->getKeyName())->pluck($this->model->getKeyName());
 
             return response()->json([
-                'messages' => ['success' => ['All items selected']],
+                'messages' => ['success' => [__('All items selected')]],
                 'items' => $uuids,
             ], 200);
         } catch (\Exception $e) {
             logger($e);
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to select all items']]
+                'errors' => ['server' => [__('Failed to select all items')]]
             ], 500);
         }
     }

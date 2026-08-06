@@ -65,27 +65,27 @@ class StoreCallBlockRequest extends FormRequest
                 $userExtensionUuid = optional($this->user())->extension_uuid;
 
                 if (! $userExtensionUuid) {
-                    $validator->errors()->add('extension_uuid', 'Your user account is not assigned to an extension.');
+                    $validator->errors()->add('extension_uuid', __('Your user account is not assigned to an extension.'));
                     return;
                 }
 
                 if ($this->input('extension_uuid') !== $userExtensionUuid) {
-                    $validator->errors()->add('extension_uuid', 'You can only manage call blocks for your own extension.');
+                    $validator->errors()->add('extension_uuid', __('You can only manage call blocks for your own extension.'));
                 }
             }
 
             [$app, $data] = $this->parsedAction();
             if (! in_array($app, ['reject', 'busy', 'voicemail'], true)) {
-                $validator->errors()->add('call_block_action', 'Select a valid call block action.');
+                $validator->errors()->add('call_block_action', __('Select a valid call block action.'));
             }
 
             if ($app === 'voicemail') {
                 if (! userCheckPermission('call_block_voicemail')) {
-                    $validator->errors()->add('call_block_action', 'You do not have permission to send blocked calls to voicemail.');
+                    $validator->errors()->add('call_block_action', __('You do not have permission to send blocked calls to voicemail.'));
                 }
 
                 if (blank($data)) {
-                    $validator->errors()->add('call_block_voicemail', 'Select a voicemail mailbox.');
+                    $validator->errors()->add('call_block_voicemail', __('Select a voicemail mailbox.'));
                 }
 
                 if (! blank($data) && ! Voicemails::query()
@@ -93,7 +93,7 @@ class StoreCallBlockRequest extends FormRequest
                     ->where('voicemail_id', $data)
                     ->where('voicemail_enabled', 'true')
                     ->exists()) {
-                    $validator->errors()->add('call_block_voicemail', 'Select a valid voicemail mailbox.');
+                    $validator->errors()->add('call_block_voicemail', __('Select a valid voicemail mailbox.'));
                 }
             }
         });

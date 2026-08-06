@@ -19,34 +19,34 @@
                             <Vueform ref="form$" :endpoint="submitForm" @success="handleSuccess" @error="handleError"
                                 @response="handleResponse" :display-errors="false">
                                 <HiddenElement name="business_hour_uuid" :meta="true" />
-                                <StaticElement name="h4" tag="h4" content="Add New Holiday" />
+                                <StaticElement name="h4" tag="h4" :content="$t('Add New Holiday')" />
                                 <SelectElement name="holiday_type" :items="[
                                     {
                                         value: 'us_holiday',
-                                        label: 'US Holiday',
+                                        label: trans('US Holiday'),
                                     },
                                     {
                                         value: 'ca_holiday',
-                                        label: 'Canadian Holiday',
+                                        label: trans('Canadian Holiday'),
                                     },
                                     {
                                         value: 'uk_holiday',
-                                        label: 'UK Holiday',
+                                        label: trans('UK Holiday'),
                                     },
                                     {
                                         value: 'single_date',
-                                        label: 'Single Date',
+                                        label: trans('Single Date'),
                                     },
                                     {
                                         value: 'date_range',
-                                        label: 'Date Range',
+                                        label: trans('Date Range'),
                                     },
                                     {
                                         value: 'recurring_pattern',
-                                        label: 'Recurring Pattern',
+                                        label: trans('Recurring Pattern'),
                                     },
-                                ]" :search="true" :native="false" label="Holiday Type" input-type="search"
-                                    @change="handleHolidayTypeChange" autocomplete="off" placeholder="Select Holiday Type"
+                                ]" :search="true" :native="false" :label="$t('Holiday Type')" input-type="search"
+                                    @change="handleHolidayTypeChange" autocomplete="off" :placeholder="$t('Select Holiday Type')"
                                     :floating="false" />
 
 
@@ -69,9 +69,7 @@
                                             </div>
 
                                             <div class="ml-3">
-                                                Choose from the list of holidays. Each selection automatically
-                                                applies the exception on that exact holiday date.
-
+                                                {{ $t('Choose from the list of holidays. Each selection automatically applies the exception on that exact holiday date.') }}
                                             </div>
                                         </div>
                                     </div>
@@ -95,10 +93,7 @@
                                             </div>
 
                                             <div class="ml-3">
-
-                                                Define a holiday for one specific calendar date.
-                                                Pick your date and, if needed, enter a start and/or end time.
-                                                Leaving the time fields blank will cover the entire day from 00:00 to 23:59.
+                                                {{ $t('Define a holiday for one specific calendar date. Pick your date and, if needed, enter a start and/or end time. Leaving the time fields blank will cover the entire day from 00:00 to 23:59.') }}
                                             </div>
                                         </div>
                                     </div>
@@ -122,11 +117,7 @@
                                             </div>
 
                                             <div class="ml-3">
-                                                Create an exception spanning multiple days.
-                                                Select a “From” date and a “To” date, and optionally specify start/end times
-                                                for each day.
-                                                If you leave the time fields blank, each day in the range will default to a
-                                                full-day exception.
+                                                {{ $t('Create an exception spanning multiple days. Select a “From” date and a “To” date, and optionally specify start/end times for each day. If you leave the time fields blank, each day in the range will default to a full-day exception.') }}
                                             </div>
                                         </div>
                                     </div>
@@ -149,25 +140,17 @@
                                                 <InformationCircleIcon class="size-5 text-blue-400" aria-hidden="true" />
                                             </div>
 
-                                            <div class="ml-3">
-                                                <strong>Understanding Recurring Patterns:</strong>
-                                                This form helps you define specific time periods based on a
-                                                <strong>recurring
-                                                    pattern</strong>.
-                                                If you set multiple options (like a specific month and a specific day of
-                                                the week), the condition will only be met when <strong>all</strong> selected
-                                                criteria are true simultaneously.
-                                                Any field you leave blank will not restrict the condition (for example,
-                                                leaving <strong>Month</strong> blank means “every month”).
+                                            <div class="ml-3"
+                                                v-html="$t('<strong>Understanding Recurring Patterns:</strong> This form helps you define specific time periods based on a <strong>recurring pattern</strong>. If you set multiple options (like a specific month and a specific day of the week), the condition will only be met when <strong>all</strong> selected criteria are true simultaneously. Any field you leave blank will not restrict the condition (for example, leaving <strong>Month</strong> blank means “every month”).')">
                                             </div>
                                         </div>
                                     </div>
 
                                 </StaticElement>
 
-                                <SelectElement name="us_holiday" :search="true" :native="false" label="US Holiday"
+                                <SelectElement name="us_holiday" :search="true" :native="false" :label="$t('US Holiday')"
                                     :submit="false" :items="usHolidays" input-type="search" autocomplete="off" :object="true"
-                                    @change="handleUSHolidayUpdate" placeholder="Select US Holiday" :floating="false"
+                                    @change="handleUSHolidayUpdate" :placeholder="$t('Select US Holiday')" :floating="false"
                                     :conditions="[
                                         [
                                             'holiday_type',
@@ -178,9 +161,9 @@
                                         ],
                                     ]" />
 
-                                <SelectElement name="ca_holiday" :search="true" :native="false" label="Canadian Holiday"
+                                <SelectElement name="ca_holiday" :search="true" :native="false" :label="$t('Canadian Holiday')"
                                     :submit="false" :items="caHolidays" input-type="search" autocomplete="off" :object="true"
-                                    @change="handleCAHolidayUpdate" placeholder="Select Canadian Holiday" :floating="false"
+                                    @change="handleCAHolidayUpdate" :placeholder="$t('Select Canadian Holiday')" :floating="false"
                                     :conditions="[
                                         [
                                             'holiday_type',
@@ -191,9 +174,9 @@
                                         ],
                                     ]" />
 
-                                <SelectElement name="uk_holiday" :search="true" :native="false" label="UK Holiday"
+                                <SelectElement name="uk_holiday" :search="true" :native="false" :label="$t('UK Holiday')"
                                     :submit="false" :items="ukHolidays" input-type="search" autocomplete="off" :object="true"
-                                    @change="handleUKHolidayUpdate" placeholder="Select UK Holiday" :floating="false"
+                                    @change="handleUKHolidayUpdate" :placeholder="$t('Select UK Holiday')" :floating="false"
                                     :conditions="[
                                         [
                                             'holiday_type',
@@ -204,8 +187,8 @@
                                         ],
                                     ]" />
 
-                                <TextElement name="description" label="Holiday Description"
-                                    description="Enter a clear, descriptive name for this holiday (e.g. ‘Company Annual Picnic’)."
+                                <TextElement name="description" :label="$t('Holiday Description')"
+                                    :description="$t('Enter a clear, descriptive name for this holiday (e.g. ‘Company Annual Picnic’).')"
                                     :conditions="[
                                         [
                                             'holiday_type',
@@ -220,11 +203,11 @@
 
                                 <DateElement name="start_date" display-format="MMMM DD, YYYY" :label="(el$) => {
                                     if (el$.form$.el$('holiday_type').value == 'single_date') {
-                                        return 'Date'
+                                        return trans('Date')
                                     }
 
                                     if (el$.form$.el$('holiday_type').value == 'date_range') {
-                                        return 'Start Date'
+                                        return trans('Start Date')
                                     }
 
                                 }" :columns="{
@@ -244,7 +227,7 @@
         ],
     ],
 ]" />
-                                <DateElement name="start_time" label="Start Time" :date="false" :time="true" :hour24="false"
+                                <DateElement name="start_time" :label="$t('Start Time')" :date="false" :time="true" :hour24="false"
                                     value-format="HH:mm" :columns="{
                                         default: {
                                             container: 6,
@@ -271,7 +254,7 @@
                                         ],
                                     ],
                                 ]" />
-                                <DateElement name="end_date" display-format="MMMM DD, YYYY" label="End Date" :columns="{
+                                <DateElement name="end_date" display-format="MMMM DD, YYYY" :label="$t('End Date')" :columns="{
                                     default: {
                                         container: 6,
                                     },
@@ -287,7 +270,7 @@
         ],
     ],
 ]" />
-                                <DateElement name="end_time" label="End Time" :date="false" :time="true" :hour24="false"
+                                <DateElement name="end_time" :label="$t('End Time')" :date="false" :time="true" :hour24="false"
                                     value-format="HH:mm" :columns="{
                                         default: {
                                             container: 6,
@@ -308,8 +291,8 @@
                                 <GroupElement name="container_1" />
 
                                 <SelectElement name="mon" :items="monthOptions" :search="true" :native="false"
-                                    input-type="search" autocomplete="off" label="Month" :strict="false"
-                                    description="Select the month of the year. Leave blank for any month." :floating="false"
+                                    input-type="search" autocomplete="off" :label="$t('Month')" :strict="false"
+                                    :description="$t('Select the month of the year. Leave blank for any month.')" :floating="false"
                                     :conditions="[
                                         [
                                             'holiday_type',
@@ -320,8 +303,8 @@
                                         ],
                                     ]" />
                                 <SelectElement name="mday" :items="dayOfMonthOptions" :search="true" :native="false"
-                                    input-type="search" autocomplete="off" label="Day of Month"
-                                    description="Select the day of the month (1-31). For example, choose '15' for the 15th day of the month. Leave blank for any day."
+                                    input-type="search" autocomplete="off" :label="$t('Day of Month')"
+                                    :description="$t('Select the day of the month (1-31). For example, choose \'15\' for the 15th day of the month. Leave blank for any day.')"
                                     :floating="false" :conditions="[
                                         [
                                             'holiday_type',
@@ -332,8 +315,8 @@
                                         ],
                                     ]" />
                                 <SelectElement name="week" :items="weekOfYearOptions" :search="true" :native="false"
-                                    input-type="search" autocomplete="off" label="Week of Year" :strict="false"
-                                    description="Select the week of the year (1-53). Week 1 is the week containing January 1st. Leave blank for any week."
+                                    input-type="search" autocomplete="off" :label="$t('Week of Year')" :strict="false"
+                                    :description="$t('Select the week of the year (1-53). Week 1 is the week containing January 1st. Leave blank for any week.')"
                                     :floating="false" :conditions="[
                                         [
                                             'holiday_type',
@@ -344,9 +327,8 @@
                                         ],
                                     ]" />
                                 <SelectElement name="mweek" :items="weekOfMonthOptions" :search="true" :native="false"
-                                    input-type="search" autocomplete="off" label="Week of Month" :strict="false"
-                                    description="Select the occurrence of a weekday within the month. For example, to specify the 2nd Friday of the month, select '2' here and 'Friday' in the 'Day of Week' field. 
-                                    '6' specifically means the last occurrence of the chosen weekday in the month. Leave blank for any week of the month."
+                                    input-type="search" autocomplete="off" :label="$t('Week of Month')" :strict="false"
+                                    :description="$t('Select the occurrence of a weekday within the month. For example, to specify the 2nd Friday of the month, select \'2\' here and \'Friday\' in the \'Day of Week\' field. \'6\' specifically means the last occurrence of the chosen weekday in the month. Leave blank for any week of the month.')"
                                     :floating="false" :conditions="[
                                         [
                                             'holiday_type',
@@ -357,8 +339,8 @@
                                         ],
                                     ]" />
                                 <SelectElement name="wday" :items="dayOfWeekOptions" :search="true" :native="false"
-                                    input-type="search" autocomplete="off" label="Day of Week" :strict="false"
-                                    description="Select the day of the week. This is often used in conjunction with 'Week of Month'. Leave blank for any day of the week."
+                                    input-type="search" autocomplete="off" :label="$t('Day of Week')" :strict="false"
+                                    :description="$t('Select the day of the week. This is often used in conjunction with \'Week of Month\'. Leave blank for any day of the week.')"
                                     :floating="false" :conditions="[
                                         [
                                             'holiday_type',
@@ -371,12 +353,12 @@
 
 
                                 <StaticElement name="action_header" tag="p"
-                                    content="Define how incoming calls are handled during this holiday."
+                                    :content="$t('Define how incoming calls are handled during this holiday.')"
                                     :conditions="[['holiday_type', '!=', null],]" />
 
                                 <SelectElement name="action" :items="options.routing_types" label-prop="name" :search="true"
-                                    :native="false" label="Choose Action" input-type="search" autocomplete="off"
-                                    placeholder="Choose Action" :floating="false" :strict="false"
+                                    :native="false" :label="$t('Choose Action')" input-type="search" autocomplete="off"
+                                    :placeholder="$t('Choose Action')" :floating="false" :strict="false"
                                     :columns="{ sm: { container: 6, }, }" @change="(newValue, oldValue, el$) => {
                                         let target = el$.form$.el$('target')
 
@@ -416,8 +398,8 @@
                                         // emits('error', error);
                                         return [];  // Return an empty array in case of error
                                     }
-                                }" :search="true" label-prop="name" :native="false" label="Target" input-type="search"
-                                    allow-absent :object="true" autocomplete="off" placeholder="Choose Target"
+                                }" :search="true" label-prop="name" :native="false" :label="$t('Target')" input-type="search"
+                                    allow-absent :object="true" autocomplete="off" :placeholder="$t('Choose Target')"
                                     :floating="false" :strict="false" :columns="{ sm: { container: 6, }, }" :conditions="[
                                         ['action', 'not_empty'],
                                         ['action', 'not_in', ['check_voicemail', 'company_directory', 'hangup']]
@@ -425,11 +407,11 @@
 
 
                                 <GroupElement name="container_3" />
-                                <ButtonElement name="reset" button-label="Cancel" :secondary="true" :resets="true"
+                                <ButtonElement name="reset" :button-label="$t('Cancel')" :secondary="true" :resets="true"
                                     @click="emits('close')" :columns="{
                                         container: 6,
                                     }" />
-                                <ButtonElement name="submit" button-label="Save" :submits="true" align="right" :columns="{
+                                <ButtonElement name="submit" :button-label="$t('Save')" :submits="true" align="right" :columns="{
                                     container: 6,
                                 }" />
                             </Vueform>
@@ -445,6 +427,7 @@
 
 <script setup>
 import { ref, watch } from "vue";
+import { trans } from "laravel-vue-i18n";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { InformationCircleIcon } from '@heroicons/vue/20/solid'
 
@@ -519,7 +502,7 @@ const handleError = (error, details, form$) => {
         case 'prepare':
             console.log(error) // Error object
 
-            form$.messageBag.append('Could not prepare form')
+            form$.messageBag.append(trans('Could not prepare form'))
             break
 
         // Error occured because response status is outside of 2xx
@@ -539,14 +522,14 @@ const handleError = (error, details, form$) => {
         case 'cancel':
             console.log(error) // Error object
 
-            form$.messageBag.append('Request cancelled')
+            form$.messageBag.append(trans('Request cancelled'))
             break
 
         // Some other errors happened (no response object)
         case 'other':
             console.log(error) // Error object
 
-            form$.messageBag.append('Couldn\'t submit form')
+            form$.messageBag.append(trans('Couldn\'t submit form'))
             break
     }
 }
@@ -636,18 +619,18 @@ const handleUKHolidayUpdate = (newValue, oldValue, el$) => {
 
 // Month (1=Jan … 12=Dec)
 const monthOptions = [
-  { value: '1',  label: 'January' },
-  { value: '2',  label: 'February' },
-  { value: '3',  label: 'March' },
-  { value: '4',  label: 'April' },
-  { value: '5',  label: 'May' },
-  { value: '6',  label: 'June' },
-  { value: '7',  label: 'July' },
-  { value: '8',  label: 'August' },
-  { value: '9',  label: 'September' },
-  { value: '10', label: 'October' },
-  { value: '11', label: 'November' },
-  { value: '12', label: 'December' },
+  { value: '1',  label: trans('January') },
+  { value: '2',  label: trans('February') },
+  { value: '3',  label: trans('March') },
+  { value: '4',  label: trans('April') },
+  { value: '5',  label: trans('May') },
+  { value: '6',  label: trans('June') },
+  { value: '7',  label: trans('July') },
+  { value: '8',  label: trans('August') },
+  { value: '9',  label: trans('September') },
+  { value: '10', label: trans('October') },
+  { value: '11', label: trans('November') },
+  { value: '12', label: trans('December') },
 ];
 
 // Day of Month (1–31)
@@ -664,224 +647,224 @@ const weekOfYearOptions = Array.from({ length: 53 }, (_, i) => ({
 
 // Week of Month (1=first … 5=fifth, 6=last)
 const weekOfMonthOptions = [
-  { value: '1', label: '1 (First)' },
-  { value: '2', label: '2 (Second)' },
-  { value: '3', label: '3 (Third)' },
-  { value: '4', label: '4 (Fourth)' },
-  { value: '5', label: '5 (Fifth)' },
-  { value: '6', label: '6 (Last)' },
+  { value: '1', label: trans('1 (First)') },
+  { value: '2', label: trans('2 (Second)') },
+  { value: '3', label: trans('3 (Third)') },
+  { value: '4', label: trans('4 (Fourth)') },
+  { value: '5', label: trans('5 (Fifth)') },
+  { value: '6', label: trans('6 (Last)') },
 ];
 
 // Day of Week (1=Sunday … 7=Saturday)
 const dayOfWeekOptions = [
-  { value: '1', label: 'Sunday' },
-  { value: '2', label: 'Monday' },
-  { value: '3', label: 'Tuesday' },
-  { value: '4', label: 'Wednesday' },
-  { value: '5', label: 'Thursday' },
-  { value: '6', label: 'Friday' },
-  { value: '7', label: 'Saturday' },
+  { value: '1', label: trans('Sunday') },
+  { value: '2', label: trans('Monday') },
+  { value: '3', label: trans('Tuesday') },
+  { value: '4', label: trans('Wednesday') },
+  { value: '5', label: trans('Thursday') },
+  { value: '6', label: trans('Friday') },
+  { value: '7', label: trans('Saturday') },
 ];
 
 const usHolidays = [
   {
-    label: "New Year's Eve (December 31)",
+    label: trans("New Year's Eve (December 31)"),
     value: { mon: "12",  wday: "",   mday: "31",      mweek: "" }
   },
   {
-    label: "New Year's Day (January 1)",
+    label: trans("New Year's Day (January 1)"),
     value: { mon: "1",  wday: "",   mday: "1",      mweek: "" }
   },
   {
-    label: "Martin Luther King Jr. Day (3rd Monday in January)",
+    label: trans("Martin Luther King Jr. Day (3rd Monday in January)"),
     value: { mon: "1",  wday: "2",  mday: "15-21",  mweek: "" }
   },
   {
-    label: "Valentine's Day (February 14)",
+    label: trans("Valentine's Day (February 14)"),
     value: { mon: "2",  wday: "",   mday: "14",     mweek: "" }
   },
   {
-    label: "Presidents' Day (3rd Monday in February)",
+    label: trans("Presidents' Day (3rd Monday in February)"),
     value: { mon: "2",  wday: "2",  mday: "15-21",  mweek: "" }
   },
   {
-    label: "St. Patrick's Day (March 17)",
+    label: trans("St. Patrick's Day (March 17)"),
     value: { mon: "3",  wday: "",   mday: "17",     mweek: "" }
   },
   {
-    label: "Memorial Day (last Monday in May)",
+    label: trans("Memorial Day (last Monday in May)"),
     value: { mon: "5",  wday: "2",  mday: "25-31",  mweek: "" }
   },
   {
-    label: "Juneteenth (June 19)",
+    label: trans("Juneteenth (June 19)"),
     value: { mon: "6",  wday: "",   mday: "19",     mweek: "" }
   },
   {
-    label: "Independence Day (July 4)",
+    label: trans("Independence Day (July 4)"),
     value: { mon: "7",  wday: "",   mday: "4",      mweek: "" }
   },
   {
-    label: "Labor Day (1st Monday in September)",
+    label: trans("Labor Day (1st Monday in September)"),
     value: { mon: "9",  wday: "2",  mday: "1-7",    mweek: "" }
   },
   {
-    label: "Columbus Day (2nd Monday in October)",
+    label: trans("Columbus Day (2nd Monday in October)"),
     value: { mon: "10", wday: "2",  mday: "8-14",   mweek: "" }
   },
   {
-    label: "Halloween (October 31)",
+    label: trans("Halloween (October 31)"),
     value: { mon: "10", wday: "",   mday: "31",     mweek: "" }
   },
   {
-    label: "Veterans Day (November 11)",
+    label: trans("Veterans Day (November 11)"),
     value: { mon: "11", wday: "",   mday: "11",     mweek: "" }
   },
   {
-    label: "Thanksgiving Day (4th Thursday in November)",
+    label: trans("Thanksgiving Day (4th Thursday in November)"),
     value: { mon: "11", wday: "5",  mday: "22-28",  mweek: "" }
   },
   {
-    label: "Black Friday (4th Friday in November)",
+    label: trans("Black Friday (4th Friday in November)"),
     value: { mon: "11", wday: "6",  mday: "23-29",  mweek: "" }
   },
   {
-    label: "Christmas Eve (December 24)",
+    label: trans("Christmas Eve (December 24)"),
     value: { mon: "12", wday: "",   mday: "24",     mweek: "" }
   },
   {
-    label: "Christmas Day (December 25)",
+    label: trans("Christmas Day (December 25)"),
     value: { mon: "12", wday: "",   mday: "25",     mweek: "" }
   },
   {
-    label: "Mother's Day (2nd Sunday in May)",
+    label: trans("Mother's Day (2nd Sunday in May)"),
     value: { mon: "5",  wday: "1",  mday: "8-14",   mweek: "" }
   },
   {
-    label: "Father's Day (3rd Sunday in June)",
+    label: trans("Father's Day (3rd Sunday in June)"),
     value: { mon: "6",  wday: "1",  mday: "15-21",  mweek: "" }
   }
 ];
 
 const caHolidays = [
     {
-        label: "New Year's Day (January 1)",
+        label: trans("New Year's Day (January 1)"),
         value: { mon: "1", wday: "", mday: "1", mweek: "" }
     },
     {
-        label: "Family Day (3rd Monday in February)",
+        label: trans("Family Day (3rd Monday in February)"),
         value: { mon: "2", wday: "2", mday: "15-21", mweek: "" }
     },
     {
-        label: "Good Friday (Friday before Easter Sunday)",
+        label: trans("Good Friday (Friday before Easter Sunday)"),
         value: { mon: "4", wday: "6", mday: "2-8", mweek: "" }
     },
     {
-        label: "Easter Monday (Monday after Easter Sunday)",
+        label: trans("Easter Monday (Monday after Easter Sunday)"),
         value: { mon: "4", wday: "2", mday: "1-7", mweek: "" }
     },
     {
-        label: "Victoria Day (Last Monday before May 25)",
+        label: trans("Victoria Day (Last Monday before May 25)"),
         value: { mon: "5", wday: "2", mday: "18-24", mweek: "" }
     },
     {
-        label: "Canada Day (July 1)",
+        label: trans("Canada Day (July 1)"),
         value: { mon: "7", wday: "", mday: "1", mweek: "" }
     },
     {
-        label: "Civic Holiday (First Monday in August)",
+        label: trans("Civic Holiday (First Monday in August)"),
         value: { mon: "8", wday: "2", mday: "1-7", mweek: "" }
     },
     {
-        label: "Labour Day (First Monday in September)",
+        label: trans("Labour Day (First Monday in September)"),
         value: { mon: "9", wday: "2", mday: "1-7", mweek: "" }
     },
     {
-        label: "National Day for Truth and Reconciliation (September 30)",
+        label: trans("National Day for Truth and Reconciliation (September 30)"),
         value: { mon: "9", wday: "", mday: "30", mweek: "" }
     },
     {
-        label: "Thanksgiving Day (Second Monday in October)",
+        label: trans("Thanksgiving Day (Second Monday in October)"),
         value: { mon: "10", wday: "2", mday: "8-14", mweek: "" }
     },
     {
-        label: "Remembrance Day (November 11)",
+        label: trans("Remembrance Day (November 11)"),
         value: { mon: "11", wday: "", mday: "11", mweek: "" }
     },
     {
-        label: "Christmas Day (December 25)",
+        label: trans("Christmas Day (December 25)"),
         value: { mon: "12", wday: "", mday: "25", mweek: "" }
     },
     {
-        label: "Boxing Day (December 26)",
+        label: trans("Boxing Day (December 26)"),
         value: { mon: "12", wday: "", mday: "26", mweek: "" }
     },
     // Additional observances
     {
-        label: "St. Patrick's Day (March 17)",
+        label: trans("St. Patrick's Day (March 17)"),
         value: { mon: "3", wday: "", mday: "17", mweek: "" }
     },
     {
-        label: "Mother's Day (Second Sunday in May)",
+        label: trans("Mother's Day (Second Sunday in May)"),
         value: { mon: "5", wday: "1", mday: "8-14", mweek: "" }
     },
     {
-        label: "Father's Day (Third Sunday in June)",
+        label: trans("Father's Day (Third Sunday in June)"),
         value: { mon: "6", wday: "1", mday: "15-21", mweek: "" }
     },
     {
-        label: "Halloween (October 31)",
+        label: trans("Halloween (October 31)"),
         value: { mon: "10", wday: "", mday: "31", mweek: "" }
     }
 ];
 
 const ukHolidays = [
     {
-        label: "New Year's Day (January 1)",
+        label: trans("New Year's Day (January 1)"),
         value: { mon: "1", wday: "", mday: "1", mweek: "" }
     },
     {
-        label: "May Day (First Monday in May)",
+        label: trans("May Day (First Monday in May)"),
         value: { mon: "5", wday: "2", mday: "1-7", mweek: "" }
     },
     {
-        label: "Spring Bank Holiday (Last Monday in May)",
+        label: trans("Spring Bank Holiday (Last Monday in May)"),
         value: { mon: "5", wday: "2", mday: "25-31", mweek: "" }
     },
     {
-        label: "August Bank Holiday (Last Monday in August)",
+        label: trans("August Bank Holiday (Last Monday in August)"),
         value: { mon: "8", wday: "2", mday: "25-31", mweek: "" }
     },
     {
-        label: "August Bank Holiday (First Monday in August; Scotland Only)",
+        label: trans("August Bank Holiday (First Monday in August; Scotland Only)"),
         value: { mon: "8", wday: "2", mday: "1-7", mweek: "" }
     },
     {
-        label: "Christmas Day (December 25)",
+        label: trans("Christmas Day (December 25)"),
         value: { mon: "12", wday: "", mday: "25", mweek: "" }
     },
     {
-        label: "Boxing Day (December 26)",
+        label: trans("Boxing Day (December 26)"),
         value: { mon: "12", wday: "", mday: "26", mweek: "" }
     },
     // Additional observances
     {
-        label: "St. Patrick's Day (March 17)",
+        label: trans("St. Patrick's Day (March 17)"),
         value: { mon: "3", wday: "", mday: "17", mweek: "" }
     },
     {
-        label: "St. Andrew's Day (November 30)",
+        label: trans("St. Andrew's Day (November 30)"),
         value: { mon: "11", wday: "", mday: "30", mweek: "" }
     },
     {
-        label: "Mother's Day (Second Sunday in May)",
+        label: trans("Mother's Day (Second Sunday in May)"),
         value: { mon: "5", wday: "1", mday: "8-14", mweek: "" }
     },
     {
-        label: "Father's Day (Third Sunday in June)",
+        label: trans("Father's Day (Third Sunday in June)"),
         value: { mon: "6", wday: "1", mday: "15-21", mweek: "" }
     },
     {
-        label: "Halloween (October 31)",
+        label: trans("Halloween (October 31)"),
         value: { mon: "10", wday: "", mday: "31", mweek: "" }
     }
 ];

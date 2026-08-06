@@ -147,7 +147,7 @@ class CdrsController extends Controller
 
             // If item doesn't exist throw and error 
             if (!$item) {
-                throw new \Exception("Failed to fetch item details. Item not found");
+                throw new \Exception(__("Failed to fetch item details. Item not found"));
             }
 
             $this->item_domain_uuid = $item->domain_uuid;
@@ -170,7 +170,7 @@ class CdrsController extends Controller
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to fetch item details']]
+                'errors' => ['server' => [__('Failed to fetch item details')]]
             ], 500);  // 500 Internal Server Error for any other errors
         }
     }
@@ -208,7 +208,7 @@ class CdrsController extends Controller
 
             // If item doesn't exist throw and error 
             if (!$item) {
-                throw new \Exception("Failed to fetch item details. Item not found");
+                throw new \Exception(__("Failed to fetch item details. Item not found"));
             }
 
             // Add a temporary URL for the audio file (S3 or Local)
@@ -268,7 +268,7 @@ class CdrsController extends Controller
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to fetch item details']]
+                'errors' => ['server' => [__('Failed to fetch item details')]]
             ], 500);  // 500 Internal Server Error for any other errors
         }
     }
@@ -290,7 +290,7 @@ class CdrsController extends Controller
 
         $entities = [
             [
-                'groupLabel' => 'Extensions',
+                'groupLabel' => __('Extensions'),
                 'groupOptions' => $extensions->map(function ($extension) {
                     return [
                         'value' => $extension->extension_uuid,
@@ -301,7 +301,7 @@ class CdrsController extends Controller
                 })->toArray(),
             ],
             [
-                'groupLabel' => 'Contact Centers',
+                'groupLabel' => __('Contact Centers'),
                 'groupOptions' => $queues->map(function ($queue) {
                     return [
                         'value' => $queue->call_center_queue_uuid,
@@ -328,7 +328,7 @@ class CdrsController extends Controller
         } catch (ModelNotFoundException $e) {
             // Handle the case when the model is not found
             // For example, return a response or redirect
-            return response()->json(['error' => 'Record not found'], 404);
+            return response()->json(['error' => __('Record not found')], 404);
         }
 
         //-----For local files------
@@ -532,20 +532,20 @@ class CdrsController extends Controller
 
             // Return a JSON response indicating success
             return response()->json([
-                'messages' => ['success' => ['Report is being generated in the background. We\'ll email you a link when it\'s ready to download.']],
+                'messages' => ['success' => [__('Report is being generated in the background. We\'ll email you a link when it\'s ready to download.')]],
             ], 200);
         } catch (\Exception $e) {
             logger($e->getMessage());
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to export items']]
+                'errors' => ['server' => [__('Failed to export items')]]
             ], 500); // 500 Internal Server Error for any other errors
         }
 
         return response()->json([
             'success' => false,
-            'errors' => ['server' => ['Failed to export']]
+            'errors' => ['server' => [__('Failed to export')]]
         ], 500); // 500 Internal Server Error for any other errors
     }
 

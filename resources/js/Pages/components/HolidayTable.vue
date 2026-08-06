@@ -6,14 +6,14 @@
                     <table class="min-w-full divide-y divide-gray-200 mb-4">
                         <thead class="bg-gray-200">
                             <tr>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Holiday</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">{{ $t('Holiday') }}</th>
                                 <th class="hidden px-6 py-3 text-left text-sm font-semibold text-gray-900 sm:table-cell">
-                                    Date(s)
+                                    {{ $t('Date(s)') }}
                                 </th>
                                 <th class="hidden px-6 py-3 text-left text-sm font-semibold text-gray-900 sm:table-cell">
-                                    Route To</th>
+                                    {{ $t('Route To') }}</th>
                                 <th class="relative px-6 py-3 text-left text-sm font-medium text-gray-500">
-                                    <span class="sr-only">Actions</span>
+                                    <span class="sr-only">{{ $t('Actions') }}</span>
                                 </th>
                             </tr>
                         </thead>
@@ -42,7 +42,7 @@
                                 </td>
                                 <td class="whitespace-nowrap px-6 py-2 text-right text-sm font-medium">
                                     <div class="flex items-center whitespace-nowrap justify-end">
-                                        <ejs-tooltip v-if="permissions.holidays_update" :content="'Edit'" position='TopCenter'
+                                        <ejs-tooltip v-if="permissions.holidays_update" :content="$t('Edit')" position='TopCenter'
                                             target="#destination_tooltip_target">
                                             <div id="destination_tooltip_target">
                                                 <PencilSquareIcon @click="handleEditButtonClick(holiday.uuid)"
@@ -51,7 +51,7 @@
                                             </div>
                                         </ejs-tooltip>
 
-                                        <ejs-tooltip v-if="permissions.holidays_delete" :content="'Delete'" position='TopCenter'
+                                        <ejs-tooltip v-if="permissions.holidays_delete" :content="$t('Delete')" position='TopCenter'
                                             target="#delete_tooltip_target">
                                             <div id="delete_tooltip_target">
                                                 <TrashIcon @click="handleSingleItemDeleteRequest(holiday.uuid)"
@@ -68,7 +68,7 @@
                     <!-- Empty State -->
                     <div v-if="!loading && holidays.length === 0" class="text-center my-5">
                         <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                        <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
+                        <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ $t('No results found') }}</h3>
                         <!-- <p class="mt-1 text-sm text-gray-500">
                 Adjust your search and try again.
               </p> -->

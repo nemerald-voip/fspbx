@@ -3,10 +3,10 @@
 
     <div class="m-3">
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-            <template #title>Call Blocks</template>
+            <template #title>{{ $t('Call Blocks') }}</template>
 
             <template #subtitle>
-                Manage inbound and outbound call blocking rules.
+                {{ $t('Manage inbound and outbound call blocking rules.') }}
             </template>
 
             <template #filters>
@@ -17,18 +17,18 @@
                     <input type="text" v-model="filterData.search" name="mobile-search-call-blocks"
                         id="mobile-search-call-blocks"
                         class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                        :placeholder="$t('Search')" @keydown.enter="handleSearchButtonClick" />
                     <input type="text" v-model="filterData.search" name="desktop-search-call-blocks"
                         id="desktop-search-call-blocks"
                         class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                        :placeholder="$t('Search')" @keydown.enter="handleSearchButtonClick" />
                 </div>
             </template>
 
             <template #action>
                 <button v-if="permissions.create" type="button" @click.prevent="handleCreateButtonClick"
                     class="ml-2 sm:ml-4 rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                    Create
+                    {{ $t('Create') }}
                 </button>
             </template>
 
@@ -45,44 +45,44 @@
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                     <div class="pl-4 flex items-center cursor-pointer select-none"
                         @click="handleSortRequest('call_block_direction')">
-                        <span class="mr-2">Direction</span>
+                        <span class="mr-2">{{ $t('Direction') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'call_block_direction' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'call_block_direction' && sortData.order === 'desc'"
                             class="h-4 w-4 text-gray-500" />
                     </div>
                 </TableColumnHeader>
-                <TableColumnHeader header="Scope" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t('Scope')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('call_block_number')">
-                        <span class="mr-2">Number</span>
+                        <span class="mr-2">{{ $t('Number') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'call_block_number' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'call_block_number' && sortData.order === 'desc'"
                             class="h-4 w-4 text-gray-500" />
                     </div>
                 </TableColumnHeader>
-                <TableColumnHeader header="Name" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Count" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Enabled" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Description" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t('Name')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t('Count')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t('Action')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t('Enabled')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t('Description')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
             </template>
 
             <template v-if="selectPageItems" v-slot:current-selection>
                 <td colspan="9">
                     <div class="text-sm text-center m-2">
-                        <span class="font-semibold">{{ selectedItems.length }}</span> items are selected.
+                        {{ $t(':count items are selected.', { count: selectedItems.length }) }}
                         <button v-if="!selectAll && selectedItems.length !== data.total"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleSelectAll">
-                            Select all {{ data.total }} items
+                            {{ $t('Select all :total items', { total: data.total }) }}
                         </button>
                         <button v-if="selectAll"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleClearSelection">
-                            Clear selection
+                            {{ $t('Clear selection') }}
                         </button>
                     </div>
                 </td>
@@ -97,7 +97,7 @@
                             <div class="ml-4 capitalize"
                                 :class="{ 'cursor-pointer hover:text-gray-900': permissions.update }"
                                 @click="permissions.update && handleEditButtonClick(row.call_block_uuid)">
-                                {{ row.call_block_direction }}
+                                {{ directionLabel(row.call_block_direction) }}
                             </div>
                         </div>
                     </TableField>
@@ -109,10 +109,10 @@
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
                         <button v-if="permissions.update" type="button" class="cursor-pointer"
                             @click="executeToggle([row.call_block_uuid])">
-                            <Badge :text="row.call_block_enabled === 'true' ? 'True' : 'False'"
+                            <Badge :text="row.call_block_enabled === 'true' ? $t('True') : $t('False')"
                                 v-bind="enabledBadgeProps(row.call_block_enabled)" />
                         </button>
-                        <Badge v-else :text="row.call_block_enabled === 'true' ? 'True' : 'False'"
+                        <Badge v-else :text="row.call_block_enabled === 'true' ? $t('True') : $t('False')"
                             v-bind="enabledBadgeProps(row.call_block_enabled)" />
                     </TableField>
                     <TableField class="px-2 py-2 text-sm text-gray-500" :text="row.call_block_description" />
@@ -121,10 +121,10 @@
                             <div class="flex items-center whitespace-nowrap justify-end">
                                 <PencilSquareIcon v-if="permissions.update" @click="handleEditButtonClick(row.call_block_uuid)"
                                     class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
-                                    title="Edit" />
+                                    :title="$t('Edit')" />
                                 <TrashIcon v-if="permissions.destroy" @click="handleSingleItemDeleteRequest(row.call_block_uuid)"
                                     class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
-                                    title="Delete" />
+                                    :title="$t('Delete')" />
                             </div>
                         </template>
                     </TableField>
@@ -134,8 +134,8 @@
             <template #empty>
                 <div v-if="data.data.length === 0" class="text-center my-5">
                     <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
-                    <p class="mt-1 text-sm text-gray-500">Adjust your search and try again.</p>
+                    <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ $t('No results found') }}</h3>
+                    <p class="mt-1 text-sm text-gray-500">{{ $t('Adjust your search and try again.') }}</p>
                 </div>
             </template>
 
@@ -155,7 +155,7 @@
 
     <ConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
         @confirm="confirmAction" :header="confirmationHeader" :text="confirmationText"
-        :confirm-button-label="confirmationButtonLabel" cancel-button-label="Cancel" />
+        :confirm-button-label="confirmationButtonLabel" :cancel-button-label="$t('Cancel')" />
 
     <CallBlockForm :show="showForm" :options="itemOptions" :mode="formMode" :loading="loadingForm"
         :header="formHeader" @close="handleFormClose" @error="handleErrorResponse" @success="showNotification"
@@ -167,6 +167,7 @@
 
 <script setup>
 import { computed, onMounted, ref } from "vue";
+import { trans } from "laravel-vue-i18n";
 import axios from "axios";
 import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
@@ -195,9 +196,9 @@ const selectedItems = ref([]);
 const selectPageItems = ref(false);
 const confirmationModalTrigger = ref(false);
 const confirmAction = ref(null);
-const confirmationHeader = ref("Are you sure?");
+const confirmationHeader = ref(trans("Are you sure?"));
 const confirmationText = ref("");
-const confirmationButtonLabel = ref("Continue");
+const confirmationButtonLabel = ref(trans("Continue"));
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(false);
@@ -226,14 +227,14 @@ const sortData = ref({ name: "call_block_direction", order: "asc" });
 
 const bulkActions = computed(() => {
     const actions = [];
-    if (permissions.update) actions.push({ id: "bulk_toggle", label: "Toggle Enabled", icon: "PencilSquareIcon" });
-    if (permissions.destroy) actions.push({ id: "bulk_delete", label: "Delete", icon: "TrashIcon" });
+    if (permissions.update) actions.push({ id: "bulk_toggle", label: trans("Toggle Enabled"), icon: "PencilSquareIcon" });
+    if (permissions.destroy) actions.push({ id: "bulk_delete", label: trans("Delete"), icon: "TrashIcon" });
     return actions;
 });
 
 const formHeader = computed(() => formMode.value === "create"
-    ? "Create Call Block"
-    : `Update Call Block - ${itemOptions.value?.item?.call_block_number || itemOptions.value?.item?.call_block_name || "Loading..."}`);
+    ? trans("Create Call Block")
+    : trans('Update Call Block - :value', { value: itemOptions.value?.item?.call_block_number || itemOptions.value?.item?.call_block_name || trans("Loading...") }));
 
 onMounted(() => getData());
 
@@ -339,9 +340,9 @@ const handleClearSelection = () => {
 
 const handleSingleItemDeleteRequest = (uuid) => {
     showConfirmation({
-        header: "Confirm Deletion",
-        text: "This action will permanently delete the selected call block.",
-        button: "Delete",
+        header: trans("Confirm Deletion"),
+        text: trans("This action will permanently delete the selected call block."),
+        button: trans("Delete"),
         action: () => executeBulkDelete([uuid]),
     });
 };
@@ -349,18 +350,18 @@ const handleSingleItemDeleteRequest = (uuid) => {
 const handleBulkActionRequest = (action) => {
     if (action === "bulk_delete") {
         showConfirmation({
-            header: "Confirm Deletion",
-            text: "This action will permanently delete the selected call block(s).",
-            button: "Delete",
+            header: trans("Confirm Deletion"),
+            text: trans("This action will permanently delete the selected call block(s)."),
+            button: trans("Delete"),
             action: () => executeBulkDelete(),
         });
     }
 
     if (action === "bulk_toggle") {
         showConfirmation({
-            header: "Confirm Toggle",
-            text: "Toggle enabled for the selected call block(s)?",
-            button: "Toggle",
+            header: trans("Confirm Toggle"),
+            text: trans("Toggle enabled for the selected call block(s)?"),
+            button: trans("Toggle"),
             action: () => executeToggle(selectedItems.value),
         });
     }
@@ -435,10 +436,34 @@ const enabledBadgeProps = (enabled) => enabled === "true"
     ? { backgroundColor: "bg-green-50", textColor: "text-green-700", ringColor: "ring-green-600/20" }
     : { backgroundColor: "bg-gray-50", textColor: "text-gray-700", ringColor: "ring-gray-600/20" };
 
-const scopeLabel = (row) => row.extension?.name_formatted || row.extension?.extension || "All extensions";
+const directionLabel = (direction) => {
+    switch (direction) {
+        case "inbound":
+            return trans("Inbound");
+        case "outbound":
+            return trans("Outbound");
+        default:
+            return direction;
+    }
+};
+
+const callBlockAppLabel = (app) => {
+    switch (app) {
+        case "reject":
+            return trans("Reject");
+        case "busy":
+            return trans("Busy");
+        case "voicemail":
+            return trans("Voicemail");
+        default:
+            return String(app || "").replace("_", " ");
+    }
+};
+
+const scopeLabel = (row) => row.extension?.name_formatted || row.extension?.extension || trans("All extensions");
 const numberLabel = (row) => [row.call_block_country_code, row.call_block_number].filter(Boolean).join("") || "-";
 const actionLabel = (row) => {
-    const app = String(row.call_block_app || "").replace("_", " ");
+    const app = callBlockAppLabel(row.call_block_app);
 
     return row.call_block_app === "voicemail" && row.call_block_data
         ? `${app}: ${row.call_block_data}`

@@ -343,7 +343,7 @@ class CallTranscriptionController extends Controller
             );
 
             return response()->json([
-                'messages' => ['success' => ['Transcription request queued.']],
+                'messages' => ['success' => [__('Transcription request queued.')]],
             ], 202);
         } catch (\Throwable $e) {
             logger("CallTranscriptionController@transcribe error: " . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
@@ -372,7 +372,7 @@ class CallTranscriptionController extends Controller
             dispatch(new \App\Jobs\SummarizeCallTranscription($data['uuid']))->onQueue('transcriptions');
 
             return response()->json([
-                'messages' => ['success' => ['Summarization request queued.']],
+                'messages' => ['success' => [__('Summarization request queued.')]],
             ], 202);
         } catch (\Throwable $e) {
             logger("CallTranscriptionController@summarize error: " . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());

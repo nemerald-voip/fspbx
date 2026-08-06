@@ -72,7 +72,7 @@ class HolidayHoursController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages' => ['success' => ['Holiday created']],
+                'messages' => ['success' => [__('Holiday created')]],
                 'data'     => $holiday,
             ], 201);
         } catch (\Throwable $e) {
@@ -84,7 +84,7 @@ class HolidayHoursController extends Controller
             ]);
 
             return response()->json([
-                'messages' => ['error' => ['Could not save holiday.']],
+                'messages' => ['error' => [__('Could not save holiday.')]],
             ], 500);
         }
     }
@@ -126,14 +126,14 @@ class HolidayHoursController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages' => ['success' => ['Holiday updated']],
+                'messages' => ['success' => [__('Holiday updated')]],
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
             logger('Holiday update error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Could not update holiday.']],
+                'messages' => ['error' => [__('Could not update holiday.')]],
             ], 500);
         }
     }
@@ -175,7 +175,7 @@ class HolidayHoursController extends Controller
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to fetch item details']]
+                'errors' => ['server' => [__('Failed to fetch item details')]]
             ], 500);  // 500 Internal Server Error for any other errors
         }
     }
@@ -201,7 +201,7 @@ class HolidayHoursController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages' => ['success' => ['Selected holiday(s) deleted successfully.']]
+                'messages' => ['success' => [__('Selected holiday(s) deleted successfully.')]]
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -210,7 +210,7 @@ class HolidayHoursController extends Controller
                 " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['An error occurred while deleting the selected holiday(s).']]
+                'messages' => ['error' => [__('An error occurred while deleting the selected holiday(s).')]]
             ], 500);
         }
     }
@@ -233,7 +233,7 @@ class HolidayHoursController extends Controller
             logger('checkServiceStatus error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['An error occurred while checking service status.']]
+                'messages' => ['error' => [__('An error occurred while checking service status.')]]
             ], 500);
         }
     }

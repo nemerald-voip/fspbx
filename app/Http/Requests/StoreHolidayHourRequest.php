@@ -72,7 +72,7 @@ class StoreHolidayHourRequest extends FormRequest
                         ], true)
                         && empty($value)
                     ) {
-                        $fail('A target must be provided when action is selected.');
+                        $fail(__('A target must be provided when action is selected.'));
                     }
                 },
             ],
@@ -86,8 +86,8 @@ class StoreHolidayHourRequest extends FormRequest
     {
         return [
             // 'ring_group_extension.ring_group_unique' => 'This number is already used',
-            'start_date.required_if' => 'The date field is required',
-            'end_date.required_if' => 'The date field is required',
+            'start_date.required_if' => __('The date field is required'),
+            'end_date.required_if' => __('The date field is required'),
 
         ];
     }
@@ -109,7 +109,7 @@ class StoreHolidayHourRequest extends FormRequest
                 if (! $hasFixed && ! $hasFloating) {
                     $validator->errors()->add(
                         'holiday_type',
-                        'You must select a holiday from the list.'
+                        __('You must select a holiday from the list.')
                     );
                 }
             }
@@ -126,7 +126,7 @@ class StoreHolidayHourRequest extends FormRequest
                 if (! $hasAny) {
                     $validator->errors()->add(
                         'holiday_type',
-                        'To define a recurring pattern you must fill at least one of the condition fields in the form.'
+                        __('To define a recurring pattern you must fill at least one of the condition fields in the form.')
                     );
                 }
             }
@@ -136,7 +136,7 @@ class StoreHolidayHourRequest extends FormRequest
                 if ($this->input('end_date') !== $this->input('start_date')) {
                     $validator->errors()->add(
                         'end_date',
-                        'For a single-date holiday, end_date must equal start_date.'
+                        __('For a single-date holiday, end_date must equal start_date.')
                     );
                 }
             }
@@ -149,7 +149,7 @@ class StoreHolidayHourRequest extends FormRequest
                     if ($endTime < $startTime) {
                         $validator->errors()->add(
                             'end_time',
-                            'The end time must be a time after or equal to start time.'
+                            __('The end time must be a time after or equal to start time.')
                         );
                     }
                 }

@@ -4,13 +4,13 @@
 
         <div class="grid grid-cols-1 gap-6 ">
 
-            <Toggle label="Status" v-model="form.status" />
+            <Toggle :label="$t('Status')" v-model="form.status" />
 
             <div>
-                <LabelInputRequired :target="'key'" :label="'Key'" />
+                <LabelInputRequired :target="'key'" :label="$t('Key')" />
                 <div class="mt-2">
                     <InputField v-model="form.key" type="text" name="key"
-                        placeholder="Enter one or more digits (e.g., 1, 12, 123)"
+                        :placeholder="$t('Enter one or more digits (e.g., 1, 12, 123)')"
                         autocomplete="off" />
                 </div>
                 <div v-if="errors?.key" class="mt-2 text-xs text-red-600">
@@ -19,10 +19,10 @@
             </div>
 
             <div>
-                <LabelInputRequired :target="'action'" :label="'Action'" />
+                <LabelInputRequired :target="'action'" :label="$t('Action')" />
                 <div class="mt-2">
                     <ComboBox :options="options.routing_types" :selectedItem="form.action" :search="true"
-                        placeholder="Choose Action" @update:model-value="(value) => handleUpdateActionField(value)"
+                        :placeholder="$t('Choose Action')" @update:model-value="(value) => handleUpdateActionField(value)"
                         autocomplete="off"
                         :error="errors?.action && errors.action.length > 0" />
                 </div>
@@ -32,10 +32,10 @@
             </div>
 
             <div>
-                <LabelInputRequired :target="'target'" :label="'Target'" />
+                <LabelInputRequired :target="'target'" :label="$t('Target')" />
                 <div class="mt-2 relative">
                     <ComboBox :options="targets" :selectedItem="form.target" :search="true" :key="targets"
-                        placeholder="Choose Target" @update:model-value="(value) => handleUpdateTargetField(value)"
+                        :placeholder="$t('Choose Target')" @update:model-value="(value) => handleUpdateTargetField(value)"
                         autocomplete="off"
                         :disabled="isTargetDisabled" :error="errors?.target && errors.target.length > 0"/>
 
@@ -50,9 +50,9 @@
             </div>
 
             <div>
-                <LabelInputOptional :target="'description'" :label="'Description'" />
+                <LabelInputOptional :target="'description'" :label="$t('Description')" />
                 <div class="mt-2">
-                    <InputField v-model="form.description" type="text" name="description" placeholder="Enter description" />
+                    <InputField v-model="form.description" type="text" name="description" :placeholder="$t('Enter description')" />
                 </div>
             </div>
 
@@ -62,11 +62,11 @@
                         class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
                         ref="saveButtonRef" :disabled="isSubmitting">
                         <Spinner :show="isSubmitting" />
-                        Save
+                        {{ $t('Save') }}
                     </button>
                     <button type="button"
                         class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0"
-                        @click="emit('cancel')" ref="cancelButtonRef">Cancel
+                        @click="emit('cancel')" ref="cancelButtonRef">{{ $t('Cancel') }}
                     </button>
                 </div>
             </div>

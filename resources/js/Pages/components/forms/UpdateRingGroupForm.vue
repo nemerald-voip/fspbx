@@ -7,7 +7,7 @@
                 <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
                     <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
                         <FormTabs view="vertical">
-                            <FormTab name="page0" label="Settings" :elements="[
+                            <FormTab name="page0" :label="$t('Settings')" :elements="[
                                 'ring_group_uuid',
                                 'ring_group_uuid_clean',
                                 'h4',
@@ -39,7 +39,7 @@
                                 'ring_group_description',
                                 'settings_submit'
                             ]" :conditions="[() => localOptions.permissions.manage_settings]" />
-                            <FormTab name="page1" label="Call Forwarding" :elements="[
+                            <FormTab name="page1" :label="$t('Call Forwarding')" :elements="[
                                 'h4_1',
                                 'ring_group_forward_enabled',
                                 'forward_action',
@@ -47,7 +47,7 @@
                                 'forward_external_target',
                                 'call_forward_submit',
                             ]" :conditions="[() => localOptions.permissions.manage_forwarding]" />
-                            <FormTab name="page2" label="Advanced" :elements="[
+                            <FormTab name="page2" :label="$t('Advanced')" :elements="[
                                 'h4_3',
                                 'ring_group_caller_id_name',
                                 'ring_group_caller_id_number',
@@ -72,14 +72,14 @@
                         <FormElements>
 
                             <HiddenElement name="ring_group_uuid" :meta="true" />
-                            <StaticElement name="h4" tag="h4" content="Settings"
-                                description="Provide basic information about the ring group" />
+                            <StaticElement name="h4" tag="h4" :content="$t('Settings')"
+                                :description="$t('Provide basic information about the ring group')" />
                             <StaticElement name="ring_group_uuid_clean"
                                 :conditions="[() => localOptions.permissions.is_superadmin]">
 
                                 <div class="mb-1">
                                     <div class="text-sm font-medium text-gray-600 mb-1">
-                                        Unique ID
+                                        {{ $t('Unique ID') }}
                                     </div>
 
                                     <div class="flex items-center group">
@@ -90,7 +90,7 @@
                                         <button type="button"
                                             @click="handleCopyToClipboard(localOptions.ring_group.ring_group_uuid)"
                                             class="ml-2 p-1 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
-                                            title="Copy to clipboard">
+                                            :title="$t('Copy to clipboard')">
                                             <ClipboardDocumentIcon
                                                 class="h-4 w-4 text-gray-500 hover:text-gray-900  cursor-pointer" />
                                         </button>
@@ -98,17 +98,17 @@
                                 </div>
 
                             </StaticElement>
-                            <TextElement name="ring_group_name" label="Name" :columns="{
+                            <TextElement name="ring_group_name" :label="$t('Name')" :columns="{
                                 sm: { container: 6, }, lg: { container: 6, },
-                            }" placeholder="Enter Ring Group Name" :floating="false" />
+                            }" :placeholder="$t('Enter Ring Group Name')" :floating="false" />
                             <TextElement name="ring_group_extension" :columns="{
                                 sm: { container: 6, }, lg: { container: 6, },
-                            }" label="Extension" placeholder="Enter Extension" :floating="false" />
+                            }" :label="$t('Extension')" :placeholder="$t('Enter Extension')" :floating="false" />
 
-                            <SelectElement name="ring_group_greeting" :search="true" :native="false" label="Greeting"
+                            <SelectElement name="ring_group_greeting" :search="true" :native="false" :label="$t('Greeting')"
                                 :items="fetchGreetings" input-type="search" autocomplete="off"
-                                placeholder="Select Greeting" :floating="false"
-                                info="Enable this option so that callers hear a recorded greeting before they are connected to a group member."
+                                :placeholder="$t('Select Greeting')" :floating="false"
+                                :info="$t('Enable this option so that callers hear a recorded greeting before they are connected to a group member.')"
                                 :strict="false" :columns="{ sm: { container: 6, }, lg: { container: 6, }, }"
                                 :conditions="[() => localOptions.permissions.manage_greeting]">
                                 <template #after>
@@ -174,12 +174,8 @@
 
 
                             <SelectElement name="ring_group_strategy" :search="true" :native="false"
-                                label="Call Distribution" :items="localOptions.call_distributions" input-type="search"
-                                autocomplete="off" placeholder="Select Call Distribution" :floating="false" info="Advanced (default): This option rings all phones at once, but each phone has its own thread. This is especially useful when there are multiple registrations for the same extension.
-Sequential Ring: This option rings one phone at a time in a specific order.
-Simultaneous Ring: This option rings all phones at once.
-Random Ring: This option rings one phone at a time in a random order.
-Rollover: This option rings each phone one at a time, but it skips busy phones." :strict="false"
+                                :label="$t('Call Distribution')" :items="localOptions.call_distributions" input-type="search"
+                                autocomplete="off" :placeholder="$t('Select Call Distribution')" :floating="false" :info="$t('Advanced (default): This option rings all phones at once, but each phone has its own thread. This is especially useful when there are multiple registrations for the same extension.\nSequential Ring: This option rings one phone at a time in a specific order.\nSimultaneous Ring: This option rings all phones at once.\nRandom Ring: This option rings one phone at a time in a random order.\nRollover: This option rings each phone one at a time, but it skips busy phones.')" :strict="false"
                                 :columns="{ sm: { container: 6, }, lg: { container: 6, }, }" />
 
                             <GroupElement name="container_3"
@@ -189,17 +185,17 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
                             <GroupElement name="container_4"
                                 :conditions="[() => localOptions.permissions.destination_view]" />
 
-                            <StaticElement name="h3_1" tag="h4" content="Members"
-                                description="Manage members of this ring group"
+                            <StaticElement name="h3_1" tag="h4" :content="$t('Members')"
+                                :description="$t('Manage members of this ring group')"
                                 :conditions="[() => localOptions.permissions.destination_view]" />
 
                             <TagsElement name="selectedMembers" :close-on-select="true" :items="availableMembers"
-                                :create="true" :search="true" :groups="true" :native="false" label="Add Member(s)"
-                                input-type="search" autocomplete="off" placeholder="Search by name or extension"
+                                :create="true" :search="true" :groups="true" :native="false" :label="$t('Add Member(s)')"
+                                input-type="search" autocomplete="off" :placeholder="$t('Search by name or extension')"
                                 :floating="false" :hide-selected="false" :object="true" :group-hide-empty="true"
                                 :append-new-option="false" :submit="false"
                                 @select="handleMemberSelect"
-                                description="Pick from the list or type an external number — members are added immediately."
+                                :description="$t('Pick from the list or type an external number — members are added immediately.')"
                                 :conditions="[() => localOptions.permissions.destination_create, () => localOptions.permissions.destination_view]" />
 
                             <GroupElement name="container_1"
@@ -219,13 +215,13 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
                                             :columns="{ default: { container: 8 }, sm: { container: 4 } }" :label="(el$) => {
                                                 const isSusp = el$.parent.value.suspended;
 
-                                                let html = `Member`;
+                                                let html = trans('Member');
 
                                                 if (isSusp) {
                                                     html += `
                                                         <span class='ml-2 px-2 py-0.5 text-xs rounded font-semibold
                                                                     bg-red-50 text-red-400 ring-1 ring-red-200/20'>
-                                                            Suspended
+                                                            ${trans('Suspended')}
                                                         </span>`;
                                                 }
 
@@ -237,21 +233,21 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
                                             }" />
 
                                         <SelectElement name="destination_delay" :items="delayOptions" :search="true"
-                                            :native="false" label="Delay" input-type="search" allow-absent
+                                            :native="false" :label="$t('Delay')" input-type="search" allow-absent
                                             autocomplete="off"
                                             :columns="{ default: { container: 6, }, sm: { container: 4, }, }" size="sm"
                                             :conditions="[['ring_group_strategy', 'not_in', ['sequence', 'rollover', 'random']]]"
-                                            info="How many seconds to wait before starting to ring this member."
-                                            placeholder="Select option" :floating="false"
+                                            :info="$t('How many seconds to wait before starting to ring this member.')"
+                                            :placeholder="$t('Select option')" :floating="false"
                                             :disabled="() => { return !localOptions.permissions.destination_update }" />
 
 
                                         <SelectElement name="destination_timeout" :items="timeoutOptions" :search="true"
-                                            :native="false" label="Ring for" input-type="search" allow-absent
+                                            :native="false" :label="$t('Ring for')" input-type="search" allow-absent
                                             autocomplete="off"
                                             :columns="{ default: { container: 6, }, sm: { container: 4, }, }" size="sm"
-                                            info="How many seconds to keep ringing this member before giving up."
-                                            placeholder="Select option" :floating="false"
+                                            :info="$t('How many seconds to keep ringing this member before giving up.')"
+                                            :placeholder="$t('Select option')" :floating="false"
                                             :disabled="() => { return !localOptions.permissions.destination_update }" />
 
                                         <GroupElement name="container"
@@ -262,13 +258,13 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
                                             :conditions="[['ring_group_strategy', 'not_in', ['sequence', 'rollover', 'random']]]" />
                                         <ToggleElement name="destination_prompt"
                                             :columns="{ default: { container: 6, }, sm: { container: 4, }, }"
-                                            align="left" label="Confirm Answer" size="sm"
-                                            info="Enable answer confirmation to prevent voicemails and automated systems from answering a call."
+                                            align="left" :label="$t('Confirm Answer')" size="sm"
+                                            :info="$t('Enable answer confirmation to prevent voicemails and automated systems from answering a call.')"
                                             :disabled="() => { return !localOptions.permissions.destination_update }" />
 
                                         <ToggleElement name="destination_enabled"
                                             :columns="{ default: { container: 5 }, sm: { container: 4 } }" size="sm"
-                                            label="Active"
+                                            :label="$t('Active')"
                                             :disabled="(el$) => el$.parent.value.suspended || !localOptions.permissions.destination_update" />
                                     </ObjectElement>
                                 </template>
@@ -277,11 +273,11 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
                             <GroupElement name="container_5" />
                             <StaticElement name="divider2" tag="hr" />
                             <GroupElement name="container_6" />
-                            <StaticElement name="h3_2" tag="h4" content="When no one in ring group answers"
-                                description="Forward calls to" />
+                            <StaticElement name="h3_2" tag="h4" :content="$t('When no one in ring group answers')"
+                                :description="$t('Forward calls to')" />
                             <SelectElement name="timeout_action" :items="localOptions.routing_types" label-prop="name"
-                                :search="true" :native="false" label="Choose Action" input-type="search"
-                                autocomplete="off" placeholder="Choose Action" :floating="false" :strict="false"
+                                :search="true" :native="false" :label="$t('Choose Action')" input-type="search"
+                                autocomplete="off" :placeholder="$t('Choose Action')" :floating="false" :strict="false"
                                 :columns="{ sm: { container: 6, }, }" @change="(newValue, oldValue, el$) => {
                                     let timeout_target = el$.form$.el$('timeout_target')
 
@@ -304,9 +300,9 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
                                     emits('error', error);
                                     return [];  // Return an empty array in case of error
                                 }
-                            }" :search="true" label-prop="name" :native="false" label="Target" input-type="search"
+                            }" :search="true" label-prop="name" :native="false" :label="$t('Target')" input-type="search"
                                 allow-absent :object="true" :format-data="formatTarget" autocomplete="off"
-                                placeholder="Choose Target" :floating="false" :strict="false"
+                                :placeholder="$t('Choose Target')" :floating="false" :strict="false"
                                 :columns="{ sm: { container: 6, }, }" :conditions="[
                                     ['timeout_action', 'not_empty'],
                                     ['timeout_action', 'not_in', ['check_voicemail', 'company_directory', 'hangup']]
@@ -316,26 +312,26 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
                             <GroupElement name="container_7" />
                             <StaticElement name="divider3" tag="hr" />
                             <GroupElement name="container_8" />
-                            <TextElement name="ring_group_cid_name_prefix" label="Caller ID Name Prefix"
-                                info="Prepend text to the caller’s name when routing through this ring group (e.g. ‘Sales:’ to display ‘Sales: Jane Smith’.)."
+                            <TextElement name="ring_group_cid_name_prefix" :label="$t('Caller ID Name Prefix')"
+                                :info="$t('Prepend text to the caller’s name when routing through this ring group (e.g. ‘Sales:’ to display ‘Sales: Jane Smith’.).')"
                                 :columns="{ sm: { container: 6, }, }"
                                 :conditions="[() => localOptions.permissions.manage_cid_name_prefix]" />
-                            <TextElement name="ring_group_cid_number_prefix" label="Caller ID Number Prefix"
-                                info="Prepend text to the caller’s number when routing through this ring group (e.g. ‘555#2135551234’)."
+                            <TextElement name="ring_group_cid_number_prefix" :label="$t('Caller ID Number Prefix')"
+                                :info="$t('Prepend text to the caller’s number when routing through this ring group (e.g. ‘555#2135551234’).')"
                                 :columns="{ sm: { container: 6, }, }"
                                 :conditions="[() => localOptions.permissions.manage_cid_number_prefix]" />
-                            <TextareaElement name="ring_group_description" label="Description" :rows="2" />
+                            <TextareaElement name="ring_group_description" :label="$t('Description')" :rows="2" />
 
-                            <ButtonElement name="settings_submit" button-label="Save" :submits="true" align="right" />
+                            <ButtonElement name="settings_submit" :button-label="$t('Save')" :submits="true" align="right" />
 
                             <!-- Call Forwarding -->
-                            <StaticElement name="h4_1" tag="h4" content="Call Forwarding"
-                                description="Automatically forward all calls for this ring group to another destination." />
-                            <ToggleElement name="ring_group_forward_enabled" :labels="{ on: 'On', off: 'Off', }" />
+                            <StaticElement name="h4_1" tag="h4" :content="$t('Call Forwarding')"
+                                :description="$t('Automatically forward all calls for this ring group to another destination.')" />
+                            <ToggleElement name="ring_group_forward_enabled" :labels="{ on: $t('On'), off: $t('Off'), }" />
 
                             <SelectElement name="forward_action" :items="localOptions.forwarding_types" :search="true"
-                                :native="false" label="Choose Action" input-type="search" autocomplete="off"
-                                placeholder="Choose Action" :floating="false" :strict="false"
+                                :native="false" :label="$t('Choose Action')" input-type="search" autocomplete="off"
+                                :placeholder="$t('Choose Action')" :floating="false" :strict="false"
                                 :conditions="[['ring_group_forward_enabled', '==', true],]"
                                 :columns="{ sm: { container: 6, }, }" @change="(newValue, oldValue, el$) => {
                                     let forward_target = el$.form$.el$('forward_target')
@@ -359,71 +355,71 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
                                     emits('error', error);
                                     return [];  // Return an empty array in case of error
                                 }
-                            }" :search="true" label-prop="name" :native="false" label="Target" input-type="search"
+                            }" :search="true" label-prop="name" :native="false" :label="$t('Target')" input-type="search"
                                 allow-absent :object="true" :format-data="formatTarget" autocomplete="off"
-                                placeholder="Choose Target" :floating="false" :strict="false"
+                                :placeholder="$t('Choose Target')" :floating="false" :strict="false"
                                 :columns="{ sm: { container: 6, }, }" :conditions="[
                                     ['ring_group_forward_enabled', '==', true],
                                     ['forward_action', 'not_empty'],
                                     ['forward_action', 'not_in', ['external']]
                                 ]" />
 
-                            <TextElement name="forward_external_target" label="Target"
-                                placeholder="Enter External Number" :floating="false"
+                            <TextElement name="forward_external_target" :label="$t('Target')"
+                                :placeholder="$t('Enter External Number')" :floating="false"
                                 :columns="{ sm: { container: 6, }, }" :conditions="[
                                     ['ring_group_forward_enabled', '==', true],
                                     ['forward_action', 'not_empty'],
                                     ['forward_action', 'in', ['external']]
                                 ]" />
 
-                            <ButtonElement name="call_forward_submit" button-label="Save" :submits="true"
+                            <ButtonElement name="call_forward_submit" :button-label="$t('Save')" :submits="true"
                                 align="right" />
 
 
                             <!-- Advanced tab -->
-                            <StaticElement name="h4_3" tag="h4" content="Advanced"
-                                description="Manage ring group's advanced settings" />
-                            <TextElement name="ring_group_caller_id_name" label="Outbound Caller ID Name"
-                                description="Set the caller ID name for outbound external calls."
+                            <StaticElement name="h4_3" tag="h4" :content="$t('Advanced')"
+                                :description="$t('Manage ring group\'s advanced settings')" />
+                            <TextElement name="ring_group_caller_id_name" :label="$t('Outbound Caller ID Name')"
+                                :description="$t('Set the caller ID name for outbound external calls.')"
                                 :columns="{ sm: { container: 6, }, }"
                                 :conditions="[() => localOptions.permissions.manage_cid_name]" />
-                            <TextElement name="ring_group_caller_id_number" label="Outbound Caller ID Number"
-                                description="Set the caller ID number for outbound external calls."
+                            <TextElement name="ring_group_caller_id_number" :label="$t('Outbound Caller ID Number')"
+                                :description="$t('Set the caller ID number for outbound external calls.')"
                                 :columns="{ sm: { container: 6, }, }"
                                 :conditions="[() => localOptions.permissions.manage_cid_number]" />
-                            <TextElement name="ring_group_distinctive_ring" label="Distinctive Ring"
+                            <TextElement name="ring_group_distinctive_ring" :label="$t('Distinctive Ring')"
                                 :columns="{ sm: { container: 6, }, }" />
                             <GroupElement name="container5" size="sm" />
                             <SelectElement name="ring_group_ringback" :items="localOptions.ring_back_tones"
-                                :groups="true" default="${us-ring}" :search="true" :native="false" label="Ringback Tone"
+                                :groups="true" default="${us-ring}" :search="true" :native="false" :label="$t('Ringback Tone')"
                                 input-type="search" autocomplete="off" :strict="false"
-                                description="Specify the sound or tone the caller hears while waiting for the destination to answer the call."
+                                :description="$t('Specify the sound or tone the caller hears while waiting for the destination to answer the call.')"
                                 :columns="{ sm: { container: 6, }, }" />
                             <ToggleElement name="ring_group_call_forward_enabled" align="left"
-                                label="Allow Member Call Forwarding Rules"
-                                info="Enable per‑member call forwarding rules when Advanced call distribution is selected for the ring group."
+                                :label="$t('Allow Member Call Forwarding Rules')"
+                                :info="$t('Enable per‑member call forwarding rules when Advanced call distribution is selected for the ring group.')"
                                 default="true" />
                             <ToggleElement name="ring_group_follow_me_enabled" align="left"
-                                label="Allow Member Sequential Ring Rules"
-                                info="Enable per‑member call sequential routing rules when Advanced call distribution is selected for the ring group."
+                                :label="$t('Allow Member Sequential Ring Rules')"
+                                :info="$t('Enable per‑member call sequential routing rules when Advanced call distribution is selected for the ring group.')"
                                 default="true" />
                             <ToggleElement name="missed_call_notifications" align="left"
-                                label="Enable Missed Call Notifications" default="true"
+                                :label="$t('Enable Missed Call Notifications')" default="true"
                                 :columns="{ md: { container: 4, }, sm: { container: 6, }, default: { container: 6, }, }"
                                 :conditions="[() => localOptions.permissions.manage_missed_call]" />
-                            <TextElement name="ring_group_missed_call_data" label="Notification Email"
+                            <TextElement name="ring_group_missed_call_data" :label="$t('Notification Email')"
                                 :columns="{ sm: { container: 6, }, }"
                                 :conditions="[['missed_call_notifications', '==', true,], () => localOptions.permissions.manage_missed_call]" />
 
                             <GroupElement name="container6" size="sm" />
-                            <TextElement name="forward_toll_allow" label="Forward Toll Allow"
+                            <TextElement name="forward_toll_allow" :label="$t('Forward Toll Allow')"
                                 :columns="{ sm: { container: 6, }, }"
                                 :conditions="[() => localOptions.permissions.manage_forwarding_toll_allow]" />
                             <GroupElement name="container" />
-                            <TextElement name="ring_group_context" label="Context" :columns="{ sm: { container: 6, }, }"
+                            <TextElement name="ring_group_context" :label="$t('Context')" :columns="{ sm: { container: 6, }, }"
                                 :conditions="[() => localOptions.permissions.manage_context]" />
 
-                            <ButtonElement name="advanced_submit" button-label="Save" :submits="true" align="right" />
+                            <ButtonElement name="advanced_submit" :button-label="$t('Save')" :submits="true" align="right" />
 
                         </FormElements>
                     </div>
@@ -435,16 +431,16 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
     <UpdateGreetingModal :greeting="greetingLabel" :show="showEditModal" :loading="isGreetingUpdating"
         @confirm="handleGreetingUpdate" @close="showEditModal = false" />
 
-    <NewGreetingForm :header="'New Greeting Message'" :show="showNewGreetingModal" @close="showNewGreetingModal = false"
+    <NewGreetingForm :header="$t('New Greeting Message')" :show="showNewGreetingModal" @close="showNewGreetingModal = false"
         :voices="localOptions.voices" :speeds="localOptions.speeds" :default_voice="localOptions.default_voice"
         :phone_call_instructions="localOptions.phone_call_instructions" :sample_message="localOptions.sample_message"
         :routes="getRoutesForGreetingForm" @error="emitErrorToParentFromChild" @success="emitSuccessToParentFromChild"
         @saved="handleNewGreetingAdded" />
 
     <ConfirmationModal :show="showGreetingDeleteConfirmationModal" @close="showGreetingDeleteConfirmationModal = false"
-        @confirm="confirmGreetingDeleteAction" :header="'Confirm Deletion'"
-        :text="'This action will permanently delete this greeting. Are you sure you want to proceed?'"
-        :confirm-button-label="'Delete'" cancel-button-label="Cancel" />
+        @confirm="confirmGreetingDeleteAction" :header="$t('Confirm Deletion')"
+        :text="$t('This action will permanently delete this greeting. Are you sure you want to proceed?')"
+        :confirm-button-label="$t('Delete')" :cancel-button-label="$t('Cancel')" />
 </template>
 
 <script setup>
@@ -456,6 +452,7 @@ import { PlusIcon, TrashIcon, PencilSquareIcon } from '@heroicons/vue/20/solid'
 import { PlayCircleIcon, CloudArrowDownIcon, PauseCircleIcon } from '@heroicons/vue/24/solid';
 import NewGreetingForm from './NewGreetingForm.vue';
 import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
+import { trans } from "laravel-vue-i18n";
 
 function toBool(v) {
     return v === true || v === 'true' || v === 1 || v === '1';
@@ -463,9 +460,9 @@ function toBool(v) {
 
 const handleCopyToClipboard = (text) => {
     navigator.clipboard.writeText(text).then(() => {
-        emits('success', 'success', { message: ['Copied to clipboard.'] });
+        emits('success', 'success', { message: [trans('Copied to clipboard.')] });
     }).catch((error) => {
-        emits('error', { response: { data: { errors: { request: ['Failed to copy to clipboard.'] } } } });
+        emits('error', { response: { data: { errors: { request: [trans('Failed to copy to clipboard.')] } } } });
     });
 }
 
@@ -491,7 +488,7 @@ const fetchGreetings = async (query, input) => {
 
     if (!route) {
         availableGreetings.value = [
-            { value: '0', label: 'None' }
+            { value: '0', label: trans('None') }
         ];
         return availableGreetings.value;
     }
@@ -503,7 +500,7 @@ const fetchGreetings = async (query, input) => {
     } catch (error) {
         console.error("Failed to load greetings async", error);
         availableGreetings.value = [
-            { value: '0', label: 'None' }
+            { value: '0', label: trans('None') }
         ];
         return availableGreetings.value;
     }
@@ -592,13 +589,13 @@ onMounted(() => {
 const delayOptions = Array.from({ length: 21 }, (_, i) => {
     const seconds = i * 5;
     const rings = Math.round(seconds / 5);
-    return { value: String(seconds), label: `${rings} ${rings === 1 ? 'Ring' : 'Rings'} (${seconds}s)` };
+    return { value: String(seconds), label: `${trans(':count Ring(s)', { count: rings })} (${seconds}s)` };
 });
 
 const timeoutOptions = Array.from({ length: 21 }, (_, i) => {
     const seconds = i * 5;
     const rings = Math.round(seconds / 5);
-    return { value: String(seconds), label: `${rings} ${rings === 1 ? 'Ring' : 'Rings'} (${seconds}s)` };
+    return { value: String(seconds), label: `${trans(':count Ring(s)', { count: rings })} (${seconds}s)` };
 });
 
 const availableMembers = computed(() => {
@@ -696,16 +693,16 @@ const handleError = (error, details, form$) => {
 
     switch (details.type) {
         case 'prepare':
-            form$.messageBag.append('Could not prepare form')
+            form$.messageBag.append(trans('Could not prepare form'))
             break
         case 'submit':
             emits('error', error);
             break
         case 'cancel':
-            form$.messageBag.append('Request cancelled')
+            form$.messageBag.append(trans('Request cancelled'))
             break
         case 'other':
-            form$.messageBag.append('Couldn\'t submit form')
+            form$.messageBag.append(trans('Couldn\'t submit form'))
             break
     }
 }
@@ -758,7 +755,7 @@ const playGreeting = () => {
 
     currentAudio.value.play().catch(() => {
         isAudioPlaying.value = false;
-        emits('error', { message: 'Audio playback failed' });
+        emits('error', { message: trans('Audio playback failed') });
     });
 
     currentAudio.value.addEventListener('ended', () => {
@@ -767,7 +764,7 @@ const playGreeting = () => {
 
     currentAudio.value.addEventListener('error', () => {
         isAudioPlaying.value = false;
-        emits('error', { message: 'File not found or failed to load audio' });
+        emits('error', { message: trans('File not found or failed to load audio') });
     });
 };
 
@@ -833,7 +830,7 @@ const handleGreetingUpdate = async (updatedGreeting) => {
             response: {
                 data: {
                     errors: {
-                        request: ['Greeting name cannot be empty.']
+                        request: [trans('Greeting name cannot be empty.')]
                     }
                 }
             }

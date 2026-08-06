@@ -22,7 +22,7 @@
                                 <button type="button"
                                     class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                     @click="emit('close')">
-                                    <span class="sr-only">Close</span>
+                                    <span class="sr-only">{{ $t('Close') }}</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
@@ -36,13 +36,13 @@
                                         <path class="opacity-75" fill="currentColor"
                                             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                     </svg>
-                                    <div class="text-lg text-blue-600 m-auto">Loading...</div>
+                                    <div class="text-lg text-blue-600 m-auto">{{ $t('Loading...') }}</div>
                                 </div>
                             </div>
 
                             <div v-if="duplicateCallBlock"
                                 class="mb-4 rounded-md bg-amber-50 p-3 text-sm text-amber-800 ring-1 ring-inset ring-amber-200">
-                                This caller already has a call block rule: {{ duplicateCallBlock.label }}.
+                                {{ $t('This caller already has a call block rule: :label.', { label: duplicateCallBlock.label }) }}
                             </div>
 
                             <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
@@ -52,33 +52,33 @@
                                     <FormElements>
                                         <HiddenElement name="call_block_uuid" :meta="true" />
 
-                                        <StaticElement name="settings_header" tag="h4" content="Call Block Rule" />
+                                        <StaticElement name="settings_header" tag="h4" :content="$t('Call Block Rule')" />
 
                                         <SelectElement name="call_block_direction" :items="directionOptions"
-                                            :native="false" label="Direction" :floating="false"
+                                            :native="false" :label="$t('Direction')" :floating="false"
                                             :columns="{ sm: { container: 6 } }" />
 
                                         <SelectElement name="extension_uuid" :items="extensionScopeOptions"
-                                            :native="false" label="Scope" :floating="false"
+                                            :native="false" :label="$t('Scope')" :floating="false"
                                             :columns="{ sm: { container: 6 } }" />
 
-                                        <StaticElement name="match_header" tag="h4" content="Match Caller"
-                                            description="Use Caller ID Name, Caller ID Number, or both." />
+                                        <StaticElement name="match_header" tag="h4" :content="$t('Match Caller')"
+                                            :description="$t('Use Caller ID Name, Caller ID Number, or both.')" />
 
-                                        <TextElement name="call_block_name" label="Caller ID Name"
-                                            description="Regular expressions (Regex) are supported. Example: ^\?SPAM"
+                                        <TextElement name="call_block_name" :label="$t('Caller ID Name')"
+                                            :description="$t('Regular expressions (Regex) are supported. Example: ^\\?SPAM')"
                                             :floating="false" :columns="{ sm: { container: 12 } }" />
 
-                                        <TextElement name="call_block_country_code" label="Country Code"
+                                        <TextElement name="call_block_country_code" :label="$t('Country Code')"
                                             :floating="false" :columns="{ sm: { container: 3 } }" />
 
-                                        <TextElement name="call_block_number" label="Caller ID Number"
+                                        <TextElement name="call_block_number" :label="$t('Caller ID Number')"
                                             :floating="false" :columns="{ sm: { container: 9 } }" />
 
-                                        <StaticElement name="action_header" tag="h4" content="Action" />
+                                        <StaticElement name="action_header" tag="h4" :content="$t('Action')" />
 
                                         <SelectElement name="call_block_action" :items="actionOptions"
-                                            :native="false" label="Action" :floating="false"
+                                            :native="false" :label="$t('Action')" :floating="false"
                                             :columns="{ sm: { container: 6 } }"
                                             @change="(newValue, oldValue, el$) => {
                                                 if (oldValue !== null && oldValue !== undefined && selectedActionApp(newValue) !== 'voicemail') {
@@ -87,22 +87,22 @@
                                             }" />
 
                                         <SelectElement name="call_block_voicemail" :items="voicemailOptions"
-                                            :native="false" :search="true" label="Voicemail" :floating="false"
-                                            placeholder="Select Mailbox" :columns="{ sm: { container: 6 } }"
+                                            :native="false" :search="true" :label="$t('Voicemail')" :floating="false"
+                                            :placeholder="$t('Select Mailbox')" :columns="{ sm: { container: 6 } }"
                                             :conditions="[isVoicemailAction]" />
 
                                         <GroupElement name="enabled_row_spacer" />
 
-                                        <ToggleElement name="call_block_enabled" text="Enabled"
-                                            true-value="true" false-value="false" :labels="{ on: 'On', off: 'Off' }"
+                                        <ToggleElement name="call_block_enabled" :text="$t('Enabled')"
+                                            true-value="true" false-value="false" :labels="{ on: $t('On'), off: $t('Off') }"
                                             :columns="{ sm: { container: 6 } }" label="&nbsp;" />
 
-                                        <TextareaElement name="call_block_description" label="Description"
+                                        <TextareaElement name="call_block_description" :label="$t('Description')"
                                             :floating="false" :rows="2" />
 
                                         <GroupElement name="button_container" />
 
-                                        <ButtonElement name="submit" button-label="Save" :submits="true" align="right" />
+                                        <ButtonElement name="submit" :button-label="$t('Save')" :submits="true" align="right" />
                                     </FormElements>
                                 </template>
                             </Vueform>
@@ -116,6 +116,7 @@
 
 <script setup>
 import { computed, ref } from "vue";
+import { trans } from "laravel-vue-i18n";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from "@headlessui/vue";
 import { XMarkIcon } from "@heroicons/vue/24/solid";
 
@@ -125,7 +126,7 @@ const props = defineProps({
     loading: Boolean,
     header: {
         type: String,
-        default: "Call Block",
+        default: () => trans("Call Block"),
     },
     mode: {
         type: String,
@@ -137,8 +138,8 @@ const emit = defineEmits(["close", "error", "success", "refresh-data"]);
 const form$ = ref(null);
 
 const directionOptions = [
-    { label: "Inbound", value: "inbound" },
-    { label: "Outbound", value: "outbound" },
+    { label: trans("Inbound"), value: "inbound" },
+    { label: trans("Outbound"), value: "outbound" },
 ];
 
 const allowedActions = ["reject", "busy", "voicemail"];
@@ -230,6 +231,6 @@ const handleError = (error, details, form$) => {
         return;
     }
 
-    form$.messageBag.append("Could not submit form");
+    form$.messageBag.append(trans("Could not submit form"));
 };
 </script>

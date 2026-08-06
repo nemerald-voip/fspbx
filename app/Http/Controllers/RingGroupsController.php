@@ -144,23 +144,23 @@ class RingGroupsController extends Controller
             $call_distributions = [
                 [
                     'value' => 'enterprise',
-                    'label' => 'Advanced',
+                    'label' => __('Advanced'),
                 ],
                 [
                     'value' => 'simultaneous',
-                    'label' => 'Simultaneous Ring',
+                    'label' => __('Simultaneous Ring'),
                 ],
                 [
                     'value' => 'sequence',
-                    'label' => 'Sequential Ring',
+                    'label' => __('Sequential Ring'),
                 ],
                 [
                     'value' => 'random',
-                    'label' => 'Random Ring',
+                    'label' => __('Random Ring'),
                 ],
                 [
                     'value' => 'rollover',
-                    'label' => 'Rollover',
+                    'label' => __('Rollover'),
                 ],
 
             ];
@@ -191,7 +191,7 @@ class RingGroupsController extends Controller
 
             $memberOptions = [
                 [
-                    'groupLabel' => 'Extensions',
+                    'groupLabel' => __('Extensions'),
                     'groupOptions' => $extensions->map(function ($extension) {
                         return [
                             'value' => $extension->extension_uuid,
@@ -203,7 +203,7 @@ class RingGroupsController extends Controller
                     })->toArray(),
                 ],
                 [
-                    'groupLabel' => 'Ring Groups',
+                    'groupLabel' => __('Ring Groups'),
                     'groupOptions' => $ringGroups->map(function ($group) {
                         return [
                             'value' => $group->ring_group_uuid,
@@ -325,12 +325,12 @@ class RingGroupsController extends Controller
 
             // Define the instructions for recording a voicemail greeting using a phone call
             $phoneCallInstructions = [
-                'Dial <strong>*732</strong> from your phone.',
-                'Enter the ring group extension number when prompted and press <strong>#</strong>.',
-                'Follow the prompts to record your greeting.',
+                __('Dial <strong>*732</strong> from your phone.'),
+                __('Enter the ring group extension number when prompted and press <strong>#</strong>.'),
+                __('Follow the prompts to record your greeting.'),
             ];
 
-            $sampleMessage = 'Thank you for contacting the Sales Department. Please hold the line; a representative will be with you shortly.';
+            $sampleMessage = __('Thank you for contacting the Sales Department. Please hold the line; a representative will be with you shortly.');
 
             $ring_back_tones = getRingBackTonesCollectionGrouped(session('domain_uuid'));
 
@@ -366,7 +366,7 @@ class RingGroupsController extends Controller
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to fetch item details']]
+                'errors' => ['server' => [__('Failed to fetch item details')]]
             ], 500);  // 500 Internal Server Error for any other errors
         }
     }
@@ -422,7 +422,7 @@ class RingGroupsController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages' => ['success' => ['Ring group saved']],
+                'messages' => ['success' => [__('Ring group saved')]],
                 'ring_group_uuid' => $ringGroup->ring_group_uuid,
             ]);
         } catch (\Throwable $e) {
@@ -430,7 +430,7 @@ class RingGroupsController extends Controller
             logger('RingGroup update error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Something went wrong while saving.']]
+                'messages' => ['error' => [__('Something went wrong while saving.')]]
             ], 500);
         }
     }
@@ -447,7 +447,7 @@ class RingGroupsController extends Controller
     {
         if (!userCheckPermission('ring_group_edit')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']]
+                'messages' => ['error' => [__('Access denied.')]]
             ], 403);
         }
 
@@ -507,13 +507,13 @@ class RingGroupsController extends Controller
             });
 
             return response()->json([
-                'messages' => ['success' => ['Ring group updated']]
+                'messages' => ['success' => [__('Ring group updated')]]
             ]);
         } catch (\Throwable $e) {
             logger('RingGroup update error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Something went wrong while updating.']]
+                'messages' => ['error' => [__('Something went wrong while updating.')]]
             ], 500);
         }
     }
@@ -528,7 +528,7 @@ class RingGroupsController extends Controller
     {
         if (!userCheckPermission('ring_group_delete')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']]
+                'messages' => ['error' => [__('Access denied.')]]
             ], 403);
         }
 
@@ -563,14 +563,14 @@ class RingGroupsController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages' => ['success' => ['Selected ring group(s) were deleted successfully.']]
+                'messages' => ['success' => [__('Selected ring group(s) were deleted successfully.')]]
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
             logger('RingGroups bulkDelete error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['An error occurred while deleting the selected ring group(s).']]
+                'messages' => ['error' => [__('An error occurred while deleting the selected ring group(s).')]]
             ], 500);
         }
     }
@@ -587,7 +587,7 @@ class RingGroupsController extends Controller
 
             // Return a JSON response indicating success
             return response()->json([
-                'messages' => ['success' => ['All items selected']],
+                'messages' => ['success' => [__('All items selected')]],
                 'items' => $uuids,
             ], 200);
         } catch (\Exception $e) {
@@ -595,7 +595,7 @@ class RingGroupsController extends Controller
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to select all items']]
+                'errors' => ['server' => [__('Failed to select all items')]]
             ], 500); // 500 Internal Server Error for any other errors
         }
     }
@@ -616,7 +616,7 @@ class RingGroupsController extends Controller
         // 2. Permission Check
         if (!userCheckPermission('ring_group_add')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']]
+                'messages' => ['error' => [__('Access denied.')]]
             ], 403);
         }
 
@@ -651,7 +651,10 @@ class RingGroupsController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages' => ['success' => ['Ring Group duplicated successfully', 'New Extension: ' . $newRingGroup->ring_group_extension]],
+                'messages' => ['success' => [
+                    __('Ring Group duplicated successfully'),
+                    __('New Extension: :extension', ['extension' => $newRingGroup->ring_group_extension]),
+                ]],
                 'ring_group_uuid' => $newRingGroup->ring_group_uuid
             ], 201);
         } catch (\Throwable $e) {
@@ -660,7 +663,7 @@ class RingGroupsController extends Controller
 
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to duplicate ring group.']]
+                'errors' => ['server' => [__('Failed to duplicate ring group.')]]
             ], 500);
         }
     }

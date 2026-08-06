@@ -7,7 +7,7 @@
                 <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
                     <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
                         <FormTabs view="vertical">
-                            <FormTab name="page0" label="Settings" :elements="[
+                            <FormTab name="page0" :label="$t('Settings')" :elements="[
                                 'ring_group_uuid',
                                 'h4',
                                 'ring_group_name',
@@ -23,16 +23,16 @@
                         class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
                         <FormElements>
 
-                            <StaticElement name="h4" tag="h4" content="Settings"
-                                description="Provide basic information about the ring group" />
-                            <TextElement name="ring_group_name" label="Name" :columns="{
+                            <StaticElement name="h4" tag="h4" :content="$t('Settings')"
+                                :description="$t('Provide basic information about the ring group')" />
+                            <TextElement name="ring_group_name" :label="$t('Name')" :columns="{
                                 sm: {
                                     container: 6,
                                 },
                                 lg: {
                                     container: 6,
                                 },
-                            }" placeholder="Enter Ring Group Name" :floating="false" />
+                            }" :placeholder="$t('Enter Ring Group Name')" :floating="false" />
                             <TextElement name="ring_group_extension" :columns="{
                                 sm: {
                                     container: 6,
@@ -40,12 +40,12 @@
                                 lg: {
                                     container: 6,
                                 },
-                            }" label="Extension" placeholder="Enter Extension" :floating="false" />
+                            }" :label="$t('Extension')" :placeholder="$t('Enter Extension')" :floating="false" />
 
- 
-                            <TextareaElement name="ring_group_description" label="Description" :rows="2" />
 
-                            <ButtonElement name="settings_submit" button-label="Save" :submits="true" align="right" />
+                            <TextareaElement name="ring_group_description" :label="$t('Description')" :rows="2" />
+
+                            <ButtonElement name="settings_submit" :button-label="$t('Save')" :submits="true" align="right" />
 
 
                         </FormElements>
@@ -61,6 +61,7 @@
 import { onMounted, reactive, ref, watch, computed } from "vue";
 
 import { Cog6ToothIcon, MusicalNoteIcon, AdjustmentsHorizontalIcon } from '@heroicons/vue/24/outline';
+import { trans } from "laravel-vue-i18n";
 
 
 const props = defineProps({
@@ -158,7 +159,7 @@ const handleError = (error, details, form$) => {
         case 'prepare':
             console.log(error) // Error object
 
-            form$.messageBag.append('Could not prepare form')
+            form$.messageBag.append(trans('Could not prepare form'))
             break
 
         // Error occured because response status is outside of 2xx
@@ -178,14 +179,14 @@ const handleError = (error, details, form$) => {
         case 'cancel':
             console.log(error) // Error object
 
-            form$.messageBag.append('Request cancelled')
+            form$.messageBag.append(trans('Request cancelled'))
             break
 
         // Some other errors happened (no response object)
         case 'other':
             console.log(error) // Error object
 
-            form$.messageBag.append('Couldn\'t submit form')
+            form$.messageBag.append(trans('Couldn\'t submit form'))
             break
     }
 }

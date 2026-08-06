@@ -18,7 +18,7 @@
                                 <button type="button"
                                     class="rounded-md bg-gray-100 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                     @click="emit('close')">
-                                    <span class="sr-only">Close</span>
+                                    <span class="sr-only">{{ $t('Close') }}</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
@@ -44,9 +44,8 @@
                                             </div>
                                             <div>
                                                 <h1 class="text-2xl font-bold text-gray-900">{{
-                                                    capitalizeFirstLetter(item.direction) }} Call</h1>
-                                                <p class="text-sm font-medium text-gray-500">On {{ item.start_date }} at {{
-                                                    item.start_time }}</p>
+                                                    directionHeading(item.direction) }}</h1>
+                                                <p class="text-sm font-medium text-gray-500">{{ $t('On :date at :time', { date: item.start_date, time: item.start_time }) }}</p>
                                             </div>
                                         </div>
                                         <!-- <div
@@ -68,27 +67,27 @@
                                                         <div class="px-4 py-5 sm:px-6">
                                                             <h2 id="applicant-information-title"
                                                                 class="text-lg font-medium leading-6 text-gray-900">
-                                                                Call Information</h2>
+                                                                {{ $t('Call Information') }}</h2>
                                                             <div class="mt-1 max-w-2xl text-sm text-gray-500 space-y-1">
                                                                 <div class="flex items-start gap-2">
-                                                                    <span class="text-gray-500">SIP Call-ID:</span>
+                                                                    <span class="text-gray-500">{{ $t('SIP Call-ID:') }}</span>
                                                                     <span class="text-gray-900 break-all">{{ item.sip_call_id || '-' }}</span>
                                                     <button type="button"
                                                         @click="handleCopyToClipboard(item.sip_call_id)"
                                                         class="ml-2 p-1 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
-                                                        title="Copy to clipboard">
+                                                        :title="$t('Copy to clipboard')">
                                                         <!-- Small Copy Icon -->
                                                         <ClipboardDocumentIcon
                                                             class="h-4 w-4 text-gray-500 hover:text-gray-900  cursor-pointer" />
                                                     </button>
                                                                 </div>
                                                                 <div class="flex items-start gap-2">
-                                                                    <span class="text-gray-500">Unique ID:</span>
+                                                                    <span class="text-gray-500">{{ $t('Unique ID:') }}</span>
                                                                     <span class="text-gray-900 break-all">{{ item.xml_cdr_uuid || '-' }}</span>
                                                     <button type="button"
                                                         @click="handleCopyToClipboard(item.xml_cdr_uuid)"
                                                         class="ml-2 p-1 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
-                                                        title="Copy to clipboard">
+                                                        :title="$t('Copy to clipboard')">
                                                         <!-- Small Copy Icon -->
                                                         <ClipboardDocumentIcon
                                                             class="h-4 w-4 text-gray-500 hover:text-gray-900  cursor-pointer" />
@@ -100,13 +99,13 @@
                                                             <dl class="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2">
                                                                 <div class="sm:col-span-1">
                                                                     <dt class="text-sm font-medium text-gray-500">
-                                                                        From</dt>
+                                                                        {{ $t('From') }}</dt>
                                                                     <dd class="mt-1 text-sm text-gray-900">
                                                                         {{ item.caller_id_number_formatted }}
                                                                     </dd>
                                                                 </div>
                                                                 <div class="sm:col-span-1">
-                                                                    <dt class="text-sm font-medium text-gray-500">To</dt>
+                                                                    <dt class="text-sm font-medium text-gray-500">{{ $t('To') }}</dt>
                                                                     <dd class="mt-1 text-sm text-gray-900">
                                                                         {{ item.caller_destination_formatted }}
                                                                     </dd>
@@ -116,7 +115,7 @@
                                                                     <dl class="divide-y divide-gray-200">
                                                                         <div
                                                                             class="flex justify-between py-3 text-sm font-medium">
-                                                                            <dt class="text-gray-900">{{ 'Waiting time' }}
+                                                                            <dt class="text-gray-900">{{ $t('Waiting time') }}
                                                                             </dt>
                                                                             <dd class="whitespace-nowrap text-gray-500">
                                                                                 {{ item.waitsec_formatted }}
@@ -124,7 +123,7 @@
                                                                         </div>
                                                                         <div
                                                                             class="flex justify-between py-3 text-sm font-medium">
-                                                                            <dt class="text-gray-900">{{ 'In-call duration'
+                                                                            <dt class="text-gray-900">{{ $t('In-call duration')
                                                                             }}</dt>
                                                                             <dd class="whitespace-nowrap text-gray-500">
 
@@ -133,16 +132,16 @@
                                                                         </div>
                                                                         <div
                                                                             class="flex justify-between py-3 text-sm font-medium">
-                                                                            <dt class="text-gray-900">{{ 'Total duration' }}
+                                                                            <dt class="text-gray-900">{{ $t('Total duration') }}
                                                                             </dt>
                                                                             <dd class="whitespace-nowrap text-gray-500">
                                                                                 {{ item.duration_formatted }}</dd>
                                                                         </div>
                                                                         <div
                                                                             class="flex justify-between py-3 text-sm font-medium">
-                                                                            <dt class="text-gray-900">{{ 'Status' }}</dt>
+                                                                            <dt class="text-gray-900">{{ $t('Status') }}</dt>
                                                                             <dd class="whitespace-nowrap text-gray-500">
-                                                                                {{ item.status }}</dd>
+                                                                                {{ statusLabel(item.status) }}</dd>
                                                                         </div>
                                                                     </dl>
                                                                 </div>
@@ -206,7 +205,7 @@
                                             <section aria-labelledby="timeline-title" class="lg:col-start-2">
                                                 <div class="bg-white px-4 py-5 shadow sm:rounded-lg sm:px-6">
                                                     <h2 id="timeline-title" class="text-lg font-medium text-gray-900">
-                                                        Timeline</h2>
+                                                        {{ $t('Timeline') }}</h2>
 
                                                     <!-- Timeline Feed -->
                                                     <div class="flow-root mt-2">
@@ -224,8 +223,7 @@
                                                                             <div
                                                                                 class="flex rounded-full bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-600">
                                                                                 <PhoneIncomingIcon class="w-4 h-4 mr-2" />
-                                                                                Call from
-                                                                                {{ item.caller_id_number_formatted }}
+                                                                                {{ $t('Call from :number', { number: item.caller_id_number_formatted }) }}
                                                                             </div>
                                                                         </div>
                                                                         <!-- </template> -->
@@ -242,10 +240,8 @@
                                                                         <div class="relative">
                                                                             <div
                                                                                 class="flex rounded-full bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-600">
-                                                                                <PhoneLocalIcon class="w-4 h-4 mr-2" /> Call
-                                                                                to
-                                                                                {{ item.caller_destination_formatted
-                                                                                }}
+                                                                                <PhoneLocalIcon class="w-4 h-4 mr-2" />
+                                                                                {{ $t('Call to :number', { number: item.caller_destination_formatted }) }}
                                                                             </div>
                                                                         </div>
                                                                     </div>
@@ -261,10 +257,8 @@
                                                                         <div class="relative">
                                                                             <div
                                                                                 class="flex rounded-full bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-600">
-                                                                                <PhoneLocalIcon class="w-4 h-4 mr-2" /> Call
-                                                                                to
-                                                                                {{ item.caller_destination_formatted
-                                                                                }}
+                                                                                <PhoneLocalIcon class="w-4 h-4 mr-2" />
+                                                                                {{ $t('Call to :number', { number: item.caller_destination_formatted }) }}
                                                                             </div>
                                                                         </div>
                                                                     </div>
@@ -279,7 +273,7 @@
                                                                         aria-hidden="true"></span>
                                                                     <div class="relative flex items-start space-x-3">
                                                                         <template
-                                                                            v-if="flow.dialplan_app === 'Outbound Call'">
+                                                                            v-if="flow.dialplan_app_type === 'outbound_call'">
                                                                             <div>
                                                                                 <div class="relative px-1">
                                                                                     <div
@@ -317,7 +311,7 @@
 
 
                                                                         <template
-                                                                            v-if="flow.dialplan_app === 'Inbound Call'">
+                                                                            v-if="flow.dialplan_app_type === 'inbound_call'">
                                                                             <div>
                                                                                 <div class="relative px-1">
                                                                                     <div
@@ -352,7 +346,7 @@
 
                                                                         </template>
 
-                                                                        <template v-if="flow.dialplan_app === 'Extension'">
+                                                                        <template v-if="flow.dialplan_app_type === 'extension'">
                                                                             <div>
                                                                                 <div class="relative px-1">
                                                                                     <div
@@ -378,9 +372,9 @@
                                                                                         ({{ flow.destination_number }})
                                                                                     </div>
                                                                                     <p v-if="flow.bridged_time != 0" class="mt-0.5 text-sm text-gray-500">
-                                                                                        Result: Answered</p>
+                                                                                        {{ $t('Result: Answered') }}</p>
                                                                                     <p v-if="flow.call_disposition" class="mt-0.5 text-sm text-gray-500">
-                                                                                        Result: {{ flow.call_disposition }}</p>
+                                                                                        {{ $t('Result: :disposition', { disposition: flow.call_disposition }) }}</p>
                                                                                     <p class="mt-0.5 text-sm text-gray-500">
                                                                                         {{ flow.duration_formatted }}</p>
                                                                                 </div>
@@ -388,7 +382,7 @@
                                                                         </template>
 
 
-                                                                        <template v-if="flow.dialplan_app === 'Ring Group'">
+                                                                        <template v-if="flow.dialplan_app_type === 'ring_group'">
                                                                             <div>
                                                                                 <div class="relative px-1">
                                                                                     <div
@@ -419,7 +413,7 @@
                                                                             </div>
                                                                         </template>
                                                                         <template
-                                                                            v-if="flow.dialplan_app === 'Auto Receptionist'">
+                                                                            v-if="flow.dialplan_app_type === 'auto_receptionist'">
                                                                             <div>
                                                                                 <div class="relative px-1">
                                                                                     <div
@@ -450,7 +444,7 @@
                                                                             </div>
                                                                         </template>
 
-                                                                        <template v-if="flow.dialplan_app === 'Voicemail'">
+                                                                        <template v-if="flow.dialplan_app_type === 'voicemail'">
                                                                             <div>
                                                                                 <div class="relative px-1">
                                                                                     <div
@@ -472,13 +466,13 @@
                                                                                     </div>
                                                                                     <div
                                                                                         class="font-semibold text-gray-900">
-                                                                                        Voicemail {{ flow.dialplan_name }}
+                                                                                        {{ $t('Voicemail :name', { name: flow.dialplan_name }) }}
                                                                                     </div>
                                                                                     <p v-if="item.voicemail_message">
-                                                                                        The caller left a message
+                                                                                        {{ $t('The caller left a message') }}
                                                                                     </p>
                                                                                     <p v-else="item.voicemail_message">
-                                                                                        The caller did not leave a message
+                                                                                        {{ $t('The caller did not leave a message') }}
                                                                                     </p>
 
                                                                                     <p class="mt-0.5 text-sm text-gray-500">
@@ -487,7 +481,7 @@
                                                                             </div>
                                                                         </template>
 
-                                                                        <template v-if="flow.dialplan_app === 'Schedule'">
+                                                                        <template v-if="flow.dialplan_app_type === 'schedule'">
                                                                             <div>
                                                                                 <div class="relative px-1">
                                                                                     <div
@@ -518,7 +512,7 @@
                                                                             </div>
                                                                         </template>
 
-                                                                        <template v-if="flow.dialplan_app === 'Virtual Fax'">
+                                                                        <template v-if="flow.dialplan_app_type === 'virtual_fax'">
                                                                             <div>
                                                                                 <div class="relative px-1">
                                                                                     <div
@@ -549,7 +543,7 @@
                                                                             </div>
                                                                         </template>
 
-                                                                        <template v-if="flow.dialplan_app === 'Contact Center Queue'">
+                                                                        <template v-if="flow.dialplan_app_type === 'contact_center_queue'">
                                                                             <div>
                                                                                 <div class="relative px-1">
                                                                                     <div
@@ -575,14 +569,14 @@
                                                                                         ({{ flow.destination_number }})
                                                                                     </div>
                                                                                     <p class="mt-0.5 text-sm text-gray-500">
-                                                                                        Result: {{ item.cc_result }}</p>
+                                                                                        {{ $t('Result: :disposition', { disposition: item.cc_result }) }}</p>
                                                                                     <p class="mt-0.5 text-sm text-gray-500">
                                                                                         {{ flow.duration_formatted }}</p>
                                                                                 </div>
                                                                             </div>
                                                                         </template>
 
-                                                                        <template v-if="flow.dialplan_app === 'Call Flow'">
+                                                                        <template v-if="flow.dialplan_app_type === 'call_flow'">
                                                                             <div>
                                                                                 <div class="relative px-1">
                                                                                     <div
@@ -614,7 +608,7 @@
                                                                         </template>
 
 
-                                                                        <template v-if="flow.dialplan_app === 'Park'">
+                                                                        <template v-if="flow.dialplan_app_type === 'park'">
                                                                             <div>
                                                                                 <div class="relative px-1">
                                                                                     <div
@@ -645,7 +639,7 @@
                                                                             </div>
                                                                         </template>
 
-                                                                        <template v-if="flow.dialplan_app && flow.dialplan_app.includes('Call Intercept')">
+                                                                        <template v-if="flow.dialplan_app_type === 'call_intercept'">
                                                                             <div>
                                                                                 <div class="relative px-1">
                                                                                     <div
@@ -676,7 +670,7 @@
                                                                             </div>
                                                                         </template>
 
-                                                                        <template v-if="flow.dialplan_app === 'Misc. Destination'">
+                                                                        <template v-if="flow.dialplan_app_type === 'misc_destination'">
                                                                             <div>
                                                                                 <div class="relative px-1">
                                                                                     <div
@@ -702,9 +696,9 @@
                                                                                         ({{ flow.destination_number }})
                                                                                     </div>
                                                                                     <p v-if="flow.bridged_time != 0" class="mt-0.5 text-sm text-gray-500">
-                                                                                        Result: Answered</p>
+                                                                                        {{ $t('Result: Answered') }}</p>
                                                                                     <p v-if="flow.call_disposition" class="mt-0.5 text-sm text-gray-500">
-                                                                                        Result: {{ flow.call_disposition }}</p>
+                                                                                        {{ $t('Result: :disposition', { disposition: flow.call_disposition }) }}</p>
                                                                                     <p class="mt-0.5 text-sm text-gray-500">
                                                                                         {{ flow.duration_formatted }}</p>
                                                                                 </div>
@@ -727,7 +721,7 @@
                                                                             <div
                                                                                 class="flex rounded-full bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-600">
                                                                                 <CallEndIcon class="w-4 h-4 mr-2" />
-                                                                                End of the call
+                                                                                {{ $t('End of the call') }}
 
                                                                             </div>
                                                                         </div>
@@ -788,6 +782,7 @@
 
 <script setup>
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
+import { trans } from "laravel-vue-i18n";
 import { XMarkIcon } from "@heroicons/vue/24/solid";
 import Loading from "../general/Loading.vue";
 
@@ -827,10 +822,10 @@ const props = defineProps({
 
 const handleCopyToClipboard = (text) => {
     navigator.clipboard.writeText(text).then(() => {
-        emit('success', 'success', { message: ['Copied to clipboard.'] });
+        emit('success', 'success', { message: [trans('Copied to clipboard.')] });
     }).catch((error) => {
         // Handle the error case
-        emit('error', { response: { data: { errors: { request: ['Failed to copy to clipboard.'] } } } });
+        emit('error', { response: { data: { errors: { request: [trans('Failed to copy to clipboard.')] } } } });
     });
 }
 
@@ -838,5 +833,39 @@ function capitalizeFirstLetter(string) {
     if (!string) return '';
     return string.charAt(0).toUpperCase() + string.slice(1);
 }
+
+const directionHeading = (direction) => {
+    switch (direction) {
+        case 'outbound':
+            return trans('Outbound Call');
+        case 'inbound':
+            return trans('Inbound Call');
+        case 'local':
+            return trans('Local Call');
+        default:
+            return capitalizeFirstLetter(direction) + ' Call';
+    }
+};
+
+const statusLabel = (status) => {
+    switch (status) {
+        case 'answered':
+            return trans('Answered');
+        case 'no_answer':
+            return trans('No Answer');
+        case 'cancelled':
+            return trans('Cancelled');
+        case 'voicemail':
+            return trans('Voicemail');
+        case 'missed call':
+            return trans('Missed Call');
+        case 'abandoned':
+            return trans('Abandoned');
+        case 'failed':
+            return trans('Failed');
+        default:
+            return status;
+    }
+};
 
 </script>

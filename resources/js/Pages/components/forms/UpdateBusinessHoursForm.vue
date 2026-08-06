@@ -18,7 +18,7 @@
                 <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
                     <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
                         <FormTabs view="vertical" @select="handleTabSelected">
-                            <FormTab name="business_hours" label="Business Hours" :elements="[
+                            <FormTab name="business_hours" :label="$t('Business Hours')" :elements="[
                                 'business_hours_header',
                                 'uuid_clean',
                                 'name',
@@ -42,7 +42,7 @@
 
                             ]" />
 
-                            <FormTab name="holidays" label="Holidays" :elements="[
+                            <FormTab name="holidays" :label="$t('Holidays')" :elements="[
                                 'holidays_header',
                                 'add_holiday',
                                 'holiday_table',
@@ -64,7 +64,7 @@
 
                                 <div class="mb-1">
                                     <div class="text-sm font-medium text-gray-600 mb-1">
-                                        Unique ID
+                                        {{ $t('Unique ID') }}
                                     </div>
 
                                     <div class="flex items-center group">
@@ -74,7 +74,7 @@
 
                                         <button type="button" @click="handleCopyToClipboard(options.item.uuid)"
                                             class="ml-2 p-1 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
-                                            title="Copy to clipboard">
+                                            :title="$t('Copy to clipboard')">
                                             <!-- Small Copy Icon -->
                                             <ClipboardDocumentIcon
                                                 class="h-4 w-4 text-gray-500 hover:text-gray-900  cursor-pointer" />
@@ -84,52 +84,52 @@
 
                             </StaticElement>
 
-                            <StaticElement name="business_hours_header" tag="h4" content="Business Hours" />
-                            <TextElement name="name" label="Name" :columns="{
+                            <StaticElement name="business_hours_header" tag="h4" :content="$t('Business Hours')" />
+                            <TextElement name="name" :label="$t('Name')" :columns="{
                                 sm: {
                                     container: 6,
                                 },
-                            }" placeholder="Enter Name" :floating="false" />
+                            }" :placeholder="$t('Enter Name')" :floating="false" />
 
-                            <TextElement name="extension" label="Extension" :columns="{
+                            <TextElement name="extension" :label="$t('Extension')" :columns="{
                                 sm: {
                                     container: 6,
                                 },
-                            }" placeholder="Enter Extension" :floating="false" />
+                            }" :placeholder="$t('Enter Extension')" :floating="false" />
 
                             <SelectElement name="timezone" :groups="true" :items="options.timezones" :search="true"
-                                :native="false" label="Time Zone" input-type="search" autocomplete="off"
-                                placeholder="Choose time zone" :floating="false" :strict="false" :columns="{
+                                :native="false" :label="$t('Time Zone')" input-type="search" autocomplete="off"
+                                :placeholder="$t('Choose time zone')" :floating="false" :strict="false" :columns="{
                                     sm: {
                                         container: 6,
                                     },
                                 }" />
 
-                            <TextElement name="description" label="Description" :columns="{
+                            <TextElement name="description" :label="$t('Description')" :columns="{
                                 sm: {
                                     container: 6,
                                 },
-                            }" placeholder="Enter Description" :floating="false" />
+                            }" :placeholder="$t('Enter Description')" :floating="false" />
 
                             <GroupElement name="container" />
 
                             <RadiogroupElement name="custom_hours" :items="[
                                 {
                                     value: false,
-                                    label: 'Always take calls (24/7)',
+                                    label: trans('Always take calls (24/7)'),
                                 },
                                 {
                                     value: true,
-                                    label: 'Only during specific hours',
+                                    label: trans('Only during specific hours'),
                                 },
-                            ]" label="When do you want to receive calls?" default="false"
+                            ]" :label="$t('When do you want to receive calls?')" default="false"
                                 @change="handleCustomHoursUpdate" />
-                            <ListElement name="time_slots" :sort="true" label="Time Slots" :initial="1"
+                            <ListElement name="time_slots" :sort="true" :label="$t('Time Slots')" :initial="1"
                                 :conditions="[['custom_hours', true]]"
                                 :add-classes="{ ListElement: { listItem: 'bg-white p-3 sm:p-4 mb-4 rounded-lg shadow-md' } }">
                                 <template #default="{ index }">
                                     <ObjectElement :name="index">
-                                        <CheckboxgroupElement name="weekdays" view="tabs" label="Weekdays" :items="[
+                                        <CheckboxgroupElement name="weekdays" view="tabs" :label="$t('Weekdays')" :items="[
                                             { value: '1', label: 'S' },
                                             { value: '2', label: 'M' },
                                             { value: '3', label: 'T' },
@@ -141,7 +141,7 @@
                             default: { container: 12 },
                             sm: { container: 6 },
                         }" />
-                                        <DateElement name="time_from" label="From" :time="true" :date="false"
+                                        <DateElement name="time_from" :label="$t('From')" :time="true" :date="false"
                                             :hour24="false" :columns="{
                                                 default: {
                                                     container: 12,
@@ -157,11 +157,11 @@
                                             sm: {
                                                 container: 3,
                                             },
-                                        }" size="sm" label="To" />
+                                        }" size="sm" :label="$t('To')" />
 
                                         <SelectElement name="action" :items="options.routing_types" label-prop="name"
-                                            :search="true" :native="false" label="Choose Action" input-type="search"
-                                            autocomplete="off" placeholder="Choose Action" :floating="false" :strict="false"
+                                            :search="true" :native="false" :label="$t('Choose Action')" input-type="search"
+                                            autocomplete="off" :placeholder="$t('Choose Action')" :floating="false" :strict="false"
                                             :columns="{ default: { container: 12 }, sm: { container: 6 } }" @change="(newValue, oldValue, el$) => {
                                                 let target = el$.form$.el$('time_slots').children$[index].children$['target']
                                                 // console.log(el$.form$.el$('time_slots').children$[index].children$['target']);
@@ -200,9 +200,9 @@
                                                 emit('error', error);
                                                 return [];  // Return an empty array in case of error
                                             }
-                                        }" :search="true" label-prop="name" :native="false" label="Target"
+                                        }" :search="true" label-prop="name" :native="false" :label="$t('Target')"
                                             input-type="search" allow-absent :object="true" autocomplete="off"
-                                            placeholder="Choose Target" :floating="false" :strict="false"
+                                            :placeholder="$t('Choose Target')" :floating="false" :strict="false"
                                             :columns="{ default: { container: 12 }, sm: { container: 6 } }" :conditions="[
                                                 ['time_slots.*.action', 'not_empty'],
                                                 ['time_slots.*.action', 'not_in', ['check_voicemail', 'company_directory', 'hangup']]
@@ -216,17 +216,17 @@
                             <StaticElement name="divider1" tag="hr" :conditions="[['custom_hours', true]]" />
                             <GroupElement name="container_4" :conditions="[['custom_hours', true]]" />
 
-                            <StaticElement name="closed_hours_header" tag="h4" content="Closed Hours"
-                                description="Define how incoming calls are handled outside of your business hours."
+                            <StaticElement name="closed_hours_header" tag="h4" :content="$t('Closed Hours')"
+                                :description="$t('Define how incoming calls are handled outside of your business hours.')"
                                 :conditions="[['custom_hours', true]]" />
 
                             <StaticElement name="247_header" tag="h4" content=""
-                                description="Define how incoming calls are handled."
+                                :description="$t('Define how incoming calls are handled.')"
                                 :conditions="[['custom_hours', false]]" />
 
                             <SelectElement name="after_hours_action" :items="options.routing_types" label-prop="name"
-                                :search="true" :native="false" label="Choose Action" input-type="search" autocomplete="off"
-                                placeholder="Choose Action" :floating="false" :strict="false"
+                                :search="true" :native="false" :label="$t('Choose Action')" input-type="search" autocomplete="off"
+                                :placeholder="$t('Choose Action')" :floating="false" :strict="false"
                                 :columns="{ default: { container: 12 }, sm: { container: 6 } }" @change="(newValue, oldValue, el$) => {
                                     let after_hours_target = el$.form$.el$('after_hours_target')
 
@@ -266,8 +266,8 @@
                                     emit('error', error);
                                     return [];  // Return an empty array in case of error
                                 }
-                            }" :search="true" label-prop="name" :native="false" label="Target" input-type="search"
-                                allow-absent :object="true" autocomplete="off" placeholder="Choose Target" :floating="false"
+                            }" :search="true" label-prop="name" :native="false" :label="$t('Target')" input-type="search"
+                                allow-absent :object="true" autocomplete="off" :placeholder="$t('Choose Target')" :floating="false"
                                 :strict="false" :columns="{ default: { container: 12 }, sm: { container: 6 } }" :conditions="[
                                     ['after_hours_action', 'not_empty'],
                                     ['after_hours_action', 'not_in', ['check_voicemail', 'company_directory', 'hangup']]
@@ -276,10 +276,10 @@
 
                             <!-- Holidays -->
 
-                            <StaticElement name="holidays_header" tag="h4" content="Holidays"
-                                description="Configure how incoming calls are routed on holidays and other special dates outside your normal business hours." />
+                            <StaticElement name="holidays_header" tag="h4" :content="$t('Holidays')"
+                                :description="$t('Configure how incoming calls are routed on holidays and other special dates outside your normal business hours.')" />
 
-                            <ButtonElement name="add_holiday" button-label="Add Holiday" align="right"
+                            <ButtonElement name="add_holiday" :button-label="$t('Add Holiday')" align="right"
                                 @click="handleAddHolidayButtonClick" :loading="addHolidayButtonLoading"
                                 :conditions="[() => options.permissions.holidays_create]" />
 
@@ -293,7 +293,7 @@
 
 
 
-                            <ButtonElement name="submit" button-label="Save" :submits="true" align="right" />
+                            <ButtonElement name="submit" :button-label="$t('Save')" :submits="true" align="right" />
 
                         </FormElements>
                     </div>
@@ -310,15 +310,16 @@
             @success="emitSuccessToParentFromChild" @refresh-data="getHolidays" />
 
         <ConfirmationModal :show="showDeleteConfirmationModal" @close="showDeleteConfirmationModal = false"
-            @confirm="confirmDeleteAction" :header="'Confirm Deletion'" :loading="isDeleteHolidayLoading"
-            :text="'This action will permanently delete the selected holiday. Are you sure you want to proceed?'"
-            :confirm-button-label="'Delete'" cancel-button-label="Cancel" />
+            @confirm="confirmDeleteAction" :header="$t('Confirm Deletion')" :loading="isDeleteHolidayLoading"
+            :text="$t('This action will permanently delete the selected holiday. Are you sure you want to proceed?')"
+            :confirm-button-label="$t('Delete')" :cancel-button-label="$t('Cancel')" />
 
     </div>
 </template>
 
 <script setup>
 import { ref } from "vue";
+import { trans } from "laravel-vue-i18n";
 import HolidayTable from "./../HolidayTable.vue";
 import CreateHolidayHourModal from "./../modal/CreateHolidayHourModal.vue"
 import UpdateHolidayHourModal from "./../modal/UpdateHolidayHourModal.vue"
@@ -345,10 +346,10 @@ const emit = defineEmits(['close', 'error', 'success', 'refresh-data']);
 
 const handleCopyToClipboard = (text) => {
     navigator.clipboard.writeText(text).then(() => {
-        emit('success', 'success', { message: ['Copied to clipboard.'] });
+        emit('success', 'success', { message: [trans('Copied to clipboard.')] });
     }).catch((error) => {
         // Handle the error case
-        emit('error', { response: { data: { errors: { request: ['Failed to copy to clipboard.'] } } } });
+        emit('error', { response: { data: { errors: { request: [trans('Failed to copy to clipboard.')] } } } });
     });
 }
 
@@ -515,7 +516,7 @@ const handleError = (error, details, form$) => {
         case 'prepare':
             console.log(error) // Error object
 
-            form$.messageBag.append('Could not prepare form')
+            form$.messageBag.append(trans('Could not prepare form'))
             break
 
         // Error occured because response status is outside of 2xx
@@ -535,14 +536,14 @@ const handleError = (error, details, form$) => {
         case 'cancel':
             console.log(error) // Error object
 
-            form$.messageBag.append('Request cancelled')
+            form$.messageBag.append(trans('Request cancelled'))
             break
 
         // Some other errors happened (no response object)
         case 'other':
             console.log(error) // Error object
 
-            form$.messageBag.append('Couldn\'t submit form')
+            form$.messageBag.append(trans('Couldn\'t submit form'))
             break
     }
 }

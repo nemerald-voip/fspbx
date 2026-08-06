@@ -152,21 +152,21 @@ class CDR extends Model
     public function getCcResultAttribute()
     {
         if ($this->cc_cause == 'answered') {
-            return 'Answered';
+            return __('Answered');
         }
 
         if ($this->cc_cause == 'cancel') {
             switch ($this->cc_cancel_reason) {
                 case 'NONE':
-                    return "No specific reason";
+                    return __("No specific reason");
                 case 'NO_AGENT_TIMEOUT':
-                    return "No agents in queue";
+                    return __("No agents in queue");
                 case 'BREAK_OUT':
-                    return "Abandoned";
+                    return __("Abandoned");
                 case 'EXIT_WITH_KEY':
-                    return "The caller pressed the exit key";
+                    return __("The caller pressed the exit key");
                 case 'TIMEOUT':
-                    return "Queue timeout reached";
+                    return __("Queue timeout reached");
             }
         }
         return null;

@@ -65,11 +65,11 @@ class StoreBusinessHoursRequest extends FormRequest
                         $start = Carbon::createFromFormat('h:i a', $from);
                         $end   = Carbon::createFromFormat('h:i a', $value);
                     } catch (\Exception $e) {
-                        return $fail("Invalid time format in slot #{$idx}.");
+                        return $fail(__('Invalid time format in slot #:index.', ['index' => $idx]));
                     }
 
                     if ($end->lte($start)) {
-                        $fail("End time must be after the start time in slot #{$idx}.");
+                        $fail(__('End time must be after the start time in slot #:index.', ['index' => $idx]));
                     }
                 },
             ],
@@ -96,7 +96,7 @@ class StoreBusinessHoursRequest extends FormRequest
                         ], true)
                         && empty($value)
                     ) {
-                        $fail('A target must be provided when action is selected.');
+                        $fail(__('A target must be provided when action is selected.'));
                     }
                 },
             ],
@@ -122,7 +122,7 @@ class StoreBusinessHoursRequest extends FormRequest
                         ], true)
                         && empty($value)
                     ) {
-                        $fail('A target must be provided when action is selected.');
+                        $fail(__('A target must be provided when action is selected.'));
                     }
                 },
             ],
@@ -133,10 +133,10 @@ class StoreBusinessHoursRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'time_slots.*.time_from.required' => 'The from field is required',
-            'time_slots.*.time_to.required' => 'The to field is required',
-            'time_slots.*.weekdays.required' => 'Please select at least one day',
-            'time_slots.*.action.required' => 'The action field is required',
+            'time_slots.*.time_from.required' => __('The from field is required'),
+            'time_slots.*.time_to.required' => __('The to field is required'),
+            'time_slots.*.weekdays.required' => __('Please select at least one day'),
+            'time_slots.*.action.required' => __('The action field is required'),
         ];
     }
 

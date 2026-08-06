@@ -24,7 +24,7 @@
                                 <button type="button"
                                     class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                     @click="handleClose">
-                                    <span class="sr-only">Close</span>
+                                    <span class="sr-only">{{ $t('Close') }}</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
@@ -40,7 +40,7 @@
                                                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                         </svg>
                                     </div>
-                                    <div class="text-lg text-blue-600 m-auto">Loading...</div>
+                                    <div class="text-lg text-blue-600 m-auto">{{ $t('Loading...') }}</div>
                                 </div>
                             </div>
 
@@ -52,7 +52,7 @@
                                     <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
                                         <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
                                             <FormTabs view="vertical">
-                                                <FormTab name="settings" label="Settings" :elements="[
+                                                <FormTab name="settings" :label="$t('Settings')" :elements="[
                                                     'settings_title',
                                                     'ivr_menu_enabled',
                                                     'ivr_menu_name',
@@ -62,7 +62,7 @@
                                                     'submit_settings',
                                                 ]" />
 
-                                                <FormTab name="advanced" label="Advanced" :elements="[
+                                                <FormTab name="advanced" :label="$t('Advanced')" :elements="[
                                                     'advanced_title',
                                                     'caller_id_prefix',
                                                     'digit_length',
@@ -84,45 +84,45 @@
                                         <div
                                             class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
                                             <FormElements>
-                                                <StaticElement name="settings_title" tag="h4" content="Settings"
-                                                    description="Configure the main settings for this virtual receptionist." />
+                                                <StaticElement name="settings_title" tag="h4" :content="$t('Settings')"
+                                                    :description="$t('Configure the main settings for this virtual receptionist.')" />
 
                                                 <HiddenElement name="ivr_menu_enabled" :meta="true" default="true" />
 
-                                                <TextElement name="ivr_menu_name" label="Name"
+                                                <TextElement name="ivr_menu_name" :label="$t('Name')"
                                                     :columns="{ sm: { container: 6 } }" />
 
-                                                <TextElement name="ivr_menu_extension" label="Extension"
+                                                <TextElement name="ivr_menu_extension" :label="$t('Extension')"
                                                     :columns="{ sm: { container: 6 } }" />
 
-                                                <TextElement name="ivr_menu_description" label="Description"
-                                                    placeholder="Enter description" :floating="false" />
+                                                <TextElement name="ivr_menu_description" :label="$t('Description')"
+                                                    :placeholder="$t('Enter description')" :floating="false" />
 
                                                 <GroupElement name="container_settings" />
-                                                <ButtonElement name="submit_settings" button-label="Save"
+                                                <ButtonElement name="submit_settings" :button-label="$t('Save')"
                                                     :submits="true" align="right" />
 
-                                                <StaticElement name="advanced_title" tag="h4" content="Advanced"
-                                                    description="Set advanced settings for this virtual receptionist." />
+                                                <StaticElement name="advanced_title" tag="h4" :content="$t('Advanced')"
+                                                    :description="$t('Set advanced settings for this virtual receptionist.')" />
 
-                                                <TextElement name="caller_id_prefix" label="Caller ID Name Prefix"
+                                                <TextElement name="caller_id_prefix" :label="$t('Caller ID Name Prefix')"
                                                     :columns="{ sm: { container: 6 } }" />
 
-                                                <TextElement name="digit_length" label="Digit Length"
+                                                <TextElement name="digit_length" :label="$t('Digit Length')"
                                                     :columns="{ sm: { container: 6 } }" />
 
-                                                <TextElement name="prompt_timeout" label="Input Timeout (seconds)"
+                                                <TextElement name="prompt_timeout" :label="$t('Input Timeout (seconds)')"
                                                     placeholder="3" :columns="{ sm: { container: 6 } }"
-                                                    description="How long to wait for caller input before counting it as no input." />
+                                                    :description="$t('How long to wait for caller input before counting it as no input.')" />
 
-                                                <TextElement name="pin" label="PIN Number"
+                                                <TextElement name="pin" :label="$t('PIN Number')"
                                                     :columns="{ sm: { container: 6 } }"
-                                                    description="Use a PIN to protect this menu from unauthorized access." />
+                                                    :description="$t('Use a PIN to protect this menu from unauthorized access.')" />
 
                                                 <SelectElement name="ring_back_tone" :items="options.ring_back_tones"
-                                                    :search="true" :native="false" label="Ring Back Tone" :groups="true"
+                                                    :search="true" :native="false" :label="$t('Ring Back Tone')" :groups="true"
                                                     input-type="search" autocomplete="off"
-                                                    placeholder="Choose an option" :strict="false"
+                                                    :placeholder="$t('Choose an option')" :strict="false"
                                                     :columns="{ sm: { container: 6 } }" />
 
                                                 <GroupElement name="ring_back_tone_actions" :columns="{ container: 6 }">
@@ -146,8 +146,8 @@
 
                                                 <SelectElement name="invalid_input_message" :items="options.sounds"
                                                     :groups="true" :search="true" :native="false"
-                                                    label="Invalid Input Message" input-type="search" autocomplete="off"
-                                                    placeholder="Choose an option" :strict="false"
+                                                    :label="$t('Invalid Input Message')" input-type="search" autocomplete="off"
+                                                    :placeholder="$t('Choose an option')" :strict="false"
                                                     :columns="{ sm: { container: 6 } }" />
 
                                                 <GroupElement name="invalid_input_actions" :columns="{ container: 6 }">
@@ -170,9 +170,9 @@
                                                 </GroupElement>
 
                                                 <SelectElement name="exit_message" :items="options.sounds"
-                                                    :groups="true" :search="true" :native="false" label="Exit Message"
+                                                    :groups="true" :search="true" :native="false" :label="$t('Exit Message')"
                                                     input-type="search" autocomplete="off"
-                                                    placeholder="Choose an option" :strict="false"
+                                                    :placeholder="$t('Choose an option')" :strict="false"
                                                     :columns="{ sm: { container: 6 } }" />
 
                                                 <GroupElement name="exit_message_actions" :columns="{ container: 6 }">
@@ -194,12 +194,12 @@
                                                     </ButtonElement>
                                                 </GroupElement>
 
-                                                <ToggleElement name="direct_dial" text="Enable Direct Dialing"
+                                                <ToggleElement name="direct_dial" :text="$t('Enable Direct Dialing')"
                                                     true-value="true" false-value="false"
-                                                    description="Allows callers to dial extensions directly." />
+                                                    :description="$t('Allows callers to dial extensions directly.')" />
 
                                                 <GroupElement name="container_advanced" />
-                                                <ButtonElement name="submit_advanced" button-label="Save"
+                                                <ButtonElement name="submit_advanced" :button-label="$t('Save')"
                                                     :submits="true" align="right" />
                                             </FormElements>
                                         </div>
@@ -222,13 +222,14 @@ import {
     PlayCircleIcon,
     PauseCircleIcon,
 } from "@heroicons/vue/24/solid";
+import { trans } from "laravel-vue-i18n";
 
 const props = defineProps({
     show: Boolean,
     options: Object,
     header: {
         type: String,
-        default: 'New Virtual Receptionist',
+        default: () => trans('New Virtual Receptionist'),
     },
     loading: Boolean,
 });
@@ -326,16 +327,16 @@ const handleError = (error, details, form$) => {
 
     switch (details.type) {
         case 'prepare':
-            form$.messageBag.append('Could not prepare form');
+            form$.messageBag.append(trans('Could not prepare form'));
             break;
         case 'submit':
             emit('error', error);
             break;
         case 'cancel':
-            form$.messageBag.append('Request cancelled');
+            form$.messageBag.append(trans('Request cancelled'));
             break;
         case 'other':
-            form$.messageBag.append('Couldn’t submit form');
+            form$.messageBag.append(trans('Couldn’t submit form'));
             break;
     }
 };
@@ -425,7 +426,7 @@ const playInvalidInputMessage = async () => {
 
         currentInvalidInputMessageAudio.value.play().catch(() => {
             isInvalidInputMessageAudioPlaying.value = false;
-            emit('error', { message: 'Audio playback failed' });
+            emit('error', { message: trans('Audio playback failed') });
         });
 
         currentInvalidInputMessageAudio.value.addEventListener('ended', () => {
@@ -473,7 +474,7 @@ const playExitMessage = async () => {
 
         currentExitMessageAudio.value.play().catch(() => {
             isExitMessageAudioPlaying.value = false;
-            emit('error', { message: 'Audio playback failed' });
+            emit('error', { message: trans('Audio playback failed') });
         });
 
         currentExitMessageAudio.value.addEventListener('ended', () => {
@@ -523,7 +524,7 @@ const playRingBackTone = async () => {
 
         currentRingBackToneAudio.value.play().catch(() => {
             isRingBackTonePlaying.value = false;
-            emit('error', { message: 'Audio playback failed' });
+            emit('error', { message: trans('Audio playback failed') });
         });
 
         currentRingBackToneAudio.value.addEventListener('ended', () => {
