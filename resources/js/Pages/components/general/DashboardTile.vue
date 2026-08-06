@@ -35,6 +35,7 @@ import {
     UsersIcon,
     UserGroupIcon,
     CalendarDaysIcon,
+    CreditCardIcon,
     HeartIcon
 } from "@heroicons/vue/24/solid";
 import { ClockIcon } from "@heroicons/vue/24/outline";
@@ -65,6 +66,7 @@ const iconMap = {
     UserGroupIcon: UserGroupIcon,
     VoicemailIcon: VoicemailIcon,
     CalendarDaysIcon: CalendarDaysIcon,
+    CreditCardIcon: CreditCardIcon,
     FaxIcon: FaxIcon,
     CallHistoryIcon: CallHistoryIcon,
     DevicesIcon: DevicesIcon,
@@ -83,6 +85,7 @@ const styleMap = {
     ContactPhoneIcon: { bgColor: 'bg-sky-50', textColor: 'text-sky-700', hoverTextColor: 'group-hover:text-sky-900' },
     VoicemailIcon: { bgColor: 'bg-fuchsia-50', textColor: 'text-fuchsia-700', hoverTextColor: 'group-hover:text-fuchsia-900' },
     CalendarDaysIcon: { bgColor: 'bg-rose-50', textColor: 'text-rose-700', hoverTextColor: 'group-hover:text-rose-900' },
+    CreditCardIcon: { bgColor: 'bg-amber-50', textColor: 'text-amber-700', hoverTextColor: 'group-hover:text-amber-900' },
     FaxIcon: { bgColor: 'bg-indigo-50', textColor: 'text-indigo-700', hoverTextColor: 'group-hover:text-indigo-900' },
     CallHistoryIcon: { bgColor: 'bg-red-50', textColor: 'text-red-700', hoverTextColor: 'group-hover:text-red-900' },
     DevicesIcon: { bgColor: 'bg-lime-50', textColor: 'text-lime-700', hoverTextColor: 'group-hover:text-lime-900' },

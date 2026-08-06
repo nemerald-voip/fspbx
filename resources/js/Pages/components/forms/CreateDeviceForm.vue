@@ -24,7 +24,7 @@
                                 <button type="button"
                                     class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                     @click="emit('close')">
-                                    <span class="sr-only">Close</span>
+                                    <span class="sr-only">{{ $t('Close') }}</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
@@ -42,7 +42,7 @@
                                             </path>
                                         </svg>
                                     </div>
-                                    <div class="text-lg text-blue-600 m-auto">Loading...</div>
+                                    <div class="text-lg text-blue-600 m-auto">{{ $t('Loading...') }}</div>
                                 </div>
                             </div>
 
@@ -68,7 +68,7 @@
                                     <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
                                         <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
                                             <FormTabs view="vertical" @select="handleTabSelected">
-                                                <FormTab name="page0" label="Device Settings" :elements="[
+                                                <FormTab name="page0" :label="$t('Device Settings')" :elements="[
                                                     'h4',
                                                     'device_address',
                                                     'device_template',
@@ -81,7 +81,7 @@
                                                     'submit',
 
                                                 ]" />
-                                                <FormTab name="lines" label="Lines" :elements="[
+                                                <FormTab name="lines" :label="$t('Lines')" :elements="[
                                                     'lines_container',
                                                     'lines_title',
                                                     'add_key',
@@ -91,7 +91,7 @@
                                                     'submit_lines',
                                                 ]" />
 
-                                                <FormTab name="keys" label="Function Keys" :elements="[
+                                                <FormTab name="keys" :label="$t('Function Keys')" :elements="[
                                                     'lines_container',
                                                     'keys_title',
                                                     'add_key',
@@ -108,33 +108,33 @@
                                             class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
                                             <FormElements>
 
-                                                <StaticElement name="h4" tag="h4" content="Device Settings" />
+                                                <StaticElement name="h4" tag="h4" :content="$t('Device Settings')" />
 
-                                                <TextElement name="device_address" label="MAC Address"
-                                                    placeholder="Enter MAC address" :floating="false" :columns="{
+                                                <TextElement name="device_address" :label="$t('MAC Address')"
+                                                    :placeholder="$t('Enter MAC address')" :floating="false" :columns="{
                                                         sm: {
                                                             container: 6,
                                                         },
                                                     }" />
 
-                                                <TextElement name="serial_number" label="Serial Number (Optional)"
-                                                    placeholder="Enter Serial Number" :floating="false" :columns="{
+                                                <TextElement name="serial_number" :label="$t('Serial Number (Optional)')"
+                                                    :placeholder="$t('Enter Serial Number')" :floating="false" :columns="{
                                                         sm: {
                                                             container: 6,
                                                         },
                                                     }" />
 
                                                 <SelectElement name="device_template" :items="options.templates"
-                                                    :search="true" :native="false" label="Device Template"
+                                                    :search="true" :native="false" :label="$t('Device Template')"
                                                     input-type="search" autocomplete="off" label-prop="name"
                                                     value-prop="value" :floating="false"
-                                                    placeholder="Select Template" />
+                                                    :placeholder="$t('Select Template')" />
 
                                                 <SelectElement name="device_key_template_uuid"
                                                     :items="options.key_templates" :search="true" :native="false"
-                                                    label="Key Template" input-type="search" autocomplete="off"
+                                                    :label="$t('Key Template')" input-type="search" autocomplete="off"
                                                     label-prop="name" value-prop="value"
-                                                    placeholder="Select Key Template (Optional)" :floating="false"
+                                                    :placeholder="$t('Select Key Template (Optional)')" :floating="false"
                                                     :disabled="[['device_profile_uuid', 'not_in', [null, '', 'NULL']]]"
                                                     :conditions="[() => options?.permissions?.device_key_template_assign]"
                                                     @change="(newValue, oldValue, el$) => {
@@ -144,9 +144,9 @@
                                                     }" />
 
                                                 <SelectElement name="device_profile_uuid" :items="options.profiles"
-                                                    :search="true" :native="false" label="Device Profile (Deprecated)"
+                                                    :search="true" :native="false" :label="$t('Device Profile (Deprecated)')"
                                                     input-type="search" autocomplete="off" label-prop="name"
-                                                    value-prop="value" placeholder="Select Profile (Optional)"
+                                                    value-prop="value" :placeholder="$t('Select Profile (Optional)')"
                                                     :floating="false"
                                                     :disabled="[['device_key_template_uuid', 'not_in', [null, '', 'NULL']]]"
                                                     @change="(newValue, oldValue, el$) => {
@@ -155,19 +155,19 @@
                                                         }
                                                     }" />
 
-                                                <TextElement name="device_description" label="Description"
-                                                    placeholder="Enter description" :floating="false" />
+                                                <TextElement name="device_description" :label="$t('Description')"
+                                                    :placeholder="$t('Enter description')" :floating="false" />
 
 
                                                 <GroupElement name="container_3" />
 
-                                                <ButtonElement name="submit" button-label="Save" :submits="true"
+                                                <ButtonElement name="submit" :button-label="$t('Save')" :submits="true"
                                                     align="right" />
 
 
                                                 <!-- Lines tab-->
-                                                <StaticElement name="lines_title" tag="h4" content="Device Lines"
-                                                    description="Assign lines to this device." />
+                                                <StaticElement name="lines_title" tag="h4" :content="$t('Device Lines')"
+                                                    :description="$t('Assign lines to this device.')" />
 
                                                 <GroupElement name="lines_container" />
 
@@ -207,7 +207,7 @@
                                                                 :default="null" />
 
 
-                                                            <TextElement name="line_number" label="Key" :rules="[
+                                                            <TextElement name="line_number" :label="$t('Key')" :rules="[
                                                                 'nullable',
                                                                 'numeric',
                                                             ]" autocomplete="off" :columns="{
@@ -217,7 +217,7 @@
                                                                 },
                                                             }" :default="nextLineNumber" />
 
-                                                            <SelectElement name="line_type_id" label="Function"
+                                                            <SelectElement name="line_type_id" :label="$t('Function')"
                                                                 :items="options.line_key_types" :search="true"
                                                                 label-prop="name" :native="false" input-type="search"
                                                                 autocomplete="off" :columns="{
@@ -225,7 +225,7 @@
                                                                     sm: {
                                                                         container: 3,
                                                                     },
-                                                                }" placeholder="Choose Function" :floating="false"
+                                                                }" :placeholder="$t('Choose Function')" :floating="false"
                                                                 @change="(newValue, oldValue, el$) => {
 
                                                                     if (newValue == 'sharedline') {
@@ -237,7 +237,7 @@
 
                                                                 }" />
 
-                                                            <SelectElement v-if="!isExternalLine(index)" name="auth_id" label="Ext/Number"
+                                                            <SelectElement v-if="!isExternalLine(index)" name="auth_id" :label="$t('Ext/Number')"
                                                                 :items="options.extensions" label-prop="name"
                                                                 :search="true" :native="false" input-type="search"
                                                                 autocomplete="off" :columns="{
@@ -245,7 +245,7 @@
                                                                     sm: {
                                                                         container: 4,
                                                                     },
-                                                                }" placeholder="Choose Ext/Number" :floating="false"
+                                                                }" :placeholder="$t('Choose Ext/Number')" :floating="false"
                                                                 @change="(newValue, oldValue, el$) => {
 
                                                                     el$.form$.el$('device_lines').children$[index].children$['display_name'].update(newValue);
@@ -255,7 +255,7 @@
                                                                 }" />
 
                                                             <StaticElement v-else name="external_auth_hint"
-                                                                label="Ext/Number"
+                                                                :label="$t('Ext/Number')"
                                                                 :columns="{
 
                                                                     sm: {
@@ -264,11 +264,11 @@
                                                                 }">
                                                                 <div
                                                                     class="flex h-9 items-center rounded-md bg-gray-100 px-3 text-sm text-gray-900 ring-1 ring-inset ring-gray-300">
-                                                                    Edit in Advanced Settings
+                                                                    {{ $t('Edit in Advanced Settings') }}
                                                                 </div>
                                                             </StaticElement>
 
-                                                            <TextElement name="display_name" label="Display Name"
+                                                            <TextElement name="display_name" :label="$t('Display Name')"
                                                                 :columns="{
 
                                                                     default: {
@@ -277,7 +277,7 @@
                                                                     sm: {
                                                                         container: 3,
                                                                     },
-                                                                }" placeholder="Display Name" :floating="false" />
+                                                                }" :placeholder="$t('Display Name')" :floating="false" />
 
                                                             <StaticElement label="&nbsp;" name="key_advanced" :columns="{
 
@@ -297,17 +297,17 @@
                                                             </StaticElement>
 
                                                             <FormChildModal :show="advModalIndex === index"
-                                                                header="Advanced Line Settings" :loading="false"
+                                                                :header="$t('Advanced Line Settings')" :loading="false"
                                                                 @close="closeAdvSettings">
                                                                 <div class="px-5 grid gap-y-4">
-                                                                    <TextElement name="server_address" label="Domain"
-                                                                        placeholder="Enter domain name"
+                                                                    <TextElement name="server_address" :label="$t('Domain')"
+                                                                        :placeholder="$t('Enter domain name')"
                                                                         :floating="false"
                                                                         :default="options.default_line_options?.server_address" />
 
                                                                     <TextElement name="user_id"
-                                                                        label="User ID"
-                                                                        placeholder="Enter user Id"
+                                                                        :label="$t('User ID')"
+                                                                        :placeholder="$t('Enter user Id')"
                                                                         :floating="false"
                                                                         :default="options.default_line_options?.user_id"
                                                                         :conditions="[
@@ -316,8 +316,8 @@
                                                                         ]" />
 
                                                                     <TextElement name="auth_id"
-                                                                        label="Auth ID"
-                                                                        placeholder="Enter auth Id"
+                                                                        :label="$t('Auth ID')"
+                                                                        :placeholder="$t('Enter auth Id')"
                                                                         :floating="false"
                                                                         :default="options.default_line_options?.auth_id"
                                                                         :conditions="[
@@ -326,8 +326,8 @@
                                                                         ]" />
 
                                                                     <TextElement name="password"
-                                                                        label="SIP Password"
-                                                                        placeholder="Enter sip password"
+                                                                        :label="$t('SIP Password')"
+                                                                        :placeholder="$t('Enter sip password')"
                                                                         :floating="false"
                                                                         :default="options.default_line_options?.password"
                                                                         :conditions="[
@@ -336,54 +336,54 @@
                                                                         ]" />
 
                                                                     <TextElement name="server_address_primary"
-                                                                        label="Primary Server Address"
-                                                                        placeholder="Enter primary server address"
+                                                                        :label="$t('Primary Server Address')"
+                                                                        :placeholder="$t('Enter primary server address')"
                                                                         :floating="false"
                                                                         :default="options.default_line_options?.server_address_primary"
                                                                         :conditions="[() => options?.permissions?.manage_device_line_primary_server]" />
 
                                                                     <TextElement name="server_address_secondary"
-                                                                        label="Secondary Server Address"
-                                                                        placeholder="Enter secondary server address"
+                                                                        :label="$t('Secondary Server Address')"
+                                                                        :placeholder="$t('Enter secondary server address')"
                                                                         :floating="false"
                                                                         :default="options.default_line_options?.server_address_secondary"
                                                                         :conditions="[() => options?.permissions?.manage_device_line_secondary_server]" />
 
                                                                     <TextElement name="outbound_proxy_primary"
-                                                                        label="Primary Proxy Address"
-                                                                        placeholder="Enter primary proxy address"
+                                                                        :label="$t('Primary Proxy Address')"
+                                                                        :placeholder="$t('Enter primary proxy address')"
                                                                         :floating="false"
                                                                         :default="options.default_line_options?.outbound_proxy_primary"
                                                                         :conditions="[() => options?.permissions?.manage_device_line_primary_proxy]" />
 
                                                                     <TextElement name="outbound_proxy_secondary"
-                                                                        label="Secondary Proxy Address"
-                                                                        placeholder="Enter secondary Proxy address"
+                                                                        :label="$t('Secondary Proxy Address')"
+                                                                        :placeholder="$t('Enter secondary Proxy address')"
                                                                         :floating="false"
                                                                         :default="options.default_line_options?.outbound_proxy_secondary"
                                                                         :conditions="[() => options?.permissions?.manage_device_line_secondary_proxy]" />
 
-                                                                    <TextElement name="sip_port" label="SIP Port"
-                                                                        placeholder="Enter SIP port" :floating="false"
+                                                                    <TextElement name="sip_port" :label="$t('SIP Port')"
+                                                                        :placeholder="$t('Enter SIP port')" :floating="false"
                                                                         :default="options.default_line_options?.sip_port" />
 
                                                                     <SelectElement name="sip_transport"
-                                                                        label="SIP Transport"
+                                                                        :label="$t('SIP Transport')"
                                                                         :items="options.sip_transport_types"
                                                                         :search="true" label-prop="name" :native="false"
                                                                         input-type="search" autocomplete="off"
-                                                                        placeholder="Select SIP Transport"
+                                                                        :placeholder="$t('Select SIP Transport')"
                                                                         :floating="false"
                                                                         :default="options.default_line_options?.sip_transport" />
 
                                                                     <TextElement name="register_expires"
-                                                                        label="Register Expires (Seconds)"
-                                                                        placeholder="Enter expiry time (seconds)"
+                                                                        :label="$t('Register Expires (Seconds)')"
+                                                                        :placeholder="$t('Enter expiry time (seconds)')"
                                                                         :floating="false"
                                                                         :default="options.default_line_options?.register_expires" />
 
                                                                     <ButtonElement name="close_advanced"
-                                                                        button-label="Close" align="center" :full="true"
+                                                                        :button-label="$t('Close')" align="center" :full="true"
                                                                         @click="closeAdvSettings" />
                                                                 </div>
                                                             </FormChildModal>
@@ -395,13 +395,13 @@
 
                                                 <GroupElement name="lines_container2" />
 
-                                                <ButtonElement name="submit_lines" button-label="Save" :submits="true"
+                                                <ButtonElement name="submit_lines" :button-label="$t('Save')" :submits="true"
                                                     align="right" />
 
 
                                                 <!-- Function Keys -->
-                                                <StaticElement name="keys_title" tag="h4" content="Device Function Keys"
-                                                    description="Assign fucntion keys to this device." />
+                                                <StaticElement name="keys_title" tag="h4" :content="$t('Device Function Keys')"
+                                                    :description="$t('Assign fucntion keys to this device.')" />
 
 
                                                 <GroupElement name="keys_container" />
@@ -417,7 +417,7 @@
                                                             <HiddenElement name="_generated_label" :meta="true"
                                                                 :default="null" />
 
-                                                            <TextElement name="key_index" label="Key" :rules="[
+                                                            <TextElement name="key_index" :label="$t('Key')" :rules="[
                                                                 'nullable',
                                                                 'numeric',
                                                             ]" autocomplete="off" :columns="{
@@ -427,7 +427,7 @@
                                                                 },
                                                             }" :default="nextKeyNumber" />
 
-                                                            <SelectElement name="key_type" label="Type"
+                                                            <SelectElement name="key_type" :label="$t('Type')"
                                                                 :items="keyTypes" :search="true" label-prop="name"
                                                                 :native="false" input-type="search" autocomplete="off"
                                                                 :columns="{
@@ -435,7 +435,7 @@
                                                                     sm: {
                                                                         container: 3,
                                                                     },
-                                                                }" placeholder="Choose Function" :floating="false"
+                                                                }" :placeholder="$t('Choose Function')" :floating="false"
                                                                 @change="(newValue, oldValue, el$) => {
 
                                                                     let key_value_select = el$.form$.el$('device_keys.' + index + '.key_value_select')
@@ -449,7 +449,7 @@
 
                                                                 }" />
 
-                                                            <SelectElement name="key_value_select" label="Value"
+                                                            <SelectElement name="key_value_select" :label="$t('Value')"
                                                                 label-prop="name" value-prop="extension" :search="true"
                                                                 :native="false" :submit="false"
                                                                 :create="['blf', 'speed_dial', 'park']
@@ -459,18 +459,18 @@
                                                                     sm: {
                                                                         container: 4,
                                                                     },
-                                                                }" placeholder="Choose Ext/Number" :floating="false"
+                                                                }" :placeholder="$t('Choose Ext/Number')" :floating="false"
                                                                 :items="(query, input) => getKeyValueSelectItems(query, input, index)"
                                                                 @change="(newValue, oldValue, el$) => updateLabel(newValue, oldValue, el$, index)"
                                                                 :conditions="[
                                                                     ['device_keys.*.key_type', ['line', 'check_voicemail', 'blf', 'speed_dial', 'park']]
                                                                 ]" />
 
-                                                            <TextElement name="key_value_text" label="Value" :columns="{
+                                                            <TextElement name="key_value_text" :label="$t('Value')" :columns="{
                                                                 sm: {
                                                                     container: 4,
                                                                 },
-                                                            }" placeholder="Enter Value" :floating="false" :disabled="[
+                                                            }" :placeholder="$t('Enter Value')" :floating="false" :disabled="[
                                                                 ['device_keys.*.key_type', '']
                                                             ]" :conditions="[
                                                                 ['device_keys.*.key_type', '!=', ['line', 'check_voicemail', 'blf', 'speed_dial', 'park']]
@@ -479,7 +479,7 @@
                                                             <HiddenElement name="key_value" :meta="true"
                                                                 :default="null" />
 
-                                                            <TextElement name="key_label" label="Label" :columns="{
+                                                            <TextElement name="key_label" :label="$t('Label')" :columns="{
 
                                                                 default: {
                                                                     container: 10,
@@ -487,7 +487,7 @@
                                                                 sm: {
                                                                     container: 3,
                                                                 },
-                                                            }" :placeholder="form$?.data?.device_keys?.[index]?._generated_label ?? 'Enter Value'"
+                                                            }" :placeholder="form$?.data?.device_keys?.[index]?._generated_label ?? $t('Enter Value')"
                                                                 :floating="false" :disabled="[
                                                                     ['device_keys.*.key_type', ['', 'line']]
                                                                 ]" />
@@ -519,7 +519,7 @@
 
                                                 <GroupElement name="keys_container2" />
 
-                                                <ButtonElement name="submit_keys" button-label="Save" :submits="true"
+                                                <ButtonElement name="submit_keys" :button-label="$t('Save')" :submits="true"
                                                     align="right" />
 
                                             </FormElements>
@@ -545,6 +545,7 @@ import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } fro
 import { XMarkIcon } from "@heroicons/vue/24/solid";
 import { Cog8ToothIcon } from "@heroicons/vue/24/outline";
 import FormChildModal from "../FormChildModal.vue"
+import { trans } from "laravel-vue-i18n";
 
 
 const props = defineProps({
@@ -565,12 +566,12 @@ const keyValueOptionsByIndex = reactive({})
 const parkLabelFromValue = (value, base = 5900) => {
     const n = parseInt(value, 10)
     if (Number.isFinite(n) && n > base) {
-        return `Park ${n - base}`
+        return trans('Park :number', { number: n - base })
     }
 
     // Fallback: last 1–2 digits
     const m = String(value).match(/(\d{1,2})$/)
-    return m ? `Park ${parseInt(m[1], 10)}` : ''
+    return m ? trans('Park :number', { number: parseInt(m[1], 10) }) : ''
 }
 
 const nameOnlyFromOption = (opt) => {
@@ -622,13 +623,13 @@ const nextKeyNumber = computed(() => {
 })
 
 const keyTypes = [
-    { value: '', name: 'N/A' },
-    { value: 'line', name: 'Line' },
-    { value: 'blf', name: 'BLF' },
-    { value: 'speed_dial', name: 'Speed Dial' },
-    { value: 'check_voicemail', name: 'Check Voicemail' },
-    { value: 'park', name: 'Park & Retrieve' },
-    { value: 'dtmf', name: 'DTMF' },
+    { value: '', name: trans('N/A') },
+    { value: 'line', name: trans('Line') },
+    { value: 'blf', name: trans('BLF') },
+    { value: 'speed_dial', name: trans('Speed Dial') },
+    { value: 'check_voicemail', name: trans('Check Voicemail') },
+    { value: 'park', name: trans('Park & Retrieve') },
+    { value: 'dtmf', name: trans('DTMF') },
 ]
 
 const keyTypesWithSelect = ['line', 'check_voicemail', 'blf', 'speed_dial', 'park']
@@ -647,7 +648,7 @@ const getKeyValueSelectItems = async (query, input, index) => {
             const displayName = form$.el$(`device_lines.${i}.display_name`)?.value ?? ''
             return {
                 extension: `${i + 1}`,
-                name: `Line ${i + 1}${displayName ? ' - ' + displayName : ''}`,
+                name: trans('Line :number', { number: i + 1 }) + (displayName ? ' - ' + displayName : ''),
             }
         })
     }
@@ -690,7 +691,7 @@ const getKeyValueSelectItems = async (query, input, index) => {
             const ext = String(base + i)
             return {
                 extension: ext,
-                name: `Park ${i + 1} (${ext})`,
+                name: trans('Park :number (:ext)', { number: i + 1, ext }),
             }
         })
     }
@@ -716,7 +717,7 @@ const updateLabel = (newValue, oldValue, el$, index) => {
 
     if (keyType === 'check_voicemail') {
         const selected = (keyValueOptionsByIndex[index] ?? []).find(o => String(o.extension) === String(newValue))
-        label = selected?.extension ? `VM ${selected.extension}` : null
+        label = selected?.extension ? trans('VM :extension', { extension: selected.extension }) : null
     }
 
     if (keyType === 'blf' || keyType === 'speed_dial') {
@@ -812,7 +813,7 @@ const handleError = (error, details, form$) => {
         case 'prepare':
             console.log(error) // Error object
 
-            form$.messageBag.append('Could not prepare form')
+            form$.messageBag.append(trans('Could not prepare form'))
             break
 
         // Error occured because response status is outside of 2xx
@@ -832,14 +833,14 @@ const handleError = (error, details, form$) => {
         case 'cancel':
             console.log(error) // Error object
 
-            form$.messageBag.append('Request cancelled')
+            form$.messageBag.append(trans('Request cancelled'))
             break
 
         // Some other errors happened (no response object)
         case 'other':
             console.log(error) // Error object
 
-            form$.messageBag.append('Couldn\'t submit form')
+            form$.messageBag.append(trans('Couldn\'t submit form'))
             break
     }
 }

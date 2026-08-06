@@ -3,7 +3,7 @@
 
     <div class="m-3">
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-            <template #title>Devices</template>
+            <template #title>{{ $t('Devices') }}</template>
 
             <template #filters>
                 <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
@@ -13,11 +13,11 @@
                     <input type="text" v-model="filterData.search" name="mobile-search-candidate"
                         id="mobile-search-candidate"
                         class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                        :placeholder="$t('Search')" @keydown.enter="handleSearchButtonClick" />
                     <input type="text" v-model="filterData.search" name="desktop-search-candidate"
                         id="desktop-search-candidate"
                         class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                        :placeholder="$t('Search')" @keydown.enter="handleSearchButtonClick" />
                 </div>
             </template>
 
@@ -25,7 +25,7 @@
                 <button v-if="permissions.device_create" type="button"
                     @click.prevent="handleCreateButtonClick()"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                    Create
+                    {{ $t('Create') }}
                 </button>
 
                 <button v-if="permissions.manage_cloud_provision_providers" type="button"
@@ -37,12 +37,12 @@
                 <button v-if="permissions.device_import" type="button" @click.prevent="handleImportButtonClick()"
                     class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     <DocumentArrowUpIcon class="h-5 w-5" aria-hidden="true" />
-                    Import CSV
+                    {{ $t('Import CSV') }}
                 </button>
 
                 <a v-if="permissions.device_key_template_view" type="button" :href="routes.key_templates"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                    Key Templates
+                    {{ $t('Key Templates') }}
                 </a>
 
                 <a v-if="permissions.device_profile_index" type="button" :href="routes.profiles"
@@ -53,13 +53,13 @@
                 <button v-if="!filterData.showGlobal && permissions.device_view_global" type="button"
                     @click.prevent="handleShowGlobal()"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                    Show global
+                    {{ $t('Show global') }}
                 </button>
 
                 <button v-if="filterData.showGlobal && permissions.device_view_global" type="button"
                     @click.prevent="handleShowLocal()"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                    Show local
+                    {{ $t('Show local') }}
                 </button>
             </template>
 
@@ -71,7 +71,7 @@
             </template>
             <template #table-header>
 
-                <TableColumnHeader header="MAC Address"
+                <TableColumnHeader :header="$t('MAC Address')"
                     class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
@@ -79,28 +79,28 @@
                         :has-selected-items="selectedItems.length > 0" /> -->
                     <div class="pl-4 flex items-center cursor-pointer select-none"
                         @click="handleSortRequest('device_address')">
-                        <span class="mr-2">MAC Address</span>
+                        <span class="mr-2">{{ $t('MAC Address') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'device_address' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'device_address' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
                     </div>                </TableColumnHeader>
-                <TableColumnHeader v-if="filterData.showGlobal" header="Domain"
+                <TableColumnHeader v-if="filterData.showGlobal" :header="$t('Domain')"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
-                <TableColumnHeader header="Template"
+                <TableColumnHeader :header="$t('Template')"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Profile / Key Template" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader v-if="!filterData.showGlobal" header="Assigned extension"
+                <TableColumnHeader :header="$t('Profile / Key Template')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader v-if="!filterData.showGlobal" :header="$t('Assigned extension')"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('device_description')">
-                        <span class="mr-2">Description</span>
+                        <span class="mr-2">{{ $t('Description') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'device_description' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'device_description' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
                     </div>
                 </TableColumnHeader>
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('device_provisioned_date')">
-                        <span class="mr-2">Last Contact</span>
+                        <span class="mr-2">{{ $t('Last Contact') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'device_provisioned_date' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'device_provisioned_date' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
                     </div>
@@ -112,16 +112,16 @@
             <template v-if="selectPageItems" v-slot:current-selection>
                 <td colspan="9">
                     <div class="text-sm text-center m-2">
-                        <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
+                        {{ $t(':count items are selected.', { count: selectedItems.length }) }}
                         <button v-if="!selectAll && selectedItems.length !== data.total"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleSelectAll">
-                            Select all {{ data.total }} items
+                            {{ $t('Select all :total items', { total: data.total }) }}
                         </button>
                         <button v-if="selectAll"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleClearSelection">
-                            Clear selection
+                            {{ $t('Clear selection') }}
                         </button>
                     </div>
                 </td>
@@ -179,11 +179,11 @@
                         <template #default>
                             <div v-if="row.profile?.device_profile_name || row.key_template?.name">
                                 <div v-if="row.profile?.device_profile_name">
-                                    <span class="font-semibold">Profile:</span>
+                                    <span class="font-semibold">{{ $t('Profile:') }}</span>
                                     <span> {{ row.profile.device_profile_name }}</span>
                                 </div>
                                 <div v-if="row.key_template?.name">
-                                    <span class="font-semibold">Key Template:</span>
+                                    <span class="font-semibold">{{ $t('Key Template:') }}</span>
                                     <span> {{ row.key_template.name }}</span>
                                 </div>
                             </div>
@@ -197,7 +197,7 @@
                                 <div v-for="line in [...row.lines].sort((a, b) => Number(a.line_number) - Number(b.line_number))"
                                     :key="line.device_line_uuid">
                                     <span v-if="row.lines.length > 1" class="font-semibold">
-                                        Line {{ line.line_number }}:
+                                        {{ $t('Line :number:', { number: line.line_number }) }}
                                     </span>
                                     <span>{{ line.external_line ? line.auth_id : (line.extension?.name_formatted || line.auth_id) }}</span>
                                 </div>
@@ -217,8 +217,8 @@
                             <div class="invisible opacity-0 group-hover:visible group-hover:opacity-100 group-focus:visible group-focus:opacity-100 transition-opacity duration-300 absolute z-50 bottom-full left-1/2 -translate-x-1/2 pb-2">
                                 
                                 <div class="px-3 py-2 text-xs leading-relaxed text-white bg-gray-900 rounded shadow-lg whitespace-nowrap cursor-text select-text">
-                                    <div v-if="row.device_provisioned_ip">IP: {{ row.device_provisioned_ip }}</div>
-                                    <div v-if="row.device_provisioned_agent">Agent: {{ row.device_provisioned_agent }}</div>
+                                    <div v-if="row.device_provisioned_ip">{{ $t('IP: :ip', { ip: row.device_provisioned_ip }) }}</div>
+                                    <div v-if="row.device_provisioned_agent">{{ $t('Agent: :agent', { agent: row.device_provisioned_agent }) }}</div>
                                     
                                     <div class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
                                 </div>
@@ -251,7 +251,7 @@
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap justify-end">
-                                <ejs-tooltip v-if="permissions.device_update" :content="'Edit'"
+                                <ejs-tooltip v-if="permissions.device_update" :content="$t('Edit')"
                                     position='TopCenter' target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
                                         <PencilSquareIcon @click="handleEditButtonClick(row.device_uuid)"
@@ -261,7 +261,7 @@
                                 </ejs-tooltip>
 
                                 <ejs-tooltip v-if="permissions.device_provisioning_preview"
-                                    :content="'Preview provisioning'" position='TopCenter'
+                                    :content="$t('Preview provisioning')" position='TopCenter'
                                     :target="'#provisioning_preview_tooltip_target_' + row.device_uuid">
                                     <div :id="'provisioning_preview_tooltip_target_' + row.device_uuid">
                                         <MagnifyingGlassIcon @click="handleProvisioningPreview(row.device_uuid)"
@@ -269,7 +269,7 @@
                                     </div>
                                 </ejs-tooltip>
 
-                                <ejs-tooltip v-if="permissions.device_destroy" :content="'Delete'"
+                                <ejs-tooltip v-if="permissions.device_destroy" :content="$t('Delete')"
                                     position='TopCenter' target="#delete_tooltip_target">
                                     <div id="delete_tooltip_target">
                                         <TrashIcon @click="handleSingleItemDeleteRequest(row.device_uuid)"
@@ -287,9 +287,9 @@
                 <!-- Conditional rendering for 'no records' message -->
                 <div v-if="data.data.length === 0" class="text-center my-5 ">
                     <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
+                    <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ $t('No results found') }}</h3>
                     <p class="mt-1 text-sm text-gray-500">
-                        Adjust your search and try again.
+                        {{ $t('Adjust your search and try again.') }}
                     </p>
                 </div>
             </template>
@@ -309,22 +309,22 @@
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
-    <NotificationSimple :show="restartRequestNotificationErrorTrigger" :isSuccess="false" :header="'Warning'"
-        :text="'Please select at least one device'" @update:show="restartRequestNotificationErrorTrigger = false" />
-    <NotificationSimple :show="restartRequestNotificationSuccessTrigger" :isSuccess="true" :header="'Success'"
-        :text="'Restart request has been submitted'" @update:show="restartRequestNotificationSuccessTrigger = false" />
+    <NotificationSimple :show="restartRequestNotificationErrorTrigger" :isSuccess="false" :header="$t('Warning')"
+        :text="$t('Please select at least one device')" @update:show="restartRequestNotificationErrorTrigger = false" />
+    <NotificationSimple :show="restartRequestNotificationSuccessTrigger" :isSuccess="true" :header="$t('Success')"
+        :text="$t('Restart request has been submitted')" @update:show="restartRequestNotificationSuccessTrigger = false" />
 
     <CreateDeviceForm :show="showCreateModal" :options="itemOptions" :loading="isModalLoading"
-        :header="'Create New Device'" @close="showCreateModal = false" @error="handleErrorResponse"
+        :header="$t('Create New Device')" @close="showCreateModal = false" @error="handleErrorResponse"
         @success="showNotification" @refresh-data="refreshCurrentPage" />
 
     <UpdateDeviceForm :show="showUpdateModal" :options="itemOptions" :loading="isModalLoading"
-        :header="'Update Device - ' + (itemOptions?.item?.device_address_formatted ?? 'loading')"
+        :header="$t('Update Device - :device', { device: itemOptions?.item?.device_address_formatted ?? $t('Loading...') })"
         @close="showUpdateModal = false" @error="handleErrorResponse" @success="showNotification"
         @refresh-data="refreshCurrentPage" />
 
     <BulkUpdateDeviceForm :items="selectedItems" :options="itemOptions" :show="showBulkUpdateModal"
-        :header="'Bulk Update'" :loading="isModalLoading" @close="handleModalClose"
+        :header="$t('Bulk Update')" :loading="isModalLoading" @close="handleModalClose"
         @refresh-data="refreshCurrentPage" />
 
 
@@ -337,13 +337,13 @@
         @confirm="confirmDeleteAction" />
 
     <ConfirmationModal :show="confirmationRestartTrigger" @close="confirmationRestartTrigger = false"
-        @confirm="confirmRestartAction" :header="'Are you sure?'" :text="'Confirm restart of selected devices.'"
-        :confirm-button-label="'Restart'" cancel-button-label="Cancel" />
+        @confirm="confirmRestartAction" :header="$t('Are you sure?')" :text="$t('Confirm restart of selected devices.')"
+        :confirm-button-label="$t('Restart')" :cancel-button-label="$t('Cancel')" />
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
 
-    <UploadModal :show="showUploadModal" @close="showUploadModal = false" :header="'Upload File'" @upload="uploadFile"
+    <UploadModal :show="showUploadModal" @close="showUploadModal = false" :header="$t('Upload File')" @upload="uploadFile"
         @download-template="downloadTemplateFile" :is-submitting="isUploadingFile" :errors="uploadErrors" />
 
     <ImportDevicesModal v-if="showImportPreviewModal" :show="showImportPreviewModal" :options="itemOptions"
@@ -363,15 +363,15 @@
                 <div v-else class="flex min-h-0 flex-1 flex-col gap-3">
                     <div class="grid gap-2 text-sm text-gray-600 sm:grid-cols-3">
                         <div>
-                            <span class="font-semibold text-gray-900">Device:</span>
+                            <span class="font-semibold text-gray-900">{{ $t('Device:') }}</span>
                             {{ provisioningPreviewData?.device?.device_address_formatted || provisioningPreviewData?.device?.device_address || '—' }}
                         </div>
                         <div>
-                            <span class="font-semibold text-gray-900">Vendor:</span>
+                            <span class="font-semibold text-gray-900">{{ $t('Vendor:') }}</span>
                             {{ provisioningPreviewData?.device?.device_vendor || '—' }}
                         </div>
                         <div>
-                            <span class="font-semibold text-gray-900">Template:</span>
+                            <span class="font-semibold text-gray-900">{{ $t('Template:') }}</span>
                             {{ provisioningPreviewTemplateLabel }}
                         </div>
                     </div>
@@ -379,12 +379,12 @@
                     <div v-if="provisioningPreviewFiles.length === 0"
                         class="flex min-h-0 flex-1 flex-col items-center justify-center rounded-md border border-dashed border-gray-300 bg-gray-50 p-8 text-center">
                         <MagnifyingGlassIcon class="h-10 w-10 text-gray-300" aria-hidden="true" />
-                        <p class="mt-2 text-sm font-medium text-gray-900">No provisioning files generated</p>
-                        <p class="mt-1 text-sm text-gray-500">This device's template did not produce any files to preview.</p>
+                        <p class="mt-2 text-sm font-medium text-gray-900">{{ $t('No provisioning files generated') }}</p>
+                        <p class="mt-1 text-sm text-gray-500">{{ $t("This device's template did not produce any files to preview.") }}</p>
                     </div>
 
                     <template v-else>
-                        <div role="tablist" aria-label="Provisioning files"
+                        <div role="tablist" :aria-label="$t('Provisioning files')"
                             class="flex flex-nowrap items-center gap-2 overflow-x-auto border-b border-gray-200 pb-2">
                             <button v-for="(file, index) in provisioningPreviewFiles" :key="file.flavor" type="button"
                                 role="tab" :aria-selected="activeProvisioningPreviewFlavor === file.flavor"
@@ -416,15 +416,15 @@
                                             : 'bg-white text-gray-900 ring-gray-300 hover:bg-gray-50',
                                         'rounded-md px-2.5 py-1.5 text-sm font-semibold shadow-sm ring-1 ring-inset'
                                     ]">
-                                    Wrap
+                                    {{ $t('Wrap') }}
                                 </button>
                                 <button type="button" @click="copyProvisioningPreview"
                                     class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                                    Copy
+                                    {{ $t('Copy') }}
                                 </button>
                                 <button type="button" @click="downloadProvisioningPreview"
                                     class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                                    Download
+                                    {{ $t('Download') }}
                                 </button>
                             </div>
                         </div>
@@ -443,13 +443,13 @@
         </template>
     </AddEditItemModal>
 
-    <AddEditItemModal :show="showDuplicateModal" :header="'Duplicate Device'" :loading="isModalLoading"
+    <AddEditItemModal :show="showDuplicateModal" :header="$t('Duplicate Device')" :loading="isModalLoading"
         @close="showDuplicateModal = false">
         <template #modal-body>
             <div class="p-6">
                 <div class="mb-4">
                     <label for="new_mac" class="block text-sm font-medium leading-6 text-gray-900">
-                        New MAC Address
+                        {{ $t('New MAC Address') }}
                     </label>
                     <div class="mt-2">
                         <input type="text" id="new_mac" v-model="newMacAddress" placeholder="00:00:00:00:00:00"
@@ -466,10 +466,10 @@
 
                 <div class="mt-6 flex items-center justify-end gap-x-6">
                     <button type="button" @click="showDuplicateModal = false"
-                        class="text-sm font-semibold leading-6 text-gray-900">Cancel</button>
+                        class="text-sm font-semibold leading-6 text-gray-900">{{ $t('Cancel') }}</button>
                     <button type="button" @click="submitDuplicateRequest"
                         class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                        Duplicate
+                        {{ $t('Duplicate') }}
                     </button>
                 </div>
             </div>
@@ -553,7 +553,7 @@ const provisioningPreviewData = ref(null);
 const provisioningPreviewError = ref(null);
 const activeProvisioningPreviewFlavor = ref(null);
 const provisioningPreviewWrap = ref(false);
-let tooltipCopyContent = ref('Copy to Clipboard');
+let tooltipCopyContent = ref(trans('Copy to Clipboard'));
 
 const data = ref({
     data: [],
@@ -669,8 +669,8 @@ const focusProvisioningPreviewTab = (index, event) => {
 
 const formatBytes = (bytes) => {
     const value = Number(bytes);
-    if (!Number.isFinite(value) || value < 0) return '— bytes';
-    if (value < 1024) return `${value} bytes`;
+    if (!Number.isFinite(value) || value < 0) return '— ' + trans('bytes');
+    if (value < 1024) return trans(':count bytes', { count: value });
     if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
 
     return `${(value / (1024 * 1024)).toFixed(1)} MB`;
@@ -680,7 +680,7 @@ const provisioningPreviewHeader = computed(() => {
     const device = provisioningPreviewData.value?.device;
     const label = device?.device_address_formatted || device?.device_address;
 
-    return label ? `Provisioning Preview - ${label}` : 'Provisioning Preview';
+    return label ? trans('Provisioning Preview - :label', { label }) : trans('Provisioning Preview');
 });
 
 const provisioningPreviewTemplateLabel = computed(() => {
@@ -745,7 +745,7 @@ const handleProvisioningPreview = async (uuid) => {
         const errors = error.response?.data?.errors;
         provisioningPreviewError.value = errors
             ? Object.values(errors).flat().join(' ')
-            : 'Could not render provisioning preview.';
+            : trans('Could not render provisioning preview.');
     } finally {
         isProvisioningPreviewLoading.value = false;
     }
@@ -820,9 +820,9 @@ const copyProvisioningPreview = async () => {
 
     try {
         await navigator.clipboard.writeText(activeProvisioningPreviewFile.value.content);
-        showNotification('success', { preview: ['Provisioning file copied.'] });
+        showNotification('success', { preview: [trans('Provisioning file copied.')] });
     } catch (error) {
-        showNotification('error', { preview: ['Could not copy provisioning file.'] });
+        showNotification('error', { preview: [trans('Could not copy provisioning file.')] });
     }
 };
 
@@ -841,7 +841,7 @@ const downloadProvisioningPreview = () => {
 
 const submitDuplicateRequest = () => {
     if (!newMacAddress.value) {
-        formErrors.value = { new_mac_address: ['MAC Address is required'] };
+        formErrors.value = { new_mac_address: [trans('MAC Address is required')] };
         return;
     }
 
@@ -870,12 +870,12 @@ const bulkActions = computed(() => {
     const actions = [
         {
             id: 'bulk_restart',
-            label: 'Restart',
+            label: trans('Restart'),
             icon: 'RestartIcon'
         },
         {
             id: 'bulk_update',
-            label: 'Update',
+            label: trans('Update'),
             icon: 'PencilSquareIcon'
         }
     ];
@@ -884,7 +884,7 @@ const bulkActions = computed(() => {
     if (permissions.device_destroy) {
         actions.push({
             id: 'bulk_delete',
-            label: 'Delete',
+            label: trans('Delete'),
             icon: 'TrashIcon'
         });
     }
@@ -1021,9 +1021,9 @@ const handleCloudProvisioningButtonClick = () => {
 
 const handleCopyToClipboard = (macAddress) => {
     navigator.clipboard.writeText(macAddress).then(() => {
-        tooltipCopyContent.value = 'Copied'
+        tooltipCopyContent.value = trans('Copied')
         setTimeout(() => {
-            tooltipCopyContent.value = 'Copy to Clipboard'
+            tooltipCopyContent.value = trans('Copy to Clipboard')
         }, 500);
     }).catch((error) => {
         // Handle the error case
@@ -1135,7 +1135,7 @@ const renderRequestedPage = (url) => {
 
 const handleFormErrorResponse = (error) => {
     if (error.request?.status === 419) {
-        showNotification('error', { request: ["Session expired. Reload the page"] });
+        showNotification('error', { request: [trans("Session expired. Reload the page")] });
     } else if (error.response) {
         // The request was made and the server responded with a status code
         // that falls out of the range of 2xx

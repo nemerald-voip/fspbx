@@ -17,12 +17,12 @@
                             class="relative transform rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-7xl sm:p-6">
                             <div class="mb-5 flex items-center justify-between">
                                 <DialogTitle as="h3" class="text-base font-semibold leading-6 text-gray-900">
-                                    Import Preview & Edit
+                                    {{ $t('Import Preview & Edit') }}
                                 </DialogTitle>
                                 <button type="button"
                                     class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                     @click="emit('close')">
-                                    <span class="sr-only">Close</span>
+                                    <span class="sr-only">{{ $t('Close') }}</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
@@ -35,26 +35,26 @@
                                     <path class="opacity-75" fill="currentColor"
                                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                 </svg>
-                                <span class="ml-2 text-gray-600">Processing...</span>
+                                <span class="ml-2 text-gray-600">{{ $t('Processing...') }}</span>
                             </div>
 
                             <div v-else class="w-full">
                                 <Vueform ref="form$" :endpoint="false" :display-errors="false"
                                     :default="{ items: importData }">
-                                    <StaticElement name="bulk_header" tag="h4" content="Bulk Apply"
+                                    <StaticElement name="bulk_header" tag="h4" :content="$t('Bulk Apply')"
                                         class="mb-2 mt-2 text-sm font-semibold text-gray-700" />
 
                                     <GroupElement name="bulk_group" :columns="{ lg: 12, md: 12, sm: 12 }"
                                         class="mb-6 flex items-start rounded-lg border border-gray-200 bg-gray-50 p-4">
-                                        <SelectElement name="bulk_device_template" label="Template" :floating="false"
+                                        <SelectElement name="bulk_device_template" :label="$t('Template')" :floating="false"
                                             :items="options?.templates || []" label-prop="name" value-prop="value"
                                             :search="true" :native="false" input-type="search" autocomplete="off"
-                                            placeholder="Select template..." :columns="{ lg: 5, md: 5, sm: 12 }" />
+                                            :placeholder="$t('Select template...')" :columns="{ lg: 5, md: 5, sm: 12 }" />
 
-                                        <SelectElement name="bulk_device_key_template_uuid" label="Key Template"
+                                        <SelectElement name="bulk_device_key_template_uuid" :label="$t('Key Template')"
                                             :floating="false" :items="options?.key_templates || []" label-prop="name"
                                             value-prop="value" :search="true" :native="false" input-type="search"
-                                            autocomplete="off" placeholder="Select key template..."
+                                            autocomplete="off" :placeholder="$t('Select key template...')"
                                             :columns="{ lg: 5, md: 5, sm: 12 }" />
 
                                         <StaticElement name="apply_bulk_btn" :columns="{ lg: 2, md: 2, sm: 12 }">
@@ -62,7 +62,7 @@
                                                 <div class="pt-[26px]">
                                                     <button type="button" @click.prevent="handleBulkApply"
                                                         class="inline-flex w-full justify-center whitespace-nowrap rounded-md bg-indigo-600 px-3 py-[9px] text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                                                        Apply to All
+                                                        {{ $t('Apply to All') }}
                                                     </button>
                                                 </div>
                                             </template>
@@ -73,11 +73,11 @@
                                         <template #default>
                                             <div
                                                 class="mb-2 hidden grid-cols-12 gap-4 border-b border-gray-200 bg-white px-2 py-2 text-xs font-bold uppercase tracking-wider text-gray-500 lg:grid">
-                                                <div class="col-span-2 pl-2">MAC Address</div>
-                                                <div class="col-span-2 pl-2">Serial Number</div>
-                                                <div class="col-span-2 pl-2">Extension</div>
-                                                <div class="col-span-3 pl-2">Template</div>
-                                                <div class="col-span-3 pl-2">Key Template</div>
+                                                <div class="col-span-2 pl-2">{{ $t('MAC Address') }}</div>
+                                                <div class="col-span-2 pl-2">{{ $t('Serial Number') }}</div>
+                                                <div class="col-span-2 pl-2">{{ $t('Extension') }}</div>
+                                                <div class="col-span-3 pl-2">{{ $t('Template') }}</div>
+                                                <div class="col-span-3 pl-2">{{ $t('Key Template') }}</div>
                                             </div>
                                         </template>
                                     </StaticElement>
@@ -95,21 +95,21 @@
                                                     :items="options?.extensions || []" label-prop="name"
                                                     value-prop="value" :search="true" :native="false"
                                                     input-type="search" autocomplete="off"
-                                                    placeholder="Select extension..."
+                                                    :placeholder="$t('Select extension...')"
                                                     :columns="{ lg: 2, md: 3, sm: 12 }" />
 
                                                 <SelectElement name="device_template" :floating="false"
                                                     :items="options?.templates || []" label-prop="name"
                                                     value-prop="value" :search="true" :native="false"
                                                     input-type="search" autocomplete="off"
-                                                    placeholder="Select template..."
+                                                    :placeholder="$t('Select template...')"
                                                     :columns="{ lg: 3, md: 3, sm: 12 }" />
 
                                                 <SelectElement name="device_key_template_uuid" :floating="false"
                                                     :items="options?.key_templates || []" label-prop="name"
                                                     value-prop="value" :search="true" :native="false"
                                                     input-type="search" autocomplete="off"
-                                                    placeholder="Select key template..."
+                                                    :placeholder="$t('Select key template...')"
                                                     :columns="{ lg: 3, md: 3, sm: 12 }" />
                                             </ObjectElement>
                                         </template>
@@ -120,13 +120,13 @@
                                     <button type="button"
                                         class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
                                         @click="emit('close')">
-                                        Cancel
+                                        {{ $t('Cancel') }}
                                     </button>
                                     <button type="button"
                                         class="rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600"
                                         :disabled="loading || isSubmitting"
                                         @click.prevent="manualSubmit">
-                                        {{ loading || isSubmitting ? 'Importing...' : 'Confirm Import' }}
+                                        {{ loading || isSubmitting ? $t('Importing...') : $t('Confirm Import') }}
                                     </button>
                                 </div>
                             </div>

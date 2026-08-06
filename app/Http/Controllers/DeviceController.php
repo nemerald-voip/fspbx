@@ -107,7 +107,7 @@ class DeviceController extends Controller
         // 1. Permission Check
         if (!userCheckPermission('device_add')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']]
+                'messages' => ['error' => [__('Access denied.')]]
             ], 403);
         }
 
@@ -160,7 +160,7 @@ class DeviceController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages' => ['success' => ['Device duplicated successfully.']],
+                'messages' => ['success' => [__('Device duplicated successfully.')]],
                 'device_uuid' => $newDevice->device_uuid
             ], 201);
         } catch (\Throwable $e) {
@@ -269,7 +269,7 @@ class DeviceController extends Controller
 
         if ($this->keyTemplateAssignmentDenied($validated)) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -284,13 +284,13 @@ class DeviceController extends Controller
             app(DeviceService::class)->create($validated);
 
             return response()->json([
-                'messages' => ['success' => ['Device created successfully.']]
+                'messages' => ['success' => [__('Device created successfully.')]]
             ], 201);
         } catch (\Exception $e) {
             logger('DeviceController@store error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to create device']]
+                'errors' => ['server' => [__('Failed to create device')]]
             ], 500);
         }
     }
@@ -311,14 +311,14 @@ class DeviceController extends Controller
 
         if ($this->keyTemplateAssignmentDenied($inputs)) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
         if (!$device) {
             return response()->json([
                 'success' => false,
-                'errors' => ['model' => ['Device not found']]
+                'errors' => ['model' => [__('Device not found')]]
             ], 404);
         }
 
@@ -326,13 +326,13 @@ class DeviceController extends Controller
             app(DeviceService::class)->update($device, $inputs);
 
             return response()->json([
-                'messages' => ['success' => ['Device updated succesfully.']]
+                'messages' => ['success' => [__('Device updated succesfully.')]]
             ], 200);
         } catch (\Exception $e) {
             logger('DeviceController@update error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to update this device']]
+                'errors' => ['server' => [__('Failed to update this device')]]
             ], 500);
         }
     }
@@ -345,7 +345,7 @@ class DeviceController extends Controller
 
         if ($this->keyTemplateAssignmentDenied($data)) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -355,7 +355,7 @@ class DeviceController extends Controller
         if (!$device) {
             return response()->json([
                 'success' => false,
-                'errors' => ['model' => ['Device not found']]
+                'errors' => ['model' => [__('Device not found')]]
             ], 404);
         }
 
@@ -409,14 +409,14 @@ class DeviceController extends Controller
             }
 
             return response()->json([
-                'messages' => ['success' => ['Device assigned/updated.']]
+                'messages' => ['success' => [__('Device assigned/updated.')]]
             ], 200);
         } catch (\Exception $e) {
             logger('DeviceController@assign error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to assign device']]
+                'errors' => ['server' => [__('Failed to assign device')]]
             ], 500);
         }
     }
@@ -431,7 +431,7 @@ class DeviceController extends Controller
     {
         if (! userCheckPermission('user_delete')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']]
+                'messages' => ['error' => [__('Access denied.')]]
             ], 403);
         }
 
@@ -443,7 +443,7 @@ class DeviceController extends Controller
 
             if (empty($uuids) || !$extension_uuid) {
                 return response()->json([
-                    'messages' => ['error' => ['No devices or extension provided.']]
+                    'messages' => ['error' => [__('No devices or extension provided.')]]
                 ], 400);
             }
 
@@ -451,7 +451,7 @@ class DeviceController extends Controller
             $extension = Extensions::where('extension_uuid', $extension_uuid)->first();
             if (! $extension) {
                 return response()->json([
-                    'messages' => ['error' => ['Extension not found.']]
+                    'messages' => ['error' => [__('Extension not found.')]]
                 ], 404);
             }
 
@@ -463,7 +463,7 @@ class DeviceController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages' => ['success' => ["Unassigned extension from {$affected} device line(s)."]]
+                'messages' => ['success' => [__('Unassigned extension from :count device line(s).', ['count' => $affected])]]
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -472,7 +472,7 @@ class DeviceController extends Controller
                 . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['An error occurred while unassigning the selected devices.']]
+                'messages' => ['error' => [__('An error occurred while unassigning the selected devices.')]]
             ], 500);
         }
     }
@@ -497,11 +497,11 @@ class DeviceController extends Controller
             // Delete Device
             $device->delete();
 
-            return redirect()->back()->with('message', ['server' => ['Item deleted']]);
+            return redirect()->back()->with('message', ['server' => [__('Item deleted')]]);
         } catch (\Exception $e) {
             // Log the error message
             logger($e->getMessage());
-            return redirect()->back()->with('error', ['server' => ['Server returned an error while deleting this item']]);
+            return redirect()->back()->with('error', ['server' => [__('Server returned an error while deleting this item')]]);
         }
     }
 
@@ -511,11 +511,11 @@ class DeviceController extends Controller
         $mode = $request->input('mode') ?: ($itemUuid ? 'update' : 'create');
 
         if (!in_array($mode, ['create', 'update', 'bulk_update'], true)) {
-            abort(422, 'Invalid item options mode.');
+            abort(422, __('Invalid item options mode.'));
         }
 
         if ($mode === 'update' && !$itemUuid) {
-            abort(422, 'Item UUID is required for update mode.');
+            abort(422, __('Item UUID is required for update mode.'));
         }
 
         if (in_array($mode, ['update', 'bulk_update'], true) && !userCheckPermission('device_edit')) {
@@ -683,9 +683,9 @@ class DeviceController extends Controller
             }
 
             $lineKeyTypes = [
-                ['value' => 'line', 'name' => 'Line'],
-                ['value' => 'sharedline', 'name' => 'Shared Line'],
-                ['value' => 'externalline', 'name' => 'External Line'],
+                ['value' => 'line', 'name' => __('Line')],
+                ['value' => 'sharedline', 'name' => __('Shared Line')],
+                ['value' => 'externalline', 'name' => __('External Line')],
             ];
 
             $sipTransportTypes = [
@@ -748,7 +748,7 @@ class DeviceController extends Controller
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to get item details']]
+                'errors' => ['server' => [__('Failed to get item details')]]
             ], 500); // 500 Internal Server Error for any other errors
         }
     }
@@ -823,13 +823,13 @@ class DeviceController extends Controller
 
         if ($this->keyTemplateAssignmentDenied($data)) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
         if (!empty($lineAttributes) && !userCheckPermission('device_line_edit')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -841,7 +841,7 @@ class DeviceController extends Controller
         if (empty($ids) || (empty($data) && empty($lineAttributes))) {
             return response()->json([
                 'success' => false,
-                'errors' => ['input' => ['No devices or fields provided for update.']]
+                'errors' => ['input' => [__('No devices or fields provided for update.')]]
             ], 422);
         }
 
@@ -886,32 +886,32 @@ class DeviceController extends Controller
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to update selected items']]
+                'errors' => ['server' => [__('Failed to update selected items')]]
             ], 500);
         }
 
         $messages = [];
 
         if (!empty($data)) {
-            $messages[] = 'Selected items updated';
+            $messages[] = __('Selected items updated');
         }
 
         if ($domainsCascaded > 0) {
-            $messages[] = 'Lines on ' . $domainsCascaded
-                . ' reassigned device(s) were re-pointed at the new account.';
+            $messages[] = __('Lines on :count reassigned device(s) were re-pointed at the new account.', ['count' => $domainsCascaded]);
         }
 
         if ($lineResult !== null) {
             if ($lineResult['lines_updated'] > 0) {
-                $messages[] = 'Updated ' . $lineResult['lines_updated'] . ' line(s) on '
-                    . $lineResult['devices_affected'] . ' device(s).';
+                $messages[] = __('Updated :lines line(s) on :devices device(s).', [
+                    'lines' => $lineResult['lines_updated'],
+                    'devices' => $lineResult['devices_affected'],
+                ]);
 
                 if ($lineResult['devices_skipped'] > 0) {
-                    $messages[] = $lineResult['devices_skipped']
-                        . ' device(s) had no matching lines and were skipped.';
+                    $messages[] = __(':count device(s) had no matching lines and were skipped.', ['count' => $lineResult['devices_skipped']]);
                 }
             } else {
-                $messages[] = 'No matching lines were found to update.';
+                $messages[] = __('No matching lines were found to update.');
             }
         }
 
@@ -928,12 +928,12 @@ class DeviceController extends Controller
                     'provision'
                 );
 
-                $messages[] = $sent . ' registered device(s) scheduled for synchronization.';
+                $messages[] = __(':count registered device(s) scheduled for synchronization.', ['count' => $sent]);
             } catch (\Exception $e) {
                 logger('DeviceController@bulkUpdate resync failed: ' . $e->getMessage()
                     . " at " . $e->getFile() . ":" . $e->getLine());
 
-                $messages[] = 'Settings saved, but the device sync could not be sent. Reboot the phones manually.';
+                $messages[] = __('Settings saved, but the device sync could not be sent. Reboot the phones manually.');
             }
         }
 
@@ -1059,7 +1059,7 @@ class DeviceController extends Controller
 
             // Return a JSON response indicating success
             return response()->json([
-                'messages' => ['success' => ['All items selected']],
+                'messages' => ['success' => [__('All items selected')]],
                 'items' => $uuids,
             ], 200);
         } catch (\Exception $e) {
@@ -1067,7 +1067,7 @@ class DeviceController extends Controller
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to select all items']]
+                'errors' => ['server' => [__('Failed to select all items')]]
             ], 500); // 500 Internal Server Error for any other errors
         }
     }
@@ -1163,7 +1163,7 @@ class DeviceController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages' => ['server' => ['All selected items have been deleted successfully.']],
+                'messages' => ['server' => [__('All selected items have been deleted successfully.')]],
             ], 200);
         } catch (\Exception $e) {
             // Rollback Transaction if any error occurs
@@ -1173,7 +1173,7 @@ class DeviceController extends Controller
 
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Server returned an error while deleting the selected items.']]
+                'errors' => ['server' => [__('Server returned an error while deleting the selected items.')]]
             ], 500); // 500 Internal Server Error for any other errors
         }
     }
@@ -1238,7 +1238,7 @@ class DeviceController extends Controller
             ->all();
 
         return array_merge([
-            ['value' => 'NULL', 'name' => 'None'],
+            ['value' => 'NULL', 'name' => __('None')],
         ], $templates);
     }
 

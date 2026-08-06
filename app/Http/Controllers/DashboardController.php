@@ -596,7 +596,7 @@ class DashboardController extends Controller
             $apps[] = [
                 'name' => __('Billing'),
                 'href' => '/billing',
-                'icon' => 'SettingsApplications',
+                'icon' => 'CreditCardIcon',
                 'slug' => 'billing',
                 'alt_href' => userCheckPermission('billing_settings_edit') ? '/billing/settings' : null,
                 'alt_link_label' => userCheckPermission('billing_settings_edit') ? __('Settings') : null,

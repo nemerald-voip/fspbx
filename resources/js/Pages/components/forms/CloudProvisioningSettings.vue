@@ -25,7 +25,7 @@
                                 <button type="button"
                                     class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                     @click="emit('close')">
-                                    <span class="sr-only">Close</span>
+                                    <span class="sr-only">{{ $t('Close') }}</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
@@ -43,7 +43,7 @@
                                             </path>
                                         </svg>
                                     </div>
-                                    <div class="text-lg text-blue-600 m-auto">Loading...</div>
+                                    <div class="text-lg text-blue-600 m-auto">{{ $t('Loading...') }}</div>
                                 </div>
                             </div>
 
@@ -67,7 +67,7 @@
                                             <FormTabs view="vertical" @select="handleTabSelected">
 
 
-                                                <FormTab name="polycom" label="Polycom" :elements="[
+                                                <FormTab name="polycom" :label="$t('Polycom')" :elements="[
                                                     'polycom_title',
                                                     'polycom_loading',
                                                     'polycom_status',
@@ -116,7 +116,7 @@
                                             class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
                                             <FormElements>
 
-                                                <StaticElement name="polycom_title" tag="h4" content="Polycom ZTP" />
+                                                <StaticElement name="polycom_title" tag="h4" :content="$t('Polycom ZTP')" />
 
                                                 <StaticElement name="polycom_loading"
                                                     :conditions="[() => isFormLoading]">
@@ -141,14 +141,14 @@
                                                             <div class="size-3 rounded-full bg-current" />
                                                         </div>
                                                         <h1 class="flex gap-x-3 text-lg">
-                                                            <span class="font-semibold ">Status:</span>
+                                                            <span class="font-semibold ">{{ $t('Status:') }}</span>
                                                             <Badge backgroundColor="bg-green-100"
-                                                                textColor="text-green-700" :text="'Active'"
+                                                                textColor="text-green-700" :text="$t('Active')"
                                                                 ringColor="ring-green-400/20"
                                                                 class="px-2 py-1 text-xs font-semibold" />
                                                         </h1>
                                                     </div>
-                                                    
+
 
                                                     <div v-if="!options" class="flex items-center gap-x-3">
                                                         <div
@@ -156,10 +156,10 @@
                                                             <div class="size-3 rounded-full bg-current" />
                                                         </div>
                                                         <h1 class="flex gap-x-3 text-lg">
-                                                            <span class="font-semibold ">Status:</span>
+                                                            <span class="font-semibold ">{{ $t('Status:') }}</span>
                                                             <Badge v-if="!isFormLoading" backgroundColor="bg-amber-100"
                                                                 textColor="text-amber-700"
-                                                                :text="'Polycom ZTP API Token Missing or Invalid'"
+                                                                :text="$t('Polycom ZTP API Token Missing or Invalid')"
                                                                 ringColor="ring-amber-400/20"
                                                                 class="px-2 py-1 text-xs font-semibold" />
                                                         </h1>
@@ -172,9 +172,9 @@
                                                             <div class="size-3 rounded-full bg-current" />
                                                         </div>
                                                         <h1 class="flex gap-x-3 text-lg">
-                                                            <span class="font-semibold ">Status:</span>
+                                                            <span class="font-semibold ">{{ $t('Status:') }}</span>
                                                             <Badge backgroundColor="bg-gray-100"
-                                                                textColor="text-gray-700" :text="'Not Registered'"
+                                                                textColor="text-gray-700" :text="$t('Not Registered')"
                                                                 ringColor="ring-gray-400/20"
                                                                 class="px-2 py-1 text-xs font-semibold" />
                                                         </h1>
@@ -185,35 +185,35 @@
 
 
                                                 <ButtonElement name="polycom_create_org"
-                                                    button-label="Create Organization" :loading="isLoading.create"
+                                                    :button-label="$t('Create Organization')" :loading="isLoading.create"
                                                     @click="handleCreateButtonClick('polycom')"
-                                                    description="Create organization or connect to the existing organization in Polycom ZTP."
+                                                    :description="$t('Create organization or connect to the existing organization in Polycom ZTP.')"
                                                     :conditions="[() => options && !options.organization_id]" />
 
                                                 <ButtonElement name="polycom_update_org"
-                                                    button-label="Organization Settings" :loading="isLoading.update"
+                                                    :button-label="$t('Organization Settings')" :loading="isLoading.update"
                                                     @click="handleUpdateButtonClick('polycom')"
-                                                    description="Create organization or connect to the existing organization in Polycom ZTP."
+                                                    :description="$t('Create organization or connect to the existing organization in Polycom ZTP.')"
                                                     :conditions="[() => options && options.organization_id]" />
 
                                                 <ButtonElement name="polycom_destroy_org"
-                                                    button-label="Delete Organization" :loading="isLoading.destroy"
+                                                    :button-label="$t('Delete Organization')" :loading="isLoading.destroy"
                                                     @click="handleDestroyButtonClick('polycom')"
-                                                    description="Delete organization from Polycom ZTP." :danger="true"
+                                                    :description="$t('Delete organization from Polycom ZTP.')" :danger="true"
                                                     :conditions="[() => options && options.organization_id]" />
 
                                                 <ButtonElement name="polycom_sync_devices"
-                                                    button-label="Sync Devices" :loading="isLoading.sync"
+                                                    :button-label="$t('Sync Devices')" :loading="isLoading.sync"
                                                     @click="handleSyncButtonClick('polycom')"
-                                                    description="Syncs all devices from Polycom ZTP to your local storage. This will erase and replace any devices currently stored locally." 
+                                                    :description="$t('Syncs all devices from Polycom ZTP to your local storage. This will erase and replace any devices currently stored locally.')"
                                                     :secondary="true"
                                                     :conditions="[() => options && options.organization_id]" />
 
 
-                                                <ButtonElement name="polycom_create_api_token" button-label="API Token"
+                                                <ButtonElement name="polycom_create_api_token" :button-label="$t('API Token')"
                                                     :loading="isLoading.create"
                                                     @click="handleApiTokenButtonClick('polycom')"
-                                                    description="Click to add or update your Polycom ZTP API Token."
+                                                    :description="$t('Click to add or update your Polycom ZTP API Token.')"
                                                     :secondary="true" :conditions="[() => !isFormLoading]" />
 
                                                 <StaticElement name="yealink_title" tag="h4" :content="$t('Yealink RPS')"
@@ -329,12 +329,12 @@
 
 
     <CreatePolycomOrgForm :options="itemOptions" :errors="formErrors" :show="showCreateModal"
-        :header="'Activate Polycom Organization'" :loading="loadingModal" @close="handleModalClose"
+        :header="$t('Activate Polycom Organization')" :loading="loadingModal" @close="handleModalClose"
         @error="emitErrorToParentFromChild" @success="emitSuccessToParentFromChild"
         @refresh-data="getCloudProvisioningItemOptions('polycom')" />
 
 
-    <UpdatePolycomOrgForm :options="itemOptions" :show="showUpdateModal" :header="'Edit Polycom Organization'"
+    <UpdatePolycomOrgForm :options="itemOptions" :show="showUpdateModal" :header="$t('Edit Polycom Organization')"
         :loading="loadingModal" @close="showUpdateModal = false" @error="emitErrorToParentFromChild"
         @success="emitSuccessToParentFromChild" @clear-errors="handleClearErrors" />
 
@@ -713,7 +713,7 @@ const handleError = (error, details, form$) => {
         case 'prepare':
             console.log(error) // Error object
 
-            form$.messageBag.append('Could not prepare form')
+            form$.messageBag.append(trans('Could not prepare form'))
             break
 
         // Error occured because response status is outside of 2xx
@@ -733,14 +733,14 @@ const handleError = (error, details, form$) => {
         case 'cancel':
             console.log(error) // Error object
 
-            form$.messageBag.append('Request cancelled')
+            form$.messageBag.append(trans('Request cancelled'))
             break
 
         // Some other errors happened (no response object)
         case 'other':
             console.log(error) // Error object
 
-            form$.messageBag.append('Couldn\'t submit form')
+            form$.messageBag.append(trans('Couldn\'t submit form'))
             break
     }
 }
