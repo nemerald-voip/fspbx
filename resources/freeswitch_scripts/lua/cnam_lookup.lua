@@ -10,6 +10,18 @@ end
 
 local api = freeswitch.API()
 
+local function shell_quote(value)
+    return "'" .. tostring(value):gsub("'", "'\\''") .. "'"
+end
+
+local function command_succeeded(ok, _, status)
+    if type(ok) == "number" then
+        return ok == 0
+    end
+
+    return ok == true and (status == nil or status == 0)
+end
+
 local function telnyx_lookup(digits)
     local telnyx_api_key = api:executeString("global_getvar telnyx_api_key")
 
@@ -18,13 +30,19 @@ local function telnyx_lookup(digits)
         return nil
     end
 
+    if telnyx_api_key:find("[\r\n]") then
+        debug_log("ERR", "[cnam_lookup.lua] telnyx_api_key contains invalid characters")
+        return nil
+    end
+
     local e164 = "+1" .. digits
     local url = "https://api.telnyx.com/v2/number_lookup/" .. e164 .. "?type=caller-name"
 
     local cmd = string.format(
-        [[curl -sS --max-time 1 --globoff -H "Accept: application/json" -H "Authorization: Bearer %s" "%s"]],
-        telnyx_api_key,
-        url
+        "/usr/bin/curl --silent --show-error --fail-with-body --connect-timeout 1 --max-time 3 --globoff --header %s --header %s %s",
+        shell_quote("Accept: application/json"),
+        shell_quote("Authorization: Bearer " .. telnyx_api_key),
+        shell_quote(url)
     )
 
     debug_log("INFO", "[cnam_lookup.lua] Querying Telnyx for " .. e164)
@@ -36,7 +54,12 @@ local function telnyx_lookup(digits)
     end
 
     local body = handle:read("*a") or ""
-    handle:close()
+    local close_ok, close_reason, close_status = handle:close()
+
+    if not command_succeeded(close_ok, close_reason, close_status) then
+        debug_log("ERR", "[cnam_lookup.lua] Telnyx request failed")
+        return nil
+    end
 
     debug_log("INFO", "[cnam_lookup.lua] Telnyx raw response: " .. body)
 
@@ -73,13 +96,19 @@ end
 -- 1) Pull & normalize caller number
 local raw = api:executeString("uuid_getvar " .. uuid .. " caller_id_number")
 debug_log("INFO", "[cnam_lookup.lua] Raw caller_id_number: " .. tostring(raw))
-if not raw or raw == "" then
+if not raw or raw == "" or raw == "_undef_" then
     return
 end
 
 local digits = raw:gsub("%D", "") -- strip non-digits
-if #digits > 10 then
-    digits = digits:sub(-10) -- keep last 10
+if #digits == 11 and digits:sub(1, 1) == "1" then
+    digits = digits:sub(2)
+end
+
+-- Telnyx lookups in this script are intentionally limited to valid NANP numbers.
+if not digits:match("^[2-9]%d%d[2-9]%d%d%d%d%d%d$") then
+    debug_log("WARNING", "[cnam_lookup.lua] Caller ID is not a valid NANP number")
+    return
 end
 debug_log("INFO", "[cnam_lookup.lua] Normalized to 10 digits: " .. digits)
 
@@ -91,9 +120,11 @@ local cached_name, cached_ts
 local sql_check = [[
     SELECT cnam, extract(epoch from date) AS date
     FROM v_cnam
-    WHERE phone_number LIKE :phone
+    WHERE phone_number = :phone
+    ORDER BY date DESC NULLS LAST
+    LIMIT 1
 ]]
-local params = { phone = "%" .. digits .. "%" }
+local params = { phone = digits }
 
 debug_log("INFO", "[cnam_lookup.lua] Querying local database: " .. sql_check)
 dbh:query(sql_check, params, function(row)
@@ -116,7 +147,7 @@ if cached_name and cached_ts then
             "[cnam_lookup.lua] Cache in local database is stale (%.1f days), deleting and refreshing",
             age / 86400
         ))
-        local sql_del = "DELETE FROM v_cnam WHERE phone_number LIKE :phone"
+        local sql_del = "DELETE FROM v_cnam WHERE phone_number = :phone"
         debug_log("INFO", "[cnam_lookup.lua] Deleting stale cache: " .. sql_del)
         dbh:query(sql_del, params)
         cached_name = nil

@@ -40,6 +40,7 @@ class DialplanService
         return DB::transaction(function () use ($validated, $dialplan) {
             $dialplan ??= new Dialplans();
             $isNew = !$dialplan->exists;
+            $originalContext = $isNew ? null : $dialplan->getRawOriginal('dialplan_context');
             $dialplanUuid = $dialplan->dialplan_uuid ?: (string) Str::uuid();
             $xmlMode = ($validated['editor_mode'] ?? 'builder') === 'xml';
             $details = $xmlMode ? [] : $this->normalizedDetails($validated['dialplan_details'] ?? []);
@@ -78,7 +79,11 @@ class DialplanService
                 $this->createDetails($dialplan, $details);
             }
 
-            $this->clearDialplanCache($dialplan->dialplan_context);
+            $contexts = collect([$originalContext, $dialplan->dialplan_context])
+                ->filter()
+                ->unique()
+                ->values();
+            DB::afterCommit(fn () => $contexts->each(fn ($context) => $this->clearDialplanCache($context)));
 
             return $dialplan;
         });
@@ -109,7 +114,8 @@ class DialplanService
             $copy->dialplan_xml = $this->buildXml($copy, $details);
             $copy->save();
             $this->createDetails($copy, $details);
-            $this->clearDialplanCache($copy->dialplan_context);
+            $context = $copy->dialplan_context;
+            DB::afterCommit(fn () => $this->clearDialplanCache($context));
 
             return $copy;
         });
@@ -123,20 +129,24 @@ class DialplanService
                 $dialplan->update_date = now();
                 $dialplan->update_user = session('user_uuid');
                 $dialplan->save();
-                $this->clearDialplanCache($dialplan->dialplan_context);
             });
+
+            $contexts = $dialplans->pluck('dialplan_context')->filter()->unique()->values();
+            DB::afterCommit(fn () => $contexts->each(fn ($context) => $this->clearDialplanCache($context)));
         });
     }
 
     public function delete(Collection $dialplans): void
     {
         DB::transaction(function () use ($dialplans) {
+            $contexts = $dialplans->pluck('dialplan_context')->filter()->unique()->values();
+
             $dialplans->each(function (Dialplans $dialplan) {
-                $context = $dialplan->dialplan_context;
                 $dialplan->dialplan_details()->delete();
                 $dialplan->delete();
-                $this->clearDialplanCache($context);
             });
+
+            DB::afterCommit(fn () => $contexts->each(fn ($context) => $this->clearDialplanCache($context)));
         });
     }
 
@@ -314,8 +324,17 @@ class DialplanService
 
     public function clearDialplanCache(?string $context): void
     {
-        $context = in_array($context, ['${domain_name}', 'global'], true) ? '*' : $context;
-        FusionCache::clear('dialplan:' . ($context ?: '*'));
+        if (!$context || in_array($context, ['${domain_name}', 'global'], true)) {
+            FusionCache::clearPattern('dialplan:*');
+            return;
+        }
+
+        $key = 'dialplan:' . $context;
+
+        // Multiple mode caches the context itself. Single mode caches the
+        // assembled context under one child key per destination.
+        FusionCache::clear($key);
+        FusionCache::clearPattern($key . ':*');
     }
 
     private function createDetails(Dialplans $dialplan, array $details): void

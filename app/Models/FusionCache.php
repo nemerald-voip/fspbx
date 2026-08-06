@@ -74,12 +74,12 @@ class FusionCache extends Model
             return false;
         }
 
-        $esl = static::esl();
-        if (!$esl) {
-            return false;
-        }
-
         if ($cacheType === 'memcache') {
+            $esl = static::esl();
+            if (!$esl) {
+                return false;
+            }
+
             // memcache delete <key>
             $esl->executeCommand('memcache delete ' . $key);
             return true;
@@ -89,9 +89,6 @@ class FusionCache extends Model
             // change the delimiter for file cache
             $key = str_replace(':', '.', $key);
 
-            // cache delete <key> in FreeSWITCH
-            $esl->executeCommand('cache delete ' . $key);
-
             $cacheLocation = static::cacheLocation();
 
             if ($cacheLocation) {
@@ -100,6 +97,43 @@ class FusionCache extends Model
                 if (!empty($files)) {
                     File::delete($files);
                 }
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Delete all items matching a cache-key pattern.
+     *
+     * File cache supports glob patterns. Memcache cannot enumerate or delete
+     * keys by pattern, so it must be flushed to guarantee invalidation.
+     */
+    public static function clearPattern(string $pattern): bool
+    {
+        $cacheType = static::cacheType();
+
+        if (!$cacheType) {
+            return false;
+        }
+
+        if ($cacheType === 'memcache') {
+            return static::flushAll();
+        }
+
+        if ($cacheType === 'file') {
+            $cacheLocation = static::cacheLocation();
+            if (!$cacheLocation) {
+                return false;
+            }
+
+            $pattern = str_replace(':', '.', $pattern);
+            $files = glob($cacheLocation . '/' . $pattern) ?: [];
+
+            if (!empty($files)) {
+                File::delete($files);
             }
 
             return true;
