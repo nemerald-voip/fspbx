@@ -214,7 +214,7 @@
     </AddEditItemModal>
 
     <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="showEditModal"
-        :header="$t('Update Ring Group Settings - :name', { name: itemOptions?.ring_group?.ring_group_name })" :loading="loadingModal"
+        :header="$t('Update Ring Group Settings - :name', { name: itemOptions?.ring_group?.ring_group_name ?? $t('Loading...') })" :loading="loadingModal"
         @close="handleModalClose">
         <template #modal-body>
             <UpdateRingGroupForm :options="itemOptions" @close="handleModalClose" @error="handleErrorResponse"
