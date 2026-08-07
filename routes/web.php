@@ -118,6 +118,7 @@ Route::webhooks('webhook/voipms/sms', 'voipms_messaging');
 Route::webhooks('webhook/fibernetics/sms', 'fibernetics_messaging', 'get');
 Route::post('webhook/fibernetics/sms', FiberneticsMmsWebhookController::class)
     ->name('webhook.fibernetics.mms');
+Route::webhooks('webhook/twilio/sms', 'twilio_messaging');
 Route::webhooks('/sms/ringotelwebhook', 'ringotel_messaging');
 Route::webhooks('/webhook/freeswitch', 'freeswitch');
 Route::webhooks('/webhook/stripe', 'stripe');

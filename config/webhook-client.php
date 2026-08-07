@@ -744,6 +744,18 @@ return [
             'process_webhook_job' => \App\Http\Webhooks\Jobs\ProcessFiberneticsWebhookJob::class,
         ],
 
+        [
+            'name'                  => 'twilio_messaging',
+            'signing_secret'        => env('TWILIO_AUTH_TOKEN'),
+            'signature_header_name' => 'X-Twilio-Signature',
+            'signature_validator'   => \App\Http\Webhooks\SignatureValidators\TwilioSignatureValidator::class,
+            'webhook_profile'       => \App\Http\Webhooks\WebhookProfiles\TwilioWebhookProfile::class,
+            'webhook_response'      => \Spatie\WebhookClient\WebhookResponse\DefaultRespondsTo::class,
+            'webhook_model'         => \App\Models\WhCall::class,
+            'store_headers'         => [],
+            'process_webhook_job'   => \App\Http\Webhooks\Jobs\ProcessTwilioWebhookJob::class,
+        ],
+
     ],
 
     /*
