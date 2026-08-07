@@ -1,5 +1,5 @@
 -- Enable/Disable debug mode globally
-DEBUG_MODE = true  -- Set to false to disable debug logs
+DEBUG_MODE = false  -- Set to false to disable debug logs
 
 -- Bandwidth treats any request containing the test parameter as non-billable
 -- and returns a random caller name. Test responses must never be cached.
