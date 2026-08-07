@@ -12,6 +12,7 @@ use App\Models\BasicDialerCampaignAttempt;
 use App\Models\Dialplans;
 use App\Models\Extensions;
 use App\Models\OutboundFax;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
@@ -25,7 +26,7 @@ class CdrDataService
 
         // Check if user is allowed to see all CDRs for tenant
         $user = auth()->user();
-        if ($user && userCheckPermission("xml_cdr_view") && userCheckPermission("xml_cdr_view_self_records") && !userCheckPermission("xml_cdr_view_all_records")) {
+        if ($user && userCheckPermission("xml_cdr_view_self_records") && !userCheckPermission("xml_cdr_view_all_records")) {
             $params['filter']['entity']['value'] = $user->extension_uuid;
             $params['filter']['entity']['type'] = 'extension';
         }
@@ -209,16 +210,20 @@ class CdrDataService
         return $formattedDuration;
     }
 
-    public function getExtensionStatistics($params = [])
+    public function getExtensionStatistics(array $params = []): LengthAwarePaginator
     {
-        $all = $this->buildExtensionStatisticsCollection($params);
+        $all = $this->getExtensionStatisticsCollection($params);
 
-        $perPage     = (int) ($params['per_page'] ?? 50);
-        $currentPage = (int) ($params['page'] ?? 1);
+        $perPage = (int) ($params['per_page'] ?? 50);
+        if (! in_array($perPage, fspbx_pagination_options(), true)) {
+            $perPage = 50;
+        }
+
+        $currentPage = max(1, (int) ($params['page'] ?? 1));
         $total       = $all->count();
         $pageItems   = $all->forPage($currentPage, $perPage)->values();
 
-        return new \Illuminate\Pagination\LengthAwarePaginator(
+        return new LengthAwarePaginator(
             $pageItems,
             $total,
             $perPage,
@@ -227,9 +232,17 @@ class CdrDataService
         );
     }
 
-    public function getApiExtensionStatistics($params = []): array
+    public function getExtensionStatisticsCollection(array $params = []): Collection
     {
-        $all = $this->buildExtensionStatisticsCollection($params);
+        $params['filter'] = $params['filter'] ?? [];
+        $params['filter']['showGlobal'] = false;
+
+        return $this->buildExtensionStatisticsCollection($params);
+    }
+
+    public function getApiExtensionStatistics(array $params = []): array
+    {
+        $all = $this->getExtensionStatisticsCollection($params);
 
         $limit = (int) ($params['limit'] ?? 50);
         $limit = max(1, min(100, $limit));
@@ -248,7 +261,7 @@ class CdrDataService
         ];
     }
 
-    protected function buildExtensionStatisticsCollection($params = [])
+    protected function buildExtensionStatisticsCollection(array $params = []): Collection
     {
         $domain_uuid = $params['domain_uuid'] ?? session('domain_uuid');
         $extensionUuid = $params['filter']['extension_uuid'] ?? null;
@@ -259,7 +272,6 @@ class CdrDataService
         $selfExtensionUuid = null;
         if (
             $user
-            && userCheckPermission("xml_cdr_view")
             && userCheckPermission("xml_cdr_view_self_records")
             && !userCheckPermission("xml_cdr_view_all_records")
         ) {

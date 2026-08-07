@@ -2,215 +2,111 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\CDR;
-use Inertia\Inertia;
-use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
-use App\Services\CdrDataService;
 use App\Exports\ExtensionStatisticsExport;
+use App\Http\Requests\ExportExtensionStatisticsRequest;
+use App\Http\Requests\ExtensionStatisticsRequest;
+use App\Services\CdrDataService;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Carbon;
+use Inertia\Inertia;
+use Inertia\Response;
 use Maatwebsite\Excel\Facades\Excel;
 use Maatwebsite\Excel\Excel as ExcelWriter;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ExtensionStatisticsController extends Controller
 {
+    public function __construct(
+        protected CdrDataService $cdrDataService
+    ) {}
 
-    public $model;
-    public $filters = [];
-    public $sortField;
-    public $sortOrder;
-    protected $viewName = 'ExtensionStatistics';
-    protected $searchable = ['extension.extension', 'extension.effective_caller_id_name'];
-    public $item_domain_uuid;
-    protected $cdrDataService;
-
-    public function __construct(CdrDataService $cdrDataService)
+    public function index(ExtensionStatisticsRequest $request): Response
     {
-        $this->cdrDataService = $cdrDataService;
-        $this->model = new CDR();
+        $domainUuid = (string) session('domain_uuid');
+        $timezone = get_local_time_zone($domainUuid);
+        [$startPeriod, $endPeriod] = $this->defaultDateRange($timezone);
+
+        return Inertia::render('ExtensionStatistics', [
+            'startPeriod' => $startPeriod->toIso8601String(),
+            'endPeriod' => $endPeriod->toIso8601String(),
+            'timezone' => $timezone,
+            'routes' => [
+                'current_page' => route('extension-statistics.index'),
+                'data_route' => route('extension-statistics.data'),
+                'export' => route('extension-statistics.export'),
+            ],
+            'permissions' => [
+                'export' => userCheckPermission('xml_cdr_export'),
+            ],
+            'pagination' => [
+                'per_page' => fspbx_pagination_per_page($request),
+                'per_page_options' => fspbx_pagination_options(),
+            ],
+        ]);
     }
 
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index(Request $request)
+    public function getData(ExtensionStatisticsRequest $request): LengthAwarePaginator
     {
-        // logger($request->all());
-        // Check permissions
-        if (!userCheckPermission("xml_cdr_view")) {
-            return redirect('/');
-        }
-
-        $domain_uuid = session('domain_uuid');
-        $startPeriod = Carbon::now(get_local_time_zone($domain_uuid))->startOfDay()->setTimeZone('UTC');
-        $endPeriod = Carbon::now(get_local_time_zone($domain_uuid))->endOfDay()->setTimeZone('UTC');
-
-        return Inertia::render(
-            $this->viewName,
-            [
-                'startPeriod' => function () use ($startPeriod) {
-                    return $startPeriod;
-                },
-                'endPeriod' => function ()  use ($endPeriod) {
-                    return $endPeriod;
-                },
-                'timezone' => function () use ($domain_uuid) {
-                    return get_local_time_zone($domain_uuid);
-                },
-                'routes' => [
-                    'current_page' => route('extension-statistics.index'),
-                    'data_route' => route('extension-statistics.data'),
-                    'export' => route('extension-statistics.export'),
-                ]
-
-            ]
+        return $this->cdrDataService->getExtensionStatistics(
+            $this->statisticsParams($request)
         );
     }
 
-    //Most of this function has been moved to CdrDataService service container
-    public function getData()
+    public function export(ExportExtensionStatisticsRequest $request): BinaryFileResponse
     {
-        $params = request()->all();
-        $params['paginate'] = false;
-        $domain_uuid = session('domain_uuid');
-        $params['domain_uuid'] = $domain_uuid;
-
-        if (!empty(request('filter.dateRange'))) {
-            $startPeriod = Carbon::parse(request('filter.dateRange')[0])->setTimeZone('UTC');
-            $endPeriod = Carbon::parse(request('filter.dateRange')[1])->setTimeZone('UTC');
-        }
-
-        $params['filter']['startPeriod'] = $startPeriod->getTimestamp();
-        $params['filter']['endPeriod'] = $endPeriod->getTimestamp();
-
-        unset(
-            $params['filter']['dateRange'],
+        $rows = $this->cdrDataService->getExtensionStatisticsCollection(
+            $this->statisticsParams($request)
         );
 
-        $this->filters = [
-            'startPeriod' => $startPeriod,
-            'endPeriod' => $endPeriod,
+        return Excel::download(
+            new ExtensionStatisticsExport($rows),
+            'extension_statistics.csv',
+            ExcelWriter::CSV
+        );
+    }
+
+    private function statisticsParams(ExtensionStatisticsRequest $request): array
+    {
+        $validated = $request->validated();
+        $domainUuid = (string) session('domain_uuid');
+        [$startPeriod, $endPeriod] = $this->resolveDateRange(
+            data_get($validated, 'filter.dateRange'),
+            $domainUuid
+        );
+
+        return [
+            'domain_uuid' => $domainUuid,
+            'paginate' => false,
+            'page' => (int) ($validated['page'] ?? 1),
+            'per_page' => (int) ($validated['per_page'] ?? 50),
+            'filter' => [
+                'search' => trim((string) data_get($validated, 'filter.search', '')),
+                'showGlobal' => false,
+                'startPeriod' => $startPeriod->getTimestamp(),
+                'endPeriod' => $endPeriod->getTimestamp(),
+            ],
         ];
-
-        // logger($params);
-
-        // Fetch CDR data
-        $cdrData = $this->cdrDataService->getExtensionStatistics($params);
-
-        // logger($cdrData);
-
-        return $cdrData;
-
     }
 
-    // This function has been moved to CdrDataService service container
-    // public function builder($filters = [])
-    // {
-    // }
-
-
-    /**
-     * Get all items
-     *
-     * @return \Illuminate\Http\Response
-     */
-
-        public function export()
-        {
-            if (!userCheckPermission('xml_cdr_export') && !userCheckPermission('cdrs_export')) {
-                abort(403);
-            }
-
-            $params = request()->all();
-            $params['paginate'] = false;
-
-            $domain_uuid = session('domain_uuid');
-            $params['domain_uuid'] = $domain_uuid;
-
-            if (!empty(request('filter.dateRange'))) {
-                $startPeriod = Carbon::parse(request('filter.dateRange')[0])->setTimeZone('UTC');
-                $endPeriod = Carbon::parse(request('filter.dateRange')[1])->setTimeZone('UTC');
-            } else {
-                $startPeriod = Carbon::now(get_local_time_zone($domain_uuid))->startOfDay()->setTimeZone('UTC');
-                $endPeriod = Carbon::now(get_local_time_zone($domain_uuid))->endOfDay()->setTimeZone('UTC');
-            }
-
-            $params['filter']['startPeriod'] = $startPeriod->getTimestamp();
-            $params['filter']['endPeriod'] = $endPeriod->getTimestamp();
-
-            unset($params['filter']['dateRange']);
-
-            return Excel::download(
-                new ExtensionStatisticsExport($params, $this->cdrDataService),
-                'extension_statistics.csv',
-                ExcelWriter::CSV
-            );
+    private function resolveDateRange(?array $dateRange, string $domainUuid): array
+    {
+        if ($dateRange !== null) {
+            return [
+                Carbon::parse($dateRange[0])->setTimezone('UTC'),
+                Carbon::parse($dateRange[1])->setTimezone('UTC'),
+            ];
         }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
+        return $this->defaultDateRange(get_local_time_zone($domainUuid));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
+    private function defaultDateRange(string $timezone): array
     {
-        //
-    }
+        $now = Carbon::now($timezone);
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\CDR  $cDR
-     * @return \Illuminate\Http\Response
-     */
-    public function show(CDR $cDR)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\CDR  $cDR
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(CDR $cDR)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\CDR  $cDR
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, CDR $cDR)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\CDR  $cDR
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(CDR $cDR)
-    {
-        //
+        return [
+            $now->copy()->startOfDay()->setTimezone('UTC'),
+            $now->copy()->endOfDay()->setTimezone('UTC'),
+        ];
     }
 }

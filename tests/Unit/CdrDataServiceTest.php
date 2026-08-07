@@ -10,6 +10,27 @@ use ReflectionMethod;
 
 class CdrDataServiceTest extends TestCase
 {
+    public function test_extension_statistics_always_force_account_scope(): void
+    {
+        $service = new class extends CdrDataService
+        {
+            public array $capturedParams = [];
+
+            protected function buildExtensionStatisticsCollection(array $params = []): Collection
+            {
+                $this->capturedParams = $params;
+
+                return collect();
+            }
+        };
+
+        $service->getExtensionStatisticsCollection([
+            'filter' => ['showGlobal' => true],
+        ]);
+
+        $this->assertFalse($service->capturedParams['filter']['showGlobal']);
+    }
+
     public function test_outbound_fax_collapses_duplicate_loopback_profiles_for_the_same_channel(): void
     {
         $profiles = collect([

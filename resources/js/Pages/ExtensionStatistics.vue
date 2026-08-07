@@ -7,7 +7,7 @@
 
                 <template #action>
                     <button
-                        v-if="page.props.auth?.can?.cdrs_export || page.props.auth?.can?.xml_cdr_export"
+                        v-if="permissions.export"
                         type="button"
                         @click.prevent="exportCsv"
                         :disabled="isExporting"
@@ -17,18 +17,6 @@
                         Export CSV
                         <Spinner class="ml-1" :show="isExporting" />
                     </button>
-
-                    <!-- <button v-if="!showGlobal && page.props.auth.can.cdrs_view_global" type="button"
-                        @click.prevent="handleShowGlobal()"
-                        class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                        Show global
-                    </button>
-
-                    <button v-if="showGlobal && page.props.auth.can.cdrs_view_global" type="button"
-                        @click.prevent="handleShowLocal()"
-                        class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                        Show local
-                    </button> -->
                 </template>
 
                 <template #filters>
@@ -167,7 +155,11 @@
                         :currentPage="data.current_page"
                         :lastPage="data.last_page"
                         :links="data.links"
+                        :page-size="perPage"
+                        :page-size-options="props.pagination?.per_page_options ?? []"
+                        :show-page-size-selector="true"
                         @pagination-change-page="renderRequestedPage"
+                        @page-size-change="handlePageSizeChange"
                     />
                 </template>
             </DataTable>
@@ -185,7 +177,6 @@
 <script setup>
 import axios from 'axios';
 import { ref, onMounted } from "vue";
-import { usePage } from '@inertiajs/vue3'
 import MainLayout from '../Layouts/MainLayout.vue'
 import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
@@ -201,11 +192,7 @@ import {
 } from "@heroicons/vue/24/solid";
 import Loading from "./components/general/Loading.vue";
 
-const page = usePage();
-
 const loading = ref(false)
-const viewModalTrigger = ref(false);
-const loadingModal = ref(false)
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(null);
@@ -228,7 +215,13 @@ const props = defineProps({
     endPeriod: String,
     timezone: String,
     routes: Object,
+    permissions: Object,
+    pagination: Object,
 });
+
+const permissions = props.permissions;
+const perPage = ref(props.pagination?.per_page ?? 50);
+const currentPage = ref(1);
 
 onMounted(() => {
     handleSearchButtonClick();
@@ -244,21 +237,23 @@ const dateRange = [
 
 const filterData = ref({
     search: null,
-    showGlobal: false,
     dateRange: dateRange,
 });
 
 const getData = (page = 1) => {
     loading.value = true;
+    currentPage.value = Number(page) || 1;
 
     axios.get(props.routes.data_route, {
         params: {
             filter: filterData.value,
-            page,
+            page: currentPage.value,
+            per_page: perPage.value,
         }
     })
         .then((response) => {
             data.value = response.data;
+            currentPage.value = response.data.current_page ?? currentPage.value;
         }).catch((error) => {
             handleErrorResponse(error);
         }).finally(() => {
@@ -281,14 +276,24 @@ const handleFiltersReset = () => {
 }
 
 const renderRequestedPage = (url) => {
-    loading.value = true;
+    if (!url) return;
     const urlObj = new URL(url, window.location.origin);
     const pageParam = urlObj.searchParams.get("page") ?? 1;
     getData(pageParam);
 };
 
+const handlePageSizeChange = (newPerPage) => {
+    perPage.value = newPerPage;
+    getData(1);
+};
+
 const handleUpdateDateRange = (newDateRange) => {
-    filterData.value.dateRange = newDateRange;
+    filterData.value.dateRange = Array.isArray(newDateRange) && newDateRange.length === 2
+        ? newDateRange
+        : [
+            startLocal.clone().startOf('day').toISOString(),
+            endLocal.clone().endOf('day').toISOString(),
+        ];
 }
 
 const exportCsv = async () => {
@@ -339,10 +344,6 @@ const exportCsv = async () => {
         isExporting.value = false;
     }
 };
-
-const handleModalClose = () => {
-    viewModalTrigger.value = false;
-}
 
 const hideNotification = () => {
     notificationShow.value = false;
