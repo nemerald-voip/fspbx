@@ -12,6 +12,30 @@ class StoreSipProfileRequest extends FormRequest
         return userCheckPermission('sip_profile_add');
     }
 
+    protected function prepareForValidation(): void
+    {
+        $settings = $this->input('settings');
+
+        if (! is_array($settings)) {
+            return;
+        }
+
+        foreach ($settings as &$setting) {
+            if (! is_array($setting)) {
+                continue;
+            }
+
+            $value = $setting['sip_profile_setting_value'] ?? null;
+
+            if (is_int($value) || is_float($value)) {
+                $setting['sip_profile_setting_value'] = (string) $value;
+            }
+        }
+        unset($setting);
+
+        $this->merge(['settings' => $settings]);
+    }
+
     public function rules(): array
     {
         return $this->rulesForProfile();
