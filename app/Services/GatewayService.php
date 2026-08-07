@@ -55,6 +55,54 @@ class GatewayService
         ];
     }
 
+    /**
+     * Fields that require the gateway to be reloaded in FreeSWITCH when changed.
+     *
+     * "sofia profile X rescan" adds new gateways and removes deleted ones, but
+     * it does NOT reload an already loaded gateway: it keeps running with the
+     * old credentials in memory. Changing a trunk password from the UI looked
+     * like it had no effect — FreeSWITCH kept sending the old password and the
+     * carrier answered 403 on REGISTER, until someone ran killgw by hand.
+     */
+    private const REGISTRATION_FIELDS = [
+        'username', 'password', 'auth_username', 'realm', 'proxy',
+        'register_proxy', 'outbound_proxy', 'register', 'register_transport',
+        'expire_seconds', 'from_user', 'from_domain', 'extension',
+        'extension_in_contact', 'contact_params', 'profile',
+    ];
+
+    /**
+     * Kills the gateway so the following rescan recreates it with the new data.
+     *
+     * Only worth doing when the edit touched the credentials or the route: a
+     * killgw unregisters the trunk for a few seconds, which is too much to pay
+     * for a description change.
+     */
+    public function reloadRegistration(Gateways $gateway, array $changed): void
+    {
+        $relevant = array_intersect(array_keys($changed), self::REGISTRATION_FIELDS);
+
+        if ($relevant === []) {
+            return;
+        }
+
+        $service = new FreeswitchEslService();
+
+        if (! $service->isConnected()) {
+            return;
+        }
+
+        $profile = $gateway->profile ?: 'external';
+
+        $service->executeCommand(sprintf(
+            'sofia profile %s killgw %s',
+            $profile,
+            $gateway->gateway_uuid
+        ));
+
+        $service->disconnect();
+    }
+
     public function sync(Collection|array|null $profiles = null): void
     {
         $profiles = collect($profiles)

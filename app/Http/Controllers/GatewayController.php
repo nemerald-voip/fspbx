@@ -105,6 +105,10 @@ class GatewayController extends Controller
         $validated = $request->validated();
         $data = $service->saveData($validated, $gateway);
 
+        // Must be read BEFORE saving: getDirty() comes back empty afterwards.
+        $gateway->fill($data);
+        $changed = $gateway->getDirty();
+
         try {
             DB::beginTransaction();
 
@@ -114,6 +118,10 @@ class GatewayController extends Controller
             DB::commit();
 
             $accessControlService->sync();
+
+            // Before the rescan: a rescan alone does not reload the credentials
+            // of an already loaded gateway, so a password change had no effect.
+            $service->reloadRegistration($gateway, $changed);
             $service->sync(collect([$oldProfile, $gateway->profile]));
 
             return response()->json([
