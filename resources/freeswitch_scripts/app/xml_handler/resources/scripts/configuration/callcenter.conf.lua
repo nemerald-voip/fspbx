@@ -114,6 +114,7 @@ require "resources.functions.format_ringback"
 					queue_abandoned_resume_allowed = row.queue_abandoned_resume_allowed;
 					queue_announce_sound = row.queue_announce_sound;
 					queue_announce_frequency = row.queue_announce_frequency;
+					queue_announce_position = row.queue_announce_position;
 					queue_description = row.queue_description;
 
 				--replace the space with a dash
@@ -164,11 +165,15 @@ require "resources.functions.format_ringback"
 					if (queue_abandoned_resume_allowed ~= nil) then
 						xml:append([[                                    <param name="abandoned-resume-allowed" value="]] .. xml.sanitize(queue_abandoned_resume_allowed) .. [["/>]]);
 					end
-					if (queue_announce_sound ~= nil) then
-						xml:append([[                                    <param name="announce-sound" value="]] .. xml.sanitize(queue_announce_sound) .. [["/>]]);
-					end
-					if (queue_announce_frequency ~= nil) then
-						xml:append([[                                    <param name="announce-frequency" value="]] .. xml.sanitize(queue_announce_frequency) .. [["/>]]);
+					-- Position announcements own the complete announcement cycle so
+					-- the periodic greeting and position phrase cannot overlap.
+					if (queue_announce_position ~= "true") then
+						if (queue_announce_sound ~= nil) then
+							xml:append([[                                    <param name="announce-sound" value="]] .. xml.sanitize(queue_announce_sound) .. [["/>]]);
+						end
+						if (queue_announce_frequency ~= nil) then
+							xml:append([[                                    <param name="announce-frequency" value="]] .. xml.sanitize(queue_announce_frequency) .. [["/>]]);
+						end
 					end
 					xml:append([[                            </queue>]]);
 

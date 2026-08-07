@@ -125,6 +125,10 @@ class EmailTemplatePreviewService
             'caller_id_name' => 'Jordan Lee',
             'caller_id_number' => '+1 202-555-0142',
             'ring_group_display' => 'Customer Service (2000)',
+            'queue_display' => 'Customer Service ext 9400',
+            'departure_reason' => 'Caller hung up',
+            'wait_duration' => '42 seconds',
+            'call_uuid' => '00000000-0000-4000-8000-000000000002',
             'destination_number' => '2000',
             'sent_at' => now()->toDateTimeString(),
 

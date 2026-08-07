@@ -6,6 +6,7 @@ use App\Jobs\CreateVoicemailEscalationNotificationsJob;
 use App\Jobs\HandleFaxTxEventJob;
 use App\Jobs\HandleVoicemailEscalationAttemptEventJob;
 use App\Jobs\ProcessFaxWebhookEventJob;
+use App\Jobs\SendContactCenterAbandonedCallNotificationByEmail;
 use App\Jobs\SendNewVoicemailNotificationByEmail;
 use App\Jobs\SendNewVoicemailNotificationBySms;
 use App\Jobs\SendRingGroupMissedCallNotificationByEmail;
@@ -83,6 +84,7 @@ class ProcessFreeswitchWebhookJob extends SpatieProcessWebhookJob
         $this->queue = match ($event) {
             'send_vm_sms_notification'   => 'messages',
             'send_vm_email_notification' => 'emails',
+            'send_contact_center_abandoned_call_email' => 'emails',
             'send_ring_group_missed_call_email' => 'emails',
             // 'transcribe_call'            => 'transcriptions',
             'fax.received',
@@ -114,6 +116,10 @@ class ProcessFreeswitchWebhookJob extends SpatieProcessWebhookJob
 
                     case 'send_vm_email_notification':
                         SendNewVoicemailNotificationByEmail::dispatch($data);
+                        break;
+
+                    case 'send_contact_center_abandoned_call_email':
+                        SendContactCenterAbandonedCallNotificationByEmail::dispatch($data);
                         break;
 
                     case 'send_ring_group_missed_call_email':
