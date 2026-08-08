@@ -1385,7 +1385,7 @@ import { Cog8ToothIcon, DocumentDuplicateIcon } from "@heroicons/vue/24/outline"
 import Badge from "@generalComponents/Badge.vue";
 import { XCircleIcon } from '@heroicons/vue/20/solid'
 import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
-import { trans } from 'laravel-vue-i18n';
+import { trans } from '@i18n';
 
 
 const props = defineProps({

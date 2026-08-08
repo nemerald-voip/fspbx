@@ -3,7 +3,7 @@ import { createInertiaApp, router } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import Vueform from '@vueform/vueform';
 import vueformConfig from './vueform.config.js';
-import { i18nVue, loadLanguageAsync, getActiveLanguage } from 'laravel-vue-i18n';
+import { i18nVue, loadLanguageAsync, getActiveLanguage } from '@i18n';
 
 
 import './bootstrap';

@@ -393,7 +393,7 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
 import axios from 'axios';
-import { trans } from 'laravel-vue-i18n';
+import { trans } from '@i18n';
 import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";

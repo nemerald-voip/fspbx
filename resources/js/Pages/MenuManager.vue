@@ -343,7 +343,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import axios from 'axios'
-import { trans } from 'laravel-vue-i18n'
+import { trans } from '@i18n'
 import MainLayout from '../Layouts/MainLayout.vue'
 import Loading from './components/general/Loading.vue'
 import ConfirmationModal from './components/modal/ConfirmationModal.vue'

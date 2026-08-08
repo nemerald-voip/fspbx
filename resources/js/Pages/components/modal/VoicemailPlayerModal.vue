@@ -37,7 +37,7 @@
                                     </div>
                                     <div class="flex gap-2">
                                         <dt class="font-medium text-gray-500">{{ $t('To:') }}</dt>
-                                        <dd class="text-gray-900">{{ $t('Extension :number', { number: item?.caller_destination_formatted }) }}</dd>
+                                        <dd class="text-gray-900">{{ $t('Extension :number', { number: item?.caller_destination_formatted ?? '' }) }}</dd>
                                     </div>
                                 </dl>
                             </div>

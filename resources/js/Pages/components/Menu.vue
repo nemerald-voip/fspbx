@@ -207,7 +207,7 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { usePage } from '@inertiajs/vue3'
-import { trans } from 'laravel-vue-i18n'
+import { trans } from '@i18n'
 
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import { Bars3Icon, XMarkIcon, UserCircleIcon, ArrowRightOnRectangleIcon } from '@heroicons/vue/24/outline'

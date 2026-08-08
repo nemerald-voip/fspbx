@@ -167,7 +167,7 @@
 
 <script setup>
 import { computed, onMounted, ref } from "vue";
-import { trans } from "laravel-vue-i18n";
+import { trans } from "@i18n";
 import axios from "axios";
 import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";

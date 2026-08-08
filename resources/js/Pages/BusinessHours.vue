@@ -169,7 +169,7 @@
     </AddEditItemModal>
 
     <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="showEditModal"
-        :header="$t('Update Business Hours - :name', { name: itemOptions?.item?.name })" :loading="loadingModal"
+        :header="$t('Update Business Hours - :name', { name: itemOptions?.item?.name ?? $t('Loading...') })" :loading="loadingModal"
         @close="handleModalClose">
         <template #modal-body>
             <UpdateBusinessHoursForm :options="itemOptions" @close="handleModalClose" @error="handleErrorResponse"
@@ -200,7 +200,7 @@ import { computed, onMounted, ref } from "vue";
 import { usePage } from '@inertiajs/vue3'
 import axios from 'axios';
 import { router } from "@inertiajs/vue3";
-import { trans } from "laravel-vue-i18n";
+import { trans } from "@i18n";
 import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";

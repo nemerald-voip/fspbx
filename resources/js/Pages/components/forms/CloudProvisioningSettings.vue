@@ -398,7 +398,7 @@ import YealinkRpsServerForm from "../forms/YealinkRpsServerForm.vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { XMarkIcon } from "@heroicons/vue/24/solid";
 import Badge from "@generalComponents/Badge.vue";
-import { trans } from 'laravel-vue-i18n';
+import { trans } from '@i18n';
 
 const props = defineProps({
     show: Boolean,

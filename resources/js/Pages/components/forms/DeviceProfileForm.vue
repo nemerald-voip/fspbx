@@ -208,7 +208,7 @@
 import { computed, ref, watch } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from "@headlessui/vue";
 import { XMarkIcon } from "@heroicons/vue/24/solid";
-import { trans } from "laravel-vue-i18n";
+import { trans } from "@i18n";
 import DeviceProfileKeyTable from "./DeviceProfileKeyTable.vue";
 import DeviceProfileSettingTable from "./DeviceProfileSettingTable.vue";
 

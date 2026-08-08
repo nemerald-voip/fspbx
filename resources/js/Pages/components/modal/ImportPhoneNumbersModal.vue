@@ -167,7 +167,7 @@
 import { ref } from 'vue';
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
 import { XMarkIcon } from "@heroicons/vue/24/solid";
-import { trans } from 'laravel-vue-i18n';
+import { trans } from '@i18n';
 import axios from 'axios';
 
 const props = defineProps({

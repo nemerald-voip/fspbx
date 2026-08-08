@@ -261,7 +261,7 @@ import UpdateRingGroupForm from "./components/forms/UpdateRingGroupForm.vue";
 import Notification from "./components/notifications/Notification.vue";
 import Badge from "@generalComponents/Badge.vue";
 import AdvancedActionButton from "./components/general/AdvancedActionButton.vue";
-import { trans } from "laravel-vue-i18n";
+import { trans } from "@i18n";
 
 
 const page = usePage()

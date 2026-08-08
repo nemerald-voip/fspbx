@@ -293,7 +293,7 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { router } from '@inertiajs/vue3'
-import { trans } from 'laravel-vue-i18n'
+import { trans } from '@i18n'
 import {
     ArrowPathIcon,
     CheckIcon,

@@ -545,7 +545,7 @@ import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } fro
 import { XMarkIcon } from "@heroicons/vue/24/solid";
 import { Cog8ToothIcon } from "@heroicons/vue/24/outline";
 import FormChildModal from "../FormChildModal.vue"
-import { trans } from "laravel-vue-i18n";
+import { trans } from "@i18n";
 
 
 const props = defineProps({

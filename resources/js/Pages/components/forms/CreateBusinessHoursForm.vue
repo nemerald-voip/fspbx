@@ -231,7 +231,7 @@
 
 <script setup>
 import { ref } from "vue";
-import { trans } from "laravel-vue-i18n";
+import { trans } from "@i18n";
 
 const props = defineProps({
     options: Object,

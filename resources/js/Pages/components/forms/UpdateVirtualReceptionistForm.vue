@@ -472,7 +472,7 @@ import AddEditItemModal from "../modal/AddEditItemModal.vue";
 import CreateVirtualReceptionistKeyForm from "../forms/CreateVirtualReceptionistKeyForm.vue";
 import UpdateVirtualReceptionistKeyForm from "../forms/UpdateVirtualReceptionistKeyForm.vue";
 import UpdateGreetingModal from "../modal/UpdateGreetingModal.vue";
-import { trans } from "laravel-vue-i18n";
+import { trans } from "@i18n";
 
 const props = defineProps({
     show: Boolean,

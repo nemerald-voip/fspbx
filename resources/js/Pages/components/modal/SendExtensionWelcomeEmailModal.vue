@@ -130,7 +130,7 @@
 import { computed, ref, watch } from "vue";
 import AddEditItemModal from "./AddEditItemModal.vue";
 import Spinner from "@generalComponents/Spinner.vue";
-import { trans } from 'laravel-vue-i18n';
+import { trans } from '@i18n';
 
 const props = defineProps({
     show: Boolean,

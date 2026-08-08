@@ -280,7 +280,7 @@
 <script setup>
 import { computed, ref, onBeforeUnmount, onMounted, nextTick } from 'vue'
 import axios from 'axios';
-import { trans } from 'laravel-vue-i18n';
+import { trans } from '@i18n';
 import MainLayout from '../Layouts/MainLayout.vue'
 import DashboardTile from './components/general/DashboardTile.vue'
 import GlobalInfoPanel from './components/general/GlobalInfoPanel.vue'

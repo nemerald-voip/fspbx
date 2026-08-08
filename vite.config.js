@@ -118,6 +118,7 @@ async function getConfig() {
                 '@layouts': path.resolve(__dirname, 'resources/js/Layouts'),
                 '@icons': path.resolve(__dirname, 'resources/js/Pages/components/icons'),
                 '@generalComponents': path.resolve(__dirname, 'resources/js/Pages/components/general'),
+                '@i18n': path.resolve(__dirname, 'resources/js/i18n.mjs'),
             }
         }
     });

@@ -61,7 +61,7 @@
 import { onMounted, reactive, ref, watch, computed } from "vue";
 
 import { Cog6ToothIcon, MusicalNoteIcon, AdjustmentsHorizontalIcon } from '@heroicons/vue/24/outline';
-import { trans } from "laravel-vue-i18n";
+import { trans } from "@i18n";
 
 
 const props = defineProps({

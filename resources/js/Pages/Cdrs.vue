@@ -315,7 +315,7 @@
 import { computed, ref, onMounted } from "vue";
 import { usePage } from '@inertiajs/vue3'
 import { router } from "@inertiajs/vue3";
-import { trans } from "laravel-vue-i18n";
+import { trans } from "@i18n";
 import MainLayout from '../Layouts/MainLayout.vue'
 import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
