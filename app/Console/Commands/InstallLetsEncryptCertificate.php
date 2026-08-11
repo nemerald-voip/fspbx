@@ -185,10 +185,10 @@ class InstallLetsEncryptCertificate extends Command
         $this->line('FS PBX uses passwordless root SSH to copy ACME challenges, certificate');
         $this->line('state, and the Nginx certificate between the servers.');
         $sshTarget = strtolower(trim((string) $this->ask(
-            "Peer SSH target [root@{$peerHost}]",
+            'Peer SSH target',
             'root@'.$peerHost
         )));
-        $sshPort = (int) $this->ask('SSH port [22]', '22');
+        $sshPort = (int) $this->ask('SSH port', '22');
 
         if (! $this->isValidSshTarget($sshTarget)) {
             throw new RuntimeException('The peer SSH target must use root@ followed by a valid hostname or IPv4 address.');
@@ -246,10 +246,35 @@ class InstallLetsEncryptCertificate extends Command
     protected function verifyReciprocalSsh(array $topology): void
     {
         $this->info('Checking passwordless SSH to the peer...');
-        $this->runRemote($topology, ['true'], 15, false);
+        try {
+            $this->runRemote($topology, ['true'], 15, false);
+        } catch (Throwable $exception) {
+            throw new RuntimeException(
+                'Passwordless root SSH to the peer is not configured. From this server, make sure '
+                ."ssh -p {$topology['peer_ssh_port']} {$topology['peer_ssh_target']} true succeeds, then rerun the installer. "
+                .$exception->getMessage(),
+                previous: $exception
+            );
+        }
 
         $this->info('Checking passwordless SSH from the peer back to this server...');
         $reverseTarget = 'root@'.$topology['local_host'];
+        try {
+            $this->verifyReverseSsh($topology, $reverseTarget);
+        } catch (Throwable $exception) {
+            throw new RuntimeException(
+                "Passwordless root SSH works to {$topology['peer_host']}, but not from the peer back to {$topology['local_host']}. "
+                ."Log in to {$topology['peer_host']}, run: ssh-copy-id -p {$topology['peer_ssh_port']} {$reverseTarget}, "
+                ."then verify: ssh -o BatchMode=yes -p {$topology['peer_ssh_port']} {$reverseTarget} true. "
+                .'Rerun the certificate installer after that command succeeds. '
+                .$exception->getMessage(),
+                previous: $exception
+            );
+        }
+    }
+
+    protected function verifyReverseSsh(array $topology, string $reverseTarget): void
+    {
         $this->runRemote($topology, [
             'ssh',
             '-o', 'BatchMode=yes',

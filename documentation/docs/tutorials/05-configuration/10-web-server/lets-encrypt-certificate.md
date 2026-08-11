@@ -82,6 +82,27 @@ SSH port: 22
 
 Before making changes, FS PBX displays the three certificate names, local server, peer server, and renewal owner for confirmation.
 
+### Configure passwordless root SSH
+
+The certificate hooks must connect in both directions. From node 1, verify access to node 2:
+
+```bash
+ssh -o BatchMode=yes -p 22 root@pbx2.example.com true
+```
+
+Then log in to node 2 and install its root public key on node 1:
+
+```bash
+sudo -i
+test -s /root/.ssh/id_ed25519.pub || ssh-keygen -t ed25519
+ssh-copy-id -p 22 root@pbx1.example.com
+ssh -o BatchMode=yes -p 22 root@pbx1.example.com true
+```
+
+`ssh-copy-id` may ask for node 1's root password. If password-based root login is disabled, copy the `/root/.ssh/id_ed25519.pub` line through your server console or another trusted administrative channel and append it to `/root/.ssh/authorized_keys` on node 1. Keep `/root/.ssh` mode `0700` and `authorized_keys` mode `0600`.
+
+Do not continue until both `BatchMode=yes` checks succeed without prompting for a password.
+
 The installer then:
 
 1. Verifies passwordless root SSH from node 1 to node 2 and from node 2 back to node 1.

@@ -170,6 +170,55 @@ class InstallLetsEncryptCertificateTest extends TestCase
         ], $command->events);
     }
 
+    public function test_redundant_flow_explains_how_to_fix_missing_reverse_ssh(): void
+    {
+        $command = new class extends InstallLetsEncryptCertificate
+        {
+            private int $remoteCalls = 0;
+
+            protected function isRoot(): bool { return true; }
+            protected function promptDeploymentMode(): string { return 'redundant'; }
+            protected function readDeploymentConfig(string $path): array { return []; }
+            protected function promptRedundantTopology(): array
+            {
+                return [
+                    'mode' => 'redundant',
+                    'domains' => ['portal.example.com', 'pbx1.example.com', 'pbx2.example.com'],
+                    'floating_host' => 'portal.example.com',
+                    'local_host' => 'pbx1.example.com',
+                    'peer_host' => 'pbx2.example.com',
+                    'peer_ssh_target' => 'root@pbx2.example.com',
+                    'peer_ssh_port' => 22,
+                ];
+            }
+            protected function displayTopology(array $topology): void {}
+            protected function installLocalPrerequisites(string $mode): void {}
+            protected function runRemote(array $topology, array $command, int $timeout = 60, bool $stream = true): string
+            {
+                $this->remoteCalls++;
+                if ($this->remoteCalls === 2) {
+                    throw new \RuntimeException('Permission denied (publickey).');
+                }
+
+                return '';
+            }
+        };
+
+        $command->setLaravel($this->app);
+        $tester = new CommandTester($command);
+        $tester->setInputs(['yes']);
+
+        $this->assertSame(1, $tester->execute([]));
+        $this->assertStringContainsString(
+            'ssh-copy-id -p 22 root@pbx1.example.com',
+            $tester->getDisplay()
+        );
+        $this->assertStringContainsString(
+            'ssh -o BatchMode=yes -p 22 root@pbx1.example.com true',
+            $tester->getDisplay()
+        );
+    }
+
     public function test_deployment_type_requires_an_explicit_selection(): void
     {
         $command = new class extends InstallLetsEncryptCertificate
