@@ -589,7 +589,7 @@ const greetingTranscription = computed(() => {
 });
 
 const formatTarget = (name, value) => {
-    return { [name]: value?.extension ?? null };
+    return { [name]: value?.bridge_uuid ?? value?.extension ?? null };
 };
 
 const submitForm = async (FormData, form$) => {

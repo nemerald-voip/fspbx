@@ -696,7 +696,7 @@ class VirtualReceptionistController extends Controller
             case 'call_flows':
                 return 'transfer ' . $key['extension'] . ' XML ' . session('domain_name');
             case 'bridges':
-                return 'bridge ' . $key['extension'];
+                return 'lua bridge.lua ' . ($key['target'] ?? '');
             case 'voicemails':
                 return 'transfer *99' . $key['extension'] . ' XML ' . session('domain_name');
             case 'recordings':
@@ -728,7 +728,7 @@ class VirtualReceptionistController extends Controller
             case 'call_flows':
                 return ['action' => 'transfer', 'data' => $target . ' XML ' . session('domain_name')];
             case 'bridges':
-                return ['action' => 'bridge', 'data' => $target];
+                return ['action' => 'lua', 'data' => 'bridge.lua ' . $target];
             case 'voicemails':
                 return ['action' => 'transfer', 'data' => '*99' . $target . ' XML ' . session('domain_name')];
             case 'recordings':

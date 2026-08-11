@@ -150,16 +150,19 @@
                                                                     },
                                                                 }" @change="(newValue, oldValue, el$) => {
                                                                     let extension = el$.form$.el$('routing_options.' + index + '.extension')
+                                                                    let bridgeUuid = el$.form$.el$('routing_options.' + index + '.bridge_uuid')
 
                                                                     // only clear when this isn’t the very first time (i.e. oldValue was set)
                                                                     if (oldValue !== null && oldValue !== undefined) {
                                                                         extension.clear();
+                                                                        bridgeUuid.clear();
                                                                     }
 
                                                                     // fallback_target.clear()
                                                                     extension.updateItems()
                                                                 }" />
 
+                                                            <HiddenElement name="bridge_uuid" :meta="true" />
 
                                                             <SelectElement name="extension" :items="async (query, input) => {
                                                                 let type = input.$parent.el$.form$.el$('routing_options.' + index + '.type');
@@ -190,7 +193,11 @@
 
                                                                     ['routing_options.' + index + '.type', 'not_empty'],
                                                                     ['routing_options.' + index + '.type', 'not_in', ['check_voicemail', 'company_directory', 'hangup']]
-                                                                ]" />
+                                                                ]" @select="(value, option, el$) => {
+                                                                    const type = el$.form$.el$('routing_options.' + index + '.type').value
+                                                                    el$.form$.el$('routing_options.' + index + '.bridge_uuid')
+                                                                        .update(type === 'bridges' ? option?.bridge_uuid ?? null : null)
+                                                                }" />
 
 
 

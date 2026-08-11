@@ -155,7 +155,7 @@ class SipProfileService
             'sip_profile_name' => $validated['sip_profile_name'],
             'sip_profile_hostname' => $this->nullable($validated['sip_profile_hostname'] ?? null),
             'sip_profile_enabled' => $validated['sip_profile_enabled'] ?? 'true',
-            'sip_profile_description' => $validated['sip_profile_description'],
+            'sip_profile_description' => $this->nullable($validated['sip_profile_description'] ?? null),
         ], 'v_sip_profiles', $isNew);
     }
 
@@ -205,10 +205,12 @@ class SipProfileService
         }
 
         if (userCheckPermission('sip_profile_domain_delete')) {
-            DB::table('v_sip_profile_domains')
-                ->where('sip_profile_uuid', $profile->sip_profile_uuid)
-                ->whereNotIn('sip_profile_domain_uuid', $kept ?: [''])
-                ->delete();
+            $this->deleteMissingChildren(
+                'v_sip_profile_domains',
+                'sip_profile_domain_uuid',
+                $profile->sip_profile_uuid,
+                $kept
+            );
         }
     }
 
@@ -259,11 +261,29 @@ class SipProfileService
         }
 
         if (userCheckPermission('sip_profile_setting_delete')) {
-            DB::table('v_sip_profile_settings')
-                ->where('sip_profile_uuid', $profile->sip_profile_uuid)
-                ->whereNotIn('sip_profile_setting_uuid', $kept ?: [''])
-                ->delete();
+            $this->deleteMissingChildren(
+                'v_sip_profile_settings',
+                'sip_profile_setting_uuid',
+                $profile->sip_profile_uuid,
+                $kept
+            );
         }
+    }
+
+    private function deleteMissingChildren(
+        string $table,
+        string $uuidColumn,
+        string $profileUuid,
+        array $kept
+    ): void {
+        $query = DB::table($table)
+            ->where('sip_profile_uuid', $profileUuid);
+
+        if ($kept !== []) {
+            $query->whereNotIn($uuidColumn, $kept);
+        }
+
+        $query->delete();
     }
 
     private function runtimeState(SipProfiles $profile): array

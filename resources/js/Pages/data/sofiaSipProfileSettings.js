@@ -36,6 +36,7 @@ export const SOFIA_SIP_SETTINGS = [
     { name: "sip-port", group: "General", type: "number", description: "UDP/TCP port Sofia binds to (default 5060)." },
     { name: "sip-ip", group: "General", type: "text", description: "IP Sofia binds SIP to (e.g. $${local_ip_v4})." },
     { name: "user-agent-string", group: "General", type: "text", description: "User-Agent header value sent by FreeSWITCH." },
+    { name: "odbc-dsn", group: "General", type: "text", description: "Database connection used for this Sofia profile." },
     { name: "debug", group: "General", type: "number", description: "Sofia debug level (0 = off)." },
     { name: "sip-trace", group: "General", type: "enum", options: YESNO, description: "Log raw SIP messages to console." },
     { name: "sip-capture", group: "General", type: "enum", options: YESNO, description: "Send SIP messages to a HEP/Homer capture server." },
@@ -69,11 +70,13 @@ export const SOFIA_SIP_SETTINGS = [
     { name: "inbound-proxy-media", group: "Media & Codecs", type: "boolean", options: BOOL, description: "Proxy media without transcoding." },
     { name: "disable-transcoding", group: "Media & Codecs", type: "boolean", options: BOOL, description: "Refuse calls that would require transcoding." },
     { name: "dtmf-duration", group: "Media & Codecs", type: "number", description: "RFC2833 DTMF duration in samples." },
+    { name: "dtmf-type", group: "Media & Codecs", type: "enum", options: ["rfc2833", "info", "none"], description: "How DTMF events are transported." },
     { name: "rfc2833-pt", group: "Media & Codecs", type: "number", description: "RFC2833 telephone-event payload type." },
     { name: "hold-music", group: "Media & Codecs", type: "text", description: "Music-on-hold source." },
 
     // ── NAT ─────────────────────────────────────────────────────────────────
     { name: "apply-nat-acl", group: "NAT", type: "text", description: "ACL used to detect NATed endpoints (e.g. nat.auto)." },
+    { name: "local-network-acl", group: "NAT", type: "text", description: "ACL identifying local networks (e.g. localnet.auto)." },
     { name: "aggressive-nat-detection", group: "NAT", type: "boolean", options: BOOL, description: "More aggressive NAT detection heuristics." },
     { name: "nat-options-ping", group: "NAT", type: "boolean", options: BOOL, description: "Send OPTIONS keep-alives to NATed registrations." },
     { name: "all-reg-options-ping", group: "NAT", type: "boolean", options: BOOL, description: "Send OPTIONS keep-alives to all registrations." },
@@ -90,6 +93,7 @@ export const SOFIA_SIP_SETTINGS = [
     { name: "tls-verify-policy", group: "TLS", type: "enum", options: ["none", "peer", "all", "subjects_all", "subjects_in"], description: "Certificate verification policy." },
     { name: "tls-verify-depth", group: "TLS", type: "number", description: "Maximum certificate chain depth to verify." },
     { name: "tls-version", group: "TLS", type: "text", description: "Allowed TLS versions (e.g. tlsv1.2)." },
+    { name: "tls-cert-dir", group: "TLS", type: "text", description: "Directory containing the TLS certificate files." },
 
     // ── Presence ────────────────────────────────────────────────────────────
     { name: "manage-presence", group: "Presence", type: "boolean", options: BOOL, description: "Enable presence/BLF handling on this profile." },
@@ -100,15 +104,18 @@ export const SOFIA_SIP_SETTINGS = [
     // ── Timers & Advanced ───────────────────────────────────────────────────
     { name: "rtp-timeout-sec", group: "Timers & Advanced", type: "number", description: "Drop a call after this many seconds without RTP." },
     { name: "rtp-hold-timeout-sec", group: "Timers & Advanced", type: "number", description: "RTP timeout while a call is on hold." },
+    { name: "media_timeout", group: "Timers & Advanced", type: "number", description: "Drop a call after this many seconds without media." },
+    { name: "media_hold_timeout", group: "Timers & Advanced", type: "number", description: "Media timeout while a call is on hold." },
     { name: "enable-timer", group: "Timers & Advanced", type: "boolean", options: BOOL, description: "Enable RFC4028 session timers." },
     { name: "minimum-session-expires", group: "Timers & Advanced", type: "number", description: "Minimum Session-Expires value to accept." },
-    { name: "session-timeout", group: "Timers & Advanced", type: "number", description: "Default session timeout in seconds." },
+    { name: "session-timeout", group: "Timers & Advanced", type: "text", description: "Default session timeout in seconds, or false to disable." },
     { name: "enable-100rel", group: "Timers & Advanced", type: "boolean", options: BOOL, description: "Enable PRACK / 100rel reliable provisional responses." },
     { name: "enable-compact-headers", group: "Timers & Advanced", type: "boolean", options: BOOL, description: "Use compact SIP header names." },
     { name: "watchdog-enabled", group: "Timers & Advanced", type: "enum", options: YESNO, description: "Restart the profile if the SIP thread stalls." },
     { name: "watchdog-step-timeout", group: "Timers & Advanced", type: "number", description: "Watchdog step timeout in milliseconds." },
     { name: "watchdog-event-timeout", group: "Timers & Advanced", type: "number", description: "Watchdog event timeout in milliseconds." },
     { name: "suppress-cng", group: "Timers & Advanced", type: "boolean", options: BOOL, description: "Suppress comfort-noise generation packets." },
+    { name: "track-calls", group: "Timers & Advanced", type: "boolean", options: BOOL, description: "Store call state so SIP calls can be recovered." },
 ];
 
 const SETTINGS_BY_NAME = SOFIA_SIP_SETTINGS.reduce((map, def) => {
@@ -163,7 +170,7 @@ export const SIP_PROFILE_TEMPLATES = {
     },
     external: {
         label: "External (trunks)",
-        description: "Unauthenticated profile for carrier/SIP trunks in the public context.",
+        description: "Provider-facing profile for carrier/SIP trunks in the public context.",
         settings: [
             ["context", "public"],
             ["dialplan", "XML"],
@@ -172,27 +179,53 @@ export const SIP_PROFILE_TEMPLATES = {
             ["rtp-ip", "$${local_ip_v4}"],
             ["ext-rtp-ip", "$${external_rtp_ip}"],
             ["ext-sip-ip", "$${external_sip_ip}"],
-            ["auth-calls", "false"],
+            ["user-agent-string", "FreeSWITCH"],
+            ["apply-inbound-acl", "providers"],
+            ["auth-calls", "true"],
+            ["nonce-ttl", "60"],
+            ["inbound-late-negotiation", "true"],
+            ["apply-nat-acl", "nat.auto"],
+            ["tls", "$${external_ssl_enable}"],
+            ["tls-bind-params", "transport=tls"],
+            ["tls-only", "false"],
+            ["tls-sip-port", "5061"],
+            ["tls-verify-date", "false"],
+            ["tls-verify-depth", "2"],
+            ["tls-verify-policy", "none"],
+            ["tls-version", "$${sip_tls_version}"],
+            ["tls-cert-dir", "$${external_ssl_dir}"],
+            ["enable-timer", "false"],
+            ["session-timeout", "false"],
+            ["dtmf-type", "rfc2833"],
+            ["local-network-acl", "localnet.auto"],
+            ["media_hold_timeout", "1800"],
+            ["media_timeout", "300"],
+            ["track-calls", "false"],
+            ["odbc-dsn", null],
             ["manage-presence", "false"],
             ["inbound-codec-prefs", "$${global_codec_prefs}"],
             ["outbound-codec-prefs", "$${global_codec_prefs}"],
             ["inbound-codec-negotiation", "generous"],
-            ["rtp-timeout-sec", "300"],
-            ["rtp-hold-timeout-sec", "1800"],
-            ["tls", "false"],
         ],
     },
 };
 
+/** Build the per-profile RAM SQLite DSN used by Sofia. */
+export function sipProfileOdbcDsn(profileName) {
+    const name = String(profileName ?? "").trim() || "external";
+
+    return `sqlite:///dev/shm/sofia_reg_${name}.db`;
+}
+
 /** Build editor rows from a template id. */
-export function templateSettings(templateId) {
+export function templateSettings(templateId, profileName = "") {
     const tpl = SIP_PROFILE_TEMPLATES[templateId];
     if (!tpl) return [];
 
     return tpl.settings.map(([name, value]) => ({
         sip_profile_setting_uuid: null,
         sip_profile_setting_name: name,
-        sip_profile_setting_value: value,
+        sip_profile_setting_value: name === "odbc-dsn" ? sipProfileOdbcDsn(profileName) : value,
         sip_profile_setting_enabled: "true",
         sip_profile_setting_description: getSettingDefinition(name)?.description ?? "",
     }));

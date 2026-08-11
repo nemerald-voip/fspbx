@@ -108,6 +108,7 @@ class BridgeController extends Controller
         }
 
         $form = $service->parseDestination($item->bridge_destination);
+        $form['bridge_headers'] = $service->headers($item, $form['bridge_headers']);
         $gatewayOptions = $this->gatewayOptions();
         $form = $this->hydrateGatewaySelections($form, $gatewayOptions);
 

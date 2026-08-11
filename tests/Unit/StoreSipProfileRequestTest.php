@@ -8,6 +8,25 @@ use Tests\TestCase;
 
 class StoreSipProfileRequestTest extends TestCase
 {
+    public function test_profile_description_is_optional(): void
+    {
+        $rule = (new StoreSipProfileRequest())->rules()['sip_profile_description'];
+
+        $this->assertTrue(Validator::make([], [
+            'sip_profile_description' => $rule,
+        ])->passes());
+        $this->assertTrue(Validator::make([
+            'sip_profile_description' => null,
+        ], [
+            'sip_profile_description' => $rule,
+        ])->passes());
+        $this->assertTrue(Validator::make([
+            'sip_profile_description' => '',
+        ], [
+            'sip_profile_description' => $rule,
+        ])->passes());
+    }
+
     public function test_numeric_setting_values_are_normalized_to_strings(): void
     {
         $request = new class extends StoreSipProfileRequest

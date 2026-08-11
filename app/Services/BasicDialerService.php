@@ -469,7 +469,7 @@ class BasicDialerService
     private function answeredApplication(BasicDialerCampaign $campaign, string $domainName): string
     {
         if ($campaign->destination_type === 'bridges') {
-            return sprintf('&bridge(%s)', $campaign->destination_target);
+            return sprintf('&lua(bridge.lua %s)', $campaign->destination_target);
         }
 
         if ($campaign->destination_type === 'hangup') {

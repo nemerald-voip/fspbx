@@ -361,7 +361,7 @@ const fetchRoutingTargets = async (query, input, actionElementName) => {
 };
 
 const formatRoutingTarget = (name, value) => {
-    return { [name]: value?.extension ?? value ?? null };
+    return { [name]: value?.bridge_uuid ?? value?.extension ?? value ?? null };
 };
 
 const handleExtensionChange = (newValue, oldValue, el$) => {

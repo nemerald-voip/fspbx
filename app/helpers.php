@@ -1653,9 +1653,15 @@ if (!function_exists('buildDestinationAction')) {
                 ];
 
             case 'bridges':
+                $bridgeUuid = $option['bridge_uuid'] ?? $option['option'] ?? null;
+                if (blank($bridgeUuid) && \Illuminate\Support\Str::isUuid($option['extension'] ?? null)) {
+                    $bridgeUuid = $option['extension'];
+                }
+
                 return [
-                    'destination_app' => 'bridge',
-                    'destination_data' => $option['extension'],
+                    'destination_app' => 'lua',
+                    'destination_data' => 'bridge.lua ' . $bridgeUuid,
+                    'bridge_uuid' => $bridgeUuid,
                 ];
 
             case 'voicemails':

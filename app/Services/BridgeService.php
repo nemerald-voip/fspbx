@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Bridge;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class BridgeService
@@ -16,6 +17,12 @@ class BridgeService
             $isNew = ! $bridge->exists;
             $bridgeUuid = $bridge->bridge_uuid ?: (string) Str::uuid();
 
+            if (! $isNew && ! is_array($validated['bridge_variables'] ?? null)) {
+                $validated['bridge_variables'] = $this->parseDestination(
+                    $bridge->bridge_destination
+                )['bridge_variables'];
+            }
+
             $bridge->forceFill([
                 'domain_uuid' => session('domain_uuid'),
                 'bridge_uuid' => $bridgeUuid,
@@ -26,6 +33,10 @@ class BridgeService
                 $isNew ? 'insert_date' : 'update_date' => now(),
                 $isNew ? 'insert_user' : 'update_user' => session('user_uuid'),
             ])->save();
+
+            if (array_key_exists('bridge_headers', $validated)) {
+                $this->syncHeaders($bridgeUuid, $validated['bridge_headers'] ?? []);
+            }
 
             $this->clearDestinations();
 
@@ -51,6 +62,13 @@ class BridgeService
     public function delete(Collection $bridges): int
     {
         return DB::transaction(function () use ($bridges) {
+            if (Schema::hasTable('bridge_headers')) {
+                DB::table('bridge_headers')
+                    ->where('domain_uuid', session('domain_uuid'))
+                    ->whereIn('bridge_uuid', $bridges->pluck('bridge_uuid'))
+                    ->delete();
+            }
+
             $deleted = Bridge::query()
                 ->where('domain_uuid', session('domain_uuid'))
                 ->whereIn('bridge_uuid', $bridges->pluck('bridge_uuid'))
@@ -76,6 +94,30 @@ class BridgeService
                 $copy->update_date = null;
                 $copy->update_user = null;
                 $copy->save();
+
+                if (Schema::hasTable('bridge_headers')) {
+                    $headers = DB::table('bridge_headers')
+                        ->where('bridge_uuid', $bridge->bridge_uuid)
+                        ->where('domain_uuid', $bridge->domain_uuid)
+                        ->orderBy('sort_order')
+                        ->get(['header_name', 'header_value']);
+
+                    if ($headers->isNotEmpty()) {
+                        DB::table('bridge_headers')->insert(
+                            $headers->values()->map(fn ($header, $index) => [
+                                'bridge_header_uuid' => (string) Str::uuid(),
+                                'bridge_uuid' => $copy->bridge_uuid,
+                                'domain_uuid' => $copy->domain_uuid,
+                                'header_name' => $header->header_name,
+                                'header_value' => $header->header_value,
+                                'sort_order' => $index,
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ])->all()
+                        );
+                    }
+                }
+
                 $count++;
             }
 
@@ -121,7 +163,16 @@ class BridgeService
         }
 
         if (in_array($action, ['gateway', 'profile'], true)) {
-            $variables = $this->bridgeVariables($validated['bridge_variables'] ?? []);
+            $bridgeVariables = $validated['bridge_variables'] ?? [];
+
+            if (array_key_exists('bridge_headers', $validated)) {
+                $bridgeVariables = collect($bridgeVariables)
+                    ->reject(fn ($value, $key) => $this->isSipHeaderVariable((string) $key))
+                    ->all();
+            }
+
+            $variables = $this->bridgeVariables($bridgeVariables);
+
             if ($variables !== null && $destination !== null) {
                 $destination = '{' . $variables . '}' . $destination;
             }
@@ -139,6 +190,7 @@ class BridgeService
             'destination_number' => null,
             'bridge_destination' => $destination,
             'bridge_variables' => [],
+            'bridge_headers' => [],
         ];
 
         $destination = trim((string) $destination);
@@ -146,14 +198,22 @@ class BridgeService
             return $result;
         }
 
-        if (preg_match('/^\{([^}]+)\}/', $destination, $matches)) {
-            foreach (explode(',', $matches[1]) as $pair) {
+        $variableBlock = $this->extractLeadingVariableBlock($destination);
+        if ($variableBlock !== null) {
+            foreach (explode(',', $variableBlock['variables']) as $pair) {
                 [$name, $value] = array_pad(explode('=', $pair, 2), 2, '');
                 if ($name !== '') {
                     $result['bridge_variables'][$name] = $value;
+
+                    if ($this->isSipHeaderVariable($name)) {
+                        $result['bridge_headers'][] = [
+                            'name' => preg_replace('/^sip_h_/i', '', $name),
+                            'value' => $value,
+                        ];
+                    }
                 }
             }
-            $destination = substr($destination, strlen($matches[0]));
+            $destination = substr($destination, strlen($variableBlock['raw']));
         }
 
         $actions = explode(',', $destination);
@@ -180,6 +240,26 @@ class BridgeService
         return $result;
     }
 
+    public function headers(Bridge $bridge, array $fallback = []): array
+    {
+        if (! $bridge->exists || ! Schema::hasTable('bridge_headers')) {
+            return $fallback;
+        }
+
+        $headers = DB::table('bridge_headers')
+            ->where('bridge_uuid', $bridge->bridge_uuid)
+            ->where('domain_uuid', $bridge->domain_uuid)
+            ->orderBy('sort_order')
+            ->get(['header_name', 'header_value'])
+            ->map(fn ($header) => [
+                'name' => $header->header_name,
+                'value' => $header->header_value,
+            ])
+            ->all();
+
+        return $headers === [] ? $fallback : $headers;
+    }
+
     private function bridgeVariables(array $variables): ?string
     {
         $value = collect($variables)
@@ -190,6 +270,88 @@ class BridgeService
             ->implode(',');
 
         return $value === '' ? null : $value;
+    }
+
+    private function syncHeaders(string $bridgeUuid, array $headers): void
+    {
+        if (! Schema::hasTable('bridge_headers')) {
+            if ($headers !== []) {
+                throw new \RuntimeException('The bridge_headers table is missing. Run the database migrations.');
+            }
+
+            return;
+        }
+
+        DB::table('bridge_headers')
+            ->where('bridge_uuid', $bridgeUuid)
+            ->where('domain_uuid', session('domain_uuid'))
+            ->delete();
+
+        $rows = collect($headers)
+            ->map(function ($header, $index) use ($bridgeUuid) {
+                if (! is_array($header)) {
+                    return null;
+                }
+
+                $name = preg_replace('/^sip_h_/i', '', trim((string) ($header['name'] ?? '')));
+                $value = trim((string) ($header['value'] ?? ''));
+
+                if ($name === '' || $value === '') {
+                    return null;
+                }
+
+                return [
+                    'bridge_header_uuid' => (string) Str::uuid(),
+                    'bridge_uuid' => $bridgeUuid,
+                    'domain_uuid' => session('domain_uuid'),
+                    'header_name' => $name,
+                    'header_value' => $value,
+                    'sort_order' => $index,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            })
+            ->filter()
+            ->values()
+            ->all();
+
+        if ($rows !== []) {
+            DB::table('bridge_headers')->insert($rows);
+        }
+    }
+
+    private function isSipHeaderVariable(string $name): bool
+    {
+        return str_starts_with(strtolower(trim($name)), 'sip_h_');
+    }
+
+    private function extractLeadingVariableBlock(string $destination): ?array
+    {
+        if (! str_starts_with($destination, '{')) {
+            return null;
+        }
+
+        $depth = 0;
+        $length = strlen($destination);
+
+        for ($index = 0; $index < $length; $index++) {
+            if ($destination[$index] === '{') {
+                $depth++;
+            } elseif ($destination[$index] === '}') {
+                $depth--;
+
+                if ($depth === 0) {
+                    $raw = substr($destination, 0, $index + 1);
+
+                    return [
+                        'raw' => $raw,
+                        'variables' => substr($raw, 1, -1),
+                    ];
+                }
+            }
+        }
+
+        return null;
     }
 
     private function clearDestinations(): void

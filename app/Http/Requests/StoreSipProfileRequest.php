@@ -52,7 +52,7 @@ class StoreSipProfileRequest extends FormRequest
             ],
             'sip_profile_hostname' => ['nullable', 'string', 'max:255'],
             'sip_profile_enabled' => ['required', Rule::in(['true', 'false'])],
-            'sip_profile_description' => ['required', 'string'],
+            'sip_profile_description' => ['nullable', 'string'],
             'domains' => ['array'],
             'domains.*.sip_profile_domain_uuid' => ['nullable', 'uuid'],
             'domains.*.sip_profile_domain_name' => ['nullable', 'string', 'max:255'],

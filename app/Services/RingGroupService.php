@@ -47,7 +47,10 @@ class RingGroupService
             case 'call_flows':
                 return  ['action' => 'transfer', 'data' => $payload['timeout_target'] . ' XML ' . $domain_name];
             case 'bridges':
-                return ['action' => 'bridge', 'data' => $payload['timeout_target']];
+                return [
+                    'action' => 'lua',
+                    'data' => 'bridge.lua ' . ($payload['timeout_target'] ?? ''),
+                ];
             case 'voicemails':
                 return ['action' => 'transfer', 'data' => '*99' . $payload['timeout_target'] . ' XML ' . $domain_name];
 
