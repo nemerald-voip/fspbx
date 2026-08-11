@@ -49,17 +49,24 @@
                                     :error="errors?.input ? errors.input[0] : null"
                                     :conditions="[['greeting_method', '==', 'text-to-speech']]" />
 
-                                <SelectElement name="voice" label="Voice" :items="voices"
+                                <SelectElement name="tts_provider" label="TTS Provider" :items="ttsProviderItems"
+                                    :search="false" :native="false" :default="currentTtsProvider"
+                                    placeholder="Choose Provider" :floating="false" :columns="{
+                                        sm: { container: 12 },
+                                    }" @change="onTtsProviderChange"
+                                    :conditions="[['greeting_method', '==', 'text-to-speech']]" />
+
+                                <SelectElement name="voice" label="Voice" :items="currentVoices"
                                     :search="true" :native="false" input-type="search"
                                     autocomplete="off" placeholder="Choose Voice" :floating="false"
-                                    :default="props.default_voice" :columns="{
+                                    :default="currentDefaultVoice" :columns="{
                                         sm: {
                                             container: 6,
                                         },
                                     }" :error="errors?.voice ? errors.voice[0] : null"
                                     :conditions="[['greeting_method', '==', 'text-to-speech']]" />
 
-                                <SelectElement name="speed" label="Speed" :items="speeds"
+                                <SelectElement v-if="currentSpeeds.length > 0" name="speed" label="Speed" :items="currentSpeeds"
                                    :search="true" :native="false" input-type="search" :default="'1.00'"
                                     autocomplete="off" placeholder="Choose Speed" :floating="false" :columns="{
                                         sm: {
@@ -197,6 +204,48 @@ const form$ = ref(null);
 const emit = defineEmits(['close', 'error', 'success', 'saved']);
 const page = usePage();
 
+// TTS Provider state
+const ttsProviderItems = [
+    { value: 'openai', label: 'OpenAI' },
+    { value: 'elevenlabs', label: 'ElevenLabs' },
+];
+const currentTtsProvider = ref('openai');
+const currentVoices = ref(props.voices || []);
+const currentSpeeds = ref(props.speeds || []);
+const currentDefaultVoice = ref(props.default_voice);
+const isLoadingVoices = ref(false);
+
+const onTtsProviderChange = async (provider) => {
+    currentTtsProvider.value = provider;
+    if (provider === 'openai') {
+        // Reset to original props
+        currentVoices.value = props.voices || [];
+        currentSpeeds.value = props.speeds || [];
+        currentDefaultVoice.value = props.default_voice;
+    } else {
+        // Fetch voices from API
+        isLoadingVoices.value = true;
+        try {
+            const { data } = await axios.get(props.routes?.tts_voices_route || '/api/tts/voices', {
+                params: { provider }
+            });
+            currentVoices.value = data.voices || [];
+            currentSpeeds.value = data.speeds || [];
+            currentDefaultVoice.value = data.default_voice;
+        } catch (err) {
+            console.error('Failed to load voices:', err);
+            currentVoices.value = [];
+            currentSpeeds.value = [];
+        } finally {
+            isLoadingVoices.value = false;
+        }
+    }
+    // Reset voice selection in form
+    if (form$.value) {
+        form$.value.el$('voice')?.clear();
+    }
+};
+
 // UI State Variables
 const isFormSubmiting = ref(false);
 const isSaving = ref(false);
@@ -274,6 +323,7 @@ const generateGreeting = () => {
 
     const generatePayload = {
         input: form$.value?.data?.input ?? null,
+        provider: currentTtsProvider.value,
         voice: form$.value?.data?.voice ?? null,
         speed: form$.value?.data?.speed ?? null,
         _token: page.props.csrf_token
