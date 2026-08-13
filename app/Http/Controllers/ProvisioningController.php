@@ -725,6 +725,47 @@ class ProvisioningController extends Controller
             'shared_line_count' => collect($lines)->where('shared_line', true)->count(),
         ]);
 
+        // --- expose per-extension state for templates ---
+        // Collect user_ids from the device lines (these match $lines[..]['user_id'])
+        $userIds = array_values(array_filter(array_map(fn($l) => $l['user_id'] ?? null, $lines)));
+        
+        $extensions = [];
+        if (!empty($userIds)) {
+            $extRows = \App\Models\Extensions::query()
+                ->where('domain_uuid', $device->domain_uuid)
+                ->whereIn('extension', $userIds)
+                ->get([
+                    'extension',
+                    'do_not_disturb',
+                    'forward_all_enabled',
+                    'forward_busy_enabled',
+                    'forward_no_answer_enabled',
+                    'follow_me_enabled',
+                    'enabled',
+                    'effective_caller_id_name',
+                ])
+                ->keyBy('extension');
+        
+            foreach ($extRows as $ext) {
+                $extensions[(string)$ext->extension] = [
+                    // Boolean convenience values for templates:
+                    'do_not_disturb' => ($ext->do_not_disturb === 'true'),
+                    'forward_all_enabled' => ($ext->forward_all_enabled === 'true'),
+                    'forward_busy_enabled' => ($ext->forward_busy_enabled === 'true'),
+                    'forward_no_answer_enabled' => ($ext->forward_no_answer_enabled === 'true'),
+                    'follow_me_enabled' => ($ext->follow_me_enabled === 'true'),
+                    'enabled' => ($ext->enabled === 'true'),
+        
+                    // Keep raw strings for backwards compatibility where needed:
+                    'do_not_disturb_raw' => (string)$ext->do_not_disturb,
+                    'forward_all_enabled_raw' => (string)$ext->forward_all_enabled,
+        
+                    // Useful metadata:
+                    'effective_caller_id_name' => $ext->effective_caller_id_name,
+                ];
+            }
+        }
+        
         $settings = $this->getProvisionSettings(
             (string) $device->domain_uuid,
             (string) $device->device_uuid
@@ -792,6 +833,7 @@ class ProvisioningController extends Controller
             'lines'       => $lines,
             'line_count'  => count($lines),
             'settings'    => $settings,
+            'extensions'  => $extensions,
 
             'phonebooks'  => $phonebooks,
         ];
