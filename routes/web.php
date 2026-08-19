@@ -110,6 +110,7 @@ Route::webhooks('webhook/postmark', 'postmark');
 Route::webhooks('webhook/mailgun', 'mailgun');
 Route::webhooks('webhook/commio/sms', 'commio_messaging');
 Route::webhooks('webhook/sinch/sms', 'sinch_messaging');
+Route::webhooks('webhook/voxutel/sms', 'voxutel_messaging');
 Route::webhooks('webhook/bandwidth/sms', 'bandwidth_messaging');
 Route::webhooks('webhook/telnyx/sms', 'telnyx_messaging');
 Route::webhooks('webhook/clicksend/sms', 'clicksend_messaging');

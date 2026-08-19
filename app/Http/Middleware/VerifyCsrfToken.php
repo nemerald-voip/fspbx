@@ -16,6 +16,7 @@ class VerifyCsrfToken extends Middleware
         'webhook/mailgun',
         'webhook/commio/sms',
         'webhook/sinch/sms',
+        'webhook/voxutel/sms',
         'webhook/bandwidth/sms',
         'webhook/telnyx/sms',
         'webhook/clicksend/sms',

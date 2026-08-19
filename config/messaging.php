@@ -5,6 +5,7 @@ return [
 
     'outbound_providers' => [
         'sinch' => \App\Services\Messaging\Outbound\Providers\SinchOutboundProvider::class,
+        'voxutel' => \App\Services\Messaging\Outbound\Providers\VoxutelOutboundProvider::class,
         'bandwidth' => \App\Services\Messaging\Outbound\Providers\BandwidthOutboundProvider::class,
         'telnyx' => \App\Services\Messaging\Outbound\Providers\TelnyxOutboundProvider::class,
         'clicksend' => \App\Services\Messaging\Outbound\Providers\ClickSendOutboundProvider::class,

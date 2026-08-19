@@ -4,6 +4,22 @@ return [
     'configs' => [
         [
             /*
+             * Voxutel's Message Broker uses the same payload format as Sinch,
+             * but receives its own endpoint, credentials, and provider identity.
+             */
+            'name' => 'voxutel_messaging',
+            'signing_secret' => env('WEBHOOK_CLIENT_SECRET'),
+            'signature_header_name' => 'X-Voxutel-Signature',
+            'signature_validator' => \App\Http\Webhooks\SignatureValidators\VoxutelSignatureValidator::class,
+            'webhook_profile' => \App\Http\Webhooks\WebhookProfiles\VoxutelWebhookProfile::class,
+            'webhook_response' => \Spatie\WebhookClient\WebhookResponse\DefaultRespondsTo::class,
+            'webhook_model' => \App\Models\WhCall::class,
+            'store_headers' => [],
+            'process_webhook_job' => \App\Http\Webhooks\Jobs\ProcessVoxutelWebhookJob::class,
+        ],
+
+        [
+            /*
              * This package supports multiple webhook receiving endpoints. If you only have
              * one endpoint receiving webhooks, you can use 'default'.
              */
