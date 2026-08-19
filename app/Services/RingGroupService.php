@@ -16,6 +16,7 @@ class RingGroupService
             case 'business_hours':
             case 'time_conditions':
             case 'contact_centers':
+            case 'ai_agents':
             case 'conferences':
             case 'faxes':
             case 'call_flows':
@@ -42,6 +43,7 @@ class RingGroupService
             case 'business_hours':
             case 'time_conditions':
             case 'contact_centers':
+            case 'ai_agents':
             case 'faxes':
             case 'conferences':
             case 'call_flows':

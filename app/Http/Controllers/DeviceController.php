@@ -679,7 +679,9 @@ class DeviceController extends Controller
                             $line->password = null;
                         }
                         return $line;
-                    });
+                    })
+                    ->sortBy(fn ($line) => (int) $line->line_number)
+                    ->values();
             }
 
             $lineKeyTypes = [

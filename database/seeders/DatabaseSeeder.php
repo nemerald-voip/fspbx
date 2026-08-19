@@ -225,6 +225,13 @@ class DatabaseSeeder extends Seeder
             ['application_name' => 'Basic Dialer', 'permission_name' => 'basic_dialer_start'],
             ['application_name' => 'PhoneControl', 'permission_name' => 'phone_control_view'],
             ['application_name' => 'PhoneControl', 'permission_name' => 'phone_control_call'],
+            ['application_name' => 'AI Agents', 'permission_name' => 'ai_agent_view'],
+            ['application_name' => 'AI Agents', 'permission_name' => 'ai_agent_create'],
+            ['application_name' => 'AI Agents', 'permission_name' => 'ai_agent_update'],
+            ['application_name' => 'AI Agents', 'permission_name' => 'ai_agent_delete'],
+            ['application_name' => 'AI Agents', 'permission_name' => 'ai_agent_manage_domain'],
+            ['application_name' => 'AI Agents', 'permission_name' => 'ai_agent_manage_provider'],
+            ['application_name' => 'AI Agents', 'permission_name' => 'ai_agent_manage_integration'],
         ];
         $timestamp = date("Y-m-d H:i:s");
 
@@ -371,6 +378,13 @@ class DatabaseSeeder extends Seeder
                 'basic_dialer_start',
                 'phone_control_view',
                 'phone_control_call',
+                'ai_agent_view',
+                'ai_agent_create',
+                'ai_agent_update',
+                'ai_agent_delete',
+                'ai_agent_manage_domain',
+                'ai_agent_manage_provider',
+                'ai_agent_manage_integration',
             ],
             'admin' => [
                 'call_webhook_view',

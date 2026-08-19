@@ -59,5 +59,8 @@
 
     <!-- FS PBX: Call Flow BLF daemon -->
     <param name="startup-script" value="lua/flow_blf.lua"/>
+
+    <!-- FS PBX: Call Center Agent BLF daemon -->
+    <param name="startup-script" value="lua/agent_blf.lua"/>
   </settings>
 </configuration>

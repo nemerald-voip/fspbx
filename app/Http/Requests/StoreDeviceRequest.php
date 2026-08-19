@@ -76,7 +76,7 @@ class StoreDeviceRequest extends FormRequest
             // Required fields for each key:
             'device_lines.*.line_type_id' => ['required', 'string'],
             'device_lines.*.auth_id' => ['required', 'string'],
-            'device_lines.*.line_number' => ['required', 'numeric'],
+            'device_lines.*.line_number' => ['required', 'integer', 'min:0', 'distinct'],
 
             // These fields can be null/empty:
             'device_lines.*.display_name' => ['nullable'],

@@ -1645,6 +1645,8 @@ if (!function_exists('buildDestinationAction')) {
             case 'time_conditions':
             case 'contact_centers':
             case 'conferences':
+            case 'conference_centers':
+            case 'ai_agents':
             case 'faxes':
             case 'call_flows':
                 return [

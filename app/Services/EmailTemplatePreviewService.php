@@ -131,7 +131,12 @@ class EmailTemplatePreviewService
             'call_uuid' => '00000000-0000-4000-8000-000000000002',
             'destination_number' => '2000',
             'sent_at' => now()->toDateTimeString(),
-
+            'fields' => [
+                ['label' => 'Name', 'value' => 'Jordan Lee'],
+                ['label' => 'Callback', 'value' => '+1 202-555-0142'],
+                ['label' => 'Purpose', 'value' => 'Requested an account follow-up'],
+            ],
+            'notes' => 'Please return the call this afternoon.',
             'date' => now()->format('F j, Y'),
             'duration' => '00:42',
             'sentiment' => 'Positive',

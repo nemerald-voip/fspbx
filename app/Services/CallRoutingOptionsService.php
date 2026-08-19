@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Support\BridgeRuntimeDestination;
-use App\Models\{Bridge, BusinessHour, CallCenterQueues, CallFlows, Conferences, Dialplans, Domain, Extensions, Faxes, IvrMenus, Recordings, RingGroups, Voicemails};
+use App\Models\{AiAgent, Bridge, BusinessHour, CallCenterQueues, CallFlows, Conferences, Dialplans, Domain, Extensions, Faxes, IvrMenus, Recordings, RingGroups, Voicemails};
 use App\Models\ConferenceCenter;
 
 class CallRoutingOptionsService
@@ -25,6 +25,7 @@ class CallRoutingOptionsService
         ['value' => 'recordings', 'name' => 'Play Greeting'],
         ['value' => 'conferences', 'name' => 'Conferences'],
         ['value' => 'conference_centers', 'name' => 'Conference Centers'],
+        ['value' => 'ai_agents', 'name' => 'AI Agent'],
         ['value' => 'check_voicemail', 'name' => 'Check Voicemail'],
         ['value' => 'company_directory', 'name' => 'Company Directory'],
         ['value' => 'hangup', 'name' => 'Hang up'],
@@ -50,6 +51,7 @@ class CallRoutingOptionsService
         'faxes'            => \App\Models\Faxes::class,
         'call_flows'       => \App\Models\CallFlows::class,
         'recordings'       => \App\Models\Recordings::class,
+        'ai_agents'        => \App\Models\AiAgent::class,
     ];
 
     private const TRANSFER_FORMAT = '%s:%s XML %s';
@@ -67,6 +69,7 @@ class CallRoutingOptionsService
             ['value' => 'business_hours', 'label' => __('Business Hours')],
             ['value' => 'time_conditions', 'label' => __('Schedule')],
             ['value' => 'contact_centers', 'label' => __('Contact Center')],
+            ['value' => 'ai_agents', 'label' => __('AI Agent')],
             ['value' => 'faxes', 'label' => __('Fax')],
             ['value' => 'call_flows', 'label' => __('Call Flow')],
             ['value' => 'external', 'label' => __('External Number')],
@@ -103,6 +106,18 @@ class CallRoutingOptionsService
                 return $this->buildOptions(Conferences::class, 'conference_extension', 'conference_name');
             case 'conference_centers':
                 return $this->buildOptions(ConferenceCenter::class, 'conference_center_extension', 'conference_center_name');
+            case 'ai_agents':
+                return AiAgent::query()
+                    ->where('domain_uuid', $this->domainUuid)
+                    ->where('enabled', true)
+                    ->where('provisioning_status', 'synced')
+                    ->orderBy('extension')
+                    ->get(['ai_agent_uuid', 'extension', 'name'])
+                    ->map(fn (AiAgent $agent) => [
+                        'value' => $agent->ai_agent_uuid,
+                        'extension' => $agent->extension,
+                        'name' => $agent->extension . ' - ' . $agent->name,
+                    ])->all();
             case 'voicemails':
                 return $this->buildOptions(Voicemails::class, 'voicemail_id', 'voicemail_description');
             case 'other':
@@ -532,6 +547,7 @@ class CallRoutingOptionsService
             'faxes' => '/fax_uuid=([0-9a-fA-F-]+)/',
             'conferences' => '/conference_uuid=([0-9a-fA-F-]+)/',
             'conference_centers' => '/app.lua conference_center/',
+            'ai_agents' => '/ai_agent.lua\s+([0-9a-fA-F-]+)/',
             'check_voicemail' => '/app.lua voicemail/',
             'company_directory' => '/directory.lua/',
             'external' => '/disa.lua/',
@@ -590,6 +606,20 @@ class CallRoutingOptionsService
                         'name' => $conferenceCenter
                             ? $conferenceCenter->conference_center_extension . ' - ' . $conferenceCenter->conference_center_name
                             : $dialplan->dialplan_name,
+                    ];
+                }
+
+                if ($type === 'ai_agents') {
+                    $agent = AiAgent::query()
+                        ->where('domain_uuid', $this->domainUuid)
+                        ->where('ai_agent_uuid', $matches[1])
+                        ->first();
+
+                    return [
+                        'type' => $type,
+                        'extension' => $extension,
+                        'option' => $agent?->ai_agent_uuid,
+                        'name' => $agent ? $agent->extension . ' - ' . $agent->name : $dialplan->dialplan_name,
                     ];
                 }
 
@@ -708,6 +738,7 @@ class CallRoutingOptionsService
             'call_flows' => 'Call Flow',
             'conferences' => 'Conference',
             'conference_centers' => 'Conference Center',
+            'ai_agents' => 'AI Agent',
             'recordings' => 'Play recording',
             'company_directory' => 'Company Directory',
             'check_voicemail' => 'Check Voicemail',

@@ -57,6 +57,7 @@ class LogsController extends Controller
                     'email_logs' => route('email-logs.index'),
                     'email_retry' => route('email-logs.retry'),
                     'email_delivery_details' => route('email-logs.delivery-details', ['uuid' => '__UUID__']),
+                    'ai_agent_logs' => route('ai-agent-logs.index'),
                     'test_email_send' => route('test-email-send.store'),
                     'tigertms_logs' => $this->tigerTmsLogsEnabled() ? route('tigertms-logs.index') : null,
                     'inbound_webhooks' => route('inbound-webhooks.index'),
@@ -217,6 +218,7 @@ class LogsController extends Controller
         $permissions['log_download'] = userCheckPermission('log_download');
         $permissions['log_path_view'] = userCheckPermission('log_path_view');
         $permissions['email_test_send'] = userCheckPermission('email_test_send');
+        $permissions['ai_agent_view'] = userCheckPermission('ai_agent_view');
 
         return $permissions;
     }

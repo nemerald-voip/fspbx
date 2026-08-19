@@ -75,6 +75,42 @@ class AccessControlService
         }
     }
 
+    /**
+     * Synchronize one provider's tagged nodes without replacing the shared list.
+     */
+    public function syncManagedProviderCidrs(string $provider, mixed $value): void
+    {
+        $provider = strtolower(trim($provider));
+        $description = 'Managed provider:' . $provider;
+        $cidrs = $this->normalizeCidrs($value);
+
+        $providers = AccessControl::query()
+            ->firstOrNew(['access_control_name' => self::PROVIDERS_LIST]);
+
+        if (! $providers->exists) {
+            $providers->forceFill([
+                'access_control_default' => 'deny',
+                'access_control_description' => 'Provider IP access control list.',
+            ])->save();
+        }
+
+        $managedNodes = $providers->nodes()->where('node_description', $description);
+
+        if ($cidrs->isEmpty()) {
+            $managedNodes->delete();
+        } else {
+            $managedNodes->whereNotIn('node_cidr', $cidrs->all())->delete();
+        }
+
+        foreach ($cidrs as $cidr) {
+            $providers->nodes()->firstOrCreate([
+                'node_type' => 'allow',
+                'node_cidr' => $cidr,
+                'node_description' => $description,
+            ]);
+        }
+    }
+
     public function removeGatewayProviderIps(Gateways $gateway): void
     {
         $managedLists = $this->managedGatewayLists($gateway);

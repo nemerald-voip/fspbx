@@ -5,6 +5,7 @@ use App\Http\Controllers\AccessControlController;
 use App\Http\Controllers\ActiveConferenceController;
 use App\Http\Controllers\ActiveCallsController;
 use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\AiAgentController;
 use App\Http\Controllers\AppsController;
 use App\Http\Controllers\AppsCredentialsController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
@@ -310,6 +311,7 @@ Route::group(['middleware' => 'auth'], function () {
 
     // Conference Centers
     Route::get('conference-centers', [ConferenceCenterController::class, 'index'])->name('conference-centers.index');
+    Route::get('ai-agents', [AiAgentController::class, 'index'])->name('ai-agents.index');
     Route::get('conferences', [ConferenceController::class, 'index'])->name('conferences.index');
     Route::get('conference-controls', [ConferenceControlController::class, 'index'])->name('conference-controls.index');
     Route::get('conference-profiles', [ConferenceProfileController::class, 'index'])->name('conference-profiles.index');

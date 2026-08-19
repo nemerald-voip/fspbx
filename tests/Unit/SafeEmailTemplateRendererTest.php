@@ -28,7 +28,8 @@ class SafeEmailTemplateRendererTest extends TestCase
     {
         $definitions = app(EmailTemplateSourceService::class)->definitions();
 
-        $this->assertCount(20, $definitions);
+        $this->assertCount(22, $definitions);
+        $this->assertArrayHasKey('ai-agent.send-email|en-us', $definitions);
         $this->assertArrayHasKey('extension.welcome|en-us', $definitions);
         $this->assertArrayHasKey('voicemail.default|en-us', $definitions);
         $this->assertArrayHasKey('voicemail.transcription|en-us', $definitions);

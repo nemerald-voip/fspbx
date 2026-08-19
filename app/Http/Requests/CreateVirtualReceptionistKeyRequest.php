@@ -4,9 +4,36 @@ namespace App\Http\Requests;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class CreateVirtualReceptionistKeyRequest extends FormRequest
 {
+    protected const ACTIONS_WITHOUT_TARGET = [
+        'company_directory',
+        'check_voicemail',
+        'hangup',
+    ];
+
+    protected const ACTIONS = [
+        'extensions',
+        'voicemails',
+        'ring_groups',
+        'ivrs',
+        'business_hours',
+        'time_conditions',
+        'contact_centers',
+        'bridges',
+        'faxes',
+        'call_flows',
+        'recordings',
+        'conferences',
+        'conference_centers',
+        'ai_agents',
+        'check_voicemail',
+        'company_directory',
+        'hangup',
+    ];
+
     /**
      * Determine if the user is authorized to make this request.
      *
@@ -20,22 +47,31 @@ class CreateVirtualReceptionistKeyRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'menu_uuid' => 'present',
-            'domain_uuid' => 'present',
+            'menu_uuid' => 'required|uuid',
+            'domain_uuid' => 'required|uuid',
             'key' => 'required|string|max:11',
-            'status' => 'required',
-            'action' => 'required',
+            'status' => 'required|boolean',
+            'action' => ['required', 'string', Rule::in(self::ACTIONS)],
             'target' => [
-                'sometimes', // Only validate if present
-                function ($attribute, $value, $fail) {
-                    $action = request()->input('action'); // Get the value of 'action'
-    
-                    if (!in_array($action, ["company_directory", "check_voicemail", "hangup"]) && empty($value)) {
-                        $fail('The target field is required.');
-                    }
-                },
+                'nullable',
+                Rule::requiredIf(fn () => !in_array(
+                    $this->input('action'),
+                    self::ACTIONS_WITHOUT_TARGET,
+                    true
+                )),
+                'string',
+                'max:255',
             ],
-            'extension' => 'present',
+            'extension' => [
+                'nullable',
+                Rule::requiredIf(fn () => !in_array(
+                    $this->input('action'),
+                    [...self::ACTIONS_WITHOUT_TARGET, 'bridges'],
+                    true
+                )),
+                'string',
+                'max:255',
+            ],
             'description' => 'nullable|string|max:255',
         ];
     }
@@ -43,22 +79,62 @@ class CreateVirtualReceptionistKeyRequest extends FormRequest
 
     public function prepareForValidation(): void
     {
+        $target = $this->input('target');
+        $normalizedTarget = $this->selectionValue($target, ['value', 'bridge_uuid']);
+        $normalizedExtension = $this->selectionValue($this->input('extension'), ['extension', 'value']);
 
-        // Check if 'action' is missing or empty and set it to null
-        if (!$this->has('action') || $this->input('action') === 'NULL') {
-            $this->merge(['action' => null]);
+        if (blank($normalizedExtension) && is_array($target)) {
+            $normalizedExtension = $this->selectionValue($target, ['extension']);
         }
 
-        // Check if 'action' is missing or empty and set it to null
-        if (!$this->has('target') || $this->input('target') === 'NULL') {
-            $this->merge(['target' => null]);
-        }
+        $this->merge([
+            'action' => $this->selectionValue($this->input('action'), ['value']),
+            'target' => $normalizedTarget,
+            'extension' => $normalizedExtension,
+            'status' => $this->booleanValue($this->input('status')),
+        ]);
 
         // Sanitize description
-        if ($this->has('description') && $this->description) {
+        if (is_string($this->input('description')) && $this->input('description') !== '') {
             $sanitizedDescription = $this->sanitizeInput($this->description);
             $this->merge(['description' => $sanitizedDescription]);
         }
+    }
+
+    protected function selectionValue(mixed $value, array $keys): mixed
+    {
+        if ($value === 'NULL' || $value === '') {
+            return null;
+        }
+
+        if (!is_array($value)) {
+            return $value;
+        }
+
+        foreach ($keys as $key) {
+            if (array_key_exists($key, $value) && is_scalar($value[$key])) {
+                return (string) $value[$key];
+            }
+        }
+
+        return $value;
+    }
+
+    protected function booleanValue(mixed $value): mixed
+    {
+        if (is_bool($value)) {
+            return $value;
+        }
+
+        if (is_string($value) || is_int($value)) {
+            $normalized = filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+
+            if ($normalized !== null) {
+                return $normalized;
+            }
+        }
+
+        return $value;
     }
 
     /**

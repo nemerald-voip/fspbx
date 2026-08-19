@@ -2295,6 +2295,7 @@ public function store(StoreExtensionRequest $request)
             case 'business_hours':
             case 'time_conditions':
             case 'contact_centers':
+            case 'ai_agents':
             case 'faxes':
             case 'call_flows':
                 return $inputs[$targetKey] ?? null;

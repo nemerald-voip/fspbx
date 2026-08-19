@@ -93,6 +93,7 @@ export const SOFIA_SIP_SETTINGS = [
     { name: "tls-verify-policy", group: "TLS", type: "enum", options: ["none", "peer", "all", "subjects_all", "subjects_in"], description: "Certificate verification policy." },
     { name: "tls-verify-depth", group: "TLS", type: "number", description: "Maximum certificate chain depth to verify." },
     { name: "tls-version", group: "TLS", type: "text", description: "Allowed TLS versions (e.g. tlsv1.2)." },
+    { name: "tls-verify-in-subjects", group: "TLS", type: "text", description: "If the tls-verify-policy is set to subjects_all or subjects_in this sets which subjects are allowed." },
     { name: "tls-cert-dir", group: "TLS", type: "text", description: "Directory containing the TLS certificate files." },
 
     // ── Presence ────────────────────────────────────────────────────────────
