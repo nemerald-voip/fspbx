@@ -296,9 +296,16 @@ class PhoneRegistrationTargetService
             return null;
         }
 
-        if (preg_match('/^sips?:[^@]+@\[?([0-9a-f:.]+)\]?(?::\d+)?(?:[;?]|$)/i', $contactUri, $matches)
-            && filter_var($matches[1], FILTER_VALIDATE_IP)) {
-            return $matches[1];
+        if (preg_match(
+            '/^sips?:[^@]+@(?:\[([0-9a-f:.]+)]|((?:\d{1,3}\.){3}\d{1,3}))(?::\d+)?(?:[;?]|$)/i',
+            $contactUri,
+            $matches
+        )) {
+            $ip = $matches[1] !== '' ? $matches[1] : $matches[2];
+
+            if (filter_var($ip, FILTER_VALIDATE_IP)) {
+                return $ip;
+            }
         }
 
         return null;

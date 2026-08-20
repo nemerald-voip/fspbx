@@ -8,7 +8,7 @@ require "resources.functions.config"
 
 local Database = require "resources.functions.database"
 
-local DEBUG_MODE = true
+local DEBUG_MODE = false
 local SCRIPT_NAME = "[agent_toggle.lua]"
 local AGENT_SOUND_PREFIX = "/var/www/fspbx/resources/sounds/en/us/alloy/call_center"
 local api = freeswitch.API()
