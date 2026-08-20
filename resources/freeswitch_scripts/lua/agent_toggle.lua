@@ -8,7 +8,7 @@ require "resources.functions.config"
 
 local Database = require "resources.functions.database"
 
-local DEBUG_MODE = false
+local DEBUG_MODE = true
 local SCRIPT_NAME = "[agent_toggle.lua]"
 local AGENT_SOUND_PREFIX = "/var/www/fspbx/resources/sounds/en/us/alloy/call_center"
 local api = freeswitch.API()
@@ -52,7 +52,7 @@ local function main()
 	if not session:ready() then return end
 
 	local domain_uuid = session:getVariable("domain_uuid")
-	local sip_auth_username = session:getVariable("sip_auth_username")
+	local sip_from_user = session:getVariable("sip_from_user")
 	local sounds_dir = session:getVariable("sounds_dir") or "/usr/share/freeswitch/sounds"
 	local language = session:getVariable("default_language") or "en"
 	local dialect = session:getVariable("default_dialect") or "us"
@@ -74,12 +74,31 @@ local function main()
 		return
 	end
 
+-- Log the authentication values used by the self-service authorization
+	-- check so mismatches can be diagnosed from the FreeSWITCH log.
+	debug_log(string.format(
+		"Auth check: domain_uuid='%s', sip_from_user='%s', requested_agent_id='%s', requested_action='%s'",
+		tostring(domain_uuid),
+		tostring(sip_from_user),
+		tostring(requested_agent_id),
+		tostring(requested_action)
+	))
+
 	-- Compact keys are deliberately self-service only. The authenticated SIP
 	-- username must exactly match the requested agent ID.
 	if not domain_uuid
 		or domain_uuid == ""
-		or not sip_auth_username
-		or tostring(sip_auth_username) ~= requested_agent_id then
+		or not sip_from_user
+		or tostring(sip_from_user) ~= tostring(requested_agent_id) then
+
+		log("WARNING", string.format(
+			"Rejected compact agent action: authentication mismatch. domain_uuid='%s', sip_from_user='%s', requested_agent_id='%s', requested_action='%s'",
+			tostring(domain_uuid),
+			tostring(sip_from_user),
+			tostring(requested_agent_id),
+			tostring(requested_action)
+		))
+
 		fail("Rejected a compact agent action for a different SIP user", auth_failure_sound)
 		return
 	end
