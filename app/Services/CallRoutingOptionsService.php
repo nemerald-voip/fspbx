@@ -163,13 +163,7 @@ class CallRoutingOptionsService
 
             $name = $row->$extensionField . ($nameField ? " - " . $row->$nameField : '');
             if ($model === Voicemails::class) {
-                if ($row->extension) {
-                    // Use extension's name_formatted if extension exists
-                    $name = $row->extension->name_formatted;
-                } else {
-                    // Fallback to voicemail_id - "Team voicemail" if extension does not exist
-                    $name =  $row->voicemail_id . " - Team voicemail" . ($row->voicemail_description ? ' (' . $row->voicemail_description . ')' : '');
-                }
+                $name = $this->voicemailOptionName($row);
             }
 
             if ($model === Recordings::class) {
@@ -432,7 +426,7 @@ class CallRoutingOptionsService
                         'type' => 'voicemails',
                         'extension' => $voicemail->voicemail_id,
                         'option' => $voicemail->voicemail_uuid,
-                        'name' => $voicemail->extension ? $voicemail->extension->name_formatted : $voicemail->voicemail_id . ' - Team Voicemail',
+                        'name' => $this->voicemailOptionName($voicemail),
                     ];
                 }
             }
@@ -506,7 +500,7 @@ class CallRoutingOptionsService
                 'type' => 'voicemails',
                 'extension' => $voicemail->voicemail_id,
                 'option' => $voicemail->voicemail_uuid,
-                'name' => $voicemail->extension->name_formatted ?? $voicemail->voicemail_id,
+                'name' => $this->voicemailOptionName($voicemail),
             ];
         }
 
@@ -529,6 +523,17 @@ class CallRoutingOptionsService
                 'name' => $ext->name_formatted,
             ];
         }
+    }
+
+    private function voicemailOptionName(Voicemails $voicemail): string
+    {
+        if ($voicemail->extension) {
+            return $voicemail->extension->name_formatted;
+        }
+
+        return $voicemail->voicemail_id
+            . ' - Team voicemail'
+            . ($voicemail->voicemail_description ? ' (' . $voicemail->voicemail_description . ')' : '');
     }
 
     /**
