@@ -2,18 +2,13 @@
 
 namespace App\Jobs;
 
-use App\Mail\AppCredentials;
-use App\Models\DefaultSettings;
 use Illuminate\Bus\Queueable;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
-use Illuminate\Queue\Middleware\RateLimitedWithRedis;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use DateTime;
@@ -85,23 +80,14 @@ class SendEventNotify implements ShouldQueue
     }
 
     /**
-     * Get the middleware the job should pass through.
-     *
-     * @return array
-     */
-    public function middleware()
-    {
-        return [(new RateLimitedWithRedis('eventNotify'))];
-    }
-
-    /**
      * Execute the job.
      *
      * @return void
      */
     public function handle()
     {
-        // Allow only 5 job every 10 second
+        // Backstop for older/single-action callers. Bulk actions are already
+        // distributed over time by DeviceActionService before reaching the queue.
         Redis::throttle('eventNotify')->allow(50)->every(30)->then(function () {
 
             $process = Process::fromShellCommandline($this->command);

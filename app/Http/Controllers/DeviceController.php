@@ -21,6 +21,7 @@ use App\Http\Requests\DuplicateDeviceRequest;
 use App\Http\Requests\StoreDeviceRequest;
 use App\Http\Requests\UpdateDeviceRequest;
 use App\Http\Requests\BulkUpdateDeviceRequest;
+use App\Http\Requests\SendDeviceActionRequest;
 use Spatie\QueryBuilder\AllowedSort;
 
 /**
@@ -945,21 +946,31 @@ class DeviceController extends Controller
     }
 
 
-    public function restart(FreeswitchEslService $eslService, DeviceActionService $deviceActionService)
+    public function restart(
+        SendDeviceActionRequest $request,
+        FreeswitchEslService $eslService,
+        DeviceActionService $deviceActionService
+    )
     {
         return $this->sendRegisteredDeviceAction(
             $eslService,
             $deviceActionService,
+            $request->validated()['devices'],
             'reboot',
             __('Selected device(s) scheduled for reboot')
         );
     }
 
-    public function sync(FreeswitchEslService $eslService, DeviceActionService $deviceActionService)
+    public function sync(
+        SendDeviceActionRequest $request,
+        FreeswitchEslService $eslService,
+        DeviceActionService $deviceActionService
+    )
     {
         return $this->sendRegisteredDeviceAction(
             $eslService,
             $deviceActionService,
+            $request->validated()['devices'],
             'provision',
             __('Selected device(s) scheduled for synchronization')
         );
@@ -968,6 +979,7 @@ class DeviceController extends Controller
     private function sendRegisteredDeviceAction(
         FreeswitchEslService $eslService,
         DeviceActionService $deviceActionService,
+        array $deviceUuids,
         string $action,
         string $successMessage
     ): JsonResponse {
@@ -975,7 +987,7 @@ class DeviceController extends Controller
             $this->dispatchRegisteredDeviceAction(
                 $eslService,
                 $deviceActionService,
-                (array) request('devices'),
+                $deviceUuids,
                 $action
             );
 
@@ -1029,14 +1041,14 @@ class DeviceController extends Controller
         }
 
         // Filter and process $regs based on $linesCollection
-        return collect($regs)->filter(function ($reg) use ($linesCollection) {
+        $registrations = collect($regs)->filter(function ($reg) use ($linesCollection) {
             [$authId, $domain] = explode('@', $reg['user'], 2);
             return $linesCollection->contains(function ($line) use ($authId, $domain) {
                 return $line['auth_id'] === $authId && $line['server_address'] === $domain;
             });
-        })->each(function ($reg) use ($deviceActionService, $action) {
-            $deviceActionService->handleDeviceAction($reg, $action);
-        })->count();
+        })->values();
+
+        return $deviceActionService->scheduleDeviceActions($registrations, $action);
     }
 
     /**
