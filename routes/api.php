@@ -881,6 +881,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('domains', [DomainController::class, 'store'])->name('domains.store');
     Route::put('domains/{domain}', [DomainController::class, 'update'])->name('domains.update');
     Route::get('domains/data', [DomainController::class, 'getData'])->name('domains.data');
+    Route::get('domains/registration-summary', [DomainController::class, 'registrationSummary'])->name('domains.registration-summary');
     Route::post('domains/item-options', [DomainController::class, 'getItemOptions'])->name('domains.item.options');
     Route::post('domains/bulk-delete', [DomainController::class, 'bulkDelete'])->name('domains.bulk.delete');
 });
