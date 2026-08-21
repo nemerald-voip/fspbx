@@ -102,6 +102,7 @@ class GatewayController extends Controller
         }
 
         $oldProfile = $gateway->profile;
+        $beforeRuntime = $service->runtimeState($gateway);
         $validated = $request->validated();
         $data = $service->saveData($validated, $gateway);
 
@@ -121,11 +122,23 @@ class GatewayController extends Controller
 
             // Before the rescan: a rescan alone does not reload the credentials
             // of an already loaded gateway, so a password change had no effect.
-            $service->reloadRegistration($gateway, $changed);
-            $service->sync(collect([$oldProfile, $gateway->profile]));
+            $reloadSucceeded = $service->reloadRegistration($gateway, $changed, $beforeRuntime);
+            $syncSucceeded = $service->sync(collect([$oldProfile, $gateway->profile]));
+            $runtimeSynchronized = $reloadSucceeded && $syncSucceeded;
+
+            // sync() records its own status; restore the pending flag when the
+            // preceding killgw failed even if the subsequent rescan succeeded.
+            session(['reload_xml' => ! $runtimeSynchronized]);
+
+            $messages = ['success' => ['Gateway updated successfully.']];
+
+            if (! $runtimeSynchronized) {
+                $messages['error'] = ['FreeSWITCH returned an error.'];
+            }
 
             return response()->json([
-                'messages' => ['success' => ['Gateway updated successfully.']],
+                'messages' => $messages,
+                'runtime_synchronized' => $runtimeSynchronized,
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
