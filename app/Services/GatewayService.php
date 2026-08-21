@@ -55,17 +55,172 @@ class GatewayService
         ];
     }
 
-    public function sync(Collection|array|null $profiles = null): void
+    /** Fields emitted into the generated Sofia gateway configuration. */
+    private const RUNTIME_FIELDS = [
+        'username',
+        'distinct_to',
+        'auth_username',
+        'password',
+        'realm',
+        'from_user',
+        'from_domain',
+        'proxy',
+        'register_proxy',
+        'outbound_proxy',
+        'expire_seconds',
+        'register',
+        'register_transport',
+        'contact_params',
+        'retry_seconds',
+        'extension',
+        'ping',
+        'ping_min',
+        'ping_max',
+        'contact_in_ping',
+        'context',
+        'caller_id_in_from',
+        'supress_cng',
+        'extension_in_contact',
+        'sip_cid_type',
+    ];
+
+    /** Fields that control whether and where the gateway is loaded. */
+    private const RUNTIME_LOCATION_FIELDS = [
+        'profile',
+        'hostname',
+        'enabled',
+    ];
+
+    public function runtimeState(Gateways $gateway): array
+    {
+        return [
+            'profile' => $gateway->profile ?: 'external',
+            'hostname' => $gateway->hostname,
+            'enabled' => $gateway->enabled,
+        ];
+    }
+
+    /**
+     * Kills the gateway so the following rescan recreates it with the new data.
+     *
+     * Only worth doing when the edit changes generated gateway configuration:
+     * killgw unregisters the trunk briefly, which is too much to pay for a
+     * description-only change.
+     */
+    public function reloadRegistration(Gateways $gateway, array $changed, array $before): bool
+    {
+        $changedFields = array_keys($changed);
+        $runtimeChanged = array_intersect($changedFields, self::RUNTIME_FIELDS) !== [];
+        $locationChanged = array_intersect($changedFields, self::RUNTIME_LOCATION_FIELDS) !== [];
+
+        if (! $runtimeChanged && ! $locationChanged) {
+            return true;
+        }
+
+        $service = $this->makeEslService();
+
+        if (! $service->isConnected()) {
+            logger('GatewayService: unable to connect to FreeSWITCH; gateway reload was deferred.');
+
+            return false;
+        }
+
+        try {
+            $switchName = trim((string) $service->executeCommand('switchname', false));
+
+            if (! $this->commandSucceeded($switchName)) {
+                logger('GatewayService: unable to determine the local FreeSWITCH switchname.');
+
+                return false;
+            }
+
+            $after = $this->runtimeState($gateway);
+            $beforeActive = $this->isActiveOnSwitch($before, $switchName);
+            $afterActive = $this->isActiveOnSwitch($after, $switchName);
+            $profileChanged = $before['profile'] !== $after['profile'];
+
+            if (! $beforeActive || (! $runtimeChanged && $afterActive && ! $profileChanged)) {
+                return true;
+            }
+
+            $profile = "'" . addcslashes($before['profile'], "\\'") . "'";
+            $response = $service->executeCommand(sprintf(
+                'sofia profile %s killgw %s',
+                $profile,
+                $gateway->gateway_uuid
+            ), false);
+
+            if (! $this->commandSucceeded($response)) {
+                logger('GatewayService: FreeSWITCH failed to remove gateway ' . $gateway->gateway_uuid . ' before rescan.');
+
+                return false;
+            }
+
+            return true;
+        } finally {
+            $service->disconnect();
+        }
+    }
+
+    public function sync(Collection|array|null $profiles = null): bool
     {
         $profiles = collect($profiles)
             ->filter()
             ->unique()
             ->values();
 
-        $this->clearSofiaCache();
-        $this->rescanProfiles($profiles);
+        if ($profiles->isEmpty()) {
+            $profiles = Gateways::query()
+                ->where(function ($query) {
+                    $query->where('domain_uuid', session('domain_uuid'))
+                        ->orWhereNull('domain_uuid');
+                })
+                ->whereNotNull('profile')
+                ->distinct()
+                ->pluck('profile');
+        }
 
-        session(['reload_xml' => false]);
+        $service = $this->makeEslService();
+
+        if (! $service->isConnected()) {
+            logger('GatewayService: unable to connect to FreeSWITCH; gateway runtime synchronization was deferred.');
+            session(['reload_xml' => true]);
+
+            return false;
+        }
+
+        $success = true;
+
+        try {
+            $switchName = trim((string) $service->executeCommand('switchname', false));
+
+            if (! $this->commandSucceeded($switchName)) {
+                logger('GatewayService: unable to determine the local FreeSWITCH switchname.');
+                $success = false;
+            } elseif (! $this->clearCacheKey('configuration:sofia.conf:' . $switchName)) {
+                logger('GatewayService: unable to clear the generated Sofia configuration cache.');
+                $success = false;
+            }
+
+            foreach ($profiles as $profile) {
+                $quotedProfile = "'" . addcslashes($profile, "\\'") . "'";
+                $response = $service->executeCommand(
+                    "sofia profile {$quotedProfile} rescan",
+                    false
+                );
+
+                if (! $this->commandSucceeded($response)) {
+                    logger('GatewayService: FreeSWITCH failed to rescan SIP profile ' . $profile . '.');
+                    $success = false;
+                }
+            }
+        } finally {
+            $service->disconnect();
+        }
+
+        session(['reload_xml' => ! $success]);
+
+        return $success;
     }
 
     public function executeGatewayCommand(string $action, Gateways $gateway): ?string
@@ -84,7 +239,7 @@ class GatewayService
             return null;
         }
 
-        $service = new FreeswitchEslService();
+        $service = $this->makeEslService();
 
         if (!$service->isConnected()) {
             return '-ERR Could not connect to FreeSWITCH event socket.';
@@ -93,42 +248,37 @@ class GatewayService
         return (string) $service->executeCommand($command);
     }
 
-    private function rescanProfiles(Collection $profiles): void
+    protected function makeEslService(): FreeswitchEslService
     {
-        $profiles = $profiles->isNotEmpty()
-            ? $profiles
-            : Gateways::query()
-                ->where(function ($query) {
-                    $query->where('domain_uuid', session('domain_uuid'))
-                        ->orWhereNull('domain_uuid');
-                })
-                ->whereNotNull('profile')
-                ->distinct()
-                ->pluck('profile');
-
-        $service = new FreeswitchEslService();
-
-        if (!$service->isConnected()) {
-            return;
-        }
-
-        $profiles->filter()->unique()->values()->each(function (string $profile) use ($service) {
-            $service->executeCommand("sofia profile {$profile} rescan", false);
-        });
-
-        $service->disconnect();
+        return new FreeswitchEslService();
     }
 
-    private function clearSofiaCache(): void
+    protected function clearCacheKey(string $key): bool
     {
-        $service = new FreeswitchEslService();
-        $hostname = $service->isConnected()
-            ? trim((string) $service->executeCommand('switchname'))
-            : null;
+        return FusionCache::clear($key);
+    }
 
-        if (filled($hostname)) {
-            FusionCache::clear('configuration:sofia.conf:' . $hostname);
+    protected function isActiveOnSwitch(array $state, string $switchName): bool
+    {
+        if (($state['enabled'] ?? null) !== 'true' || blank($state['profile'] ?? null)) {
+            return false;
         }
+
+        $hostname = trim((string) ($state['hostname'] ?? ''));
+
+        return $hostname === '' || $hostname === $switchName;
+    }
+
+    protected function commandSucceeded(mixed $response): bool
+    {
+        if (! is_string($response) || trim($response) === '') {
+            return false;
+        }
+
+        return ! preg_match(
+            '/(?:^-ERR\b|\bFailure\b|Invalid Profile|cannot find config|No Such Profile)/im',
+            $response
+        );
     }
 
     private function nullable($value): ?string
