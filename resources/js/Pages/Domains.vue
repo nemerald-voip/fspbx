@@ -53,6 +53,9 @@
                     :sortOrder="sortData.order" @sort="handleSortRequest"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
+                <TableColumnHeader :header="$t('Extensions')"
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+
                 <TableColumnHeader />
                 <!-- Enabled -->
                 <TableColumnHeader header="Status" field="domain_enabled" :sortable="true" :sortedField="sortData.name"
@@ -98,6 +101,42 @@
 
                     <!-- Domain Name (fqdn) -->
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.domain_name" />
+
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                        <div v-if="registrationSummaryState === 'loading'"
+                            class="flex items-center gap-2">
+                            <span class="sr-only">{{ $t('Loading...') }}</span>
+                            <span class="h-6 w-20 animate-pulse rounded-full bg-gray-200 motion-reduce:animate-none"
+                                aria-hidden="true"></span>
+                            <span class="h-6 w-20 animate-pulse rounded-full bg-gray-200 motion-reduce:animate-none"
+                                aria-hidden="true"></span>
+                        </div>
+                        <div v-else-if="registrationSummary[row.domain_uuid]">
+                            <template v-if="registrationSummaryAvailable">
+                                <span class="flex items-center gap-2">
+                                    <span
+                                        class="inline-flex items-center rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
+                                        {{ $t('Online: :count', {
+                                            count: registrationSummary[row.domain_uuid].online_extensions,
+                                        }) }}
+                                    </span>
+                                    <span
+                                        class="inline-flex items-center rounded-full bg-rose-50 px-2.5 py-1 text-xs font-medium text-rose-700 ring-1 ring-inset ring-rose-600/20">
+                                        {{ $t('Offline: :count', {
+                                            count: offlineExtensionCount(registrationSummary[row.domain_uuid]),
+                                        }) }}
+                                    </span>
+                                </span>
+                            </template>
+                            <template v-else>
+                                <span
+                                    class="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20">
+                                    {{ $t('Unavailable') }}
+                                </span>
+                            </template>
+                        </div>
+                        <span v-else class="text-amber-700">{{ $t('Unavailable') }}</span>
+                    </TableField>
 
                     <TableField class="px-2 py-2 text-sm flex-col sm:flex-row gap-2">
 
@@ -258,11 +297,37 @@ const props = defineProps({
 });
 
 const perPage = ref(props.pagination?.per_page);
+const registrationSummary = ref({});
+const registrationSummaryAvailable = ref(false);
+const registrationSummaryState = ref('loading');
+
+const offlineExtensionCount = (summary) => {
+    return Math.max(
+        Number(summary.enabled_extensions || 0) - Number(summary.online_extensions || 0),
+        0,
+    );
+}
 
 
 onMounted(() => {
     handleSearchButtonClick();
+    getRegistrationSummary();
 })
+
+const getRegistrationSummary = () => {
+    registrationSummaryState.value = 'loading';
+
+    axios.get(props.routes.registration_summary)
+        .then((response) => {
+            registrationSummary.value = response.data.domains || {};
+            registrationSummaryAvailable.value = Boolean(response.data.available);
+            registrationSummaryState.value = response.data.available ? 'available' : 'unavailable';
+        })
+        .catch(() => {
+            registrationSummaryAvailable.value = false;
+            registrationSummaryState.value = 'unavailable';
+        });
+}
 
 const filterData = ref({
     search: null,
@@ -444,6 +509,7 @@ const handleSearchButtonClick = () => {
 
 const refreshCurrentPage = () => {
     getData(currentPage.value)
+    getRegistrationSummary()
     refreshDomainSelector()
 };
 

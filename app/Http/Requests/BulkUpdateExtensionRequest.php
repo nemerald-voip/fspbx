@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Services\PhoneNumberService;
 use Illuminate\Foundation\Http\FormRequest;
+use libphonenumber\PhoneNumberFormat;
 
 class BulkUpdateExtensionRequest extends FormRequest
 {
@@ -166,6 +168,19 @@ class BulkUpdateExtensionRequest extends FormRequest
             $this->merge([
                 'voicemail_mail_to' => strtolower((string) $this->input('voicemail_mail_to')),
             ]);
+        }
+
+        $phoneNumbers = app(PhoneNumberService::class);
+        foreach (['outbound_caller_id_number', 'emergency_caller_id_number'] as $field) {
+            if (array_key_exists($field, $this->all())) {
+                $this->merge([
+                    $field => $phoneNumbers->formatForDomain(
+                        $this->input($field),
+                        session('domain_uuid'),
+                        PhoneNumberFormat::E164
+                    ),
+                ]);
+            }
         }
 
         $normalizePhoneLoose = function (?string $value): ?string {

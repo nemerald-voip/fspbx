@@ -3,7 +3,7 @@
         :controls="{ add: true, remove: true, sort: true }"
         :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }">
         <template #default="{ index }">
-            <ObjectElement :name="index">
+            <ObjectElement :name="index" :key="formData?.[name]?.[index]?.key_uuid">
                 <HiddenElement name="key_area" :meta="true" :default="area" />
                 <HiddenElement name="key_uuid" :meta="true" :default="Math.random().toString(36).slice(2)" />
                 <HiddenElement name="_generated_label" :meta="true" :default="null" />

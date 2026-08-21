@@ -51,6 +51,7 @@ class UpdatePhoneNumberRequest extends FormRequest
                     'ivrs',
                     'business_hours',
                     'contact_centers',
+                    'ai_agents',
                     'bridges',
                     'faxes',
                     'conferences',

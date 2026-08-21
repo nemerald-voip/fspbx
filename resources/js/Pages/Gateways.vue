@@ -72,6 +72,16 @@
                 <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="State" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Register" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex cursor-pointer select-none items-center" @click="handleSortRequest('hostname')">
+                        <span class="mr-2">{{ $t('FreeSWITCH Hostname') }}</span>
+                        <ChevronUpIcon v-if="sortData.name === 'hostname' && sortData.order === 'asc'"
+                            class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'hostname' && sortData.order === 'desc'"
+                            class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
                 <TableColumnHeader header="Enabled" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Description"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
@@ -125,6 +135,8 @@
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
                         <Badge :text="row.register_label" v-bind="registerBadgeProps(row.register)" />
                     </TableField>
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                        :text="row.hostname || $t('All nodes')" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
                         <button v-if="permissions.update" type="button" class="cursor-pointer"
                             @click="executeToggle([row.gateway_uuid])">
@@ -306,7 +318,7 @@ const bulkActions = computed(() => {
 });
 
 const selectionColspan = computed(() => {
-    let count = 8;
+    let count = 9;
     if (filterData.value.showGlobal) count += 1;
     return count;
 });

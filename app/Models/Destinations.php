@@ -4,6 +4,7 @@ namespace App\Models;
 
 use libphonenumber\PhoneNumberFormat;
 use Illuminate\Database\Eloquent\Model;
+use App\Services\PhoneNumberService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Destinations extends Model
@@ -82,12 +83,20 @@ class Destinations extends Model
 
     public function getDestinationNumberFormattedAttribute()
     {
-        return formatPhoneNumber($this->destination_number, 'US', PhoneNumberFormat::NATIONAL);
+        return app(PhoneNumberService::class)->formatForDomain(
+            $this->destination_number,
+            $this->domain_uuid,
+            PhoneNumberFormat::NATIONAL
+        );
     }
 
     public function getDestinationNumberE164Attribute()
     {
-        return formatPhoneNumber($this->destination_number, 'US', PhoneNumberFormat::E164);
+        return app(PhoneNumberService::class)->formatForDomain(
+            $this->destination_number,
+            $this->domain_uuid,
+            PhoneNumberFormat::E164
+        );
     }
 
     public function getRoutingOptionsAttribute()

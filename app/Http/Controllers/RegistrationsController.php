@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\RegistrationActionRequest;
 use App\Services\DeviceActionService;
 use App\Services\FreeswitchEslService;
 use Illuminate\Http\JsonResponse;
@@ -137,14 +138,13 @@ class RegistrationsController extends Controller
     }
 
 
-    public function handleAction(Request $request, DeviceActionService $deviceActionService, FreeswitchEslService $eslService): JsonResponse
+    public function handleAction(
+        RegistrationActionRequest $request,
+        DeviceActionService $deviceActionService,
+        FreeswitchEslService $eslService
+    ): JsonResponse
     {
-        $validated = $request->validate([
-            'action' => ['required', 'in:reboot,provision,unregister'],
-            'items' => ['required_without:regs', 'array'],
-            'items.*' => ['string'],
-            'regs' => ['required_without:items', 'array'],
-        ]);
+        $validated = $request->validated();
 
         try {
             $action = $validated['action'];
@@ -156,13 +156,22 @@ class RegistrationsController extends Controller
                 ], 422);
             }
 
+            if ($action !== 'unregister') {
+                $deviceActionService->scheduleDeviceActions($registrations, $action);
+                $eslService->disconnect();
+
+                return response()->json([
+                    'messages' => ['success' => ['Request successfully processed.']],
+                ], 201);
+            }
+
             foreach ($registrations as $reg) {
                 $profile = (string) ($reg['sip_profile_name'] ?? '');
                 $user = (string) ($reg['sip_auth_user'] ?? '');
                 $realm = (string) ($reg['sip_auth_realm'] ?? '');
                 $target = ($user && $realm) ? "{$user}@{$realm}" : '';
 
-                if ($action === 'unregister' && $target && $profile) {
+                if ($target && $profile) {
                     // Use native FreeSWITCH unregister first, then fall back to vendor-specific handling.
                     $commandsToTry = [
                         "sofia profile {$profile} flush_inbound_reg {$target} reboot",

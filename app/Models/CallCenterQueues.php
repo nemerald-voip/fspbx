@@ -75,7 +75,7 @@ class CallCenterQueues extends Model
         $this->attributes['insert_date'] = date('Y-m-d H:i:s');
         $this->attributes['insert_user'] = Session::get('user_uuid');
         $this->attributes['queue_strategy'] = 'ring-all';
-        $this->attributes['queue_record_template'] = true;
+        $this->attributes['queue_record_template'] = false;
         $this->attributes['queue_time_base_score'] = 'system';
         $this->attributes['queue_max_wait_time_with_no_agent_time_reached'] = '5';
         $this->attributes['queue_tier_rules_apply'] = false;

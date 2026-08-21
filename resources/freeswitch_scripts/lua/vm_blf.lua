@@ -20,9 +20,6 @@ end
 
 local api = freeswitch.API()
 
--- Track only vm* AoRs that actually have active subscriptions
-local subscriptions = {}
-
 ---------------------------------------------------------
 -- Normalize To: header or MWI account → user@domain
 -- Handles: <sip:vm200@domain;param=...>, sip:..., angle brackets, params

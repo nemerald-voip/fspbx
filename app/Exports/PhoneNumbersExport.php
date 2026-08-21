@@ -3,7 +3,9 @@
 namespace App\Exports;
 
 use App\Models\Destinations;
+use App\Services\PhoneNumberService;
 use Illuminate\Support\Collection;
+use libphonenumber\PhoneNumberFormat;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 
@@ -15,6 +17,7 @@ class PhoneNumbersExport implements FromCollection, WithHeadings
     public function __construct()
     {
         $domainUuid = session('domain_uuid');
+        $countryCode = app(PhoneNumberService::class)->countryCodeForDomain($domainUuid);
         $sortField  = request()->get('sortField', 'destination_number');
         $sortOrder  = request()->get('sortOrder', 'asc');
 
@@ -39,19 +42,18 @@ class PhoneNumbersExport implements FromCollection, WithHeadings
             });
         }
 
-  //      logger($q->get());
+        // logger($q->get());
 
-    $this->rows = $q->get()->map(function ($r) {
-        return [
-            'country_code' => $r->destination_prefix,
-            // 'phone_number' => $this->formatForExport($r->destination_prefix, $r->destination_number),
+        $this->rows = $q->get()->map(function ($r) use ($countryCode) {
+            return [
+                'country_code' => $r->destination_prefix,
+                // 'phone_number' => $this->formatForExport($r->destination_prefix, $r->destination_number),
 
-            'phone_number'  => formatPhoneNumber($r->destination_number),
-            'destination'  => $this->buildDestinationLabel($r),
-            'description'  => $r->destination_description,
-        ];
-    });
-
+                'phone_number' => formatPhoneNumber($r->destination_number, $countryCode, PhoneNumberFormat::NATIONAL),
+                'destination' => $this->buildDestinationLabel($r),
+                'description' => $r->destination_description,
+            ];
+        });
     }
 
     public function headings(): array
@@ -65,35 +67,32 @@ class PhoneNumbersExport implements FromCollection, WithHeadings
         return $this->rows;
     }
 
-private function buildDestinationLabel($r): string
-{
-    $parts = [];
-    $options = $r->routing_options ?? null;
+    private function buildDestinationLabel($r): string
+    {
+        $parts = [];
+        $options = $r->routing_options ?? null;
 
-    if (is_array($options) && !empty($options)) {
-        foreach ($options as $opt) {
-            $type = $opt['type']      ?? null;
-            $ext  = $opt['extension'] ?? null;
+        if (is_array($options) && !empty($options)) {
+            foreach ($options as $opt) {
+                $type = $opt['type'] ?? null;
+                $ext = $opt['extension'] ?? null;
 
-            if ($type || $ext) {
-                $labelBits = [];
-                if (!empty($type)) {
-                    $labelBits[] = "Type: {$type}";
+                if ($type || $ext) {
+                    $labelBits = [];
+                    if (!empty($type)) {
+                        $labelBits[] = "Type: {$type}";
+                    }
+                    if (!empty($ext)) {
+                        $labelBits[] = "Extension: {$ext}";
+                    }
+                    // Add the formatted string to the main parts array
+                    $parts[] = implode(', ', $labelBits);
                 }
-                if (!empty($ext)) {
-                    $labelBits[] = "Extension: {$ext}";
-                }
-                // Add the formatted string to the main parts array
-                $parts[] = implode(', ', $labelBits);
             }
         }
+
+        // Returns the joined string, or an empty string "" if $parts is empty
+        return implode(' | ', $parts);
     }
 
-    // Returns the joined string, or an empty string "" if $parts is empty
-    return implode(' | ', $parts);
 }
-
-
-
-}
-

@@ -38,6 +38,7 @@ use Illuminate\Support\Facades\Route;
 use libphonenumber\PhoneNumberFormat;
 use Spatie\QueryBuilder\QueryBuilder;
 use App\Services\FreeswitchEslService;
+use App\Services\DeviceActionService;
 use Illuminate\Support\Facades\Schema;
 use Spatie\QueryBuilder\AllowedFilter;
 use Illuminate\Support\Facades\Storage;
@@ -2214,7 +2215,7 @@ public function store(StoreExtensionRequest $request)
      * @param  Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function sendEventNotifyAll(Request $request)
+    public function sendEventNotifyAll(Request $request, DeviceActionService $deviceActionService)
     {
         $selectedExtensionIds = $request->get('extensionIds') ?? [];
         $selectedScope = $request->get('scope') ?? 'local';
@@ -2241,35 +2242,16 @@ public function store(StoreExtensionRequest $request)
 
         // logger($all_regs);
 
-        foreach ($all_regs as $reg) {
-            // Get the agent name
-            if (preg_match('/Bria|Push|Ringotel/i', $reg['agent']) > 0) {
-                $agent = "";
-            } elseif (preg_match('/polycom|polyedge/i', $reg['agent']) > 0) {
-                $agent = "polycom";
-            } elseif (preg_match("/yealink/i", $reg['agent'])) {
-                $agent = "yealink";
-            } elseif (preg_match("/grandstream/i", $reg['agent'])) {
-                $agent = "grandstream";
-            } else {
-                /**
-                 * Sometimes it throws an exception
-                 * "message": "Undefined variable $agent",
-                 * "exception": "ErrorException",
-                 * "file": "/var/www/freeswitchpbx/app/Http/Controllers/ExtensionsController.php",
-                 *
-                 * So this line prevents it
-                 */
-                $agent = "";
-            }
+        // Preserve the legacy endpoint's supported vendor set, then use the same
+        // NAT-aware pacing as the Devices and Registrations bulk actions.
+        $supportedRegistrations = collect($all_regs)
+            ->filter(fn (array $registration) => preg_match(
+                '/polycom|polyedge|yealink|grandstream/i',
+                (string) ($registration['agent'] ?? '')
+            ))
+            ->values();
 
-            if (!empty($agent)) {
-                $command = "fs_cli -x 'luarun app.lua event_notify " . $reg['sip_profile_name'] . " reboot " . $reg['user'] . " " . $agent . "'";
-                // Queue a job to restart the phone
-                logger($command);
-                SendEventNotify::dispatch($command)->onQueue('default');
-            }
-        }
+        $deviceActionService->scheduleDeviceActions($supportedRegistrations, 'reboot');
 
         return response()->json([
             'status' => 200,
@@ -2295,6 +2277,7 @@ public function store(StoreExtensionRequest $request)
             case 'business_hours':
             case 'time_conditions':
             case 'contact_centers':
+            case 'ai_agents':
             case 'faxes':
             case 'call_flows':
                 return $inputs[$targetKey] ?? null;

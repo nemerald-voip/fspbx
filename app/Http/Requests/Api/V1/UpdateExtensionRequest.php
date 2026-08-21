@@ -2,9 +2,11 @@
 
 namespace App\Http\Requests\Api\V1;
 
+use App\Services\PhoneNumberService;
 use Illuminate\Foundation\Http\FormRequest;
 use App\Rules\UniqueExtension;
 use Illuminate\Validation\Rule;
+use libphonenumber\PhoneNumberFormat;
 
 class UpdateExtensionRequest extends FormRequest
 {
@@ -94,6 +96,19 @@ class UpdateExtensionRequest extends FormRequest
                     ? $this->input('voicemail_file')
                     : '',
             ]);
+        }
+
+        $phoneNumbers = app(PhoneNumberService::class);
+        foreach (['outbound_caller_id_number', 'emergency_caller_id_number'] as $field) {
+            if (array_key_exists($field, $this->all())) {
+                $this->merge([
+                    $field => $phoneNumbers->formatForDomain(
+                        $this->input($field),
+                        (string) $this->route('domain_uuid'),
+                        PhoneNumberFormat::E164
+                    ),
+                ]);
+            }
         }
     }
 
@@ -228,7 +243,7 @@ class UpdateExtensionRequest extends FormRequest
 
             // --- Caller ID ---
             'outbound_caller_id_number' => [
-                'description' => 'Outbound caller ID number (E.164 recommended). If omitted, value is unchanged.',
+                'description' => 'Outbound caller ID number. Valid national numbers are normalized to E.164 using the domain country. If omitted, value is unchanged.',
                 'example' => '+12135551212',
             ],
             'outbound_caller_id_name' => [
@@ -236,7 +251,7 @@ class UpdateExtensionRequest extends FormRequest
                 'example' => 'Front Desk',
             ],
             'emergency_caller_id_number' => [
-                'description' => 'Emergency caller ID number (E.164 recommended). If omitted, value is unchanged.',
+                'description' => 'Emergency caller ID number. Valid national numbers are normalized to E.164 using the domain country. If omitted, value is unchanged.',
                 'example' => '+12135559876',
             ],
             'emergency_caller_id_name' => [

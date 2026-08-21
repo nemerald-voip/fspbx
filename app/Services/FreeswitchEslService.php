@@ -153,6 +153,7 @@ class FreeswitchEslService
             );
 
         $registrations = [];
+        $addressResolver = new SipRegistrationAddressResolver();
 
         foreach ($sip_profiles as $sip_profile) {
             $cmd = "sofia xmlstatus profile '" . $sip_profile['sip_profile_name'] . "' reg";
@@ -160,63 +161,13 @@ class FreeswitchEslService
 
             if ($xml) {
                 foreach ($xml->registrations->registration as $registration) {
-                    $contact = (string)$registration->contact;
-                    $contactData = [];
-
-                    // Extract transport first
-                    if (preg_match('/;transport=([a-zA-Z]+)/i', $contact, $tMatch)) {
-                        $contactData['transport'] = strtoupper($tMatch[1]);
-                    }
-
-                    // Extract the actual SIP URI (user, ip, port)
-                    if (preg_match('/<([^>]+)>/', $contact, $bracketMatch)) {
-                        $contact = $bracketMatch[1];
-                    } else {
-                        $contact = trim($contact);
-                    }
-
-                    $sipUri = strtok($contact, ';');
-
-                    if (preg_match('/^(?:sips?):([^@]+)@([0-9a-zA-Z\.\-]+)(?::(\d+))?$/', $sipUri, $matches)) {
-                        $contactData['user'] = $matches[1];
-                        $contactData['ip'] = $matches[2];
-                        $contactData['port'] = $matches[3] ?? null;
-                    }
-
-                    // Example of using regular expressions to extract information
-                    // if (preg_match('/sips?:([^@]+)@([^;]+);transport=([^;]+);/', $contact, $matches)) {
-                    //     $contactData['user'] = $matches[1];
-                    //     $contactData['ip_with_port'] = $matches[2];
-                    //     $contactData['transport'] = $matches[3];
-
-                    //     // Further splitting to separate IP and port if needed
-                    //     $ipPort = explode(':', $contactData['ip_with_port']);
-                    //     $contactData['ip'] = $ipPort[0];
-                    //     $contactData['port'] = $ipPort[1] ?? null; // Check if port is present
-                    // }
-
-                    if (preg_match('/<([^>]+)>/', $contact, $bracketMatch)) {
-                        $contact = $bracketMatch[1];
-                    } else {
-                        // If no angle brackets, use as is
-                        $contact = trim($contact);
-                    }
-                    $sipUri = strtok($contact, ';'); // get everything before first ';'
-
-                    if (preg_match('/^(?:sips?):([^@]+)@([0-9a-zA-Z\.\-]+)(?::(\d+))?$/', $sipUri, $matches)) {
-                        $contactData['user'] = $matches[1];
-                        $contactData['ip'] = $matches[2];
-                        $contactData['port'] = $matches[3] ?? null;
-                    }
-
-                    // Extracting the WAN IP from fs_path
-                    if (preg_match('/fs_path=sips?%3A([^;]+)/', $contact, $fsPathMatches)) {
-                        $decodedFsPath = urldecode($fsPathMatches[1]);
-                        // Extract the IP from the decoded string
-                        if (preg_match('/(\d+\.\d+\.\d+\.\d+)/', $decodedFsPath, $ipMatches)) {
-                            $contactData['wan_ip'] = $ipMatches[1];
-                        }
-                    }
+                    $contactData = $addressResolver->resolve(
+                        (string) $registration->contact,
+                        (string) $registration->{'call-id'},
+                        (string) $registration->agent,
+                        (string) $registration->{'network-ip'},
+                        (string) $registration->{'network-port'}
+                    );
 
                     // Remove expiration date from status
                     $status = (string)$registration->status;
@@ -241,12 +192,12 @@ class FreeswitchEslService
                         'call_id' => (string)$registration->{'call-id'},
                         'user' => (string)$registration->user,
                         'status' => (string)$status,
-                        'lan_ip' => $contactData['ip'] ?? '',
-                        'port' => $contactData['port'] ?? '',
-                        'contact' => $contact,
+                        'lan_ip' => $contactData['lan_ip'],
+                        'port' => $contactData['port'],
+                        'contact' => $contactData['contact'],
                         'agent' => (string)$registration->agent,
-                        'transport' => $contactData['transport'] ?? '',
-                        'wan_ip' => $contactData['wan_ip'] ?? '',
+                        'transport' => $contactData['transport'],
+                        'wan_ip' => $contactData['wan_ip'],
                         'sip_profile_name' => $sip_profile['sip_profile_name'],
                         'sip_auth_user' => (string)$registration->{'sip-auth-user'}, // Add this line
                         'sip_auth_realm' => (string)$registration->{'sip-auth-realm'},

@@ -6,6 +6,7 @@ use Spatie\Activitylog\LogOptions;
 use libphonenumber\PhoneNumberFormat;
 use Illuminate\Database\Eloquent\Model;
 use App\Services\CallRoutingOptionsService;
+use App\Services\PhoneNumberService;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -157,17 +158,29 @@ class Extensions extends Model
 
     public function getOutboundCallerIdNumberFormattedAttribute()
     {
-        return formatPhoneNumber($this->outbound_caller_id_number, 'US', PhoneNumberFormat::NATIONAL);
+        return app(PhoneNumberService::class)->formatForDomain(
+            $this->outbound_caller_id_number,
+            $this->domain_uuid,
+            PhoneNumberFormat::NATIONAL
+        );
     }
 
     public function getEmergencyCallerIdNumberE164Attribute()
     {
-        return formatPhoneNumber($this->emergency_caller_id_number, 'US', PhoneNumberFormat::E164);
+        return app(PhoneNumberService::class)->formatForDomain(
+            $this->emergency_caller_id_number,
+            $this->domain_uuid,
+            PhoneNumberFormat::E164
+        );
     }
 
     public function getOutboundCallerIdNumberE164Attribute()
     {
-        return formatPhoneNumber($this->outbound_caller_id_number, 'US', PhoneNumberFormat::E164);
+        return app(PhoneNumberService::class)->formatForDomain(
+            $this->outbound_caller_id_number,
+            $this->domain_uuid,
+            PhoneNumberFormat::E164
+        );
     }
 
     /**

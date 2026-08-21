@@ -511,6 +511,7 @@ class GatewayController extends Controller
                         ->orWhere('proxy', 'ilike', "%{$needle}%")
                         ->orWhere('register_proxy', 'ilike', "%{$needle}%")
                         ->orWhere('outbound_proxy', 'ilike', "%{$needle}%")
+                        ->orWhere('hostname', 'ilike', "%{$needle}%")
                         ->orWhere('description', 'ilike', "%{$needle}%");
                 });
             }),
