@@ -208,6 +208,10 @@
         @confirm="confirmAction" :header="confirmationHeader" :text="confirmationText"
         :confirm-button-label="confirmationButtonLabel" cancel-button-label="Cancel" />
 
+    <GatewayPreferredCarrierModal :show="showPreferredCarrierModal" :creating="creatingPreferredCarrier"
+        @close="showPreferredCarrierModal = false" @create-carrier="executePreferredCarrierCreate"
+        @open-native="handleNativeGatewayCreate" />
+
     <GatewayForm :show="showForm" :options="itemOptions" :permissions="permissions" :mode="formMode" :loading="loadingForm"
         :header="formHeader" @close="handleFormClose" @error="handleErrorResponse" @success="showNotification"
         @refresh-data="refreshCurrentPage" />
@@ -228,6 +232,7 @@ import Loading from "./components/general/Loading.vue";
 import Spinner from "@generalComponents/Spinner.vue";
 import Notification from "./components/notifications/Notification.vue";
 import GatewayForm from "./components/forms/GatewayForm.vue";
+import GatewayPreferredCarrierModal from "./components/modal/GatewayPreferredCarrierModal.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
 import Badge from "@generalComponents/Badge.vue";
 import {
@@ -265,8 +270,10 @@ const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(false);
 const showForm = ref(false);
+const showPreferredCarrierModal = ref(false);
 const formMode = ref("create");
 const loadingForm = ref(false);
+const creatingPreferredCarrier = ref(false);
 const pendingGatewayStatusItems = ref([]);
 const itemOptions = ref({
     item: {},
@@ -424,9 +431,29 @@ const handleShowLocal = () => {
 };
 
 const handleCreateButtonClick = () => {
+    showPreferredCarrierModal.value = true;
+};
+
+const handleNativeGatewayCreate = () => {
+    showPreferredCarrierModal.value = false;
     showForm.value = true;
     formMode.value = "create";
     getItemOptions();
+};
+
+const executePreferredCarrierCreate = (carrier) => {
+    creatingPreferredCarrier.value = true;
+
+    axios.post(routes.preferred_carrier_store, { carrier })
+        .then((response) => {
+            showPreferredCarrierModal.value = false;
+            showNotification("success", response.data.messages);
+            refreshCurrentPage();
+        })
+        .catch(handleErrorResponse)
+        .finally(() => {
+            creatingPreferredCarrier.value = false;
+        });
 };
 
 const handleEditButtonClick = (uuid) => {
