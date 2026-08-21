@@ -2,9 +2,38 @@
 
 namespace App\Services;
 
+use libphonenumber\PhoneNumberFormat;
 
 class PhoneNumberService
 {
+    /** @var array<string, string> */
+    private array $countryCodes = [];
+
+    public function countryCodeForDomain(?string $domainUuid = null): string
+    {
+        $domainUuid = $domainUuid ?: session('domain_uuid');
+        $cacheKey = $domainUuid ?: '__default__';
+
+        if (!array_key_exists($cacheKey, $this->countryCodes)) {
+            $countryCode = get_domain_setting('country', $domainUuid) ?: 'US';
+            $this->countryCodes[$cacheKey] = strtoupper(trim((string) $countryCode)) ?: 'US';
+        }
+
+        return $this->countryCodes[$cacheKey];
+    }
+
+    public function formatForDomain(
+        ?string $phoneNumber,
+        ?string $domainUuid = null,
+        int $format = PhoneNumberFormat::NATIONAL
+    ): ?string {
+        return formatPhoneNumber(
+            $phoneNumber,
+            $this->countryCodeForDomain($domainUuid),
+            $format
+        );
+    }
+
     private function toBool(mixed $value, bool $default = false): bool
     {
         // Handles: true/false, "true"/"false", 1/0, "1"/"0", "on"/"off", etc.
