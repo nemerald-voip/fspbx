@@ -276,8 +276,8 @@ class BasicQueueService
                 'data' => ($validated['timeout_target'] ?? '') . ' XML ' . $domainName,
             ],
             'bridges' => [
-                'action' => 'bridge',
-                'data' => $validated['timeout_target'] ?? '',
+                'action' => 'lua',
+                'data' => 'bridge.lua ' . ($validated['timeout_target'] ?? ''),
             ],
             'voicemails' => [
                 'action' => 'transfer',

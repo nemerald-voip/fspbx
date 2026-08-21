@@ -104,6 +104,22 @@ class PhoneRegistrationTargetServiceTest extends TestCase
         $this->assertSame('fresh-call', $groups[0]['registrations'][0]['call_id']);
     }
 
+    public function test_public_contact_remains_available_for_phone_control_when_display_lan_is_blank(): void
+    {
+        $service = new PhoneRegistrationTargetService();
+        $registration = $this->registration('call-a', 50, 'Yealink SIP-T53W 96.86.0.70');
+        $registration['lan_ip'] = '';
+        $registration['contact'] = 'sip:101@8.8.8.8:31777';
+
+        $groups = $service->groupRegistrations(
+            collect([$registration]),
+            fn () => ['vendor' => 'yealink', 'label' => 'Yealink']
+        );
+
+        $this->assertSame('8.8.8.8', $groups[0]['lan_ip']);
+        $this->assertSame('', $groups[0]['registration_lan_ip']);
+    }
+
     public function test_it_selects_the_freshest_group_and_reports_other_matches(): void
     {
         $service = new PhoneRegistrationTargetService();

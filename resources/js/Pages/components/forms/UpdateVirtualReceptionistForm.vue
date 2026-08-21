@@ -405,30 +405,6 @@
                                                     @success="emitSuccessToParentFromChild"
                                                     @saved="handleNewGreetingAdded" />
 
-                                                <AddEditItemModal :customClass="'sm:max-w-lg'" :show="showAddKeyModal"
-                                                    :header="$t('Add Virtual Receptionist Key')" :loading="loadingModal"
-                                                    @close="handleModalClose">
-                                                    <template #modal-body>
-                                                        <CreateVirtualReceptionistKeyForm :options="options"
-                                                            :errors="formErrorsFromAxios"
-                                                            :is-submitting="submittingKeyCreate"
-                                                            @submit="handleCreateKeyRequest" @error="handleKeyFormError"
-                                                            @cancel="handleModalClose" />
-                                                    </template>
-                                                </AddEditItemModal>
-
-                                                <AddEditItemModal :customClass="'sm:max-w-lg'" :show="showEditKeyModal"
-                                                    :header="$t('Edit Virtual Receptionist Key')" :loading="loadingModal"
-                                                    @close="handleModalClose">
-                                                    <template #modal-body>
-                                                        <UpdateVirtualReceptionistKeyForm :options="options"
-                                                            :errors="formErrorsFromAxios" :selected-key="selectedKey"
-                                                            :is-submitting="submittingKeyUpdate"
-                                                            @submit="handleUpdateKeyRequest" @error="handleKeyFormError"
-                                                            @cancel="handleModalClose" />
-                                                    </template>
-                                                </AddEditItemModal>
-
                                                 <UpdateGreetingModal :greeting="selectedGreeting"
                                                     :show="showEditGreetingModal" :loading="isGreetingUpdating"
                                                     @confirm="handleGreetingUpdate"
@@ -442,6 +418,27 @@
                                     </div>
                                 </template>
                             </Vueform>
+
+                            <AddEditItemModal :customClass="'sm:max-w-lg'" :show="showAddKeyModal"
+                                :header="$t('Add Virtual Receptionist Key')" :loading="false"
+                                @close="handleModalClose">
+                                <template #modal-body>
+                                    <CreateVirtualReceptionistKeyForm v-if="showAddKeyModal" :options="options"
+                                        @success="handleKeyFormSuccess" @saved="handleKeySaved"
+                                        @error="handleKeyFormError" @close="handleModalClose" />
+                                </template>
+                            </AddEditItemModal>
+
+                            <AddEditItemModal :customClass="'sm:max-w-lg'" :show="showEditKeyModal"
+                                :header="$t('Edit Virtual Receptionist Key')" :loading="false"
+                                @close="handleModalClose">
+                                <template #modal-body>
+                                    <UpdateVirtualReceptionistKeyForm v-if="showEditKeyModal" :options="options"
+                                        :selected-key="selectedKey" @success="handleKeyFormSuccess"
+                                        @saved="handleKeySaved" @error="handleKeyFormError"
+                                        @close="handleModalClose" />
+                                </template>
+                            </AddEditItemModal>
                         </DialogPanel>
                     </TransitionChild>
                 </div>
@@ -472,7 +469,7 @@ import AddEditItemModal from "../modal/AddEditItemModal.vue";
 import CreateVirtualReceptionistKeyForm from "../forms/CreateVirtualReceptionistKeyForm.vue";
 import UpdateVirtualReceptionistKeyForm from "../forms/UpdateVirtualReceptionistKeyForm.vue";
 import UpdateGreetingModal from "../modal/UpdateGreetingModal.vue";
-import { trans } from "laravel-vue-i18n";
+import { trans } from "@i18n";
 
 const props = defineProps({
     show: Boolean,
@@ -504,10 +501,6 @@ const showKeyDeletingStatus = ref(false);
 const selectedKey = ref(null);
 const showEditKeyModal = ref(false);
 const showAddKeyModal = ref(false);
-const loadingModal = ref(false);
-const submittingKeyUpdate = ref(false);
-const submittingKeyCreate = ref(false);
-const formErrorsFromAxios = ref({});
 const showEditGreetingModal = ref(false);
 const isGreetingUpdating = ref(false);
 const selectedGreeting = ref(null);
@@ -589,7 +582,7 @@ const greetingTranscription = computed(() => {
 });
 
 const formatTarget = (name, value) => {
-    return { [name]: value?.extension ?? null };
+    return { [name]: value?.bridge_uuid ?? value?.extension ?? null };
 };
 
 const submitForm = async (FormData, form$) => {
@@ -1120,52 +1113,20 @@ const pauseRingBackTone = () => {
 };
 
 const handleAddKey = () => {
-    formErrorsFromAxios.value = {};
     showAddKeyModal.value = true;
 };
 
 const handleEditKey = (option) => {
-    formErrorsFromAxios.value = {};
     selectedKey.value = option;
     showEditKeyModal.value = true;
 };
 
-const handleCreateKeyRequest = (payload) => {
-    submittingKeyCreate.value = true;
-    formErrorsFromAxios.value = {};
-
-    axios.post(props.options.routes.create_key_route, payload)
-        .then((response) => {
-            emit('success', 'success', response.data.messages);
-            emit('refresh-item', props.options?.item?.ivr_menu_uuid);
-            handleModalClose();
-        })
-        .catch((error) => {
-            formErrorsFromAxios.value = error?.response?.data?.errors ?? {};
-            emit('error', error);
-        })
-        .finally(() => {
-            submittingKeyCreate.value = false;
-        });
+const handleKeyFormSuccess = (messages) => {
+    emit('success', 'success', messages);
 };
 
-const handleUpdateKeyRequest = (payload) => {
-    submittingKeyUpdate.value = true;
-    formErrorsFromAxios.value = {};
-
-    axios.put(props.options.routes.update_key_route, payload)
-        .then((response) => {
-            emit('success', 'success', response.data.messages);
-            emit('refresh-item', props.options?.item?.ivr_menu_uuid);
-            handleModalClose();
-        })
-        .catch((error) => {
-            formErrorsFromAxios.value = error?.response?.data?.errors ?? {};
-            emit('error', error);
-        })
-        .finally(() => {
-            submittingKeyUpdate.value = false;
-        });
+const handleKeySaved = () => {
+    emit('refresh-item', props.options?.item?.ivr_menu_uuid);
 };
 
 const handleDeleteKeyRequest = (key) => {

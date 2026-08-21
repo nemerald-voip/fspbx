@@ -52,7 +52,7 @@
 
                                         <!-- When -->
                                         <p class="text-sm text-gray-500">
-                                            {{ $t('On :date at :time', { date: recordingOptions?.item?.start_date, time: recordingOptions?.item?.start_time }) }}
+                                            {{ $t('On :date at :time', { date: recordingOptions?.item?.start_date ?? '', time: recordingOptions?.item?.start_time ?? '' }) }}
                                         </p>
 
                                         <!-- Parties -->
@@ -490,7 +490,7 @@
 
 <script setup>
 import { ref, computed, watch, onUnmounted } from 'vue'
-import { trans } from "laravel-vue-i18n";
+import { trans } from "@i18n";
 
 import { Dialog, DialogPanel, TransitionChild, TransitionRoot, TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/vue'
 import AudioPlayer from "@generalComponents/AudioPlayer.vue"

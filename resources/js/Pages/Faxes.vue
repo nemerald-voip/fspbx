@@ -496,7 +496,7 @@ import NewFaxForm from "./components/forms/NewFaxForm.vue";
 import Notification from "./components/notifications/Notification.vue";
 import Badge from "@generalComponents/Badge.vue";
 import { DocumentPlusIcon, EnvelopeIcon, DocumentArrowUpIcon, DocumentTextIcon } from "@heroicons/vue/24/outline";
-import { trans } from "laravel-vue-i18n";
+import { trans } from "@i18n";
 
 
 

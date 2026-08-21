@@ -270,7 +270,7 @@ import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } fro
 import CallFlowGroupModal from "../modal/CallFlowGroupModal.vue";
 import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
 import { XMarkIcon } from "@heroicons/vue/24/solid";
-import { trans } from "laravel-vue-i18n";
+import { trans } from "@i18n";
 
 const props = defineProps({
     show: Boolean,
@@ -361,7 +361,7 @@ const fetchRoutingTargets = async (query, input, actionElementName) => {
 };
 
 const formatRoutingTarget = (name, value) => {
-    return { [name]: value?.extension ?? value ?? null };
+    return { [name]: value?.bridge_uuid ?? value?.extension ?? value ?? null };
 };
 
 const handleExtensionChange = (newValue, oldValue, el$) => {

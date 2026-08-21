@@ -2,6 +2,7 @@
 
 namespace App\Models\Traits;
 
+use App\Models\AiAgent;
 use App\Models\BusinessHour;
 use App\Models\CallCenterQueues;
 use App\Models\CallFlows;
@@ -85,6 +86,7 @@ trait GeneratesUniqueExtensions
             [ConferenceCenter::class, 'conference_center_extension'],
             [Conferences::class, 'conference_extension'],
             [BusinessHour::class, 'extension'],
+            [AiAgent::class, 'extension'],
         ];
     }
 }

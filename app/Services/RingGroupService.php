@@ -16,6 +16,7 @@ class RingGroupService
             case 'business_hours':
             case 'time_conditions':
             case 'contact_centers':
+            case 'ai_agents':
             case 'conferences':
             case 'faxes':
             case 'call_flows':
@@ -42,12 +43,16 @@ class RingGroupService
             case 'business_hours':
             case 'time_conditions':
             case 'contact_centers':
+            case 'ai_agents':
             case 'faxes':
             case 'conferences':
             case 'call_flows':
                 return  ['action' => 'transfer', 'data' => $payload['timeout_target'] . ' XML ' . $domain_name];
             case 'bridges':
-                return ['action' => 'bridge', 'data' => $payload['timeout_target']];
+                return [
+                    'action' => 'lua',
+                    'data' => 'bridge.lua ' . ($payload['timeout_target'] ?? ''),
+                ];
             case 'voicemails':
                 return ['action' => 'transfer', 'data' => '*99' . $payload['timeout_target'] . ' XML ' . $domain_name];
 

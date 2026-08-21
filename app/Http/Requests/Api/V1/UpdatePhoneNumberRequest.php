@@ -51,6 +51,7 @@ class UpdatePhoneNumberRequest extends FormRequest
                     'ivrs',
                     'business_hours',
                     'contact_centers',
+                    'ai_agents',
                     'bridges',
                     'faxes',
                     'conferences',
@@ -81,6 +82,13 @@ class UpdatePhoneNumberRequest extends FormRequest
                         $fail('The extension must contain only digits and may include a single leading +.');
                     }
                 },
+            ],
+            'routing_options.*.bridge_uuid' => [
+                'sometimes',
+                'nullable',
+                'uuid',
+                Rule::exists('v_bridges', 'bridge_uuid')
+                    ->where(fn ($query) => $query->where('domain_uuid', $domainUuid)),
             ],
         ];
     }
@@ -172,6 +180,10 @@ class UpdatePhoneNumberRequest extends FormRequest
             'routing_options.*.extension' => [
                 'description' => 'Digits target for this routing type (extension or external).',
                 'example' => '9000',
+            ],
+            'routing_options.*.bridge_uuid' => [
+                'description' => 'Optional bridge UUID used to keep the route synchronized when the bridge changes.',
+                'example' => '9a458dfd-a989-4e77-ab1d-711f5ecd35cb',
             ],
         ];
     }

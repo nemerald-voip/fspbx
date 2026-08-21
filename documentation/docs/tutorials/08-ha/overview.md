@@ -77,3 +77,9 @@ You can update the floating record using:
 
 - Apply FS PBX updates on the **primary first**, verify, then the standby.
 - For emergency failover: update floating DNS → verify registrations → monitor calls.
+
+## Nginx certificate
+
+Use one Nginx certificate containing the floating hostname and both direct node hostnames. Run the FS PBX Let's Encrypt installer on the active node and select **Redundant server pair**. The installer publishes HTTP-01 challenges on both nodes, installs the same certificate on both, and makes renewal ownership follow the floating DNS record.
+
+Do not request a separate certificate containing the floating hostname on each node: the floating hostname reaches only the active node during validation. Follow the complete [Nginx Let's Encrypt certificate guide](/docs/configuration/web-server/lets-encrypt/).

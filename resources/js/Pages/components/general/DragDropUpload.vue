@@ -32,7 +32,7 @@
   
   <script setup>
   import { ref } from 'vue'
-  import { trans } from 'laravel-vue-i18n'
+  import { trans } from '@i18n'
 
   // Define an emitter to send the valid file to the parent
   const emit = defineEmits(['file-selected'])

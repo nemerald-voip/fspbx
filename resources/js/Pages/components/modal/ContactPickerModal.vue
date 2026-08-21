@@ -150,7 +150,7 @@
 <script setup>
 import { nextTick, ref, watch } from 'vue'
 import axios from 'axios'
-import { trans } from 'laravel-vue-i18n'
+import { trans } from '@i18n'
 import { BookOpenIcon, InformationCircleIcon, MagnifyingGlassIcon, TrashIcon, UserPlusIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import FormChildModal from '../FormChildModal.vue'
 import Loading from '../general/Loading.vue'

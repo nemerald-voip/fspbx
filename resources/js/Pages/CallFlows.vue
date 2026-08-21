@@ -260,7 +260,7 @@ import CallFlowForm from "./components/forms/CallFlowForm.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
 import Badge from "@generalComponents/Badge.vue";
 import { ChevronDownIcon, ChevronUpIcon, MagnifyingGlassIcon, PencilSquareIcon, TrashIcon } from "@heroicons/vue/24/solid";
-import { trans } from "laravel-vue-i18n";
+import { trans } from "@i18n";
 
 const props = defineProps({
     routes: Object,

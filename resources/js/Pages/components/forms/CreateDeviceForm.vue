@@ -217,7 +217,7 @@
                                                                 },
                                                             }" :default="nextLineNumber" />
 
-                                                            <SelectElement name="line_type_id" :label="$t('Function')"
+                                                            <SelectElement name="line_type_id" :label="$t('Function')" default="line"
                                                                 :items="options.line_key_types" :search="true"
                                                                 label-prop="name" :native="false" input-type="search"
                                                                 autocomplete="off" :columns="{
@@ -451,7 +451,7 @@
 
                                                             <SelectElement name="key_value_select" :label="$t('Value')"
                                                                 label-prop="name" value-prop="extension" :search="true"
-                                                                :native="false" :submit="false"
+                                                                :native="false" :submit="false" allow-absent
                                                                 :create="['blf', 'speed_dial', 'park']
                                                                     .includes(form$?.data?.device_keys?.[index]?.key_type)" :append-new-option="false"
                                                                 input-type="search" autocomplete="off" :columns="{
@@ -545,7 +545,7 @@ import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } fro
 import { XMarkIcon } from "@heroicons/vue/24/solid";
 import { Cog8ToothIcon } from "@heroicons/vue/24/outline";
 import FormChildModal from "../FormChildModal.vue"
-import { trans } from "laravel-vue-i18n";
+import { trans } from "@i18n";
 
 
 const props = defineProps({

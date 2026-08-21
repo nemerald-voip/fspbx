@@ -659,13 +659,13 @@ class DialplanController extends Controller
                 ->where('bridge_enabled', 'true')
                 ->where('domain_uuid', $currentDomain)
                 ->orderBy('bridge_name')
-                ->get(['bridge_name', 'bridge_destination']);
+                ->get(['bridge_uuid', 'bridge_name']);
 
             if ($bridges->isNotEmpty()) {
                 $options[] = [
                     'label' => 'Bridges',
                     'items' => $bridges->map(fn (Bridge $bridge) => [
-                        'value' => 'bridge:' . $bridge->bridge_destination,
+                        'value' => 'bridge_uuid:' . $bridge->bridge_uuid,
                         'label' => $bridge->bridge_name,
                     ])->values()->all(),
                 ];

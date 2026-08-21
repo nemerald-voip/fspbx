@@ -452,7 +452,7 @@ import { PlusIcon, TrashIcon, PencilSquareIcon } from '@heroicons/vue/20/solid'
 import { PlayCircleIcon, CloudArrowDownIcon, PauseCircleIcon } from '@heroicons/vue/24/solid';
 import NewGreetingForm from './NewGreetingForm.vue';
 import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
-import { trans } from "laravel-vue-i18n";
+import { trans } from "@i18n";
 
 function toBool(v) {
     return v === true || v === 'true' || v === 1 || v === '1';
@@ -646,7 +646,7 @@ watch(() => props.options, (newOptions) => {
 });
 
 const formatTarget = (name, value) => {
-    return { [name]: value?.extension ?? null }
+    return { [name]: value?.bridge_uuid ?? value?.extension ?? null }
 }
 
 const submitForm = async (FormData, form$) => {

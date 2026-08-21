@@ -118,7 +118,7 @@
 
 <script setup>
 import { computed } from "vue";
-import { trans } from "laravel-vue-i18n";
+import { trans } from "@i18n";
 import { PlusIcon, TrashIcon } from "@heroicons/vue/24/solid";
 import Toggle from "@generalComponents/Toggle.vue";
 

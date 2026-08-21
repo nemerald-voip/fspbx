@@ -3,7 +3,7 @@
 namespace App\Jobs;
 
 use Illuminate\Bus\Queueable;
-use App\Models\CallRecordings;
+use App\Models\CDR;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Queue\SerializesModels;
@@ -67,7 +67,7 @@ class DeleteOldCallRecordings implements ShouldQueue
     /**
      * Create a new job instance.
      *
-     * @param int $daysKeepRecordings Number of days to retain call recordings (older recordings will be deleted)
+     * @param int $daysKeepRecordings Number of days to retain local call recording files
      */
     public function __construct(int $daysKeepRecordings = 90)
     {
@@ -83,7 +83,6 @@ class DeleteOldCallRecordings implements ShouldQueue
 
             $days = $this->daysKeepRecordings;
             $cutoffTimestamp = Carbon::now()->subDays($days)->timestamp;
-            $cutoffDate = Carbon::now()->subDays($days);
 
             // Access the 'recordings' disk (root: /var/lib/freeswitch/recordings)
             $disk = Storage::disk('recordings');
@@ -93,14 +92,6 @@ class DeleteOldCallRecordings implements ShouldQueue
             $basePath = rtrim($basePath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
 
             $this->deleteOldRecordingFiles($basePath, $cutoffTimestamp);
-
-            // Delete call recording records from the database via the CallRecordings model
-            try {
-                CallRecordings::where('call_recording_date', '<', $cutoffDate)->delete();
-                // logger("Deleted call recording records older than {$days} days from CallRecordings.");
-            } catch (\Exception $e) {
-                logger("Error deleting call recording records from CallRecordings: " . $e->getMessage());
-            }
 
         }, function () {
             return $this->release(30); // If locked, retry in 30 seconds
@@ -132,7 +123,11 @@ class DeleteOldCallRecordings implements ShouldQueue
                         continue;
                     }
 
-                    $this->deleteRecordingFile($file->getPathname());
+                    $recordingFile = $file->getPathname();
+
+                    if ($this->deleteRecordingFile($recordingFile)) {
+                        $this->clearRecordingReferences($recordingFile);
+                    }
                 }
             } catch (UnexpectedValueException $e) {
                 logger("Error scanning recording archive {$archivePath}: " . $e->getMessage());
@@ -140,16 +135,40 @@ class DeleteOldCallRecordings implements ShouldQueue
         }
     }
 
-    protected function deleteRecordingFile(string $file): void
+    protected function deleteRecordingFile(string $file): bool
     {
         try {
             if (unlink($file)) {
-                // logger("Deleted recording file: {$file}");
-            } else {
-                logger("Failed to delete recording file: {$file}");
+                return true;
             }
+
+            logger("Failed to delete recording file: {$file}");
         } catch (\Exception $e) {
             logger("Error deleting recording file {$file}: " . $e->getMessage());
+        }
+
+        return false;
+    }
+
+    /**
+     * Remove only the recording pointer after its local file is deleted.
+     * The CDR itself must remain available for call history and reporting.
+     */
+    protected function clearRecordingReferences(string $file): void
+    {
+        $recordPath = dirname($file);
+        $recordName = basename($file);
+
+        try {
+            CDR::query()
+                ->where('record_path', $recordPath)
+                ->where('record_name', $recordName)
+                ->update([
+                    'record_path' => null,
+                    'record_name' => null,
+                ]);
+        } catch (\Exception $e) {
+            logger("Error clearing recording references for {$file}: " . $e->getMessage());
         }
     }
 }

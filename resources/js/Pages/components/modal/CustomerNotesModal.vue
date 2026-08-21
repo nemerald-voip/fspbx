@@ -48,7 +48,7 @@
 <script setup>
 import { computed, nextTick, ref } from 'vue'
 import AddEditItemModal from './AddEditItemModal.vue'
-import { trans } from 'laravel-vue-i18n'
+import { trans } from '@i18n'
 
 const emit = defineEmits(['close', 'success', 'error', 'updated'])
 

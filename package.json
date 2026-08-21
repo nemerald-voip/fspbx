@@ -2,7 +2,8 @@
     "private": true,
     "scripts": {
         "dev": "vite",
-        "build": "vite build"
+        "build": "vite build",
+        "test:i18n": "node .github/scripts/test-vue-i18n.mjs"
     },
     "devDependencies": {
         "@popperjs/core": "^2.11.8",

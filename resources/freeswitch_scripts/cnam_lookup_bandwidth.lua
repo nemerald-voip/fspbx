@@ -193,6 +193,7 @@ if name and #name > 0 and name ~= "UNKNOWN" then
     api:executeString("uuid_setvar " .. uuid .. " ignore_display_updates false")
     api:executeString("uuid_setvar " .. uuid .. " origination_callee_id_name " .. name)
     api:executeString("uuid_setvar " .. uuid .. " origination_callee_id_number " .. digits)
+    api:executeString("uuid_setvar " .. uuid .. " caller_id_name " .. name)
     api:executeString("uuid_setvar " .. uuid .. " effective_caller_id_name " .. name)
     api:executeString("uuid_display " .. uuid .. " " .. name .. "|" .. digits)
 

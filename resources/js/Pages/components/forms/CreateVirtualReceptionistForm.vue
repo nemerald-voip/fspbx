@@ -222,7 +222,7 @@ import {
     PlayCircleIcon,
     PauseCircleIcon,
 } from "@heroicons/vue/24/solid";
-import { trans } from "laravel-vue-i18n";
+import { trans } from "@i18n";
 
 const props = defineProps({
     show: Boolean,

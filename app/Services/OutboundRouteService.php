@@ -109,6 +109,17 @@ class OutboundRouteService
             return ['type' => 'bridge', 'uuid' => null, 'name' => 'bridge', 'data' => substr($value, 7)];
         }
 
+        if (str_starts_with(strtolower($value), 'bridge_uuid:')) {
+            $bridgeUuid = substr($value, 12);
+
+            return [
+                'type' => 'bridge_uuid',
+                'uuid' => $bridgeUuid,
+                'name' => 'bridge',
+                'data' => 'bridge.lua ' . $bridgeUuid,
+            ];
+        }
+
         if (str_starts_with(strtolower($value), 'enum')) {
             return ['type' => 'enum', 'uuid' => null, 'name' => 'enum', 'data' => $value];
         }
@@ -145,7 +156,7 @@ class OutboundRouteService
             'gateway' => $destination['name'] . '.' . $abbrv,
             'freetdm' => 'freetdm.' . $abbrv,
             'xmpp' => 'xmpp.' . $abbrv,
-            'bridge' => 'bridge.' . $abbrv,
+            'bridge', 'bridge_uuid' => 'bridge.' . $abbrv,
             'enum' => 'enum.' . $abbrv,
             'transfer' => 'transfer.' . $abbrv,
             default => $abbrv,
@@ -158,7 +169,7 @@ class OutboundRouteService
             'gateway' => 'sofia/gateway/' . $destination['uuid'] . '/' . ($abbrv === '988' ? $prefixNumber . '18002738255' : $prefixNumber . '$1'),
             'freetdm' => $destination['data'] . '/1/a/' . $prefixNumber . '$1',
             'xmpp' => 'dingaling/gtalk/+' . $prefixNumber . '$1@voice.google.com',
-            'bridge', 'transfer' => $destination['data'],
+            'bridge', 'bridge_uuid', 'transfer' => $destination['data'],
             'enum' => '${enum_auto_route}',
             default => $destination['data'],
         };
@@ -252,14 +263,23 @@ class OutboundRouteService
 
         $details[] = $this->detail(
             'action',
-            $primary['type'] === 'transfer' ? 'transfer' : 'bridge',
+            match ($primary['type']) {
+                'transfer' => 'transfer',
+                'bridge_uuid' => 'lua',
+                default => 'bridge',
+            },
             $this->bridgeData($primary, $prefixNumber, $route['abbrv']),
             $order
         );
         $order += 10;
 
         foreach ($fallbacks as $fallback) {
-            $details[] = $this->detail('action', 'bridge', $this->bridgeData($fallback, $prefixNumber, $route['abbrv']), $order);
+            $details[] = $this->detail(
+                'action',
+                $fallback['type'] === 'bridge_uuid' ? 'lua' : 'bridge',
+                $this->bridgeData($fallback, $prefixNumber, $route['abbrv']),
+                $order
+            );
             $order += 10;
         }
 

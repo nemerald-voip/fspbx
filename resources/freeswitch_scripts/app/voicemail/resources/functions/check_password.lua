@@ -68,6 +68,11 @@
 					return session:hangup();
 				end
 
+			--skip authentication when the mailbox has no password
+				if (voicemail_password == nil) or (tostring(voicemail_password) == '') then
+					return;
+				end
+
 			--please enter your password followed by pound
 				min_digits = 2;
 				max_digits = 20;

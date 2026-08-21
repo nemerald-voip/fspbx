@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\DefaultSettings;
-use App\Models\FusionCache;
 use App\Models\SipProfileDomain;
 use App\Models\SipProfiles;
 use Illuminate\Support\Collection;
@@ -14,9 +13,14 @@ use Illuminate\Support\Str;
 
 class SipProfileService
 {
+    public function __construct(
+        protected SofiaProfileRuntimeService $runtimeService,
+    ) {}
+
     public function save(array $validated, ?SipProfiles $profile = null): SipProfiles
     {
         $existingHostname = $profile?->sip_profile_hostname;
+        $before = $profile?->exists ? $this->runtimeState($profile) : null;
         $profile ??= new SipProfiles(['sip_profile_uuid' => (string) Str::uuid()]);
         $isNew = ! $profile->exists;
 
@@ -28,7 +32,13 @@ class SipProfileService
             $this->syncSettings($profile, $validated['settings'] ?? []);
         });
 
-        $this->syncRuntime(collect([$existingHostname, $profile->sip_profile_hostname]));
+        $this->runtimeService->synchronize(
+            collect([[
+                'before' => $before,
+                'after' => $this->runtimeState($profile),
+            ]]),
+            collect([$existingHostname, $profile->sip_profile_hostname])
+        );
 
         return $profile;
     }
@@ -97,6 +107,9 @@ class SipProfileService
     public function toggle(Collection $profiles): void
     {
         $hostnames = $profiles->pluck('sip_profile_hostname');
+        $before = $profiles->mapWithKeys(fn (SipProfiles $profile) => [
+            (string) $profile->sip_profile_uuid => $this->runtimeState($profile),
+        ]);
 
         DB::transaction(function () use ($profiles) {
             foreach ($profiles as $profile) {
@@ -106,13 +119,23 @@ class SipProfileService
             }
         });
 
-        $this->syncRuntime($hostnames);
+        $this->runtimeService->synchronize(
+            $profiles->map(fn (SipProfiles $profile) => [
+                'before' => $before->get((string) $profile->sip_profile_uuid),
+                'after' => $this->runtimeState($profile),
+            ]),
+            $hostnames
+        );
     }
 
     public function delete(Collection $profiles): void
     {
         $hostnames = $profiles->pluck('sip_profile_hostname');
         $profileNames = $profiles->pluck('sip_profile_name')->filter()->values();
+        $transitions = $profiles->map(fn (SipProfiles $profile) => [
+            'before' => $this->runtimeState($profile),
+            'after' => null,
+        ]);
 
         DB::transaction(function () use ($profiles) {
             $uuids = $profiles->pluck('sip_profile_uuid')->all();
@@ -123,7 +146,7 @@ class SipProfileService
         });
 
         $this->deleteLegacyProfileFiles($profileNames);
-        $this->syncRuntime($hostnames);
+        $this->runtimeService->synchronize($transitions, $hostnames);
     }
 
     private function profileData(array $validated, bool $isNew): array
@@ -132,7 +155,7 @@ class SipProfileService
             'sip_profile_name' => $validated['sip_profile_name'],
             'sip_profile_hostname' => $this->nullable($validated['sip_profile_hostname'] ?? null),
             'sip_profile_enabled' => $validated['sip_profile_enabled'] ?? 'true',
-            'sip_profile_description' => $validated['sip_profile_description'],
+            'sip_profile_description' => $this->nullable($validated['sip_profile_description'] ?? null),
         ], 'v_sip_profiles', $isNew);
     }
 
@@ -182,10 +205,12 @@ class SipProfileService
         }
 
         if (userCheckPermission('sip_profile_domain_delete')) {
-            DB::table('v_sip_profile_domains')
-                ->where('sip_profile_uuid', $profile->sip_profile_uuid)
-                ->whereNotIn('sip_profile_domain_uuid', $kept ?: [''])
-                ->delete();
+            $this->deleteMissingChildren(
+                'v_sip_profile_domains',
+                'sip_profile_domain_uuid',
+                $profile->sip_profile_uuid,
+                $kept
+            );
         }
     }
 
@@ -236,44 +261,38 @@ class SipProfileService
         }
 
         if (userCheckPermission('sip_profile_setting_delete')) {
-            DB::table('v_sip_profile_settings')
-                ->where('sip_profile_uuid', $profile->sip_profile_uuid)
-                ->whereNotIn('sip_profile_setting_uuid', $kept ?: [''])
-                ->delete();
+            $this->deleteMissingChildren(
+                'v_sip_profile_settings',
+                'sip_profile_setting_uuid',
+                $profile->sip_profile_uuid,
+                $kept
+            );
         }
     }
 
-    private function syncRuntime(Collection $hostnames): void
-    {
-        $hostnames = $hostnames
-            ->map(fn ($hostname) => is_string($hostname) ? trim($hostname) : $hostname)
-            ->filter()
-            ->unique()
-            ->values();
+    private function deleteMissingChildren(
+        string $table,
+        string $uuidColumn,
+        string $profileUuid,
+        array $kept
+    ): void {
+        $query = DB::table($table)
+            ->where('sip_profile_uuid', $profileUuid);
 
-        if ($hostnames->isEmpty()) {
-            $hostname = $this->switchName();
-            if ($hostname) {
-                $hostnames->push($hostname);
-            }
+        if ($kept !== []) {
+            $query->whereNotIn($uuidColumn, $kept);
         }
 
-        $hostnames->each(fn (string $hostname) => FusionCache::clear('configuration:sofia.conf:' . $hostname));
-
-        session(['reload_xml' => true]);
+        $query->delete();
     }
 
-    private function switchName(): ?string
+    private function runtimeState(SipProfiles $profile): array
     {
-        $service = new FreeswitchEslService();
-
-        if (! $service->isConnected()) {
-            return null;
-        }
-
-        $hostname = trim((string) $service->executeCommand('switchname'));
-
-        return $hostname !== '' ? $hostname : null;
+        return [
+            'name' => (string) $profile->sip_profile_name,
+            'hostname' => $this->nullable($profile->sip_profile_hostname),
+            'enabled' => (string) $profile->sip_profile_enabled,
+        ];
     }
 
     private function deleteLegacyProfileFiles(Collection $profileNames): void

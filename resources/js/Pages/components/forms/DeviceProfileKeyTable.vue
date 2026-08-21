@@ -256,7 +256,7 @@
 
 <script setup>
 import { computed, ref } from "vue";
-import { trans } from "laravel-vue-i18n";
+import { trans } from "@i18n";
 import { AdjustmentsHorizontalIcon, PlusIcon, TrashIcon } from "@heroicons/vue/24/solid";
 
 const props = defineProps({

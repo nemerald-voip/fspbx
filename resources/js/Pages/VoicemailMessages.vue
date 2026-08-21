@@ -268,7 +268,7 @@ import { registerLicense } from '@syncfusion/ej2-base';
 import Spinner from "@generalComponents/Spinner.vue";
 import Badge from "@generalComponents/Badge.vue";
 import VoicemailPlayerModal from "./components/modal/VoicemailPlayerModal.vue";
-import { trans } from "laravel-vue-i18n";
+import { trans } from "@i18n";
 import {
     PlayCircleIcon,
     CloudArrowDownIcon,

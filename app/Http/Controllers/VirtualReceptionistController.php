@@ -594,7 +594,7 @@ class VirtualReceptionistController extends Controller
                 'ivr_menu_option_digits' => $inputs['key'],
                 'ivr_menu_option_action' => 'menu-exec-app',
                 'ivr_menu_option_param' => $this->buildKeyDestinationAction($inputs),
-                'ivr_menu_option_description' => $inputs['description'],
+                'ivr_menu_option_description' => $inputs['description'] ?? null,
                 'ivr_menu_option_enabled' => $inputs['status'],
             ]);
 
@@ -605,7 +605,7 @@ class VirtualReceptionistController extends Controller
                 'data' => $ivrMenuOption,
             ], 201);
         } catch (\Exception $e) {
-            logger('VirtualReceptioninstController@createKey error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            logger('VirtualReceptionistController@createKey error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json([
                 'success' => false,
                 'errors' => ['server' => [__('Unable to create Virtual Receptionist Key.')]]
@@ -633,7 +633,7 @@ class VirtualReceptionistController extends Controller
                 'ivr_menu_option_digits' => $inputs['key'],
                 'ivr_menu_option_action' => 'menu-exec-app',
                 'ivr_menu_option_param' => $this->buildKeyDestinationAction($inputs),
-                'ivr_menu_option_description' => $inputs['description'],
+                'ivr_menu_option_description' => $inputs['description'] ?? null,
                 'ivr_menu_option_enabled' => $inputs['status'],
             ]);
 
@@ -692,11 +692,13 @@ class VirtualReceptionistController extends Controller
             case 'time_conditions':
             case 'contact_centers':
             case 'conferences':
+            case 'conference_centers':
             case 'faxes':
             case 'call_flows':
+            case 'ai_agents':
                 return 'transfer ' . $key['extension'] . ' XML ' . session('domain_name');
             case 'bridges':
-                return 'bridge ' . $key['extension'];
+                return 'lua bridge.lua ' . ($key['target'] ?? '');
             case 'voicemails':
                 return 'transfer *99' . $key['extension'] . ' XML ' . session('domain_name');
             case 'recordings':
@@ -724,11 +726,13 @@ class VirtualReceptionistController extends Controller
             case 'time_conditions':
             case 'contact_centers':
             case 'conferences':
+            case 'conference_centers':
             case 'faxes':
             case 'call_flows':
+            case 'ai_agents':
                 return ['action' => 'transfer', 'data' => $target . ' XML ' . session('domain_name')];
             case 'bridges':
-                return ['action' => 'bridge', 'data' => $target];
+                return ['action' => 'lua', 'data' => 'bridge.lua ' . $target];
             case 'voicemails':
                 return ['action' => 'transfer', 'data' => '*99' . $target . ' XML ' . session('domain_name')];
             case 'recordings':

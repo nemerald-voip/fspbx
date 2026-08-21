@@ -1994,7 +1994,7 @@ import Badge from "@generalComponents/Badge.vue";
 import AssignedDevices from "../AssignedDevices.vue";
 import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
 import { ExclamationTriangleIcon } from '@heroicons/vue/20/solid'
-import { trans } from 'laravel-vue-i18n';
+import { trans } from '@i18n';
 
 
 const emit = defineEmits(['close', 'error', 'success', 'refresh-data'])

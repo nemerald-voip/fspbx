@@ -39,7 +39,7 @@
                         <p class="mt-1 text-xs text-gray-500">Optional. Limit this profile to a specific FreeSWITCH hostname.</p>
                     </div>
                     <div class="md:col-span-2">
-                        <label class="block text-sm font-medium text-gray-900">Description <span class="text-red-500">*</span></label>
+                        <label class="block text-sm font-medium text-gray-900">Description</label>
                         <textarea v-model="form.sip_profile_description" rows="2" :class="inputClass(fieldError('sip_profile_description'))"></textarea>
                         <p v-if="fieldError('sip_profile_description')" class="mt-1 text-xs text-red-600">{{ fieldError('sip_profile_description') }}</p>
                     </div>
@@ -218,6 +218,7 @@ import {
     CUSTOM_GROUP,
     SIP_PROFILE_TEMPLATES,
     resolveSettingGroup,
+    sipProfileOdbcDsn,
     templateSettings,
 } from "../../data/sofiaSipProfileSettings";
 
@@ -242,6 +243,7 @@ const activeGroup = ref("all");
 const settingsScroll = ref(null);
 const saving = ref(false);
 const errors = ref({});
+const generatedOdbcDsn = ref(null);
 let localKey = 0;
 
 const childPermissions = computed(() => props.options?.permissions ?? {});
@@ -319,8 +321,25 @@ watch(
         settingSearch.value = "";
         activeGroup.value = "all";
         errors.value = {};
+        generatedOdbcDsn.value = null;
     },
     { immediate: true },
+);
+
+watch(
+    () => form.value.sip_profile_name,
+    (profileName) => {
+        if (generatedOdbcDsn.value === null) return;
+
+        const odbcSetting = settings.value.find((setting) => setting.sip_profile_setting_name === "odbc-dsn");
+        if (!odbcSetting || odbcSetting.sip_profile_setting_value !== generatedOdbcDsn.value) {
+            generatedOdbcDsn.value = null;
+            return;
+        }
+
+        generatedOdbcDsn.value = sipProfileOdbcDsn(profileName);
+        odbcSetting.sip_profile_setting_value = generatedOdbcDsn.value;
+    },
 );
 
 function normalizeRows(rows, factory) {
@@ -373,7 +392,8 @@ function removeDomain(index) {
 }
 
 function applyTemplate(templateId) {
-    settings.value = templateSettings(templateId).map((row) => freezeGroup({ ...row, local_key: ++localKey }));
+    settings.value = templateSettings(templateId, form.value.sip_profile_name).map((row) => freezeGroup({ ...row, local_key: ++localKey }));
+    generatedOdbcDsn.value = templateId === "external" ? sipProfileOdbcDsn(form.value.sip_profile_name) : null;
     settingSearch.value = "";
     activeGroup.value = "all";
 }

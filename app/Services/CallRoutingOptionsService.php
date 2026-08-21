@@ -2,7 +2,8 @@
 
 namespace App\Services;
 
-use App\Models\{Bridge, BusinessHour, CallCenterQueues, CallFlows, Conferences, Dialplans, Domain, Extensions, Faxes, IvrMenus, Recordings, RingGroups, Voicemails};
+use App\Support\BridgeRuntimeDestination;
+use App\Models\{AiAgent, Bridge, BusinessHour, CallCenterQueues, CallFlows, Conferences, Dialplans, Domain, Extensions, Faxes, IvrMenus, Recordings, RingGroups, Voicemails};
 use App\Models\ConferenceCenter;
 
 class CallRoutingOptionsService
@@ -24,6 +25,7 @@ class CallRoutingOptionsService
         ['value' => 'recordings', 'name' => 'Play Greeting'],
         ['value' => 'conferences', 'name' => 'Conferences'],
         ['value' => 'conference_centers', 'name' => 'Conference Centers'],
+        ['value' => 'ai_agents', 'name' => 'AI Agent'],
         ['value' => 'check_voicemail', 'name' => 'Check Voicemail'],
         ['value' => 'company_directory', 'name' => 'Company Directory'],
         ['value' => 'hangup', 'name' => 'Hang up'],
@@ -49,6 +51,7 @@ class CallRoutingOptionsService
         'faxes'            => \App\Models\Faxes::class,
         'call_flows'       => \App\Models\CallFlows::class,
         'recordings'       => \App\Models\Recordings::class,
+        'ai_agents'        => \App\Models\AiAgent::class,
     ];
 
     private const TRANSFER_FORMAT = '%s:%s XML %s';
@@ -66,6 +69,7 @@ class CallRoutingOptionsService
             ['value' => 'business_hours', 'label' => __('Business Hours')],
             ['value' => 'time_conditions', 'label' => __('Schedule')],
             ['value' => 'contact_centers', 'label' => __('Contact Center')],
+            ['value' => 'ai_agents', 'label' => __('AI Agent')],
             ['value' => 'faxes', 'label' => __('Fax')],
             ['value' => 'call_flows', 'label' => __('Call Flow')],
             ['value' => 'external', 'label' => __('External Number')],
@@ -102,6 +106,18 @@ class CallRoutingOptionsService
                 return $this->buildOptions(Conferences::class, 'conference_extension', 'conference_name');
             case 'conference_centers':
                 return $this->buildOptions(ConferenceCenter::class, 'conference_center_extension', 'conference_center_name');
+            case 'ai_agents':
+                return AiAgent::query()
+                    ->where('domain_uuid', $this->domainUuid)
+                    ->where('enabled', true)
+                    ->where('provisioning_status', 'synced')
+                    ->orderBy('extension')
+                    ->get(['ai_agent_uuid', 'extension', 'name'])
+                    ->map(fn (AiAgent $agent) => [
+                        'value' => $agent->ai_agent_uuid,
+                        'extension' => $agent->extension,
+                        'name' => $agent->extension . ' - ' . $agent->name,
+                    ])->all();
             case 'voicemails':
                 return $this->buildOptions(Voicemails::class, 'voicemail_id', 'voicemail_description');
             case 'other':
@@ -147,13 +163,7 @@ class CallRoutingOptionsService
 
             $name = $row->$extensionField . ($nameField ? " - " . $row->$nameField : '');
             if ($model === Voicemails::class) {
-                if ($row->extension) {
-                    // Use extension's name_formatted if extension exists
-                    $name = $row->extension->name_formatted;
-                } else {
-                    // Fallback to voicemail_id - "Team voicemail" if extension does not exist
-                    $name =  $row->voicemail_id . " - Team voicemail" . ($row->voicemail_description ? ' (' . $row->voicemail_description . ')' : '');
-                }
+                $name = $this->voicemailOptionName($row);
             }
 
             if ($model === Recordings::class) {
@@ -181,7 +191,8 @@ class CallRoutingOptionsService
             ->get(['bridge_uuid', 'bridge_name', 'bridge_destination'])
             ->map(fn (Bridge $bridge) => [
                 'value' => $bridge->bridge_uuid,
-                'extension' => $bridge->bridge_destination,
+                'bridge_uuid' => $bridge->bridge_uuid,
+                'extension' => $bridge->bridge_uuid,
                 'name' => $bridge->bridge_name ?: $bridge->bridge_destination,
             ])
             ->values()
@@ -234,12 +245,19 @@ class CallRoutingOptionsService
                             break;
 
                         case 'lua':
-                            // Handle recordings
-                            $routing_options[] =  $this->extractRecordingUuidFromData($action['destination_data']);
+                            $bridgeUuid = BridgeRuntimeDestination::uuidFromScriptData(
+                                $action['destination_data'] ?? null
+                            );
+                            $routing_options[] = $bridgeUuid
+                                ? $this->reverseEngineerBridgeAction(null, $bridgeUuid)
+                                : $this->extractRecordingUuidFromData($action['destination_data']);
                             break;
 
                         case 'bridge':
-                            $routing_options[] = $this->reverseEngineerBridgeAction($action['destination_data'] ?? null);
+                            $routing_options[] = $this->reverseEngineerBridgeAction(
+                                $action['destination_data'] ?? null,
+                                $action['bridge_uuid'] ?? null
+                            );
                             break;
 
                         case 'hangup':
@@ -329,8 +347,12 @@ class CallRoutingOptionsService
                     return $this->reverseEngineerTransferAction("$destination $context $domain_name");
                     break;
                 case 'lua':
-                    return $this->extractRecordingUuidFromData("$destination $context $domain_name");
-                    break;
+                    $scriptData = implode(' ', array_slice($parts, 1));
+                    $bridgeUuid = BridgeRuntimeDestination::uuidFromScriptData($scriptData);
+
+                    return $bridgeUuid
+                        ? $this->reverseEngineerBridgeAction(null, $bridgeUuid)
+                        : $this->extractRecordingUuidFromData($scriptData);
 
                 case 'hangup':
                     return array(
@@ -404,7 +426,7 @@ class CallRoutingOptionsService
                         'type' => 'voicemails',
                         'extension' => $voicemail->voicemail_id,
                         'option' => $voicemail->voicemail_uuid,
-                        'name' => $voicemail->extension ? $voicemail->extension->name_formatted : $voicemail->voicemail_id . ' - Team Voicemail',
+                        'name' => $this->voicemailOptionName($voicemail),
                     ];
                 }
             }
@@ -478,7 +500,7 @@ class CallRoutingOptionsService
                 'type' => 'voicemails',
                 'extension' => $voicemail->voicemail_id,
                 'option' => $voicemail->voicemail_uuid,
-                'name' => $voicemail->extension->name_formatted ?? $voicemail->voicemail_id,
+                'name' => $this->voicemailOptionName($voicemail),
             ];
         }
 
@@ -503,6 +525,17 @@ class CallRoutingOptionsService
         }
     }
 
+    private function voicemailOptionName(Voicemails $voicemail): string
+    {
+        if ($voicemail->extension) {
+            return $voicemail->extension->name_formatted;
+        }
+
+        return $voicemail->voicemail_id
+            . ' - Team voicemail'
+            . ($voicemail->voicemail_description ? ' (' . $voicemail->voicemail_description . ')' : '');
+    }
+
     /**
      * Map Dialplan data back to a routing option.
      */
@@ -519,6 +552,7 @@ class CallRoutingOptionsService
             'faxes' => '/fax_uuid=([0-9a-fA-F-]+)/',
             'conferences' => '/conference_uuid=([0-9a-fA-F-]+)/',
             'conference_centers' => '/app.lua conference_center/',
+            'ai_agents' => '/ai_agent.lua\s+([0-9a-fA-F-]+)/',
             'check_voicemail' => '/app.lua voicemail/',
             'company_directory' => '/directory.lua/',
             'external' => '/disa.lua/',
@@ -577,6 +611,20 @@ class CallRoutingOptionsService
                         'name' => $conferenceCenter
                             ? $conferenceCenter->conference_center_extension . ' - ' . $conferenceCenter->conference_center_name
                             : $dialplan->dialplan_name,
+                    ];
+                }
+
+                if ($type === 'ai_agents') {
+                    $agent = AiAgent::query()
+                        ->where('domain_uuid', $this->domainUuid)
+                        ->where('ai_agent_uuid', $matches[1])
+                        ->first();
+
+                    return [
+                        'type' => $type,
+                        'extension' => $extension,
+                        'option' => $agent?->ai_agent_uuid,
+                        'name' => $agent ? $agent->extension . ' - ' . $agent->name : $dialplan->dialplan_name,
                     ];
                 }
 
@@ -644,11 +692,13 @@ class CallRoutingOptionsService
         }
     }
 
-    protected function reverseEngineerBridgeAction(?string $destinationData): array
+    protected function reverseEngineerBridgeAction(?string $destinationData, ?string $bridgeUuid = null): array
     {
         $destination = trim((string) $destinationData);
 
-        if ($destination === '') {
+        $bridgeUuid ??= BridgeRuntimeDestination::uuid($destination);
+
+        if ($destination === '' && blank($bridgeUuid)) {
             return [
                 'type' => 'bridges',
                 'extension' => null,
@@ -657,14 +707,23 @@ class CallRoutingOptionsService
             ];
         }
 
-        $bridge = Bridge::where('domain_uuid', $this->domainUuid)
+        $bridge = null;
+
+        if (filled($bridgeUuid)) {
+            $bridge = Bridge::where('domain_uuid', $this->domainUuid)
+                ->whereKey($bridgeUuid)
+                ->first(['bridge_uuid', 'bridge_name', 'bridge_destination']);
+        }
+
+        $bridge ??= Bridge::where('domain_uuid', $this->domainUuid)
             ->where('bridge_destination', $destination)
             ->first(['bridge_uuid', 'bridge_name', 'bridge_destination']);
 
         return [
             'type' => 'bridges',
-            'extension' => $destination,
+            'extension' => $bridge?->bridge_uuid ?? $destination,
             'option' => $bridge?->bridge_uuid,
+            'bridge_uuid' => $bridge?->bridge_uuid,
             'name' => $bridge?->bridge_name ?? $destination,
         ];
     }
@@ -684,6 +743,7 @@ class CallRoutingOptionsService
             'call_flows' => 'Call Flow',
             'conferences' => 'Conference',
             'conference_centers' => 'Conference Center',
+            'ai_agents' => 'AI Agent',
             'recordings' => 'Play recording',
             'company_directory' => 'Company Directory',
             'check_voicemail' => 'Check Voicemail',

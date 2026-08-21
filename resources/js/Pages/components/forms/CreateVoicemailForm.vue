@@ -299,7 +299,7 @@ import Spinner from "@generalComponents/Spinner.vue";
 import Badge from "@generalComponents/Badge.vue";
 import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
 import ConfirmationModal from "../modal/ConfirmationModal.vue";
-import { trans } from "laravel-vue-i18n";
+import { trans } from "@i18n";
 
 
 const props = defineProps({

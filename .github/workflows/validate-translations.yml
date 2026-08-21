@@ -4,17 +4,30 @@ on:
   pull_request:
     paths:
       - 'resources/lang/**'
+      - 'resources/js/**'
+      - 'Modules/**/Resources/assets/js/**'
       - 'config/locales.php'
       - '.github/scripts/validate-translations.php'
+      - '.github/scripts/test-vue-i18n.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.js'
   push:
     branches: [ main ]
     paths:
       - 'resources/lang/**'
+      - 'resources/js/**'
+      - 'Modules/**/Resources/assets/js/**'
       - 'config/locales.php'
+      - '.github/scripts/validate-translations.php'
+      - '.github/scripts/test-vue-i18n.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.js'
 
 jobs:
   validate:
-    name: Validate resources/lang/*.json
+    name: Validate translation catalogs and Vue usage
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,5 +36,16 @@ jobs:
         with:
           php-version: '8.1'
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install frontend dependencies
+        run: npm ci
+
       - name: Validate translation files
         run: php .github/scripts/validate-translations.php | tee "$GITHUB_STEP_SUMMARY"
+
+      - name: Validate Vue translations
+        run: npm run test:i18n

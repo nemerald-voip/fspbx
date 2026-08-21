@@ -3,8 +3,10 @@
 namespace App\Http\Requests;
 
 use App\Rules\UniqueExtension;
+use App\Services\PhoneNumberService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use libphonenumber\PhoneNumberFormat;
 
 class UpdateExtensionRequest extends FormRequest
 {
@@ -274,6 +276,19 @@ public function prepareForValidation()
                 ? $this->input('voicemail_file')
                 : '',
         ]);
+    }
+
+    $phoneNumbers = app(PhoneNumberService::class);
+    foreach (['outbound_caller_id_number', 'emergency_caller_id_number'] as $field) {
+        if (array_key_exists($field, $this->all())) {
+            $this->merge([
+                $field => $phoneNumbers->formatForDomain(
+                    $this->input($field),
+                    session('domain_uuid'),
+                    PhoneNumberFormat::E164
+                ),
+            ]);
+        }
     }
 
     // Helper: keep digits, allow a single leading +

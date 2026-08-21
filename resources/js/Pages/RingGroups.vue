@@ -214,7 +214,7 @@
     </AddEditItemModal>
 
     <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="showEditModal"
-        :header="$t('Update Ring Group Settings - :name', { name: itemOptions?.ring_group?.ring_group_name })" :loading="loadingModal"
+        :header="$t('Update Ring Group Settings - :name', { name: itemOptions?.ring_group?.ring_group_name ?? $t('Loading...') })" :loading="loadingModal"
         @close="handleModalClose">
         <template #modal-body>
             <UpdateRingGroupForm :options="itemOptions" @close="handleModalClose" @error="handleErrorResponse"
@@ -261,7 +261,7 @@ import UpdateRingGroupForm from "./components/forms/UpdateRingGroupForm.vue";
 import Notification from "./components/notifications/Notification.vue";
 import Badge from "@generalComponents/Badge.vue";
 import AdvancedActionButton from "./components/general/AdvancedActionButton.vue";
-import { trans } from "laravel-vue-i18n";
+import { trans } from "@i18n";
 
 
 const page = usePage()

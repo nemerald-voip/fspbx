@@ -28,6 +28,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Laravel\Horizon\Contracts\MasterSupervisorRepository;
 use App\Services\FreeswitchEslService;
+use App\Services\SipRegistrationSummaryService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -76,7 +77,7 @@ class DashboardController extends Controller
         return array_merge($permissions, CustomerNotesController::permissionFlags());
     }
 
-    public function getCounts()
+    public function getCounts(SipRegistrationSummaryService $registrationSummaryService)
     {
         $domain_uuid = session('domain_uuid');
 
@@ -234,19 +235,11 @@ class DashboardController extends Controller
                 ->count();
         }
 
-        $eslService = new FreeswitchEslService();
+        $onlineCounts = $registrationSummaryService->onlineExtensionCountsByRealm();
+        $currentRealm = strtolower(trim((string) session('domain_name')));
 
-        //Get all registrations
-        $regs = $eslService->getAllSipRegistrations();
-
-        // Get unique extensions online
-        $uniqueRegs = $regs->unique('user')->values();
-        $counts['global_reg_count'] = $uniqueRegs->count();
-
-        //Filter by domain
-        $filteredRegs = $uniqueRegs->where('sip_auth_realm', session('domain_name'))->values();
-
-        $counts['local_reg_count'] = $filteredRegs->count();
+        $counts['global_reg_count'] = array_sum($onlineCounts);
+        $counts['local_reg_count'] = (int) ($onlineCounts[$currentRealm] ?? 0);
 
 
         return $counts;

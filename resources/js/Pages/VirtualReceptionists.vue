@@ -172,7 +172,7 @@
 
     <UpdateVirtualReceptionistForm :options="itemOptions" @refresh-data="handleSearchButtonClick" @refresh-item="getItemOptions"
         :show="showUpdateModal" @close="showUpdateModal = false"
-        :header="$t('Edit Virtual Receptionist Settings - :name', { name: itemOptions?.item?.ivr_menu_name })" :loading="loadingModal"
+        :header="$t('Edit Virtual Receptionist Settings - :name', { name: itemOptions?.item?.ivr_menu_name ?? $t('Loading...') })" :loading="loadingModal"
         @success="showNotification" />
 
     <DeleteConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
@@ -200,7 +200,7 @@ import CreateVirtualReceptionistForm from "./components/forms/CreateVirtualRecep
 import Notification from "./components/notifications/Notification.vue";
 import Badge from "@generalComponents/Badge.vue";
 import AdvancedActionButton from "./components/general/AdvancedActionButton.vue";
-import { trans } from "laravel-vue-i18n";
+import { trans } from "@i18n";
 
 const loading = ref(false)
 const loadingModal = ref(false)

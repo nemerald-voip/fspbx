@@ -52,7 +52,10 @@ $summary = [];
 foreach (glob("{$langPath}/*.json") as $file) {
     $locale = basename($file, '.json');
 
-    if ($locale === $sourceLocale) {
+    // laravel-vue-i18n generates php_*.json bundles from Laravel's PHP
+    // translation files during a Vite build. They are build artifacts with
+    // dot-namespaced framework keys, not locale catalogs based on en-us.json.
+    if ($locale === $sourceLocale || str_starts_with($locale, 'php_')) {
         continue;
     }
 

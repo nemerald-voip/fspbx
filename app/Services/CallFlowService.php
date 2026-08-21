@@ -95,8 +95,8 @@ class CallFlowService
 
         return match ($action) {
             'bridges' => [
-                'app' => 'bridge',
-                'data' => $target,
+                'app' => 'lua',
+                'data' => 'bridge.lua ' . $target,
             ],
             'recordings' => [
                 'app' => 'lua',

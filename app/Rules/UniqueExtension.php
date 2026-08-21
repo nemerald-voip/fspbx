@@ -2,6 +2,7 @@
 
 namespace App\Rules;
 
+use App\Models\AiAgent;
 use App\Models\BusinessHour;
 use Closure;
 use App\Models\Faxes;
@@ -127,6 +128,13 @@ class UniqueExtension implements ValidationRule
             ->where('domain_uuid', $this->domainUuid)
             ->when($this->currentUuid, function ($query) {
                 return $query->where('uuid', '!=', $this->currentUuid);
+                });
+
+        $subqueries[] = AiAgent::select('extension')
+            ->where('extension', $value)
+            ->where('domain_uuid', $this->domainUuid)
+            ->when($this->currentUuid, function ($query) {
+                return $query->where('ai_agent_uuid', '!=', $this->currentUuid);
             });
 
         // Combine all subqueries using UNION

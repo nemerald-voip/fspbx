@@ -319,7 +319,7 @@
 
 <script setup>
 import { ref } from "vue";
-import { trans } from "laravel-vue-i18n";
+import { trans } from "@i18n";
 import HolidayTable from "./../HolidayTable.vue";
 import CreateHolidayHourModal from "./../modal/CreateHolidayHourModal.vue"
 import UpdateHolidayHourModal from "./../modal/UpdateHolidayHourModal.vue"

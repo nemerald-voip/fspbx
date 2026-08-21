@@ -64,6 +64,12 @@
                                                     'button_container',
                                                     'settings_submit',
                                                 ]" />
+                                                <FormTab name="headers" :label="$t('Headers')" :elements="[
+                                                    'headers_header',
+                                                    'bridge_headers',
+                                                    'headers_button_container',
+                                                    'headers_submit',
+                                                ]" />
                                                 <FormTab name="advanced" label="Advanced" :elements="[
                                                     'advanced_header',
                                                     'bridge_destination',
@@ -146,8 +152,31 @@
                                                 <ButtonElement name="settings_submit" button-label="Save"
                                                     :submits="true" align="right" />
 
+                                                <StaticElement name="headers_header" tag="h4" :content="$t('SIP Headers')"
+                                                    :description="$t('Add custom headers to the outbound SIP INVITE.')" />
+
+                                                <ListElement name="bridge_headers" :initial="0" :label="$t('Headers')" size="sm"
+                                                    :controls="{ add: true, remove: true, sort: true }"
+                                                    :add-classes="{ ListElement: { listItem: 'bg-white p-3 sm:p-4 mb-4 rounded-lg border border-gray-200' } }">
+                                                    <template #default="{ index }">
+                                                        <ObjectElement :name="index">
+                                                            <TextElement name="name" :label="$t('Header Name')"
+                                                                placeholder="X-FSPBX-Domain-UUID" :floating="false"
+                                                                :columns="{ sm: { container: 6 } }" />
+                                                            <TextElement name="value" :label="$t('Value')"
+                                                                placeholder="${domain_uuid}" :floating="false"
+                                                                :columns="{ sm: { container: 6 } }" />
+                                                        </ObjectElement>
+                                                    </template>
+                                                </ListElement>
+
+                                                <GroupElement name="headers_button_container" />
+
+                                                <ButtonElement name="headers_submit" :button-label="$t('Save')"
+                                                    :submits="true" align="right" />
+
                                                 <StaticElement name="advanced_header" tag="h4" content="Advanced Settings"
-                                                    description="Use the raw destination only when the action fields cannot represent the bridge." />
+                                                    :description="$t('Use the raw destination only when the action fields cannot represent the bridge.')" />
 
                                                 <TextareaElement name="bridge_destination" label="Raw Destination"
                                                     :rows="4" />
@@ -199,6 +228,7 @@ const profiles = computed(() => props.options?.profiles ?? []);
 
 const defaultValues = computed(() => ({
     bridge_uuid: props.options?.item?.bridge_uuid ?? null,
+    bridge_headers: props.options?.form?.bridge_headers ?? [],
     bridge_name: props.options?.item?.bridge_name ?? null,
     bridge_action: props.options?.form?.bridge_action ?? null,
     bridge_profile: props.options?.form?.bridge_profile ?? null,

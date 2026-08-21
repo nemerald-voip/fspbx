@@ -17,7 +17,7 @@
         'time_conditions' => 'dialplan_number',
         'business_hours' => 'extension',
         'contact_centers' => 'queue_extension',
-        'bridges' => 'bridge_destination',
+        'bridges' => 'bridge_uuid',
         'faxes' => 'fax_extension',
         'call_flows' => 'call_flow_extension',
         'recordings' => 'recording_filename',

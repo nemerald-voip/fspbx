@@ -238,7 +238,7 @@ import UpdateVoicemailForm from "./components/forms/UpdateVoicemailForm.vue";
 import Notification from "./components/notifications/Notification.vue";
 import Badge from "@generalComponents/Badge.vue";
 import { UserGroupIcon, UserIcon, EnvelopeIcon } from "@heroicons/vue/24/outline";
-import { trans } from "laravel-vue-i18n";
+import { trans } from "@i18n";
 
 
 

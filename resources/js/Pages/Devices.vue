@@ -504,7 +504,7 @@ import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
 import AceEditor from "./components/general/AceEditor.vue";
 import UploadModal from "./components/modal/UploadModal.vue";
 import ImportDevicesModal from "./components/modal/ImportDevicesModal.vue";
-import { trans } from "laravel-vue-i18n";
+import { trans } from "@i18n";
 
 const props = defineProps({
     routes: Object,

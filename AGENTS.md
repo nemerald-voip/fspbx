@@ -191,8 +191,12 @@ This repo is a Laravel, Vue/Inertia, VueForm, and FreeSWITCH application. Before
 
 ## FreeSWITCH Files
 
-- New Lua scripts belong in `resources/lua`.
-- Future-install FreeSWITCH autoload config belongs under `resources/autoload_configs`; other FreeSWITCH config remains under `public/app/switch/resources/conf/...`.
+- FreeSWITCH BLF daemons, including voicemail, call flow, follow-me, and agent presence, belong under `resources/freeswitch_scripts/lua`.
+- New event-driven BLF daemons should follow the established `resources/freeswitch_scripts/lua/vm_blf.lua` structure: a simple local logger, explicit event handlers, raw `freeswitch.EventConsumer` instances, nonblocking queue drains, and a short idle sleep. Do not copy unused state or known parsing defects merely for visual parity.
+- Compact agent BLF actions use the purpose-built `resources/freeswitch_scripts/lua/agent_toggle.lua`; do not route `agent<id>` or `break<id>` through the legacy `app/agent_status` script used by `*22`, `*23`, and `*24`.
+- `resources/autoload_configs/lua.conf.xml` is the canonical future-install startup configuration. New Lua startup services must be added there and patched into `/etc/freeswitch/autoload_configs/lua.conf.xml` for existing installs.
+- Enabling a new Lua startup service requires a complete, administrator-controlled FreeSWITCH restart. Updates may patch `lua.conf.xml`, but must not start the script with `luarun`, reload `mod_lua`, or restart FreeSWITCH automatically; print the manual restart command instead.
+- Other future-install FreeSWITCH autoload config belongs under `resources/autoload_configs`; other FreeSWITCH config remains under `public/app/switch/resources/conf/...`.
 - Existing-install FreeSWITCH config usually needs to be written or patched under `/etc/freeswitch/...` from an update class.
 - Dialplan templates live under `public/app/dialplans/resources/switch/conf/dialplan`.
 - For Lua called by dialplan XML, use paths that match the FreeSWITCH runtime script directory, such as `lua/call_block.lua`.

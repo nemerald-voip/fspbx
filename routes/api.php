@@ -3,6 +3,9 @@
 use App\Http\Controllers\AccountSettingsController;
 use App\Http\Controllers\AppsController;
 use App\Http\Controllers\AccessControlController;
+use App\Http\Controllers\AiAgentController;
+use App\Http\Controllers\AiProviderIntegrationController;
+use App\Http\Controllers\AiToolController;
 use App\Http\Controllers\ActiveConferenceController;
 use App\Http\Controllers\Api\EmergencyCallController;
 use App\Http\Controllers\Api\HolidayHoursController;
@@ -37,6 +40,7 @@ use App\Http\Controllers\DomainController;
 use App\Http\Controllers\DomainGroupsController;
 use App\Http\Controllers\DomainSettingsController;
 use App\Http\Controllers\EmailLogsController;
+use App\Http\Controllers\AiAgentLogsController;
 use App\Http\Controllers\EmailQueueController;
 use App\Http\Controllers\EmailTemplateController;
 use App\Http\Controllers\ExtensionsController;
@@ -103,7 +107,26 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+Route::post('/ai-tools/retell/send-email', [AiToolController::class, 'sendEmail'])
+    ->middleware('throttle:60,1')
+    ->name('ai-tools.retell.send-email');
+
 Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () {
+    Route::get('/ai-agents/data', [AiAgentController::class, 'data'])->name('ai-agents.data');
+    Route::post('/ai-agents/item-options', [AiAgentController::class, 'itemOptions'])->name('ai-agents.item-options');
+    Route::get('/ai-agents/integration', [AiProviderIntegrationController::class, 'show'])->name('ai-agents.integration.show');
+    Route::put('/ai-agents/integration', [AiProviderIntegrationController::class, 'update'])->name('ai-agents.integration.update');
+    Route::post('/ai-agents/integration/test', [AiProviderIntegrationController::class, 'test'])->name('ai-agents.integration.test');
+    Route::get('/ai-agents/provider-agents', [AiProviderIntegrationController::class, 'providerAgents'])->name('ai-agents.provider-agents');
+    Route::get('/ai-agents/tool-status', [AiAgentController::class, 'toolStatus'])->name('ai-agents.tool-status');
+    Route::post('/ai-agents/sync-tools', [AiAgentController::class, 'syncTools'])->name('ai-agents.sync-tools');
+    Route::post('/ai-agents', [AiAgentController::class, 'store'])->name('ai-agents.store');
+    Route::put('/ai-agents/{ai_agent}', [AiAgentController::class, 'update'])->name('ai-agents.update');
+    Route::post('/ai-agents/{ai_agent}/toggle', [AiAgentController::class, 'toggle'])->name('ai-agents.toggle');
+    Route::post('/ai-agents/{ai_agent}/retry', [AiAgentController::class, 'retry'])->name('ai-agents.retry');
+    Route::post('/ai-agents/{ai_agent}/refresh', [AiAgentController::class, 'refresh'])->name('ai-agents.refresh');
+    Route::delete('/ai-agents/{ai_agent}', [AiAgentController::class, 'destroy'])->name('ai-agents.destroy');
+
     // Dashboard
     Route::get('/dashboard/data', [DashboardController::class, 'getData'])->name('dashboard.data');
     Route::get('/dashboard/counts', [DashboardController::class, 'getCounts'])->name('dashboard.counts');
@@ -136,6 +159,9 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/email-logs/retry', [EmailLogsController::class, 'retry'])->name('email-logs.retry');
     Route::get('/email-logs/{uuid}/delivery-details', [EmailLogsController::class, 'deliveryDetails'])->name('email-logs.delivery-details');
     Route::post('/test-email-send', [TestEmailController::class, 'store'])->name('test-email-send.store');
+
+    // AI Agent logs
+    Route::get('/ai-agent-logs', [AiAgentLogsController::class, 'index'])->name('ai-agent-logs.index');
 
     // Email templates
     Route::get('/email-templates/data', [EmailTemplateController::class, 'getData'])->name('email-templates.data');
@@ -855,6 +881,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('domains', [DomainController::class, 'store'])->name('domains.store');
     Route::put('domains/{domain}', [DomainController::class, 'update'])->name('domains.update');
     Route::get('domains/data', [DomainController::class, 'getData'])->name('domains.data');
+    Route::get('domains/registration-summary', [DomainController::class, 'registrationSummary'])->name('domains.registration-summary');
     Route::post('domains/item-options', [DomainController::class, 'getItemOptions'])->name('domains.item.options');
     Route::post('domains/bulk-delete', [DomainController::class, 'bulkDelete'])->name('domains.bulk.delete');
 });
