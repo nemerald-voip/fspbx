@@ -40,9 +40,19 @@ class DeleteOldCallRecordingsTest extends TestCase
         $oldOutsideArchive = $this->createFile('domain.example/not-archive/2025/Oct/15/old.wav', $cutoff - 10);
         $oldDomainRootWav = $this->createFile('domain.example/uploaded_greeting_20250318_185444.wav', $cutoff - 10);
 
+        $job = new class extends DeleteOldCallRecordings
+        {
+            public array $clearedReferences = [];
+
+            protected function clearRecordingReferences(string $file): void
+            {
+                $this->clearedReferences[] = $file;
+            }
+        };
+
         $method = new ReflectionMethod(DeleteOldCallRecordings::class, 'deleteOldRecordingFiles');
         $method->setAccessible(true);
-        $method->invoke(new DeleteOldCallRecordings(), $this->basePath . DIRECTORY_SEPARATOR, $cutoff);
+        $method->invoke($job, $this->basePath . DIRECTORY_SEPARATOR, $cutoff);
 
         $this->assertFileDoesNotExist($oldNestedWav);
         $this->assertFileDoesNotExist($oldNestedMp3);
@@ -51,6 +61,40 @@ class DeleteOldCallRecordingsTest extends TestCase
         $this->assertFileExists($oldTextFile);
         $this->assertFileExists($oldOutsideArchive);
         $this->assertFileExists($oldDomainRootWav);
+
+        sort($job->clearedReferences);
+        $expectedClearedReferences = [$oldNestedWav, $oldNestedMp3, $oldDirectWav];
+        sort($expectedClearedReferences);
+
+        $this->assertSame($expectedClearedReferences, $job->clearedReferences);
+    }
+
+    public function test_it_keeps_the_database_reference_when_file_deletion_fails(): void
+    {
+        $cutoff = time() - 90;
+        $oldRecording = $this->createFile('domain.example/archive/2025/Oct/15/old.wav', $cutoff - 10);
+
+        $job = new class extends DeleteOldCallRecordings
+        {
+            public array $clearedReferences = [];
+
+            protected function deleteRecordingFile(string $file): bool
+            {
+                return false;
+            }
+
+            protected function clearRecordingReferences(string $file): void
+            {
+                $this->clearedReferences[] = $file;
+            }
+        };
+
+        $method = new ReflectionMethod(DeleteOldCallRecordings::class, 'deleteOldRecordingFiles');
+        $method->setAccessible(true);
+        $method->invoke($job, $this->basePath . DIRECTORY_SEPARATOR, $cutoff);
+
+        $this->assertFileExists($oldRecording);
+        $this->assertSame([], $job->clearedReferences);
     }
 
     private function createFile(string $relativePath, int $mtime): string

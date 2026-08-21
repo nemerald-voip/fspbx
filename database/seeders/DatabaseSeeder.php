@@ -225,6 +225,13 @@ class DatabaseSeeder extends Seeder
             ['application_name' => 'Basic Dialer', 'permission_name' => 'basic_dialer_start'],
             ['application_name' => 'PhoneControl', 'permission_name' => 'phone_control_view'],
             ['application_name' => 'PhoneControl', 'permission_name' => 'phone_control_call'],
+            ['application_name' => 'AI Agents', 'permission_name' => 'ai_agent_view'],
+            ['application_name' => 'AI Agents', 'permission_name' => 'ai_agent_create'],
+            ['application_name' => 'AI Agents', 'permission_name' => 'ai_agent_update'],
+            ['application_name' => 'AI Agents', 'permission_name' => 'ai_agent_delete'],
+            ['application_name' => 'AI Agents', 'permission_name' => 'ai_agent_manage_domain'],
+            ['application_name' => 'AI Agents', 'permission_name' => 'ai_agent_manage_provider'],
+            ['application_name' => 'AI Agents', 'permission_name' => 'ai_agent_manage_integration'],
         ];
         $timestamp = date("Y-m-d H:i:s");
 
@@ -371,6 +378,13 @@ class DatabaseSeeder extends Seeder
                 'basic_dialer_start',
                 'phone_control_view',
                 'phone_control_call',
+                'ai_agent_view',
+                'ai_agent_create',
+                'ai_agent_update',
+                'ai_agent_delete',
+                'ai_agent_manage_domain',
+                'ai_agent_manage_provider',
+                'ai_agent_manage_integration',
             ],
             'admin' => [
                 'call_webhook_view',
@@ -1193,7 +1207,7 @@ class DatabaseSeeder extends Seeder
                 'default_setting_name'          => 'boolean',
                 'default_setting_value'         => "true",
                 'default_setting_enabled'       => true,
-                'default_setting_description'   => "Enables automatic deletion of call recordings (.wav and .mp3) and their corresponding database records older than the configured retention period.",
+                'default_setting_description'   => "Enables automatic deletion of local call recording files (.wav and .mp3) older than the configured retention period. CDRs are retained and only local recording references are cleared.",
             ],
             [
                 'default_setting_category'      => 'scheduled_jobs',
@@ -1201,7 +1215,7 @@ class DatabaseSeeder extends Seeder
                 'default_setting_name'          => 'text',
                 'default_setting_value'         => "90",
                 'default_setting_enabled'       => true,
-                'default_setting_description'   => "Specifies the number of days to retain call recordings before they are automatically deleted.",
+                'default_setting_description'   => "Specifies the number of days to retain local call recording files before they are automatically deleted.",
             ],
             [
                 'default_setting_category'      => 'scheduled_jobs',

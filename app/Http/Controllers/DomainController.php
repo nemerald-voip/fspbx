@@ -15,6 +15,8 @@ use Spatie\QueryBuilder\AllowedFilter;
 use Illuminate\Support\Facades\Session;
 use App\Http\Requests\StoreDomainRequest;
 use App\Http\Requests\UpdateDomainRequest;
+use App\Services\SipRegistrationSummaryService;
+use Throwable;
 
 class DomainController extends Controller
 {
@@ -46,6 +48,7 @@ class DomainController extends Controller
                 'routes' => [
                     // 'current_page' => route('devices.index'),
                     'data_route' => route('domains.data'),
+                    'registration_summary' => route('domains.registration-summary'),
                     // 'store' => route('devices.store'),
                     // 'select_all' => route('devices.select.all'),
                     'bulk_delete' => route('domains.bulk.delete'),
@@ -101,6 +104,53 @@ class DomainController extends Controller
         // logger($domainsDto);
 
         return $domainsDto;
+    }
+
+    public function registrationSummary(SipRegistrationSummaryService $registrationSummaryService)
+    {
+        abort_unless(userCheckPermission('domain_view'), 403);
+
+        $domains = Domain::query()
+            ->select(['domain_uuid', 'domain_name'])
+            ->get();
+
+        $enabledExtensionCounts = DB::table('v_extensions')
+            ->select('domain_uuid', DB::raw('COUNT(*) AS aggregate'))
+            ->where('enabled', 'true')
+            ->groupBy('domain_uuid')
+            ->pluck('aggregate', 'domain_uuid');
+
+        try {
+            $onlineCounts = $registrationSummaryService->onlineExtensionCountsByRealm();
+            $available = true;
+        } catch (Throwable $e) {
+            $message = 'DomainController@registrationSummary error: ' . $e->getMessage();
+
+            try {
+                logger($message);
+            } catch (Throwable) {
+                error_log($message);
+            }
+
+            $onlineCounts = [];
+            $available = false;
+        }
+
+        $summary = $domains->mapWithKeys(function (Domain $domain) use ($available, $enabledExtensionCounts, $onlineCounts) {
+            $realm = strtolower(trim((string) $domain->domain_name));
+
+            return [
+                $domain->domain_uuid => [
+                    'online_extensions' => $available ? (int) ($onlineCounts[$realm] ?? 0) : null,
+                    'enabled_extensions' => (int) ($enabledExtensionCounts[$domain->domain_uuid] ?? 0),
+                ],
+            ];
+        });
+
+        return response()->json([
+            'available' => $available,
+            'domains' => $summary,
+        ]);
     }
 
     public function getItemOptions()

@@ -3,8 +3,10 @@
 namespace App\Exports;
 
 use App\Models\Extensions;
+use App\Services\PhoneNumberService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use libphonenumber\PhoneNumberFormat;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 
@@ -15,6 +17,7 @@ class ExtensionsExport implements FromCollection, WithHeadings
     public function __construct()
     {
         $domainUuid = session('domain_uuid');
+        $countryCode = app(PhoneNumberService::class)->countryCodeForDomain($domainUuid);
 
         // Sort & filter parity with your page
         $sortField = request()->get('sortField', 've.extension');
@@ -73,42 +76,41 @@ class ExtensionsExport implements FromCollection, WithHeadings
                 ->pluck('voicemail_id', 'voicemail_id'); // [ext => ext]
         }
 
-$this->rows = $rows->map(function ($r) use ($emailMap, $voicemailMap) {
-    $email = (string) ($emailMap->get($r->extension) ?? '');
-    $cid   = formatPhoneNumber($r->outbound_caller_id_number);
-    $emergencycid   = formatPhoneNumber($r->emergency_caller_id_number);
-    $voicemailEnabled = $voicemailMap->has($r->extension) ? 'true' : 'false';
+        $this->rows = $rows->map(function ($r) use ($emailMap, $voicemailMap, $countryCode) {
+            $email = (string) ($emailMap->get($r->extension) ?? '');
+            $cid = formatPhoneNumber($r->outbound_caller_id_number, $countryCode, PhoneNumberFormat::NATIONAL);
+            $emergencyCid = formatPhoneNumber($r->emergency_caller_id_number, $countryCode, PhoneNumberFormat::NATIONAL);
+            $voicemailEnabled = $voicemailMap->has($r->extension) ? 'true' : 'false';
 
-    return [
-        'extension'           => $r->extension,
-        'first_name'          => $r->directory_first_name,
-        'last_name'           => $r->directory_last_name,
-        'email'               => $email,
-        'outbound_caller_id_number' => $cid,
-        'emergency_caller_id_number' => $emergencycid,
-        'voicemail_enabled' => $voicemailEnabled,
-        'description'         => $r->description,
-    ];
-});
+            return [
+                'extension' => $r->extension,
+                'first_name' => $r->directory_first_name,
+                'last_name' => $r->directory_last_name,
+                'email' => $email,
+                'outbound_caller_id_number' => $cid,
+                'emergency_caller_id_number' => $emergencyCid,
+                'voicemail_enabled' => $voicemailEnabled,
+                'description' => $r->description,
+            ];
+        });
     }
 
     public function headings(): array
     {
-    return [
-        'extension',
-        'first_name',
-        'last_name',
-        'email',
-        'outbound_caller_id_number',
-        'emergency_caller_id_number',
-        'voicemail_enabled',
-        'description',
-    ];
+        return [
+            'extension',
+            'first_name',
+            'last_name',
+            'email',
+            'outbound_caller_id_number',
+            'emergency_caller_id_number',
+            'voicemail_enabled',
+            'description',
+        ];
     }
 
     public function collection(): Collection
     {
         return $this->rows;
     }
-
 }

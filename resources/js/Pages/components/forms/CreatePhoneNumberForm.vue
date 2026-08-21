@@ -193,10 +193,10 @@
 
                                                                     ['routing_options.' + index + '.type', 'not_empty'],
                                                                     ['routing_options.' + index + '.type', 'not_in', ['check_voicemail', 'company_directory', 'hangup']]
-                                                                ]" @select="(value, option, el$) => {
+                                                                ]" @select="(value, el$) => {
                                                                     const type = el$.form$.el$('routing_options.' + index + '.type').value
                                                                     el$.form$.el$('routing_options.' + index + '.bridge_uuid')
-                                                                        .update(type === 'bridges' ? option?.bridge_uuid ?? null : null)
+                                                                        .update(type === 'bridges' ? value ?? null : null)
                                                                 }" />
 
 

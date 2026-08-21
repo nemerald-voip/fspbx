@@ -36,6 +36,7 @@ use App\Observers\RingGroupObserver;
 use App\Observers\UserDomainGroupPermissionsObserver;
 use App\Observers\UserObserver;
 use App\Services\PmsOutboundSyncContext;
+use App\Services\PhoneNumberService;
 use App\Services\PolycomCloudProvider;
 use App\Services\RingotelApiService;
 use App\Support\Localization\LocaleFileLoader;
@@ -64,6 +65,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(PmsOutboundSyncContext::class);
 
         $this->app->singleton(LocaleRegistry::class);
+
+        $this->app->scoped(PhoneNumberService::class);
 
         // Merge a locale's JSON strings over its LocaleRegistry::chain() so
         // regional dialects (e.g. es-mx) only need to override what differs

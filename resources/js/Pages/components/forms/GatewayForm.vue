@@ -246,8 +246,9 @@
                                                     :native="false" label="Extension In Contact" :floating="false"
                                                     :strict="false" :columns="{ sm: { container: 6 } }" />
 
-                                                <TextElement name="hostname" label="Hostname" :floating="false"
-                                                    :columns="{ sm: { container: 6 } }" />
+                                                <TextElement name="hostname" :label="$t('FreeSWITCH Hostname')"
+                                                    :description="$t('Leave blank to load this gateway on every FreeSWITCH node. Enter a switchname to load it only on that node.')"
+                                                    :floating="false" :columns="{ sm: { container: 6 } }" />
 
                                                 <GroupElement name="advanced_button_container" />
 

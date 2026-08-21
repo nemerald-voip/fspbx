@@ -23,6 +23,17 @@
                     :selected-domain-uuid="selectedDomainUuid" />
             </section>
 
+            <!-- AI AGENTS -->
+            <section v-if="permissions?.ai_agent_view" v-show="selectedMenuOption === 'ai_agent_logs'">
+                <Vueform>
+                    <StaticElement name="ai_agent_logs_title" tag="h4" :content="$t('AI Agents')" />
+                </Vueform>
+
+                <AiAgentLogs :trigger="aiAgentLogsTrigger" :startPeriod="startPeriod" :endPeriod="endPeriod"
+                    :timezone="timezone" :routes="routes" :domain-options="domainOptions"
+                    :selected-domain-uuid="selectedDomainUuid" />
+            </section>
+
             <!-- WEBHOOKS -->
             <section v-show="selectedMenuOption === 'inbound_webhooks'">
                 <Vueform>
@@ -157,6 +168,7 @@ import axios from 'axios'
 import PageWithSideMenu from '../Layouts/PageWithSideMenu.vue'
 import Notification from "./components/notifications/Notification.vue";
 import EmailLogs from "./components/EmailLogs.vue";
+import AiAgentLogs from "./components/AiAgentLogs.vue";
 import TigerTmsLogs from "./components/TigerTmsLogs.vue";
 import InboundWebhooks from "./components/InboundWebhooks.vue";
 import MessageLogs from "./components/MessageLogs.vue";
@@ -176,6 +188,7 @@ import {
     PrinterIcon,
     ServerStackIcon,
     GlobeAltIcon,
+    CpuChipIcon,
 } from '@heroicons/vue/24/outline'
 
 const props = defineProps({
@@ -200,6 +213,7 @@ const isDeleteLocationLoading = ref(false)
 const showDeleteLocationConfirmationModal = ref(false)
 const confirmDeleteLocationAction = ref(null);
 const emailsTrigger = ref(false)
+const aiAgentLogsTrigger = ref(false)
 const tigerTmsLogsTrigger = ref(false)
 const inboundWebhooksTrigger = ref(false)
 const messageLogsTrigger = ref(false)
@@ -224,6 +238,7 @@ const pages = [
 
 const handleUpdateSelectedMenuOption = (key) => {
     if (key === 'emails') emailsTrigger.value = !emailsTrigger.value
+    if (key === 'ai_agent_logs') aiAgentLogsTrigger.value = !aiAgentLogsTrigger.value
     if (key === 'tigertms_logs') tigerTmsLogsTrigger.value = !tigerTmsLogsTrigger.value
     if (key === 'inbound_webhooks') inboundWebhooksTrigger.value = !inboundWebhooksTrigger.value
     if (key === 'message_logs') messageLogsTrigger.value = !messageLogsTrigger.value
@@ -236,8 +251,13 @@ const handleUpdateSelectedMenuOption = (key) => {
 const navigation = computed(() => {
     const items = [
         { key: 'emails', name: 'Emails', icon: EnvelopeIcon },
-        { key: 'message_logs', name: 'Messages', icon: ChatBubbleLeftRightIcon },
     ]
+
+    if (props.permissions?.ai_agent_view) {
+        items.push({ key: 'ai_agent_logs', name: 'AI Agents', icon: CpuChipIcon })
+    }
+
+    items.push({ key: 'message_logs', name: 'Messages', icon: ChatBubbleLeftRightIcon })
 
     items.push({ key: 'inbound_webhooks', name: 'Inbound Webhooks', icon: InboxArrowDownIcon })
 
