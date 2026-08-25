@@ -146,14 +146,44 @@
 			freeswitch.consoleLog("INFO", "[failure_handler] sip_code: " .. tostring(sip_code) .. "\n");
 		end
 
-		if (originate_causes ~= nil) then
-			array = explode("|",originate_causes);
-			if (string.find(array[1], "USER_BUSY")) or (sip_code == "sip:486") then
-				originate_disposition = "USER_BUSY";
-				session:setVariable("originate_disposition", originate_disposition);
-			end
-		end
+--		if (originate_causes ~= nil) then
+--			array = explode("|",originate_causes);
+--			if (string.find(array[1], "USER_BUSY")) or (sip_code == "sip:486") then
+--				originate_disposition = "USER_BUSY";
+--				session:setVariable("originate_disposition", originate_disposition);
+--			end
+--		end
 
+--normalize busy / declined calls to USER_BUSY
+    local is_busy = false;
+
+        if (originate_causes ~= nil) then
+            array = explode("|", originate_causes);
+
+         if (array[1] ~= nil and string.find(array[1], "USER_BUSY")) then
+                is_busy = true;
+        end
+    end
+
+--486 Busy Here
+        if (sip_code == "sip:486") then
+        is_busy = true;
+    end
+
+--603 Decline / CALL_REJECTED
+--treat as busy unless explicitly configured to hang up on reject
+        if (
+              (sip_code == "sip:603" or originate_disposition == "CALL_REJECTED")
+              and hangup_on_call_reject ~= "true"
+        ) then
+        is_busy = true;
+    end
+
+    if (is_busy) then
+        originate_disposition = "USER_BUSY";
+        session:setVariable("originate_disposition", originate_disposition);
+    end
+    
 		if (originate_disposition ~= nil) then
 			if (originate_disposition == 'USER_BUSY') then
 
