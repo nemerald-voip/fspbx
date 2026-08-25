@@ -17,6 +17,22 @@ local function truthy(value)
     return value == "true" or value == "t" or value == "1"
 end
 
+local function trim(value)
+    return tostring(value or ""):match("^%s*(.-)%s*$")
+end
+
+local function resolve_global_value(value)
+    value = trim(value)
+    local variable_name = value:match("^%$%${([%w_.%-]+)}$")
+
+    if not variable_name then
+        return value
+    end
+
+    local api = freeswitch.API()
+    return trim(api:execute("global_getvar", variable_name))
+end
+
 local agent_uuid = tostring(argv[1] or ""):lower()
 local domain_uuid = session:getVariable("domain_uuid")
 local domain_name = session:getVariable("domain_name")
@@ -83,7 +99,7 @@ if not agent or not truthy(agent.enabled) or agent.provisioning_status ~= "synce
 end
 
 local public_sip_host = tostring(agent.public_sip_host or "")
-local external_sip_port = tostring(agent.external_sip_port or "")
+local external_sip_port = resolve_global_value(agent.external_sip_port)
 
 if not public_sip_host:match("^[A-Za-z0-9][A-Za-z0-9%.%-]*$")
     or not external_sip_port:match("^%d+$")

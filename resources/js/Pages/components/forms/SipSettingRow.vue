@@ -29,7 +29,8 @@
                 <input
                     v-else
                     v-model="setting.sip_profile_setting_value"
-                    :type="definition?.type === 'number' ? 'number' : 'text'"
+                    type="text"
+                    :inputmode="definition?.type === 'number' ? 'numeric' : undefined"
                     :disabled="!canEdit"
                     spellcheck="false"
                     placeholder="value"

@@ -16,6 +16,9 @@ class AiAgentRuntimeContractTest extends TestCase
         $this->assertStringContainsString('sip_h_X-FSPBX-SIP-Host', $script);
         $this->assertStringContainsString('i.public_sip_host', $script);
         $this->assertStringContainsString("s.sip_profile_setting_name = 'sip-port'", $script);
+        $this->assertStringContainsString('value:match("^%$%${([%w_.%-]+)}$")', $script);
+        $this->assertStringContainsString('api:execute("global_getvar", variable_name)', $script);
+        $this->assertStringContainsString('resolve_global_value(agent.external_sip_port)', $script);
         $this->assertStringContainsString('public_sip_host .. ":" .. external_sip_port', $script);
         $this->assertStringContainsString('log("Final dial string: " .. dial_string)', $script);
         $this->assertStringContainsString('session:execute("bridge", dial_string)', $script);

@@ -18,6 +18,10 @@ class AiProviderIntegrationService
         '161.115.160.0/19',
     ];
 
+    public function __construct(private readonly FreeswitchGlobalVariableResolver $variables)
+    {
+    }
+
     public function retell(): AiProviderIntegration
     {
         return $this->integration('retell');
@@ -89,6 +93,8 @@ class AiProviderIntegrationService
             ->where('sip_profile_setting_name', 'sip-port')
             ->where('sip_profile_setting_enabled', 'true')
             ->value('sip_profile_setting_value');
+
+        $port = $this->variables->resolve($port);
 
         if (! is_numeric($port) || (int) $port < 1 || (int) $port > 65535) {
             throw new RuntimeException('The external SIP profile has no valid enabled SIP port.');
