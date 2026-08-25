@@ -207,6 +207,14 @@ class AiAgentDomainPermissionRequestTest extends TestCase
         $this->assertStringNotContainsString('navigator.clipboard.writeText(value)', $page);
     }
 
+    public function test_optional_email_recipient_is_not_presented_as_a_tool_sync_warning(): void
+    {
+        $page = file_get_contents(base_path('resources/js/Pages/AiAgents.vue'));
+
+        $this->assertStringNotContainsString('toolConfigurationRequired', $page);
+        $this->assertStringNotContainsString('trans("Email recipient required")', $page);
+    }
+
     private function storeRequest(string $domainUuid, string $provider = self::EXISTING_PROVIDER): StoreAiAgentRequest
     {
         $request = new class extends StoreAiAgentRequest

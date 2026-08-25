@@ -30,7 +30,6 @@
                     <span v-if="toolStatus.total > 0 && toolStatus.failed === 0" :class="toolCompactStatusClasses"
                         class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md px-2 py-1 text-xs font-semibold ring-1 ring-inset">
                         <CheckCircleIcon v-if="toolsAreCurrent" class="h-4 w-4" aria-hidden="true" />
-                        <ExclamationTriangleIcon v-else-if="toolConfigurationRequired" class="h-4 w-4" aria-hidden="true" />
                         <ArrowPathIcon v-else class="h-4 w-4 motion-safe:animate-spin" aria-hidden="true" />
                         {{ toolCompactStatusText }}
                     </span>
@@ -205,12 +204,10 @@ onMounted(() => { getData(); getToolStatus(); });
 onBeforeUnmount(() => { if (toolStatusTimer) window.clearTimeout(toolStatusTimer); });
 
 const remainingToolSyncs = computed(() => toolStatus.value.pending + toolStatus.value.syncing);
-const toolConfigurationRequired = computed(() => toolStatus.value.configuration_required > 0);
-const toolsAreCurrent = computed(() => !syncingTools.value && remainingToolSyncs.value === 0 && !toolConfigurationRequired.value);
+const toolsAreCurrent = computed(() => !syncingTools.value && remainingToolSyncs.value === 0);
 const toolCompactStatusText = computed(() => {
     if (syncingTools.value && remainingToolSyncs.value === 0) return trans("Queueing tool sync...");
     if (remainingToolSyncs.value > 0) return trans("Syncing tools (:count remaining)", { count: remainingToolSyncs.value });
-    if (toolConfigurationRequired.value) return trans("Email recipient required");
     return trans("Tools current");
 });
 const toolCompactStatusClasses = computed(() => toolsAreCurrent.value
