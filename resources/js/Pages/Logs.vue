@@ -20,7 +20,7 @@
 
                 <EmailLogs :trigger="emailsTrigger" :startPeriod="startPeriod" :endPeriod="endPeriod"
                     :timezone="timezone" :routes="routes" :permissions="permissions" :domain-options="domainOptions"
-                    :selected-domain-uuid="selectedDomainUuid" />
+                    :selected-domain-uuid="selectedDomainUuid" :features="features" />
             </section>
 
             <!-- AI AGENTS -->
