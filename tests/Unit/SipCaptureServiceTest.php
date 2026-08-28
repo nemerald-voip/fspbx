@@ -62,6 +62,21 @@ class SipCaptureServiceTest extends TestCase
         $this->assertSame(3000000001, $service->availableCaptureId([101, 102]));
     }
 
+    public function test_it_only_replaces_the_old_managed_default_capture_id(): void
+    {
+        $service = new TestableSipCaptureService([]);
+
+        $this->assertTrue($service->replacesLegacyCaptureId(
+            100,
+            SipCaptureService::LEGACY_MANAGED_DESCRIPTION,
+        ));
+        $this->assertFalse($service->replacesLegacyCaptureId(
+            101,
+            SipCaptureService::LEGACY_MANAGED_DESCRIPTION,
+        ));
+        $this->assertFalse($service->replacesLegacyCaptureId(100, 'Configured manually.'));
+    }
+
     private function service(): SipCaptureService
     {
         return new SipCaptureService();
@@ -77,6 +92,14 @@ class TestableSipCaptureService extends SipCaptureService
     public function availableCaptureId(array $usedCaptureIds): int
     {
         return $this->randomCaptureId(collect($usedCaptureIds));
+    }
+
+    public function replacesLegacyCaptureId(int $captureId, string $description): bool
+    {
+        $variable = new \App\Models\SwitchVariable();
+        $variable->forceFill(['var_description' => $description]);
+
+        return $this->shouldReplaceLegacyCaptureId($variable, $captureId);
     }
 
     protected function generateCaptureIdCandidate(): int

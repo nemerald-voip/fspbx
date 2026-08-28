@@ -17,6 +17,9 @@ class SipCaptureService
     public const CAPTURE_ID_VARIABLE = 'hep_capture_id';
     public const MAX_CAPTURE_ID = 4294967295;
     public const CAPTURE_ID_ATTEMPTS = 32;
+    public const LEGACY_DEFAULT_CAPTURE_ID = 100;
+    public const LEGACY_MANAGED_DESCRIPTION = 'HEP capture identifier managed by SIP Capture settings.';
+    public const MANAGED_DESCRIPTION = 'HEP capture identifier randomly assigned by SIP Capture settings.';
 
     public function settings(): array
     {
@@ -92,11 +95,6 @@ class SipCaptureService
             )
             : null;
 
-        $legacyCaptureId = DB::table('v_sofia_global_settings')
-            ->where('global_setting_name', 'capture-server')
-            ->orderBy('sofia_global_setting_uuid')
-            ->value('global_setting_value');
-        $legacyCaptureId = $this->parseCaptureServerValue($legacyCaptureId)['capture_id'] ?? null;
         $captureId = null;
 
         DB::transaction(function () use (
@@ -105,10 +103,9 @@ class SipCaptureService
             $profiles,
             $selected,
             $serverHostname,
-            $legacyCaptureId,
             &$captureId,
         ) {
-            $captureId = $this->assignCaptureId($serverHostname, $legacyCaptureId);
+            $captureId = $this->assignCaptureId($serverHostname);
             $this->saveGlobalSetting($enabled, $captureServer);
             $this->saveProfileSettings($profiles, $selected);
         });
@@ -203,7 +200,7 @@ class SipCaptureService
         return $this->validCaptureId($value);
     }
 
-    protected function assignCaptureId(string $hostname, ?int $legacyCaptureId): int
+    protected function assignCaptureId(string $hostname): int
     {
         $variables = SwitchVariable::query()
             ->where('var_name', self::CAPTURE_ID_VARIABLE)
@@ -219,10 +216,8 @@ class SipCaptureService
             ->values();
         $captureId = $this->validCaptureId($variable?->var_value);
 
-        if ($captureId === null) {
-            $captureId = $legacyCaptureId !== null && ! $usedCaptureIds->contains($legacyCaptureId)
-                ? $legacyCaptureId
-                : $this->randomCaptureId($usedCaptureIds);
+        if ($captureId === null || $this->shouldReplaceLegacyCaptureId($variable, $captureId)) {
+            $captureId = $this->randomCaptureId($usedCaptureIds);
         }
 
         $variable ??= new SwitchVariable(['var_uuid' => (string) Str::uuid()]);
@@ -234,10 +229,16 @@ class SipCaptureService
             'var_hostname' => $hostname,
             'var_enabled' => 'true',
             'var_order' => null,
-            'var_description' => 'HEP capture identifier managed by SIP Capture settings.',
+            'var_description' => self::MANAGED_DESCRIPTION,
         ])->save();
 
         return $captureId;
+    }
+
+    protected function shouldReplaceLegacyCaptureId(?SwitchVariable $variable, ?int $captureId): bool
+    {
+        return $captureId === self::LEGACY_DEFAULT_CAPTURE_ID
+            && trim((string) $variable?->var_description) === self::LEGACY_MANAGED_DESCRIPTION;
     }
 
     protected function randomCaptureId(Collection $usedCaptureIds): int
