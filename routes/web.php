@@ -34,6 +34,7 @@ use App\Http\Controllers\DeviceProfileController;
 use App\Http\Controllers\DialplanController;
 use App\Http\Controllers\DomainController;
 use App\Http\Controllers\DomainGroupsController;
+use App\Http\Controllers\DynamicRouteController;
 use App\Http\Controllers\EmailQueueController;
 use App\Http\Controllers\EmailTemplateController;
 use App\Http\Controllers\ExtensionsController;
@@ -301,6 +302,7 @@ Route::group(['middleware' => 'auth'], function () {
 
     // Call Flows
     Route::get('call-flows', [CallFlowController::class, 'index'])->name('call-flows.index');
+    Route::get('dynamic-routes', [DynamicRouteController::class, 'index'])->name('dynamic-routes.index');
 
     // Basic Queues
     Route::get('basic-queues', [BasicQueueController::class, 'index'])->name('basic-queues.index');

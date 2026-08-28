@@ -236,6 +236,7 @@ const defaultMenuTitles = {
     'Call Block': () => trans('Call Block'),
     'Call History': () => trans('Call History'),
     'Call Flows': () => trans('Call Flows'),
+    'Dynamic Routes': () => trans('Dynamic Routes'),
     'Conference Centers': () => trans('Conference Centers'),
     'Conferences': () => trans('Conferences'),
     'Faxes': () => trans('Faxes'),

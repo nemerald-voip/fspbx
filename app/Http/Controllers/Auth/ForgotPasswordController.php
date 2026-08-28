@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Models\User;
 use Throwable;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Schema;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 
 class ForgotPasswordController extends Controller
@@ -31,6 +33,19 @@ class ForgotPasswordController extends Controller
                     'error' => ['Please correct the highlighted fields.'],
                 ],
                 'errors' => $validator->errors()->toArray(),
+            ], 422);
+        }
+
+        $user = User::query()
+            ->where('domain_uuid', session('domain_uuid'))
+            ->whereRaw('LOWER(user_email) = ?', [strtolower((string) $request->email)])
+            ->first();
+
+        if ($user && Schema::hasTable('ldap_directory_users') && $user->ldapDirectoryUsers()->exists()) {
+            return response()->json([
+                'messages' => [
+                    'error' => [__('This user is managed by an external directory. Reset the password in the connected directory.')],
+                ],
             ], 422);
         }
 

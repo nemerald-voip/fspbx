@@ -672,9 +672,6 @@ class CallFlowController extends Controller
 
     private function afterDialplanChange($contexts): void
     {
-        session(['reload_xml' => true]);
-        session()->forget('destinations.array');
-
         foreach ($contexts as $context) {
             cache()->forget('dialplan:' . $context);
         }

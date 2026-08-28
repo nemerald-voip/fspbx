@@ -39,9 +39,11 @@ use App\Http\Controllers\DefaultSettingsController;
 use App\Http\Controllers\DomainController;
 use App\Http\Controllers\DomainGroupsController;
 use App\Http\Controllers\DomainSettingsController;
+use App\Http\Controllers\DynamicRouteController;
 use App\Http\Controllers\EmailLogsController;
 use App\Http\Controllers\AiAgentLogsController;
 use App\Http\Controllers\EmailQueueController;
+use App\Http\Controllers\LdapDirectoryController;
 use App\Http\Controllers\EmailTemplateController;
 use App\Http\Controllers\ExtensionsController;
 use App\Http\Controllers\ExtensionWelcomeEmailController;
@@ -364,6 +366,16 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('users/item-options', [UsersController::class, 'getItemOptions'])->name('users.item.options');
     Route::post('users/bulk-delete', [UsersController::class, 'bulkDelete'])->name('users.bulk.delete');
     Route::post('users/select-all', [UsersController::class, 'selectAll'])->name('users.select.all');
+    Route::get('ldap-directories', [LdapDirectoryController::class, 'index'])->name('ldap-directories.index');
+    Route::post('ldap-directories', [LdapDirectoryController::class, 'store'])->name('ldap-directories.store');
+    Route::put('ldap-directories/{directory}', [LdapDirectoryController::class, 'update'])->name('ldap-directories.update');
+    Route::delete('ldap-directories/{directory}', [LdapDirectoryController::class, 'destroy'])->name('ldap-directories.destroy');
+    Route::post('ldap-directories/{directory}/test', [LdapDirectoryController::class, 'test'])->name('ldap-directories.test');
+    Route::post('ldap-directories/{directory}/sync', [LdapDirectoryController::class, 'sync'])->name('ldap-directories.sync');
+    Route::get('ldap-directories/{directory}/mappings', [LdapDirectoryController::class, 'mappings'])->name('ldap-directories.mappings');
+    Route::put('ldap-directories/{directory}/mappings', [LdapDirectoryController::class, 'updateMappings'])->name('ldap-directories.mappings.update');
+    Route::get('ldap-directories/{directory}/groups/{group}/members', [LdapDirectoryController::class, 'groupMembers'])
+        ->name('ldap-directories.groups.members');
 
     // Extensions
     Route::post('extensions', [ExtensionsController::class, 'store'])->name('extensions.store');
@@ -551,6 +563,15 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/call-flows/bulk-delete', [CallFlowController::class, 'bulkDelete'])->name('call-flows.bulk.delete');
     Route::post('/call-flows/bulk-copy', [CallFlowController::class, 'bulkCopy'])->name('call-flows.bulk.copy');
     Route::post('/call-flows/bulk-toggle', [CallFlowController::class, 'bulkToggle'])->name('call-flows.bulk.toggle');
+
+    // Dynamic Routes
+    Route::post('dynamic-routes', [DynamicRouteController::class, 'store'])->name('dynamic-routes.store');
+    Route::put('dynamic-routes/{dynamic_route}', [DynamicRouteController::class, 'update'])->name('dynamic-routes.update');
+    Route::get('dynamic-routes/data', [DynamicRouteController::class, 'getData'])->name('dynamic-routes.data');
+    Route::post('dynamic-routes/item-options', [DynamicRouteController::class, 'getItemOptions'])->name('dynamic-routes.item.options');
+    Route::post('dynamic-routes/select-all', [DynamicRouteController::class, 'selectAll'])->name('dynamic-routes.select.all');
+    Route::post('dynamic-routes/bulk-delete', [DynamicRouteController::class, 'bulkDelete'])->name('dynamic-routes.bulk.delete');
+    Route::post('dynamic-routes/bulk-toggle', [DynamicRouteController::class, 'bulkToggle'])->name('dynamic-routes.bulk.toggle');
 
     // Bridges
     Route::post('bridges', [BridgeController::class, 'store'])->name('bridges.store');

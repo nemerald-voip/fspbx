@@ -10,6 +10,7 @@ use Spatie\Activitylog\Traits\CausesActivity;
 use App\Models\Traits\Fortify\EmailChallengable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
 {
@@ -167,6 +168,11 @@ class User extends Authenticatable
     public function extension()
     {
         return $this->belongsTo(Extensions::class, 'extension_uuid', 'extension_uuid');
+    }
+
+    public function ldapDirectoryUsers(): HasMany
+    {
+        return $this->hasMany(LdapDirectoryUser::class, 'user_uuid', 'user_uuid');
     }
 
     public function getEmailAttribute()

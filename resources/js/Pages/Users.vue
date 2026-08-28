@@ -19,6 +19,18 @@
                         class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
                         :placeholder="$t('Search')" @keydown.enter="handleSearchButtonClick" />
                 </div>
+
+                <select
+                    v-if="hasDirectories"
+                    v-model="filterData.source"
+                    class="mb-2 min-w-44 rounded-md border-0 py-1.5 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:mr-4"
+                    :aria-label="$t('User source')"
+                    @change="handleSearchButtonClick"
+                >
+                    <option :value="null">{{ $t('All sources') }}</option>
+                    <option value="local">{{ $t('Local') }}</option>
+                    <option value="directory">{{ $t('Directory Service') }}</option>
+                </select>
             </template>
 
             <template #action>
@@ -34,7 +46,8 @@
             <template #navigation>
                 <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
                     :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
-                    @pagination-change-page="renderRequestedPage" />
+                    @pagination-change-page="renderRequestedPage" :bulk-actions="bulkActions"
+                    @bulk-action="handleBulkActionRequest" :has-selected-items="selectedItems.length > 0" />
             </template>
 
 
@@ -42,10 +55,9 @@
                 <!-- Checkbox + Name column -->
                 <TableColumnHeader
                     class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
-<!--                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems" @click.stop
+                    <input v-if="bulkActions.length && selectableTotal > 0" type="checkbox" v-model="selectPageItems"
+                        @change="handleSelectPageItems" @click.stop
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                    <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
-                        :has-selected-items="selectedItems.length > 0" /> -->
                     <div class="pl-4 flex items-center cursor-pointer select-none" @click="handleSortRequest('username')">
                         <span class="mr-2">{{ $t('Name') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'username' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
@@ -80,13 +92,13 @@
             </template>
 
             <template v-if="selectPageItems" v-slot:current-selection>
-                <td colspan="9">
+                <td colspan="6">
                     <div class="text-sm text-center m-2">
                         {{ $t(':count items are selected.', { count: selectedItems.length }) }}
-                        <button v-if="!selectAll && selectedItems.length != data.total"
+                        <button v-if="!selectAll && selectedItems.length != selectableTotal"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleSelectAll">
-                            {{ $t('Select all :total items', { total: data.total }) }}
+                            {{ $t('Select all :total items', { total: selectableTotal }) }}
                         </button>
                         <button v-if="selectAll"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
@@ -104,22 +116,40 @@
                     <!-- Checkbox + Name -->
                     <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500" :text="row.ring_group_extension">
                         <div class="flex items-center">
-                            <!-- <input
-                                v-if="row.user_uuid && row.can_delete_target"
-                                v-model="selectedItems"
-                                type="checkbox"
-                                name="action_box[]"
-                                :value="row.user_uuid"
-                                class="h-4 w-4 rounded border-gray-300 text-indigo-600"
-                            /> -->
-                            <div
-                                class="ml-4"
-                                :class="{ 'cursor-pointer hover:text-gray-900': row.can_manage_target }"
-                                @click="row.can_manage_target && handleEditButtonClick(row.user_uuid)"
-                            >
-                                <span class="flex items-center">
+                            <template v-if="bulkActions.length">
+                                <!-- The slot is held open even for users the actor
+                                     cannot delete, so names stay in one column. -->
+                                <div class="flex h-4 w-4 shrink-0 items-center justify-center">
+                                    <input
+                                        v-if="row.user_uuid && row.can_delete_target"
+                                        v-model="selectedItems"
+                                        type="checkbox"
+                                        name="action_box[]"
+                                        :value="row.user_uuid"
+                                        class="h-4 w-4 rounded border-gray-300 text-indigo-600"
+                                    />
+                                </div>
+                            </template>
+                            <div class="ml-4 flex items-center gap-1.5">
+                                <span
+                                    class="flex items-center"
+                                    :class="{ 'cursor-pointer hover:text-gray-900': row.can_manage_target }"
+                                    @click="row.can_manage_target && handleEditButtonClick(row.user_uuid)"
+                                >
                                     {{ row.name_formatted }}
                                 </span>
+
+                                <ejs-tooltip
+                                    v-if="hasDirectories && row.ldap_directory_name"
+                                    :content="$t('Directory service: :directory', { directory: row.ldap_directory_name })"
+                                    position="TopCenter"
+                                    :target="'#user_source_tooltip_target_' + row.user_uuid"
+                                >
+                                    <div :id="'user_source_tooltip_target_' + row.user_uuid" class="flex items-center">
+                                        <BuildingOffice2Icon class="h-4 w-4 shrink-0 text-indigo-500" />
+                                        <span class="sr-only">{{ $t('Managed by a directory service') }}</span>
+                                    </div>
+                                </ejs-tooltip>
                             </div>
                         </div>
                     </TableField>
@@ -231,7 +261,6 @@
 
 <script setup>
 import { computed, ref } from "vue";
-import { usePage } from '@inertiajs/vue3'
 import axios from 'axios';
 import { router } from "@inertiajs/vue3";
 import DataTable from "./components/general/DataTable.vue";
@@ -242,8 +271,8 @@ import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import Loading from "./components/general/Loading.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
 import { ChevronDownIcon, ChevronUpIcon, MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
+import { BuildingOffice2Icon } from "@heroicons/vue/24/outline";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
-import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
 import CreateUserForm from "./components/forms/CreateUserForm.vue";
 import UpdateUserForm from "./components/forms/UpdateUserForm.vue";
@@ -253,7 +282,6 @@ import { trans } from "@i18n";
 
 
 
-const page = usePage()
 const loading = ref(false)
 const isModalLoading = ref(false)
 const selectAll = ref(false);
@@ -273,13 +301,22 @@ const props = defineProps({
     routes: Object,
     permissions: Object,
     pagination: Object,
+    has_directories: Boolean,
+    selectable_total: Number,
 });
 
 const perPage = ref(props.pagination?.per_page);
 
 const filterData = ref({
     search: null,
+    source: null,
 });
+
+// Nothing about directory provenance is shown unless this account has a
+// directory configured -- accounts that never use Active Directory get the
+// plain user list, with no extra column, filter or marker.
+const hasDirectories = computed(() => props.has_directories === true);
+const selectableTotal = computed(() => props.selectable_total ?? 0);
 
 const sortData = ref({
     name: 'username',
@@ -299,7 +336,7 @@ const bulkActions = computed(() => {
     ];
 
     // Conditionally add the delete action if permission is granted
-    if (page.props.auth.can.user_destroy) {
+    if (props.permissions?.user_delete) {
         actions.push({
             id: 'bulk_delete',
             label: trans('Delete'),
@@ -356,7 +393,7 @@ const handleCreateButtonClick = () => {
 }
 
 const handleSelectAll = () => {
-    axios.post(props.routes.select_all, filterData._rawValue)
+    axios.post(props.routes.select_all, filterData.value)
         .then((response) => {
             selectedItems.value = response.data.items;
             selectAll.value = true;
@@ -381,7 +418,8 @@ const handleSearchButtonClick = () => {
     router.visit(props.routes.current_page, {
         data: {
             filter: {
-                search: filterData.value.search,     
+                search: filterData.value.search,
+                source: filterData.value.source,
             },
             sort,
             per_page: perPage.value,
@@ -390,6 +428,7 @@ const handleSearchButtonClick = () => {
         preserveState: true,
         only: [
             "data",
+            "selectable_total",
         ],
         onSuccess: (page) => {
             loading.value = false;
@@ -400,6 +439,7 @@ const handleSearchButtonClick = () => {
 
 const handleFiltersReset = () => {
     filterData.value.search = null;
+    filterData.value.source = null;
     // After resetting the filters, call handleSearchButtonClick to perform the search with the updated filters
     handleSearchButtonClick();
 }
@@ -420,14 +460,15 @@ const renderRequestedPage = (url) => {
     router.visit(url, {
         data: {
             filter: {
-                search: filterData.value.search,    
+                search: filterData.value.search,
+                source: filterData.value.source,
             },
             sort,
             per_page: perPage.value,
         },
         preserveScroll: true,
         preserveState: true,
-        only: ["data"],
+        only: ["data", "selectable_total"],
         onSuccess: (page) => {
             loading.value = false;
         }
@@ -503,7 +544,9 @@ const handleErrorResponse = (error) => {
 
 const handleSelectPageItems = () => {
     if (selectPageItems.value) {
-        selectedItems.value = props.data.data.map(item => item.user_uuid);
+        selectedItems.value = props.data.data
+            .filter(item => item.can_delete_target)
+            .map(item => item.user_uuid);
     } else {
         selectedItems.value = [];
     }

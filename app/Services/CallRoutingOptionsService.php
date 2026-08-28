@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Support\BridgeRuntimeDestination;
-use App\Models\{AiAgent, Bridge, BusinessHour, CallCenterQueues, CallFlows, Conferences, Dialplans, Domain, Extensions, Faxes, IvrMenus, Recordings, RingGroups, Voicemails};
+use App\Models\{AiAgent, Bridge, BusinessHour, CallCenterQueues, CallFlows, Conferences, Dialplans, Domain, DynamicRoute, Extensions, Faxes, IvrMenus, Recordings, RingGroups, Voicemails};
 use App\Models\ConferenceCenter;
 
 class CallRoutingOptionsService
@@ -22,6 +22,7 @@ class CallRoutingOptionsService
         ['value' => 'bridges', 'name' => 'Bridge'],
         ['value' => 'faxes', 'name' => 'Fax'],
         ['value' => 'call_flows', 'name' => 'Call Flow'],
+        ['value' => 'dynamic_routes', 'name' => 'Dynamic Route'],
         ['value' => 'recordings', 'name' => 'Play Greeting'],
         ['value' => 'conferences', 'name' => 'Conferences'],
         ['value' => 'conference_centers', 'name' => 'Conference Centers'],
@@ -50,6 +51,7 @@ class CallRoutingOptionsService
         'conference_centers' => \App\Models\ConferenceCenter::class,
         'faxes'            => \App\Models\Faxes::class,
         'call_flows'       => \App\Models\CallFlows::class,
+        'dynamic_routes'   => \App\Models\DynamicRoute::class,
         'recordings'       => \App\Models\Recordings::class,
         'ai_agents'        => \App\Models\AiAgent::class,
     ];
@@ -72,6 +74,7 @@ class CallRoutingOptionsService
             ['value' => 'ai_agents', 'label' => __('AI Agent')],
             ['value' => 'faxes', 'label' => __('Fax')],
             ['value' => 'call_flows', 'label' => __('Call Flow')],
+            ['value' => 'dynamic_routes', 'label' => __('Dynamic Route')],
             ['value' => 'external', 'label' => __('External Number')],
         ];
     }
@@ -86,6 +89,8 @@ class CallRoutingOptionsService
                 return $this->buildBridgeOptions();
             case 'call_flows':
                 return $this->buildOptions(CallFlows::class, 'call_flow_extension', 'call_flow_name');
+            case 'dynamic_routes':
+                return $this->buildDynamicRouteOptions();
                 // case 'dial_plans':
                 //     return $this->buildOptions(Dialplans::class, 'dialplan_name', '', true);
             case 'extensions':
@@ -194,6 +199,22 @@ class CallRoutingOptionsService
                 'bridge_uuid' => $bridge->bridge_uuid,
                 'extension' => $bridge->bridge_uuid,
                 'name' => $bridge->bridge_name ?: $bridge->bridge_destination,
+            ])
+            ->values()
+            ->all();
+    }
+
+    protected function buildDynamicRouteOptions(): array
+    {
+        return DynamicRoute::query()
+            ->where('domain_uuid', $this->domainUuid)
+            ->where('enabled', true)
+            ->orderBy('extension')
+            ->get(['dynamic_route_uuid', 'extension', 'name'])
+            ->map(fn (DynamicRoute $route) => [
+                'value' => $route->dynamic_route_uuid,
+                'extension' => $route->extension,
+                'name' => $route->extension . ' - ' . $route->name,
             ])
             ->values()
             ->all();
@@ -548,6 +569,7 @@ class CallRoutingOptionsService
             'contact_centers' => '/call_center_queue_uuid=([0-9a-fA-F-]+)/',
             'business_hours' => '/business_hours=([0-9a-fA-F-]+)/',
             'call_flows' => '/call_flow_uuid=([0-9a-fA-F-]+)/',
+            'dynamic_routes' => '/dynamic_route_uuid=([0-9a-fA-F-]+)/',
             'time_conditions' => '/\b(year|yday|mon|mday|week|mweek|wday|hour|minute|minute-of-day|time-of-day|date-time)=("[^"]+"|\'[^\']+\'|\S+)/',
             'faxes' => '/fax_uuid=([0-9a-fA-F-]+)/',
             'conferences' => '/conference_uuid=([0-9a-fA-F-]+)/',
@@ -625,6 +647,22 @@ class CallRoutingOptionsService
                         'extension' => $extension,
                         'option' => $agent?->ai_agent_uuid,
                         'name' => $agent ? $agent->extension . ' - ' . $agent->name : $dialplan->dialplan_name,
+                    ];
+                }
+
+                if ($type === 'dynamic_routes') {
+                    $dynamicRoute = DynamicRoute::query()
+                        ->where('domain_uuid', $this->domainUuid)
+                        ->whereKey($matches[1])
+                        ->first(['dynamic_route_uuid', 'extension', 'name']);
+
+                    return [
+                        'type' => $type,
+                        'extension' => $dynamicRoute?->extension ?? $extension,
+                        'option' => $dynamicRoute?->dynamic_route_uuid ?? $matches[1],
+                        'name' => $dynamicRoute
+                            ? $dynamicRoute->extension . ' - ' . $dynamicRoute->name
+                            : $dialplan->dialplan_name,
                     ];
                 }
 
@@ -741,6 +779,7 @@ class CallRoutingOptionsService
             'time_conditions' => 'Schedules',
             'bridges' => 'Bridge',
             'call_flows' => 'Call Flow',
+            'dynamic_routes' => 'Dynamic Route',
             'conferences' => 'Conference',
             'conference_centers' => 'Conference Center',
             'ai_agents' => 'AI Agent',

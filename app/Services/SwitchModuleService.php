@@ -231,7 +231,6 @@ class SwitchModuleService
         $xml .= '</configuration>';
 
         File::put($path, $xml);
-        session(['reload_xml' => true]);
 
         return true;
     }

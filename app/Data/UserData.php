@@ -38,5 +38,7 @@ class UserData extends Data
 
         #[DataCollectionOf(LocationData::class)]
         public ?DataCollection $locations = null,
+
+        public ?string $ldap_directory_name = null,
     ) {}
 }

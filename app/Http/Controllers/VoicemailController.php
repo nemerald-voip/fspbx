@@ -286,9 +286,6 @@ class VoicemailController extends Controller
                     }
                 }
 
-                if (isset($_SESSION['destinations']['array'])) {
-                    unset($_SESSION['destinations']['array']);
-                }
             });
 
             return response()->json([

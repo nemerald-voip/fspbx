@@ -259,10 +259,6 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
 
                 FusionCache::clear("directory:" . $extension->extension . "@" . $extension->user_context);
 
-                if (isset($_SESSION['destinations']['array'])) {
-                    unset($_SESSION['destinations']['array']);
-                }
-
                 DB::commit();
             } catch (\Throwable $e) {
                 DB::rollBack();

@@ -56,9 +56,7 @@
                                     user_enabled: options?.item?.user_enabled ?? true,
                                     language: options?.item?.language ?? null,
                                     extension_uuid: options?.item?.extension_uuid ?? null,
-                                    groups: options.item.user_groups
-                                        ? options.item.user_groups.map(ug => ug.group_uuid)
-                                        : [],
+                                    groups: localRoleUuids(options),
 
                                     accounts: options.item.domain_permissions
                                         ? options.item.domain_permissions.map(item => item.domain_uuid)
@@ -82,10 +80,13 @@
                                                 <FormTab name="page0" :label="$t('Basic Info')" :elements="[
                                                     'user_uuid_clean',
                                                     'h4',
+                                                    'directory_notice',
+                                                    'directory_identity',
                                                     'first_name',
                                                     'last_name',
                                                     'user_uuid',
                                                     'user_email',
+                                                    'directory_roles',
                                                     'groups',
                                                     'time_zone',
                                                     'container_2',
@@ -93,6 +94,7 @@
                                                     'language',
                                                     'account_groups',
                                                     'accounts',
+                                                    'directory_extension',
                                                     'extension_uuid',
                                                     'container_3',
                                                     'reset',
@@ -103,7 +105,7 @@
                                                     'password_reset',
                                                     'security_title',
 
-                                                ]" />
+                                                ]" :conditions="[() => !isDirectoryManaged]" />
 
                                                 <FormTab name="advanced" :label="$t('Advanced')" :elements="[
                                                     'locations',
@@ -128,6 +130,49 @@
                                             <FormElements>
 
                                                 <StaticElement name="h4" tag="h4" :content="$t('Basic Info')" />
+                                                <StaticElement name="directory_notice" :conditions="[() => isDirectoryManaged]">
+                                                    <div class="rounded-md bg-indigo-50 px-4 py-3 ring-1 ring-inset ring-indigo-200">
+                                                        <div class="flex items-start gap-3">
+                                                            <BuildingOffice2Icon class="mt-0.5 h-5 w-5 shrink-0 text-indigo-600" />
+                                                            <div>
+                                                                <p class="text-sm font-semibold text-indigo-900">
+                                                                    {{ $t('Managed by a directory service') }}
+                                                                </p>
+                                                                <p class="mt-1 text-sm text-indigo-800">
+                                                                    {{ directoryManagement.email_managed
+                                                                        ? $t('Identity and sign-in changes must be made in :directory.', {
+                                                                            directory: directoryManagement.directory_name
+                                                                        })
+                                                                        : $t('Identity is managed in :directory. Add an email below to enable sign-in.', {
+                                                                            directory: directoryManagement.directory_name
+                                                                        }) }}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </StaticElement>
+                                                <StaticElement name="directory_identity" :conditions="[() => isDirectoryManaged]">
+                                                    <dl class="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
+                                                        <div>
+                                                            <dt class="text-sm font-medium text-gray-600">{{ $t('First Name') }}</dt>
+                                                            <dd class="mt-1 text-sm text-gray-900">{{ options.item.first_name || '—' }}</dd>
+                                                        </div>
+                                                        <div>
+                                                            <dt class="text-sm font-medium text-gray-600">{{ $t('Last Name') }}</dt>
+                                                            <dd class="mt-1 text-sm text-gray-900">{{ options.item.last_name || '—' }}</dd>
+                                                        </div>
+                                                        <div v-if="directoryManagement.email_managed">
+                                                            <dt class="text-sm font-medium text-gray-600">{{ $t('Email') }}</dt>
+                                                            <dd class="mt-1 break-all text-sm text-gray-900">{{ options.item.user_email }}</dd>
+                                                        </div>
+                                                        <div>
+                                                            <dt class="text-sm font-medium text-gray-600">{{ $t('Status') }}</dt>
+                                                            <dd class="mt-1 text-sm text-gray-900">
+                                                                {{ options.item.user_enabled === 'true' ? $t('Enabled') : $t('Disabled') }}
+                                                            </dd>
+                                                        </div>
+                                                    </dl>
+                                                </StaticElement>
                                                 <StaticElement name="user_uuid_clean"
                                                     :conditions="[() => options.permissions.is_superadmin]">
 
@@ -157,19 +202,22 @@
                                                         sm: {
                                                             container: 6,
                                                         },
-                                                    }" />
+                                                    }" :conditions="[() => !isDirectoryManaged]" />
                                                 <TextElement name="last_name" :label="$t('Last Name')"
                                                     :placeholder="$t('Enter Last Name')" :floating="false" :columns="{
                                                         sm: {
                                                             container: 6,
                                                         },
-                                                    }" />
+                                                    }" :conditions="[() => !isDirectoryManaged]" />
                                                 <TextElement name="user_email" :label="$t('Email')" :placeholder="$t('Enter Email')"
+                                                    :description="isDirectoryManaged
+                                                        ? $t('The directory did not provide an email. This local address is used for sign-in and verification codes, and is not written back to the directory.')
+                                                        : null"
                                                     :floating="false" :columns="{
                                                         sm: {
                                                             container: 6,
                                                         },
-                                                    }" />
+                                                    }" :conditions="[() => !isDirectoryManaged || !directoryManagement.email_managed]" />
 
                                                 <SelectElement name="time_zone" :groups="true"
                                                     :items="options.timezones" :search="true" :native="false"
@@ -185,14 +233,45 @@
                                                 <SelectElement name="extension_uuid" :items="options.extensions"
                                                     :search="true" :native="false" :label="$t('Assigned extension')"
                                                     input-type="search" autocomplete="off" :floating="false"
+                                                    :conditions="[() => !directoryManagement.extension_managed]"
                                                     :placeholder="$t('Select extension')" :columns="{
                                                         sm: {
                                                             wrapper: 6,
                                                         },
                                                     }" />
 
+                                                <StaticElement name="directory_extension"
+                                                    :conditions="[() => directoryManagement.extension_managed]">
+                                                    <div>
+                                                        <div class="text-sm font-medium text-gray-600">{{ $t('Assigned extension') }}</div>
+                                                        <div class="mt-1 text-sm text-gray-900">
+                                                            {{ options.item.extension?.name_formatted || directoryManagement.remote_extension || '—' }}
+                                                        </div>
+                                                        <p class="mt-1 text-xs text-gray-500">
+                                                            {{ $t('This extension is linked from the directory.') }}
+                                                        </p>
+                                                    </div>
+                                                </StaticElement>
+
+                                                <StaticElement name="directory_roles"
+                                                    :conditions="[() => directoryManagement.managed_roles.length > 0]">
+                                                    <div>
+                                                        <div class="text-sm font-medium text-gray-600">{{ $t('Directory-managed roles') }}</div>
+                                                        <div class="mt-2 flex flex-wrap gap-1.5">
+                                                            <span v-for="role in directoryManagement.managed_roles" :key="role.value"
+                                                                class="inline-flex items-center rounded-md bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 ring-1 ring-inset ring-indigo-600/20">
+                                                                {{ role.label }}
+                                                            </span>
+                                                        </div>
+                                                        <p class="mt-1.5 text-xs text-gray-500">
+                                                            {{ $t('These roles come from mapped directory groups and cannot be changed here.') }}
+                                                        </p>
+                                                    </div>
+                                                </StaticElement>
+
                                                 <TagsElement name="groups" :search="true" :items="options.groups"
-                                                    :label="$t('Roles')" input-type="search" autocomplete="off"
+                                                    :label="directoryManagement.managed_roles.length ? $t('Additional local roles') : $t('Roles')"
+                                                    input-type="search" autocomplete="off"
                                                     :placeholder="$t('Select Roles')" :floating="false" :strict="false"
                                                     :conditions="[() => options.permissions.user_group_view]"
                                                     :disabled="[(el$, form$) => { return !options.permissions.user_group_edit }]" />
@@ -252,7 +331,7 @@
 
                                                 <ToggleElement name="user_enabled" :text="$t('Status')" true-value="true"
                                                     false-value="false"
-                                                    :conditions="[() => options.permissions.user_status]" />
+                                                    :conditions="[() => options.permissions.user_status && !isDirectoryManaged]" />
                                                 <HiddenElement name="language" :meta="true" />
 
                                                 <GroupElement name="container_3" />
@@ -324,13 +403,13 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { XMarkIcon } from "@heroicons/vue/24/solid";
 import ConfirmationModal from "./../modal/ConfirmationModal.vue";
 import ApiTokens from "./../ApiTokens.vue";
 import CreateApiTokenModal from "./../modal/CreateApiTokenModal.vue"
-import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
+import { BuildingOffice2Icon, ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
 import { trans } from "@i18n";
 
 
@@ -355,6 +434,28 @@ const confirmDeleteAction = ref(null);
 const locations = ref([])
 const isLocationsLoading = ref(false)
 const isPasswordResetLoading = ref(false)
+
+const directoryManagement = computed(() => props.options?.directory_management ?? {
+    managed: false,
+    directory_name: null,
+    manage_groups_locally: true,
+    email_managed: false,
+    managed_roles: [],
+    extension_managed: false,
+    remote_extension: null,
+})
+
+const isDirectoryManaged = computed(() => directoryManagement.value.managed === true)
+
+const localRoleUuids = (options) => {
+    const managedRoleUuids = new Set(
+        (options?.directory_management?.managed_roles ?? []).map(role => role.value)
+    )
+
+    return (options?.item?.user_groups ?? [])
+        .map(role => role.group_uuid)
+        .filter(groupUuid => !managedRoleUuids.has(groupUuid))
+}
 
 const handleCopyToClipboard = (text) => {
     navigator.clipboard.writeText(text).then(() => {

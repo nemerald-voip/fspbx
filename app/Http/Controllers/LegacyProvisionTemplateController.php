@@ -83,8 +83,6 @@ class LegacyProvisionTemplateController extends Controller
                 $request->validated('content')
             );
 
-            session(['reload_xml' => true]);
-
             return response()->json([
                 'file' => $file,
                 'messages' => ['success' => [__('Provisioning template saved.')]],

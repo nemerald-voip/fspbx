@@ -8,6 +8,7 @@ use App\Actions\Fortify\ResetUserPassword;
 use App\Actions\Fortify\UpdateUserPassword;
 use App\Actions\Fortify\UpdateUserProfileInformation;
 use App\Models\DefaultSettings;
+use App\Services\LdapUserAuthenticator;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -42,6 +43,12 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::updateUserProfileInformationUsing(UpdateUserProfileInformation::class);
         Fortify::updateUserPasswordsUsing(UpdateUserPassword::class);
         Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
+        Fortify::authenticateUsing(function (Request $request) {
+            return app(LdapUserAuthenticator::class)->authenticate(
+                (string) $request->input(Fortify::username()),
+                (string) $request->input('password')
+            );
+        });
 
         Fortify::authenticateThrough(function () {
             logger('Checking email challenge enabled status...'  . $this->emailChallengeEnabled());

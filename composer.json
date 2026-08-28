@@ -9,6 +9,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.1",
+        "ext-ldap": "*",
         "ext-simplexml": "*",
         "aws/aws-sdk-php": "~3.0",
         "barryvdh/laravel-dompdf": "^3.1",

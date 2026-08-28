@@ -35,9 +35,9 @@ class DialplanService
         'spawn_stream',
     ];
 
-    public function save(array $validated, ?Dialplans $dialplan = null): Dialplans
+    public function save(array $validated, ?Dialplans $dialplan = null, bool $preserveName = false): Dialplans
     {
-        return DB::transaction(function () use ($validated, $dialplan) {
+        return DB::transaction(function () use ($validated, $dialplan, $preserveName) {
             $dialplan ??= new Dialplans();
             $isNew = !$dialplan->exists;
             $originalContext = $isNew ? null : $dialplan->getRawOriginal('dialplan_context');
@@ -49,7 +49,9 @@ class DialplanService
                 'dialplan_uuid' => $dialplanUuid,
                 'domain_uuid' => blank($validated['domain_uuid'] ?? null) ? null : $validated['domain_uuid'],
                 'hostname' => $this->blankToNull($validated['hostname'] ?? null),
-                'dialplan_name' => $this->sanitizeName($validated['dialplan_name']),
+                'dialplan_name' => $preserveName
+                    ? trim($validated['dialplan_name'])
+                    : $this->sanitizeName($validated['dialplan_name']),
                 'dialplan_number' => $this->blankToNull($validated['dialplan_number'] ?? null),
                 'dialplan_destination' => $validated['dialplan_destination'] ?? 'false',
                 'dialplan_context' => $validated['dialplan_context'],

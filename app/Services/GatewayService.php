@@ -183,8 +183,7 @@ class GatewayService
         $service = $this->makeEslService();
 
         if (! $service->isConnected()) {
-            logger('GatewayService: unable to connect to FreeSWITCH; gateway runtime synchronization was deferred.');
-            session(['reload_xml' => true]);
+            logger('GatewayService: unable to connect to FreeSWITCH; gateway runtime synchronization failed.');
 
             return false;
         }
@@ -217,8 +216,6 @@ class GatewayService
         } finally {
             $service->disconnect();
         }
-
-        session(['reload_xml' => ! $success]);
 
         return $success;
     }

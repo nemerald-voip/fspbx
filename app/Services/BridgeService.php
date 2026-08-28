@@ -38,8 +38,6 @@ class BridgeService
                 $this->syncHeaders($bridgeUuid, $validated['bridge_headers'] ?? []);
             }
 
-            $this->clearDestinations();
-
             return $bridge;
         });
     }
@@ -56,7 +54,6 @@ class BridgeService
             }
         });
 
-        $this->clearDestinations();
     }
 
     public function delete(Collection $bridges): int
@@ -73,8 +70,6 @@ class BridgeService
                 ->where('domain_uuid', session('domain_uuid'))
                 ->whereIn('bridge_uuid', $bridges->pluck('bridge_uuid'))
                 ->delete();
-
-            $this->clearDestinations();
 
             return $deleted;
         });
@@ -120,8 +115,6 @@ class BridgeService
 
                 $count++;
             }
-
-            $this->clearDestinations();
 
             return $count;
         });
@@ -352,11 +345,6 @@ class BridgeService
         }
 
         return null;
-    }
-
-    private function clearDestinations(): void
-    {
-        session()->forget('destinations.array');
     }
 
     private function blankToNull(?string $value): ?string

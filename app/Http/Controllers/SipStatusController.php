@@ -154,8 +154,6 @@ class SipStatusController extends Controller
                 default => $this->executeProfileCommand($validated, $eslService),
             };
 
-            session(['reload_xml' => false]);
-
             return response()->json([
                 'messages' => [
                     'success' => [filled($result) ? $result : 'Request successfully processed.'],

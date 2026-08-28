@@ -56,6 +56,7 @@ class UpdatePhoneNumberRequest extends FormRequest
                     'faxes',
                     'conferences',
                     'call_flows',
+                    'dynamic_routes',
                     'voicemails',
                     'company_directory',
                     'check_voicemail',

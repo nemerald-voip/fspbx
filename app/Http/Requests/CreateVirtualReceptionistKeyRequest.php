@@ -25,6 +25,7 @@ class CreateVirtualReceptionistKeyRequest extends FormRequest
         'bridges',
         'faxes',
         'call_flows',
+        'dynamic_routes',
         'recordings',
         'conferences',
         'conference_centers',

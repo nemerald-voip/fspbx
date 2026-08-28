@@ -153,6 +153,13 @@ class DatabaseSeeder extends Seeder
             ['application_name' => 'User Manager', 'permission_name' => 'api_key_create'],
             ['application_name' => 'User Manager', 'permission_name' => 'api_key_update'],
             ['application_name' => 'User Manager', 'permission_name' => 'api_key_delete'],
+            ['application_name' => 'Directory Services', 'permission_name' => 'ldap_directory_view'],
+            ['application_name' => 'Directory Services', 'permission_name' => 'ldap_directory_create'],
+            ['application_name' => 'Directory Services', 'permission_name' => 'ldap_directory_update'],
+            ['application_name' => 'Directory Services', 'permission_name' => 'ldap_directory_delete'],
+            ['application_name' => 'Directory Services', 'permission_name' => 'ldap_directory_test'],
+            ['application_name' => 'Directory Services', 'permission_name' => 'ldap_directory_sync'],
+            ['application_name' => 'Directory Services', 'permission_name' => 'ldap_directory_map_groups'],
             ['application_name' => 'Extensions', 'permission_name' => 'extension_device_create'],
             ['application_name' => 'Extensions', 'permission_name' => 'extension_device_assign'],
             ['application_name' => 'Extensions', 'permission_name' => 'extension_device_unassign'],
@@ -232,6 +239,10 @@ class DatabaseSeeder extends Seeder
             ['application_name' => 'AI Agents', 'permission_name' => 'ai_agent_manage_domain'],
             ['application_name' => 'AI Agents', 'permission_name' => 'ai_agent_manage_provider'],
             ['application_name' => 'AI Agents', 'permission_name' => 'ai_agent_manage_integration'],
+            ['application_name' => 'Dynamic Routes', 'permission_name' => 'dynamic_route_view'],
+            ['application_name' => 'Dynamic Routes', 'permission_name' => 'dynamic_route_create'],
+            ['application_name' => 'Dynamic Routes', 'permission_name' => 'dynamic_route_update'],
+            ['application_name' => 'Dynamic Routes', 'permission_name' => 'dynamic_route_delete'],
         ];
         $timestamp = date("Y-m-d H:i:s");
 
@@ -258,6 +269,7 @@ class DatabaseSeeder extends Seeder
         if (!empty($toInsert)) {
             Permissions::insert($toInsert);
         }
+
     }
 
     private function createGroupPermissions()
@@ -305,6 +317,13 @@ class DatabaseSeeder extends Seeder
                 'api_key_create',
                 'api_key_update',
                 'api_key_delete',
+                'ldap_directory_view',
+                'ldap_directory_create',
+                'ldap_directory_update',
+                'ldap_directory_delete',
+                'ldap_directory_test',
+                'ldap_directory_sync',
+                'ldap_directory_map_groups',
                 'extension_device_create',
                 'extension_device_assign',
                 'extension_device_unassign',
@@ -385,6 +404,10 @@ class DatabaseSeeder extends Seeder
                 'ai_agent_manage_domain',
                 'ai_agent_manage_provider',
                 'ai_agent_manage_integration',
+                'dynamic_route_view',
+                'dynamic_route_create',
+                'dynamic_route_update',
+                'dynamic_route_delete',
             ],
             'admin' => [
                 'call_webhook_view',
@@ -451,6 +474,10 @@ class DatabaseSeeder extends Seeder
                 'basic_dialer_start',
                 'phone_control_view',
                 'phone_control_call',
+                'dynamic_route_view',
+                'dynamic_route_create',
+                'dynamic_route_update',
+                'dynamic_route_delete',
             ],
             'Message Admin' => [
                 'message_settings_list_view',

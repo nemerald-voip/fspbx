@@ -656,6 +656,7 @@ class BusinessHoursController extends Controller
             case 'contact_centers':
             case 'faxes':
             case 'call_flows':
+            case 'dynamic_routes':
                 return  ['action' => 'transfer', 'data' => $inputs['failback_target'] . ' XML ' . session('domain_name')];
             case 'bridges':
                 return [

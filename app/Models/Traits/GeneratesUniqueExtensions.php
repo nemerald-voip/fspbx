@@ -9,6 +9,7 @@ use App\Models\CallFlows;
 use App\Models\ConferenceCenter;
 use App\Models\Conferences;
 use App\Models\Dialplans;
+use App\Models\DynamicRoute;
 use App\Models\Extensions;
 use App\Models\Faxes;
 use App\Models\IvrMenus;
@@ -87,6 +88,7 @@ trait GeneratesUniqueExtensions
             [Conferences::class, 'conference_extension'],
             [BusinessHour::class, 'extension'],
             [AiAgent::class, 'extension'],
+            [DynamicRoute::class, 'extension'],
         ];
     }
 }

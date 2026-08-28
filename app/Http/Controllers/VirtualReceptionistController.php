@@ -136,10 +136,6 @@ class VirtualReceptionistController extends Controller
 
             $this->generateDialPlanXML($instance);
 
-            if (isset($_SESSION['destinations']['array'])) {
-                unset($_SESSION['destinations']['array']);
-            }
-
             return response()->json([
                 'item_uuid' => $instance->ivr_menu_uuid,
                 'messages' => ['success' => [__('Virtual receptionist created successfully.')]]
@@ -189,11 +185,6 @@ class VirtualReceptionistController extends Controller
             $instance->save();
 
             $this->generateDialPlanXML($instance);
-
-            //clear the destinations session array
-            if (isset($_SESSION['destinations']['array'])) {
-                unset($_SESSION['destinations']['array']);
-            }
 
             // Return a JSON response indicating success
             return response()->json([
@@ -695,6 +686,7 @@ class VirtualReceptionistController extends Controller
             case 'conference_centers':
             case 'faxes':
             case 'call_flows':
+            case 'dynamic_routes':
             case 'ai_agents':
                 return 'transfer ' . $key['extension'] . ' XML ' . session('domain_name');
             case 'bridges':
@@ -729,6 +721,7 @@ class VirtualReceptionistController extends Controller
             case 'conference_centers':
             case 'faxes':
             case 'call_flows':
+            case 'dynamic_routes':
             case 'ai_agents':
                 return ['action' => 'transfer', 'data' => $target . ' XML ' . session('domain_name')];
             case 'bridges':

@@ -64,21 +64,36 @@ class UsersController extends Controller
             $select[] = 'extension_uuid';
         }
 
-        $users = QueryBuilder::for(User::class)
+        $userQuery = User::query()
             ->where('domain_uuid', $currentDomain)
-            ->select($select)
+            ->select($select);
+
+        // Directory provenance is only worth querying -- or surfacing in the UI --
+        // when this account actually has a directory configured. Installs that
+        // never touch Active Directory pay nothing and see no trace of it.
+        $hasDirectories = Schema::hasTable('ldap_directory_users')
+            && Schema::hasTable('ldap_directories')
+            && DB::table('ldap_directories')->where('domain_uuid', $currentDomain)->exists();
+
+        if ($hasDirectories) {
+            $userQuery->addSelect([
+                'ldap_directory_name' => DB::table('ldap_directory_users as directory_users')
+                    ->join('ldap_directories as directories', 'directories.directory_uuid', '=', 'directory_users.directory_uuid')
+                    ->select('directories.name')
+                    ->whereColumn('directory_users.user_uuid', 'v_users.user_uuid')
+                    ->whereColumn('directory_users.domain_uuid', 'v_users.domain_uuid')
+                    ->where('directory_users.domain_uuid', $currentDomain)
+                    ->orderBy('directories.priority')
+                    ->orderBy('directories.name')
+                    ->limit(1),
+            ]);
+        }
+
+        $users = QueryBuilder::for($userQuery)
             ->allowedFilters([
-                AllowedFilter::callback('search', function ($query, $value) {
-                    $query->where(function ($q) use ($value) {
-                        $q->where('user_email', 'ilike', "%{$value}%")
-                            ->orWhere('username', 'ilike', "%{$value}%")
-                            ->orWhereHas('user_adv_fields', function ($q2) use ($value) {
-                                $q2->where('first_name', 'ilike', "%{$value}%")
-                                    ->orWhere('last_name',  'ilike', "%{$value}%");
-                            });
-                    });
-                }),
+                AllowedFilter::callback('search', fn($query, $value) => $this->applySearchFilter($query, $value)),
                 AllowedFilter::exact('user_enabled'),
+                AllowedFilter::callback('source', fn($query, $value) => $this->applySourceFilter($query, $value, $currentDomain, $hasDirectories)),
             ])
             ->allowedSorts(['username', 'add_date'])
             ->allowedIncludes(['user_groups'])
@@ -93,7 +108,9 @@ class UsersController extends Controller
 
         $users->getCollection()->transform(function ($user) {
             $canManage = userCheckPermission('user_edit') && $this->canManageTarget($user);
-            $canDelete = userCheckPermission('user_delete') && $this->canManageTarget($user);
+            $canDelete = userCheckPermission('user_delete')
+                && $this->canManageTarget($user)
+                && blank($user->ldap_directory_name);
 
             $user->can_manage_target = $canManage;
             $user->can_delete_target = $canDelete;
@@ -121,6 +138,8 @@ class UsersController extends Controller
                     'select_all' => route('users.select.all'),
                 ],
                 'permissions' => $this->getUserPermissions(),
+                'has_directories' => $hasDirectories,
+                'selectable_total' => $this->selectableUserCount($request, $currentDomain, $hasDirectories),
             ]
         );
     }
@@ -131,6 +150,7 @@ class UsersController extends Controller
         $itemUuid = $request->input('item_uuid');
 
         $domain_uuid = session('domain_uuid');
+        $directoryManagement = $this->emptyDirectoryManagement();
 
         $select = [
             'user_uuid',
@@ -201,6 +221,7 @@ class UsersController extends Controller
 
             $this->ensureCanManageTarget($user);
 
+            $directoryManagement = $this->directoryManagement($user);
             $userDto = UserData::from($user);
             $updateRoute = route('users.update', ['user' => $itemUuid]);
         } else {
@@ -307,6 +328,7 @@ class UsersController extends Controller
             'domains' => $domains,
             'domain_groups' => $domain_groups,
             'extensions' => $extensions,
+            'directory_management' => $directoryManagement,
         ]);
     }
 
@@ -431,14 +453,21 @@ class UsersController extends Controller
 
         $validated   = $request->validated();
         $domain_uuid = session('domain_uuid');
+        $directoryManagement = $this->directoryManagement($user);
+        $managedGroupUuids = collect($directoryManagement['managed_roles'])
+            ->pluck('value');
 
         if (! isSuperAdmin()) {
             unset($validated['domain_uuid'], $validated['user_type']);
         }
 
+        $localGroupUuids = collect($validated['groups'] ?? [])
+            ->diff($managedGroupUuids)
+            ->unique()
+            ->values();
         $allowedGroups = collect();
-        if (!empty($validated['groups']) && is_array($validated['groups'])) {
-            $allowedGroups = $this->allowedGroupsForActor($validated['groups'], $user->domain_uuid);
+        if ($localGroupUuids->isNotEmpty()) {
+            $allowedGroups = $this->allowedGroupsForActor($localGroupUuids->all(), $user->domain_uuid);
         }
 
         $groupsChanged = false;
@@ -449,7 +478,9 @@ class UsersController extends Controller
                 ->values()
                 ->all();
 
-            $newGroupUuids = collect($validated['groups'])
+            $newGroupUuids = $localGroupUuids
+                ->merge($managedGroupUuids)
+                ->unique()
                 ->sort()
                 ->values()
                 ->all();
@@ -460,13 +491,15 @@ class UsersController extends Controller
         try {
             DB::beginTransaction();
 
-            $user->user_adv_fields()->updateOrCreate(
-                ['user_uuid' => $user->user_uuid],
-                [
-                    'first_name' => $validated['first_name'] ?? null,
-                    'last_name'  => $validated['last_name'] ?? null,
-                ]
-            );
+            if (! $directoryManagement['managed']) {
+                $user->user_adv_fields()->updateOrCreate(
+                    ['user_uuid' => $user->user_uuid],
+                    [
+                        'first_name' => $validated['first_name'],
+                        'last_name'  => $validated['last_name'] ?? null,
+                    ]
+                );
+            }
 
             $user->update($validated);
 
@@ -486,9 +519,13 @@ class UsersController extends Controller
             }
 
             if (array_key_exists('groups', $validated) && is_array($validated['groups'])) {
-                $user->user_groups()->delete();
+                $localMemberships = $user->user_groups();
+                if ($managedGroupUuids->isNotEmpty()) {
+                    $localMemberships->whereNotIn('group_uuid', $managedGroupUuids);
+                }
+                $localMemberships->delete();
 
-                foreach ($validated['groups'] as $groupUuid) {
+                foreach ($localGroupUuids as $groupUuid) {
                     $user->user_groups()->create([
                         'group_uuid'  => $groupUuid,
                         'domain_uuid' => $user->domain_uuid,
@@ -573,6 +610,14 @@ class UsersController extends Controller
                 $this->ensureCanManageTarget($user);
             }
 
+            if ($this->hasDirectoryManagedUsers($domain_uuid, $users->pluck('user_uuid'))) {
+                DB::rollBack();
+
+                return response()->json([
+                    'messages' => ['error' => [__('Directory-managed users cannot be deleted here. Disable or remove them in the connected directory.')]],
+                ], 422);
+            }
+
             foreach ($users as $user) {
                 $user->user_adv_fields()->delete();
                 $user->settings()->delete();
@@ -602,6 +647,219 @@ class UsersController extends Controller
                 'messages' => ['error' => [__('An error occurred while deleting the selected user(s).')]]
             ], 500);
         }
+    }
+
+    private function hasDirectoryManagedUsers(string $domainUuid, $userUuids): bool
+    {
+        if (! Schema::hasTable('ldap_directory_users') || $userUuids->isEmpty()) {
+            return false;
+        }
+
+        return DB::table('ldap_directory_users')
+            ->where('domain_uuid', $domainUuid)
+            ->whereIn('user_uuid', $userUuids)
+            ->exists();
+    }
+
+    private function emptyDirectoryManagement(): array
+    {
+        return [
+            'managed' => false,
+            'directory_name' => null,
+            'manage_groups_locally' => true,
+            'email_managed' => false,
+            'managed_roles' => [],
+            'extension_managed' => false,
+            'remote_extension' => null,
+        ];
+    }
+
+    private function directoryManagement(User $user): array
+    {
+        if (! Schema::hasTable('ldap_directory_users') || ! Schema::hasTable('ldap_directories')) {
+            return $this->emptyDirectoryManagement();
+        }
+
+        $link = DB::table('ldap_directory_users as directory_users')
+            ->join('ldap_directories as directories', 'directories.directory_uuid', '=', 'directory_users.directory_uuid')
+            ->where('directory_users.domain_uuid', $user->domain_uuid)
+            ->where('directory_users.user_uuid', $user->user_uuid)
+            ->orderBy('directories.priority')
+            ->orderBy('directories.name')
+            ->first([
+                'directory_users.directory_user_uuid',
+                'directory_users.email as directory_email',
+                'directory_users.extension',
+                'directories.name as directory_name',
+                'directories.manage_groups_locally',
+            ]);
+
+        if (! $link) {
+            return $this->emptyDirectoryManagement();
+        }
+
+        $manageGroupsLocally = filter_var($link->manage_groups_locally, FILTER_VALIDATE_BOOLEAN);
+        $managedRoles = [];
+
+        if (! $manageGroupsLocally && Schema::hasTable('ldap_directory_user_group_assignments')) {
+            $managedRoles = DB::table('ldap_directory_user_group_assignments as assignments')
+                ->join('v_groups as groups', 'groups.group_uuid', '=', 'assignments.group_uuid')
+                ->where('assignments.directory_user_uuid', $link->directory_user_uuid)
+                ->orderBy('groups.group_name')
+                ->get(['groups.group_uuid as value', 'groups.group_name as label'])
+                ->map(fn ($group) => ['value' => $group->value, 'label' => $group->label])
+                ->all();
+        }
+
+        return [
+            'managed' => true,
+            'directory_name' => $link->directory_name,
+            'manage_groups_locally' => $manageGroupsLocally,
+            'email_managed' => filter_var($link->directory_email, FILTER_VALIDATE_EMAIL) !== false,
+            'managed_roles' => $managedRoles,
+            'extension_managed' => filled($link->extension),
+            'remote_extension' => $link->extension,
+        ];
+    }
+
+    /**
+     * Returns every user uuid matching the current filters, so the list view can
+     * offer "select all N" beyond the current page. The set is narrowed to users
+     * the actor may actually manage -- bulkDelete() aborts the whole batch on the
+     * first unmanageable target, so handing back a superadmin here would make
+     * select-all-then-delete fail as a unit.
+     */
+    public function selectAll(Request $request)
+    {
+        if (! userCheckPermission('user_view')) {
+            return response()->json([
+                'messages' => ['error' => [__('Access denied.')]]
+            ], 403);
+        }
+
+        try {
+            $currentDomain = session('domain_uuid');
+
+            $hasDirectories = Schema::hasTable('ldap_directory_users')
+                && Schema::hasTable('ldap_directories')
+                && DB::table('ldap_directories')->where('domain_uuid', $currentDomain)->exists();
+
+            $query = User::query()
+                ->where('domain_uuid', $currentDomain)
+                ->select('user_uuid');
+
+            if ($search = $request->input('search')) {
+                $this->applySearchFilter($query, $search);
+            }
+
+            if ($source = $request->input('source')) {
+                $this->applySourceFilter($query, $source, $currentDomain, $hasDirectories);
+            }
+
+            // The only bulk action on this page is Delete. Directory-managed
+            // users are intentionally read-only, so "select all" must return
+            // the same deletable set as the visible row checkboxes.
+            if ($hasDirectories) {
+                $this->applySourceFilter($query, 'local', $currentDomain, true);
+            }
+
+            $this->applyManageableScope($query);
+
+            return response()->json([
+                'messages' => ['success' => [__('All items selected')]],
+                'items' => $query->pluck('user_uuid'),
+            ]);
+        } catch (\Throwable $e) {
+            logger('User selectAll error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
+            return response()->json([
+                'messages' => ['error' => [__('Failed to select all items')]]
+            ], 500);
+        }
+    }
+
+    protected function applySearchFilter($query, $value): void
+    {
+        $query->where(function ($q) use ($value) {
+            $q->where('user_email', 'ilike', "%{$value}%")
+                ->orWhere('username', 'ilike', "%{$value}%")
+                ->orWhereHas('user_adv_fields', function ($q2) use ($value) {
+                    $q2->where('first_name', 'ilike', "%{$value}%")
+                        ->orWhere('last_name',  'ilike', "%{$value}%");
+                });
+        });
+    }
+
+    private function selectableUserCount(Request $request, string $currentDomain, bool $hasDirectories): int
+    {
+        if (! userCheckPermission('user_delete')) {
+            return 0;
+        }
+
+        $query = User::query()->where('domain_uuid', $currentDomain);
+
+        if ($search = $request->input('filter.search')) {
+            $this->applySearchFilter($query, $search);
+        }
+
+        if ($source = $request->input('filter.source')) {
+            $this->applySourceFilter($query, $source, $currentDomain, $hasDirectories);
+        }
+
+        if ($hasDirectories) {
+            $this->applySourceFilter($query, 'local', $currentDomain, true);
+        }
+
+        $this->applyManageableScope($query);
+
+        return $query->count();
+    }
+
+    protected function applySourceFilter($query, $value, string $currentDomain, bool $hasDirectories): void
+    {
+        if (! $hasDirectories || ! in_array($value, ['local', 'directory'], true)) {
+            return;
+        }
+
+        $linkedToDirectory = function ($q) use ($currentDomain) {
+            $q->select(DB::raw(1))
+                ->from('ldap_directory_users as directory_users')
+                ->whereColumn('directory_users.user_uuid', 'v_users.user_uuid')
+                ->where('directory_users.domain_uuid', $currentDomain);
+        };
+
+        $value === 'directory'
+            ? $query->whereExists($linkedToDirectory)
+            : $query->whereNotExists($linkedToDirectory);
+    }
+
+    /**
+     * The SQL mirror of canManageTarget(): superadmins are off limits, and so is
+     * anyone whose highest group level outranks the actor's. Kept in step with
+     * that method -- it is the set-wide form of the same rule.
+     */
+    protected function applyManageableScope($query): void
+    {
+        if (isSuperAdmin()) {
+            return;
+        }
+
+        $groupsOfUser = function ($q) {
+            $q->select(DB::raw(1))
+                ->from('v_user_groups')
+                ->join('v_groups', 'v_groups.group_uuid', '=', 'v_user_groups.group_uuid')
+                ->whereColumn('v_user_groups.user_uuid', 'v_users.user_uuid');
+        };
+
+        $actorLevel = $this->actorLevel();
+
+        $query->whereNotExists(function ($q) use ($groupsOfUser) {
+            $groupsOfUser($q);
+            $q->whereRaw('lower(v_groups.group_name) = ?', ['superadmin']);
+        })->whereNotExists(function ($q) use ($groupsOfUser, $actorLevel) {
+            $groupsOfUser($q);
+            $q->where('v_groups.group_level', '>', $actorLevel);
+        });
     }
 
     protected function actorLevel(): int
@@ -680,6 +938,8 @@ class UsersController extends Controller
     {
         $permissions = [];
         $permissions['user_create'] = userCheckPermission('user_add');
+        $permissions['user_edit'] = userCheckPermission('user_edit');
+        $permissions['user_delete'] = userCheckPermission('user_delete');
         $permissions['user_group_view'] = userCheckPermission('user_group_view');
         $permissions['user_group_edit'] = userCheckPermission('user_group_edit');
         $permissions['user_status'] = userCheckPermission('user_status');

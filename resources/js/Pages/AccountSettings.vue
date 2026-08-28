@@ -78,6 +78,14 @@
                     @edit-item="handleUpdateLocationButtonClick" @delete-item="handleDeleteLocationButtonClick" />
             </section>
 
+            <!-- ACTIVE DIRECTORY -->
+            <section v-if="ldapDirectorySettings && permissions?.ldap_directory_view"
+                v-show="selectedMenuOption === 'active_directory'">
+                <LdapDirectorySettings :settings="ldapDirectorySettings"
+                    @success="messages => showNotification('success', messages)"
+                    @error="messages => showNotification('error', messages)" />
+            </section>
+
             <!-- ADVANCED -->
             <section v-if="selectedMenuOption === 'advanced' && props.domainSettings">
                 <DomainSettingsPanel v-bind="props.domainSettings" embedded />
@@ -212,6 +220,7 @@ import GraphicEqIcon from "@icons/GraphicEqIcon.vue"
 import CallTranscriptionOptionsForm from "./components/forms/CallTranscriptionOptionsForm.vue"
 import AssemblyAiForm from "./components/forms/AssemblyAiForm.vue"
 import CallWebhookSettingsForm from "./components/forms/CallWebhookSettingsForm.vue"
+import LdapDirectorySettings from "./components/LdapDirectorySettings.vue"
 import {
     Cog6ToothIcon,
     MapPinIcon,
@@ -223,6 +232,7 @@ import {
     AdjustmentsHorizontalIcon,
     AdjustmentsVerticalIcon,
     ArrowPathRoundedSquareIcon,
+    ServerStackIcon,
 } from '@heroicons/vue/24/outline'
 
 const props = defineProps({
@@ -252,6 +262,14 @@ const props = defineProps({
         default: () => ({}),
     },
     domainSettings: {
+        type: Object,
+        default: null,
+    },
+    initial_section: {
+        type: String,
+        default: '',
+    },
+    ldapDirectorySettings: {
         type: Object,
         default: null,
     },
@@ -311,6 +329,9 @@ const handleUpdateSelectedMenuOption = (key) => {
 const navigation = [
     { key: 'general', name: 'General', icon: Cog6ToothIcon },
     { key: 'locations', name: 'Locations', icon: MapPinIcon },
+    ...(props.ldapDirectorySettings && props.permissions?.ldap_directory_view
+        ? [{ key: 'active_directory', name: 'Directory Services', icon: ServerStackIcon }]
+        : []),
     { key: 'auto_provisioning', name: 'Auto Provisioning', icon: WrenchScrewdriverIcon },
     ...(props.permissions?.call_webhook_view
         ? [{ key: 'call_webhooks', name: 'Call Webhooks', icon: ArrowPathRoundedSquareIcon }]
@@ -342,7 +363,10 @@ const navigation = [
 
 onMounted(() => {
     if (navigation.length) {
-        initialMenuOption.value = navigation[0].key
+        const requestedSectionExists = navigation.some(item =>
+            item.key === props.initial_section || item.children?.some(child => child.key === props.initial_section)
+        )
+        initialMenuOption.value = requestedSectionExists ? props.initial_section : navigation[0].key
         // handleUpdateSelectedMenuOption(navigation.value[0].key)
     }
 

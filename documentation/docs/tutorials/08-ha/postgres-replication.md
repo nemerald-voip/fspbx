@@ -12,10 +12,14 @@ This script configures **logical replication** in both directions between two FS
 
 > Works well when servers talk via **external or internal IPs**, and assumes **SSH keys are already exchanged both ways**.
 
+The two nodes may run different PostgreSQL major versions. The script discovers
+the online cluster containing the `fusionpbx` database independently on each
+node, including its port and active configuration files.
+
 ## What It Sets
 
 - Configures replication settings between two nodes
-- **Firewall**: opens TCP 5432 between peers
+- **Firewall**: opens each discovered PostgreSQL port between peers
 - **Schema bootstrap**: drops and recreates `public` on REMOTE (⚠️ destructive), copies schema from LOCAL
 - Publications:
   - LOCAL → `fspbx_publication_a`
@@ -37,7 +41,10 @@ Provide prompts:
 
 * db user passwords for local and remote. You can find these in your `.env` file.
 
-> By default the script targets **PostgreSQL 17** (`/etc/postgresql/17/main/`). Adjust `PG_VERSION` if needed.
+Before changing either node, the script verifies that it can discover an online,
+writable PostgreSQL cluster containing the `fusionpbx` database. Before the
+destructive schema prompt, it also verifies the applied runtime settings and
+database connectivity locally and in both network directions.
 
 Safety Prompt (Destructive)
 ---------------------------

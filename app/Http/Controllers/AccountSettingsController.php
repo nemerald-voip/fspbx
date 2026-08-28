@@ -39,7 +39,7 @@ class AccountSettingsController extends Controller
      * @param  Request  $request
      * @return Redirector|Response|RedirectResponse|Application
      */
-    public function index()
+    public function index(Request $request)
     {
         if (!userCheckPermission("account_settings_list_view")) {
             return redirect('/');
@@ -104,6 +104,10 @@ class AccountSettingsController extends Controller
                 },
                 'permissions' => function () {
                     return $this->getUserPermissions();
+                },
+                'initial_section' => $request->string('section')->toString(),
+                'ldapDirectorySettings' => function () {
+                    return app(LdapDirectoryController::class)->accountSettingsProps();
                 },
                 'domainSettings' => function () {
                     if (! userCheckPermission('domain_setting_view')) {
@@ -299,6 +303,7 @@ class AccountSettingsController extends Controller
         $permissions = [];
         $permissions['location_view'] = userCheckPermission('location_view');
         $permissions['location_create'] = userCheckPermission('location_create');
+        $permissions['ldap_directory_view'] = userCheckPermission('ldap_directory_view');
         $permissions['location_update'] = userCheckPermission('location_update');
         $permissions['location_delete'] = userCheckPermission('location_delete');
         $permissions['call_webhook_view'] = userCheckPermission('call_webhook_view');

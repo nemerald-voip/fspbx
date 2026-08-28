@@ -55,7 +55,6 @@ class SofiaProfileRuntimeServiceTest extends TestCase
             ['configuration:sofia.conf:node-a'],
             $service->clearedKeys
         );
-        $this->assertFalse((bool) session('reload_xml'));
     }
 
     public static function localRuntimeTransitionProvider(): array
@@ -131,10 +130,9 @@ class SofiaProfileRuntimeServiceTest extends TestCase
             ['configuration:sofia.conf:node-a'],
             $service->clearedKeys
         );
-        $this->assertTrue((bool) session('reload_xml'));
     }
 
-    public function test_it_keeps_reload_pending_when_cache_warming_or_rescan_fails(): void
+    public function test_it_returns_false_when_cache_warming_or_rescan_fails(): void
     {
         $esl = Mockery::mock(FreeswitchEslService::class);
         $esl->shouldReceive('isConnected')->once()->andReturnTrue();
@@ -163,7 +161,6 @@ class SofiaProfileRuntimeServiceTest extends TestCase
         );
 
         $this->assertFalse($result);
-        $this->assertTrue((bool) session('reload_xml'));
     }
 
     private static function state(

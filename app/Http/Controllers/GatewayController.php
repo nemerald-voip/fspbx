@@ -126,10 +126,6 @@ class GatewayController extends Controller
             $syncSucceeded = $service->sync(collect([$oldProfile, $gateway->profile]));
             $runtimeSynchronized = $reloadSucceeded && $syncSucceeded;
 
-            // sync() records its own status; restore the pending flag when the
-            // preceding killgw failed even if the subsequent rescan succeeded.
-            session(['reload_xml' => ! $runtimeSynchronized]);
-
             $messages = ['success' => ['Gateway updated successfully.']];
 
             if (! $runtimeSynchronized) {

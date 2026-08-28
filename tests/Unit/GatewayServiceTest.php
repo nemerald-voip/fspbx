@@ -5,12 +5,20 @@ namespace Tests\Unit;
 use App\Models\Gateways;
 use App\Services\FreeswitchEslService;
 use App\Services\GatewayService;
+use Illuminate\Support\Facades\Log;
 use Mockery;
 use RuntimeException;
 use Tests\TestCase;
 
 class GatewayServiceTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Log::spy();
+    }
+
     /**
      * @dataProvider runtimeFieldProvider
      */
@@ -161,10 +169,9 @@ class GatewayServiceTest extends TestCase
 
         $this->assertTrue($service->sync(collect(['external', 'internal', 'external'])));
         $this->assertSame(['configuration:sofia.conf:node-a'], $service->clearedKeys);
-        $this->assertFalse((bool) session('reload_xml'));
     }
 
-    public function test_sync_keeps_reload_pending_when_rescan_fails(): void
+    public function test_sync_returns_false_when_rescan_fails(): void
     {
         $esl = Mockery::mock(FreeswitchEslService::class);
         $esl->shouldReceive('isConnected')->once()->andReturnTrue();
@@ -177,10 +184,9 @@ class GatewayServiceTest extends TestCase
         $service = new TestableGatewayService([$esl]);
 
         $this->assertFalse($service->sync(collect(['external'])));
-        $this->assertTrue((bool) session('reload_xml'));
     }
 
-    public function test_sync_keeps_reload_pending_when_freeswitch_is_unavailable(): void
+    public function test_sync_returns_false_when_freeswitch_is_unavailable(): void
     {
         $esl = Mockery::mock(FreeswitchEslService::class);
         $esl->shouldReceive('isConnected')->once()->andReturnFalse();
@@ -190,7 +196,6 @@ class GatewayServiceTest extends TestCase
         $service = new TestableGatewayService([$esl]);
 
         $this->assertFalse($service->sync(collect(['external'])));
-        $this->assertTrue((bool) session('reload_xml'));
     }
 
     private function reloadEsl(string $response, string $profile = 'external'): FreeswitchEslService

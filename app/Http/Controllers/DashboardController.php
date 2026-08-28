@@ -16,6 +16,7 @@ use App\Models\Extensions;
 use App\Models\RingGroups;
 use App\Models\Voicemails;
 use App\Models\Destinations;
+use App\Models\DynamicRoute;
 use Illuminate\Support\Carbon;
 use App\Models\CallCenterQueues;
 use App\Models\CallCenterAgents;
@@ -188,6 +189,12 @@ class DashboardController extends Controller
             //Call Flow Count
             $counts['call_flows'] = CallFlows::where('domain_uuid', $domain_uuid)
                 ->where('call_flow_enabled', 'true')
+                ->count();
+        }
+
+        if (userCheckPermission('dynamic_route_view')) {
+            $counts['dynamic_routes'] = DynamicRoute::where('domain_uuid', $domain_uuid)
+                ->where('enabled', true)
                 ->count();
         }
 
@@ -547,6 +554,9 @@ class DashboardController extends Controller
         }
         if (userCheckPermission("call_flow_view")) {
             $apps[] = ['name' => __('Call Flows'), 'href' => route('call-flows.index'), 'icon' => 'AlternativeRouteIcon', 'slug' => 'call_flows'];
+        }
+        if (userCheckPermission('dynamic_route_view')) {
+            $apps[] = ['name' => __('Dynamic Routes'), 'href' => route('dynamic-routes.index'), 'icon' => 'AlternativeRouteIcon', 'slug' => 'dynamic_routes'];
         }
         if (userCheckPermission("fax_view")) {
             $apps[] = ['name' => __('Faxes'), 'href' => '/faxes', 'icon' => 'FaxIcon', 'slug' => 'faxes'];

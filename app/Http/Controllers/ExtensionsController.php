@@ -1118,11 +1118,6 @@ public function store(StoreExtensionRequest $request)
                 FusionCache::clear("directory:" . $extension->extension . "@" . $extension->user_context);
             }
 
-            // Clear the destinations session array if present
-            if (isset($_SESSION['destinations']['array'])) {
-                unset($_SESSION['destinations']['array']);
-            }
-
             return response()->json([
                 'extension_uuid'    => $extension->extension_uuid,
                 'messages' => ['success' => [__('Extension has been created')]],
@@ -1468,11 +1463,6 @@ public function store(StoreExtensionRequest $request)
             //clear fusionpbx cache
             FusionCache::clear("directory:" . $extension->extension . "@" . $extension->user_context);
 
-            //clear the destinations session array
-            if (isset($_SESSION['destinations']['array'])) {
-                unset($_SESSION['destinations']['array']);
-            }
-
             $freshExtension = $extension->fresh(['advSettings']);
             $freshExtension->load([
                 'voicemail' => function ($query) use ($currentDomain) {
@@ -1614,10 +1604,6 @@ public function store(StoreExtensionRequest $request)
                 }
 
                 FusionCache::clear("directory:" . $extension->extension . "@" . $extension->user_context);
-            }
-
-            if (isset($_SESSION['destinations']['array'])) {
-                unset($_SESSION['destinations']['array']);
             }
 
             DB::commit();
@@ -1981,11 +1967,6 @@ public function store(StoreExtensionRequest $request)
                 }
             }
 
-            // 9. Clear the destinations session array if present
-            if (isset($_SESSION['destinations']['array'])) {
-                unset($_SESSION['destinations']['array']);
-            }
-
             DB::commit();
 
             return response()->json([
@@ -2280,6 +2261,7 @@ public function store(StoreExtensionRequest $request)
             case 'ai_agents':
             case 'faxes':
             case 'call_flows':
+            case 'dynamic_routes':
                 return $inputs[$targetKey] ?? null;
 
             case 'voicemails':

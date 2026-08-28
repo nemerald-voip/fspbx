@@ -20,6 +20,7 @@ class RingGroupService
             case 'conferences':
             case 'faxes':
             case 'call_flows':
+            case 'dynamic_routes':
                 return  $payload['forward_target'];
             case 'voicemails':
                 return '*99' . $payload['forward_target'];
@@ -47,6 +48,7 @@ class RingGroupService
             case 'faxes':
             case 'conferences':
             case 'call_flows':
+            case 'dynamic_routes':
                 return  ['action' => 'transfer', 'data' => $payload['timeout_target'] . ' XML ' . $domain_name];
             case 'bridges':
                 return [

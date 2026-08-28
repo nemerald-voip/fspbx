@@ -230,9 +230,6 @@ class DomainController extends Controller
             Session::put('context', $_SESSION["domain_name"]);
             $_SESSION["context"] = $_SESSION["domain_name"];
 
-            // unset destinations belonging to old domain
-            unset($_SESSION["destinations"]["array"]);
-
             // This is a workaround to ensure the filters are reset when the domain changes.
             // Given that url()->previous() includes the filter options, it's necessary to pass a refreshed URL.
             if ($request->redirect_url) {
@@ -277,9 +274,6 @@ class DomainController extends Controller
             //set the context
             Session::put('context', $_SESSION["domain_name"]);
             $_SESSION["context"] = $_SESSION["domain_name"];
-
-            // unset destinations belonging to old domain
-            unset($_SESSION["destinations"]["array"]);
 
             $url = getFusionPBXPreviousURL(url()->previous());
             return redirect($url);

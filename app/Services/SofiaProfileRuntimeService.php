@@ -47,8 +47,7 @@ class SofiaProfileRuntimeService
             ->every(fn (bool $cleared) => $cleared);
 
         if (! $connected || blank($switchName)) {
-            logger('SofiaProfileRuntimeService: unable to connect to FreeSWITCH; profile runtime synchronization was deferred.');
-            session(['reload_xml' => true]);
+            logger('SofiaProfileRuntimeService: unable to connect to FreeSWITCH; profile runtime synchronization failed.');
 
             return false;
         }
@@ -86,8 +85,6 @@ class SofiaProfileRuntimeService
         } finally {
             $this->eslService->disconnect();
         }
-
-        session(['reload_xml' => ! $success]);
 
         return $success;
     }
