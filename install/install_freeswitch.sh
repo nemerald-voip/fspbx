@@ -126,7 +126,7 @@ sh autogen.sh
 ./configure --enable-debug
 make -j $(getconf _NPROCESSORS_ONLN)
 make install
-ldconfig
+/sbin/ldconfig
 
 if [[ "$OS_CODENAME" == "trixie" ]]; then
     curl -sSL https://freeswitch.org/fsget | bash -s $SW_TOKEN
@@ -145,7 +145,7 @@ sh autogen.sh
 ./configure --enable-debug
 make -j $(getconf _NPROCESSORS_ONLN)
 make install
-ldconfig
+/sbin/ldconfig
     fi
 
 if [[ "$OS_CODENAME" == "trixie" ]]; then
