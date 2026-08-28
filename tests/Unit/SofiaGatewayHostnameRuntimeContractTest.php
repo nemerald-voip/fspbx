@@ -36,6 +36,24 @@ class SofiaGatewayHostnameRuntimeContractTest extends TestCase
         );
     }
 
+    public function test_global_sofia_settings_expand_server_scoped_variables(): void
+    {
+        $script = $this->sofiaConfigurationScript();
+
+        $this->assertStringContainsString(
+            'local function expand_global_variables(value)',
+            $script
+        );
+        $this->assertStringContainsString(
+            'xml.sanitize(expand_global_variables(row.global_setting_value))',
+            $script
+        );
+        $this->assertStringContainsString(
+            'sip_profile_setting_value = expand_global_variables(sip_profile_setting_value);',
+            $script
+        );
+    }
+
     private function sofiaConfigurationScript(): string
     {
         return File::get(resource_path(

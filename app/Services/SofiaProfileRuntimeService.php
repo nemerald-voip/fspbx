@@ -18,7 +18,12 @@ class SofiaProfileRuntimeService
      * Each transition contains nullable before/after profile state arrays with
      * name, hostname, and enabled keys.
      */
-    public function synchronize(Collection $transitions, Collection $hostnames): bool
+    public function synchronize(
+        Collection $transitions,
+        Collection $hostnames,
+        ?Collection $captureStates = null,
+        ?Collection $globalVariables = null,
+    ): bool
     {
         $connected = $this->eslService->isConnected();
         $switchName = $connected
@@ -55,6 +60,25 @@ class SofiaProfileRuntimeService
         $success = $cacheCleared;
 
         try {
+            foreach ($globalVariables ?? collect() as $name => $value) {
+                if (! preg_match('/^[A-Za-z0-9_.-]+$/D', (string) $name)) {
+                    logger('SofiaProfileRuntimeService: refused an invalid global variable name.');
+
+                    return false;
+                }
+
+                $response = $this->eslService->executeCommand(
+                    'global_setvar ' . $name . '=' . $value,
+                    false
+                );
+
+                if (! $this->commandSucceeded($response)) {
+                    logger('SofiaProfileRuntimeService: unable to set global variable ' . $name . '.');
+
+                    return false;
+                }
+            }
+
             if ($targets->contains($switchName)) {
                 $response = $this->eslService->executeCommand(
                     'xml_locate configuration configuration name sofia.conf',
@@ -78,6 +102,22 @@ class SofiaProfileRuntimeService
                     logger(
                         'SofiaProfileRuntimeService: FreeSWITCH failed to '
                         . $action['action'] . ' SIP profile ' . $action['profile'] . '.'
+                    );
+                    $success = false;
+                }
+            }
+
+            foreach ($this->captureActions($captureStates ?? collect(), $switchName) as $action) {
+                $profile = "'" . addcslashes($action['profile'], "\\'") . "'";
+                $response = $this->eslService->executeCommand(
+                    "sofia profile {$profile} capture {$action['capture']}",
+                    false
+                );
+
+                if (! $this->commandSucceeded($response)) {
+                    logger(
+                        'SofiaProfileRuntimeService: FreeSWITCH failed to turn capture '
+                        . $action['capture'] . ' for SIP profile ' . $action['profile'] . '.'
                     );
                     $success = false;
                 }
@@ -145,6 +185,17 @@ class SofiaProfileRuntimeService
         $hostname = trim((string) ($state['hostname'] ?? ''));
 
         return $hostname === '' || $hostname === $switchName;
+    }
+
+    protected function captureActions(Collection $states, string $switchName): Collection
+    {
+        return $states
+            ->filter(fn (array $state) => $this->isActiveOnSwitch($state, $switchName))
+            ->map(fn (array $state) => [
+                'profile' => $state['name'],
+                'capture' => ($state['capture'] ?? false) ? 'on' : 'off',
+            ])
+            ->values();
     }
 
     protected function commandSucceeded(mixed $response): bool

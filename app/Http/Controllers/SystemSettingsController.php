@@ -11,10 +11,13 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Contracts\Foundation\Application;
+use App\Http\Requests\UpdateSipCaptureSettingsRequest;
 use App\Http\Requests\UpdateSystemSettingsRequest;
 use App\Services\Settings\SettingsManagementService;
 use App\Services\Settings\SystemSettingsSchema;
+use App\Services\SipCaptureService;
 
 class SystemSettingsController extends Controller
 {
@@ -24,6 +27,7 @@ class SystemSettingsController extends Controller
     public function __construct(
         private readonly SettingsManagementService $settings,
         private readonly SystemSettingsSchema $schema,
+        private readonly SipCaptureService $sipCapture,
     ) {
         $this->model = new DefaultSettings();
     }
@@ -45,6 +49,7 @@ class SystemSettingsController extends Controller
                 'routes' => [
                     'dashboard_route' => route('dashboard'),
                     'settings_update' => route('system-settings.update'),
+                    'sip_capture_update' => route('system-settings.sip_capture.update'),
                     'payment_gateways' => route('system-settings.payment_gateways'),
                     'payment_gateway_update' => route('gateway.update'),
                     'payment_gateway_deactivate' => route('gateway.deactivate'),
@@ -66,11 +71,50 @@ class SystemSettingsController extends Controller
                 'settings_values' => function () {
                     return $this->schema->values();
                 },
+                'sip_capture' => function () {
+                    return $this->canViewSipCapture()
+                        ? $this->sipCapture->settings()
+                        : null;
+                },
                 'permissions' => function () {
                     return $this->getUserPermissions();
                 },
             ]
         );
+    }
+
+    public function updateSipCapture(UpdateSipCaptureSettingsRequest $request): JsonResponse
+    {
+        if (! $this->canEditSipCapture()) {
+            return response()->json(['errors' => ['authorization' => [__('Access denied.')]]], 403);
+        }
+
+        try {
+            $result = $this->sipCapture->save($request->validated());
+            $messages = ['success' => [__('SIP capture settings saved.')]];
+
+            if (! $result['runtime_synchronized']) {
+                $messages['error'] = [__(
+                    'The settings were saved, but FreeSWITCH could not apply them live. Check the event socket and rescan the affected SIP profiles.'
+                )];
+            }
+
+            return response()->json([
+                'messages' => $messages,
+                'runtime_synchronized' => $result['runtime_synchronized'],
+                'server_hostname' => $result['server_hostname'],
+                'capture_id' => $result['capture_id'],
+            ]);
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            logger('SystemSettingsController@updateSipCapture: ' . $e->getMessage()
+                . ' at ' . $e->getFile() . ':' . $e->getLine());
+
+            return response()->json([
+                'errors' => ['server' => [__('Server returned an error while saving SIP capture settings.')]],
+            ], 500);
+        }
     }
 
     /**
@@ -186,7 +230,22 @@ class SystemSettingsController extends Controller
         $permissions['call_transcription_settings_view'] = userCheckPermission('call_transcription_settings_view');
         $permissions['default_setting_view'] = userCheckPermission('default_setting_view');
         $permissions['default_setting_edit'] = userCheckPermission('default_setting_edit');
+        $permissions['sip_capture_view'] = $this->canViewSipCapture();
+        $permissions['sip_capture_edit'] = $this->canEditSipCapture();
 
         return $permissions;
+    }
+
+    private function canViewSipCapture(): bool
+    {
+        return userCheckPermission('sofia_global_setting_view')
+            && userCheckPermission('sip_profile_view');
+    }
+
+    private function canEditSipCapture(): bool
+    {
+        return userCheckPermission('sofia_global_setting_edit')
+            && userCheckPermission('sip_profile_setting_add')
+            && userCheckPermission('sip_profile_setting_edit');
     }
 }

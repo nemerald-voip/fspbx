@@ -161,7 +161,7 @@ class SwitchVariableService
 
         File::ensureDirectoryExists($confDir);
 
-        $hostname = $this->switchHostname();
+        $hostname = $this->currentHostname();
         $xml = '';
         $previousCategory = null;
 
@@ -286,7 +286,10 @@ class SwitchVariableService
         return filled($path) ? rtrim((string) $path, '/') : null;
     }
 
-    private function switchHostname(): string
+    /**
+     * Return the hostname FreeSWITCH uses to scope node-specific variables.
+     */
+    public function currentHostname(): string
     {
         try {
             $esl = app(FreeswitchEslService::class);

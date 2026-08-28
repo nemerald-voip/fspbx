@@ -60,6 +60,21 @@
 
 		--get the variables
 			vars = trim(api:execute("global_getvar", ""));
+			local function expand_global_variables(value)
+				value = tostring(value or "");
+				for line in (vars.."\n"):gmatch"(.-)\n" do
+					local pos = string.find(line, "=", 1, true);
+					if (pos and pos > 1) then
+						local name = string.sub(line, 1, pos - 1);
+						local variable_value = string.sub(line, pos + 1);
+						local pattern_name = name:gsub("([^%w])", "%%%1");
+						value = value:gsub("%$%${"..pattern_name.."}", function()
+							return variable_value;
+						end);
+					end
+				end
+				return value;
+			end
 
 		--start the xml array
 			local xml = Xml:new();
@@ -76,7 +91,7 @@
 			x = 0;
 			xml:append([[			<global_settings>]]);
 			dbh:query(sql, params, function(row)
-					xml:append([[				<param name="]] .. xml.sanitize(row.global_setting_name) .. [[" value="]] .. xml.sanitize(row.global_setting_value) .. [["/>]]);
+					xml:append([[				<param name="]] .. xml.sanitize(row.global_setting_name) .. [[" value="]] .. xml.sanitize(expand_global_variables(row.global_setting_value)) .. [["/>]]);
 			end)
 			xml:append([[			</global_settings>]]);
 
@@ -252,15 +267,8 @@
 						profile_tag_status = "open";
 					end
 
-				--loop through the var array
-					for line in (vars.."\n"):gmatch"(.-)\n" do
-						if (line) then
-							pos = string.find(line, "=", 0, true);
-							--name = string.sub( line, 0, pos-1);
-							--value = string.sub( line, pos+1);
-							sip_profile_setting_value = sip_profile_setting_value:gsub("%$%${"..string.sub( line, 0, pos-1).."}", string.sub( line, pos+1));
-						end
-					end
+				--expand global variables in the profile setting value
+					sip_profile_setting_value = expand_global_variables(sip_profile_setting_value);
 
 				--remove $ and replace with ""
 					--if (sip_profile_setting_value) then

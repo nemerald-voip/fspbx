@@ -163,6 +163,74 @@ class SofiaProfileRuntimeServiceTest extends TestCase
         $this->assertFalse($result);
     }
 
+    public function test_it_applies_capture_on_and_off_without_restarting_profiles(): void
+    {
+        $esl = Mockery::mock(FreeswitchEslService::class);
+        $esl->shouldReceive('isConnected')->once()->andReturnTrue();
+        $esl->shouldReceive('executeCommand')
+            ->once()->with('switchname', false)->ordered()->andReturn('node-a');
+        $esl->shouldReceive('executeCommand')
+            ->once()
+            ->with('xml_locate configuration configuration name sofia.conf', false)
+            ->ordered()
+            ->andReturn(new SimpleXMLElement('<document/>'));
+        $esl->shouldReceive('executeCommand')
+            ->once()->with("sofia profile 'internal' rescan", false)->ordered()->andReturn('+OK');
+        $esl->shouldReceive('executeCommand')
+            ->once()->with("sofia profile 'external' rescan", false)->ordered()->andReturn('+OK');
+        $esl->shouldReceive('executeCommand')
+            ->once()->with("sofia profile 'internal' capture on", false)->ordered()->andReturn('+OK');
+        $esl->shouldReceive('executeCommand')
+            ->once()->with("sofia profile 'external' capture off", false)->ordered()->andReturn('+OK');
+        $esl->shouldReceive('disconnect')->once()->ordered();
+
+        $service = new TestableSofiaProfileRuntimeService($esl);
+        $internal = self::state('internal', 'true');
+        $external = self::state('external', 'true');
+
+        $this->assertTrue($service->synchronize(
+            collect([
+                ['before' => $internal, 'after' => $internal],
+                ['before' => $external, 'after' => $external],
+            ]),
+            collect([null]),
+            collect([
+                array_merge($internal, ['capture' => true]),
+                array_merge($external, ['capture' => false]),
+            ])
+        ));
+    }
+
+    public function test_it_sets_capture_id_before_regenerating_and_rescanning_profiles(): void
+    {
+        $esl = Mockery::mock(FreeswitchEslService::class);
+        $esl->shouldReceive('isConnected')->once()->andReturnTrue();
+        $esl->shouldReceive('executeCommand')
+            ->once()->with('switchname', false)->ordered()->andReturn('node-a');
+        $esl->shouldReceive('executeCommand')
+            ->once()->with('global_setvar hep_capture_id=102', false)->ordered()->andReturn('+OK');
+        $esl->shouldReceive('executeCommand')
+            ->once()
+            ->with('xml_locate configuration configuration name sofia.conf', false)
+            ->ordered()
+            ->andReturn(new SimpleXMLElement('<document/>'));
+        $esl->shouldReceive('executeCommand')
+            ->once()->with("sofia profile 'internal' rescan", false)->ordered()->andReturn('+OK');
+        $esl->shouldReceive('executeCommand')
+            ->once()->with("sofia profile 'internal' capture on", false)->ordered()->andReturn('+OK');
+        $esl->shouldReceive('disconnect')->once()->ordered();
+
+        $service = new TestableSofiaProfileRuntimeService($esl);
+        $internal = self::state('internal', 'true');
+
+        $this->assertTrue($service->synchronize(
+            collect([['before' => $internal, 'after' => $internal]]),
+            collect([null]),
+            collect([array_merge($internal, ['capture' => true])]),
+            collect(['hep_capture_id' => '102']),
+        ));
+    }
+
     private static function state(
         string $name,
         string $enabled,

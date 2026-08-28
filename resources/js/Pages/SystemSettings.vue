@@ -97,6 +97,12 @@
                 </Vueform>
             </section>
 
+            <section v-if="selectedMenuOption === 'sip_capture'">
+                <SipCaptureSettingsForm :route="routes.sip_capture_update" :settings="sip_capture"
+                    :can-edit="permissions?.sip_capture_edit" @error="handleErrorResponse"
+                    @success="showNotification" />
+            </section>
+
             <!--  Transcription - General Settings -->
             <section v-if="selectedMenuOption === 'transcription_options'">
                 <CallTranscriptionOptionsForm :routes="routes" @error="handleErrorResponse" @success="showNotification"/>
@@ -134,7 +140,8 @@ import { CreditCardIcon, Cog6ToothIcon } from '@heroicons/vue/24/outline'
 import GraphicEqIcon from "@icons/GraphicEqIcon.vue"
 import AssemblyAiForm from "./components/forms/AssemblyAiForm.vue"
 import CallTranscriptionOptionsForm from "./components/forms/CallTranscriptionOptionsForm.vue"
-import { AdjustmentsVerticalIcon } from "@heroicons/vue/24/outline";
+import SipCaptureSettingsForm from "./components/forms/SipCaptureSettingsForm.vue"
+import { AdjustmentsVerticalIcon, SignalIcon } from "@heroicons/vue/24/outline";
 
 
 const props = defineProps({
@@ -152,6 +159,10 @@ const props = defineProps({
         default: () => ({}),
     },
     settings_values: {
+        type: Object,
+        default: () => ({}),
+    },
+    sip_capture: {
         type: Object,
         default: () => ({}),
     },
@@ -198,6 +209,10 @@ onMounted(() => {
 
     if (props.permissions?.payment_gateways_view) {
         navigation.value.push({ key: 'payment_gateways', name: 'Payment Gateways', icon: CreditCardIcon })
+    }
+
+    if (props.permissions?.sip_capture_view) {
+        navigation.value.push({ key: 'sip_capture', name: 'SIP Capture', icon: SignalIcon })
     }
 
     if (props.permissions?.call_transcription_settings_view) {
