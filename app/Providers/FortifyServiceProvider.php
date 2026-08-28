@@ -7,8 +7,10 @@ use App\Actions\Fortify\RedirectToEmailChallengeIf2FAIsNotEnabled;
 use App\Actions\Fortify\ResetUserPassword;
 use App\Actions\Fortify\UpdateUserPassword;
 use App\Actions\Fortify\UpdateUserProfileInformation;
+use App\Mail\ResetPasswordMail;
 use App\Models\DefaultSettings;
 use App\Services\LdapUserAuthenticator;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -43,6 +45,25 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::updateUserProfileInformationUsing(UpdateUserProfileInformation::class);
         Fortify::updateUserPasswordsUsing(UpdateUserPassword::class);
         Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
+
+        // Laravel's default ResetPassword notification renders its own hardcoded
+        // MailMessage, bypassing the app's branded email_templates system (no
+        // header/footer, no admin-editable copy). Route it through the same
+        // BaseMailable-based flow every other transactional email uses.
+        ResetPassword::toMailUsing(function ($notifiable, string $token) {
+            $url = url(route('password.reset', [
+                'token' => $token,
+                'email' => $notifiable->getEmailForPasswordReset(),
+            ], false));
+
+            return new ResetPasswordMail([
+                'email' => $notifiable->getEmailForPasswordReset(),
+                'name' => $notifiable->name_formatted ?? null,
+                'url' => $url,
+                'expire_minutes' => config('auth.passwords.'.config('auth.defaults.passwords').'.expire'),
+            ]);
+        });
+
         Fortify::authenticateUsing(function (Request $request) {
             return app(LdapUserAuthenticator::class)->authenticate(
                 (string) $request->input(Fortify::username()),
