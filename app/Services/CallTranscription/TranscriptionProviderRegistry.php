@@ -57,6 +57,40 @@ class TranscriptionProviderRegistry
 
                 return new AssemblyAiService($conn, $opts);
 
+            case 'elevenlabs':
+                $svc = config('services.elevenlabs', []);
+
+                $apiKey  = (string)($svc['api_key']  ?? '');
+                $baseUrl = (string)($svc['base_url'] ?? 'https://api.elevenlabs.io');
+                $timeout = (int)($svc['timeout']  ?? 60);
+
+                if ($apiKey === '') {
+                    throw new RuntimeException('ElevenLabs API key is not configured.');
+                }
+
+                $conn = [
+                    'api_key'  => $apiKey,
+                    'base_url' => $baseUrl,
+                    'timeout'  => $timeout,
+                ];
+
+                $rawOptions = $providerConfig['config'] ?? $providerConfig;
+
+                $allow = [
+                    'model_id', 'diarize', 'timestamps_granularity',
+                    'language_code', 'keyterms', 'tag_audio_events',
+                    'num_speakers',
+                ];
+
+                $opts = [];
+                foreach ($allow as $k) {
+                    if (array_key_exists($k, $rawOptions)) {
+                        $opts[$k] = $rawOptions[$k];
+                    }
+                }
+
+                return new ElevenLabsSttService($conn, $opts);
+
             default:
                 throw new RuntimeException("Unsupported transcription provider: {$providerKey}");
         }
