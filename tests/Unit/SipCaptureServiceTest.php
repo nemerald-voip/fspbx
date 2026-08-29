@@ -310,35 +310,45 @@ class SipCaptureServiceTest extends TestCase
             $this->assertSame('true', $dialplan->dialplan_enabled);
             $this->assertSame('Used to correlate A-leg and B-leg.', $dialplan->dialplan_description);
             $this->assertStringContainsString(
-                '<condition field="${sip_h_X-CID}" expression="^$">',
+                '<condition field="${sip_h_X-CID}" expression="^(.+)$">',
                 $dialplan->dialplan_xml,
             );
             $this->assertStringContainsString(
-                '<action application="set" data="sip_h_X-CID=${sip_call_id}"/>',
+                '<action application="export" data="nolocal:sip_h_X-CID=$1"/>',
+                $dialplan->dialplan_xml,
+            );
+            $this->assertStringContainsString(
+                '<anti-action application="export" data="nolocal:sip_h_X-CID=${sip_call_id}"/>',
                 $dialplan->dialplan_xml,
             );
 
             $details = DB::table('v_dialplan_details')
                 ->orderBy('dialplan_detail_order')
                 ->get();
-            $this->assertCount(2, $details);
+            $this->assertCount(3, $details);
             $this->assertSame('condition', $details[0]->dialplan_detail_tag);
             $this->assertSame('${sip_h_X-CID}', $details[0]->dialplan_detail_type);
-            $this->assertSame('^$', $details[0]->dialplan_detail_data);
+            $this->assertSame('^(.+)$', $details[0]->dialplan_detail_data);
             $this->assertSame('action', $details[1]->dialplan_detail_tag);
-            $this->assertSame('set', $details[1]->dialplan_detail_type);
-            $this->assertSame('sip_h_X-CID=${sip_call_id}', $details[1]->dialplan_detail_data);
+            $this->assertSame('export', $details[1]->dialplan_detail_type);
+            $this->assertSame('nolocal:sip_h_X-CID=$1', $details[1]->dialplan_detail_data);
+            $this->assertSame('anti-action', $details[2]->dialplan_detail_tag);
+            $this->assertSame('export', $details[2]->dialplan_detail_type);
+            $this->assertSame(
+                'nolocal:sip_h_X-CID=${sip_call_id}',
+                $details[2]->dialplan_detail_data,
+            );
 
             $dialplanUuid = $dialplan->dialplan_uuid;
             $service->ensureCorrelationDialplanForTest();
 
             $this->assertSame(1, DB::table('v_dialplans')->count());
-            $this->assertSame(2, DB::table('v_dialplan_details')->count());
+            $this->assertSame(3, DB::table('v_dialplan_details')->count());
             $this->assertSame($dialplanUuid, DB::table('v_dialplans')->value('dialplan_uuid'));
         });
     }
 
-    public function test_it_preserves_an_existing_global_correlation_dialplan(): void
+    public function test_it_upgrades_an_existing_global_correlation_dialplan_in_place(): void
     {
         $this->withSqliteDatabase(function () {
             $this->createDialplanSchema();
@@ -365,10 +375,19 @@ class SipCaptureServiceTest extends TestCase
                 ->ensureCorrelationDialplanForTest();
 
             $this->assertSame(1, DB::table('v_dialplans')->count());
-            $this->assertSame($customXml, DB::table('v_dialplans')->value('dialplan_xml'));
-            $this->assertSame(90, DB::table('v_dialplans')->value('dialplan_order'));
-            $this->assertSame('false', DB::table('v_dialplans')->value('dialplan_enabled'));
-            $this->assertSame(0, DB::table('v_dialplan_details')->count());
+            $dialplan = DB::table('v_dialplans')->first();
+            $this->assertSame($dialplanUuid, $dialplan->dialplan_uuid);
+            $this->assertSame(SipCaptureService::CORRELATION_DIALPLAN_ORDER, $dialplan->dialplan_order);
+            $this->assertSame('true', $dialplan->dialplan_enabled);
+            $this->assertStringContainsString(
+                '<action application="export" data="nolocal:sip_h_X-CID=$1"/>',
+                $dialplan->dialplan_xml,
+            );
+            $this->assertStringContainsString(
+                '<anti-action application="export" data="nolocal:sip_h_X-CID=${sip_call_id}"/>',
+                $dialplan->dialplan_xml,
+            );
+            $this->assertSame(3, DB::table('v_dialplan_details')->count());
         });
     }
 

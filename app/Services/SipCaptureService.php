@@ -393,18 +393,23 @@ class SipCaptureService
         $existing = Dialplans::query()
             ->whereNull('domain_uuid')
             ->where('dialplan_context', 'global')
-            ->where(function ($query) {
-                $query->where('dialplan_name', self::CORRELATION_DIALPLAN_NAME)
-                    ->orWhere('dialplan_xml', 'like', '%sip_h_X-CID=${sip_call_id}%');
-            })
+            ->where('dialplan_name', self::CORRELATION_DIALPLAN_NAME)
+            ->orderBy('dialplan_uuid')
             ->lockForUpdate()
-            ->first(['dialplan_uuid']);
+            ->get();
 
-        if ($existing) {
-            return;
+        $primary = $existing->shift();
+
+        if ($existing->isNotEmpty()) {
+            $this->dialplanService()->delete($existing);
         }
 
-        $this->dialplanService()->save([
+        $this->dialplanService()->save($this->correlationDialplanData(), $primary);
+    }
+
+    protected function correlationDialplanData(): array
+    {
+        return [
             'editor_mode' => 'builder',
             'domain_uuid' => null,
             'hostname' => null,
@@ -420,7 +425,7 @@ class SipCaptureService
                 [
                     'dialplan_detail_tag' => 'condition',
                     'dialplan_detail_type' => '${sip_h_X-CID}',
-                    'dialplan_detail_data' => '^$',
+                    'dialplan_detail_data' => '^(.+)$',
                     'dialplan_detail_break' => null,
                     'dialplan_detail_inline' => null,
                     'dialplan_detail_group' => 0,
@@ -429,16 +434,26 @@ class SipCaptureService
                 ],
                 [
                     'dialplan_detail_tag' => 'action',
-                    'dialplan_detail_type' => 'set',
-                    'dialplan_detail_data' => 'sip_h_X-CID=${sip_call_id}',
+                    'dialplan_detail_type' => 'export',
+                    'dialplan_detail_data' => 'nolocal:sip_h_X-CID=$1',
                     'dialplan_detail_break' => null,
                     'dialplan_detail_inline' => null,
                     'dialplan_detail_group' => 0,
                     'dialplan_detail_order' => 20,
                     'dialplan_detail_enabled' => 'true',
                 ],
+                [
+                    'dialplan_detail_tag' => 'anti-action',
+                    'dialplan_detail_type' => 'export',
+                    'dialplan_detail_data' => 'nolocal:sip_h_X-CID=${sip_call_id}',
+                    'dialplan_detail_break' => null,
+                    'dialplan_detail_inline' => null,
+                    'dialplan_detail_group' => 0,
+                    'dialplan_detail_order' => 30,
+                    'dialplan_detail_enabled' => 'true',
+                ],
             ],
-        ]);
+        ];
     }
 
     protected function selectedProfileUuids(Collection $profiles): Collection
