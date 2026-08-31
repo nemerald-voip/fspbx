@@ -521,6 +521,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
 
     // Gateways
     Route::post('gateways', [GatewayController::class, 'store'])->name('gateways.store');
+    Route::post('gateways/preferred-carrier', [GatewayController::class, 'storePreferredCarrier'])->name('gateways.preferred-carrier.store');
     Route::put('gateways/{gateway}', [GatewayController::class, 'update'])->name('gateways.update');
     Route::get('/gateways/data', [GatewayController::class, 'getData'])->name('gateways.data');
     Route::post('/gateways/item-options', [GatewayController::class, 'getItemOptions'])->name('gateways.item.options');

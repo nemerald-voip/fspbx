@@ -10,8 +10,10 @@ use App\Models\SipProfiles;
 use App\Services\AccessControlService;
 use App\Services\FreeswitchEslService;
 use App\Services\GatewayService;
+use App\Services\OutboundRouteService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -42,6 +44,7 @@ class GatewayController extends Controller
                 'bulk_start' => route('gateways.bulk.start'),
                 'bulk_stop' => route('gateways.bulk.stop'),
                 'store' => route('gateways.store'),
+                'preferred_carrier_store' => route('gateways.preferred-carrier.store'),
                 'item_options' => route('gateways.item.options'),
             ],
             'permissions' => [
@@ -89,6 +92,85 @@ class GatewayController extends Controller
 
             return response()->json([
                 'messages' => ['error' => ['Failed to create gateway.']],
+            ], 500);
+        }
+    }
+
+    public function storePreferredCarrier(
+        Request $request,
+        GatewayService $service,
+        AccessControlService $accessControlService,
+        OutboundRouteService $outboundRouteService
+    ): JsonResponse
+    {
+        if (
+            !userCheckPermission('gateway_add')
+            || !userCheckPermission('gateway_domain')
+            || !userCheckPermission('outbound_route_add')
+            || !userCheckPermission('dialplan_domain')
+        ) {
+            return response()->json([
+                'messages' => ['error' => ['Access denied.']],
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'carrier' => ['required', 'in:voxutel'],
+        ]);
+
+        $definitions = $this->preferredCarrierGatewayDefinitions($validated['carrier']);
+
+        try {
+            DB::beginTransaction();
+
+            $gateways = collect();
+
+            foreach ($definitions as $definition) {
+                $data = $service->saveData($definition);
+                $gateway = new Gateways();
+                $gateway->forceFill($data)->save();
+                $gateways->push($gateway);
+            }
+
+            $gatewayByName = $gateways->keyBy('gateway');
+            $routeResult = $this->createVoxutelOutboundRoute($outboundRouteService, $gatewayByName);
+
+            $accessControlService->syncManagedProviderCidrs('voxutel', [
+                '172.232.30.99/32',
+                '129.153.120.152/32',
+            ]);
+
+            DB::commit();
+
+            $aclResponse = $accessControlService->sync();
+            $service->sync($gateways->pluck('profile'));
+
+            $responses = $gateways
+                ->mapWithKeys(fn (Gateways $gateway) => [
+                    $gateway->gateway => $service->executeGatewayCommand('start', $gateway) ?: 'No response from FreeSWITCH.',
+                ]);
+
+            $responseMessages = $responses
+                ->map(fn ($response, $gateway) => "{$gateway}: {$response}")
+                ->values()
+                ->all();
+
+            return response()->json([
+                'messages' => ['success' => array_merge([
+                    'Voxutel gateways created successfully.',
+                    "Created {$routeResult['count']} outbound route dialplan.",
+                    $aclResponse ? "FreeSWITCH ACL: {$aclResponse}" : 'Provider ACL synchronized.',
+                ], $responseMessages)],
+                'gateway_uuids' => $gateways->pluck('gateway_uuid')->values(),
+                'dialplan_uuids' => $routeResult['dialplan_uuids'],
+                'start_responses' => $responses,
+            ], 201);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            logger('GatewayController@storePreferredCarrier error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+
+            return response()->json([
+                'messages' => ['error' => ['Failed to create preferred carrier gateways.']],
             ], 500);
         }
     }
@@ -582,7 +664,72 @@ class GatewayController extends Controller
             ->value('sip_profile_name');
     }
 
-private function domainOptions(): array
+    private function preferredCarrierGatewayDefinitions(string $carrier): array
+    {
+        if ($carrier !== 'voxutel') {
+            return [];
+        }
+
+        $profile = $this->defaultSipProfile() ?: 'external';
+        $base = [
+            'domain_uuid' => null,
+            'expire_seconds' => 800,
+            'register' => 'false',
+            'register_transport' => 'udp',
+            'retry_seconds' => 30,
+            'channels' => 0,
+            'context' => 'public',
+            'profile' => $profile,
+            'enabled' => 'true',
+            'caller_id_in_from' => 'true',
+            'ping' => 60,
+            'gateway_acl_cidrs' => [],
+        ];
+
+        return [
+            array_merge($base, [
+                'gateway' => 'Voxutel_1',
+                'proxy' => 'sip.central.voxutel.net',
+                'description' => 'Preferred carrier trunk created for Voxutel central.',
+            ]),
+            array_merge($base, [
+                'gateway' => 'Voxutel_2',
+                'proxy' => 'sip.west.voxutel.net',
+                'description' => 'Preferred carrier trunk created for Voxutel west.',
+            ]),
+        ];
+    }
+
+    private function createVoxutelOutboundRoute(OutboundRouteService $service, Collection $gatewaysByName): array
+    {
+        $primary = $gatewaysByName->get('Voxutel_1');
+        $secondary = $gatewaysByName->get('Voxutel_2');
+
+        if (!$primary || !$secondary) {
+            throw new \RuntimeException('Voxutel gateways were not created.');
+        }
+
+        return $service->create([
+            'dialplan_name' => 'USA_CAN',
+            'preserve_dialplan_name' => true,
+            'domain_uuid' => null,
+            'dialplan_context' => 'global',
+            'gateway' => $primary->gateway_uuid . ':' . $primary->gateway,
+            'gateway_2' => $secondary->gateway_uuid . ':' . $secondary->gateway,
+            'gateway_3' => null,
+            'dialplan_expression' => '^(?:\\+?1)?([2-9]\\d{2}[2-9]\\d{2}\\d{4})$',
+            'prefix_number' => '1',
+            'limit' => null,
+            'accountcode' => null,
+            'toll_allow' => null,
+            'pin_numbers_enabled' => 'false',
+            'dialplan_order' => 100,
+            'dialplan_enabled' => 'true',
+            'dialplan_description' => 'Preferred carrier outbound route for Voxutel.',
+        ]);
+    }
+
+    private function domainOptions(): array
     {
         if (!userCheckPermission('gateway_domain')) {
             return [];
