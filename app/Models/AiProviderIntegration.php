@@ -6,8 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class AiProviderIntegration extends Model
 {
+    use Traits\TraitUuid;
+
     protected $table = 'ai_provider_integrations';
-    protected $primaryKey = 'provider';
+    protected $primaryKey = 'ai_provider_integration_uuid';
     protected $keyType = 'string';
     public $incrementing = false;
 

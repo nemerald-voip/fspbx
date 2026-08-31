@@ -12,7 +12,7 @@ class InvokeAiSendEmailToolRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        $integration = AiProviderIntegration::query()->find('retell');
+        $integration = AiProviderIntegration::query()->where('provider', 'retell')->first();
 
         return $integration?->enabled === true
             && $integration->hasApiKey()

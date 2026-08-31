@@ -9,6 +9,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class LdapDirectoryGroupMembersTest extends TestCase
@@ -28,9 +29,15 @@ class LdapDirectoryGroupMembersTest extends TestCase
         ]);
         config()->set('database.default', 'ldap_group_members_test');
         DB::purge('ldap_group_members_test');
+        DB::connection()->getPdo()->sqliteCreateFunction(
+            'uuid_generate_v4',
+            fn (): string => (string) Str::uuid()
+        );
 
         $migration = require base_path('database/migrations/2026_08_24_000001_create_ldap_directory_tables.php');
         $migration->up();
+        $uuidMigration = require base_path('database/migrations/2026_08_30_000001_recreate_disposable_tables_with_uuid_primary_keys.php');
+        $uuidMigration->up();
 
         Schema::create('v_groups', function (Blueprint $table) {
             $table->uuid('group_uuid')->primary();

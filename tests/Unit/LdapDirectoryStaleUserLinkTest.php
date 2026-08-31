@@ -8,6 +8,7 @@ use App\Services\LdapDirectorySyncService;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use ReflectionMethod;
 use Tests\TestCase;
 
@@ -31,9 +32,15 @@ class LdapDirectoryStaleUserLinkTest extends TestCase
         config()->set('database.default', 'ldap_stale_link_test');
         config()->set('cache.default', 'array');
         DB::purge('ldap_stale_link_test');
+        DB::connection()->getPdo()->sqliteCreateFunction(
+            'uuid_generate_v4',
+            fn (): string => (string) Str::uuid()
+        );
 
         $migration = require base_path('database/migrations/2026_08_24_000001_create_ldap_directory_tables.php');
         $migration->up();
+        $uuidMigration = require base_path('database/migrations/2026_08_30_000001_recreate_disposable_tables_with_uuid_primary_keys.php');
+        $uuidMigration->up();
 
         Schema::create('v_users', function (Blueprint $table) {
             $table->uuid('user_uuid')->primary();
