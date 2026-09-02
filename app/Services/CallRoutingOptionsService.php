@@ -413,10 +413,7 @@ class CallRoutingOptionsService
 
             $domainUuid = $this->domainUuid;
 
-            $dialplan = Dialplans::where(function ($query) use ($destination) {
-                $query->where('dialplan_number', $destination)
-                    ->orWhere('dialplan_number', '=', '1' . $destination);
-            })
+            $dialplan = Dialplans::where('dialplan_number', $destination)
                 ->where('dialplan_enabled', 'true')
                 ->where(function ($query) use ($domainUuid) {
                     $query->where('domain_uuid', $domainUuid)
@@ -489,10 +486,7 @@ class CallRoutingOptionsService
         $domainUuid = $this->domainUuid;
 
         // Use regex and check in the Dialplan database to determine what this extension belongs to
-        $dialplan = Dialplans::where(function ($query) use ($extension) {
-            $query->where('dialplan_number', $extension)
-                ->orWhere('dialplan_number', '=', '1' . $extension);
-        })
+        $dialplan = Dialplans::where('dialplan_number', $extension)
             ->where('dialplan_enabled', 'true')
             ->where(function ($query) use ($domainUuid) {
                 $query->where('domain_uuid', $domainUuid)
