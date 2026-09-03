@@ -114,7 +114,22 @@ class BackupApp extends Command
         $this->info("Packaging the backup into $mainBackupFile...");
         $this->executeCommand($tarCommand);
 
+        // Keep standalone database dumps when packaging fails. After the next
+        // successful full backup, remove the current dump and any older dump
+        // left behind by an earlier failed packaging attempt.
+        $this->info('Removing standalone PostgreSQL backups...');
+
+        foreach (glob("$backupDir/fusionpbx_pgsql*") ?: [] as $standaloneBackup) {
+            if (is_file($standaloneBackup) && !unlink($standaloneBackup)) {
+                $this->error("Unable to remove standalone PostgreSQL backup $standaloneBackup.");
+
+                return self::FAILURE;
+            }
+        }
+
         $this->info('Backup completed successfully!');
+
+        return self::SUCCESS;
     }
 
     /**

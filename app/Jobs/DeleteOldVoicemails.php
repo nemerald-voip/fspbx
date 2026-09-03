@@ -90,20 +90,31 @@ class DeleteOldVoicemails implements ShouldQueue
                 // Ensure the base path ends with a directory separator if needed
                 $basePath = rtrim($basePath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
 
-                $pattern = $basePath . 'msg_*.{wav,mp3}';
-                $files = glob($pattern, GLOB_BRACE);
+                $files = new \RecursiveIteratorIterator(
+                    new \RecursiveDirectoryIterator($basePath, \FilesystemIterator::SKIP_DOTS)
+                );
 
                 foreach ($files as $file) {
-                    if (filemtime($file) < $cutoffTimestamp) {
-                        try {
-                            if (unlink($file)) {
-                                // logger("Deleted voicemail file: {$file}");
-                            } else {
-                                logger("Failed to delete voicemail file: {$file}");
-                            }
-                        } catch (\Exception $e) {
-                            logger("Error deleting voicemail file {$file}: " . $e->getMessage());
-                        }
+                    $path = $file->getPathname();
+
+                    // Only expire voicemail messages. Greetings, recorded names,
+                    // intros, and other mailbox audio must be retained regardless
+                    // of age.
+                    if (preg_match('/^msg_.+\.(?:wav|mp3)$/i', $file->getFilename()) !== 1) {
+                        continue;
+                    }
+
+                    // Another server or Syncthing may remove the file between
+                    // the directory scan and this check. A missing file already
+                    // satisfies cleanup and must not fail the retention job.
+                    $modifiedAt = @filemtime($path);
+
+                    if ($modifiedAt === false || $modifiedAt >= $cutoffTimestamp) {
+                        continue;
+                    }
+
+                    if (!@unlink($path) && file_exists($path)) {
+                        logger("Failed to delete voicemail file: {$path}");
                     }
                 }
 
