@@ -254,14 +254,21 @@ class ActiveDirectoryClient
             }
 
             $responseControls = [];
-            @ldap_parse_result($connection, $result, $errorCode, $matchedDn, $errorMessage, $referrals, $responseControls);
-            if ($errorCode !== LDAP_SUCCESS) {
-                throw $this->exception('The directory returned incomplete search results', $connection);
-            }
+            $errorCode = null;
+            $parsed = @ldap_parse_result($connection, $result, $errorCode, $matchedDn, $errorMessage, $referrals, $responseControls);
+            $this->assertCompleteSearchResult($parsed, $errorCode, $connection);
             $cookie = $responseControls[LDAP_CONTROL_PAGEDRESULTS]['value']['cookie'] ?? '';
         } while ($cookie !== '');
 
         return $entries;
+    }
+
+    private function assertCompleteSearchResult(bool $parsed, ?int $errorCode, ?Connection $connection = null): void
+    {
+        // PHP's LDAP extension returns success as 0, without an LDAP_SUCCESS constant.
+        if (! $parsed || $errorCode !== 0) {
+            throw $this->exception('The directory returned incomplete search results', $connection);
+        }
     }
 
     private function normalizeEntry(array $entry): array
