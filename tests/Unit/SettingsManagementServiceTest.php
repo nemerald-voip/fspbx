@@ -184,6 +184,48 @@ class SettingsManagementServiceTest extends TestCase
         $this->assertFalse(Cache::has("{$domainUuid}_timeZone"));
     }
 
+    public function test_coordination_settings_use_normal_default_settings_actions(): void
+    {
+        $service = $this->service();
+        $domain = \App\Models\Domain::query()->findOrFail($this->insertDomain('alpha.example.com'));
+
+        foreach (['active_node', 'active_node_generation', 'coordination_secret'] as $subcategory) {
+            $data = [
+                'default_setting_category' => 'scheduled_jobs',
+                'default_setting_subcategory' => $subcategory,
+                'default_setting_name' => $subcategory === 'active_node_generation' ? 'numeric' : 'text',
+                'default_setting_value' => '1',
+                'default_setting_order' => null,
+                'default_setting_enabled' => true,
+                'default_setting_description' => null,
+            ];
+            $setting = $service->saveDefault($data);
+            $setting = $service->saveDefault(array_replace($data, ['default_setting_value' => '2']), $setting);
+            $uuid = $setting->default_setting_uuid;
+
+            $this->assertSame('2', $service->defaultItem($uuid)['default_setting_value']);
+            $this->assertSame(1, $service->toggleDefault([$uuid]));
+            $this->assertFalse($service->defaultItem($uuid)['default_setting_enabled']);
+            $this->assertSame(1, $service->copyDefaultsToDomain([$uuid], $domain));
+            $domainSettingUuid = DB::table('v_domain_settings')
+                ->where('domain_setting_subcategory', $subcategory)->value('domain_setting_uuid');
+            $this->assertSame(1, $service->copyDomainSettings($domain, [$domainSettingUuid], 'default'));
+            $this->assertSame(1, $service->deleteDefaults([$uuid]));
+        }
+    }
+
+    public function test_coordination_secret_uses_normal_secret_display_and_editing(): void
+    {
+        $settingUuid = $this->insertDefaultSetting('scheduled_jobs', 'coordination_secret', 'text');
+
+        $row = collect($this->service()->defaultSettings()->items())->firstWhere('default_setting_uuid', $settingUuid);
+        $item = $this->service()->defaultItem($settingUuid);
+
+        $this->assertTrue($row['is_secret']);
+        $this->assertSame('true', $row['value']);
+        $this->assertSame('true', $item['default_setting_value']);
+    }
+
     private function service(): SettingsManagementService
     {
         return app(SettingsManagementService::class);

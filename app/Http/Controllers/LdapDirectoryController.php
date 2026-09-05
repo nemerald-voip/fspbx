@@ -8,6 +8,7 @@ use App\Models\Groups;
 use App\Models\LdapDirectory;
 use App\Services\ActiveDirectoryClient;
 use App\Services\Auth\UserSessionInvalidationService;
+use App\Services\Ha\ActiveNodeResolver;
 use App\Services\LdapDirectoryDeletionService;
 use App\Services\LdapDirectorySyncService;
 use Illuminate\Http\JsonResponse;
@@ -22,7 +23,10 @@ class LdapDirectoryController extends Controller
     {
         abort_unless(userCheckPermission('ldap_directory_view'), 403);
 
-        return response()->json(['directories' => $this->directories()]);
+        return response()->json([
+            'directories' => $this->directories(),
+            'active_node' => $this->activeNodeContext(),
+        ]);
     }
 
     public function accountSettingsProps(): ?array
@@ -37,8 +41,17 @@ class LdapDirectoryController extends Controller
             'routes' => [
                 'index' => route('ldap-directories.index'),
                 'store' => route('ldap-directories.store'),
+                'active_node_status' => route('scheduled-jobs.active-node.show'),
+                'active_node' => route('scheduled-jobs.active-node.update'),
+                'active_node_force' => route('scheduled-jobs.active-node.force'),
+                'node_discover' => route('scheduled-jobs.nodes.discover'),
+                'node_approve' => route('scheduled-jobs.nodes.approve', ['node' => '__NODE__']),
+                'node_retire' => route('scheduled-jobs.nodes.retire', ['node' => '__NODE__']),
+                'handoff_force' => route('scheduled-jobs.handoffs.force', ['handoff' => '__HANDOFF__']),
+                'coordination_secret_rotate' => route('scheduled-jobs.secret.rotate'),
             ],
             'permissions' => $this->permissions(),
+            'active_node' => $this->activeNodeContext(),
         ];
     }
 
@@ -160,10 +173,15 @@ class LdapDirectoryController extends Controller
         abort_unless(userCheckPermission('ldap_directory_sync'), 403);
         $record = $this->directory($directory);
         abort_unless($record->enabled, 422, __('Enable the directory before synchronizing it.'));
-        $record->forceFill(['next_sync_at' => now()->addMinutes($record->sync_interval_minutes)])->save();
-        SyncLdapDirectory::dispatch($record->directory_uuid);
 
-        return response()->json(['message' => __('Synchronization queued.')], 202);
+        $record->forceFill(['next_sync_at' => now()])->save();
+        if (app(ActiveNodeResolver::class)->isActive()) {
+            SyncLdapDirectory::dispatch($record->directory_uuid);
+        }
+
+        return response()->json([
+            'message' => __('Synchronization queued. The selected scheduled-job server will run it.'),
+        ], 202);
     }
 
     public function mappings(string $directory): JsonResponse
@@ -281,6 +299,7 @@ class LdapDirectoryController extends Controller
     {
         $directories = LdapDirectory::query()
             ->where('domain_uuid', session('domain_uuid'))
+            ->with('latestSyncRun.execution')
             ->withCount(['directoryUsers', 'directoryGroups'])
             ->orderBy('priority')
             ->orderBy('name')
@@ -345,10 +364,17 @@ class LdapDirectoryController extends Controller
             ->orderBy('group_name')->get(['group_uuid', 'group_name', 'group_description']);
     }
 
+    private function activeNodeContext(): array
+    {
+        return app(ActiveNodeResolver::class)->statusContext();
+    }
+
     private function permissions(): array
     {
         return collect(['view', 'create', 'update', 'delete', 'test', 'sync', 'map_groups'])
-            ->mapWithKeys(fn ($action) => [$action => userCheckPermission('ldap_directory_' . $action)])->all();
+            ->mapWithKeys(fn ($action) => [$action => userCheckPermission('ldap_directory_' . $action)])
+            ->put('manage_active_node', isSuperAdmin())
+            ->all();
     }
 
     private function defaults(): array

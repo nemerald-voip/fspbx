@@ -10,13 +10,16 @@ use App\Models\LdapDirectory;
 use App\Models\LdapDirectoryGroup;
 use App\Models\LdapDirectoryUser;
 use App\Models\LdapSyncRun;
+use App\Models\ScheduledJobExecution;
 use App\Models\User;
 use App\Models\UserGroup;
 use App\Models\Voicemails;
 use App\Rules\UniqueExtension;
 use App\Services\Auth\UserSessionInvalidationService;
+use App\Services\Ha\ActiveNodeResolver;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use RuntimeException;
 use Throwable;
@@ -51,15 +54,38 @@ class LdapDirectorySyncService
         return $userUuids->count();
     }
 
-    public function sync(LdapDirectory $directory, bool $dryRun = false, bool $allowLargeRemoval = false): LdapSyncRun
+    public function sync(
+        LdapDirectory $directory,
+        bool $dryRun = false,
+        bool $allowLargeRemoval = false,
+        ?ScheduledJobExecution $execution = null
+    ): LdapSyncRun
     {
-        $run = LdapSyncRun::create([
+        $coordinator = app(ActiveNodeResolver::class);
+        if (! $execution) {
+            throw new RuntimeException('LDAP synchronization requires a coordinated execution claim.', 409);
+        }
+        $this->messages = [];
+        $runValues = [
             'directory_uuid' => $directory->directory_uuid,
             'domain_uuid' => $directory->domain_uuid,
             'status' => 'running',
             'dry_run' => $dryRun,
             'started_at' => now(),
-        ]);
+        ];
+
+        // Records which server produced the run, so the UI can show where a
+        // sync happened (and where a stale "running" row was left behind).
+        if (Schema::hasColumn('ldap_sync_runs', 'node_name')) {
+            $runValues['node_name'] = app(ActiveNodeResolver::class)->hostname();
+        }
+        if ($execution && Schema::hasColumn('ldap_sync_runs', 'scheduled_job_execution_uuid')) {
+            $runValues['scheduled_job_execution_uuid'] = $execution->scheduled_job_execution_uuid;
+            $runValues['node_id'] = $execution->node_id;
+            $runValues['ownership_generation'] = $execution->ownership_generation;
+        }
+
+        $run = $coordinator->withExecution($execution, fn () => LdapSyncRun::create($runValues));
 
         try {
             $domain = Domain::query()->find($directory->domain_uuid);
@@ -68,7 +94,10 @@ class LdapDirectorySyncService
                 throw new RuntimeException('The account for this directory is disabled or no longer exists.');
             }
 
-            $client = new ActiveDirectoryClient($directory);
+            $client = app()->makeWith(ActiveDirectoryClient::class, [
+                'directory' => $directory,
+                'checkExecution' => fn () => $coordinator->assertExecution($execution),
+            ]);
             $remoteUsers = $client->users();
             $remoteGroups = $client->groups();
 
@@ -89,34 +118,46 @@ class LdapDirectorySyncService
             }
 
             if ($dryRun) {
-                return $this->finishRun($run, 'completed', [
+                return $coordinator->withExecution($execution, fn () => $this->finishRun($run, 'completed', [
                     'users_seen' => count($remoteUsers),
                     'groups_seen' => count($remoteGroups),
                     'messages' => ['Directory query completed. Dry run did not change local records.'],
-                ]);
+                ]));
             }
 
-            $stats = DB::transaction(function () use ($directory, $domain, $remoteUsers, $remoteGroups) {
-                return $this->apply($directory, $domain, $remoteUsers, $remoteGroups);
+            return $coordinator->withExecution($execution, function () use ($directory, $domain, $remoteUsers, $remoteGroups, $run) {
+                $directory->refresh();
+                if (! $directory->enabled) {
+                    throw new RuntimeException('The directory was disabled while synchronization was running.');
+                }
+                $stats = $this->apply($directory, $domain, $remoteUsers, $remoteGroups);
+                $directory->forceFill([
+                    'last_sync_status' => 'completed',
+                    'last_sync_message' => $this->messages === [] ? 'Synchronization completed.' : implode(' ', $this->messages),
+                    'last_sync_at' => now(),
+                    'next_sync_at' => now()->addMinutes($directory->sync_interval_minutes),
+                ])->save();
+
+                return $this->finishRun($run, 'completed', $stats + ['messages' => $this->messages]);
             });
-
-            $directory->forceFill([
-                'last_sync_status' => 'completed',
-                'last_sync_message' => $this->messages === [] ? 'Synchronization completed.' : implode(' ', $this->messages),
-                'last_sync_at' => now(),
-                'next_sync_at' => now()->addMinutes($directory->sync_interval_minutes),
-            ])->save();
-
-            return $this->finishRun($run, 'completed', $stats + ['messages' => $this->messages]);
         } catch (Throwable $e) {
-            $directory->forceFill([
-                'last_sync_status' => 'failed',
-                'last_sync_message' => $e->getMessage(),
-                'last_sync_at' => now(),
-                'next_sync_at' => now()->addMinutes($directory->sync_interval_minutes),
-            ])->save();
+            try {
+                $coordinator->withExecution($execution, function () use ($directory, $run, $e) {
+                    $directory->forceFill([
+                        'last_sync_status' => 'failed',
+                        'last_sync_message' => $e->getMessage(),
+                        'last_sync_at' => now(),
+                        'next_sync_at' => now()->addMinutes($directory->sync_interval_minutes),
+                    ])->save();
 
-            $this->finishRun($run, 'failed', ['messages' => [$e->getMessage()]]);
+                    $this->finishRun($run, 'failed', ['messages' => [$e->getMessage()]]);
+                });
+            } catch (RuntimeException $authorization) {
+                if ($authorization->getCode() !== 409) {
+                    throw $authorization;
+                }
+                // A superseded/expired worker must not write even failure state.
+            }
             throw $e;
         }
     }
@@ -325,6 +366,8 @@ class LdapDirectorySyncService
         }
 
         if ($changedUserUuids !== []) {
+            // This also deletes database sessions, so keep it inside the guarded
+            // transaction. Its local cache clears are safe to repeat.
             app(UserSessionInvalidationService::class)->invalidateByUserUuids(array_values(array_unique($changedUserUuids)));
         }
 
@@ -540,7 +583,7 @@ class LdapDirectorySyncService
             'voicemail_description' => $name,
         ]);
 
-        FusionCache::clear("directory:{$number}@{$domain->domain_name}");
+        DB::afterCommit(fn () => FusionCache::clear("directory:{$number}@{$domain->domain_name}"));
 
         return $extension;
     }

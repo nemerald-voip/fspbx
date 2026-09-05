@@ -121,7 +121,8 @@ class Kernel extends ConsoleKernel
             $schedule->job(new ProcessScheduledAnnouncements())->everyMinute();
         }
 
-        $schedule->command('ldap:dispatch-due')->everyMinute()->withoutOverlapping();
+        $schedule->command('ldap:dispatch-due')->everyFiveMinutes()->withoutOverlapping();
+        $schedule->command('scheduled-jobs:maintain')->everyFiveMinutes()->withoutOverlapping();
 
         if (isset($jobSettings['delete_old_faxes']) && $jobSettings['delete_old_faxes'] === "true") {
             // Retrieve the days to keep faxes from settings or default to 90 days.

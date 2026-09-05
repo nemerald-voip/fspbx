@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\LdapDirectory;
+use App\Services\Ha\ActiveNodeResolver;
 use App\Services\LdapDirectorySyncService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -21,11 +22,15 @@ class SyncLdapDirectory implements ShouldQueue, ShouldBeUnique
     public int $tries = 2;
     public int $uniqueFor = 900;
 
-    public function __construct(public readonly string $directoryUuid, public readonly bool $allowLargeRemoval = false)
-    {
+    public function __construct(
+        public readonly string $directoryUuid,
+        public readonly bool $allowLargeRemoval = false
+    ) {
+        $this->onConnection('scheduled-jobs');
+        $this->onQueue('scheduled-jobs');
     }
 
-    public function handle(LdapDirectorySyncService $syncService): void
+    public function handle(LdapDirectorySyncService $syncService, ActiveNodeResolver $activeNode): void
     {
         $lock = Cache::lock('ldap-directory-sync:' . $this->directoryUuid, 900);
 
@@ -33,11 +38,55 @@ class SyncLdapDirectory implements ShouldQueue, ShouldBeUnique
             return;
         }
 
+        $execution = null;
         try {
-            $directory = LdapDirectory::query()->find($this->directoryUuid);
-            if ($directory && $directory->enabled) {
-                $syncService->sync($directory, false, $this->allowLargeRemoval);
+            $execution = $activeNode->claimExecution(
+                'ldap_directory_sync',
+                $this->directoryUuid,
+                $this->timeout,
+                function () {
+                    $directory = LdapDirectory::query()
+                        ->whereKey($this->directoryUuid)
+                        ->lockForUpdate()
+                        ->first();
+
+                    if (! $directory?->enabled || ($directory->next_sync_at && $directory->next_sync_at->isFuture())) {
+                        return false;
+                    }
+
+                    $directory->forceFill([
+                        'next_sync_at' => now()->addMinutes(max(1, (int) $directory->sync_interval_minutes)),
+                    ])->save();
+
+                    return true;
+                }
+            );
+
+            if (! $execution) {
+                return;
             }
+
+            $directory = LdapDirectory::query()->find($this->directoryUuid);
+
+            if ($directory && $directory->enabled) {
+                $syncService->sync($directory, false, $this->allowLargeRemoval, $execution);
+            }
+            $activeNode->finishExecution($execution);
+        } catch (Throwable $exception) {
+            if ($execution) {
+                if ($this->attempts() < $this->tries) {
+                    try {
+                        $activeNode->withExecution($execution, fn () => LdapDirectory::query()->whereKey($this->directoryUuid)->update(['next_sync_at' => now()]));
+                    } catch (\RuntimeException $authorization) {
+                        if ($authorization->getCode() !== 409) {
+                            throw $authorization;
+                        }
+                    }
+                }
+                $activeNode->finishExecution($execution, 'failed', $exception->getMessage());
+            }
+
+            throw $exception;
         } finally {
             $lock->release();
         }

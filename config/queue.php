@@ -29,6 +29,12 @@ return [
     */
 
     'connections' => [
+        // Isolate LDAP's long runtime from the default 90-second retry window.
+        'scheduled-jobs' => [
+            'driver' => 'redis', 'connection' => 'default',
+            'queue' => 'scheduled-jobs', 'retry_after' => 900,
+            'block_for' => null, 'after_commit' => true,
+        ],
 
         'sync' => [
             'driver' => 'sync',

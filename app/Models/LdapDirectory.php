@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class LdapDirectory extends Model
 {
@@ -93,6 +94,20 @@ class LdapDirectory extends Model
     public function syncRuns(): HasMany
     {
         return $this->hasMany(LdapSyncRun::class, 'directory_uuid', 'directory_uuid');
+    }
+
+    public function latestSyncRun(): HasOne
+    {
+        return $this->hasOne(LdapSyncRun::class, 'directory_uuid', 'directory_uuid')
+            ->whereIn('ldap_sync_runs.sync_run_uuid', function ($query) {
+                $query->select('latest_ldap_sync_run.sync_run_uuid')
+                    ->from('ldap_sync_runs as latest_ldap_sync_run')
+                    ->whereColumn('latest_ldap_sync_run.directory_uuid', 'ldap_sync_runs.directory_uuid')
+                    ->orderByDesc('latest_ldap_sync_run.started_at')
+                    ->orderByDesc('latest_ldap_sync_run.created_at')
+                    ->orderByDesc('latest_ldap_sync_run.sync_run_uuid')
+                    ->limit(1);
+            });
     }
 
     public function hasBindPassword(): bool

@@ -117,6 +117,7 @@ class ProcessFaxWebhookEventJob implements ShouldQueue
 
         if (
             $this->event === 'fax.received'
+            && $callDirection === 'inbound'
             && ($this->data['fax_success'] ?? null) === '1'
             && $faxUuid
         ) {
@@ -126,12 +127,22 @@ class ProcessFaxWebhookEventJob implements ShouldQueue
                 ->first();
 
             if ($fax) {
-                $this->sendFaxEmail(
-                    faxLogUuid: $faxLogUuid,
-                    fax: $fax,
-                    pdfPath: $pdfPath,
-                    tiffPath: $faxFilePath
-                );
+                try {
+                    app(\App\Services\FaxForwardService::class)->forward(
+                        $fax,
+                        $faxLogUuid,
+                        $faxFilePath,
+                        $this->numericOrNull($this->data['fax_document_transferred_pages'] ?? null)
+                    );
+                } finally {
+                    // Mail and forwarding are independent delivery channels.
+                    $this->sendFaxEmail(
+                        faxLogUuid: $faxLogUuid,
+                        fax: $fax,
+                        pdfPath: $pdfPath,
+                        tiffPath: $faxFilePath
+                    );
+                }
             }
         }
 

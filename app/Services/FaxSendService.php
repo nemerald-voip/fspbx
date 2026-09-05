@@ -229,9 +229,10 @@ class FaxSendService
         array $payload,
         Faxes $faxServer,
         string $fax_file,
-        ?int $total_pages
+        ?int $total_pages,
+        ?string $outboundFaxUuid = null
     ): OutboundFax {
-        return OutboundFax::create([
+        $fax = new OutboundFax([
             'domain_uuid'      => $faxServer->domain_uuid,
             'fax_uuid'         => $faxServer->fax_uuid,
             'status'           => 'waiting',
@@ -249,6 +250,14 @@ class FaxSendService
             'retry_limit'      => 5,
             'retry_at'         => null,
         ]);
+
+        if ($outboundFaxUuid !== null) {
+            $fax->outbound_fax_uuid = $outboundFaxUuid;
+        }
+
+        $fax->save();
+
+        return $fax;
     }
 
 

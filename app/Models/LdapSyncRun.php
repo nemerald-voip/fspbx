@@ -16,7 +16,8 @@ class LdapSyncRun extends Model
     protected $fillable = [
         'directory_uuid', 'domain_uuid', 'status', 'dry_run', 'users_seen',
         'users_created', 'users_updated', 'users_disabled', 'users_conflicted',
-        'groups_seen', 'messages', 'started_at', 'finished_at',
+        'groups_seen', 'messages', 'started_at', 'finished_at', 'node_name',
+        'scheduled_job_execution_uuid', 'node_id', 'ownership_generation',
     ];
 
     protected $casts = [
@@ -24,5 +25,11 @@ class LdapSyncRun extends Model
         'messages' => 'array',
         'started_at' => 'datetime',
         'finished_at' => 'datetime',
+        'ownership_generation' => 'integer',
     ];
+
+    public function execution()
+    {
+        return $this->belongsTo(ScheduledJobExecution::class, 'scheduled_job_execution_uuid', 'scheduled_job_execution_uuid');
+    }
 }

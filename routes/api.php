@@ -44,6 +44,8 @@ use App\Http\Controllers\EmailLogsController;
 use App\Http\Controllers\AiAgentLogsController;
 use App\Http\Controllers\EmailQueueController;
 use App\Http\Controllers\LdapDirectoryController;
+use App\Http\Controllers\ScheduledJobCoordinationController;
+use App\Http\Controllers\ScheduledJobPeerController;
 use App\Http\Controllers\EmailTemplateController;
 use App\Http\Controllers\ExtensionsController;
 use App\Http\Controllers\ExtensionWelcomeEmailController;
@@ -367,6 +369,14 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('users/bulk-delete', [UsersController::class, 'bulkDelete'])->name('users.bulk.delete');
     Route::post('users/select-all', [UsersController::class, 'selectAll'])->name('users.select.all');
     Route::get('ldap-directories', [LdapDirectoryController::class, 'index'])->name('ldap-directories.index');
+    Route::get('scheduled-jobs/active-node', [ScheduledJobCoordinationController::class, 'show'])->name('scheduled-jobs.active-node.show');
+    Route::post('scheduled-jobs/nodes/discover', [ScheduledJobCoordinationController::class, 'discover'])->name('scheduled-jobs.nodes.discover');
+    Route::post('scheduled-jobs/nodes/{node}/approve', [ScheduledJobCoordinationController::class, 'approve'])->name('scheduled-jobs.nodes.approve');
+    Route::post('scheduled-jobs/nodes/{node}/retire', [ScheduledJobCoordinationController::class, 'retire'])->name('scheduled-jobs.nodes.retire');
+    Route::put('scheduled-jobs/active-node', [ScheduledJobCoordinationController::class, 'updateOwner'])->name('scheduled-jobs.active-node.update');
+    Route::post('scheduled-jobs/active-node/force', [ScheduledJobCoordinationController::class, 'force'])->name('scheduled-jobs.active-node.force');
+    Route::post('scheduled-jobs/handoffs/{handoff}/force', [ScheduledJobCoordinationController::class, 'forceHandoff'])->name('scheduled-jobs.handoffs.force');
+    Route::post('scheduled-jobs/coordination-secret/rotate', [ScheduledJobCoordinationController::class, 'rotateSecret'])->name('scheduled-jobs.secret.rotate');
     Route::post('ldap-directories', [LdapDirectoryController::class, 'store'])->name('ldap-directories.store');
     Route::put('ldap-directories/{directory}', [LdapDirectoryController::class, 'update'])->name('ldap-directories.update');
     Route::delete('ldap-directories/{directory}', [LdapDirectoryController::class, 'destroy'])->name('ldap-directories.destroy');
@@ -921,3 +931,12 @@ Route::post('letsencrypt/challenge', [LetsEncryptController::class, 'receiveChal
     ->name('letsencrypt.challenge');
 Route::post('letsencrypt/receive-certificate', [LetsEncryptController::class, 'receiveCertificate'])
     ->name('letsencrypt.receive-certificate');
+
+// Signed peer-to-peer scheduled-job coordination. These routes do not use a
+// user session; each request and response is authenticated by HMAC.
+Route::post('ha/node/identify', [ScheduledJobPeerController::class, 'identify'])
+    ->middleware('throttle:30,1')->name('ha.node.identify');
+Route::post('ha/scheduled-jobs/handoffs', [ScheduledJobPeerController::class, 'prepareHandoff'])
+    ->middleware('throttle:30,1')->name('ha.scheduled-jobs.handoffs.store');
+Route::get('ha/scheduled-jobs/handoffs/{handoff}', [ScheduledJobPeerController::class, 'handoffStatus'])
+    ->middleware('throttle:30,1')->name('ha.scheduled-jobs.handoffs.show');

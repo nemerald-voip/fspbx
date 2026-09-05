@@ -167,6 +167,12 @@ return [
     */
 
     'defaults' => [
+        'scheduled-jobs' => [
+            'connection' => 'scheduled-jobs', 'queue' => ['scheduled-jobs'],
+            'balance' => 'auto', 'minProcesses' => 1, 'maxProcesses' => 2,
+            'maxTime' => 3600, 'maxJobs' => 1000, 'memory' => 256,
+            'tries' => 2, 'timeout' => 600, 'nice' => 0,
+        ],
         'supervisor-1' => [
             'connection' => 'redis',
             'queue' => ['default', 'emails', 'faxes', 'slack', 'messages', 'voicemails', 'ztp', 'stripe', 'transcriptions', 'dialer', 'webhooks'],
@@ -184,6 +190,7 @@ return [
 
     'environments' => [
         'production' => [
+            'scheduled-jobs' => ['maxProcesses' => 2],
             'supervisor-1' => [
                 'maxProcesses' => 10,
                 'balanceMaxShift' => 1,
@@ -192,6 +199,7 @@ return [
         ],
 
         'local' => [
+            'scheduled-jobs' => ['maxProcesses' => 2],
             'supervisor-1' => [
                 'queue' => ['default', 'emails', 'faxes', 'slack', 'messages', 'voicemails', 'ztp', 'stripe', 'transcriptions', 'dialer', 'webhooks'],
                 'balance' => 'auto',

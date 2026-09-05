@@ -12,6 +12,7 @@ use App\Models\GroupPermissions;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use App\Models\PaymentGateway;
 use App\Models\GatewaySetting;
@@ -1174,6 +1175,30 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'active_node',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "PostgreSQL system identifier of the approved server that owns coordinated scheduled jobs.",
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'active_node_generation',
+                'default_setting_name'          => 'numeric',
+                'default_setting_value'         => "0",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Ownership generation for coordinated scheduled jobs. Incremented when ownership changes.",
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'coordination_secret',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Shared secret used to authenticate scheduled-job coordination between approved FS PBX nodes.",
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
                 'default_setting_subcategory'   => 'scheduled_announcements_active_fqdn',
                 'default_setting_name'          => 'text',
                 'default_setting_value'         => "",
@@ -1609,7 +1634,22 @@ class DatabaseSeeder extends Seeder
 
         // Build ONLY the missing rows
         $toInsert = [];
+        // These rows have one writer in HA. Keep their catalog definitions, but
+        // let initial coordination create missing rows on its elected writer.
+        // Running this seeder independently on two subscribers must not create
+        // different UUIDs for the same global ownership setting.
+        $coordinationIsReplicated = false;
+        try {
+            $coordinationIsReplicated = DB::connection()->getDriverName() === 'pgsql'
+                && (bool) DB::selectOne('select exists(select 1 from pg_subscription) as present')->present;
+        } catch (\Throwable) {
+            $coordinationIsReplicated = true;
+        }
         foreach ($settings as $s) {
+            if ($coordinationIsReplicated && $s['default_setting_category'] === 'scheduled_jobs'
+                && in_array($s['default_setting_subcategory'], ['active_node', 'active_node_generation', 'coordination_secret'], true)) {
+                continue;
+            }
             $key = "{$s['default_setting_category']}|{$s['default_setting_subcategory']}|{$s['default_setting_name']}";
             if (!isset($existingLookup[$key])) {
                 $toInsert[] = [

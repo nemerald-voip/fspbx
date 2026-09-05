@@ -265,7 +265,11 @@ class SendFaxJob implements ShouldQueue
             $channelVariables['toll_allow'] = $tollAllow;
         }
 
-        $routeResult = outbound_route_to_bridge(
+        $localEndpoint = $this->localFaxEndpoint($fax, $domainName);
+        $routeResult = $localEndpoint !== null ? [
+            'bridges' => [$localEndpoint],
+            'route_destination' => $fax->destination,
+        ] : outbound_route_to_bridge(
             $fax->domain_uuid,
             $fax->destination,
             $channelVariables,
@@ -292,7 +296,7 @@ class SendFaxJob implements ShouldQueue
         }
 
         $faxUri = $routes[0];
-        $originateEndpoint = "loopback/{$routeDestination}/{$domainName}/XML";
+        $originateEndpoint = $localEndpoint ?? "loopback/{$routeDestination}/{$domainName}/XML";
         $selectedRoute = $routeResult['selected_route'] ?? null;
 
         fax_webhook_debug('Selected fax route', [
@@ -360,7 +364,7 @@ class SendFaxJob implements ShouldQueue
             $vars[] = $opt;
         }
 
-        // Domain-configured dial-plan variables (fax.variable settings). Retry
+        // Shared default fax.variable settings apply to local and external sends. Retry
         // options win only for the variables that this attempt explicitly sets.
         foreach ($this->domainDialplanVariables() as $extra) {
             if ($this->retryLadderControlsVariable($extra, $retryOptions)) {
@@ -384,6 +388,21 @@ class SendFaxJob implements ShouldQueue
         return '{' . $this->buildOriginateVariableBlock($vars) . '}' . $originateEndpoint . " 'txfax:{$e($fax->file_path)}'" . $dialplanContext;
     }
 
+    private function localFaxEndpoint(OutboundFax $fax, string $domainName): ?string
+    {
+        if ($domainName === '' || !preg_match('/^[0-9]+$/', (string) $fax->destination)) {
+            return null;
+        }
+
+        $exists = \App\Models\Extensions::where('domain_uuid', $fax->domain_uuid)
+            ->where('extension', $fax->destination)
+            ->exists();
+
+        // Address the registered user directly, without a trunk prefix or
+        // extension call-forward/voicemail actions intercepting the fax.
+        return $exists ? "user/{$fax->destination}@{$domainName}" : null;
+    }
+
     /**
      * T38/ECM/V17 fallback ladder per retry attempt. retry_count is the
      * number of THIS attempt (1 for first try, 2 for first retry, ...).
@@ -402,7 +421,7 @@ class SendFaxJob implements ShouldQueue
     }
 
     /**
-     * Domain-configured channel vars from fax.variable settings. Cached for
+     * Global channel vars from Default Settings fax.variable. Cached for
      * a minute to avoid hammering DefaultSettings on every send.
      */
     private function domainDialplanVariables(): array

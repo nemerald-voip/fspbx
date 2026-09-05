@@ -55,7 +55,8 @@ You can update the floating record using:
 2. Set up **Postgres replication** (bi-directional). See: [Bi-Directional PostgreSQL Setup](postgres-replication.md).
 3. Set up **Syncthing** with the FS PBX folders. See: [Syncthing File Replication](syncthing.md).
 4. Point your **floating DNS** (`pbx.example.com`) at the active node.
-5. (Optional) Automate failover with a health probe + provider API.
+5. Choose which node runs the **scheduled jobs that must not run twice**. See: [Running Scheduled Jobs on One Node](scheduled-jobs-on-one-node.md).
+6. (Optional) Automate failover with a health probe + provider API.
 
 <Tabs>
 <TabItem value="pros" label="Pros">
@@ -77,6 +78,7 @@ You can update the floating record using:
 
 - Apply FS PBX updates on the **primary first**, verify, then the standby.
 - For emergency failover: update floating DNS → verify registrations → monitor calls.
+- Both nodes run the scheduler, so jobs that **write** data must be limited to one node. Directory synchronization uses the generic signed API and database owner; scheduled announcements and certificate renewal keep their specialized DNS behavior. If a node cannot confirm authorization, it skips the job rather than risk duplicate writes and replication conflicts. See: [Running Scheduled Jobs on One Node](scheduled-jobs-on-one-node.md).
 
 ## Nginx certificate
 

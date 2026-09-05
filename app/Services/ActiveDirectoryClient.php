@@ -5,13 +5,14 @@ namespace App\Services;
 use App\Models\LdapDirectory;
 use LDAP\Connection;
 use LDAP\Result;
+use Closure;
 
 class ActiveDirectoryClient
 {
     private ?Connection $connection = null;
     private string $connectedHost = '';
 
-    public function __construct(private readonly LdapDirectory $directory)
+    public function __construct(private readonly LdapDirectory $directory, private readonly ?Closure $checkExecution = null)
     {
     }
 
@@ -172,6 +173,7 @@ class ActiveDirectoryClient
         $errors = [];
 
         foreach ($this->hosts() as $host) {
+            ($this->checkExecution)?->__invoke();
             $uri = $this->directory->secure_connection === 'ldaps'
                 ? "ldaps://{$host}:{$this->directory->port}"
                 : "ldap://{$host}:{$this->directory->port}";
@@ -185,6 +187,7 @@ class ActiveDirectoryClient
             ldap_set_option($connection, LDAP_OPT_PROTOCOL_VERSION, 3);
             ldap_set_option($connection, LDAP_OPT_REFERRALS, 0);
             ldap_set_option($connection, LDAP_OPT_NETWORK_TIMEOUT, 5);
+            ldap_set_option($connection, LDAP_OPT_TIMEOUT, 30);
 
             if ($this->directory->secure_connection === 'starttls' && ! @ldap_start_tls($connection)) {
                 $errors[] = "{$host}: StartTLS failed";
@@ -225,6 +228,7 @@ class ActiveDirectoryClient
         $cookie = '';
 
         do {
+            ($this->checkExecution)?->__invoke();
             $requestControls = [[
                 'oid' => LDAP_CONTROL_PAGEDRESULTS,
                 'iscritical' => true,
@@ -251,6 +255,9 @@ class ActiveDirectoryClient
 
             $responseControls = [];
             @ldap_parse_result($connection, $result, $errorCode, $matchedDn, $errorMessage, $referrals, $responseControls);
+            if ($errorCode !== LDAP_SUCCESS) {
+                throw $this->exception('The directory returned incomplete search results', $connection);
+            }
             $cookie = $responseControls[LDAP_CONTROL_PAGEDRESULTS]['value']['cookie'] ?? '';
         } while ($cookie !== '');
 
