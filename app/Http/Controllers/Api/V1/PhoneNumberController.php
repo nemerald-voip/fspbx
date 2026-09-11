@@ -31,7 +31,7 @@ class PhoneNumberController extends Controller
      *
      * Access rules:
      * - Caller must have access to the target domain (domain scope).
-     * - Caller must have the `destination_domain` permission.
+     * - Caller must have the `destination_all` permission.
      *
      * Pagination (cursor-based):
      * - Both `limit` and `starting_after` are optional.

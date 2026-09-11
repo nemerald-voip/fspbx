@@ -94,7 +94,7 @@ Route::middleware(['auth:sanctum', 'api.token.auth', 'throttle:api'])->group(fun
     |--------------------------------------------------------------------------
     */
     Route::get('/domains/{domain_uuid}/ring-groups', [RingGroupController::class, 'index'])
-        ->middleware('user.authorize:ring_group_domain');
+        ->middleware('user.authorize:ring_group_all');
 
     Route::get('/domains/{domain_uuid}/ring-groups/{ring_group_uuid}', [RingGroupController::class, 'show'])
         ->middleware('user.authorize:ring_group_view');
@@ -188,19 +188,19 @@ Route::middleware(['auth:sanctum', 'api.token.auth', 'throttle:api'])->group(fun
     |--------------------------------------------------------------------------
     */
     Route::get('/domains/{domain_uuid}/phone-numbers', [PhoneNumberController::class, 'index'])
-        ->middleware('user.authorize:ring_group_domain');
+        ->middleware('user.authorize:destination_all');
 
     Route::get('/domains/{domain_uuid}/phone-numbers/{destination_uuid}', [PhoneNumberController::class, 'show'])
-        ->middleware('user.authorize:ring_group_view');
+        ->middleware('user.authorize:destination_view');
 
     Route::post('/domains/{domain_uuid}/phone-numbers', [PhoneNumberController::class, 'store'])
-        ->middleware('user.authorize:ring_group_add');
+        ->middleware('user.authorize:destination_add');
 
     Route::patch('/domains/{domain_uuid}/phone-numbers/{destination_uuid}', [PhoneNumberController::class, 'update'])
-        ->middleware('user.authorize:ring_group_edit');
+        ->middleware('user.authorize:destination_edit');
 
     Route::delete('/domains/{domain_uuid}/phone-numbers/{destination_uuid}', [PhoneNumberController::class, 'destroy'])
-        ->middleware('user.authorize:ring_group_delete');
+        ->middleware('user.authorize:destination_delete');
 
     /*
     |--------------------------------------------------------------------------

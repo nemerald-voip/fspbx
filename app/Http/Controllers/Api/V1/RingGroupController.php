@@ -29,7 +29,7 @@ class RingGroupController extends Controller
      *
      * Access rules:
      * - Caller must have access to the target domain (domain scope).
-     * - Caller must have the `ring_group_view` permission.
+     * - Caller must have the `ring_group_all` permission.
      *
      * Pagination (cursor-based):
      * - Both `limit` and `starting_after` are optional.
@@ -176,7 +176,7 @@ class RingGroupController extends Controller
      *
      * Access rules:
      * - Caller must have access to the target domain (domain scope).
-     * - Caller must have the `ring_group_domain` permission.
+     * - Caller must have the `ring_group_view` permission.
      *
      * @group Ring Groups
      * @authenticated
