@@ -18,14 +18,15 @@
                     <ArrowPathIcon class="h-4 w-4" :class="{ 'animate-spin': loading }" />
                     Refresh
                 </button>
-                <a
+                <button
                     v-if="permissions.create"
-                    :href="routes.legacy_add"
+                    type="button"
+                    @click="openEditor()"
                     class="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
                 >
                     <PlusIcon class="h-4 w-4" />
-                    New module
-                </a>
+                    {{ $t('New module') }}
+                </button>
             </div>
         </header>
 
@@ -158,7 +159,6 @@
                                     <p class="mt-1 text-xs text-gray-500">{{ row.module_description || 'No description' }}</p>
                                     <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-400">
                                         <span>Order {{ row.module_order ?? 0 }}</span>
-                                        <span>Default autoload {{ row.module_default_enabled === 'true' ? 'enabled' : 'disabled' }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -173,7 +173,7 @@
                                     type="button"
                                     class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-40"
                                     :disabled="!row.can_control_runtime"
-                                    :title="row.can_control_runtime ? 'Start module' : 'Enable autoload before starting this module'"
+                                    title="Start module"
                                     @click="confirmAction('start', [row.module_uuid])"
                                 >
                                     <PlayIcon class="h-3.5 w-3.5" />
@@ -204,13 +204,14 @@
                                     <span :class="['mr-1 inline-block h-1.5 w-1.5 rounded-full', row.module_enabled === 'true' ? 'bg-indigo-500' : 'bg-gray-400']" />
                                     Autoload {{ row.module_enabled === 'true' ? 'enabled' : 'disabled' }}
                                 </span>
-                                <a
+                                <button
                                     v-if="permissions.update"
-                                    :href="row.edit_url"
+                                    type="button"
+                                    @click="openEditor(row)"
                                     class="rounded-md px-2 py-1 text-xs font-medium text-indigo-600 hover:bg-indigo-50"
                                 >
-                                    Edit
-                                </a>
+                                    {{ $t('Edit') }}
+                                </button>
                                 <button
                                     v-if="permissions.destroy"
                                     type="button"
@@ -239,6 +240,10 @@
         </div>
     </div>
 
+    <SwitchModuleEditModal :show="showEditor" :loading="editorLoading" :item="editorItem"
+        :categories="editorCategories" :route="editorRoute" @close="closeEditor"
+        @saved="handleModuleSaved" @error="handleError" />
+
     <ConfirmationModal
         :show="confirmation.show"
         :header="confirmation.header"
@@ -260,6 +265,7 @@ import axios from "axios";
 import MainLayout from "../Layouts/MainLayout.vue";
 import Loading from "./components/general/Loading.vue";
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
+import SwitchModuleEditModal from "./components/modal/SwitchModuleEditModal.vue";
 import Notification from "./components/notifications/Notification.vue";
 import { ArrowPathIcon, MagnifyingGlassIcon, PlusIcon } from "@heroicons/vue/24/outline";
 import { PlayIcon, StopIcon } from "@heroicons/vue/20/solid";
@@ -292,6 +298,14 @@ const filterData = ref({ search: "", runtime: "all", autoload: "all" });
 const notificationShow = ref(false);
 const notificationType = ref("success");
 const notificationMessages = ref(null);
+const showEditor = ref(false);
+const editorLoading = ref(false);
+const editorItem = ref({});
+const editorCategories = ref([]);
+let editorRequest = 0;
+const editorRoute = computed(() => editorItem.value.module_uuid
+    ? routes.value.update.replace('__MODULE__', editorItem.value.module_uuid)
+    : routes.value.store);
 const confirmation = ref({
     show: false,
     action: null,
@@ -420,6 +434,36 @@ function fetchData(force = false) {
 }
 
 function refreshData() {
+    fetchData(true);
+}
+
+async function openEditor(row = null) {
+    const request = ++editorRequest;
+    editorItem.value = {};
+    editorLoading.value = true;
+    showEditor.value = true;
+
+    try {
+        const response = await axios.post(routes.value.item_options, row ? { itemUuid: row.module_uuid } : {});
+        if (request !== editorRequest) return;
+        editorItem.value = response.data.item;
+        editorCategories.value = response.data.categories;
+    } catch (error) {
+        if (request !== editorRequest) return;
+        closeEditor();
+        handleError(error);
+    } finally {
+        if (request === editorRequest) editorLoading.value = false;
+    }
+}
+
+function closeEditor() {
+    showEditor.value = false;
+    editorRequest++;
+}
+
+function handleModuleSaved(result) {
+    showNotification(result.success ? 'success' : 'error', result.messages);
     fetchData(true);
 }
 

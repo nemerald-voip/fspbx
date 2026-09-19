@@ -11,6 +11,56 @@ use Illuminate\Support\Str;
 
 class SwitchModuleService
 {
+    public function save(array $data, ?SwitchModule $module = null): array
+    {
+        $module ??= new SwitchModule();
+        $module->fill($data);
+
+        if (! $module->exists) {
+            $module->module_uuid = (string) Str::uuid();
+            $module->insert_date = now();
+            $module->insert_user = session('user_uuid');
+        } else {
+            $module->update_date = now();
+            $module->update_user = session('user_uuid');
+        }
+
+        $module->save();
+
+        // The record is saved even if disk or runtime synchronization fails.
+        // Return its identity so callers never retry a successful insert as a new record.
+        $result = ['item' => $module, 'success' => false];
+
+        try {
+            if (! $this->writeXml()) {
+                throw new \RuntimeException(__('modules.conf.xml was not writable.'));
+            }
+
+            $esl = $this->esl();
+            if (! $esl->isConnected()) {
+                throw new \RuntimeException(__('FreeSWITCH event socket is unavailable.'));
+            }
+
+            $response = $this->formatEslResponse($esl->executeCommand('reloadxml'));
+            if (! str_starts_with($response, '+OK')) {
+                throw new \RuntimeException($response ?: __('FreeSWITCH XML reload was not confirmed.'));
+            }
+
+            $result['success'] = true;
+            $result['messages'] = $this->messageBag([
+                __('Module saved.'),
+                __('modules.conf.xml updated and FreeSWITCH XML reloaded.'),
+            ], 'success');
+        } catch (\Throwable $exception) {
+            $result['messages'] = $this->messageBag([
+                __('Module saved, but FreeSWITCH configuration could not be applied.'),
+                $exception->getMessage(),
+            ], 'error');
+        }
+
+        return $result;
+    }
+
     public function syncFromDisk(): int
     {
         $modDir = $this->switchDir('mod');
@@ -101,11 +151,6 @@ class SwitchModuleService
         $controlledModuleNames = collect();
 
         foreach ($modules as $module) {
-            if ($module->module_enabled !== 'true') {
-                $responses[] = "{$module->module_name}: disabled";
-                continue;
-            }
-
             $response = $esl->executeCommand("{$command} {$module->module_name}", false);
             $message = $this->formatEslResponse($response);
 
@@ -217,11 +262,13 @@ class SwitchModuleService
         $previousCategory = null;
         foreach ($modules as $module) {
             if ($previousCategory !== $module->module_category) {
-                $xml .= "\n\t\t<!-- {$module->module_category} -->\n";
+                $category = str_replace('--', '', htmlspecialchars((string) $module->module_category, ENT_XML1 | ENT_QUOTES, 'UTF-8'));
+                $xml .= "\n\t\t<!-- {$category} -->\n";
             }
 
             if ($module->module_enabled === 'true') {
-                $xml .= "\t\t<load module=\"{$module->module_name}\"/>\n";
+                $name = htmlspecialchars((string) $module->module_name, ENT_XML1 | ENT_QUOTES, 'UTF-8');
+                $xml .= "\t\t<load module=\"{$name}\"/>\n";
             }
 
             $previousCategory = $module->module_category;
@@ -230,9 +277,7 @@ class SwitchModuleService
         $xml .= "\n\t</modules>\n";
         $xml .= '</configuration>';
 
-        File::put($path, $xml);
-
-        return true;
+        return File::put($path, $xml) !== false;
     }
 
     private function switchDir(string $subcategory): ?string

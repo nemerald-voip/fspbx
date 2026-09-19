@@ -21,6 +21,7 @@ class ExtensionObserver
      */
     public function created(Extensions $extension)
     {
+        app(\App\Services\AgentDirectoryCacheService::class)->extensionsChanged([$extension->getAttributes()]);
         $user = auth()->user();
 
         // No authenticated user = likely system / CLI / job-created record
@@ -59,6 +60,11 @@ class ExtensionObserver
      */
     public function updated(Extensions $extension)
     {
+        if ($extension->wasChanged(['extension', 'number_alias', 'domain_uuid', 'user_context'])) {
+            app(\App\Services\AgentDirectoryCacheService::class)->extensionsChanged([
+                $extension->getRawOriginal(), $extension->getAttributes(),
+            ]);
+        }
         if ($extension->wasChanged('extension') || $extension->wasChanged('password')) {
             $oldExtension = (string) $extension->getOriginal('extension');
 
@@ -92,11 +98,11 @@ class ExtensionObserver
         }
 
         // Get the attributes from the model
-        $extensionAttributes = $extension->only(['extension_uuid', 'domain_uuid', 'extension', 'effective_caller_id_name']);
+        $extensionAttributes = $extension->only(['extension_uuid', 'domain_uuid', 'extension', 'number_alias', 'effective_caller_id_name']);
 
         $originalAttributes = Arr::only(
             $extension->getOriginal(),
-            ['extension_uuid', 'domain_uuid', 'extension', 'effective_caller_id_name']
+            ['extension_uuid', 'domain_uuid', 'extension', 'number_alias', 'effective_caller_id_name']
         );
 
         $voicemail = $this->sameDomainVoicemail($extension);
@@ -126,12 +132,13 @@ class ExtensionObserver
      */
     public function deleted(Extensions $extension)
     {
+        app(\App\Services\AgentDirectoryCacheService::class)->extensionsChanged([$extension->getAttributes()]);
         // Get the attributes from the model
         $extensionAttributes = $extension->only(['extension_uuid', 'domain_uuid', 'extension', 'effective_caller_id_name']);
 
         $originalAttributes = Arr::only(
             $extension->getOriginal(),
-            ['extension_uuid', 'domain_uuid', 'extension', 'effective_caller_id_name']
+            ['extension_uuid', 'domain_uuid', 'extension', 'number_alias', 'effective_caller_id_name']
         );
 
         $voicemail = $this->sameDomainVoicemail($extension);

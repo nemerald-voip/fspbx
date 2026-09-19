@@ -35,23 +35,18 @@ class LdapDirectoryController extends Controller
             return null;
         }
 
+        $coordination = userCheckPermission('scheduled_jobs_manage')
+            ? app(ScheduledJobCoordinationController::class)->controlProps()
+            : ['routes' => [], 'active_node' => []];
         return [
             'directories' => $this->directories(),
             'defaults' => $this->defaults(),
             'routes' => [
                 'index' => route('ldap-directories.index'),
                 'store' => route('ldap-directories.store'),
-                'active_node_status' => route('scheduled-jobs.active-node.show'),
-                'active_node' => route('scheduled-jobs.active-node.update'),
-                'active_node_force' => route('scheduled-jobs.active-node.force'),
-                'node_discover' => route('scheduled-jobs.nodes.discover'),
-                'node_approve' => route('scheduled-jobs.nodes.approve', ['node' => '__NODE__']),
-                'node_retire' => route('scheduled-jobs.nodes.retire', ['node' => '__NODE__']),
-                'handoff_force' => route('scheduled-jobs.handoffs.force', ['handoff' => '__HANDOFF__']),
-                'coordination_secret_rotate' => route('scheduled-jobs.secret.rotate'),
-            ],
+            ] + $coordination['routes'],
             'permissions' => $this->permissions(),
-            'active_node' => $this->activeNodeContext(),
+            'active_node' => $coordination['active_node'],
         ];
     }
 
@@ -366,14 +361,16 @@ class LdapDirectoryController extends Controller
 
     private function activeNodeContext(): array
     {
-        return app(ActiveNodeResolver::class)->statusContext();
+        return userCheckPermission('scheduled_jobs_manage')
+            ? app(ActiveNodeResolver::class)->statusContext()
+            : [];
     }
 
     private function permissions(): array
     {
         return collect(['view', 'create', 'update', 'delete', 'test', 'sync', 'map_groups'])
             ->mapWithKeys(fn ($action) => [$action => userCheckPermission('ldap_directory_' . $action)])
-            ->put('manage_active_node', isSuperAdmin())
+            ->put('manage_active_node', userCheckPermission('scheduled_jobs_manage'))
             ->all();
     }
 

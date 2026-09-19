@@ -55,8 +55,8 @@ class StoreBasicQueueRequest extends FormRequest
             'tiers' => ['nullable', 'array'],
             'tiers.*.call_center_tier_uuid' => ['nullable', 'uuid'],
             'tiers.*.call_center_agent_uuid' => ['nullable', 'uuid'],
-            'tiers.*.tier_level' => ['nullable', 'integer', 'min:1'],
-            'tiers.*.tier_position' => ['nullable', 'integer', 'min:1'],
+            'tiers.*.tier_level' => ['nullable', 'integer', 'min:1', 'max:10'],
+            'tiers.*.tier_position' => ['nullable', 'integer', 'min:1', 'max:10'],
         ];
     }
 

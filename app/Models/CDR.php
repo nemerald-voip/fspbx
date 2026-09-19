@@ -151,6 +151,10 @@ class CDR extends Model
 
     public function getCcResultAttribute()
     {
+        if (($this->attributes['status'] ?? null) === 'callback_requested') {
+            return __('Callback requested');
+        }
+
         if ($this->cc_cause == 'answered') {
             return __('Answered');
         }
@@ -174,6 +178,10 @@ class CDR extends Model
 
     public function getStatusAttribute($value)
     {
+        if ($value === 'callback_requested') {
+            return $value;
+        }
+
         // 1. Missed call condition
         $status = $value;
 

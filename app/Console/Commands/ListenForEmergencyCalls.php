@@ -31,13 +31,15 @@ class ListenForEmergencyCalls extends Command
 
                 // 🔁 Subscribe once even on first run
                 if (!$subscribed) {
-                    if (!$eslService->subscribeToEvents('plain', 'CHANNEL_CREATE')) {
+                    // Match the existing PHP guard at the socket. Keep the
+                    // editable, account-specific number lookup in the cache.
+                    if (!$eslService->subscribeToEvents('plain', 'CHANNEL_CREATE', ['variable_direction' => 'inbound'])) {
                         $this->error('❌ Failed to subscribe to events.');
                         sleep(5);
                         continue;
                     }
                     $subscribed = true;
-                    $this->info('✅ Subscribed to CHANNEL_CREATE events.');
+                    $this->info('✅ Subscribed to inbound CHANNEL_CREATE events.');
                 }
 
                 $eslService->listen(function ($event) {

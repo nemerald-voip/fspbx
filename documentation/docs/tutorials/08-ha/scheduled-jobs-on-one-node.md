@@ -74,6 +74,8 @@ The control is global. It is not repeated for every directory or tenant.
 
 FS PBX verifies the selected target and sends an idempotent prepare request directly to the current owner. The current owner enters **Draining**, rejects new execution claims, and waits for running claims to finish or expire. It then updates the owner and increments the generation in one database transaction.
 
+Consumers with external resources can also defer completion through `ScheduledJobsDraining`. These cleanup checks run outside the ownership transaction. Contact Center uses this hook to release waiting callback placeholders and ringing agent offers before transfer, while allowing bounded customer dialing to settle. A verified connected conversation can continue on the old PBX; its durable bridge receipt prevents the new owner from dialing that callback again.
+
 LDAP fetches remote data outside the coordination lock. Every database write batch, including run creation, completion and failure, rechecks node identity, owner, generation, running claim and deadline under the same local PostgreSQL transaction lock used by handoff. Authorization is checked again before commit. An expired claim revokes permission; it does **not** prove the operating-system process stopped. A paused worker that resumes cannot commit after revocation.
 
 The generic `scheduled-jobs:maintain` command checks for expired executions and progresses pending transfers each minute. Finishing an execution also attempts completion immediately; maintenance is the fallback when a worker crashes or is killed before it can report completion. It does not choose an owner or initiate a transfer. Maintenance writes only on an actual expiry or transfer transition, never a heartbeat.

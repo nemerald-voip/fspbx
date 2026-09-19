@@ -9,12 +9,14 @@ use Spatie\QueryBuilder\QueryBuilder;
 use App\Data\Api\V1\CdrCallFlowStepData;
 use App\Exceptions\ApiException;
 use App\Models\BasicDialerCampaignAttempt;
-use App\Models\Dialplans;
-use App\Models\Extensions;
 use App\Models\OutboundFax;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
+use Spatie\LaravelData\Optional;
 
 class CdrDataService
 {
@@ -132,30 +134,7 @@ class CdrDataService
                     }
                 }),
                 AllowedFilter::callback('status', function ($query, $value) {
-                    $status = $value['value'];
-                    $query->where(function ($q) use ($status) {
-                        if ($status === 'missed call') {
-                            $q->orWhere(function ($q2) {
-                                $q2->where('voicemail_message', false)
-                                    ->where('missed_call', true)
-                                    ->where('hangup_cause', 'NORMAL_CLEARING')
-                                    ->whereNull('cc_cancel_reason')
-                                    ->whereNull('cc_cause');
-                            });
-                        } elseif ($status === 'abandoned') {
-                            $q->orWhere(function ($q2) {
-                                $q2->where('voicemail_message', false)
-                                    ->where('missed_call', true)
-                                    ->where('hangup_cause', 'NORMAL_CLEARING')
-                                    ->where('cc_cancel_reason', 'BREAK_OUT')
-                                    ->where('cc_cause', 'cancel');
-                            });
-                        } elseif ($status === 'voicemail') {
-                            $q->orWhere('voicemail_message', true);
-                        } else {
-                            $q->orWhere('status', $status);
-                        }
-                    });
+                    $this->applyStatusFilter($query, $value['value']);
                 }),
                 AllowedFilter::callback('showGlobal', function ($query, $value) use ($currentDomain) {
                     // If showGlobal is falsey (0, '0', false, null), restrict to the current domain
@@ -166,8 +145,7 @@ class CdrDataService
                 }),
             ])
             ->where('hangup_cause', '!=', 'LOSE_RACE')
-            ->whereNull('cc_member_session_uuid')
-            ->whereNull('originating_leg_uuid')
+            ->where(fn ($query) => $this->filterCallLegs($query))
             // Sorting
             ->allowedSorts([
                 'direction',
@@ -191,6 +169,18 @@ class CdrDataService
         return $cdrs;
     }
 
+
+    protected function filterCallLegs($query): void
+    {
+        $query->where(function ($ordinary) {
+            $ordinary->whereNull('cc_member_session_uuid')->whereNull('originating_leg_uuid');
+        });
+        // Callback phones retain their native queue-member and routing parents.
+        // Include both endpoint roles without exposing ordinary secondary legs.
+        if (Schema::hasColumn('v_xml_cdr', 'cc_callback_attempt_uuid')) {
+            $query->orWhereNotNull('cc_callback_attempt_uuid');
+        }
+    }
 
     public function getFormattedDuration($value)
     {
@@ -552,6 +542,10 @@ class CdrDataService
             return;
         }
 
+        if (in_array($status, ['missed call', 'abandoned', 'voicemail'], true)) {
+            $query->where(fn ($q) => $q->whereNull('status')->orWhere('status', '!=', 'callback_requested'));
+        }
+
         $query->where(function ($q) use ($status) {
             if ($status === 'missed call') {
                 $q->where(function ($q2) {
@@ -600,7 +594,6 @@ class CdrDataService
                 'answer_epoch',
                 'end_epoch',
                 'duration',
-                'call_flow',
                 'missed_call',
                 'voicemail_message',
                 'hangup_cause',
@@ -609,6 +602,7 @@ class CdrDataService
                 'cc_cause',
                 'sip_hangup_disposition',
                 'status',
+                ...$this->timelineSelectColumns(),
             ])
             ->with('archive_recording:xml_cdr_uuid,object_key')
             ->first();
@@ -704,6 +698,13 @@ class CdrDataService
                     dialplan_app: $row['dialplan_app'] ?? null,
                     dialplan_name: $row['dialplan_name'] ?? null,
                     dialplan_description: $row['dialplan_description'] ?? null,
+                    xml_cdr_uuid: $row['xml_cdr_uuid'] ?? new Optional(),
+                    cc_callback_attempt_uuid: $row['cc_callback_attempt_uuid'] ?? new Optional(),
+                    cc_callback_role: $row['cc_callback_role'] ?? new Optional(),
+                    status: $row['status'] ?? new Optional(),
+                    billsec: $row['billsec'] ?? new Optional(),
+                    waitsec: $row['waitsec'] ?? new Optional(),
+                    queue_result: $row['queue_result'] ?? new Optional(),
                 );
             })
             ->all();
@@ -711,109 +712,204 @@ class CdrDataService
 
     public function buildCallFlowSummary(CDR $cdr)
     {
-        $mainCallFlowData = $this->normalizeMainCallFlowData(
-            $cdr,
-            collect(json_decode($cdr->call_flow, true) ?: [])
-        );
-        $combinedCallFlowData = $mainCallFlowData;
-
-        $windowStart = null;
-        $windowEnd = null;
-
-        if ((int) $cdr->start_epoch > 0) {
-            $windowStart = max(0, (int) $cdr->start_epoch - self::RELATED_CALL_WINDOW_PADDING_SECONDS);
-            $windowEnd = max(
-                (int) ($cdr->end_epoch ?: $cdr->start_epoch),
-                (int) $cdr->start_epoch
-            ) + self::RELATED_CALL_WINDOW_PADDING_SECONDS;
+        if ($this->isCallbackCdr($cdr)) {
+            return $this->buildCallbackCallFlowSummary($cdr);
         }
 
-        if (! empty($cdr->call_center_queue_uuid)) {
-            $relatedCalls = $cdr->relatedQueueCalls()
-                ->where('domain_uuid', $cdr->domain_uuid)
-                ->when($windowStart !== null, function ($query) use ($windowStart, $windowEnd) {
-                    $query->whereBetween('start_epoch', [$windowStart, $windowEnd]);
-                })
-                ->select([
-                    'xml_cdr_uuid',
-                    'domain_uuid',
-                    'call_flow',
-                    'direction',
-                    'hangup_cause',
-                    'sip_hangup_disposition',
-                ])
-                ->get();
+        $mainProfiles = $this->normalizeMainCallFlowData($cdr, $this->decodeCallFlow($cdr));
+        $profiles = $this->attributeCallFlow($mainProfiles, $cdr);
+        $start = (int) $cdr->start_epoch;
+        $end = max($start, (int) $cdr->end_epoch);
 
-            foreach ($relatedCalls as $relatedCall) {
-                $relatedCallFlow = collect(json_decode($relatedCall->call_flow, true) ?: [])
-                    ->map(function ($flow) use ($relatedCall) {
-                        if (isset($flow['times'])) {
-                            $flow['times']['call_disposition'] = $relatedCall->call_disposition;
-                        }
-
-                        return $flow;
-                    });
-
-                $combinedCallFlowData = $combinedCallFlowData->merge($relatedCallFlow);
-            }
-        }
-
-        $relatedCalls = $cdr->relatedRingGroupCalls()
+        // A channel may have both parent references. A single OR query returns
+        // it once, without collapsing distinct transfers/profiles on that channel.
+        $relatedCalls = CDR::query()
             ->where('domain_uuid', $cdr->domain_uuid)
-            ->when($windowStart !== null, function ($query) use ($windowStart, $windowEnd) {
-                $query->whereBetween('start_epoch', [$windowStart, $windowEnd]);
+            ->where('xml_cdr_uuid', '!=', $cdr->xml_cdr_uuid)
+            ->where(function ($query) use ($cdr) {
+                $query->where('originating_leg_uuid', $cdr->xml_cdr_uuid);
+                if (! empty($cdr->call_center_queue_uuid)) {
+                    $query->orWhere('cc_member_session_uuid', $cdr->xml_cdr_uuid);
+                }
             })
-            ->select([
-                'xml_cdr_uuid',
-                'domain_uuid',
-                'call_flow',
-                'direction',
-                'hangup_cause',
-                'sip_hangup_disposition',
-            ])
+            ->when($start > 0, fn ($query) => $query->whereBetween('start_epoch', [
+                max(0, $start - self::RELATED_CALL_WINDOW_PADDING_SECONDS),
+                $end + self::RELATED_CALL_WINDOW_PADDING_SECONDS,
+            ]))
+            ->select(['xml_cdr_uuid', 'call_flow', 'direction', 'hangup_cause',
+                'sip_hangup_disposition', 'call_center_queue_uuid', 'cc_cause', 'cc_cancel_reason', 'status'])
+            ->orderBy('start_epoch')->orderBy('xml_cdr_uuid')
             ->get();
 
         foreach ($relatedCalls as $relatedCall) {
-            $relatedCallFlow = collect(json_decode($relatedCall->call_flow, true) ?: [])
-                ->map(function ($flow) use ($relatedCall) {
-                    if (isset($flow['times'])) {
-                        $flow['times']['call_disposition'] = $relatedCall->call_disposition;
-                    }
-
-                    return $flow;
-                });
-
-            $combinedCallFlowData = $combinedCallFlowData->merge($relatedCallFlow);
+            foreach ($this->attributeCallFlow($this->decodeCallFlow($relatedCall), $relatedCall, true) as $profile) {
+                $profiles->push($profile);
+            }
         }
 
-        $callFlowSummary = $this->handleCallFlowSteps($combinedCallFlowData)
-            ->map(function ($row) {
-                return $this->buildSummaryItem($row);
-            })
-            ->sortBy('profile_created_time')
+        $summary = $this->handleCallFlowSteps($profiles)
+            ->map(fn ($row) => $this->buildSummaryItem($row))
+            ->sortBy(fn ($row) => $row['profile_created_time'] ?: PHP_INT_MAX)
             ->values()
-            ->map(function ($row) use ($cdr) {
-                $timeDifference = $row['profile_created_time'] - $cdr->start_epoch;
-                $row['time_line'] = sprintf('%02d:%02d', floor($timeDifference / 60), $timeDifference % 60);
-
-                if ($cdr->direction === 'outbound') {
-                    $row['dialplan_app'] = __('Outbound Call');
-                    $row['dialplan_app_type'] = 'outbound_call';
-                }
-
+            ->map(function ($row) use ($start) {
+                $offset = $row['profile_created_time'] - $start;
+                $row['time_line'] = $start > 0 && $row['profile_created_time'] > 0 && $offset >= 0
+                    ? sprintf('%02d:%02d', intdiv($offset, 60), $offset % 60)
+                    : '--:--';
                 return $row;
             });
 
-        return $this->formatTimes($callFlowSummary)
-            ->map(function ($row) use ($cdr) {
-                return $this->getAppDetails($row, (string) $cdr->domain_uuid);
+        return $this->enrichCallFlowSummary($this->formatTimes($summary), (string) $cdr->domain_uuid);
+    }
+
+    private function decodeCallFlow(CDR $cdr): Collection
+    {
+        $profiles = json_decode((string) $cdr->call_flow, true);
+        return collect(is_array($profiles) ? $profiles : [])
+            ->filter(fn ($profile) => is_array($profile) && is_array($profile['caller_profile'] ?? null))
+            ->map(function ($profile) {
+                // XML-to-JSON conversion stores empty elements as [], not ''.
+                foreach (['destination_number', 'callee_id_number', 'context', 'transfer_source', 'source', 'uuid', 'chan_name'] as $key) {
+                    $value = $profile['caller_profile'][$key] ?? '';
+                    $profile['caller_profile'][$key] = is_scalar($value) ? (string) $value : '';
+                }
+                return $profile;
             })
             ->values();
     }
 
+    private function attributeCallFlow(Collection $profiles, CDR $cdr, bool $related = false): Collection
+    {
+        return $profiles->map(function ($profile) use ($cdr, $related) {
+            $profile['times'] = array_replace(array_fill_keys([
+                'bridged_time', 'created_time', 'answered_time', 'progress_time', 'transfer_time',
+                'profile_created_time', 'profile_end_time', 'progress_media_time', 'hangup_time',
+            ], 0), is_array($profile['times'] ?? null) ? $profile['times'] : []);
+            $profile['_cdr_uuid'] = $cdr->xml_cdr_uuid;
+            $profile['_direction'] = $cdr->direction;
+            $profile['_queue_uuid'] = $cdr->call_center_queue_uuid;
+            $profile['_queue_result'] = $cdr->cc_result;
+            if ($related) {
+                $profile['times']['call_disposition'] = $cdr->call_disposition;
+            }
+            return $profile;
+        });
+    }
+
+    protected function enrichCallFlowSummary(Collection $rows, string $domainUuid): Collection
+    {
+        return (new CdrTimelineEnricher())->enrich($rows, $domainUuid);
+    }
+
+    public function timelineSelectColumns(): array
+    {
+        $identity = $this->callbackIdentityColumns();
+        // Callback details use native channel rows, so do not transfer their
+        // unused raw profile JSON from PostgreSQL to PHP.
+        $flow = $identity ? DB::raw(
+            "CASE WHEN cc_callback_attempt_uuid IS NOT NULL AND cc_callback_role IN ('agent', 'customer') "
+            ."THEN NULL ELSE call_flow END AS call_flow"
+        ) : 'call_flow';
+
+        return [...$identity, $flow];
+    }
+
+    public function callbackIdentityColumns(): array
+    {
+        $columns = ['cc_callback_attempt_uuid', 'cc_callback_role'];
+
+        return Schema::hasColumns('v_xml_cdr', $columns) ? $columns : [];
+    }
+
+    public function isCallbackCdr(CDR $cdr): bool
+    {
+        return Str::isUuid((string) $cdr->cc_callback_attempt_uuid)
+            && in_array($cdr->cc_callback_role, ['agent', 'customer'], true);
+    }
+
+    protected function buildCallbackCallFlowSummary(CDR $cdr): Collection
+    {
+        // One indexed lookup for this attempt, including destination names.
+        // No optional-module tables or raw XML/profile parsing are required.
+        $calls = CDR::query()
+            ->where('v_xml_cdr.domain_uuid', $cdr->domain_uuid)
+            ->where('v_xml_cdr.cc_callback_attempt_uuid', $cdr->cc_callback_attempt_uuid)
+            ->whereIn('v_xml_cdr.cc_callback_role', ['agent', 'customer'])
+            ->where('v_xml_cdr.start_epoch', '>', 0)
+            ->leftJoin('v_extensions as callback_extension', function ($join) {
+                $join->on('callback_extension.domain_uuid', '=', 'v_xml_cdr.domain_uuid')
+                    ->on('callback_extension.extension', '=', 'v_xml_cdr.destination_number');
+            })
+            ->select([
+                'v_xml_cdr.xml_cdr_uuid', 'v_xml_cdr.cc_callback_attempt_uuid', 'v_xml_cdr.cc_callback_role',
+                'v_xml_cdr.destination_number', 'v_xml_cdr.caller_destination', 'v_xml_cdr.start_epoch',
+                'v_xml_cdr.answer_epoch', 'v_xml_cdr.end_epoch', 'v_xml_cdr.duration', 'v_xml_cdr.billsec',
+                'v_xml_cdr.status', 'v_xml_cdr.direction', 'v_xml_cdr.hangup_cause', 'v_xml_cdr.sip_hangup_disposition',
+                'callback_extension.effective_caller_id_name as destination_name',
+            ])
+            ->get()
+            ->unique('xml_cdr_uuid')
+            ->sortBy([['start_epoch', 'asc'], ['cc_callback_role', 'asc'], ['xml_cdr_uuid', 'asc']])
+            ->values();
+
+        $started = (int) $calls->min('start_epoch');
+        $steps = $calls->map(function (CDR $call) use ($started) {
+            $start = (int) $call->start_epoch;
+            $answer = (int) $call->answer_epoch;
+            $end = (int) $call->end_epoch;
+            $duration = max(0, (int) $call->duration);
+            $billsec = max(0, (int) $call->billsec);
+            $waitsec = $answer > 0 ? max(0, $answer - $start) : $duration;
+            $offset = max(0, $start - $started);
+            $statusLabel = match ($call->status) {
+                'answered' => __('Answered'),
+                'busy' => __('Busy'),
+                'no_answer' => __('No Answer'),
+                'cancelled' => __('Cancelled'),
+                'failed' => __('Failed'),
+                'missed' => __('Missed Call'),
+                default => __('Unknown'),
+            };
+
+            return [
+                'xml_cdr_uuid' => $call->xml_cdr_uuid,
+                'cc_callback_attempt_uuid' => $call->cc_callback_attempt_uuid,
+                'cc_callback_role' => $call->cc_callback_role,
+                'destination_number' => $call->destination_number ?: $call->caller_destination,
+                'dialplan_app_type' => 'callback_'.$call->cc_callback_role,
+                'dialplan_app' => $call->cc_callback_role === 'agent' ? __('Agent') : __('Customer'),
+                'dialplan_name' => $call->destination_name,
+                'status' => $call->status,
+                'status_label' => $statusLabel,
+                'call_disposition' => $call->call_disposition,
+                'created_time' => $start,
+                'profile_created_time' => $start,
+                'answered_time' => $answer,
+                'profile_end_time' => $end,
+                'hangup_time' => $end,
+                // These are overlapping phone-leg intervals, never a sum of
+                // profile durations or evidence of callback confirmation.
+                'duration_seconds' => $duration,
+                'duration_formatted' => $this->getFormattedDuration($duration),
+                'billsec' => $billsec,
+                'billsec_formatted' => $this->getFormattedDuration($billsec),
+                'waitsec' => $waitsec,
+                'waitsec_formatted' => $this->getFormattedDuration($waitsec),
+                'time_line' => sprintf('%02d:%02d', intdiv($offset, 60), $offset % 60),
+            ];
+        });
+
+        return $this->formatTimes($steps);
+    }
+
     private function normalizeMainCallFlowData(CDR $cdr, Collection $callFlowData): Collection
     {
-        if ($this->isBasicDialerCdr($cdr)) {
+        $hasXmlPlaceholder = $callFlowData->contains(function ($row) {
+            $profile = $row['caller_profile'] ?? [];
+            return ($profile['source'] ?? null) === 'mod_loopback'
+                && strcasecmp(trim((string) ($profile['callee_id_number'] ?? '')), 'XML') === 0;
+        });
+        if ($hasXmlPlaceholder && $this->isBasicDialerCdr($cdr)) {
             $callFlowData = $callFlowData->map(function (array $profile) {
                 $callerProfile = $profile['caller_profile'] ?? [];
                 $callee = trim((string) ($callerProfile['callee_id_number'] ?? ''));
@@ -832,7 +928,16 @@ class CdrDataService
             return $callFlowData;
         }
 
-        if (! $this->isOutboundFaxCdr($cdr)) {
+        $hasDuplicateLoopback = false;
+        $previous = null;
+        foreach ($callFlowData as $profile) {
+            if ($previous !== null && $this->sameFaxChannelProfile($previous, $profile)) {
+                $hasDuplicateLoopback = true;
+                break;
+            }
+            $previous = $profile;
+        }
+        if (! $hasDuplicateLoopback || ! $this->isOutboundFaxCdr($cdr)) {
             return $callFlowData;
         }
 
@@ -906,62 +1011,33 @@ class CdrDataService
      */
     protected function handleCallFlowSteps($callFlowData)
     {
-        $newRows = collect();
-
-        $callFlowData->reduce(function ($carry, $row) use ($newRows) {
-
-            // Check if 'ring_group_uuid' exists in the 'application' array
-            if (isset($row['extension']['application'])) {
-                foreach ($row['extension']['application'] as $application) {
-                    if (isset($application['@attributes']['app_data']) && strpos($application['@attributes']['app_data'], 'ring_group_uuid') !== false) {
-                        // Extract the ring_group_uuid value
-                        preg_match('/ring_group_uuid=([a-f0-9\-]+)/', $application['@attributes']['app_data'], $matches);
-                        if (isset($matches[1]) && $row['times']['bridged_time'] != '0') {
-
-                            $newRow = [
-                                'caller_profile' => [
-                                    'destination_number' => $row['caller_profile']['destination_number'],
-                                    'context' => !empty($row['caller_profile']['context']) ? $row['caller_profile']['context'] : '',
-                                    'caller_id_name' => $row['caller_profile']['callee_id_name'],
-                                    'caller_id_number' => $row['caller_profile']['caller_id_number'],
-                                ],
-                                'times' => [
-                                    'bridged_time' => '0',
-                                    'created_time' => $row['times']['profile_created_time'],
-                                    'answered_time' => '0',
-                                    'progress_time' => $row['times']['profile_created_time'],
-                                    'transfer_time' => $row['times']['answered_time'],
-                                    'progress_media_time' => $row['times']['profile_created_time'],
-                                    'hangup_time' => 0,
-                                    'profile_created_time' => $row['times']['profile_created_time'],
-                                    'profile_end_time' => $row['times']['bridged_time'] != '0' ? $row['times']['bridged_time'] : $row['times']['profile_end_time']
-                                ]
-                            ];
-
-                            // Insert the new row right before the current row
-                            $newRows->push($newRow);
-
-                            // Adjust created time for current row
-                            $row['times']['profile_created_time'] = $row['times']['bridged_time'] != '0' ? $row['times']['bridged_time'] : $row['times']['transfer_time'];
-                            $row['times']['progress_media_time'] = $row['times']['bridged_time'] != '0' ? $row['times']['bridged_time'] : $row['times']['transfer_time'];
-                        } else {
-                            $row['caller_profile']['callee_id_number'] = $row['caller_profile']['destination_number'];
-                        }
-                    }
+        $steps = collect();
+        foreach ($callFlowData as $row) {
+            $application = CdrTimelineEnricher::savedApplication($row);
+            if (($application['type'] ?? null) === 'ring_group') {
+                $times = $row['times'];
+                $bridge = (int) $times['bridged_time'];
+                $start = (int) $times['profile_created_time'];
+                $end = (int) $times['profile_end_time'];
+                if ($start > 0 && $bridge > $start && $bridge <= $end) {
+                    $waiting = $row;
+                    $waiting['caller_profile']['callee_id_number'] = $row['caller_profile']['destination_number'] ?? '';
+                    $waiting['times']['profile_end_time'] = $bridge;
+                    $waiting['times']['bridged_time'] = 0;
+                    $waiting['times']['answered_time'] = 0;
+                    $waiting['times']['call_disposition'] = null;
+                    $steps->push($waiting);
+                    $row['times']['profile_created_time'] = $bridge;
+                    $row['times']['progress_media_time'] = $bridge;
+                    $row['_endpoint_after_ring_group'] = true;
+                } elseif ($bridge === 0) {
+                    $row['caller_profile']['callee_id_number'] = $row['caller_profile']['destination_number'] ?? '';
                 }
             }
-
-            // Push the current row (updated or not) to the new collection
-            $newRows->push($row);
-
-            // Return the carry for reduce
-            return $carry;
-        }, $callFlowData);
-
-        return $newRows;
+            $steps->push($row);
+        }
+        return $steps;
     }
-
-
 
     /**
      * Format the times in the call flow array
@@ -1005,67 +1081,54 @@ class CdrDataService
      */
     protected function buildSummaryItem(array $row): array
     {
-        // $app = $this->findApp($row['caller_profile']['destination_number']);
-
-        $profileCreatedEpoch = $this->formatTime($row['times']['profile_created_time']);
-        $profileEndEpoch = $this->formatTime($row['times']['profile_end_time']);
-
-
-        // logger($row);
-
-        if (!empty($row["caller_profile"]["destination_number"]) && (substr($row["caller_profile"]["destination_number"], 0, 4) == 'park' || (substr($row["caller_profile"]["destination_number"], 0, 3) == '*59' && strlen($row["caller_profile"]["destination_number"]) > 3))) {
-            if (strpos($row['caller_profile']['transfer_source'], "park+") !== false) {
-                $destinationNumber = $row['caller_profile']['destination_number'];
-            } else {
-                $destinationNumber = $row['caller_profile']['callee_id_number'];
-            }
-        }
-        //check if this is intercept
-        else if (
-            isset($row["caller_profile"]["originator"]["originator_caller_profile"]["destination_number"]) &&
-            (substr($row["caller_profile"]["originator"]["originator_caller_profile"]["destination_number"], 0, 3) == '*97' &&
-                strlen($row["caller_profile"]["originator"]["originator_caller_profile"]["destination_number"]) > 3)
-        ) {
-
-            $destinationNumber = $row["caller_profile"]["originator"]["originator_caller_profile"]["destination_number"] . "^" . $row["caller_profile"]["originator"]["originator_caller_profile"]["caller_id_number"];
-        }
-        // all other cases
-        else {
-            $destinationNumber = !empty($row['caller_profile']['callee_id_number']) ? $row['caller_profile']['callee_id_number'] : $row['caller_profile']['destination_number'];
-        }
-
-        $durationInSeconds = $profileEndEpoch - $profileCreatedEpoch;
-        $minutes = floor($durationInSeconds / 60);
-        $seconds = $durationInSeconds % 60;
-
-        if ($minutes > 0) {
-            $durationFormatted = sprintf('%d min %02d s', $minutes, $seconds);
+        $profile = $row['caller_profile'];
+        $destination = (string) ($profile['destination_number'] ?? '');
+        $callee = (string) ($profile['callee_id_number'] ?? '');
+        $intercept = data_get($profile, 'originator.originator_caller_profile.destination_number');
+        $interceptor = data_get($profile, 'originator.originator_caller_profile.caller_id_number');
+        if (str_starts_with($destination, 'park') || (str_starts_with($destination, '*59') && strlen($destination) > 3)) {
+            $number = str_contains((string) ($profile['transfer_source'] ?? ''), 'park+') ? $destination : ($callee ?: $destination);
+        } elseif (is_string($intercept) && preg_match('/^\*97\d+$/', $intercept) && is_scalar($interceptor)) {
+            $number = $intercept.'^'.$interceptor;
         } else {
-            $durationFormatted = sprintf('%02d s', $seconds);
+            $number = $callee !== '' ? $callee : $destination;
         }
 
-        return [
-            'destination_number' => $destinationNumber,
-            // 'destination_number' => !empty($row['caller_profile']['callee_id_number']) ? $row['caller_profile']['callee_id_number'] : $row['caller_profile']['destination_number'],
-            'context' => !empty($row['caller_profile']['context']) ? $row['caller_profile']['context'] : '',
-            'bridged_time' => $row['times']['bridged_time'] == 0 ? 0 : $this->formatTime($row['times']['bridged_time']),
-            'created_time' => $row['times']['created_time'] == 0 ? 0 : $this->formatTime($row['times']['created_time']),
-            'answered_time' => $row['times']['answered_time'] == 0 ? 0 : $this->formatTime($row['times']['answered_time']),
-            'progress_time' => $row['times']['progress_time'] == 0 ? 0 : $this->formatTime($row['times']['progress_time']),
-            'transfer_time' => $row['times']['transfer_time'] == 0 ? 0 : $this->formatTime($row['times']['transfer_time']),
-            'profile_created_time' => $row['times']['profile_created_time'] == 0 ? 0 : $this->formatTime($row['times']['profile_created_time']),
-            'profile_end_time' => $row['times']['profile_end_time'] == 0 ? 0 : $this->formatTime($row['times']['profile_end_time']),
-            'progress_media_time' => $row['times']['progress_media_time'] == 0 ? 0 : $this->formatTime($row['times']['progress_media_time']),
-            'hangup_time' => $row['times']['hangup_time'] == 0 ? 0 : $this->formatTime($row['times']['hangup_time']),
-            'duration_seconds' => $durationInSeconds,
-            'duration_formatted' => $durationFormatted,
-            'call_disposition' =>  isset($row['times']['call_disposition']) ? $row['times']['call_disposition'] : null,
+        $times = [];
+        foreach (['bridged_time', 'created_time', 'answered_time', 'progress_time', 'transfer_time',
+            'profile_created_time', 'profile_end_time', 'progress_media_time', 'hangup_time'] as $key) {
+            $times[$key] = $this->formatTime($row['times'][$key] ?? 0);
+        }
+        $start = $times['profile_created_time'];
+        $end = $times['profile_end_time'];
+        $duration = $start > 0 && $end >= $start ? $end - $start : null;
+        $formatted = $duration === null ? __('Unknown') : ($duration >= 60
+            ? sprintf('%d min %02d s', intdiv($duration, 60), $duration % 60)
+            : sprintf('%02d s', $duration));
+
+        // A ring-group profile may be split into its wait and bridged endpoint.
+        // Do not attribute the routing application to the endpoint phone step.
+        $application = $number === $destination && empty($row['_endpoint_after_ring_group'])
+            ? CdrTimelineEnricher::savedApplication($row) : null;
+
+        return $times + [
+            'destination_number' => $number,
+            'context' => (string) ($profile['context'] ?? ''),
+            'duration_seconds' => $duration,
+            'duration_formatted' => $formatted,
+            'call_disposition' => $row['times']['call_disposition'] ?? null,
+            '_saved_type' => $application['type'] ?? null,
+            '_saved_uuid' => $application['uuid'] ?? null,
+            '_cdr_uuid' => $row['_cdr_uuid'] ?? null,
+            '_direction' => $row['_direction'] ?? null,
+            '_queue_uuid' => $row['_queue_uuid'] ?? null,
+            '_queue_result' => $row['_queue_result'] ?? null,
         ];
     }
 
     private function formatTime($time)
     {
-        return (int) round($time / 1000000);
+        return is_numeric($time) ? max(0, (int) round($time / 1000000)) : 0;
     }
 
     /**
@@ -1074,145 +1137,6 @@ class CdrDataService
      */
     public function getAppDetails($row, string $domainUuid)
     {
-        // Convert to E164 format if this is a valid number
-        $destination = formatPhoneNumber($row['destination_number'], "US", 0); // 0 is E164 format
-
-        // Check if the number starts with '+1' and remove it if present
-        if (strpos($destination, '+1') === 0) {
-            $bareNumber = substr($destination, 2);
-        } else {
-            $bareNumber = $destination;
-        }
-
-        $dialplan = Dialplans::where('dialplan_context', $row['context'])
-            ->where(function ($query) use ($destination, $bareNumber) {
-                $query->where('dialplan_number', $destination)
-                    ->orWhere('dialplan_number', '=', $bareNumber)
-                    ->orWhere('dialplan_number', '=', '1' . $bareNumber);
-            })
-            ->where('dialplan_enabled', 'true')
-            ->select(
-                'dialplan_uuid',
-                'dialplan_name',
-                'dialplan_number',
-                'dialplan_xml',
-                'dialplan_description',
-            )
-            ->first();
-
-        if ($dialplan) {
-            $patterns = [
-                'ring_group_uuid' => [
-                    'pattern' => '/ring_group_uuid=([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/',
-                    'app' => __('Ring Group'),
-                    'type' => 'ring_group',
-                ],
-                'ivr_menu_uuid' => [
-                    'pattern' => '/ivr_menu_uuid=([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/',
-                    'app' => __('Auto Receptionist'),
-                    'type' => 'auto_receptionist',
-                ],
-                'call_center_queue_uuid' => [
-                    'pattern' => '/call_center_queue_uuid=([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/',
-                    'app' => __('Contact Center Queue'),
-                    'type' => 'contact_center_queue',
-                ],
-                'call_direction_inbound' => [
-                    'pattern' => '/call_direction=inbound/',
-                    'app' => __('Inbound Call'),
-                    'type' => 'inbound_call',
-                ],
-                'date_time' => [
-                    'pattern' => '/\b(?:year|yday|mon|mday|week|mweek|wday|hour|minute|minute-of-day|time-of-day|date-time)=/',
-                    'app' => __('Schedule'),
-                    'type' => 'schedule',
-                ],
-                'application_rxfax' => [
-                    'pattern' => '/application="rxfax"/',
-                    'app' => __('Virtual Fax'),
-                    'type' => 'virtual_fax',
-                ],
-                'call_flow_uuid' => [
-                    'pattern' => '/call_flow_uuid=([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/',
-                    'app' => __('Call Flow'),
-                    'type' => 'call_flow',
-                ],
-            ];
-
-            foreach ($patterns as $key => $info) {
-                if (preg_match($info['pattern'], $dialplan->dialplan_xml, $matches)) {
-                    $row['dialplan_app'] = $info['app'];
-                    $row['dialplan_app_type'] = $info['type'];
-                    $row['dialplan_name'] = $dialplan->dialplan_name;
-                    $row['dialplan_description'] = $dialplan->dialplan_description;
-                    break; // Stop checking after the first match
-                }
-            }
-
-            return $row;
-        }
-
-        // Check if destination is Park
-        if (strpos($row['destination_number'], "park+") !== false) {
-            $row['dialplan_app'] = __("Park");
-            $row['dialplan_app_type'] = 'park';
-            $row['dialplan_name'] = substr($row['destination_number'], 6);
-            $row['dialplan_description'] = '';
-            return $row;
-        }
-
-        // Check if destination is voicemail
-        if ((substr($row['destination_number'], 0, 3) == '*99') !== false) {
-            $row['dialplan_app'] = __("Voicemail");
-            $row['dialplan_app_type'] = 'voicemail';
-            $row['dialplan_name'] = substr($row['destination_number'], 3);
-            $row['dialplan_description'] = '';
-            return $row;
-        }
-
-        // Check if destination is intercept
-        if ((substr($row['destination_number'], 0, 3) == '*97') !== false) {
-            // Use regex to capture the digits after *97 up to ^ and everything after ^
-            if (preg_match('/\*97(\d+)\^(.+)/', $row['destination_number'], $matches)) {
-                $interceptedExt = $matches[1];
-                $intereceptedByExt = $matches[2];
-
-                $row['dialplan_app'] = __('Call Intercept :extension', ['extension' => $interceptedExt]);
-                $row['dialplan_app_type'] = 'call_intercept';
-
-                // Check if intereceptedByExt is extension
-                $extension = Extensions::where('domain_uuid', $domainUuid)
-                    ->where('extension', $intereceptedByExt)
-                    ->first();
-
-                if ($extension) {
-                    $row['dialplan_name'] = $extension->effective_caller_id_name . ' (' . $intereceptedByExt .  ')';
-                } else {
-                    $row['dialplan_name'] = null;
-                }
-                $row['dialplan_description'] = '';
-
-                return $row;
-            }
-        }
-
-        // Check if destination is extension
-        $extension = Extensions::where('domain_uuid', $domainUuid)
-            ->where('extension', $row['destination_number'])
-            ->first();
-
-        if ($extension) {
-            $row['dialplan_app'] = __("Extension");
-            $row['dialplan_app_type'] = 'extension';
-            $row['dialplan_name'] = $extension->effective_caller_id_name;
-            $row['dialplan_description'] = $extension->description;
-            return $row;
-        }
-
-        $row['dialplan_app'] = __("Misc. Destination");
-        $row['dialplan_app_type'] = 'misc_destination';
-        $row['dialplan_name'] = $row['destination_number'];
-        $row['dialplan_description'] = null;
-        return $row;
+        return $this->enrichCallFlowSummary(collect([$row]), $domainUuid)->first();
     }
 }

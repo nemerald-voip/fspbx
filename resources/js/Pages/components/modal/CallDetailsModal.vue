@@ -212,7 +212,19 @@
                                                         <ul role="list" class="mb-8">
 
                                                             <!-- Separate first element -->
-                                                            <li v-if="item.direction == 'inbound'">
+                                                            <li v-if="item.callback_timeline">
+                                                                <div class="relative pb-8">
+                                                                    <span class="absolute left-5 top-5 -ml-px h-full w-0.5 bg-gray-200" aria-hidden="true"></span>
+                                                                    <div class="relative flex items-start space-x-3">
+                                                                        <div class="inline-flex items-center rounded-full bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-600">
+                                                                            <SupportAgent class="w-4 h-4 mr-2" aria-hidden="true" />
+                                                                            {{ $t('Callback') }}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </li>
+
+                                                            <li v-if="!item.callback_timeline && item.direction == 'inbound'">
                                                                 <div class="relative pb-8">
                                                                     <span
                                                                         class="absolute left-5 top-5 -ml-px h-full w-0.5 bg-gray-200"
@@ -231,7 +243,7 @@
                                                                 </div>
                                                             </li>
 
-                                                            <li v-if="item.direction == 'local'">
+                                                            <li v-if="!item.callback_timeline && item.direction == 'local'">
                                                                 <div class="relative pb-8">
                                                                     <span
                                                                         class="absolute left-5 top-5 -ml-px h-full w-0.5 bg-gray-200"
@@ -248,7 +260,7 @@
                                                                 </div>
                                                             </li>
 
-                                                            <li v-if="item.direction == 'outbound'">
+                                                            <li v-if="!item.callback_timeline && item.direction == 'outbound'">
                                                                 <div class="relative pb-8">
                                                                     <span
                                                                         class="absolute left-5 top-5 -ml-px h-full w-0.5 bg-gray-200"
@@ -272,6 +284,40 @@
                                                                         class="absolute left-5 top-5 -ml-px h-full w-0.5 bg-gray-200"
                                                                         aria-hidden="true"></span>
                                                                     <div class="relative flex items-start space-x-3">
+                                                                        <template v-if="flow.dialplan_app_type === 'callback_agent' || flow.dialplan_app_type === 'callback_customer'">
+                                                                            <div class="relative px-1">
+                                                                                <div class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 ring-8 ring-white">
+                                                                                    <SupportAgent v-if="flow.cc_callback_role === 'agent'" class="h-5 w-5 text-gray-500" aria-hidden="true" />
+                                                                                    <PhoneOutgoingIcon v-else class="h-5 w-5 text-gray-500" aria-hidden="true" />
+                                                                                </div>
+                                                                            </div>
+                                                                            <div class="min-w-0 flex-1 py-1.5 text-sm">
+                                                                                <div class="font-medium text-gray-900">
+                                                                                    <span class="inline-flex items-center rounded-full bg-blue-50 px-1.5 py-0.5 text-sm font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                                                                                        {{ flow.time_line }}
+                                                                                    </span>
+                                                                                    {{ flow.dialplan_app }}
+                                                                                </div>
+                                                                                <div class="font-semibold text-gray-900">
+                                                                                    <template v-if="flow.dialplan_name && flow.dialplan_name !== flow.destination_number">
+                                                                                        {{ flow.dialplan_name }} ({{ flow.destination_number }})
+                                                                                    </template>
+                                                                                    <template v-else>{{ flow.destination_number }}</template>
+                                                                                </div>
+                                                                                <p class="mt-0.5 text-gray-500">
+                                                                                    {{ $t('Result: :disposition', { disposition: flow.status_label }) }}
+                                                                                </p>
+                                                                                <p v-if="flow.waitsec > 0" class="mt-0.5 text-gray-500">
+                                                                                    {{ $t('Waiting time') }}: {{ flow.waitsec_formatted }}
+                                                                                </p>
+                                                                                <p class="mt-0.5 text-gray-500">
+                                                                                    {{ $t('In-call duration') }}: {{ flow.billsec_formatted }}
+                                                                                </p>
+                                                                                <p class="mt-0.5 text-gray-500">
+                                                                                    {{ $t('Total duration') }}: {{ flow.duration_formatted }}
+                                                                                </p>
+                                                                            </div>
+                                                                        </template>
                                                                         <template
                                                                             v-if="flow.dialplan_app_type === 'outbound_call'">
                                                                             <div>
@@ -569,7 +615,7 @@
                                                                                         ({{ flow.destination_number }})
                                                                                     </div>
                                                                                     <p class="mt-0.5 text-sm text-gray-500">
-                                                                                        {{ $t('Result: :disposition', { disposition: item.cc_result }) }}</p>
+                                                                                        {{ $t('Result: :disposition', { disposition: flow.queue_result || $t('Unknown') }) }}</p>
                                                                                     <p class="mt-0.5 text-sm text-gray-500">
                                                                                         {{ flow.duration_formatted }}</p>
                                                                                 </div>
@@ -861,6 +907,8 @@ const statusLabel = (status) => {
             return trans('Missed Call');
         case 'abandoned':
             return trans('Abandoned');
+        case 'callback_requested':
+            return trans('Callback requested');
         case 'failed':
             return trans('Failed');
         default:

@@ -1,35 +1,10 @@
---	xml_handler.lua
---	Part of FusionPBX
---	Copyright (C) 2013 - 2021 Mark J Crane <markjcrane@fusionpbx.com>
---	All rights reserved.
---
---	Redistribution and use in source and binary forms, with or without
---	modification, are permitted provided that the following conditions are met:
---
---	1. Redistributions of source code must retain the above copyright notice,
---	   this list of conditions and the following disclaimer.
---
---	2. Redistributions in binary form must reproduce the above copyright
---	   notice, this list of conditions and the following disclaimer in the
---	   documentation and/or other materials provided with the distribution.
---
---	THIS SOFTWARE IS PROVIDED ''AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
---	INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
---	AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
---	AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
---	OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
---	SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
---	INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
---	CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
---	ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
---	POSSIBILITY OF SUCH DAMAGE.
---
---	Contributor(s):
---	Mark J Crane <markjcrane@fusionpbx.com>
---	Luis Daniel Lucio Quiroz <dlucio@okay.com.mx>
-
 --set the default
 	continue = true;
+	local cc_identity = {};
+	local cc_cacheable = true;
+	local function enabled(value)
+		return value == true or value == "true";
+	end
 
 --get the action
 	action = params:getHeader("action");
@@ -94,12 +69,12 @@
 		--  false - you should register with AuthID=UserID=Extension (default)
 		--  true  - you should register with AuthID=Extension and UserID=Number Alias
 		-- 	also in this case you need 2 records in cache for one extension
-			local DIAL_STRING_BASED_ON_USERID = xml_handler and xml_handler["reg_as_number_alias"]
+			local DIAL_STRING_BASED_ON_USERID = enabled(xml_handler and xml_handler["reg_as_number_alias"])
 
 		-- Use number as presence_id
 		-- When you have e.g. extension like `user-100` with number-alias `100`
 		-- by default presence_id is `user-100`. This option allow use `100` as presence_id
-			local NUMBER_AS_PRESENCE_ID = xml_handler and xml_handler["number_as_presence_id"]
+			local NUMBER_AS_PRESENCE_ID = enabled(xml_handler and xml_handler["number_as_presence_id"])
 
 			local sip_auth_method = params:getHeader("sip_auth_method")
 			if sip_auth_method then
@@ -176,10 +151,14 @@
 			--	freeswitch.consoleLog("notice", "[xml_handler][directory] Params:\n" .. params:serialize() .. "\n");
 			--end
 
-			local loaded_from_db = false
 		--build the XML string from the database
 			if (source == "database") or (USE_FS_PATH) then
-				loaded_from_db = true
+				local dbh, dbh_switch;
+				local ok = pcall(function()
+				-- Optional values must not survive a preceding lookup in the same Lua state.
+					extension_uuid, user_uuid, contact_uuid = nil, nil, nil;
+					follow_me_uuid, follow_me_enabled, database_hostname = nil, nil, nil;
+					extension_settings = {};
 
 				--include Database class
 					local Database = require "resources.functions.database";
@@ -209,14 +188,16 @@
 							end
 					end
 
-				--get the dial_string from default settings
-					local Settings = require "resources.functions.lazy_settings"
-					local settings = Settings.new(dbh, domain_name, domain_uuid);
-					dial_string = settings:get('domain', 'dial_string', 'text');
- 
 				--prevent processing for invalid domains
 					if (domain_uuid == nil) then
 						continue = false;
+					end
+
+				--get the dial_string from default settings only for a valid domain
+					if (continue) then
+						local Settings = require "resources.functions.lazy_settings"
+						local settings = Settings.new(dbh, domain_name, domain_uuid);
+						dial_string = settings:get('domain', 'dial_string', 'text');
 					end
 
 				--if load balancing is set to true then get the hostname
@@ -279,6 +260,7 @@
 
 							--close the database connection
 								dbh_switch:release();
+								dbh_switch = nil;
 						end
 					end
 
@@ -310,17 +292,16 @@
 									number_alias = row.number_alias;
 								end
 
-							--get the user_uuid
-								local sql = "SELECT user_uuid FROM v_extension_users WHERE domain_uuid = :domain_uuid and extension_uuid = :extension_uuid "
-								local params = {domain_uuid=domain_uuid, extension_uuid=extension_uuid};
-								user_uuid = dbh:first_value(sql, params);
-
-							--get the contact_uuid
-								if (user_uuid ~= nil) and (string.len(user_uuid) > 0) then
-									local sql = "SELECT contact_uuid FROM v_users WHERE domain_uuid = :domain_uuid and user_uuid = :user_uuid "
-									local params = {domain_uuid=domain_uuid, user_uuid=user_uuid};
-									contact_uuid = dbh:first_value(sql, params);
-								end
+							-- Keep the first assignment, including when it has no matching user/contact.
+								local owner = dbh:first_row([[
+									SELECT eu.user_uuid, u.contact_uuid
+									FROM (SELECT user_uuid FROM v_extension_users
+									      WHERE domain_uuid = :domain_uuid AND extension_uuid = :extension_uuid
+									      LIMIT 1) AS eu
+									LEFT JOIN v_users AS u ON u.user_uuid = eu.user_uuid AND u.domain_uuid = :domain_uuid
+								]], {domain_uuid=domain_uuid, extension_uuid=extension_uuid});
+								user_uuid = owner and owner.user_uuid;
+								contact_uuid = owner and owner.contact_uuid;
 
 							--params
 								password = row.password;
@@ -396,7 +377,7 @@
 									--set the destintion
 										local destination = (DIAL_STRING_BASED_ON_USERID and sip_from_number or sip_from_user) .. "@" .. domain_name;
 									--set a default dial string
-										if (dial_string == null) then
+										if (dial_string == nil) then
 											dial_string = "{sip_invite_domain=" .. domain_name .. ",presence_id=" .. presence_id .. "}${sofia_contact(*/" .. destination .. ")}";
 										end
 									--set the an alternative dial string if the hostnames don't match
@@ -495,6 +476,23 @@
 								end
 							end
 
+						-- Resolve only while building the directory, including negative results in its cache.
+							local tracking = require "agent_call_track";
+							local agent_uuid;
+							agent_uuid, cc_cacheable = tracking.resolve(dbh, domain_uuid, domain_name, extension, function(message)
+								freeswitch.consoleLog("warning", "[directory agent tracking] " .. message .. "\n");
+							end);
+							if agent_uuid then
+								cc_identity = {
+									fspbx_cc_agent_uuid = agent_uuid,
+									fspbx_cc_extension_uuid = extension_uuid,
+									fspbx_cc_extension = extension,
+									fspbx_cc_number_alias = number_alias or "",
+									fspbx_cc_domain_uuid = domain_uuid,
+									fspbx_cc_domain_name = domain_name,
+								};
+							end;
+
 						--build the xml
 							local xml = Xml:new();
 							xml:append([[<?xml version="1.0" encoding="UTF-8" standalone="no"?>]]);
@@ -516,13 +514,19 @@
 								end
 							else
 								if (cidr) then
-									xml:append([[						<user id="]] ..  xml.sanitize(extension) .. [[" cidr="]] .. cidr .. [[">]]);
+									xml:append([[						<user id="]] ..  xml.sanitize(extension) .. [[" cidr="]] .. xml.sanitize(cidr) .. [[">]]);
 								else
 									xml:append([[						<user id="]] ..  xml.sanitize(extension) .. [[">]]);
 								end
 							end
 							xml:append([[							<params>]]);
-							xml:append([[								<param name="password" value="]] .. password .. [["/>]]);
+							for name, value in pairs(cc_identity) do
+								xml:append([[<param name="dial-var-]] .. name .. [[" value="]] .. xml.sanitize(value) .. [["/>]]);
+							end;
+							if cc_identity.fspbx_cc_agent_uuid then
+								xml:append([[<param name="dial-var-execute_on_originate_fspbx_cc" value="lua agent_call_track.lua recipient"/>]]);
+							end;
+							xml:append([[								<param name="password" value="]] .. xml.escape(password) .. [["/>]]);
 							xml:append([[								<param name="vm-enabled" value="]] ..  xml.sanitize(vm_enabled) .. [["/>]]);
 							if (string.len(vm_mailto) > 0) then
 								xml:append([[								<param name="vm-password" value="]] ..  xml.sanitize(vm_password)  .. [["/>]]);
@@ -537,7 +541,7 @@
 							if (string.len(auth_acl) > 0) then
 								xml:append([[								<param name="auth-acl" value="]] ..  xml.sanitize(auth_acl) .. [["/>]]);
 							end
-							xml:append([[								<param name="dial-string" value="]] .. dial_string .. [["/>]]);
+							xml:append([[								<param name="dial-string" value="]] .. xml.escape(dial_string) .. [["/>]]);
 							xml:append([[								<param name="verto-context" value="]] ..  xml.sanitize(user_context) .. [["/>]]);
 							xml:append([[								<param name="verto-dialplan" value="XML"/>]]);
 							xml:append([[								<param name="jsonrpc-allowed-methods" value="verto"/>]]);
@@ -551,6 +555,9 @@
 							end
 							xml:append([[							</params>]]);
 							xml:append([[							<variables>]]);
+							for name, value in pairs(cc_identity) do
+								xml:append([[<variable name="]] .. name .. [[" value="]] .. xml.sanitize(value) .. [["/>]]);
+							end;
 							xml:append([[								<variable name="domain_uuid" value="]] ..  xml.sanitize(domain_uuid) .. [["/>]]);
 							xml:append([[								<variable name="domain_name" value="]] ..  xml.sanitize(domain_name) .. [["/>]]);
 							xml:append([[								<variable name="extension_uuid" value="]] ..  xml.sanitize(extension_uuid) .. [["/>]]);
@@ -699,11 +706,8 @@
 							xml:append([[</document>]]);
 							XML_STRING = xml:build();
 
-						--close the database connection
-							dbh:release();
-
 						--set the cache
-							if cache.support() then
+							if cc_cacheable and cache.support() then
 								local key = "directory:" .. sip_from_number .. "@" .. domain_name
 								if debug['cache'] then
 									freeswitch.consoleLog("notice", "[xml_handler][directory][cache] set key: " .. key .. "\n")
@@ -737,6 +741,23 @@
 								freeswitch.consoleLog("notice", "[xml_handler] directory:" .. user .. "@" .. domain_name .. " source: database\n");
 							end
 					end
+				end);
+				-- Release both handles on success, not-found, and exceptions.
+				local function release(handle)
+					if handle then
+						local released = pcall(function() handle:release() end);
+						if not released then
+							freeswitch.consoleLog("warning", "[xml_handler][directory] Database handle release failed\n");
+						end
+					end
+				end
+				release(dbh_switch);
+				release(dbh);
+				if not ok then
+					XML_STRING = nil;
+					-- Database exceptions can contain credentials; do not print their contents.
+					freeswitch.consoleLog("warning", "[xml_handler][directory] Directory generation failed; returning not found\n");
+				end
 			end
 
 		--get the XML string from the cache

@@ -147,9 +147,21 @@
 		end
 
 		--send a login or logout to mod_callcenter
-		cmd = "sched_api +5 none callcenter_config agent set status "..agent_uuid.." '"..status.."'";
-		freeswitch.consoleLog("notice", "[user status][login] "..cmd.."\n");
-		result = api:executeString(cmd);
+		local cc_ha_loaded, cc_ha = pcall(require, 'contact_center_ha')
+		local mirrored = nil
+		if cc_ha_loaded then
+			local ok, result = pcall(cc_ha.status, session, agent_uuid, status)
+			mirrored = ok and result
+		end
+		if mirrored == false then
+			freeswitch.consoleLog('err', '[agent_status] Unable to persist availability\n')
+			session:hangup('NORMAL_TEMPORARY_FAILURE')
+			return
+		end
+		if mirrored == nil then
+			cmd = "sched_api +5 none callcenter_config agent set status "..agent_uuid.." '"..status.."'";
+			result = api:executeString(cmd);
+		end
 
 		--update the user status
 		if (user_uuid ~= nil and user_uuid ~= '') then

@@ -30,5 +30,13 @@ class CdrCallFlowStepData extends Data
         public string|Optional|null $dialplan_app = new Optional(),
         public string|Optional|null $dialplan_name = new Optional(),
         public string|Optional|null $dialplan_description = new Optional(),
+
+        public string|Optional|null $xml_cdr_uuid = new Optional(),
+        public string|Optional|null $cc_callback_attempt_uuid = new Optional(),
+        public string|Optional|null $cc_callback_role = new Optional(),
+        public string|Optional|null $status = new Optional(),
+        public int|Optional|null $billsec = new Optional(),
+        public int|Optional|null $waitsec = new Optional(),
+        public string|Optional|null $queue_result = new Optional(),
     ) {}
 }

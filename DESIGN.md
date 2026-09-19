@@ -220,6 +220,7 @@ FS PBX uses a hybrid of tonal layering, borders, and restrained shadows. Surface
 - **Style:** Paper Surface, Operator Ink, medium corners (`0.375rem`), and a one-pixel Control Border inset ring.
 - **Focus:** Two-pixel Working Blue or Signal Indigo inset ring. Placeholder text uses Muted Text.
 - **Error / Disabled:** Errors pair Danger Red with readable validation copy. Disabled controls reduce contrast but remain legible and preserve their label.
+- **Validation:** All new or revised VueForms use server-side validation only. Follow `AGENTS.md`: no VueForm rules or client validators; display Laravel's returned errors beside their fields and clear them before resubmitting.
 
 ### Tables
 

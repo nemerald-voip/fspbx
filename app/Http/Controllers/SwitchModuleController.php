@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\SaveSwitchModuleRequest;
 use App\Models\SwitchModule;
 use App\Services\SwitchModuleService;
 use Illuminate\Http\JsonResponse;
@@ -29,8 +30,9 @@ class SwitchModuleController extends Controller
                 'bulk_stop' => route('modules.bulk.stop'),
                 'bulk_toggle' => route('modules.bulk.toggle'),
                 'bulk_delete' => route('modules.bulk.delete'),
-                'legacy_add' => '/app/modules/module_edit.php',
-                'legacy_edit' => '/app/modules/module_edit.php?id=__MODULE__',
+                'item_options' => route('modules.item.options'),
+                'store' => route('modules.store'),
+                'update' => route('modules.update', ['module' => '__MODULE__']),
             ],
             'permissions' => [
                 'create' => userCheckPermission('module_add'),
@@ -38,6 +40,42 @@ class SwitchModuleController extends Controller
                 'destroy' => userCheckPermission('module_delete'),
             ],
         ]);
+    }
+
+    public function itemOptions(Request $request): JsonResponse
+    {
+        $uuid = $request->input('itemUuid');
+
+        abort_unless(userCheckPermission($uuid ? 'module_edit' : 'module_add'), 403);
+        $request->validate(['itemUuid' => ['nullable', 'uuid']]);
+
+        return response()->json([
+            'item' => $uuid ? SwitchModule::query()->findOrFail($uuid)->only([
+                'module_uuid', 'module_label', 'module_name', 'module_category', 'module_order',
+                'module_enabled', 'module_default_enabled', 'module_description',
+            ]) : [
+                'module_label' => '',
+                'module_name' => '',
+                'module_category' => '',
+                'module_order' => null,
+                'module_enabled' => 'true',
+                'module_default_enabled' => 'true',
+                'module_description' => '',
+            ],
+            'categories' => SwitchModule::query()->whereNotNull('module_category')
+                ->where('module_category', '<>', '')->distinct()->orderBy('module_category')
+                ->pluck('module_category'),
+        ]);
+    }
+
+    public function store(SaveSwitchModuleRequest $request, SwitchModuleService $service): JsonResponse
+    {
+        return response()->json($service->save($request->validated()), 201);
+    }
+
+    public function update(SaveSwitchModuleRequest $request, SwitchModule $module, SwitchModuleService $service): JsonResponse
+    {
+        return response()->json($service->save($request->validated(), $module));
     }
 
     public function getData(Request $request, SwitchModuleService $service): JsonResponse
@@ -226,8 +264,7 @@ class SwitchModuleController extends Controller
             'module_default_enabled' => $module->module_default_enabled,
             'module_description' => $module->module_description,
             'status' => $eventSocketAvailable ? ($running ? 'running' : 'stopped') : 'unknown',
-            'can_control_runtime' => $eventSocketAvailable && $module->module_enabled === 'true',
-            'edit_url' => '/app/modules/module_edit.php?id=' . urlencode($module->module_uuid),
+            'can_control_runtime' => $eventSocketAvailable,
         ];
     }
 }

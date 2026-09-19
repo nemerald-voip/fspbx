@@ -34,6 +34,24 @@ require "resources.functions.format_ringback"
 	local Database = require "resources.functions.database";
 	dbh = Database.new('system');
 
+-- Optional Contact Center integration. Basic-only installations retain their
+-- existing XML status behavior and require no module tables or helper.
+	local cc_ha_ok, cc_ha = pcall(require, 'contact_center_ha')
+	local cc_ha_enabled = nil
+	if cc_ha_ok then
+		local ok, enabled = pcall(function() return cc_ha.enabled() end)
+		if ok and type(enabled) == 'boolean' then cc_ha_enabled = enabled end
+	elseif type(cc_ha) == 'string' and cc_ha:match("^module 'contact_center_ha' not found:") then
+		cc_ha_enabled = false -- The optional module is not installed.
+	end
+	-- An unreadable setting or broken helper must never restore Default Status.
+	local cc_preserve_status = cc_ha_enabled ~= false
+	if cc_ha_enabled == nil then
+		freeswitch.consoleLog('err', '[callcenter XML] Unable to determine Contact Center HA mode; preserving agent availability.\n')
+	end
+	local cc_requested_queue = params and params:getHeader('CC-Queue') or nil
+	if not cc_ha_enabled or not cc_requested_queue or not cc_requested_queue:match('^[%w_.+%-]+@[%w_.%-]+$') then cc_requested_queue = nil end
+
 --include settings library
 	local Settings = require "resources.functions.lazy_settings"
 
@@ -52,6 +70,9 @@ require "resources.functions.format_ringback"
 	local cache = require "resources.functions.cache"
 	hostname = trim(api:execute("switchname", ""));
 	local cc_cache_key = "configuration:callcenter.conf:" .. hostname
+	-- Never reuse legacy XML containing status after enabling HA or on errors.
+	if cc_preserve_status then cc_cache_key = cc_cache_key .. ':availability-v3' end
+	if cc_requested_queue then cc_cache_key = cc_cache_key .. ':' .. cc_requested_queue end
 	XML_STRING, err = cache.get(cc_cache_key)
 
 --set the cache
@@ -86,8 +107,9 @@ require "resources.functions.format_ringback"
 
 		--write the queues
 			xml:append([[                    <queues>]]);
-			sql = "select * from v_call_center_queues as q, v_domains as d ";
-			sql = sql .. "where d.domain_uuid = q.domain_uuid; ";
+			sql = "select q.*, d.*, p.dialplan_xml as cc_audio_dialplan from v_call_center_queues as q left join v_dialplans as p on p.dialplan_uuid = q.dialplan_uuid and p.domain_uuid = q.domain_uuid, v_domains as d ";
+			sql = sql .. "where d.domain_uuid = q.domain_uuid ";
+			if cc_requested_queue then sql = sql .. "and (q.queue_extension || '@' || d.domain_name) = '" .. cc_requested_queue .. "' " end
 			if (debug["sql"]) then
 				freeswitch.consoleLog("notice", "[xml_handler] SQL: " .. sql .. "\n");
 			end
@@ -138,8 +160,8 @@ require "resources.functions.format_ringback"
 					if (queue_time_base_score ~= nil) then
 						xml:append([[                                    <param name="time-base-score" value="]] .. xml.sanitize(queue_time_base_score) .. [["/>]]);
 					end
-					if (queue_max_wait_time_with_no_agent ~= nil) then
-						xml:append([[                                    <param name="max-wait-time" value="]] .. xml.sanitize(queue_max_wait_time) .. [["/>]]);
+						if (queue_max_wait_time ~= nil) then
+							xml:append([[                                    <param name="max-wait-time" value="]] .. xml.sanitize(queue_max_wait_time) .. [["/>]]);
 					end
 					if (queue_max_wait_time_with_no_agent ~= nil) then
 						xml:append([[                                    <param name="max-wait-time-with-no-agent" value="]] .. xml.sanitize(queue_max_wait_time_with_no_agent) .. [["/>]]);
@@ -167,7 +189,8 @@ require "resources.functions.format_ringback"
 					end
 					-- Position announcements own the complete announcement cycle so
 					-- the periodic greeting and position phrase cannot overlap.
-					if (queue_announce_position ~= "true") then
+					local managed_audio = cc_ha_ok and type(cc_ha) == 'table' and row.cc_audio_dialplan and row.cc_audio_dialplan:find('cc_queue_audio_managed=true', 1, true)
+					if (queue_announce_position ~= "true" and not managed_audio) then
 						if (queue_announce_sound ~= nil) then
 							xml:append([[                                    <param name="announce-sound" value="]] .. xml.sanitize(queue_announce_sound) .. [["/>]]);
 						end
@@ -276,7 +299,9 @@ require "resources.functions.format_ringback"
 					xml:append([[                            	label="]] .. xml.sanitize(agent_name) .. [[@]] .. xml.sanitize(domain_name) .. [[" ]]);
 					xml:append([[                            	type="]] .. xml.sanitize(agent_type) .. [[" ]]);
 					xml:append([[                            	contact="]] .. agent_contact .. [[" ]]);
-					xml:append([[                            	status="]] .. xml.sanitize(agent_status) .. [[" ]]);
+					if not cc_preserve_status then
+						xml:append([[                            	status="]] .. xml.sanitize(agent_status) .. [[" ]]);
+					end
 					if (agent_no_answer_delay_time ~= nil) then
 						xml:append([[                            	no-answer-delay-time="]] .. xml.sanitize(agent_no_answer_delay_time) .. [[" ]]);
 					end
@@ -301,7 +326,8 @@ require "resources.functions.format_ringback"
 				sql = "select t.domain_uuid, d.domain_name, t.call_center_agent_uuid, t.call_center_queue_uuid, q.queue_extension, t.tier_level, t.tier_position ";
 				sql = sql .. "from v_call_center_tiers as t, v_domains as d, v_call_center_queues as q ";
 				sql = sql .. "where d.domain_uuid = t.domain_uuid ";
-				sql = sql .. "and t.call_center_queue_uuid = q.call_center_queue_uuid; ";
+				sql = sql .. "and t.call_center_queue_uuid = q.call_center_queue_uuid ";
+				if cc_requested_queue then sql = sql .. "and (q.queue_extension || '@' || d.domain_name) = '" .. cc_requested_queue .. "' " end
 				if (debug["sql"]) then
 					freeswitch.consoleLog("notice", "[xml_handler] SQL: " .. sql .. "\n");
 				end

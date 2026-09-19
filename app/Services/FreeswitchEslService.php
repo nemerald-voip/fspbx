@@ -42,6 +42,16 @@ class FreeswitchEslService
         return $this->conn && $this->conn->connected();
     }
 
+    /** Reuse the raw ESL connection for timed event reads and background APIs. */
+    public function connection()
+    {
+        if (! $this->isConnected()) {
+            $this->reconnect();
+        }
+
+        return $this->conn;
+    }
+
     public function reconnect(): void
     {
         $this->disconnect(); // Optional: clear old connection
@@ -301,12 +311,27 @@ class FreeswitchEslService
     }
 
 
-    public function subscribeToEvents($eventType, $events)
+    /** @param array<string, string> $filters Positive socket filters (matched as OR). */
+    public function subscribeToEvents($eventType, $events, array $filters = [])
     {
         try {
-            $this->conn->events($eventType, $events);
+            // Install filters before enabling delivery on this connection.
+            $commands = [];
+            foreach ($filters as $header => $value) {
+                $commands[] = 'filter '.$header.' '.$value;
+            }
+            $commands[] = 'event '.$eventType.' '.$events;
+
+            foreach ($commands as $command) {
+                $reply = $this->conn->sendRecv($command);
+                $text = $reply ? trim((string) $reply->getHeader('Reply-Text')) : '';
+                if (! str_starts_with($text, '+OK')) {
+                    throw new \RuntimeException($text ?: 'No FreeSWITCH subscription acknowledgement');
+                }
+            }
             return true;
         } catch (\Throwable $e) {
+            $this->disconnect();
             logger()->error("Failed to subscribe to events: " . $e->getMessage());
             return false;
         }

@@ -15,6 +15,15 @@ use Illuminate\Support\Facades\DB;
 
 class DomainObserver
 {
+    public function updated(Domain $domain): void
+    {
+        if ($domain->wasChanged('domain_name')) {
+            app(\App\Services\AgentDirectoryCacheService::class)->domainChanged($domain->domain_uuid, [
+                $domain->getRawOriginal('domain_name'), $domain->domain_name,
+            ]);
+        }
+    }
+
     protected array $switchDirs = [];
 
     public function __construct(

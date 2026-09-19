@@ -1220,8 +1220,8 @@ if (!function_exists('getRingBackTonesCollection')) {
             ->orderBy('stream_name')
             ->select('stream_uuid', 'stream_name', 'stream_location');
         if ($domain) {
-            $streamsCollection->where('domain_uuid', $domain)
-                ->orWhere('domain_uuid', null);
+            $streamsCollection->where(fn ($query) => $query->where('domain_uuid', $domain)
+                ->orWhereNull('domain_uuid'));
         }
         $streamsCollection = $streamsCollection->get();
         $streams = [];
@@ -1295,8 +1295,8 @@ if (!function_exists('getMusicOnHoldCollection')) {
             ->orderBy('stream_name')
             ->select('stream_uuid', 'stream_name', 'stream_location');
         if ($domain) {
-            $streamsCollection->where('domain_uuid', $domain)
-                ->orWhere('domain_uuid', null);
+            $streamsCollection->where(fn ($query) => $query->where('domain_uuid', $domain)
+                ->orWhereNull('domain_uuid'));
         }
         $streamsCollection = $streamsCollection->get();
         $streams = [];
@@ -1390,8 +1390,8 @@ if (! function_exists('getRingBackTonesCollectionGrouped')) {
 
         // — Streams —
         $streams = MusicStreams::when($domain, function ($q) use ($domain) {
-            $q->where('domain_uuid', $domain)
-                ->orWhereNull('domain_uuid');
+            $q->where(fn ($scope) => $scope->where('domain_uuid', $domain)
+                ->orWhereNull('domain_uuid'));
         })
             ->where('stream_enabled', 'true')
             ->orderBy('stream_name')

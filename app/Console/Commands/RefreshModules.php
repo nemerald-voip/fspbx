@@ -16,15 +16,14 @@ class RefreshModules extends Command
             $result = $svc->refreshModules();
         } catch (\Throwable $e) {
             $this->warn("⚠️  modules:refresh encountered an unexpected error: {$e->getMessage()}");
-            return self::SUCCESS;
+            return self::FAILURE;
         }
 
         foreach ($result['updated'] as $msg) $this->line("✅ {$msg}");
         foreach ($result['skipped'] as $msg) $this->line("↩️  {$msg}");
         foreach ($result['errors'] as $msg) $this->warn("⚠️  {$msg}");
 
-        // Always successful exit code
-        return self::SUCCESS;
+        return empty($result['errors']) ? self::SUCCESS : self::FAILURE;
     }
 
 }

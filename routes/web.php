@@ -260,6 +260,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('recordings-manager/{recording}/download', [RecordingsManagerController::class, 'download'])->name('recordings-manager.download');
 
     // Music on Hold
+    Route::get('streams', [\App\Http\Controllers\StreamController::class, 'index'])->name('streams.index');
     Route::get('music-on-hold', [MusicOnHoldController::class, 'index'])->name('music-on-hold.index');
     Route::get('music-on-hold/{music_on_hold}/files/{file}', [MusicOnHoldController::class, 'download'])
         ->where('file', '[^/]+')

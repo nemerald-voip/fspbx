@@ -193,7 +193,8 @@
                             :text="row.caller_id_name" /> -->
 
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
-                            <div v-if="row.extension && row.direction == 'outbound'">{{ row.extension?.name_formatted }}
+                            <!-- A destination extension on an application-originated call is not its caller. -->
+                            <div v-if="row.extension && row.direction == 'outbound' && row.extension.extension !== row.destination_number">{{ row.extension?.name_formatted }}
                             </div>
                             <div v-else>{{ row.caller_id_name_formatted }}</div>
                         </TableField>
@@ -454,6 +455,7 @@ const statusOptions = [
     { name: trans('Voicemail'), value: 'voicemail' },
     { name: trans('Missed Call'), value: 'missed call' },
     { name: trans('Abandoned'), value: 'abandoned' },
+    { name: trans('Callback requested'), value: 'callback_requested' },
 ];
 
 const sentimentOptions = [
@@ -489,6 +491,8 @@ const statusLabel = (status) => {
             return trans('Missed Call');
         case 'abandoned':
             return trans('Abandoned');
+        case 'callback_requested':
+            return trans('Callback requested');
         case 'failed':
             return trans('Failed');
         default:
@@ -752,6 +756,11 @@ const handleErrorResponse = (error) => {
 }
 
 const statusBadgeConfig = {
+    callback_requested: {
+        backgroundColor: "bg-blue-50",
+        textColor: "text-blue-700",
+        ringColor: "ring-blue-600/20",
+    },
     answered: {
         backgroundColor: "bg-green-50",
         textColor: "text-green-700",

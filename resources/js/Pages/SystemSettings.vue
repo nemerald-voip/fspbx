@@ -103,6 +103,12 @@
                     @success="showNotification" />
             </section>
 
+            <section v-if="selectedMenuOption === 'scheduled_jobs' && permissions?.scheduled_jobs_manage && scheduled_jobs">
+                <ScheduledJobServerControl :initial-state="scheduled_jobs.active_node" :routes="scheduled_jobs.routes"
+                    :manage="scheduled_jobs.manage" @success="messages => showNotification('success', messages)"
+                    @error="messages => showNotification('error', messages)" />
+            </section>
+
             <!--  Transcription - General Settings -->
             <section v-if="selectedMenuOption === 'transcription_options'">
                 <CallTranscriptionOptionsForm :routes="routes" @error="handleErrorResponse" @success="showNotification"/>
@@ -136,7 +142,8 @@ import PageWithSideMenu from '../Layouts/PageWithSideMenu.vue'
 import Notification from "./components/notifications/Notification.vue";
 import UpdateStripeSettingsModal from "./components/modal/UpdateStripeSettingsModal.vue";
 import Badge from "@generalComponents/Badge.vue";
-import { CreditCardIcon, Cog6ToothIcon } from '@heroicons/vue/24/outline'
+import { CreditCardIcon, Cog6ToothIcon, ServerStackIcon } from '@heroicons/vue/24/outline'
+import ScheduledJobServerControl from './components/ScheduledJobServerControl.vue'
 import GraphicEqIcon from "@icons/GraphicEqIcon.vue"
 import AssemblyAiForm from "./components/forms/AssemblyAiForm.vue"
 import CallTranscriptionOptionsForm from "./components/forms/CallTranscriptionOptionsForm.vue"
@@ -147,6 +154,7 @@ import { AdjustmentsVerticalIcon, SignalIcon } from "@heroicons/vue/24/outline";
 const props = defineProps({
     routes: Object,
     permissions: Object,
+    scheduled_jobs: { type: Object, default: null },
     // Declarative system-default fields (SystemSettingsSchema), the option
     // lists they reference, and the current global default values. The
     // General tab renders and saves from these.
@@ -213,6 +221,10 @@ onMounted(() => {
 
     if (props.permissions?.sip_capture_view) {
         navigation.value.push({ key: 'sip_capture', name: 'SIP Capture', icon: SignalIcon })
+    }
+
+    if (props.permissions?.scheduled_jobs_manage) {
+        navigation.value.push({ key: 'scheduled_jobs', name: 'Scheduled Jobs', icon: ServerStackIcon })
     }
 
     if (props.permissions?.call_transcription_settings_view) {

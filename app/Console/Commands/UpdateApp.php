@@ -54,6 +54,7 @@ use App\Console\Commands\Updates\Update196;
 use App\Console\Commands\Updates\Update197;
 use App\Console\Commands\Updates\Update198;
 use App\Console\Commands\Updates\Update199;
+use App\Console\Commands\Updates\Update200;
 use App\Console\Commands\Updates\Update0917;
 use App\Console\Commands\Updates\Update0918;
 use App\Console\Commands\Updates\Update0924;
@@ -184,6 +185,7 @@ class UpdateApp extends Command
             '1.9.7' => Update197::class,
             '1.9.8' => Update198::class,
             '1.9.9' => Update199::class,
+            '2.0.0' => Update200::class,
             // Add more versions as needed
         ];
 
@@ -255,8 +257,10 @@ class UpdateApp extends Command
         // Change ownership of the current directory
         $this->changeDirectoryOwnership($currentDirectory);
 
+        $modulePrograms = app(\App\Services\ProFeaturesService::class)->getSupervisorProgramsToRestart();
+        $supervisorProgramsToRestart = array_merge($supervisorProgramsToRestart, $modulePrograms);
         if (!empty($supervisorProgramsToRestart)) {
-            $this->restartSupervisorPrograms($supervisorProgramsToRestart);
+            $this->restartSupervisorPrograms($supervisorProgramsToRestart, !empty($modulePrograms));
         }
 
         try {
@@ -334,7 +338,7 @@ class UpdateApp extends Command
         $this->executeCommand("chown -R www-data:www-data $directory");
     }
 
-    protected function restartSupervisorPrograms(array $programs)
+    protected function restartSupervisorPrograms(array $programs, bool $failOnError = false)
     {
         $programs = array_values(array_filter(array_unique($programs)));
 
@@ -346,6 +350,6 @@ class UpdateApp extends Command
 
         $escapedPrograms = implode(' ', array_map('escapeshellarg', $programs));
 
-        $this->executeCommand("supervisorctl restart {$escapedPrograms}", 120, false);
+        $this->executeCommand("supervisorctl restart {$escapedPrograms}", 150, $failOnError);
     }
 }

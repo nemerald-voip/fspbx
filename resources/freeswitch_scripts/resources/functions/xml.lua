@@ -16,14 +16,20 @@ function xml:build()
     return table.concat(self.xml, "\n");
 end
 
-function xml.sanitize(s)
-    return (string.gsub(s, "[\"><'$]", {
+-- Escape a raw XML attribute without changing FreeSWITCH ${...} expressions.
+function xml.escape(s)
+    return (string.gsub(tostring(s or ""), "[&\"><']", {
+        ["&"] = "&amp;",
         ["<"] = "&lt;",
         [">"] = "&gt;",
         ['"'] = "&quot;",
-        ["'"] = "&apos;",
-        ["$"] = ""
+        ["'"] = "&apos;"
     }))
+end
+
+function xml.sanitize(s)
+    -- Keep the existing dollar-removal contract for current callers.
+    return xml.escape((tostring(s or ""):gsub("%$", "")))
 end
 
 return xml;

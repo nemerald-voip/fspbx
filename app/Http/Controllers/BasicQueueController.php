@@ -237,13 +237,22 @@ class BasicQueueController extends Controller
 
         $status = $request->input('status');
         $responses = [];
+        $ha = class_exists(\Modules\ContactCenter\Services\Ha\HaSettings::class)
+            && app(\Modules\ContactCenter\Services\Ha\HaSettings::class)->enabled();
 
         foreach ($agents as $agent) {
-            $responses[$agent->call_center_agent_uuid] = $this->callCenterCommand(sprintf(
-                "api callcenter_config agent set status %s '%s'",
-                $agent->call_center_agent_uuid,
-                str_replace("'", "\\'", $status)
-            ));
+            if ($ha) {
+                $availability = app(\Modules\ContactCenter\Services\Ha\AgentStatusService::class);
+                $availability->record($agent->getKey(), $agent->domain_uuid, $status);
+                $availability->apply($agent->getKey());
+                $responses[$agent->getKey()] = '+OK';
+            } else {
+                $responses[$agent->call_center_agent_uuid] = $this->callCenterCommand(sprintf(
+                    "api callcenter_config agent set status %s '%s'",
+                    $agent->call_center_agent_uuid,
+                    str_replace("'", "\\'", $status)
+                ));
+            }
 
             if (in_array($status, ['Available', 'Logged Out'], true)) {
                 $this->callCenterCommand(sprintf(
@@ -568,7 +577,12 @@ class BasicQueueController extends Controller
             ->whereIn('call_center_agent_uuid', $uuids)
             ->get();
 
-        $deleted = $service->deleteAgents($agents);
+        try {
+            $deleted = $service->deleteAgents($agents);
+        } catch (\RuntimeException $exception) {
+            report($exception);
+            return response()->json(['messages' => ['error' => [$exception->getMessage()]]], 503);
+        }
 
         return response()->json([
             'messages' => ['success' => ["Deleted {$deleted} agent(s)."]],

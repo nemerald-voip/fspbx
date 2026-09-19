@@ -16,9 +16,29 @@ class ScheduledJobCoordinationController extends Controller
 
     public function show(): JsonResponse
     {
-        abort_unless(userCheckPermission('ldap_directory_view'), 403);
+        $this->authorizeManagement();
 
         return response()->json(['active_node' => $this->resolver->statusContext()]);
+    }
+
+    public function controlProps(): array
+    {
+        $this->authorizeManagement();
+
+        return [
+            'active_node' => $this->resolver->statusContext(),
+            'manage' => true,
+            'routes' => [
+                'active_node_status' => route('scheduled-jobs.active-node.show'),
+                'active_node' => route('scheduled-jobs.active-node.update'),
+                'active_node_force' => route('scheduled-jobs.active-node.force'),
+                'node_discover' => route('scheduled-jobs.nodes.discover'),
+                'node_approve' => route('scheduled-jobs.nodes.approve', ['node' => '__NODE__']),
+                'node_retire' => route('scheduled-jobs.nodes.retire', ['node' => '__NODE__']),
+                'handoff_force' => route('scheduled-jobs.handoffs.force', ['handoff' => '__HANDOFF__']),
+                'coordination_secret_rotate' => route('scheduled-jobs.secret.rotate'),
+            ],
+        ];
     }
 
     public function discover(Request $request): JsonResponse
@@ -163,7 +183,7 @@ class ScheduledJobCoordinationController extends Controller
 
     private function authorizeManagement(): void
     {
-        abort_unless(isSuperAdmin(), 403);
+        abort_unless(userCheckPermission('scheduled_jobs_manage'), 403);
     }
 
     private function managementError(RuntimeException $exception): JsonResponse

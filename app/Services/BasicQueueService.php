@@ -134,7 +134,7 @@ class BasicQueueService
             CallCenterQueueAgents::query()
                 ->where('domain_uuid', session('domain_uuid'))
                 ->whereIn('call_center_queue_uuid', $queueUuids)
-                ->delete();
+                ->get()->each->delete();
 
             if ($dialplanUuids->isNotEmpty()) {
                 DialplanDetails::query()
@@ -143,13 +143,13 @@ class BasicQueueService
 
                 Dialplans::query()
                     ->whereIn('dialplan_uuid', $dialplanUuids)
-                    ->delete();
+                    ->get()->each->delete();
             }
 
             $deleted = CallCenterQueues::query()
                 ->where('domain_uuid', session('domain_uuid'))
                 ->whereIn('call_center_queue_uuid', $queueUuids)
-                ->delete();
+                ->get()->each->delete()->count();
 
             $this->clearCaches();
 
@@ -160,27 +160,11 @@ class BasicQueueService
     public function deleteAgents(Collection $agents): int
     {
         return DB::transaction(function () use ($agents) {
-            $agentUuids = $agents->pluck('call_center_agent_uuid');
-            $tiers = CallCenterQueueAgents::query()
-                ->where('domain_uuid', session('domain_uuid'))
-                ->whereIn('call_center_agent_uuid', $agentUuids)
-                ->with(['queue.domain'])
-                ->get();
+            $deleted = app(CallCenterAgentDeletionService::class)->deleteMany(
+                $agents->pluck('call_center_agent_uuid')->unique()->all(), session('domain_uuid'),
+            );
 
-            $this->deleteRuntimeTiers($tiers);
-            $this->deleteRuntimeAgents($agents);
-
-            CallCenterQueueAgents::query()
-                ->where('domain_uuid', session('domain_uuid'))
-                ->whereIn('call_center_agent_uuid', $agentUuids)
-                ->delete();
-
-            $deleted = CallCenterAgents::query()
-                ->where('domain_uuid', session('domain_uuid'))
-                ->whereIn('call_center_agent_uuid', $agentUuids)
-                ->delete();
-
-            $this->clearCaches();
+            DB::afterCommit(fn () => $this->clearCaches());
 
             return $deleted;
         });
@@ -210,8 +194,8 @@ class BasicQueueService
                 return false;
             }
 
-            return (string) ($tier['tier_level'] ?? 0) !== (string) $existingTier->tier_level
-                || (string) ($tier['tier_position'] ?? 0) !== (string) $existingTier->tier_position;
+            return (string) ($tier['tier_level'] ?? 1) !== (string) $existingTier->tier_level
+                || (string) ($tier['tier_position'] ?? 1) !== (string) $existingTier->tier_position;
         });
 
         $this->deleteRuntimeTiers($removed, false);
@@ -225,7 +209,7 @@ class BasicQueueService
         CallCenterQueueAgents::query()
             ->where('domain_uuid', session('domain_uuid'))
             ->where('call_center_queue_uuid', $queue->call_center_queue_uuid)
-            ->delete();
+            ->get()->each->delete();
 
         foreach ($incoming as $tier) {
             $agent = $agents->get($tier['call_center_agent_uuid']);
@@ -241,8 +225,8 @@ class BasicQueueService
                 'call_center_agent_uuid' => $agent->call_center_agent_uuid,
                 'agent_name' => $agent->agent_name,
                 'queue_name' => $queue->queue_extension . '@' . session('domain_name'),
-                'tier_level' => (string) ($tier['tier_level'] ?? 0),
-                'tier_position' => (string) ($tier['tier_position'] ?? 0),
+                'tier_level' => (string) ($tier['tier_level'] ?? 1),
+                'tier_position' => (string) ($tier['tier_position'] ?? 1),
                 'insert_date' => now(),
                 'insert_user' => session('user_uuid'),
             ]);
@@ -351,7 +335,6 @@ class BasicQueueService
             ),
             "\t\t" . '<action application="answer" data=""/>',
             sprintf("\t\t" . '<action application="set" data="call_center_queue_uuid=%s"/>', $this->xml($queue->call_center_queue_uuid)),
-            sprintf("\t\t" . '<action application="set" data="queue_extension=%s"/>', $this->xml($queue->queue_extension)),
             "\t\t" . '<action application="set" data="cc_export_vars=${cc_export_vars},call_center_queue_uuid,sip_h_Alert-Info"/>',
             "\t\t" . '<action application="set" data="hangup_after_bridge=true"/>',
         ];
@@ -480,27 +463,6 @@ class BasicQueueService
                 'bgapi callcenter_config agent reload %s',
                 $agent->call_center_agent_uuid
             ));
-        });
-    }
-
-    private function deleteRuntimeAgents(Collection $agents): void
-    {
-        $agents = $agents
-            ->filter(fn ($agent) => $agent instanceof CallCenterAgents && filled($agent->call_center_agent_uuid))
-            ->unique('call_center_agent_uuid')
-            ->values();
-
-        if ($agents->isEmpty()) {
-            return;
-        }
-
-        $this->withEventSocket(function ($fp) use ($agents) {
-            foreach ($agents as $agent) {
-                event_socket_request($fp, sprintf(
-                    'api callcenter_config agent del %s',
-                    $agent->call_center_agent_uuid
-                ));
-            }
         });
     }
 
@@ -636,14 +598,17 @@ class BasicQueueService
 
     private function queueXml(): string
     {
+        $audioAvailable = class_exists(\Modules\ContactCenter\Services\Ha\HaSettings::class);
         return CallCenterQueues::query()
-            ->with('domain:domain_uuid,domain_name')
+            ->with(['domain:domain_uuid,domain_name', 'dialplan:dialplan_uuid,domain_uuid,dialplan_xml'])
             ->orderBy('queue_name')
             ->get()
-            ->map(function (CallCenterQueues $queue) {
+            ->map(function (CallCenterQueues $queue) use ($audioAvailable) {
                 $domainName = $this->domainName($queue->domain_uuid, $queue->domain);
                 $queueLabel = str_replace(' ', '-', (string) $queue->queue_name);
                 $mohSound = $queue->queue_moh_sound ?: 'local_stream://default';
+                $managedAudio = $audioAvailable && $queue->dialplan?->domain_uuid === $queue->domain_uuid
+                    && str_contains($queue->dialplan?->dialplan_xml ?? '', 'cc_queue_audio_managed=true');
 
                 return implode("\n", [
                     sprintf(
@@ -668,8 +633,8 @@ class BasicQueueService
                     sprintf("\t\t\t<param name=\"tier-rule-no-agent-no-wait\" value=\"%s\"/>", $this->xml($queue->queue_tier_rule_no_agent_no_wait ?? 'false')),
                     sprintf("\t\t\t<param name=\"discard-abandoned-after\" value=\"%s\"/>", $this->xml($queue->queue_discard_abandoned_after ?? '900')),
                     sprintf("\t\t\t<param name=\"abandoned-resume-allowed\" value=\"%s\"/>", $this->xml($queue->queue_abandoned_resume_allowed ?? 'false')),
-                    sprintf("\t\t\t<param name=\"announce-sound\" value=\"%s\"/>", $this->xml($queue->queue_announce_sound)),
-                    sprintf("\t\t\t<param name=\"announce-frequency\" value=\"%s\"/>", $this->xml($queue->queue_announce_frequency)),
+                    $managedAudio ? null : sprintf("\t\t\t<param name=\"announce-sound\" value=\"%s\"/>", $this->xml($queue->queue_announce_sound)),
+                    $managedAudio ? null : sprintf("\t\t\t<param name=\"announce-frequency\" value=\"%s\"/>", $this->xml($queue->queue_announce_frequency)),
                     "\t\t</queue>",
                 ]);
             })
@@ -679,21 +644,23 @@ class BasicQueueService
 
     private function agentXml(): string
     {
+        $preserveStatus = class_exists(\Modules\ContactCenter\Services\Ha\HaSettings::class)
+            && app(\Modules\ContactCenter\Services\Ha\HaSettings::class)->enabled();
         return CallCenterAgents::query()
             ->with('domain:domain_uuid,domain_name')
             ->orderBy('agent_name')
             ->get()
-            ->map(function (CallCenterAgents $agent) {
+            ->map(function (CallCenterAgents $agent) use ($preserveStatus) {
                 $domainName = $this->domainName($agent->domain_uuid, $agent->domain);
 
                 return sprintf(
-                    '<agent name="%s" label="%s@%s" type="%s" contact="%s" status="%s" no-answer-delay-time="%s" max-no-answer="%s" wrap-up-time="%s" reject-delay-time="%s" busy-delay-time="%s"/>',
+                    '<agent name="%s" label="%s@%s" type="%s" contact="%s"%s no-answer-delay-time="%s" max-no-answer="%s" wrap-up-time="%s" reject-delay-time="%s" busy-delay-time="%s"/>',
                     $this->xml($agent->call_center_agent_uuid),
                     $this->xml($agent->agent_name),
                     $this->xml($domainName),
                     $this->xml($agent->agent_type ?: 'callback'),
                     $this->xml($this->agentContact($agent)),
-                    $this->xml($agent->agent_status ?: 'Logged Out'),
+                    $preserveStatus ? '' : ' status="'.$this->xml($agent->agent_status ?: 'Logged Out').'"',
                     $this->xml($agent->agent_no_answer_delay_time ?? '30'),
                     $this->xml($agent->agent_max_no_answer ?? '0'),
                     $this->xml($agent->agent_wrap_up_time ?? '10'),

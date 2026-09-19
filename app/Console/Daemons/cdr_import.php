@@ -126,6 +126,8 @@ if (!class_exists('cdr_import')) {
 			$this->fields[] = "caller_id_name";
 			$this->fields[] = "caller_id_number";
 			$this->fields[] = "caller_destination";
+			$this->fields[] = "cc_callback_attempt_uuid";
+			$this->fields[] = "cc_callback_role";
 			$this->fields[] = "destination_number";
 			$this->fields[] = "source_number";
 			$this->fields[] = "start_epoch";
@@ -263,6 +265,94 @@ if (!class_exists('cdr_import')) {
 				}
 			}
 
+		}
+
+		/**
+		 * Call-leg status is independent of callback confirmation/bridging.
+		 * Loopbacks answer internally, so only an actual SIP answer counts.
+		 */
+		public static function call_status(SimpleXMLElement $variables, string $destination_number, string $missed_call): string {
+			$attempt = (string) ($variables->cc_callback_attempt ?? '');
+			// Only the original queue member sets this marker after receiving a
+			// successful acceptance response. EXIT_WITH_KEY alone is not proof.
+			if ((string) ($variables->cc_side ?? '') === 'member'
+				&& $attempt === ''
+				&& (string) ($variables->cc_callback_role ?? '') === ''
+				&& preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', urldecode((string) ($variables->cc_callback_accepted ?? '')))) {
+				return 'callback_requested';
+			}
+			if (preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $attempt)
+				&& ((string) $variables->cc_callback_cdr_answered === 'true'
+					|| (str_starts_with(urldecode((string) $variables->channel_name), 'sofia/') && (int) $variables->answer_epoch > 0))) {
+				return 'answered';
+			}
+
+			$status = null;
+			$failed_array = array(
+			"CALL_REJECTED",
+			"CHAN_NOT_IMPLEMENTED",
+			"DESTINATION_OUT_OF_ORDER",
+			"EXCHANGE_ROUTING_ERROR",
+			"INCOMPATIBLE_DESTINATION",
+			"INVALID_NUMBER_FORMAT",
+			"MANDATORY_IE_MISSING",
+			"NETWORK_OUT_OF_ORDER",
+			"NORMAL_TEMPORARY_FAILURE",
+			"NORMAL_UNSPECIFIED",
+			"NO_ROUTE_DESTINATION",
+			"RECOVERY_ON_TIMER_EXPIRE",
+			"REQUESTED_CHAN_UNAVAIL",
+			"SUBSCRIBER_ABSENT",
+			"SYSTEM_SHUTDOWN",
+			"UNALLOCATED_NUMBER"
+			);
+			if ($variables->billsec > 0) {
+				$status = 'answered';
+			}
+			if ($variables->hangup_cause == 'NO_ANSWER') {
+				$status = 'no_answer';
+			}
+			if ($missed_call == 'true') {
+				$status = 'missed';
+			}
+			if (substr($destination_number, 0, 3) == '*99') {
+				$status = 'voicemail';
+			}
+			if (isset($variables->voicemail_answer_stamp)) {
+				$status = 'voicemail';
+			}
+			if ($variables->hangup_cause == 'ORIGINATOR_CANCEL') {
+				$status = 'cancelled';
+			}
+			if ($variables->hangup_cause == 'USER_BUSY') {
+				$status = 'busy';
+			}
+			if (in_array($variables->hangup_cause, $failed_array)) {
+				$status = 'failed';
+			}
+			if (!isset($status) && in_array($variables->last_bridge_hangup_cause, $failed_array)) {
+				$status = 'failed';
+			}
+			if ($variables->cc_side == 'agent' && $variables->billsec == 0
+				&& !in_array($status, ['busy', 'cancelled', 'failed'], true)) {
+				$status = 'no_answer';
+			}
+			if (!isset($status)  && $variables->billsec == 0) {
+				$status = 'failed';
+			}
+			return $status ?? 'failed';
+		}
+
+		/** Link real callback endpoints without changing their native timing or parent UUID. */
+		public static function callback_fields(SimpleXMLElement $variables): array {
+			$attempt = (string) ($variables->cc_callback_attempt ?? '');
+			$role = (string) ($variables->cc_callback_role ?? '');
+			if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $attempt)
+				|| !in_array($role, ['agent', 'customer'], true)
+				|| !str_starts_with(urldecode((string) $variables->channel_name), 'sofia/')) {
+				return [];
+			}
+			return ['cc_callback_attempt_uuid' => $attempt, 'cc_callback_role' => $role];
 		}
 
 		/**
@@ -429,8 +519,9 @@ if (!class_exists('cdr_import')) {
 						}
 						unset($i);
 
-					//if last_sent_callee_id_number is set use it for the destination_number
-						if (!empty($xml->variables->last_sent_callee_id_number)) {
+					//Callback endpoints keep the dialed destination, not a connected-party display update.
+					//Other calls retain the existing last_sent_callee_id_number handling.
+						if (self::callback_fields($xml->variables) === [] && !empty($xml->variables->last_sent_callee_id_number)) {
 							$destination_number = urldecode($xml->variables->last_sent_callee_id_number);
 						}
 
@@ -536,57 +627,10 @@ if (!class_exists('cdr_import')) {
 							$last_bridge = urldecode($bridge);
 						}
 
-					//determine the call status
-						$failed_array = array(
-						"CALL_REJECTED",
-						"CHAN_NOT_IMPLEMENTED",
-						"DESTINATION_OUT_OF_ORDER",
-						"EXCHANGE_ROUTING_ERROR",
-						"INCOMPATIBLE_DESTINATION",
-						"INVALID_NUMBER_FORMAT",
-						"MANDATORY_IE_MISSING",
-						"NETWORK_OUT_OF_ORDER",
-						"NORMAL_TEMPORARY_FAILURE",
-						"NORMAL_UNSPECIFIED",
-						"NO_ROUTE_DESTINATION",
-						"RECOVERY_ON_TIMER_EXPIRE",
-						"REQUESTED_CHAN_UNAVAIL",
-						"SUBSCRIBER_ABSENT",
-						"SYSTEM_SHUTDOWN",
-						"UNALLOCATED_NUMBER"
-						);
-						if ($xml->variables->billsec > 0) {
-							$status = 'answered';
-						}
-						if ($xml->variables->hangup_cause == 'NO_ANSWER') {
-							$status = 'no_answer';
-						}
-						if ($missed_call == 'true') {
-							$status = 'missed';
-						}
-						if (substr($destination_number, 0, 3) == '*99') {
-							$status = 'voicemail';
-						}
-						if (isset($xml->variables->voicemail_answer_stamp)) {
-							$status = 'voicemail';
-						}
-						if ($xml->variables->hangup_cause == 'ORIGINATOR_CANCEL') {
-							$status = 'cancelled';
-						}
-						if ($xml->variables->hangup_cause == 'USER_BUSY') {
-							$status = 'busy';
-						}
-						if (in_array($xml->variables->hangup_cause, $failed_array)) {
-							$status = 'failed';
-						}
-						if (!isset($status) && in_array($xml->variables->last_bridge_hangup_cause, $failed_array)) {
-							$status = 'failed';
-						}
-						if ($xml->variables->cc_side == 'agent' && $xml->variables->billsec == 0) {
-							$status = 'no_answer';
-						}
-						if (!isset($status)  && $xml->variables->billsec == 0) {
-							$status = 'failed';
+					// Keep the SIP leg's answer separate from the callback outcome.
+						$status = self::call_status($xml->variables, (string) $destination_number, (string) ($missed_call ?? 'false'));
+						if (in_array($status, ['answered', 'callback_requested'], true)) {
+							$missed_call = 'false';
 						}
 
 					//set the provider id
@@ -607,6 +651,7 @@ if (!class_exists('cdr_import')) {
 						$this->array[$key]['caller_id_name'] = $caller_id_name;
 						$this->array[$key]['caller_id_number'] = $caller_id_number;
 						$this->array[$key]['caller_destination'] = $caller_destination;
+						$this->array[$key] = array_merge($this->array[$key], self::callback_fields($xml->variables));
 						$this->array[$key]['accountcode'] = urldecode($accountcode);
 						$this->array[$key]['default_language'] = urldecode($xml->variables->default_language);
 						$this->array[$key]['bridge_uuid'] = urldecode($xml->variables->bridge_uuid) ?: $last_bridge;
@@ -658,22 +703,6 @@ if (!class_exists('cdr_import')) {
                         $this->array[$key]['cc_member_session_uuid'] = urldecode($xml->variables->cc_member_session_uuid);
                     }
 
-                    if (isset($xml->variables->call_center_queue_uuid) && is_uuid(urldecode($xml->variables->call_center_queue_uuid))) {
-                        $call_center_queue_uuid = urldecode($xml->variables->call_center_queue_uuid);
-                    }
-                    if (!isset($call_center_queue_uuid) && isset($xml->variables->cc_queue)) {
-                        $sql = "select call_center_queue_uuid from v_call_center_queues ";
-                        $sql .= "where domain_uuid = :domain_uuid ";
-                        $sql .= "and queue_extension = :queue_extension ";
-                        $parameters['domain_uuid'] = $domain_uuid;
-                        $parameters['queue_extension'] = explode("@", $xml->variables->cc_queue);
-                        $database = new database;
-                        $call_center_queue_uuid = $database->select($sql, $parameters, 'column');
-                        unset($parameters);
-                    }
-                    if (isset($call_center_queue_uuid) && is_uuid($call_center_queue_uuid)) {
-                        $this->array[$key]['call_center_queue_uuid'] = $call_center_queue_uuid;
-                    }
                     if (isset($xml->variables->cc_agent_uuid) && is_uuid(urldecode($xml->variables->cc_agent_uuid))) {
                         $this->array[$key]['cc_agent_uuid'] = urldecode($xml->variables->cc_agent_uuid);
                     }
@@ -696,7 +725,8 @@ if (!class_exists('cdr_import')) {
                     $this->array[$key]['cc_cancel_reason'] = urldecode($xml->variables->cc_cancel_reason);
                     $this->array[$key]['cc_cause'] = urldecode($xml->variables->cc_cause);
                     $this->array[$key]['waitsec'] = urldecode($xml->variables->waitsec);
-                    if (urldecode($xml->variables->cc_side) == 'agent') {
+                    if (urldecode($xml->variables->cc_side) == 'agent'
+                        && ($this->array[$key]['cc_callback_role'] ?? null) !== 'agent') {
                         $this->array[$key]['direction'] = 'inbound';
                     }
 
@@ -819,6 +849,24 @@ if (!class_exists('cdr_import')) {
 						if (!empty($domain_name)) {
 							$this->array[$key]['domain_name'] = $domain_name;
 						}
+
+                    // Resolve queue identity only after its tenant is known.
+                    if (isset($xml->variables->call_center_queue_uuid) && is_uuid(urldecode($xml->variables->call_center_queue_uuid))) {
+                        $call_center_queue_uuid = urldecode($xml->variables->call_center_queue_uuid);
+                    }
+                    if (!isset($call_center_queue_uuid) && !empty($domain_uuid) && isset($xml->variables->cc_queue)) {
+                        $sql = "select call_center_queue_uuid from v_call_center_queues ";
+                        $sql .= "where domain_uuid = :domain_uuid ";
+                        $sql .= "and queue_extension = :queue_extension ";
+                        $parameters['domain_uuid'] = $domain_uuid;
+                        $parameters['queue_extension'] = explode("@", urldecode((string) $xml->variables->cc_queue))[0];
+                        $database = new database;
+                        $call_center_queue_uuid = $database->select($sql, $parameters, 'column');
+                        unset($parameters);
+                    }
+                    if (isset($call_center_queue_uuid) && is_uuid($call_center_queue_uuid)) {
+                        $this->array[$key]['call_center_queue_uuid'] = $call_center_queue_uuid;
+                    }
 
 					//get the recording details
 						if (isset($xml->variables->record_path) && isset($xml->variables->record_name)) {

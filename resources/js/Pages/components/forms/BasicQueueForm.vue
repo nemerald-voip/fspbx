@@ -192,11 +192,11 @@
                                                                     return `<span class='text-base font-semibold'>${label}</span>`;
                                                                 }" />
                                                             <SelectElement name="tier_level" :items="tierOptions"
-                                                                :search="true" :native="false" label="Level"
+                                                                :search="true" :native="false" allow-absent label="Level"
                                                                 input-type="search" autocomplete="off"
                                                                 :columns="{ sm: { container: 3 } }" size="sm" />
                                                             <SelectElement name="tier_position" :items="tierOptions"
-                                                                :search="true" :native="false" label="Position"
+                                                                :search="true" :native="false" allow-absent label="Position"
                                                                 input-type="search" autocomplete="off"
                                                                 :columns="{ sm: { container: 3 } }" size="sm" />
                                                         </ObjectElement>
@@ -350,7 +350,7 @@ const strategyOptions = [
     { value: "random", label: "Random" },
 ];
 
-const tierOptions = Array.from({ length: 20 }, (_, i) => {
+const tierOptions = Array.from({ length: 10 }, (_, i) => {
     const value = String(i + 1);
     return { value, label: value };
 });
@@ -375,8 +375,8 @@ const defaultValues = computed(() => ({
     tiers: (props.options?.tiers ?? []).map((tier) => ({
         call_center_agent_uuid: tier.call_center_agent_uuid,
         agent_label: tier.agent_label || tier.agent_name || null,
-        tier_level: String(tier.tier_level ?? 0),
-        tier_position: String(tier.tier_position ?? 0),
+        tier_level: String(tier.tier_level ?? 1),
+        tier_position: String(tier.tier_position ?? 1),
     })),
 }));
 
@@ -419,8 +419,8 @@ const handleAgentSelect = (option) => {
             {
                 call_center_agent_uuid: option.value,
                 agent_label: option.label,
-                tier_level: "0",
-                tier_position: "0",
+                tier_level: "1",
+                tier_position: "1",
             },
         ],
     });

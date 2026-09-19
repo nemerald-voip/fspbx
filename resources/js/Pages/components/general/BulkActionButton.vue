@@ -46,6 +46,9 @@ const LinkOffIcon = defineAsyncComponent(() => import('../icons/LinkOffIcon.vue'
 const SyncIcon = defineAsyncComponent(() => import('../icons/SyncIcon.vue'));
 const PencilSquareIcon = defineAsyncComponent(() => import('@heroicons/vue/20/solid/PencilSquareIcon'));
 const TrashIcon = defineAsyncComponent(() => import('@heroicons/vue/20/solid/TrashIcon'));
+const DocumentDuplicateIcon = defineAsyncComponent(() => import('@heroicons/vue/20/solid/DocumentDuplicateIcon'));
+const CheckCircleIcon = defineAsyncComponent(() => import('@heroicons/vue/20/solid/CheckCircleIcon'));
+const XCircleIcon = defineAsyncComponent(() => import('@heroicons/vue/20/solid/XCircleIcon'));
 
 // Define props to accept actions from the parent component
 const props = defineProps({
@@ -58,6 +61,9 @@ const iconMap = {
   RestartIcon,
   PencilSquareIcon,
   TrashIcon,
+  DocumentDuplicateIcon,
+  CheckCircleIcon,
+  XCircleIcon,
   LinkOffIcon,
   SyncIcon
 };

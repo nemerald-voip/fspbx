@@ -5,8 +5,8 @@ namespace App\Services;
 use App\Models\ProFeatures;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Process;
 use Nwidart\Modules\Facades\Module;
-use Symfony\Component\Console\Exception\CommandNotFoundException;
 
 class ProFeaturesService
 {
@@ -20,13 +20,33 @@ class ProFeaturesService
     public function refreshModules(): array
     {
         $enabled = collect(Module::allEnabled())->map(fn($m) => $m->getName())->values();
+        $result = ['updated' => [], 'skipped' => [], 'errors' => []];
+        $releaseModules = collect();
 
-        if ($enabled->count() == 0) return ['updated' => [], 'skipped' => [], 'errors' => []];
+        foreach ($enabled as $moduleName) {
+            if (! $this->isGitManagedModule($moduleName)) {
+                $releaseModules->push($moduleName);
+                continue;
+            }
 
-        return $this->syncModules(
-            mode: 'enabled_only',
-            enabledModules: $enabled
-        );
+            // Git supplies these modules' code. Apply their local update hooks
+            // independently of artifact versions and the release download API.
+            try {
+                $this->runModuleCommand(['modules:configure', $moduleName, '--update-only']);
+                $result['updated'][] = "{$moduleName}: local update completed (Git checkout)";
+            } catch (\Throwable $error) {
+                $result['errors'][] = "{$moduleName}: local update failed: {$error->getMessage()}";
+            }
+        }
+
+        if ($releaseModules->isNotEmpty()) {
+            $releases = $this->syncModules(mode: 'enabled_only', enabledModules: $releaseModules);
+            foreach (array_keys($result) as $key) {
+                $result[$key] = array_merge($result[$key], $releases[$key]);
+            }
+        }
+
+        return $result;
     }
 
     /**
@@ -56,7 +76,7 @@ class ProFeaturesService
                 $moduleName = $module->getName();
 
                 // optional uninstall hook
-                $this->callIfExists("module:uninstall-{$moduleName}");
+                $this->runModuleCommand(['modules:configure', $moduleName, '--uninstall']);
 
                 Module::disable($moduleName);
                 Module::delete($moduleName);
@@ -250,9 +270,8 @@ class ProFeaturesService
             }
 
             $this->saveAndExtract($artifactName, $content, $moduleName);
-            $this->recordInstalledModuleVersion($moduleName, $version);
-
             $this->enableInstalledModule($moduleName);
+            $this->recordInstalledModuleVersion($moduleName, $version);
 
             return true;
         } catch (\Throwable $e) {
@@ -289,25 +308,46 @@ class ProFeaturesService
 
         $data['version'] = $version;
 
-        file_put_contents(
+        if (file_put_contents(
             $moduleJson,
             json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . PHP_EOL
-        );
+        ) === false) {
+            throw new \RuntimeException("Unable to record installed version for {$moduleName}");
+        }
     }
 
     protected function enableInstalledModule(string $moduleName): void
     {
-        Artisan::call('module:enable', ['module' => $moduleName]);
-        Artisan::call('module:migrate', ['module' => $moduleName, '--force' => true]);
+        // The parent application booted before the artifact was extracted.
+        // Bootstrap again after enabling so newly shipped commands are registered.
+        $this->runModuleCommand(['module:enable', $moduleName]);
+        $this->runModuleCommand(['modules:configure', $moduleName]);
+    }
 
-        try {
-            Artisan::call('module:seed', ['module' => $moduleName, '--force' => true]);
-        } catch (\Throwable $e) {
-            // optional
+    protected function runModuleCommand(array $arguments): void
+    {
+        $result = Process::path(base_path())->timeout(600)->run([
+            '/usr/bin/php', base_path('artisan'), ...$arguments, '--no-interaction',
+        ]);
+        if (! $result->successful()) {
+            throw new \RuntimeException($arguments[0].' failed: '.trim($result->errorOutput().' '.$result->output()));
         }
+    }
 
-        $this->callIfExists("module:install-{$moduleName}");
-        $this->callIfExists("module:update-{$moduleName}");
+    public function getSupervisorProgramsToRestart(string $configurationDirectory = '/etc/supervisor/conf.d'): array
+    {
+        $programs = [];
+        foreach (Module::allEnabled() as $module) {
+            // Read the newly downloaded manifest, not the parent process's module cache.
+            $manifest = json_decode((string) file_get_contents($module->getPath().'/module.json'), true);
+            foreach (($manifest['supervisor'] ?? []) as $program) {
+                if (is_string($program) && preg_match('/^[a-zA-Z0-9_-]+$/D', $program)
+                    && is_file($configurationDirectory.'/'.$program.'.conf')) {
+                    $programs[] = $program;
+                }
+            }
+        }
+        return array_values(array_unique($programs));
     }
 
     protected function isGitManagedModule(string $moduleName): bool
@@ -404,15 +444,6 @@ class ProFeaturesService
         Cache::forget('pro_feature:fspbx:license');
     }
 
-    protected function callIfExists(string $command): void
-    {
-        try {
-            Artisan::call($command);
-        } catch (CommandNotFoundException $e) {
-            // ignore
-        }
-    }
-
     // --- move your existing extraction helpers here (same as you already have) ---
 
     protected function saveAndExtract(string $artifactName, string $artifactContent, string $moduleName): void
@@ -461,6 +492,19 @@ class ProFeaturesService
 
             if (!file_exists("{$tmpExtractPath}/module.json")) {
                 throw new \RuntimeException("artifact {$artifactName} did not contain module.json");
+            }
+
+            // A release is installed only after its lifecycle hooks succeed.
+            // Preserve the previous version in the staged tree so a failed hook
+            // remains eligible for retry on the next module refresh.
+            $manifestPath = "{$tmpExtractPath}/module.json";
+            $manifest = json_decode((string) file_get_contents($manifestPath), true);
+            if (! is_array($manifest)) {
+                throw new \RuntimeException("artifact {$artifactName} contains invalid module.json");
+            }
+            $manifest['version'] = $this->installedModuleVersion($moduleName) ?? '0.0.0';
+            if (file_put_contents($manifestPath, json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES).PHP_EOL) === false) {
+                throw new \RuntimeException('Unable to prepare module version.');
             }
 
             if (file_exists($extractPath)) {

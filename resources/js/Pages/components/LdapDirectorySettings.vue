@@ -19,7 +19,7 @@
             </div>
         </div>
 
-        <ScheduledJobServerControl :initial-state="activeNode" :routes="settings.routes"
+        <ScheduledJobServerControl v-if="permissions.manage_active_node" :initial-state="activeNode" :routes="settings.routes"
             :manage="permissions.manage_active_node" @success="messages => emit('success', messages)"
             @error="messages => emit('error', messages)" />
 

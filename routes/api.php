@@ -645,6 +645,14 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/conference-centers/bulk-toggle', [ConferenceCenterController::class, 'bulkToggle'])->name('conference-centers.bulk.toggle');
 
     // Music on Hold
+    Route::get('streams/data', [\App\Http\Controllers\StreamController::class, 'getData'])->name('streams.data');
+    Route::get('streams/module-status', [\App\Http\Controllers\StreamController::class, 'moduleStatus'])->name('streams.module.status');
+    Route::post('streams/item-options', [\App\Http\Controllers\StreamController::class, 'getItemOptions'])->name('streams.item.options');
+    Route::post('streams/select-all', [\App\Http\Controllers\StreamController::class, 'selectAll'])->name('streams.select.all');
+    Route::post('streams/bulk-action', [\App\Http\Controllers\StreamController::class, 'bulkAction'])->name('streams.bulk.action');
+    Route::post('streams', [\App\Http\Controllers\StreamController::class, 'store'])->name('streams.store');
+    Route::put('streams/{stream}', [\App\Http\Controllers\StreamController::class, 'update'])->name('streams.update');
+
     Route::post('music-on-hold', [MusicOnHoldController::class, 'store'])->name('music-on-hold.store');
     Route::put('music-on-hold/{music_on_hold}', [MusicOnHoldController::class, 'update'])->name('music-on-hold.update');
     Route::get('/music-on-hold/data', [MusicOnHoldController::class, 'getData'])->name('music-on-hold.data');
@@ -658,6 +666,9 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
 
     // Modules
     Route::get('/modules/data', [SwitchModuleController::class, 'getData'])->name('modules.data');
+    Route::post('/modules/item-options', [SwitchModuleController::class, 'itemOptions'])->name('modules.item.options');
+    Route::post('/modules', [SwitchModuleController::class, 'store'])->name('modules.store');
+    Route::put('/modules/{module}', [SwitchModuleController::class, 'update'])->whereUuid('module')->name('modules.update');
     Route::post('/modules/select-all', [SwitchModuleController::class, 'selectAll'])->name('modules.select.all');
     Route::post('/modules/bulk-start', [SwitchModuleController::class, 'bulkStart'])->name('modules.bulk.start');
     Route::post('/modules/bulk-stop', [SwitchModuleController::class, 'bulkStop'])->name('modules.bulk.stop');

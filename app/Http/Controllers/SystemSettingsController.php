@@ -76,6 +76,11 @@ class SystemSettingsController extends Controller
                         ? $this->sipCapture->settings()
                         : null;
                 },
+                'scheduled_jobs' => function () {
+                    return userCheckPermission('scheduled_jobs_manage')
+                        ? app(ScheduledJobCoordinationController::class)->controlProps()
+                        : null;
+                },
                 'permissions' => function () {
                     return $this->getUserPermissions();
                 },
@@ -226,6 +231,7 @@ class SystemSettingsController extends Controller
     public function getUserPermissions()
     {
         $permissions = [];
+        $permissions['scheduled_jobs_manage'] = userCheckPermission('scheduled_jobs_manage');
         $permissions['payment_gateways_view'] = userCheckPermission('payment_gateways_view');
         $permissions['call_transcription_settings_view'] = userCheckPermission('call_transcription_settings_view');
         $permissions['default_setting_view'] = userCheckPermission('default_setting_view');

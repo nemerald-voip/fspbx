@@ -204,7 +204,7 @@ class RecordingsController extends Controller
                 /** @var CallCenterQueues $entity */
                 $entity = CallCenterQueues::findOrFail($entityid);
                 $entity->queue_greeting = $recording->recording_filename;
-                $entity->save();
+                \Illuminate\Support\Facades\DB::transaction(fn () => $entity->save());
                 break;
             default:
                 return response()->json([
