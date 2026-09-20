@@ -1,0 +1,63 @@
+name: Sync GitHub Releases to Blog
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch: # Allows manual execution to catch up past releases
+
+jobs:
+  sync-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Fetch and Generate Blog Posts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          # 1. Fetch releases JSON from GitHub API (handles up to 100 past releases)
+          RELEASES_JSON=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+            "https://github.com")
+
+          # 2. Loop through every release using jq to extract required variables
+          echo "$RELEASES_JSON" | jq -c '.[]' | while read -r release; do
+            TITLE=$(echo "$release" | jq -r '.name // .tag_name')
+            TAG=$(echo "$release" | jq -r '.tag_name')
+            DATE=$(echo "$release" | jq -r '.published_at')
+            BODY=$(echo "$release" | jq -r '.body')
+            DRAFT=$(echo "$release" | jq -r '.draft')
+            PRERELEASE=$(echo "$release" | jq -r '.prerelease')
+
+            # Skip drafts and prereleases if you don't want them in your blog
+            if [ "$DRAFT" = "true" ] || [ "$PRERELEASE" = "true" ]; then
+              continue
+            fi
+
+            # Format the date into YYYY-MM-DD for the Docusaurus filename
+            POST_DATE=$(echo "$DATE" | cut -d'T' -f1)
+            FILENAME="blog/${POST_DATE}-${TAG}.md"
+
+            # Create the file only if it doesn't already exist
+            if [ ! -f "$FILENAME" ]; then
+              echo "Generating blog post for $TAG..."
+              mkdir -p blog
+
+              cat << EOF > "$FILENAME"
+---
+title: "$TITLE ($TAG)"
+date: $DATE
+tags: [release]
+---
+
+$BODY
+EOF
+            fi
+          done
+
+      - name: Commit and push changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "docs: backfill historical release notes"
+          branch: main
