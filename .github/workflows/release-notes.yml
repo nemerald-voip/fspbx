@@ -37,7 +37,7 @@ jobs:
 
             # Format the date into YYYY-MM-DD for the Docusaurus filename
             POST_DATE=$(echo "$DATE" | cut -d'T' -f1)
-            FILENAME="blog/${POST_DATE}-${TAG}.md"
+            FILENAME="documentation/blog/${POST_DATE}-${TAG}.md"
 
             # Create the file only if it doesn't already exist
             if [ ! -f "$FILENAME" ]; then
