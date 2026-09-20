@@ -42,7 +42,7 @@ jobs:
             # Create the file only if it doesn't already exist
             if [ ! -f "$FILENAME" ]; then
               echo "Generating blog post for $TAG..."
-              mkdir -p blog
+              mkdir -p documentation/blog
 
               cat << EOF > "$FILENAME"
 ---
