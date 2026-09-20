@@ -2,7 +2,7 @@
 id: postgres-replication
 title: PostgreSQL Logical Replication (Bi-Directional)
 slug: /ha/postgres-replication
-sidebar_position: 3
+sidebar_position: 2
 ---
 
 # Bi-Directional PostgreSQL Logical Replication

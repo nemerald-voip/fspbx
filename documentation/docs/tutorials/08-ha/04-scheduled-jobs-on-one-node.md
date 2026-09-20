@@ -11,6 +11,8 @@ Some FS PBX background jobs must have **at most one authorized database writer**
 
 This guide explains how FS PBX decides which server is allowed to run those jobs, and what you need to configure after setting up a redundant pair.
 
+For step-by-step discovery, approval, and owner selection in the interface, start with [Scheduled Job Server Setup](/docs/configuration/scheduled-jobs/server-ownership/).
+
 ## Why this matters
 
 In a redundant deployment both nodes run the same code, the same scheduler, and their own local queue. Nothing stops both of them from starting the same job at the same minute.
@@ -52,7 +54,7 @@ The separate `scheduled_jobs.coordination_secret` authenticates peer requests an
 
 ## Setting it from the interface
 
-Directory synchronization is the first consumer, so the global control is on its page.
+The global control is available under **System Settings > Scheduled Jobs**, **Contact Center Settings > Scheduled Jobs** when the module is installed, and **Account Settings > Directory Services**.
 
 1. Open **Account Settings**.
 2. Select the **Directory Services** tab.
@@ -64,7 +66,7 @@ Directory synchronization is the first consumer, so the global control is on its
 
 After initialization, perform approvals, retirements, secret rotation and legacy confirmation on the current owner. Normal ownership transfers can be requested from either UI node and are sent to that owner. Initial membership is a verified pair, not automatic discovery-based cluster membership.
 
-Only a super administrator can approve, retire, or select nodes. Other administrators can still see the job owner, this server, the ownership version, a pending transfer, reachability, and where work is actually running.
+The shared control and its API actions require `scheduled_jobs_manage`, assigned to superadmins by default. The panel shows the job owner, this server, the ownership version, a pending transfer, reachability, and where work is actually running.
 
 On a standalone installation the panel collapses to a single line: there is nothing to coordinate, so the ownership detail, the peer secret warning, and the transfer control stay out of the way until a second server exists.
 
@@ -78,7 +80,7 @@ Consumers with external resources can also defer completion through `ScheduledJo
 
 LDAP fetches remote data outside the coordination lock. Every database write batch, including run creation, completion and failure, rechecks node identity, owner, generation, running claim and deadline under the same local PostgreSQL transaction lock used by handoff. Authorization is checked again before commit. An expired claim revokes permission; it does **not** prove the operating-system process stopped. A paused worker that resumes cannot commit after revocation.
 
-The generic `scheduled-jobs:maintain` command checks for expired executions and progresses pending transfers each minute. Finishing an execution also attempts completion immediately; maintenance is the fallback when a worker crashes or is killed before it can report completion. It does not choose an owner or initiate a transfer. Maintenance writes only on an actual expiry or transfer transition, never a heartbeat.
+The generic `scheduled-jobs:maintain` command checks for expired executions and progresses pending transfers every five minutes. Finishing an execution also attempts completion immediately; maintenance is the fallback when a worker crashes or is killed before it can report completion. It does not choose an owner or initiate a transfer. Maintenance writes only on an actual expiry or transfer transition, never a heartbeat.
 
 The old owner stops immediately. The target starts only after logical replication delivers that ownership transaction. A delayed transaction therefore creates a safe pause rather than overlapping execution.
 
@@ -122,7 +124,7 @@ The **Sync Now** button works from either server.
 
 When you press it on the server that runs synchronization, the job is queued locally.
 
-When you press it on the other server, FS PBX marks the directory as due instead of starting the job. Queues are local to each server, so starting it there would leave the job stranded. After the due update replicates, the selected owner collects it on a scheduler pass, normally within a minute. The worker claims execution before advancing `next_sync_at`; a stale unclaimed queue item does not advance it.
+When you press it on the other server, FS PBX marks the directory as due instead of starting the job. Queues are local to each server, so starting it there would leave the job stranded. After the due update replicates, the selected owner collects it on a scheduler pass, normally within five minutes. The worker claims execution before advancing `next_sync_at`; a stale unclaimed queue item does not advance it.
 
 LDAP jobs use the dedicated `scheduled-jobs` Redis queue connection with a 900-second `retry_after`, a 600-second job deadline, and a matching Horizon supervisor. Other queues keep their existing settings. The CLI `ldap:sync` uses the same guarded service and a 600-second `pcntl` alarm. LDAP network waits are bounded and each search page rechecks authorization. Partial LDAP search results are rejected.
 
@@ -141,6 +143,7 @@ Not every scheduled job uses the same mechanism yet.
 | Job | How the server is chosen |
 | --- | ------------------------ |
 | Directory synchronization | Generic scheduled-job owner, generation, and execution claim |
+| [Contact Center callbacks](/docs/configuration/contact-center/queue-callbacks/) and callback cleanup | The same generic scheduled-job owner, generation, and execution claims |
 | Scheduled announcements | Failover DNS record, see [Scheduled Announcements](../05-configuration/13-scheduled-announcements/01-overview.md) |
 | TLS and Nginx certificate renewal | Failover DNS record recorded during certificate installation |
 | Archive call recordings to S3 | A per-server setting keyed by MAC address |
