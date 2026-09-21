@@ -6,13 +6,11 @@ use Inertia\Inertia;
 use App\Models\Gateways;
 use App\Services\FreeswitchEslService;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class ActiveCallsController extends Controller
 {
 
-    public $filters = [];
-    public $sortField;
-    public $sortOrder;
     protected $viewName = 'ActiveCalls';
     protected $searchable = ['cid_name', 'cid_num', 'dest', 'application_data', 'application', 'read_codec', 'write_codec', 'secure'];
     protected $allowedSortFields = [
@@ -32,7 +30,7 @@ class ActiveCallsController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(FreeswitchEslService $eslService)
+    public function index(Request $request)
     {
         if (! userCheckPermission('call_active_view')) {
             abort(403);
@@ -41,12 +39,7 @@ class ActiveCallsController extends Controller
         return Inertia::render(
             $this->viewName,
             [
-                'data' => function () use ($eslService) {
-                    return $this->getData($eslService);
-                },
-                'showGlobal' => function () {
-                    return userCheckPermission('call_active_all') && $this->requestWantsGlobal('filterData.showGlobal');
-                },
+                'showGlobal' => $this->filters($request)['showGlobal'],
                 'pagination' => [
                     'per_page' => fspbx_pagination_per_page(),
                     'per_page_options' => fspbx_pagination_options(),
@@ -54,10 +47,8 @@ class ActiveCallsController extends Controller
                 'permissions' => $this->permissions(),
 
                 'routes' => [
-                    'current_page' => route('active-calls.index'),
+                    'data_route' => route('active-calls.data'),
                     'select_all' => route('active-calls.select.all'),
-                    // 'bulk_delete' => route('messages.bulk.delete'),
-                    // 'bulk_update' => route('messages.bulk.update'),
                     'action' => route('active-calls.action'),
                 ]
             ]
@@ -68,35 +59,20 @@ class ActiveCallsController extends Controller
     /**
      *  Get data
      */
-    public function getData(FreeswitchEslService $eslService, $paginate = null)
+    public function getData(Request $request, FreeswitchEslService $eslService)
     {
-        $paginate ??= fspbx_pagination_per_page();
-
-        // Check if search parameter is present and not empty
-        if (!empty(request('filterData.search'))) {
-            $this->filters['search'] = request('filterData.search');
+        if (! userCheckPermission('call_active_view')) {
+            abort(403);
         }
 
-        // Check if showGlobal parameter is present and not empty
-        if (!empty(request('filterData.showGlobal'))) {
-            $this->filters['showGlobal'] = userCheckPermission('call_active_all') && $this->requestWantsGlobal('filterData.showGlobal');
-        } else {
-            $this->filters['showGlobal'] = null;
-        }
+        $filters = $this->filters($request);
+        $data = $this->builder($filters, $eslService, $request);
+        $userTz = auth()->user()->time_zone ?? 'UTC';
+        $displayTz = $filters['showGlobal']
+            ? $userTz
+            : (get_local_time_zone(session('domain_uuid')) ?? $userTz);
 
-        $requestedSortField = request()->get('sortField', 'created_epoch');
-        $requestedSortOrder = request()->get('sortOrder', 'desc');
-
-        $this->sortField = in_array($requestedSortField, $this->allowedSortFields, true)
-            ? $requestedSortField
-            : 'created_epoch';
-        $this->sortOrder = in_array($requestedSortOrder, ['asc', 'desc'], true)
-            ? $requestedSortOrder
-            : 'desc';
-
-        $data = $this->builder($this->filters, $eslService);
-
-        $data = $data->map(function ($call) {
+        $data = $data->map(function ($call) use ($displayTz) {
             // Replace gateway UUID with gateway name (unchanged)
             if (isset($call['application_data']) && strpos($call['application_data'], 'sofia/gateway') !== false) {
                 preg_match('/sofia\/gateway\/([a-z0-9\-]+)\//', $call['application_data'], $matches);
@@ -111,24 +87,10 @@ class ActiveCallsController extends Controller
                 }
             }
 
-            // ----- NEW: Duration & timestamp based on created_epoch -----
             $createdEpoch = isset($call['created_epoch']) ? (int) $call['created_epoch'] : null;
 
             // Duration start for JS (ms)
             $call['start_epoch'] = $createdEpoch ? $createdEpoch * 1000 : null;
-
-            // Decide which timezone to display timestamps in
-            $showGlobal = request('filterData.showGlobal') === 'true';
-
-            // Global: viewer = logged-in user timezone
-            $userTz = auth()->user()->time_zone ?? 'UTC';
-
-            if ($showGlobal) {
-                $displayTz = $userTz;
-            } else {
-                // Local: tenant timezone (domain from session)
-                $displayTz = get_local_time_zone(session('domain_uuid')) ?? $userTz;
-            }
 
             $call['display_timezone'] = $displayTz;
 
@@ -139,8 +101,8 @@ class ActiveCallsController extends Controller
                     ->format('Y-m-d H:i:s')
                 : null;
 
-            $call['app_full'] =
-            trim(($call['application'] ?? '') . ($call['application_data'] ? ': ' . $call['application_data'] : ''));
+            $applicationData = $call['application_data'] ?? '';
+            $call['app_full'] = trim(($call['application'] ?? '') . ($applicationData ? ': ' . $applicationData : ''));
 
             // short preview (keep it small)
             $call['app_preview'] = mb_strimwidth($call['app_full'], 0, 90, '…');
@@ -148,43 +110,36 @@ class ActiveCallsController extends Controller
             return $call;
         });
 
-        // Apply pagination manually
-        if ($paginate) {
-            $data = fspbx_paginate_collection($data, $paginate);
-        }
+        $perPage = fspbx_pagination_per_page($request);
+        $lastPage = max(1, (int) ceil($data->count() / $perPage));
+        $page = min($lastPage, max(1, (int) $request->input('page', 1)));
 
-        // logger($data);
-
-
-
-        return $data;
+        return fspbx_paginate_collection($data, $perPage, $page);
     }
 
     /**
      * @param  array  $filters
-     * @return Builder
+     * @return \Illuminate\Support\Collection
      */
-    public function builder(array $filters = [],FreeswitchEslService $eslService)
+    public function builder(array $filters, FreeswitchEslService $eslService, Request $request)
     {
 
-        // get a list of current registrations
         $data = $eslService->getAllChannels();
-
-        // logger($data);
+        [$sortField, $sortOrder] = $this->sort($request);
 
         // Apply sorting using sortBy or sortByDesc depending on the sort order
-        if ($this->sortField === 'duration') {
-            $data = $this->sortOrder === 'asc'
+        if ($sortField === 'duration') {
+            $data = $sortOrder === 'asc'
                 ? $data->sortByDesc('created_epoch')
                 : $data->sortBy('created_epoch');
-        } elseif ($this->sortOrder === 'asc') {
-            $data = $data->sortBy($this->sortField);
+        } elseif ($sortOrder === 'asc') {
+            $data = $data->sortBy($sortField);
         } else {
-            $data = $data->sortByDesc($this->sortField);
+            $data = $data->sortByDesc($sortField);
         }
 
         // Check if showGlobal is set to true, otherwise filter by context
-        if (empty($filters['showGlobal']) || $filters['showGlobal'] !== true) {
+        if (empty($filters['showGlobal']) || ! userCheckPermission('call_active_all')) {
             $domainName = session('domain_name');
 
             $data = $data->filter(function ($item) use ($domainName) {
@@ -195,14 +150,16 @@ class ActiveCallsController extends Controller
         // Apply additional filters, if any
         if (is_array($filters)) {
             foreach ($filters as $field => $value) {
+                if ($value === null || $value === '') {
+                    continue;
+                }
+
                 if (method_exists($this, $method = "filter" . ucfirst($field))) {
                     // Pass the collection by reference to modify it directly
                     $data = $this->$method($data, $value);
                 }
             }
         }
-
-        // logger($data);
 
         return $data->values(); // Ensure re-indexing of the collection
     }
@@ -219,7 +176,7 @@ class ActiveCallsController extends Controller
         // Case-insensitive partial string search in the specified fields
         $collection = $collection->filter(function ($item) use ($value, $searchable) {
             foreach ($searchable as $field) {
-                if (stripos($item[$field], $value) !== false) {
+                if (stripos($item[$field] ?? '', $value) !== false) {
                     return true;
                 }
             }
@@ -234,7 +191,7 @@ class ActiveCallsController extends Controller
     {
         if (! userCheckPermission('call_active_hangup')) {
             return response()->json([
-                'errors' => ['permission' => ['You do not have permission to end active calls.']],
+                'errors' => ['permission' => [__('You do not have permission to end active calls.')]],
             ], 403);
         }
 
@@ -247,7 +204,7 @@ class ActiveCallsController extends Controller
 
             // Return a JSON response indicating success
             return response()->json([
-                'messages' => ['success' => ['Request has been succesfully processed']]
+                'messages' => ['success' => [__('Request successfully processed.')]]
             ], 201);
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
@@ -263,23 +220,21 @@ class ActiveCallsController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function selectAll(FreeswitchEslService $eslService)
+    public function selectAll(Request $request, FreeswitchEslService $eslService)
     {
         if (! userCheckPermission('call_active_view')) {
             return response()->json([
-                'errors' => ['permission' => ['You do not have permission to view active calls.']],
+                'errors' => ['permission' => [__('You do not have permission to view active calls.')]],
             ], 403);
         }
 
         try {
-            $this->filters['showGlobal'] = userCheckPermission('call_active_all') && $this->requestWantsGlobal('showGlobal');
-
-            $allCalls = $this->builder($this->filters, $eslService);
+            $allCalls = $this->builder($this->filters($request), $eslService, $request);
 
             $uuids = $allCalls->pluck('uuid');
 
             return response()->json([
-                'messages' => ['success' => ['All items selected']],
+                'messages' => ['success' => [__('All items selected')]],
                 'items' => $uuids,
             ], 200);
         } catch (\Exception $e) {
@@ -287,7 +242,7 @@ class ActiveCallsController extends Controller
 
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to select all items']]
+                'errors' => ['server' => [__('Failed to select all items')]]
             ], 500);
         }
     }
@@ -301,9 +256,28 @@ class ActiveCallsController extends Controller
         ];
     }
 
-    private function requestWantsGlobal(string $key): bool
+    private function filters(Request $request): array
     {
-        return filter_var(request($key), FILTER_VALIDATE_BOOLEAN);
+        $filters = $request->input('filter', $request->input('filterData', []));
+        $filters = is_array($filters) ? $filters : [];
+
+        return [
+            'search' => $filters['search'] ?? null,
+            'showGlobal' => filter_var($filters['showGlobal'] ?? false, FILTER_VALIDATE_BOOLEAN)
+                && userCheckPermission('call_active_all'),
+        ];
+    }
+
+    private function sort(Request $request): array
+    {
+        $sort = (string) $request->input('sort', '-created_epoch');
+        $sortField = ltrim($sort, '-');
+
+        if (! in_array($sortField, $this->allowedSortFields, true)) {
+            return ['created_epoch', 'desc'];
+        }
+
+        return [$sortField, str_starts_with($sort, '-') ? 'desc' : 'asc'];
     }
 
 }

@@ -7,6 +7,7 @@ use App\Http\Controllers\AiAgentController;
 use App\Http\Controllers\AiProviderIntegrationController;
 use App\Http\Controllers\AiToolController;
 use App\Http\Controllers\ActiveConferenceController;
+use App\Http\Controllers\ActiveCallsController;
 use App\Http\Controllers\Api\EmergencyCallController;
 use App\Http\Controllers\Api\HolidayHoursController;
 use App\Http\Controllers\Api\LocationsController;
@@ -523,6 +524,11 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/call-webhooks/test', [CallWebhookController::class, 'test'])->name('call-webhooks.test');
     Route::post('/call-webhooks/rotate-secret', [CallWebhookController::class, 'rotateSecret'])->name('call-webhooks.rotate-secret');
     Route::delete('/call-webhooks', [CallWebhookController::class, 'destroy'])->name('call-webhooks.destroy');
+
+    // Active Calls
+    Route::get('/active-calls/data', [ActiveCallsController::class, 'getData'])->name('active-calls.data');
+    Route::post('/active-calls/select-all', [ActiveCallsController::class, 'selectAll'])->name('active-calls.select.all');
+    Route::post('/active-calls/action', [ActiveCallsController::class, 'handleAction'])->name('active-calls.action');
 
     // Registrations
     Route::get('/registrations/data', [RegistrationsController::class, 'getData'])->name('registrations.data');

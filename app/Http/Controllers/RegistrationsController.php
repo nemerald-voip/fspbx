@@ -152,7 +152,7 @@ class RegistrationsController extends Controller
 
             if ($registrations->isEmpty()) {
                 return response()->json([
-                    'messages' => ['error' => ['No registrations selected.']],
+                    'messages' => ['error' => [__('No registrations selected.')]],
                 ], 422);
             }
 
@@ -161,7 +161,7 @@ class RegistrationsController extends Controller
                 $eslService->disconnect();
 
                 return response()->json([
-                    'messages' => ['success' => ['Request successfully processed.']],
+                    'messages' => ['success' => [__('Request successfully processed.')]],
                 ], 201);
             }
 
@@ -205,7 +205,7 @@ class RegistrationsController extends Controller
             $eslService->disconnect();
 
             return response()->json([
-                'messages' => ['success' => ['Request successfully processed.']],
+                'messages' => ['success' => [__('Request successfully processed.')]],
             ], 201);
 
         } catch (\Exception $e) {
@@ -233,14 +233,14 @@ class RegistrationsController extends Controller
                 ->values();
     
             return response()->json([
-                'messages' => ['success' => ['All matching registrations selected.']],
+                'messages' => ['success' => [__('All matching registrations selected.')]],
                 'items' => $items,
             ], 200);
         } catch (\Exception $e) {
             logger($e->getMessage());
     
             return response()->json([
-                'messages' => ['error' => ['Failed to select all registrations.']],
+                'messages' => ['error' => [__('Failed to select all registrations.')]],
             ], 500); // 500 Internal Server Error for any other errors
         }
     }
