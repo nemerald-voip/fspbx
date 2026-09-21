@@ -29,6 +29,7 @@ class AiAgent extends Model
         'outbound_agent_id',
         'outbound_agent_name',
         'recording_policy',
+        'email_from_address',
         'enabled',
         'provisioning_status',
         'provisioning_error',

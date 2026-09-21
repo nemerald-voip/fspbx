@@ -836,7 +836,16 @@ class DeviceController extends Controller
             ], 403);
         }
 
-        if (array_key_exists('device_key_template_uuid', $data) && $data['device_key_template_uuid'] === 'NULL') {
+        foreach (['device_profile_uuid', 'device_key_template_uuid'] as $assignment) {
+            if (($data[$assignment] ?? null) === 'NULL') {
+                $data[$assignment] = null;
+            }
+        }
+
+        // Bulk forms omit the disabled opposite field, so clear its stored assignment here.
+        if (!empty($data['device_key_template_uuid'])) {
+            $data['device_profile_uuid'] = null;
+        } elseif (!empty($data['device_profile_uuid'])) {
             $data['device_key_template_uuid'] = null;
         }
 

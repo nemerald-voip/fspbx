@@ -54,7 +54,7 @@ class AiAgentController extends Controller
     {
         abort_unless($this->allowed('ai_agent_view'), 403);
 
-        return QueryBuilder::for(AiAgent::class)
+        return QueryBuilder::for(AiAgent::query()->where('domain_uuid', session('domain_uuid')))
             ->allowedFilters([
                 AllowedFilter::callback('search', function ($query, $value) {
                     $value = trim((string) $value);
@@ -81,7 +81,9 @@ class AiAgentController extends Controller
         $canManageProvider = $this->allowed('ai_agent_manage_provider');
 
         $agent = $request->filled('item_uuid')
-            ? AiAgent::query()->findOrFail((string) $request->string('item_uuid'))
+            ? AiAgent::query()
+                ->where('domain_uuid', session('domain_uuid'))
+                ->findOrFail((string) $request->string('item_uuid'))
             : new AiAgent([
                 'domain_uuid' => session('domain_uuid'),
                 'recording_policy' => 'inherit',
@@ -148,6 +150,10 @@ class AiAgentController extends Controller
 
     public function update(UpdateAiAgentRequest $request, AiAgent $ai_agent, AiAgentService $service): JsonResponse
     {
+        if ($denied = $this->outsideCurrentDomain($ai_agent)) {
+            return $denied;
+        }
+
         try {
             return response()->json(['item' => $service->update($ai_agent, $request->validated()), 'messages' => ['success' => [__('AI agent updated.')]]]);
         } catch (Throwable $exception) {
@@ -161,12 +167,20 @@ class AiAgentController extends Controller
     {
         abort_unless($this->allowed('ai_agent_update'), 403);
 
+        if ($denied = $this->outsideCurrentDomain($ai_agent)) {
+            return $denied;
+        }
+
         return $this->agentAction(fn () => $service->toggle($ai_agent), __('AI agent status updated.'));
     }
 
     public function retry(AiAgent $ai_agent, AiAgentService $service): JsonResponse
     {
         abort_unless($this->allowed('ai_agent_update'), 403);
+
+        if ($denied = $this->outsideCurrentDomain($ai_agent)) {
+            return $denied;
+        }
 
         return $this->agentAction(fn () => $service->retry($ai_agent), __('AI agent synchronized.'));
     }
@@ -175,12 +189,20 @@ class AiAgentController extends Controller
     {
         abort_unless($this->allowed('ai_agent_update'), 403);
 
+        if ($denied = $this->outsideCurrentDomain($ai_agent)) {
+            return $denied;
+        }
+
         return $this->agentAction(fn () => $service->refresh($ai_agent), __('Provider status refreshed.'));
     }
 
     public function destroy(AiAgent $ai_agent, AiAgentService $service): JsonResponse
     {
         abort_unless($this->allowed('ai_agent_delete'), 403);
+
+        if ($denied = $this->outsideCurrentDomain($ai_agent)) {
+            return $denied;
+        }
 
         try {
             $service->delete($ai_agent);
@@ -207,5 +229,19 @@ class AiAgentController extends Controller
     private function allowed(string $permission): bool
     {
         return isSuperAdmin() && userCheckPermission($permission);
+    }
+
+    /**
+     * Agents are listed and managed in the context of the domain the operator is currently
+     * in. `ai_agent_manage_domain` only decides whether the domain can be picked on the
+     * form - it never widens what an operator may see or act on.
+     */
+    private function outsideCurrentDomain(AiAgent $agent): ?JsonResponse
+    {
+        if ($agent->domain_uuid === session('domain_uuid')) {
+            return null;
+        }
+
+        return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
     }
 }
