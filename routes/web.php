@@ -517,9 +517,7 @@ Route::group(['middleware' => 'auth'], function () {
     // Active Calls
     Route::get('active-conferences', [ActiveConferenceController::class, 'index'])->name('active-conferences.index');
     Route::get('active-conferences/{conference}/interactive', [ActiveConferenceController::class, 'interactive'])->name('active-conferences.interactive');
-    Route::resource('active-calls', ActiveCallsController::class);
-    Route::post('/active-calls/select-all', [ActiveCallsController::class, 'selectAll'])->name('active-calls.select.all');
-    Route::post('/active-calls/action', [ActiveCallsController::class, 'handleAction'])->name('active-calls.action');
+    Route::get('active-calls', [ActiveCallsController::class, 'index'])->name('active-calls.index');
 
     // Pro Features
     Route::resource('pro-features', ProFeaturesController::class);
