@@ -3,7 +3,7 @@
 
     <div class="m-3">
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-            <template #title>Pro Features</template>
+            <template #title>{{ $t('Pro Features') }}</template>
 
             <template #filters>
                 <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
@@ -13,11 +13,11 @@
                     <input type="text" v-model="filterData.search" name="mobile-search-candidate"
                         id="mobile-search-candidate"
                         class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
-                        placeholder="Search" />
+                        :placeholder="$t('Search')" @keydown.enter="handleSearchButtonClick" />
                     <input type="text" v-model="filterData.search" name="desktop-search-candidate"
                         id="desktop-search-candidate"
                         class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
-                        placeholder="Search" />
+                        :placeholder="$t('Search')" @keydown.enter="handleSearchButtonClick" />
                 </div>
             </template>
 
@@ -26,7 +26,7 @@
 
                 <button type="button" @click.prevent="handleRefreshButtonClick()"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 ml-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                    Refresh
+                    {{ $t('Refresh') }}
                 </button>
 
 
@@ -38,36 +38,36 @@
                     @pagination-change-page="renderRequestedPage" />
             </template>
             <template #table-header>
-                <TableColumnHeader header="User"
+                <TableColumnHeader :header="$t('User')"
                     class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                    <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
+                    <BulkActionButton :actions="bulkActions"
                         :has-selected-items="selectedItems.length > 0" />
-                    <span class="pl-4">Feature</span>
+                    <span class="pl-4">{{ $t('Feature') }}</span>
                 </TableColumnHeader>
 
-                <TableColumnHeader header="License Status"
+                <TableColumnHeader :header="$t('License Status')"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <!-- <TableColumnHeader header="Contact" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" /> -->
                 <!-- <TableColumnHeader header="Module Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" /> -->
 
-                <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t('Action')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
             </template>
 
             <template v-if="selectPageItems" v-slot:current-selection>
                 <td colspan="10">
                     <div class="text-sm text-center m-2">
-                        <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
+                        {{ $t(':count items are selected.', { count: selectedItems.length }) }}
                         <button v-if="!selectAll && selectedItems.length != data.total"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleSelectAll">
-                            Select all {{ data.total }} items
+                            {{ $t('Select all :total items', { total: data.total }) }}
                         </button>
                         <button v-if="selectAll"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleClearSelection">
-                            Clear selection
+                            {{ $t('Clear selection') }}
                         </button>
                     </div>
                 </td>
@@ -89,11 +89,11 @@
 
 
                     <TableField class=" px-2 py-2 text-sm text-gray-500">
-                        <Badge v-if="row.license && !row.license_details?.meta?.valid" :text="row.license_valid" backgroundColor="bg-rose-50"
+                        <Badge v-if="row.license && !row.license_details?.meta?.valid" :text="licenseStatus(row)" backgroundColor="bg-rose-50"
                             textColor="text-rose-700"
                             ringColor="ring-rose-600/20" />
 
-                        <Badge v-if="row.license && row.license_details?.meta?.valid" :text="row.license_valid" backgroundColor="bg-blue-50"
+                        <Badge v-if="row.license && row.license_details?.meta?.valid" :text="licenseStatus(row)" backgroundColor="bg-blue-50"
                             textColor="text-blue-700"
                             ringColor="ring-blue-600/20" />
 
@@ -104,7 +104,7 @@
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap">
-                                <ejs-tooltip v-if="permissions.device_update" :content="'Edit'" position='TopCenter'
+                                <ejs-tooltip v-if="permissions.device_update" :content="$t('Edit')" position='TopCenter'
                                     target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
                                         <PencilSquareIcon @click="handleEditRequest(row.uuid)"
@@ -128,11 +128,11 @@
             </template>
             <template #empty>
                 <!-- Conditional rendering for 'no records' message -->
-                <div v-if="data.data.length === 0" class="text-center my-5 ">
+                <div v-if="!loading && data.data.length === 0" class="text-center my-5 ">
                     <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
+                    <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ $t('No results found') }}</h3>
                     <p class="mt-1 text-sm text-gray-500">
-                        Adjust your search and try again.
+                        {{ $t('Adjust your search and try again.') }}
                     </p>
                 </div>
             </template>
@@ -144,20 +144,22 @@
             <template #footer>
                 <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
                     :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
-                    @pagination-change-page="renderRequestedPage" />
+                    @pagination-change-page="renderRequestedPage"
+                    :page-size="perPage" :page-size-options="props.pagination?.per_page_options ?? []"
+                    :show-page-size-selector="true" @page-size-change="handlePageSizeChange" />
             </template>
         </DataTable>
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
     <ConfirmationModal :show="showConfirmationModal" @close="showConfirmationModal = false" @confirm="confirmAction"
-        :header="'Are you sure?'" :text="'Are you sure you want to proceed with this action?'"
-        :confirm-button-label="actionLabel" cancel-button-label="Cancel" />
+        :header="$t('Are you sure?')" :text="$t('Are you sure you want to proceed with this action?')"
+        :confirm-button-label="actionLabel" :cancel-button-label="$t('Cancel')" />
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
 
-    <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="showEditModal" :header="'Edit Pro Feature Settings'"
+    <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="showEditModal" :header="$t('Edit Pro Feature Settings')"
         :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
             <UpdateProFeatureForm :options="itemOptions" :errors="formErrors" :is-submitting="updateFormSubmiting" :is-installing="isInstalling" :is-uninstalling="isUninstalling"
@@ -167,9 +169,9 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, onUnmounted } from "vue";
+import { trans } from "@i18n";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 import axios from 'axios';
-import { router } from "@inertiajs/vue3";
 import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";
@@ -190,7 +192,6 @@ import { PencilSquareIcon } from "@heroicons/vue/24/solid";
 import UpdateProFeatureForm from "./components/forms/UpdateProFeatureForm.vue";
 
 const loading = ref(false)
-const isRefreshing = ref(false)
 const selectAll = ref(false);
 const selectedItems = ref([]);
 const selectPageItems = ref(false);
@@ -210,7 +211,7 @@ const isUninstalling = ref(null);
 
 
 const props = defineProps({
-    data: Object,
+    pagination: Object,
     routes: Object,
     permissions: {
         type: Object,
@@ -221,6 +222,37 @@ const props = defineProps({
 });
 
 const permissions = props.permissions;
+
+const licenseStatus = (row) => ({
+    VALID: trans('Valid'),
+    EXPIRED: trans('Expired'),
+    SUSPENDED: trans('Suspended'),
+    NO_MACHINE: trans('Not activated'),
+    NO_MACHINES: trans('Not activated'),
+    FINGERPRINT_SCOPE_MISMATCH: trans('Not activated'),
+    NOT_FOUND: trans('Invalid license'),
+})[row.license_valid] || row.license_valid || trans('Unknown');
+
+const perPage = ref(props.pagination?.per_page ?? 50);
+
+
+const data = ref({
+    data: [],
+    prev_page_url: null,
+    next_page_url: null,
+    from: null,
+    to: null,
+    total: 0,
+    current_page: 1,
+    last_page: 1,
+    links: [],
+});
+const currentPage = ref(1);
+let activeRequest = null;
+let requestSequence = 0;
+let isUnmounted = false;
+
+const sortData = ref({ name: 'created_at', order: 'asc' });
 
 const filterData = ref({
     search: null,
@@ -241,9 +273,6 @@ const bulkActions = computed(() => {
     return actions;
 });
 
-onMounted(() => {
-    // console.log(props.data);
-});
 
 const handleEditRequest = (itemUuid) => {
     showEditModal.value = true
@@ -260,7 +289,7 @@ const getItemOptions = (itemUuid = null) => {
         .then((response) => {
             loadingModal.value = false;
             itemOptions.value = response.data;
-            console.log(itemOptions.value);
+
 
         }).catch((error) => {
             handleModalClose();
@@ -277,7 +306,7 @@ const handleUpdateRequest = (form) => {
         .then((response) => {
             updateFormSubmiting.value = false;
             showNotification('success', response.data.messages);
-            handleSearchButtonClick();
+            refreshData();
             // handleModalClose();
             getItemOptions(itemOptions.value.item.uuid);
             handleClearSelection();
@@ -298,7 +327,7 @@ const handleDeactivateRequest = (form) => {
         .then((response) => {
             updateFormSubmiting.value = false;
             showNotification('success', response.data.messages);
-            handleSearchButtonClick();
+            refreshData();
             // handleModalClose();
             getItemOptions(itemOptions.value.item.uuid);
             handleClearSelection();
@@ -318,7 +347,7 @@ const handleInstallRequest = (form) => {
         .then((response) => {
             isInstalling.value = false;
             showNotification('success', response.data.messages);
-            handleSearchButtonClick();
+            refreshData();
             // handleModalClose();
             getItemOptions(itemOptions.value.item.uuid);
             handleClearSelection();
@@ -338,7 +367,7 @@ const handleUninstallRequest = (form) => {
         .then((response) => {
             isUninstalling.value = false;
             showNotification('success', response.data.messages);
-            handleSearchButtonClick();
+            refreshData();
             // handleModalClose();
             getItemOptions(itemOptions.value.item.uuid);
             handleClearSelection();
@@ -353,71 +382,17 @@ const handleUninstallRequest = (form) => {
 
 
 
-const handleSingleItemActionRequest = (uuid, action) => {
-    showEditModal.value = true;
-    actionLabel.value = 'End Call';
-    confirmAction.value = () => executeSingleAction(uuid, action);
-}
-
-const executeSingleAction = (uuid, action) => {
-    axios.post(props.routes.action,
-        { 'ids': [uuid], 'action': action },
-    )
-        .then((response) => {
-            showNotification('success', response.data.messages);
-            handleModalClose();
-            // Delay the search button click by 2 seconds (2000 milliseconds)
-            setTimeout(() => {
-                handleRefresh();
-            }, 2000);
-            handleClearSelection();
-        }).catch((error) => {
-            handleModalClose();
-            handleClearSelection();
-            handleErrorResponse(error);
-        });
-}
-
-
-const handleBulkActionRequest = (action) => {
-    if (action === 'bulk_end_call') {
-        showEditModal.value = true;
-        actionLabel.value = 'End Calls';
-        confirmAction.value = () => executeBulkAction('end_call');
-    }
-
-}
-
-const executeBulkAction = (action) => {
-    axios.post(props.routes.action,
-        { 'ids': selectedItems.value, 'action': action },
-    )
-        .then((response) => {
-            showNotification('success', response.data.messages);
-            handleModalClose();
-            // Delay the search button click by 2 seconds (2000 milliseconds)
-            setTimeout(() => {
-                handleRefresh();
-            }, 2000);
-            handleClearSelection();
-        }).catch((error) => {
-            handleClearSelection();
-            handleModalClose();
-            handleErrorResponse(error);
-        });
-}
-
-
-
-
 const handleSelectAll = () => {
-    axios.post(props.routes.select_all, filterData._rawValue)
+    const sequence = requestSequence;
+    axios.post(props.routes.select_all, { filter: { ...filterData.value } })
         .then((response) => {
+            if (isUnmounted || sequence !== requestSequence) return;
             selectedItems.value = response.data.items;
             selectAll.value = true;
             showNotification('success', response.data.messages);
 
         }).catch((error) => {
+            if (isUnmounted || sequence !== requestSequence) return;
             handleClearSelection();
             handleErrorResponse(error);
         });
@@ -425,62 +400,73 @@ const handleSelectAll = () => {
 };
 
 
-const handleAction = (id, action) => {
-    axios.post(props.routes.action,
-        { 'ids': [id], 'action': action },
-    )
-        .then((response) => {
-            showNotification('success', response.data.messages);
-            // Delay the search button click by 2 seconds (2000 milliseconds)
-            setTimeout(() => {
-                handleSearchButtonClick();
-            }, 2000);
-            handleClearSelection();
-        }).catch((error) => {
-            handleClearSelection();
-            handleErrorResponse(error);
-        });
-}
+const handleRefreshButtonClick = () => refreshData();
 
-const handleRefreshButtonClick = () => {
+const handleSortRequest = (column) => {
+    if (sortData.value.name === column) {
+        sortData.value.order = sortData.value.order === 'asc' ? 'desc' : 'asc';
+    } else {
+        sortData.value.name = column;
+        sortData.value.order = 'asc';
+    }
+
     handleSearchButtonClick();
-}
+};
 
+
+
+const getData = async (page = currentPage.value, { background = false } = {}) => {
+    if (isUnmounted) return;
+
+    activeRequest?.abort();
+    const controller = new AbortController();
+    activeRequest = controller;
+    const sequence = ++requestSequence;
+    handleClearSelection();
+    loading.value = !background;
+    currentPage.value = Number(page) || 1;
+
+    const sort = sortData.value.order === 'desc' ? `-${sortData.value.name}` : sortData.value.name;
+
+    try {
+        const response = await axios.get(props.routes.data_route, {
+            params: {
+                filter: { ...filterData.value },
+                page: currentPage.value,
+                per_page: perPage.value,
+                sort,
+            },
+            signal: controller.signal,
+        });
+
+        if (isUnmounted || sequence !== requestSequence) return;
+
+        // A deletion may have removed the last row on this page.
+        if (response.data.last_page && currentPage.value > response.data.last_page) {
+            return await getData(response.data.last_page, { background });
+        }
+
+        data.value = response.data;
+        currentPage.value = response.data.current_page ?? currentPage.value;
+        handleClearSelection();
+    } catch (error) {
+        if (!isUnmounted && sequence === requestSequence && !axios.isCancel(error)) {
+            handleErrorResponse(error);
+        }
+    } finally {
+        if (!isUnmounted && sequence === requestSequence) {
+            activeRequest = null;
+            loading.value = false;
+        }
+    }
+};
 
 const handleSearchButtonClick = () => {
-    loading.value = true;
-    router.visit(props.routes.current_page, {
-        data: {
-            filterData: filterData._rawValue,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: [
-            "data",
-            'showGlobal',
-        ],
-        onSuccess: (page) => {
-            loading.value = false;
-            handleClearSelection();
-        }
-    });
+    getData(1);
 };
 
-const handleRefresh = () => {
-    router.visit(props.routes.current_page, {
-        data: {
-            filterData: filterData._rawValue,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: [
-            "data",
-            'showGlobal',
-        ],
-        onSuccess: (page) => {
-            handleClearSelection();
-        }
-    });
+const refreshData = () => {
+    getData(currentPage.value);
 };
 
 const handleFiltersReset = () => {
@@ -490,19 +476,16 @@ const handleFiltersReset = () => {
 }
 
 
+const handlePageSizeChange = (newPerPage) => {
+    perPage.value = newPerPage;
+    handleSearchButtonClick();
+};
+
 const renderRequestedPage = (url) => {
-    loading.value = true;
-    router.visit(url, {
-        data: {
-            filterData: filterData._rawValue,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: ["data"],
-        onSuccess: (page) => {
-            loading.value = false;
-        }
-    });
+    if (!url) return;
+
+    const urlObj = new URL(url, window.location.origin);
+    getData(urlObj.searchParams.get('page') ?? 1);
 };
 
 
@@ -511,7 +494,7 @@ const handleErrorResponse = (error) => {
         // The request was made and the server responded with a status code
         // that falls out of the range of 2xx
         // console.log(error.response.data);
-        showNotification('error', error.response.data.errors || { request: [error.message] });
+        showNotification('error', error.response.data.errors || error.response.data.messages || { request: [error.response.data.message || error.message] });
     } else if (error.request) {
         // The request was made but no response was received
         // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
@@ -527,7 +510,7 @@ const handleErrorResponse = (error) => {
 
 const handleSelectPageItems = () => {
     if (selectPageItems.value) {
-        selectedItems.value = props.data.data.map(item => item.uuid);
+        selectedItems.value = data.value.data.map(item => item.uuid);
     } else {
         selectedItems.value = [];
     }
@@ -560,13 +543,14 @@ const showNotification = (type, messages = null) => {
 }
 
 const handleFormErrorResponse = (error) => {
+    loadingModal.value = false;
     if (error.request?.status == 419) {
-        showNotification('error', { request: ["Session expired. Reload the page"] });
+        showNotification('error', { request: [trans('Session expired. Reload the page')] });
     } else if (error.response) {
         // The request was made and the server responded with a status code
         // that falls out of the range of 2xx
         // console.log(error.response.data);
-        showNotification('error', error.response.data.errors || { request: [error.message] });
+        showNotification('error', error.response.data.errors || error.response.data.messages || { request: [error.response.data.message || error.message] });
         formErrors.value = error.response.data.errors;
     } else if (error.request) {
         // The request was made but no response was received
@@ -582,6 +566,13 @@ const handleFormErrorResponse = (error) => {
 
 }
 
+
+onMounted(() => getData());
+
+onUnmounted(() => {
+    isUnmounted = true;
+    activeRequest?.abort();
+});
 
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');
 

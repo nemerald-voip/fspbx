@@ -3,10 +3,10 @@
 
     <div class="m-3">
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-            <template #title>Gateways</template>
+            <template #title>{{ $t('Gateways') }}</template>
 
             <template #subtitle>
-                Manage SIP provider gateways, registration settings, and enabled state.
+                {{ $t('Manage SIP provider gateways, registration settings, and enabled state.') }}
             </template>
 
             <template #filters>
@@ -17,30 +17,30 @@
                     <input type="text" v-model="filterData.search" name="mobile-search-gateways"
                         id="mobile-search-gateways"
                         class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                        :placeholder="$t('Search')" @keydown.enter="handleSearchButtonClick" />
                     <input type="text" v-model="filterData.search" name="desktop-search-gateways"
                         id="desktop-search-gateways"
                         class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                        :placeholder="$t('Search')" @keydown.enter="handleSearchButtonClick" />
                 </div>
             </template>
 
             <template #action>
                 <button v-if="permissions.create" type="button" @click.prevent="handleCreateButtonClick"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                    Create
+                    {{ $t('Create') }}
                 </button>
 
                 <button v-if="!filterData.showGlobal && permissions.view_global" type="button"
                     @click.prevent="handleShowGlobal"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                    Show global
+                    {{ $t('Show global') }}
                 </button>
 
                 <button v-if="filterData.showGlobal && permissions.view_global" type="button"
                     @click.prevent="handleShowLocal"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                    Show local
+                    {{ $t('Show local') }}
                 </button>
             </template>
 
@@ -57,7 +57,7 @@
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                     <div class="pl-4 flex items-center cursor-pointer select-none" @click="handleSortRequest('gateway')">
-                        <span class="mr-2">Gateway</span>
+                        <span class="mr-2">{{ $t('Gateway') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'gateway' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'gateway' && sortData.order === 'desc'"
@@ -65,13 +65,13 @@
                     </div>
                 </TableColumnHeader>
 
-                <TableColumnHeader v-if="filterData.showGlobal" header="Domain"
+                <TableColumnHeader v-if="filterData.showGlobal" :header="$t('Domain')"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
-                <TableColumnHeader header="Proxy" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="State" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Register" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t('Proxy')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t('Status')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t('State')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t('Register')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex cursor-pointer select-none items-center" @click="handleSortRequest('hostname')">
@@ -82,8 +82,8 @@
                             class="h-4 w-4 text-gray-500" />
                     </div>
                 </TableColumnHeader>
-                <TableColumnHeader header="Enabled" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Description"
+                <TableColumnHeader :header="$t('Enabled')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t('Description')"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
             </template>
@@ -91,16 +91,16 @@
             <template v-if="selectPageItems" v-slot:current-selection>
                 <td :colspan="selectionColspan">
                     <div class="text-sm text-center m-2">
-                        <span class="font-semibold">{{ selectedItems.length }}</span> items are selected.
+                        {{ $t(':count items are selected.', { count: selectedItems.length }) }}
                         <button v-if="!selectAll && selectedItems.length !== data.total"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleSelectAll">
-                            Select all {{ data.total }} items
+                            {{ $t('Select all :total items', { total: data.total }) }}
                         </button>
                         <button v-if="selectAll"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleClearSelection">
-                            Clear selection
+                            {{ $t('Clear selection') }}
                         </button>
                     </div>
                 </td>
@@ -150,27 +150,27 @@
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap justify-end">
                                 <div v-if="isGatewayStatusPending(row.gateway_uuid)"
-                                    class="flex h-9 w-9 items-center justify-center" title="Refreshing gateway status">
+                                    class="flex h-9 w-9 items-center justify-center" :title="$t('Refreshing gateway status')">
                                     <Spinner :show="true" class="h-5 w-5" />
                                 </div>
-                                <button v-if="canStartGateway(row)" type="button" title="Start"
-                                    aria-label="Start gateway" class="rounded-full"
+                                <button v-if="canStartGateway(row)" type="button" :title="$t('Start')"
+                                    :aria-label="$t('Start gateway')" class="rounded-full"
                                     @click="executeGatewayAction([row.gateway_uuid], 'start')">
                                     <PlayIcon
                                         class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                 </button>
-                                <button v-if="canStopGateway(row)" type="button" title="Stop"
-                                    aria-label="Stop gateway" class="rounded-full"
+                                <button v-if="canStopGateway(row)" type="button" :title="$t('Stop')"
+                                    :aria-label="$t('Stop gateway')" class="rounded-full"
                                     @click="executeGatewayAction([row.gateway_uuid], 'stop')">
                                     <StopIcon
                                         class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                 </button>
-                                <button v-if="permissions.update" type="button" title="Edit" aria-label="Edit gateway"
+                                <button v-if="permissions.update" type="button" :title="$t('Edit')" :aria-label="$t('Edit gateway')"
                                     class="rounded-full" @click="handleEditButtonClick(row.gateway_uuid)">
                                     <PencilSquareIcon
                                         class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                 </button>
-                                <button v-if="permissions.destroy" type="button" title="Delete" aria-label="Delete gateway"
+                                <button v-if="permissions.destroy" type="button" :title="$t('Delete')" :aria-label="$t('Delete gateway')"
                                     class="rounded-full" @click="handleSingleItemDeleteRequest(row.gateway_uuid)">
                                     <TrashIcon
                                         class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
@@ -184,8 +184,8 @@
             <template #empty>
                 <div v-if="data.data.length === 0" class="text-center my-5">
                     <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
-                    <p class="mt-1 text-sm text-gray-500">Adjust your search and try again.</p>
+                    <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ $t('No results found') }}</h3>
+                    <p class="mt-1 text-sm text-gray-500">{{ $t('Adjust your search and try again.') }}</p>
                 </div>
             </template>
 
@@ -206,7 +206,7 @@
 
     <ConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
         @confirm="confirmAction" :header="confirmationHeader" :text="confirmationText"
-        :confirm-button-label="confirmationButtonLabel" cancel-button-label="Cancel" />
+        :confirm-button-label="confirmationButtonLabel" :cancel-button-label="$t('Cancel')" />
 
     <GatewayForm :show="showForm" :options="itemOptions" :permissions="permissions" :mode="formMode" :loading="loadingForm"
         :header="formHeader" @close="handleFormClose" @error="handleErrorResponse" @success="showNotification"
@@ -217,6 +217,7 @@
 </template>
 
 <script setup>
+import { trans } from "@i18n";
 import { computed, onMounted, ref } from "vue";
 import axios from "axios";
 import DataTable from "./components/general/DataTable.vue";
@@ -258,9 +259,9 @@ const selectedItems = ref([]);
 const selectPageItems = ref(false);
 const confirmationModalTrigger = ref(false);
 const confirmAction = ref(null);
-const confirmationHeader = ref("Are you sure?");
+const confirmationHeader = ref(trans('Are you sure?'));
 const confirmationText = ref("");
-const confirmationButtonLabel = ref("Continue");
+const confirmationButtonLabel = ref(trans('Continue'));
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(false);
@@ -301,17 +302,17 @@ const bulkActions = computed(() => {
     const actions = [];
 
     if (permissions.update) {
-        actions.push({ id: "bulk_start", label: "Start", icon: "PlayIcon" });
-        actions.push({ id: "bulk_stop", label: "Stop", icon: "StopIcon" });
-        actions.push({ id: "bulk_toggle_enabled", label: "Toggle Enabled", icon: "PencilSquareIcon" });
+        actions.push({ id: "bulk_start", label: trans('Start'), icon: "PlayIcon" });
+        actions.push({ id: "bulk_stop", label: trans('Stop'), icon: "StopIcon" });
+        actions.push({ id: "bulk_toggle_enabled", label: trans('Toggle Enabled'), icon: "PencilSquareIcon" });
     }
 
     if (permissions.create) {
-        actions.push({ id: "bulk_copy", label: "Copy", icon: "PencilSquareIcon" });
+        actions.push({ id: "bulk_copy", label: trans('Copy'), icon: "PencilSquareIcon" });
     }
 
     if (permissions.destroy) {
-        actions.push({ id: "bulk_delete", label: "Delete", icon: "TrashIcon" });
+        actions.push({ id: "bulk_delete", label: trans('Delete'), icon: "TrashIcon" });
     }
 
     return actions;
@@ -325,13 +326,13 @@ const selectionColspan = computed(() => {
 
 const formHeader = computed(() => {
     if (formMode.value === "create") {
-        return "Create Gateway";
+        return trans('Create Gateway');
     }
 
-    return `Update Gateway - ${itemOptions.value?.item?.gateway || "Loading..."}`;
+    return trans('Update Gateway - :name', { name: itemOptions.value?.item?.gateway || trans('Loading...') });
 });
 
-const domainLabel = (row) => row.domain?.domain_description || row.domain?.domain_name || "Global";
+const domainLabel = (row) => row.domain?.domain_description || row.domain?.domain_name || trans('Global');
 
 const canStartGateway = (row) => permissions.update
     && row.enabled === "true"
@@ -492,9 +493,9 @@ const handleClearSelection = () => {
 
 const handleSingleItemDeleteRequest = (uuid) => {
     showConfirmation({
-        header: "Confirm Deletion",
-        text: "This action will permanently delete the selected gateway.",
-        button: "Delete",
+        header: trans('Confirm Deletion'),
+        text: trans('This action will permanently delete the selected gateway.'),
+        button: trans('Delete'),
         action: () => executeBulkDelete([uuid]),
     });
 };
@@ -502,45 +503,45 @@ const handleSingleItemDeleteRequest = (uuid) => {
 const handleBulkActionRequest = (action) => {
     if (action === "bulk_delete") {
         showConfirmation({
-            header: "Confirm Deletion",
-            text: "This action will permanently delete the selected gateway(s).",
-            button: "Delete",
+            header: trans('Confirm Deletion'),
+            text: trans('This action will permanently delete the selected gateway(s).'),
+            button: trans('Delete'),
             action: () => executeBulkDelete(),
         });
     }
 
     if (action === "bulk_copy") {
         showConfirmation({
-            header: "Confirm Copy",
-            text: "Copy the selected gateway(s)?",
-            button: "Copy",
+            header: trans('Confirm Copy'),
+            text: trans('Copy the selected gateway(s)?'),
+            button: trans('Copy'),
             action: () => executeBulkCopy(),
         });
     }
 
     if (action === "bulk_toggle_enabled") {
         showConfirmation({
-            header: "Confirm Toggle",
-            text: "Toggle enabled for the selected gateway(s)?",
-            button: "Toggle",
+            header: trans('Confirm Toggle'),
+            text: trans('Toggle enabled for the selected gateway(s)?'),
+            button: trans('Toggle'),
             action: () => executeToggle(selectedItems.value),
         });
     }
 
     if (action === "bulk_start") {
         showConfirmation({
-            header: "Confirm Start",
-            text: "Start the selected gateway(s)?",
-            button: "Start",
+            header: trans('Confirm Start'),
+            text: trans('Start the selected gateway(s)?'),
+            button: trans('Start'),
             action: () => executeGatewayAction(selectedItems.value, "start"),
         });
     }
 
     if (action === "bulk_stop") {
         showConfirmation({
-            header: "Confirm Stop",
-            text: "Stop the selected gateway(s)?",
-            button: "Stop",
+            header: trans('Confirm Stop'),
+            text: trans('Stop the selected gateway(s)?'),
+            button: trans('Stop'),
             action: () => executeGatewayAction(selectedItems.value, "stop"),
         });
     }
@@ -677,7 +678,7 @@ const registerBadgeProps = (register) => register === "true"
         ringColor: "ring-amber-600/20",
     };
 
-const statusLabel = (status) => status === "running" ? "Running" : "Stopped";
+const statusLabel = (status) => status === "running" ? trans('Running') : trans('Stopped');
 
 const switchStatusBadgeProps = (status) => status === "running"
     ? {
@@ -693,11 +694,11 @@ const switchStatusBadgeProps = (status) => status === "running"
 
 const gatewayStateLabel = (state) => {
     const labels = {
-        REGED: "Registered",
-        UNREGED: "Not registered",
-        TRYING: "Attempting registration",
-        FAIL_WAIT: "Failed, waiting before retry",
-        NOREG: "Registration disabled",
+        REGED: trans('Registered'),
+        UNREGED: trans('Not registered'),
+        TRYING: trans('Attempting registration'),
+        FAIL_WAIT: trans('Failed, waiting before retry'),
+        NOREG: trans('Registration disabled'),
     };
 
     return labels[String(state || "").toUpperCase()] || state;

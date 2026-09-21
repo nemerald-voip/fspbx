@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use Inertia\Inertia;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use App\Models\Domain;
 use App\Jobs\ExportReport;
 use App\Jobs\AuditStaleRingotelUsers;
@@ -13,89 +15,55 @@ class ReportsController extends Controller
 
     protected $viewName = 'Reports';
 
-    // public function __construct()
-    // {
-    //     //
-    // }
-
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function index()
     {
-
-        return Inertia::render(
-            $this->viewName,
-            [
-                'data' => function () {
-                    return $this->getData();
-                },
-                'viewName' => function () {
-                    return $this->viewName;
-                },
-                // 'showGlobal' => function () {
-                //     return request('filterData.showGlobal') === 'true';
-                // },
-
-                'routes' => [
-                    'current_page' => route('reports.index'),
-                    'generate' => route('reports.generate'),
-                ]
-            ]
-        );
+        return Inertia::render($this->viewName, [
+            'routes' => [
+                'data_route' => route('reports.data'),
+                'generate' => route('reports.generate'),
+            ],
+        ]);
     }
 
-
-    /**
-     *  Get data
-     */
-    public function getData()
+    private function reports(): array
     {
+        return [
+            ['id' => 'active-extensions', 'reportName' => __('Active and suspended extensions per domain')],
+            ['id' => 'stale-ringotel-users', 'reportName' => __('Stale Ringotel users')],
+        ];
+    }
 
-        $data = collect([
-            ['reportName' => 'Active and suspended extensions per domain'],
-            ['reportName' => 'Stale Ringotel users'],
+    public function getData(Request $request)
+    {
+        $search = trim((string) $request->input('filter.search', ''));
+        return response()->json(collect($this->reports())->filter(
+            fn ($report) => $search === '' || mb_stripos($report['reportName'], $search) !== false
+        )->values());
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'reportId' => ['required', Rule::in(array_column($this->reports(), 'id'))],
         ]);
 
-        return $data;
-    }
-
-
-
-    public function store()
-    {
-
         try {
-
-            if (request('reportName') == "Active and suspended extensions per domain") {
+            if ($validated['reportId'] === 'active-extensions') {
                 $this->handleActiveAndSuspendedExtensionsReport();
+            } else {
+                $this->handleStaleRingotelUsersReport();
             }
 
-            if (request('reportName') == "Stale Ringotel users") {
-                $this->handleStaleRingotelusersReport();
-            }
-
-            // Return a JSON response indicating success
             return response()->json([
-                'messages' => ['success' => ['Report is being generated in the background. We\'ll email you a link when it\'s ready to download.']],
-            ], 200);
+                'messages' => ['success' => [__("Report is being generated in the background. We'll email you a link when it's ready to download.")]],
+            ]);
         } catch (\Exception $e) {
             logger($e->getMessage());
-            // Handle any other exception that may occur
             return response()->json([
-                'success' => false,
-                'errors' => ['server' => ['Failed to export items']]
-            ], 500); // 500 Internal Server Error for any other errors
+                'errors' => ['server' => [__('Failed to export items')]],
+            ], 500);
         }
-
-        return response()->json([
-            'success' => false,
-            'errors' => ['server' => ['Failed to export']]
-        ], 500); // 500 Internal Server Error for any other errors
     }
-
 
     private function handleActiveAndSuspendedExtensionsReport()
     {

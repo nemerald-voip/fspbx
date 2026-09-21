@@ -42,7 +42,6 @@ use App\Http\Controllers\ExtensionStatisticsController;
 use App\Http\Controllers\FaxesController;
 use App\Http\Controllers\FaxInboxController;
 use App\Http\Controllers\FaxLogController;
-use App\Http\Controllers\FaxQueueController;
 use App\Http\Controllers\FaxSentController;
 use App\Http\Controllers\FiberneticsMmsWebhookController;
 use App\Http\Controllers\FirewallController;
@@ -442,9 +441,6 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('emailqueue/{emailQueue}/{status?}', [EmailQueueController::class, 'updateStatus'])->name('emailqueue.updateStatus');
 
     // Fax Queue
-    Route::resource('faxqueue', FaxQueueController::class);
-    Route::post('/faxqueue/retry', [FaxQueueController::class, 'retry'])->name('faxqueue.retry');
-    Route::post('/faxqueue/select-all', [FaxQueueController::class, 'selectAll'])->name('faxqueue.select.all');
 
     // Recordings
     Route::get('recordings', [RecordingsController::class, 'index'])->name('recordings.index');
@@ -457,16 +453,12 @@ Route::group(['middleware' => 'auth'], function () {
     Route::put('recordings/{recording}/{entity}/{entityid}', [RecordingsController::class, 'use'])->name('recordings.use');
 
     //Route::get('/recordings/{filename?}', [RecordingsController::class, 'getRecordings']) ->name('getRecordings');
-    //Route::delete('recordings/{filename}',[RecordingsController::class, 'destroy'])->name('faxQueue.destroy');
 
     // Activity Log
-    Route::resource('activities', ActivityLogController::class);
-    Route::post('/activities/bulk-delete', [ActivityLogController::class, 'bulkDelete'])->name('activities.bulk.delete');
-    Route::post('/activities/select-all', [ActivityLogController::class, 'selectAll'])->name('activities.select.all');
+    Route::get('activities', [ActivityLogController::class, 'index'])->name('activities.index');
 
     // Reports
     Route::get('reports', [ReportsController::class, 'index'])->name('reports.index');
-    Route::post('reports/generate', [ReportsController::class, 'store'])->name('reports.generate');
 
     // Call Routing options
     Route::post('/call-routing-options', [CallRoutingOptionsController::class, 'getRoutingOptions'])->name('routing.options');
@@ -486,12 +478,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('active-calls', [ActiveCallsController::class, 'index'])->name('active-calls.index');
 
     // Pro Features
-    Route::resource('pro-features', ProFeaturesController::class);
-    // Route::post('/pro-features/action', [ProFeaturesController::class, 'handleAction'])->name('pro-features.action');
-    Route::post('pro-features/item-options', [ProFeaturesController::class, 'getItemOptions'])->name('pro-features.item.options');
-    Route::post('pro-features/activate', [ProFeaturesController::class, 'activate'])->name('pro-features.activate');
-    Route::post('pro-features/install', [ProFeaturesController::class, 'install'])->name('pro-features.install');
-    Route::post('pro-features/uninstall', [ProFeaturesController::class, 'uninstall'])->name('pro-features.uninstall');
+    Route::get('pro-features', [ProFeaturesController::class, 'index'])->name('pro-features.index');
 
 
     // Cloud Provisioning
@@ -508,9 +495,7 @@ Route::group(['middleware' => 'auth'], function () {
 
 
     // Whitelisted Numbers
-    Route::resource('whitelisted-numbers', WhitelistedNumbersController::class);
-    Route::post('/whitelisted-numbers/bulk-delete', [WhitelistedNumbersController::class, 'bulkDelete'])->name('whitelisted-numbers.bulk.delete');
-    Route::post('/whitelisted-numbers/select-all', [WhitelistedNumbersController::class, 'selectAll'])->name('whitelisted-numbers.select.all');
+    Route::get('whitelisted-numbers', [WhitelistedNumbersController::class, 'index'])->name('whitelisted-numbers.index');
 });
 
 

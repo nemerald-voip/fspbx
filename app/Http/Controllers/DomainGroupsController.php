@@ -16,9 +16,6 @@ class DomainGroupsController extends Controller
 {
 
     public $model;
-    public $filters = [];
-    public $sortField;
-    public $sortOrder;
     protected $viewName = 'DomainGroups';
     protected $searchable = ['group_name'];
 
@@ -31,7 +28,7 @@ class DomainGroupsController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
         // Check permissions
         if (!userCheckPermission("domain_groups_list_view")) {
@@ -41,12 +38,13 @@ class DomainGroupsController extends Controller
         return Inertia::render(
             $this->viewName,
             [
-                'data' => function () {
-                    return $this->getData();
-                },
+                'pagination' => [
+                    'per_page' => fspbx_pagination_per_page($request),
+                    'per_page_options' => fspbx_pagination_options(),
+                ],
 
                 'routes' => [
-                    'current_page' => route('domain-groups.index'),
+                    'data_route' => route('domain-groups.data'),
                     'item_options' => route('domain-groups.item.options'),
                     'bulk_delete' => route('domain-groups.bulk.delete'),
                     'select_all' => route('domain-groups.select.all'),
@@ -63,37 +61,19 @@ class DomainGroupsController extends Controller
     /**
      *  Get data
      */
-    public function getData($paginate = 50)
+    public function getData(Request $request)
     {
+        abort_unless(userCheckPermission('domain_groups_list_view'), 403);
 
-        // Check if search parameter is present and not empty
-        if (!empty(request('filterData.search'))) {
-            $this->filters['search'] = request('filterData.search');
-        }
-
-        // Add sorting criteria
-        $this->sortField = request()->get('sortField', 'group_name');
-        $this->sortOrder = request()->get('sortOrder', 'asc');
-
-        $data = $this->builder($this->filters);
-
-        // Apply pagination if requested
-        if ($paginate) {
-            $data = $data->paginate($paginate);
-        } else {
-            $data = $data->get(); // This will return a collection
-        }
-
-        // logger($data);
+        $data = $this->builder(
+            ['search' => $request->input('filter.search')],
+            (string) $request->input('sort', 'group_name')
+        )->paginate(fspbx_pagination_per_page($request));
 
         return $data;
     }
 
-    /**
-     * @param  array  $filters
-     * @return Builder
-     */
-    public function builder(array $filters = [])
+    public function builder(array $filters = [], string $sort = 'group_name')
     {
         $data =  $this->model::query();
         // $data->with(['domain_group_relations' => function ($query) {
@@ -111,6 +91,9 @@ class DomainGroupsController extends Controller
 
         if (is_array($filters)) {
             foreach ($filters as $field => $value) {
+                if ($value === null || $value === '') {
+                    continue;
+                }
                 if (method_exists($this, $method = "filter" . ucfirst($field))) {
                     $this->$method($data, $value);
                 }
@@ -118,7 +101,13 @@ class DomainGroupsController extends Controller
         }
 
         // Apply sorting
-        $data->orderBy($this->sortField, $this->sortOrder);
+        $sortField = ltrim($sort, '-');
+        $sortOrder = str_starts_with($sort, '-') ? 'desc' : 'asc';
+        if (! in_array($sortField, ['group_name'], true)) {
+            $sortField = 'group_name';
+            $sortOrder = 'asc';
+        }
+        $data->orderBy($sortField, $sortOrder)->orderBy('domain_group_uuid');
 
         return $data;
     }
@@ -223,7 +212,7 @@ class DomainGroupsController extends Controller
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to fetch item details']]
+                'errors' => ['server' => [__('Failed to fetch item details')]]
             ], 500);  // 500 Internal Server Error for any other errors
         }
     }
@@ -258,7 +247,7 @@ class DomainGroupsController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages'           => ['success' => ['Domain group created successfully.']],
+                'messages'           => ['success' => [__('Domain group created successfully.')]],
                 'domain_group_uuid'  => $domainGroup->domain_group_uuid,
             ]);
         } catch (\Throwable $e) {
@@ -271,7 +260,7 @@ class DomainGroupsController extends Controller
             );
 
             return response()->json([
-                'messages' => ['error' => ['Something went wrong while creating the domain group.']]
+                'messages' => ['error' => [__('Something went wrong while creating the domain group.')]]
             ], 500);
         }
     }
@@ -314,7 +303,7 @@ class DomainGroupsController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages'           => ['success' => ['Domain group updated successfully.']],
+                'messages'           => ['success' => [__('Domain group updated successfully.')]],
                 'domain_group_uuid'  => $domain_group->domain_group_uuid,
             ]);
         } catch (\Throwable $e) {
@@ -327,7 +316,7 @@ class DomainGroupsController extends Controller
             );
 
             return response()->json([
-                'messages' => ['error' => ['Something went wrong while updating the domain group.']]
+                'messages' => ['error' => [__('Something went wrong while updating the domain group.')]]
             ], 500);
         }
     }
@@ -362,7 +351,7 @@ public function bulkDelete(Request $request)
         DB::commit();
 
         return response()->json([
-            'messages' => ['success' => ['Selected domain group(s) were deleted successfully.']]
+            'messages' => ['success' => [__('Selected domain group(s) were deleted successfully.')]]
         ]);
     } catch (\Throwable $e) {
         DB::rollBack();
@@ -372,34 +361,21 @@ public function bulkDelete(Request $request)
         );
 
         return response()->json([
-            'messages' => ['error' => ['An error occurred while deleting the selected domain group(s).']]
+            'messages' => ['error' => [__('An error occurred while deleting the selected domain group(s).')]]
         ], 500);
     }
 }
 
 
-    public function selectAll()
+    public function selectAll(Request $request)
     {
-        try {
-            $domainUuid = session('domain_uuid');
-            $uuids = $this->model::where($this->model->getTable() . '.domain_uuid', $domainUuid)
-                ->orWhereNull($this->model->getTable() . '.domain_uuid')
-                ->get($this->model->getKeyName())->pluck($this->model->getKeyName());
+        abort_unless(userCheckPermission('domain_groups_list_view'), 403);
 
+        $uuids = $this->builder(['search' => $request->input('filter.search')])->pluck('domain_group_uuid');
 
-
-            // Return a JSON response indicating success
-            return response()->json([
-                'messages' => ['success' => ['All items selected']],
-                'items' => $uuids,
-            ], 200);
-        } catch (\Exception $e) {
-            logger($e);
-            // Handle any other exception that may occur
-            return response()->json([
-                'success' => false,
-                'errors' => ['server' => ['Failed to select all items']]
-            ], 500); // 500 Internal Server Error for any other errors
-        }
+        return response()->json([
+            'messages' => ['success' => [__('All items selected')]],
+            'items' => $uuids,
+        ]);
     }
 }

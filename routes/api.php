@@ -40,7 +40,11 @@ use App\Http\Controllers\PhonebookManagerController;
 use App\Http\Controllers\DialplanController;
 use App\Http\Controllers\DefaultSettingsController;
 use App\Http\Controllers\DomainController;
+use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\WhitelistedNumbersController;
+use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\DomainGroupsController;
+use App\Http\Controllers\ProFeaturesController;
 use App\Http\Controllers\DomainSettingsController;
 use App\Http\Controllers\DynamicRouteController;
 use App\Http\Controllers\EmailLogsController;
@@ -359,7 +363,29 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::delete('menus/{menu}/items/{menuItem}', [MenuManagerController::class, 'destroyItem'])->name('menus.items.destroy');
     Route::post('menus/{menu}/items/bulk-delete', [MenuManagerController::class, 'bulkDestroyItems'])->name('menus.items.bulk-destroy');
 
+    // Activity Log
+    Route::get('activities/data', [ActivityLogController::class, 'getData'])->name('activities.data');
+
+    // Whitelisted Numbers
+    Route::get('whitelisted-numbers/data', [WhitelistedNumbersController::class, 'getData'])->name('whitelisted-numbers.data');
+    Route::post('whitelisted-numbers/select-all', [WhitelistedNumbersController::class, 'selectAll'])->name('whitelisted-numbers.select.all');
+    Route::post('whitelisted-numbers/bulk-delete', [WhitelistedNumbersController::class, 'bulkDelete'])->name('whitelisted-numbers.bulk.delete');
+    Route::resource('whitelisted-numbers', WhitelistedNumbersController::class)->only(['store', 'destroy']);
+
+    // Reports
+    Route::get('reports/data', [ReportsController::class, 'getData'])->name('reports.data');
+    Route::post('reports/generate', [ReportsController::class, 'store'])->name('reports.generate');
+
+    // Pro Features
+    Route::get('pro-features/data', [ProFeaturesController::class, 'getData'])->name('pro-features.data');
+    Route::post('pro-features/select-all', [ProFeaturesController::class, 'selectAll'])->name('pro-features.select.all');
+    Route::post('pro-features/item-options', [ProFeaturesController::class, 'getItemOptions'])->name('pro-features.item.options');
+    Route::post('pro-features/install', [ProFeaturesController::class, 'install'])->name('pro-features.install');
+    Route::post('pro-features/uninstall', [ProFeaturesController::class, 'uninstall'])->name('pro-features.uninstall');
+    Route::resource('pro-features', ProFeaturesController::class)->only(['update', 'destroy']);
+
     // Domain Groups
+    Route::get('domain-groups/data', [DomainGroupsController::class, 'getData'])->name('domain-groups.data');
     Route::post('domain-groups', [DomainGroupsController::class, 'store'])->name('domain-groups.store');
     Route::put('domain-groups/{domain_group}', [DomainGroupsController::class, 'update'])->name('domain-groups.update');
     Route::post('domain-groups/item-options', [DomainGroupsController::class, 'getItemOptions'])->name('domain-groups.item.options');

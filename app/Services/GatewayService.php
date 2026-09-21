@@ -223,7 +223,7 @@ class GatewayService
     public function executeGatewayCommand(string $action, Gateways $gateway): ?string
     {
         if ($gateway->enabled !== 'true') {
-            return 'Skipped: gateway is disabled.';
+            return __('Skipped: gateway is disabled.');
         }
 
         $command = match ($action) {
@@ -239,7 +239,7 @@ class GatewayService
         $service = $this->makeEslService();
 
         if (!$service->isConnected()) {
-            return '-ERR Could not connect to FreeSWITCH event socket.';
+            return '-ERR ' . __('Could not connect to FreeSWITCH event socket.');
         }
 
         return (string) $service->executeCommand($command);
