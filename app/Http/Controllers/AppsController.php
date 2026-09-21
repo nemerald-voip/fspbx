@@ -31,9 +31,6 @@ class AppsController extends Controller
     protected $ringotelApiService;
 
     public $model;
-    public $filters = [];
-    public $sortField;
-    public $sortOrder;
     protected $viewName = 'RingotelAppSettings';
     protected $searchable = ['domain_name', 'domain_description'];
     protected $allowedSortFields = [
@@ -52,22 +49,20 @@ class AppsController extends Controller
      *
      * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View
      */
-    public function index()
+    public function index(Request $request)
     {
 
         return Inertia::render(
             $this->viewName,
             [
-                'data' => function () {
-                    return $this->getData();
-                },
                 'pagination' => [
                     'per_page' => fspbx_pagination_per_page(),
                     'per_page_options' => fspbx_pagination_options(),
                 ],
 
                 'routes' => [
-                    'current_page' => route('apps.index'),
+                    'data_route' => route('apps.data'),
+                    'select_all' => route('apps.select.all'),
                     'create_organization' => route('apps.organization.create'),
                     'update_organization' => route('apps.organization.update'),
                     'destroy_organization' => route('apps.organization.destroy'),
@@ -84,34 +79,12 @@ class AppsController extends Controller
     /**
      *  Get data
      */
-    public function getData($paginate = null)
+    public function getData(Request $request)
     {
-        $paginate ??= fspbx_pagination_per_page();
-
-        // Check if search parameter is present and not empty
-        if (!empty(request('filterData.search'))) {
-            $this->filters['search'] = request('filterData.search');
-        }
-
-        // Add sorting criteria
-        $requestedSortField = request()->get('sortField', 'domain_name');
-        $requestedSortOrder = request()->get('sortOrder', 'asc');
-
-        $this->sortField = in_array($requestedSortField, $this->allowedSortFields, true)
-            ? $requestedSortField
-            : 'domain_name';
-        $this->sortOrder = in_array($requestedSortOrder, ['asc', 'desc'], true)
-            ? $requestedSortOrder
-            : 'asc';
-
-        $data = $this->builder($this->filters);
-
-        // Apply pagination if requested
-        if ($paginate) {
-            $data = $data->paginate($paginate);
-        } else {
-            $data = $data->get(); // This will return a collection
-        }
+        $data = $this->builder(
+            ['search' => $request->input('filter.search')],
+            (string) $request->input('sort', 'domain_name')
+        )->paginate(fspbx_pagination_per_page($request));
 
         // Normalize the query-level sort flag into the existing UI payload shape.
         $data->each(function ($domain) {
@@ -125,7 +98,7 @@ class AppsController extends Controller
      * @param  array  $filters
      * @return Builder
      */
-    public function builder(array $filters = [])
+    public function builder(array $filters = [], string $sort = 'domain_name')
     {
         $data =  $this->model::query();
         // Get all domains with 'domain_enabled' set to 'true' and eager load settings
@@ -156,18 +129,21 @@ class AppsController extends Controller
 
         if (is_array($filters)) {
             foreach ($filters as $field => $value) {
+                if ($value === null || $value === '') continue;
                 if (method_exists($this, $method = "filter" . ucfirst($field))) {
                     $this->$method($data, $value);
                 }
             }
         }
 
-        // Apply sorting
-        $sortColumn = $this->sortField === 'ringotel_status'
-            ? 'ringotel_status_sort'
-            : $this->sortField;
-
-        $data->orderBy($sortColumn, $this->sortOrder);
+        $sortField = ltrim($sort, '-');
+        $sortOrder = str_starts_with($sort, '-') ? 'desc' : 'asc';
+        if (! in_array($sortField, $this->allowedSortFields, true)) {
+            $sortField = 'domain_name';
+            $sortOrder = 'asc';
+        }
+        $sortColumn = $sortField === 'ringotel_status' ? 'ringotel_status_sort' : $sortField;
+        $data->orderBy($sortColumn, $sortOrder);
 
         return $data;
     }
@@ -199,6 +175,14 @@ class AppsController extends Controller
         });
     }
 
+    public function selectAll(Request $request)
+    {
+        return response()->json([
+            'messages' => ['success' => [__('All items selected')]],
+            'items' => $this->builder(['search' => $request->input('filter.search')])->pluck('domain_uuid'),
+        ]);
+    }
+
     public function getItemOptions(RingotelApiService $ringotelApiService)
     {
         $this->ringotelApiService = $ringotelApiService;
@@ -208,12 +192,12 @@ class AppsController extends Controller
 
             $navigation = [
                 [
-                    'name' => 'Organization',
+                    'name' => __('Organization'),
                     'icon' => 'BuildingOfficeIcon',
                     'slug' => 'organization',
                 ],
                 [
-                    'name' => 'Connections',
+                    'name' => __('Connections'),
                     'icon' => 'SyncAltIcon',
                     'slug' => 'connections',
                 ],
@@ -221,52 +205,52 @@ class AppsController extends Controller
 
             $conn_navigation = [
                 [
-                    'name' => 'Settings',
+                    'name' => __('Settings'),
                     'icon' => 'Cog6ToothIcon',
                     'slug' => 'settings',
                 ],
                 [
-                    'name' => 'Features',
+                    'name' => __('Features'),
                     'icon' => 'AdjustmentsHorizontalIcon',
                     'slug' => 'features',
                 ],
                 [
-                    'name' => 'PBX Features',
+                    'name' => __('PBX Features'),
                     'icon' => 'SettingsApplications',
                     'slug' => 'pbx_features',
                 ],
                 [
-                    'name' => 'SMS Settings',
+                    'name' => __('SMS Settings'),
                     'icon' => 'ChatBubbleLeftRightIcon',
                     'slug' => 'sms_settings',
                 ],
                 [
-                    'name' => 'Visual Call Park',
+                    'name' => __('Visual Call Park'),
                     'icon' => 'Squares2X2Icon',
                     'slug' => 'visual_call_park',
                 ],
                 [
-                    'name' => 'Speed Dial Numbers',
+                    'name' => __('Speed Dial Numbers'),
                     'icon' => 'HashtagIcon',
                     'slug' => 'speed_dial',
                 ],
                 [
-                    'name' => 'BLF Indicators',
+                    'name' => __('BLF Indicators'),
                     'icon' => 'EyeIcon',
                     'slug' => 'blf_indicators',
                 ],
                 [
-                    'name' => 'Custom Web Pages',
+                    'name' => __('Custom Web Pages'),
                     'icon' => 'GlobeAltIcon',
                     'slug' => 'custom_web_pages',
                 ],
                 [
-                    'name' => 'Miscellaneous',
+                    'name' => __('Miscellaneous'),
                     'icon' => 'WrenchScrewdriverIcon',
                     'slug' => 'miscellaneous',
                 ],
                 [
-                    'name' => 'App Updates',
+                    'name' => __('App Updates'),
                     'icon' => 'ArrowPathIcon',
                     'slug' => 'app_updates',
                 ],
@@ -293,8 +277,8 @@ class AppsController extends Controller
             $regions = $this->getRegions();
 
             $packages = [
-                ['value' => '1', 'name' => 'Essentials Package'],
-                ['value' => '2', 'name' => 'Pro Package'],
+                ['value' => '1', 'name' => __('Essentials Package')],
+                ['value' => '2', 'name' => __('Pro Package')],
             ];
 
             $protocols = [
@@ -335,13 +319,13 @@ class AppsController extends Controller
 
                 // If model doesn't exist throw an error
                 if (!$model) {
-                    throw new \Exception("Failed to fetch item details. Item not found");
+                    throw new \Exception(__("Failed to fetch item details. Item not found"));
                 }
 
                 // Add additional navigation item if ringotel status is true
                 if ($model->ringotel_status == 'true') {
                     $navigation[] = [
-                        'name' => 'Users',
+                        'name' => __('Users'),
                         'icon' => 'UsersIcon',
                         'slug' => 'users',
                     ];
@@ -396,7 +380,7 @@ class AppsController extends Controller
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to fetch item details'], 'server2' => [$e->getMessage()]]
+                'errors' => ['server' => [__('Failed to fetch item details')], 'server2' => [$e->getMessage()]]
             ], 500);  // 500 Internal Server Error for any other errors
         }
     }
@@ -487,14 +471,14 @@ class AppsController extends Controller
             // Return a JSON response indicating success
             return response()->json([
                 'org_id' => $organization['id'],
-                'messages' => ['success' => ['Organization successfully activated']]
+                'messages' => ['success' => [__('Organization successfully activated')]]
             ], 201);
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Unable to activate organization. Check logs for more details'], 'server2' => [$e->getMessage()]]
+                'errors' => ['server' => [__('Unable to activate organization. Check logs for more details')], 'server2' => [$e->getMessage()]]
             ], 500);  // 500 Internal Server Error for any other errors
         }
     }
@@ -530,14 +514,14 @@ class AppsController extends Controller
 
             // Return a JSON response indicating success
             return response()->json([
-                'messages' => ['success' => ['Organization successfully updated']]
+                'messages' => ['success' => [__('Organization successfully updated')]]
             ], 201);
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Unable to update organization. Check logs for more details']]
+                'errors' => ['server' => [__('Unable to update organization. Check logs for more details')]]
             ], 500);  // 500 Internal Server Error for any other errors
         }
     }
@@ -565,7 +549,7 @@ class AppsController extends Controller
             if (!$org_id) {
                 return response()->json([
                     'success' => false,
-                    'errors' => ['server' => ['Organization ID not found for the given domain.']]
+                    'errors' => ['server' => [__('Organization ID not found for the given domain.')]]
                 ], 404); // 404 Not Found
             }
 
@@ -589,13 +573,13 @@ class AppsController extends Controller
                     ->delete();
 
                 return response()->json([
-                    'messages' => ['success' => ['Organization and its connections were successfully deleted.']]
+                    'messages' => ['success' => [__('Organization and its connections were successfully deleted.')]]
                 ], 200); // 200 OK
             }
 
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to delete the organization.']]
+                'errors' => ['server' => [__('Failed to delete the organization.')]]
             ], 500); // 500 Internal Server Error
 
         } catch (\Exception $e) {
@@ -629,14 +613,14 @@ class AppsController extends Controller
                 'conn_id' => $connection['id'],
                 'connection_name' => $inputs['connection_name'],
                 'domain' => $inputs['domain'] . ":" . $inputs['port'],
-                'messages' => ['success' => ['Connection created successfully']]
+                'messages' => ['success' => [__('Connection created successfully')]]
             ], 201);
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Unable to add connection. Check logs for more details']]
+                'errors' => ['server' => [__('Unable to add connection. Check logs for more details')]]
             ], 500);  // 500 Internal Server Error for any other errors
         }
     }
@@ -658,14 +642,14 @@ class AppsController extends Controller
 
             // Return a JSON response indicating success
             return response()->json([
-                'messages' => ['success' => ['Connection deleted successfully']]
+                'messages' => ['success' => [__('Connection deleted successfully')]]
             ], 201);
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Unable to delete connection. Check logs for more details']]
+                'errors' => ['server' => [__('Unable to delete connection. Check logs for more details')]]
             ], 500);  // 500 Internal Server Error for any other errors
         }
     }
@@ -687,14 +671,14 @@ class AppsController extends Controller
 
             // Return a JSON response indicating success
             return response()->json([
-                'messages' => ['success' => ['Connection updated successfully']]
+                'messages' => ['success' => [__('Connection updated successfully')]]
             ], 201);
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Unable to update connection. Check logs for more details']]
+                'errors' => ['server' => [__('Unable to update connection. Check logs for more details')]]
             ], 500);  // 500 Internal Server Error for any other errors
         }
     }
@@ -790,14 +774,14 @@ class AppsController extends Controller
             }
 
             return response()->json([
-                'messages' => ['success' => ['Connection updated successfully']]
+                'messages' => ['success' => [__('Connection updated successfully')]]
             ], 200);
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json([
                 'status' => 500,
                 'error' => [
-                    'message' => 'An unexpected error occurred. Please try again later.',
+                    'message' => __('An unexpected error occurred. Please try again later.'),
                 ],
             ]);
         }
@@ -856,14 +840,14 @@ class AppsController extends Controller
             }
 
             return response()->json([
-                'messages' => ['success' => ['User are successfully synced']]
+                'messages' => ['success' => [__('Users synced successfully')]]
             ], 200);
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json([
                 'status' => 500,
                 'error' => [
-                    'message' => 'An unexpected error occurred. Please try again later.',
+                    'message' => __('An unexpected error occurred. Please try again later.'),
                 ],
             ]);
         }
@@ -1808,7 +1792,7 @@ class AppsController extends Controller
 
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Unable to retrieve API Token. Check logs for more details']],
+                'errors' => ['server' => [__('Unable to retrieve API Token. Check logs for more details')]],
             ], 500); // 500 Internal Server Error for any other errors
         }
     }
@@ -1840,14 +1824,14 @@ class AppsController extends Controller
 
             // Return a JSON response indicating success
             return response()->json([
-                'messages' => ['success' => ['API Token was successfully updated']]
+                'messages' => ['success' => [__('API Token was successfully updated')]]
             ], 201);
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Unable to update API Token. Check logs for more details']]
+                'errors' => ['server' => [__('Unable to update API Token. Check logs for more details')]]
             ], 500);  // 500 Internal Server Error for any other errors
         }
     }

@@ -400,27 +400,15 @@ Route::group(['middleware' => 'auth'], function () {
 
     //Apps
     Route::resource('apps', AppsController::class);
-    Route::post('apps/item-options', [AppsController::class, 'getItemOptions'])->name('apps.item.options');
-    Route::post('/apps/organization/create', [AppsController::class, 'createOrganization'])->name('apps.organization.create');
-    Route::put('/apps/organization/update', [AppsController::class, 'updateOrganization'])->name('apps.organization.update');
-    Route::post('/apps/organization/destroy', [AppsController::class, 'destroyOrganization'])->name('apps.organization.destroy');
-    Route::post('/apps/organization/all', [AppsController::class, 'getOrganizations'])->name('apps.organization.all');
-    Route::post('/apps/organization/pair', [AppsController::class, 'pairOrganization'])->name('apps.organization.pair');
     Route::post('/apps/mobile-app-options', [AppsController::class, 'getMobileAppOptions'])->name('apps.user.options');
     //Route::get('/apps/organization/update', [AppsController::class, 'updateOrganization']) ->name('appsUpdateOrganization');
-    Route::post('/apps/connection/create', [AppsController::class, 'createConnection'])->name('apps.connection.create');
-    Route::put('/apps/connection/update', [AppsController::class, 'updateConnection'])->name('apps.connection.update');
-    Route::post('/apps/connection/delete', [AppsController::class, 'destroyConnection'])->name('apps.connection.destroy');
     Route::get('/apps/connection/update', [AppsController::class, 'updateConnection'])->name('appsUpdateConnection');
-    Route::post('/apps/token/get', [AppsController::class, 'getToken'])->name('apps.token.get');
-    Route::post('/apps/token/update', [AppsController::class, 'updateToken'])->name('apps.token.update');
     Route::post('/apps/user/create', [AppsController::class, 'createUser'])->name('apps.user.create');
     Route::post('/apps/user/delete', [AppsController::class, 'deleteUser'])->name('apps.user.delete');
     Route::post('/apps/user/activate', [AppsController::class, 'activateUser'])->name('apps.user.activate');
     Route::post('/apps/user/deactivate', [AppsController::class, 'deactivateUser'])->name('apps.user.deactivate');
     Route::post('/apps/user/state', [AppsController::class, 'setUserState'])->name('apps.user.state');
     Route::post('/apps/user/device/delete', [AppsController::class, 'deleteDevice'])->name('apps.user.device.delete');
-    Route::post('/apps/sync-users', [AppsController::class, 'syncUsers'])->name('apps.users.sync');
     Route::post('/apps/user/reset-password', [AppsController::class, 'resetPassword'])->name('apps.user.reset');
     Route::post('/apps/users/{extension}/status', [AppsController::class, 'SetStatus'])->name('appsSetStatus');
     Route::get('/apps/email', [AppsController::class, 'emailUser'])->name('emailUser');
@@ -487,32 +475,10 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('registrations', [RegistrationsController::class, 'index'])->name('registrations.index');
 
     // Sansay Registrations
-    Route::resource('sansay/registrations', SansayRegistrationsController::class)->names([
-        'index' => 'sansay.registrations.index',
-        'create' => 'sansay.registrations.create',
-        'store' => 'sansay.registrations.store',
-        'show' => 'sansay.registrations.show',
-        'edit' => 'sansay.registrations.edit',
-        'update' => 'sansay.registrations.update',
-        'destroy' => 'sansay.registrations.destroy',
-    ]);
-
-    Route::post('sansay/registrations/select-all', [SansayRegistrationsController::class, 'selectAll'])->name('sansay.registrations.select.all');
-    Route::post('sansay/registrations/delete', [SansayRegistrationsController::class, 'destroy'])->name('sansay.registrations.delete');
+    Route::get('sansay/registrations', [SansayRegistrationsController::class, 'index'])->name('sansay.registrations.index');
 
     // Sansay Active Calls
-    Route::resource('sansay/active-calls', SansayActiveCallsController::class)->names([
-        'index' => 'sansay.active-calls.index',
-        'create' => 'sansay.active-calls.create',
-        'store' => 'sansay.active-calls.store',
-        'show' => 'sansay.active-calls.show',
-        'edit' => 'sansay.active-calls.edit',
-        'update' => 'sansay.active-calls.update',
-        'destroy' => 'sansay.active-calls.destroy',
-    ]);
-
-    Route::post('sansay/active-calls/select-all', [SansayActiveCallsController::class, 'selectAll'])->name('sansay.active-calls.select.all');
-    Route::post('sansay/active-calls/delete', [SansayActiveCallsController::class, 'destroy'])->name('sansay.active-calls.delete');
+    Route::get('sansay/active-calls', [SansayActiveCallsController::class, 'index'])->name('sansay.active-calls.index');
 
     // Active Calls
     Route::get('active-conferences', [ActiveConferenceController::class, 'index'])->name('active-conferences.index');

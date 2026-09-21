@@ -397,7 +397,7 @@ class RecommendedSettingsSeeder extends Seeder
                 'default_setting_subcategory'   => 'call_delay',
                 'default_setting_name'          => 'text',
                 'default_setting_value'         => '10',
-                'default_setting_enabled'       => false,
+                'default_setting_enabled'       => true,
                 'default_setting_description'   => "Delay incoming calls to the desktop app",
             ],
             [

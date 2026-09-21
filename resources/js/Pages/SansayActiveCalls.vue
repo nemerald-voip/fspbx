@@ -3,7 +3,7 @@
 
     <div class="m-3">
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-            <template #title>Sansay Active Calls</template>
+            <template #title>{{ $t('Sansay Active Calls') }}</template>
 
             <template #filters>
                 <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
@@ -13,16 +13,16 @@
                     <input type="text" v-model="filterData.search" name="mobile-search-candidate"
                         id="mobile-search-candidate"
                         class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
-                        placeholder="Search" />
+                        :placeholder="$t('Search')" />
                     <input type="text" v-model="filterData.search" name="desktop-search-candidate"
                         id="desktop-search-candidate"
                         class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
-                        placeholder="Search" />
+                        :placeholder="$t('Search')" />
 
 
                 </div>
                 <div class="relative min-w-64 mb-2 shrink-0 sm:mr-4">
-                    <ComboBox :options="servers" :selectedItem="filterData.server" :placeholder="'Select SBC'"
+                    <ComboBox :options="servers" :selectedItem="filterData.server" :placeholder="$t('Select SBC')"
                         @update:model-value="handleUpdateServerFilter" />
                 </div>
             </template>
@@ -38,7 +38,7 @@
 
                 <button type="button" @click.prevent="handleRefreshButtonClick()"
                     class="rounded-md bg-indigo-600 ml-2 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                    Refresh
+                    {{ $t('Refresh') }}
                 </button>
 
             </template>
@@ -49,45 +49,45 @@
                     :links="data.links" @pagination-change-page="renderRequestedPage" />
             </template>
             <template #table-header>
-                <TableColumnHeader header="User"
+                <TableColumnHeader :header="$t('User')"
                     class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                     <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
                         :has-selected-items="selectedItems.length > 0" />
-                    <span class="pl-4 whitespace-nowrap">Orig TID</span>
+                    <span class="pl-4 whitespace-nowrap">{{ $t('Orig TID') }}</span>
                 </TableColumnHeader>
 
-                <TableColumnHeader header="Term TID"
+                <TableColumnHeader :header="$t('Term TID')"
                     class="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="DNIS" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="ANI" class=" px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Orig IP"
+                <TableColumnHeader :header="$t('Orig IP')"
                     class="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
-                <TableColumnHeader header="Term IP"
+                <TableColumnHeader :header="$t('Term IP')"
                     class="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Inv Time"
+                <TableColumnHeader :header="$t('Inv Time')"
                     class="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Ans Time"
+                <TableColumnHeader :header="$t('Ans Time')"
                     class="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Duration" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t('Duration')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <!-- <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" /> -->
             </template>
 
             <template v-if="selectPageItems" v-slot:current-selection>
                 <td colspan="14">
                     <div class="text-sm text-center m-2">
-                        <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
+                        {{ $t(':count items are selected.', { count: selectedItems.length }) }}
                         <button v-if="!selectAll && selectedItems.length != data.total"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleSelectAll">
-                            Select all {{ data.total }} items
+                            {{ $t('Select all :total items', { total: data.total }) }}
                         </button>
                         <button v-if="selectAll"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleClearSelection">
-                            Clear selection
+                            {{ $t('Clear selection') }}
                         </button>
                     </div>
                 </td>
@@ -136,9 +136,9 @@
                 <!-- Conditional rendering for 'no records' message -->
                 <div v-if="data.data.length === 0" class="text-center my-5 ">
                     <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
+                    <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ $t('No results found') }}</h3>
                     <p class="mt-1 text-sm text-gray-500">
-                        Adjust your search and try again.
+                        {{ $t('Adjust your search and try again.') }}
                     </p>
                 </div>
             </template>
@@ -150,15 +150,17 @@
             <template #footer>
                 <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
                     :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
-                    @pagination-change-page="renderRequestedPage" />
+                    :page-size="perPage" :page-size-options="props.pagination?.per_page_options ?? []"
+                    :show-page-size-selector="true"
+                    @pagination-change-page="renderRequestedPage" @page-size-change="handlePageSizeChange" />
             </template>
         </DataTable>
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
     <ConfirmationModal :show="isDeleteConfirmationModalVisible" @close="isDeleteConfirmationModalVisible = false"
-        @confirm="confirmDeleteAction" :header="'Are you sure?'" :text="'Confirm deleting selected item(s).'"
-        :confirm-button-label="'Delete'" cancel-button-label="Cancel" :loading="isDeleteRequestProcessing" />
+        @confirm="confirmDeleteAction" :header="$t('Are you sure?')" :text="$t('Confirm deleting selected item(s).')"
+        :confirm-button-label="$t('Delete')" :cancel-button-label="$t('Cancel')" :loading="isDeleteRequestProcessing" />
 
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
@@ -169,7 +171,6 @@
 import { computed, onMounted, ref, onUnmounted } from "vue";
 import { usePage } from '@inertiajs/vue3'
 import axios from 'axios';
-import { router } from "@inertiajs/vue3";
 import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";
@@ -191,7 +192,7 @@ import Refresh from "./components/icons/Refresh.vue"
 
 
 const page = usePage()
-const loading = ref(false)
+const loading = ref(true)
 const loadingModal = ref(false)
 const selectAll = ref(false);
 const selectedItems = ref([]);
@@ -207,14 +208,33 @@ const restartRequestNotificationSuccessTrigger = ref(false);
 const restartRequestNotificationErrorTrigger = ref(false);
 const bulkActionLabel = ref('');
 const isRefreshing = ref(false)
-const intervalId = ref(null);
+const refreshTimeoutId = ref(null);
 
 
 const props = defineProps({
-    data: Object,
     routes: Object,
+    pagination: Object,
 });
 
+
+const perPage = ref(props.pagination?.per_page ?? 50);
+
+
+const data = ref({
+    data: [],
+    prev_page_url: null,
+    next_page_url: null,
+    from: null,
+    to: null,
+    total: 0,
+    current_page: 1,
+    last_page: 1,
+    links: [],
+});
+const currentPage = ref(1);
+let activeRequest = null;
+let requestSequence = 0;
+let isUnmounted = false;
 
 const filterData = ref({
     search: null,
@@ -247,27 +267,23 @@ const bulkActions = computed(() => {
     return actions;
 });
 
-onMounted(() => {
-    // console.log(props.data);
-    if (props.data.data.length === 0) {
-        handleSearchButtonClick();
-    }
-
-});
-
+onMounted(() => getData());
 
 const handleSelectAll = () => {
+    const sequence = requestSequence;
     axios.post(props.routes.select_all,
         {
-            'filterData': filterData._rawValue
+            filter: { ...filterData.value }
         },
     )
         .then((response) => {
+            if (isUnmounted || sequence !== requestSequence) return;
             selectedItems.value = response.data.items;
             selectAll.value = true;
             showNotification('success', response.data.messages);
 
         }).catch((error) => {
+            if (isUnmounted || sequence !== requestSequence) return;
             handleClearSelection();
             handleErrorResponse(error);
         });
@@ -292,14 +308,14 @@ const executeSingleDelete = (id) => {
     axios.post(props.routes.delete,
         {
             'callsData': callsData,
-            'filterData': filterData._rawValue
+            filter: { ...filterData.value }
         },
     )
         .then((response) => {
             showNotification('success', response.data.messages);
             handleModalClose();
             isDeleteRequestProcessing.value = false;
-            handleSearchButtonClick();
+            refreshData();
         }).catch((error) => {
             handleModalClose();
             handleErrorResponse(error);
@@ -327,14 +343,14 @@ const executeBulkDelete = () => {
     axios.post(props.routes.delete,
         {
             'callsData': callsData,
-            'filterData': filterData._rawValue
+            filter: { ...filterData.value }
 
         })
         .then((response) => {
             handleModalClose();
             isDeleteRequestProcessing.value = false;
             showNotification('success', response.data.messages);
-            handleSearchButtonClick();
+            refreshData();
         })
         .catch((error) => {
             handleClearSelection();
@@ -345,51 +361,70 @@ const executeBulkDelete = () => {
 }
 
 
-const handleRefreshButtonClick = () => {
-    handleSearchButtonClick();
-}
+const getData = async (page = currentPage.value, { background = false } = {}) => {
+    if (isUnmounted) return;
 
+    clearTimeout(refreshTimeoutId.value);
+    refreshTimeoutId.value = null;
+    activeRequest?.abort();
+    const controller = new AbortController();
+    activeRequest = controller;
+    const sequence = ++requestSequence;
+    loading.value = !background;
+    currentPage.value = Number(page) || 1;
 
+    try {
+        const response = await axios.get(props.routes.data_route, {
+            params: {
+                filter: { ...filterData.value },
+                page: currentPage.value,
+                per_page: perPage.value,
+            },
+            signal: controller.signal,
+        });
 
-const handleSearchButtonClick = () => {
-    loading.value = true;
-    router.visit(props.routes.current_page, {
-        data: {
-            filterData: filterData._rawValue,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: [
-            "data",
-        ],
-        onSuccess: (page) => {
-            loading.value = false;
-            handleClearSelection();
-        },
-        onError: (error) => {
-            loading.value = false;
+        if (isUnmounted || sequence !== requestSequence) return;
+
+        // A deletion may have removed the last row on this page.
+        if (response.data.last_page && currentPage.value > response.data.last_page) {
+            return await getData(response.data.last_page, { background });
+        }
+
+        data.value = response.data;
+        currentPage.value = response.data.current_page ?? currentPage.value;
+        handleClearSelection();
+    } catch (error) {
+        if (!isUnmounted && sequence === requestSequence && !axios.isCancel(error)) {
             handleErrorResponse(error);
         }
-    });
+    } finally {
+        if (!isUnmounted && sequence === requestSequence) {
+            activeRequest = null;
+            loading.value = false;
+            scheduleRefresh();
+        }
+    }
 };
 
-const handleRefresh = () => {
-    router.visit(props.routes.current_page, {
-        data: {
-            filterData: filterData._rawValue,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: [
-            "data",
-        ],
-        onSuccess: (page) => {
-            handleClearSelection();
-        },
-        onError: (error) => {
-            handleErrorResponse(error);
-        }
-    });
+const handleSearchButtonClick = () => {
+    getData(1);
+};
+
+const refreshData = () => {
+    getData(currentPage.value);
+};
+
+const handleRefreshButtonClick = () => refreshData();
+
+const scheduleRefresh = () => {
+    clearTimeout(refreshTimeoutId.value);
+    refreshTimeoutId.value = null;
+
+    if (isRefreshing.value && !isUnmounted) {
+        refreshTimeoutId.value = setTimeout(() => {
+            getData(currentPage.value, { background: true });
+        }, 7000);
+    }
 };
 
 const handleFiltersReset = () => {
@@ -399,47 +434,41 @@ const handleFiltersReset = () => {
 }
 
 const handleUpdateServerFilter = (newSelectedItem) => {
-    filterData.value.server = newSelectedItem.value;
+    filterData.value.server = servers.find(server => server.value === newSelectedItem?.value)?.value ?? null;
+    handleClearSelection();
+    data.value.data = [];
+    handleSearchButtonClick();
 }
 
 
 const renderRequestedPage = (url) => {
-    loading.value = true;
-    router.visit(url, {
-        data: {
-            filterData: filterData._rawValue,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: ["data"],
-        onSuccess: (page) => {
-            loading.value = false;
-        }
-    });
+    if (!url) return;
+
+    const urlObj = new URL(url, window.location.origin);
+    getData(urlObj.searchParams.get('page') ?? 1);
+};
+
+const handlePageSizeChange = (newPerPage) => {
+    perPage.value = newPerPage;
+    handleSearchButtonClick();
 };
 
 const toggleRefreshing = () => {
     isRefreshing.value = !isRefreshing.value;
 
-    if (isRefreshing.value) {
-        // Start calling handleSearchButtonClick every few seconds
-        intervalId.value = setInterval(() => {
-            handleRefresh();
-        }, 7000); // Run every 5 seconds
+    if (isRefreshing.value && !activeRequest) {
+        getData(currentPage.value, { background: true });
     } else {
-        // Stop the interval when refreshing is disabled
-        clearInterval(intervalId.value);
-        intervalId.value = null;
+        clearTimeout(refreshTimeoutId.value);
+        refreshTimeoutId.value = null;
     }
 };
 
-// Make sure to clear the interval when the component is destroyed
 onUnmounted(() => {
-    if (intervalId.value) {
-        clearInterval(intervalId.value);
-    }
+    isUnmounted = true;
+    activeRequest?.abort();
+    clearTimeout(refreshTimeoutId.value);
 });
-
 
 const handleErrorResponse = (error) => {
     if (error.response) {
@@ -462,7 +491,7 @@ const handleErrorResponse = (error) => {
 
 const handleSelectPageItems = () => {
     if (selectPageItems.value) {
-        selectedItems.value = props.data.data.map(item => item.callID);
+        selectedItems.value = data.value.data.map(item => item.callID);
     } else {
         selectedItems.value = [];
     }

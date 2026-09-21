@@ -21,9 +21,6 @@ class BusinessHoursController extends Controller
 {
 
     public $model;
-    public $filters = [];
-    public $sortField;
-    public $sortOrder;
     protected $viewName = 'BusinessHours';
     protected $searchable = ['name', 'extension', 'description'];
     protected $allowedSortFields = [
@@ -54,12 +51,17 @@ class BusinessHoursController extends Controller
         return Inertia::render(
             $this->viewName,
             [
-                'data' => function () {
-                    return $this->getData();
-                },
-
+                'pagination' => [
+                    'per_page' => fspbx_pagination_per_page($request),
+                    'per_page_options' => fspbx_pagination_options(),
+                ],
+                'permissions' => [
+                    'business_hours_create' => userCheckPermission('business_hours_create'),
+                    'business_hours_update' => userCheckPermission('business_hours_update'),
+                    'business_hours_destroy' => userCheckPermission('business_hours_delete'),
+                ],
                 'routes' => [
-                    'current_page' => route('business-hours.index'),
+                    'data_route' => route('business-hours.data'),
                     'item_options' => route('business-hours.item.options'),
                     'bulk_delete' => route('business-hours.bulk.delete'),
                     'select_all' => route('business-hours.select.all'),
@@ -73,44 +75,21 @@ class BusinessHoursController extends Controller
     /**
      *  Get data
      */
-    public function getData($paginate = 50)
+    public function getData(Request $request)
     {
+        abort_unless(userCheckPermission('business_hours_list_view'), 403);
 
-        // Check if search parameter is present and not empty
-        if (!empty(request('filterData.search'))) {
-            $this->filters['search'] = request('filterData.search');
-        }
-
-        // Add sorting criteria
-        $requestedSortField = request()->get('sortField', 'extension');
-        $requestedSortOrder = request()->get('sortOrder', 'asc');
-
-        $this->sortField = in_array($requestedSortField, $this->allowedSortFields, true)
-            ? $requestedSortField
-            : 'extension';
-        $this->sortOrder = in_array($requestedSortOrder, ['asc', 'desc'], true)
-            ? $requestedSortOrder
-            : 'asc';
-
-        $data = $this->builder($this->filters);
-
-        // Apply pagination if requested
-        if ($paginate) {
-            $data = $data->paginate($paginate);
-        } else {
-            $data = $data->get(); // This will return a collection
-        }
-
-        // logger($data);
-
-        return $data;
+        return $this->builder(
+            ['search' => $request->input('filter.search')],
+            (string) $request->input('sort', 'extension')
+        )->paginate(fspbx_pagination_per_page($request));
     }
 
     /**
      * @param  array  $filters
      * @return Builder
      */
-    public function builder(array $filters = [])
+    public function builder(array $filters = [], string $sort = 'extension')
     {
         $data =  $this->model::query();
         $domainUuid = session('domain_uuid');
@@ -129,6 +108,9 @@ class BusinessHoursController extends Controller
 
         if (is_array($filters)) {
             foreach ($filters as $field => $value) {
+                if ($value === null || $value === '') {
+                    continue;
+                }
                 if (method_exists($this, $method = "filter" . ucfirst($field))) {
                     $this->$method($data, $value);
                 }
@@ -136,7 +118,13 @@ class BusinessHoursController extends Controller
         }
 
         // Apply sorting
-        $data->orderBy($this->sortField, $this->sortOrder);
+        $sortField = ltrim($sort, '-');
+        $sortOrder = str_starts_with($sort, '-') ? 'desc' : 'asc';
+        if (! in_array($sortField, $this->allowedSortFields, true)) {
+            $sortField = 'extension';
+            $sortOrder = 'asc';
+        }
+        $data->orderBy($sortField, $sortOrder);
 
         return $data;
     }
@@ -686,15 +674,12 @@ class BusinessHoursController extends Controller
     }
 
 
-    public function selectAll()
+    public function selectAll(Request $request)
     {
+        abort_unless(userCheckPermission('business_hours_list_view'), 403);
+
         try {
-            if (request()->get('showGlobal')) {
-                $uuids = $this->model::get($this->model->getKeyName())->pluck($this->model->getKeyName());
-            } else {
-                $uuids = $this->model::where('domain_uuid', session('domain_uuid'))
-                    ->get($this->model->getKeyName())->pluck($this->model->getKeyName());
-            }
+            $uuids = $this->builder(['search' => $request->input('filter.search')])->pluck('uuid');
 
             // Return a JSON response indicating success
             return response()->json([
