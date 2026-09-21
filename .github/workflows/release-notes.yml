@@ -17,47 +17,59 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
         run: |
-          # 1. Fetch releases JSON from GitHub API (handles up to 100 past releases)
-          RELEASES_JSON=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
-            "https://github.com")
+          # Start with the initial URL (requesting the max 100 per page)
+          URL="https://github.com"
 
-          # 2. Loop through every release using jq to extract required variables
-          echo "$RELEASES_JSON" | jq -c '.[]' | while read -r release; do
-            TITLE=$(echo "$release" | jq -r '.name // .tag_name')
-            TAG=$(echo "$release" | jq -r '.tag_name')
-            DATE=$(echo "$release" | jq -r '.published_at')
-            BODY=$(echo "$release" | jq -r '.body')
-            DRAFT=$(echo "$release" | jq -r '.draft')
-            PRERELEASE=$(echo "$release" | jq -r '.prerelease')
+          # Loop continuously as long as a valid next page URL exists
+          while [ -n "$URL" ]; do
+            echo "Fetching page: $URL"
 
-            # Skip drafts and prereleases if you don't want them in your blog
-            if [ "$DRAFT" = "true" ] || [ "$PRERELEASE" = "true" ]; then
-              continue
-            fi
+            # Fetch response (headers + body combined)
+            RESP=$(curl -i -s -H "Authorization: token $GITHUB_TOKEN" "$URL")
 
-            # Format the date into YYYY-MM-DD for the Docusaurus filename
-            POST_DATE=$(echo "$DATE" | cut -d'T' -f1)
-            FILENAME="documentation/blog/${POST_DATE}-${TAG}.md"
+            # Separate HTTP Headers from the JSON Body
+            HEADERS=$(echo "$RESP" | sed '/^\r$/q')
+            RELEASES_JSON=$(echo "$RESP" | sed '1,/^\r$/d')
 
-            # Create the file only if it doesn't already exist
-            if [ ! -f "$FILENAME" ]; then
-              echo "Generating blog post for $TAG..."
-              mkdir -p documentation/blog
+            # Extract individual releases from the page payload
+            echo "$RELEASES_JSON" | jq -c '.[]' | while read -r release; do
+              TITLE=$(echo "$release" | jq -r '.name // .tag_name')
+              TAG=$(echo "$release" | jq -r '.tag_name')
+              DATE=$(echo "$release" | jq -r '.published_at')
+              BODY=$(echo "$release" | jq -r '.body')
+              DRAFT=$(echo "$release" | jq -r '.draft')
+              PRERELEASE=$(echo "$release" | jq -r '.prerelease')
 
-              cat << EOF > "$FILENAME"
----
-title: "$TITLE ($TAG)"
-date: $DATE
-tags: [release]
----
+              # Skip drafts and prereleases
+              if [ "$DRAFT" = "true" ] || [ "$PRERELEASE" = "true" ]; then
+                continue
+              fi
 
-$BODY
-EOF
-            fi
+              # Format date to YYYY-MM-DD for Docusaurus
+              POST_DATE=$(echo "$DATE" | cut -d'T' -f1)
+              FILENAME="blog/${POST_DATE}-${TAG}.md"
+
+              # Write frontmatter using sequential, safe echoes
+              if [ ! -f "$FILENAME" ]; then
+                echo "Generating blog post for $TAG..."
+                mkdir -p blog
+
+                echo "---" > "$FILENAME"
+                echo "title: \"$TITLE ($TAG)\"" >> "$FILENAME"
+                echo "date: $DATE" >> "$FILENAME"
+                echo "tags: [release]" >> "$FILENAME"
+                echo "---" >> "$FILENAME"
+                echo "" >> "$FILENAME"
+                echo "$BODY" >> "$FILENAME"
+              fi
+            done
+
+            # Parse the Link header to find the next page URL (if available)
+            URL=$(echo "$HEADERS" | grep -Fi 'Link:' | sed -n -E 's/.*<([^>]+)>; rel="next".*/\1/p')
           done
 
       - name: Commit and push changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "docs: backfill historical release notes"
+          commit_message: "docs: backfill all historical release notes across pages"
           branch: main
