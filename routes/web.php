@@ -35,7 +35,6 @@ use App\Http\Controllers\DialplanController;
 use App\Http\Controllers\DomainController;
 use App\Http\Controllers\DomainGroupsController;
 use App\Http\Controllers\DynamicRouteController;
-use App\Http\Controllers\EmailQueueController;
 use App\Http\Controllers\EmailTemplateController;
 use App\Http\Controllers\ExtensionsController;
 use App\Http\Controllers\ExtensionStatisticsController;
@@ -435,10 +434,6 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('firewall', [FirewallController::class, 'index'])->name('firewall.index');
 
 
-
-    // Email Queues
-    Route::get('emailqueue', [EmailQueueController::class, 'index'])->name('emailqueue.index');
-    Route::get('emailqueue/{emailQueue}/{status?}', [EmailQueueController::class, 'updateStatus'])->name('emailqueue.updateStatus');
 
     // Fax Queue
 

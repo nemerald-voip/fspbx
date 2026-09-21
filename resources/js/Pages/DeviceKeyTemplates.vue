@@ -3,7 +3,7 @@
 
     <div class="m-3">
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-            <template #title>Device Key Templates</template>
+            <template #title>{{ $t('Device Key Templates') }}</template>
 
             <template #filters>
                 <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
@@ -12,21 +12,21 @@
                     </div>
                     <input type="text" v-model="filterData.search"
                         class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                        :placeholder="$t('Search')" @keydown.enter="handleSearchButtonClick" />
                     <input type="text" v-model="filterData.search"
                         class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                        :placeholder="$t('Search')" @keydown.enter="handleSearchButtonClick" />
                 </div>
             </template>
 
             <template #action>
                 <a :href="routes.devices"
                     class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                    Devices
+                    {{ $t('Devices') }}
                 </a>
                 <button v-if="permissions.create" type="button" @click.prevent="handleCreateButtonClick"
                     class="ml-2 sm:ml-4 rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
-                    Create
+                    {{ $t('Create') }}
                 </button>
             </template>
 
@@ -43,32 +43,32 @@
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                     <div class="pl-4 flex items-center cursor-pointer select-none" @click="handleSortRequest('name')">
-                        <span class="mr-2">Name</span>
+                        <span class="mr-2">{{ $t('Name') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'name' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'name' && sortData.order === 'desc'"
                             class="h-4 w-4 text-gray-500" />
                     </div>
                 </TableColumnHeader>
-                <TableColumnHeader header="Keys" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Enabled" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Description" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t('Keys')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t('Enabled')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t('Description')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
             </template>
 
             <template v-if="selectPageItems" v-slot:current-selection>
                 <td colspan="5">
                     <div class="text-sm text-center m-2">
-                        <span class="font-semibold">{{ selectedItems.length }}</span> items are selected.
+                        {{ $t(':count items are selected.', { count: selectedItems.length }) }}
                         <button v-if="!selectAll && selectedItems.length !== data.total"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200 hover:text-blue-500"
                             @click="handleSelectAll">
-                            Select all {{ data.total }} items
+                            {{ $t('Select all :total items', { total: data.total }) }}
                         </button>
                         <button v-if="selectAll"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200 hover:text-blue-500"
                             @click="handleClearSelection">
-                            Clear selection
+                            {{ $t('Clear selection') }}
                         </button>
                     </div>
                 </td>
@@ -88,7 +88,7 @@
                     </TableField>
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.keys_count" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
-                        <Badge :text="row.enabled === 'true' ? 'True' : 'False'" v-bind="enabledBadgeProps(row.enabled)" />
+                        <Badge :text="row.enabled === 'true' ? $t('True') : $t('False')" v-bind="enabledBadgeProps(row.enabled)" />
                     </TableField>
                     <TableField class="px-2 py-2 text-sm text-gray-500" :text="row.description" />
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
@@ -96,10 +96,10 @@
                             <div class="flex items-center whitespace-nowrap justify-end">
                                 <PencilSquareIcon v-if="permissions.update" @click="handleEditButtonClick(row.device_key_template_uuid)"
                                     class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
-                                    title="Edit" />
+                                    :title="$t('Edit')" />
                                 <TrashIcon v-if="permissions.destroy" @click="handleSingleItemDeleteRequest(row.device_key_template_uuid)"
                                     class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
-                                    title="Delete" />
+                                    :title="$t('Delete')" />
                                 <div v-if="permissions.create" class="relative z-20 ml-2">
                                     <AdvancedActionButton :actions="advancedActions"
                                         @advanced-action="(action) => handleAdvancedActionRequest(action, row.device_key_template_uuid)" />
@@ -113,7 +113,7 @@
             <template #empty>
                 <div v-if="data.data.length === 0" class="text-center my-5">
                     <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
+                    <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ $t('No results found') }}</h3>
                 </div>
             </template>
 
@@ -133,21 +133,21 @@
 
     <ConfirmationModal :show="confirmationModalTrigger" @close="handleModalClose" @confirm="confirmAction"
         :header="confirmationHeader" :text="confirmationText" :confirm-button-label="confirmationButtonLabel"
-        cancel-button-label="Cancel" />
+        :cancel-button-label="$t('Cancel')" />
 
     <DeviceKeyTemplateForm :show="showForm" :options="itemOptions" :mode="formMode" :loading="loadingForm"
         :header="formHeader" @close="handleFormClose" @error="handleErrorResponse" @success="showNotification"
         @refresh-data="refreshCurrentPage" />
 
-    <AddEditItemModal :show="showCopyModal" header="Copy Key Template To Domain" @close="handleCopyModalClose">
+    <AddEditItemModal :show="showCopyModal" :header="$t('Copy Key Template To Domain')" @close="handleCopyModalClose">
         <template #modal-body>
-            <Vueform :endpoint="submitCopyForm" @success="handleCopySuccess" @error="handleErrorResponse" :display-errors="false">
+            <Vueform :endpoint="submitCopyForm" @success="handleCopySuccess" @response="handleCopyResponse" @error="handleErrorResponse" :display-errors="false" validate-on="">
                 <template #empty>
                     <FormElements>
-                        <SelectElement name="target_domain_uuid" label="Target domain" :items="copyDomainOptions"
-                            :native="false" :search="true" input-type="search" autocomplete="off" placeholder="Select domain"
+                        <SelectElement name="target_domain_uuid" :label="$t('Target domain')" :items="copyDomainOptions"
+                            :native="false" :search="true" input-type="search" autocomplete="off" :placeholder="$t('Select domain')"
                             :strict="false" :floating="false" />
-                        <ButtonElement name="submit" button-label="Copy" :submits="true" align="right" />
+                        <ButtonElement name="submit" :button-label="$t('Copy')" :submits="true" align="right" />
                     </FormElements>
                 </template>
             </Vueform>
@@ -159,6 +159,7 @@
 </template>
 
 <script setup>
+import { trans } from '@i18n';
 import { computed, onMounted, ref } from "vue";
 import axios from "axios";
 import MainLayout from "../Layouts/MainLayout.vue";
@@ -191,9 +192,9 @@ const selectedItems = ref([]);
 const selectPageItems = ref(false);
 const confirmationModalTrigger = ref(false);
 const confirmAction = ref(null);
-const confirmationHeader = ref("Are you sure?");
+const confirmationHeader = ref(trans('Are you sure?'));
 const confirmationText = ref("");
-const confirmationButtonLabel = ref("Continue");
+const confirmationButtonLabel = ref(trans('Continue'));
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(false);
@@ -221,26 +222,26 @@ const filterData = ref({ search: null });
 const sortData = ref({ name: "name", order: "asc" });
 
 const bulkActions = computed(() => permissions.destroy ? [
-    { id: "bulk_delete", label: "Delete", icon: "TrashIcon" },
+    { id: "bulk_delete", label: trans('Delete'), icon: "TrashIcon" },
 ] : []);
 
 const copyDomainOptions = computed(() => props.options?.domains ?? []);
 
 const advancedActions = computed(() => [
     {
-        category: "Advanced",
+        category: trans('Advanced'),
         actions: [
-            { id: "duplicate", label: "Duplicate", icon: "DocumentDuplicateIcon" },
+            { id: "duplicate", label: trans('Duplicate'), icon: "DocumentDuplicateIcon" },
             ...(permissions.copy_to_domain && copyDomainOptions.value.length
-                ? [{ id: "copy_to_domain", label: "Copy to domain", icon: "DocumentDuplicateIcon" }]
+                ? [{ id: "copy_to_domain", label: trans('Copy to domain'), icon: "DocumentDuplicateIcon" }]
                 : []),
         ],
     },
 ]);
 
 const formHeader = computed(() => formMode.value === "create"
-    ? "Create Device Key Template"
-    : `Update Device Key Template - ${itemOptions.value?.item?.name || "Loading..."}`);
+    ? trans('Create Device Key Template')
+    : trans('Update Device Key Template - :name', { name: itemOptions.value?.item?.name || trans('Loading...') }));
 
 onMounted(() => getData());
 
@@ -329,10 +330,23 @@ const handleAdvancedActionRequest = async (action, uuid) => {
     }
 };
 
+function clearErrorsRecursive(element) {
+    element.messageBag?.clear();
+    Object.values(element.children$ ?? {}).forEach(clearErrorsRecursive);
+}
+
 const submitCopyForm = async (FormData, form) => {
+    form.messageBag.clear();
+    Object.values(form.elements$).forEach(clearErrorsRecursive);
     return await form.$vueform.services.axios.post(routes.copy_to_domain, {
         ...form.requestData,
         uuid: copyTemplateUuid.value,
+    });
+};
+
+const handleCopyResponse = (response, form) => {
+    Object.entries(response.data.errors ?? {}).forEach(([field, messages]) => {
+        form.el$(field)?.messageBag.append(messages[0]);
     });
 };
 
@@ -390,9 +404,9 @@ const handleClearSelection = () => {
 
 const handleSingleItemDeleteRequest = (uuid) => {
     showConfirmation({
-        header: "Confirm Deletion",
-        text: "Delete the selected device key template?",
-        button: "Delete",
+        header: trans('Confirm Deletion'),
+        text: trans('Delete the selected device key template?'),
+        button: trans('Delete'),
         action: () => executeBulkDelete([uuid]),
     });
 };
@@ -400,9 +414,9 @@ const handleSingleItemDeleteRequest = (uuid) => {
 const handleBulkActionRequest = (action) => {
     if (action === "bulk_delete") {
         showConfirmation({
-            header: "Confirm Deletion",
-            text: "Delete the selected device key template(s)?",
-            button: "Delete",
+            header: trans('Confirm Deletion'),
+            text: trans('Delete the selected device key template(s)?'),
+            button: trans('Delete'),
             action: () => executeBulkDelete(),
         });
     }

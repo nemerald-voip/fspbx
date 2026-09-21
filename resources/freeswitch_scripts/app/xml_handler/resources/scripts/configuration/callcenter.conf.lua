@@ -44,8 +44,9 @@ require "resources.functions.format_ringback"
 	elseif type(cc_ha) == 'string' and cc_ha:match("^module 'contact_center_ha' not found:") then
 		cc_ha_enabled = false -- The optional module is not installed.
 	end
+	-- Installing Contact Center protects availability even before HA approval.
 	-- An unreadable setting or broken helper must never restore Default Status.
-	local cc_preserve_status = cc_ha_enabled ~= false
+	local cc_preserve_status = cc_ha_ok or cc_ha_enabled ~= false
 	if cc_ha_enabled == nil then
 		freeswitch.consoleLog('err', '[callcenter XML] Unable to determine Contact Center HA mode; preserving agent availability.\n')
 	end
@@ -70,7 +71,7 @@ require "resources.functions.format_ringback"
 	local cache = require "resources.functions.cache"
 	hostname = trim(api:execute("switchname", ""));
 	local cc_cache_key = "configuration:callcenter.conf:" .. hostname
-	-- Never reuse legacy XML containing status after enabling HA or on errors.
+	-- Never reuse legacy XML containing status with Contact Center or on errors.
 	if cc_preserve_status then cc_cache_key = cc_cache_key .. ':availability-v3' end
 	if cc_requested_queue then cc_cache_key = cc_cache_key .. ':' .. cc_requested_queue end
 	XML_STRING, err = cache.get(cc_cache_key)

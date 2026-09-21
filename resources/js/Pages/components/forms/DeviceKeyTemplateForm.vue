@@ -23,7 +23,7 @@
                                 <button type="button"
                                     class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                     @click="emit('close')">
-                                    <span class="sr-only">Close</span>
+                                    <span class="sr-only">{{ $t('Close') }}</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
@@ -37,18 +37,18 @@
                                         <path class="opacity-75" fill="currentColor"
                                             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                     </svg>
-                                    <div class="text-lg text-blue-600 m-auto">Loading...</div>
+                                    <div class="text-lg text-blue-600 m-auto">{{ $t('Loading...') }}</div>
                                 </div>
                             </div>
 
                             <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
-                                @error="handleError" @response="handleResponse" :display-errors="false"
+                                @error="handleError" @response="handleResponse" :display-errors="false" validate-on=""
                                 :default="defaultValues">
                                 <template #empty>
                                     <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
                                         <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
                                             <FormTabs view="vertical">
-                                                <FormTab name="settings" label="Settings" :elements="[
+                                                <FormTab name="settings" :label="$t('Settings')" :elements="[
                                                     'settings_header',
                                                     'uuid_clean',
                                                     'name',
@@ -57,25 +57,25 @@
                                                     'settings_container',
                                                     'settings_submit',
                                                 ]" />
-                                                <FormTab name="main" label="Function Keys" :elements="[
+                                                <FormTab name="main" :label="$t('Function Keys')" :elements="[
                                                     'main_header',
                                                     'keys',
                                                     'main_container',
                                                     'main_submit',
                                                 ]" />
-                                                <FormTab name="side" label="Side Keys" :elements="[
+                                                <FormTab name="side" :label="$t('Side Keys')" :elements="[
                                                     'side_header',
                                                     'side_keys',
                                                     'side_container',
                                                     'side_submit',
                                                 ]" />
-                                                <FormTab name="multi" label="Multi Purpose Keys" :elements="[
+                                                <FormTab name="multi" :label="$t('Multi Purpose Keys')" :elements="[
                                                     'multi_header',
                                                     'multi_purpose_keys',
                                                     'multi_container',
                                                     'multi_submit',
                                                 ]" />
-                                                <FormTab name="expansion" label="Expansion Keys" :elements="[
+                                                <FormTab name="expansion" :label="$t('Expansion Keys')" :elements="[
                                                     'expansion_header',
                                                     'expansion_keys',
                                                     'expansion_container',
@@ -87,14 +87,14 @@
                                         <div
                                             class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
                                             <FormElements>
-                                                <StaticElement name="settings_header" tag="h4" content="Template Settings" />
+                                                <StaticElement name="settings_header" tag="h4" :content="$t('Template Settings')" />
 
                                                 <StaticElement name="uuid_clean"
                                                     :conditions="[() => props.mode === 'update' && props.options?.permissions?.is_superadmin]">
 
                                                     <div class="mb-1">
                                                         <div class="text-sm font-medium text-gray-600 mb-1">
-                                                            Unique ID
+                                                            {{ $t('Unique ID') }}
                                                         </div>
 
                                                         <div class="flex items-center group">
@@ -105,7 +105,7 @@
                                                             <button type="button"
                                                                 @click="handleCopyToClipboard(props.options.item.device_key_template_uuid)"
                                                                 class="ml-2 p-1 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
-                                                                title="Copy to clipboard">
+                                                                :title="$t('Copy to clipboard')">
                                                                 <!-- Small Copy Icon -->
                                                                 <ClipboardDocumentIcon
                                                                     class="h-4 w-4 text-gray-500 hover:text-gray-900  cursor-pointer" />
@@ -115,62 +115,62 @@
 
                                                 </StaticElement>
 
-                                                <TextElement name="name" label="Name" placeholder="Template name"
+                                                <TextElement name="name" :label="$t('Name')" :placeholder="$t('Template name')"
                                                     :floating="false" :columns="{ sm: { container: 6 } }" />
 
-                                                <ToggleElement name="enabled" text="Enabled" true-value="true"
-                                                    false-value="false" :labels="{ on: 'On', off: 'Off' }"
+                                                <ToggleElement name="enabled" :text="$t('Enabled')" true-value="true"
+                                                    false-value="false" :labels="{ on: $t('On'), off: $t('Off') }"
                                                     :columns="{ sm: { container: 6 } }" label="&nbsp;" />
 
-                                                <TextareaElement name="description" label="Description" :rows="2"
+                                                <TextareaElement name="description" :label="$t('Description')" :rows="2"
                                                     :floating="false" />
 
                                                 <GroupElement name="settings_container" />
 
-                                                <ButtonElement name="settings_submit" button-label="Save"
+                                                <ButtonElement name="settings_submit" :button-label="$t('Save')"
                                                     :submits="true" align="right" />
 
-                                                <StaticElement name="main_header" tag="h4" content="Function Keys"
-                                                    description="Programmable DSS keys for BLF, speed dial, line appearances, and other call actions." />
+                                                <StaticElement name="main_header" tag="h4" :content="$t('Function Keys')"
+                                                    :description="$t('Programmable DSS keys for BLF, speed dial, line appearances, and other call actions.')" />
                                                 <DeviceKeyTemplateKeyList name="keys" area="main" :key-types="keyTypes"
                                                     :form-data="form$?.data" :get-next-key-number="getNextKeyNumber"
                                                     :get-key-value-select-items="getKeyValueSelectItems"
                                                     :update-label="updateLabel" />
                                                 <GroupElement name="main_container" />
-                                                <ButtonElement name="main_submit" button-label="Save" :submits="true"
+                                                <ButtonElement name="main_submit" :button-label="$t('Save')" :submits="true"
                                                     align="right" />
 
-                                                <StaticElement name="side_header" tag="h4" content="Side Keys"
-                                                    description="Keys beside the display on supported Fanvil phones. Use these for primary-screen line appearances and other call actions." />
+                                                <StaticElement name="side_header" tag="h4" :content="$t('Side Keys')"
+                                                    :description="$t('Keys beside the display on supported Fanvil phones. Use these for primary-screen line appearances and other call actions.')" />
                                                 <DeviceKeyTemplateKeyList name="side_keys" area="side"
                                                     :key-types="keyTypes" :form-data="form$?.data"
                                                     :get-next-key-number="getNextKeyNumber"
                                                     :get-key-value-select-items="getKeyValueSelectItems"
                                                     :update-label="updateLabel" />
                                                 <GroupElement name="side_container" />
-                                                <ButtonElement name="side_submit" button-label="Save" :submits="true"
+                                                <ButtonElement name="side_submit" :button-label="$t('Save')" :submits="true"
                                                     align="right" />
 
-                                                <StaticElement name="multi_header" tag="h4" content="Multi Purpose Keys"
-                                                    description="Additional programmable keys used by Grandstream phones." />
+                                                <StaticElement name="multi_header" tag="h4" :content="$t('Multi Purpose Keys')"
+                                                    :description="$t('Additional programmable keys used by Grandstream phones.')" />
                                                 <DeviceKeyTemplateKeyList name="multi_purpose_keys" area="multi_purpose"
                                                     :key-types="keyTypes" :form-data="form$?.data"
                                                     :get-next-key-number="getNextKeyNumber"
                                                     :get-key-value-select-items="getKeyValueSelectItems"
                                                     :update-label="updateLabel" />
                                                 <GroupElement name="multi_container" />
-                                                <ButtonElement name="multi_submit" button-label="Save" :submits="true"
+                                                <ButtonElement name="multi_submit" :button-label="$t('Save')" :submits="true"
                                                     align="right" />
 
-                                                <StaticElement name="expansion_header" tag="h4" content="Expansion Keys"
-                                                    description="Keys provided by an attached expansion module." />
+                                                <StaticElement name="expansion_header" tag="h4" :content="$t('Expansion Keys')"
+                                                    :description="$t('Keys provided by an attached expansion module.')" />
                                                 <DeviceKeyTemplateKeyList name="expansion_keys" area="expansion"
                                                     :key-types="keyTypes" :form-data="form$?.data"
                                                     :get-next-key-number="getNextKeyNumber"
                                                     :get-key-value-select-items="getKeyValueSelectItems"
                                                     :update-label="updateLabel" />
                                                 <GroupElement name="expansion_container" />
-                                                <ButtonElement name="expansion_submit" button-label="Save"
+                                                <ButtonElement name="expansion_submit" :button-label="$t('Save')"
                                                     :submits="true" align="right" />
                                             </FormElements>
                                         </div>
@@ -186,6 +186,7 @@
 </template>
 
 <script setup>
+import { trans } from '@i18n';
 import { computed, ref } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from "@headlessui/vue";
 import { XMarkIcon } from "@heroicons/vue/24/solid";
@@ -206,24 +207,25 @@ const props = defineProps({
 const emit = defineEmits(["close", "error", "success", "refresh-data"]);
 const form$ = ref(null);
 const keyValueOptionsByIndex = {};
+let submittedKeyPaths = [];
 
 const handleCopyToClipboard = (text) => {
     navigator.clipboard.writeText(text).then(() => {
-        emit("success", "success", { message: ["Copied to clipboard."] });
+        emit("success", "success", { message: [trans('Copied to clipboard.')] });
     }).catch(() => {
-        emit("error", { response: { data: { errors: { request: ["Failed to copy to clipboard."] } } } });
+        emit("error", { response: { data: { errors: { request: [trans('Failed to copy to clipboard.')] } } } });
     });
 };
 
-const keyTypes = [
-    { value: "", name: "N/A" },
-    { value: "line", name: "Line" },
-    { value: "blf", name: "BLF" },
-    { value: "speed_dial", name: "Speed Dial" },
-    { value: "check_voicemail", name: "Check Voicemail" },
-    { value: "park", name: "Park & Retrieve" },
-    { value: "dtmf", name: "DTMF" },
-];
+const keyTypes = computed(() => [
+    { value: "", name: trans('N/A') },
+    { value: "line", name: trans('Line') },
+    { value: "blf", name: trans('BLF') },
+    { value: "speed_dial", name: trans('Speed Dial') },
+    { value: "check_voicemail", name: trans('Check Voicemail') },
+    { value: "park", name: trans('Park & Retrieve') },
+    { value: "dtmf", name: trans('DTMF') },
+]);
 
 const keyTypesWithSelect = ["line", "check_voicemail", "blf", "speed_dial", "park"];
 
@@ -301,14 +303,14 @@ const getKeyValueSelectItems = async (query, input, index, listName) => {
     if (keyType === "line") {
         return Array.from({ length: 16 }, (_, i) => ({
             extension: `${i + 1}`,
-            name: `Line ${i + 1}`,
+            name: trans('Line :number', { number: i + 1 }),
         }));
     }
 
     if (keyType === "park") {
         return Array.from({ length: 10 }, (_, i) => {
             const ext = String(5901 + i);
-            return { extension: ext, name: `Park ${i + 1} (${ext})` };
+            return { extension: ext, name: trans('Park :number (:extension)', { number: i + 1, extension: ext }) };
         });
     }
 
@@ -330,7 +332,7 @@ const getKeyValueSelectItems = async (query, input, index, listName) => {
 
 const parkLabelFromValue = (value, base = 5900) => {
     const n = parseInt(value, 10);
-    return Number.isFinite(n) && n > base ? `Park ${n - base}` : "";
+    return Number.isFinite(n) && n > base ? trans('Park :number', { number: n - base }) : "";
 };
 
 const nameOnlyFromOption = (opt) => {
@@ -358,7 +360,7 @@ const updateLabel = (newValue, oldValue, el$, index, listName) => {
     if (keyType === "check_voicemail") {
         const selected = (keyValueOptionsByIndex[cacheKey] ?? [])
             .find((option) => String(option.extension) === String(newValue));
-        label = selected?.extension ? `VM ${selected.extension}` : null;
+        label = selected?.extension ? trans('VM :extension', { extension: selected.extension }) : null;
     }
 
     if (keyType === "blf" || keyType === "speed_dial") {
@@ -372,7 +374,11 @@ const updateLabel = (newValue, oldValue, el$, index, listName) => {
 };
 
 const submitForm = async (FormData, form) => {
+    form.messageBag.clear();
+    Object.values(form.elements$).forEach(clearErrorsRecursive);
     const data = form.data;
+    submittedKeyPaths = ['keys', 'side_keys', 'multi_purpose_keys', 'expansion_keys']
+        .flatMap((name) => (data[name] ?? []).map((key, index) => `${name}.${index}`));
     data.keys = [
         ...(data.keys ?? []).map((key) => ({ ...key, key_area: "main" })),
         ...(data.side_keys ?? []).map((key) => ({ ...key, key_area: "side" })),
@@ -428,8 +434,9 @@ const handleResponse = (response, form) => {
 
     if (response.data.errors) {
         Object.keys(response.data.errors).forEach((elName) => {
-            if (form.el$(elName)) {
-                form.el$(elName).messageBag.append(response.data.errors[elName][0]);
+            const field = elName.replace(/^keys\.(\d+)/, (match, index) => submittedKeyPaths[index] ?? match);
+            if (form.el$(field)) {
+                form.el$(field).messageBag.append(response.data.errors[elName][0]);
             }
         });
     }
@@ -449,6 +456,6 @@ const handleError = (error, details, form) => {
         return;
     }
 
-    form.messageBag.append("Could not submit form");
+    form.messageBag.append(trans('Could not submit form'));
 };
 </script>

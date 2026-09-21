@@ -19,15 +19,14 @@
                                 {{ header }}
                             </DialogTitle>
                             <p class="mb-4 text-sm text-gray-500">
-                                A phonebook is a directory your phones download. Include your internal extensions,
-                                add your own contacts, or both.
+                                {{ $t('A phonebook is a directory your phones download. Include your internal extensions, add your own contacts, or both.') }}
                             </p>
 
                             <div class="absolute right-0 top-0 pr-4 pt-4 sm:block">
                                 <button type="button"
                                     class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                     @click="emit('close')">
-                                    <span class="sr-only">Close</span>
+                                    <span class="sr-only">{{ $t('Close') }}</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
@@ -40,33 +39,33 @@
                                         <path class="opacity-75" fill="currentColor"
                                             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                     </svg>
-                                    <div class="text-lg text-blue-600 m-auto">Loading...</div>
+                                    <div class="text-lg text-blue-600 m-auto">{{ $t('Loading...') }}</div>
                                 </div>
                             </div>
 
                             <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
-                                @error="handleError" @response="handleResponse" :display-errors="false"
+                                @error="handleError" @response="handleResponse" :display-errors="false" validate-on=""
                                 :default="defaultValues">
                                 <template #empty>
                                     <FormElements>
-                                        <TextElement name="name" label="Name" placeholder="e.g. Company Directory"
+                                        <TextElement name="name" :label="$t('Name')" :placeholder="$t('e.g. Company Directory')"
                                             :floating="false" :columns="{ sm: { container: 12 } }" />
 
-                                        <ToggleElement name="enabled" text="Enabled" :labels="{ on: 'On', off: 'Off' }"
+                                        <ToggleElement name="enabled" :text="$t('Enabled')" :labels="{ on: $t('On'), off: $t('Off') }"
                                             label="&nbsp;" :columns="{ sm: { container: 6 } }" />
 
-                                        <ToggleElement name="is_default" text="Account default"
-                                            :labels="{ on: 'On', off: 'Off' }"
-                                            description="Pushed to devices set to “Use account default”."
+                                        <ToggleElement name="is_default" :text="$t('Account default')"
+                                            :labels="{ on: $t('On'), off: $t('Off') }"
+                                            :description="$t('Pushed to devices set to “Use account default”.')"
                                             label="&nbsp;" :columns="{ sm: { container: 6 } }" />
 
                                         <!-- ============ Directory contents ============ -->
-                                        <StaticElement name="contents_header" tag="h4" content="What's in this directory?"
-                                            description="Choose any combination — extensions, contacts, or both." />
+                                        <StaticElement name="contents_header" tag="h4" :content="$t('What\'s in this directory?')"
+                                            :description="$t('Choose any combination — extensions, contacts, or both.')" />
 
                                         <!-- Internal extensions -->
-                                        <ToggleElement name="include_extensions" text="Internal extensions"
-                                            :labels="{ on: 'On', off: 'Off' }" :description="extensionsDescription"
+                                        <ToggleElement name="include_extensions" :text="$t('Internal extensions')"
+                                            :labels="{ on: $t('On'), off: $t('Off') }" :description="extensionsDescription"
                                             label="&nbsp;" :columns="{ sm: { container: 12 } }" />
 
                                         <!-- Contacts (this phonebook's own) -->
@@ -75,34 +74,34 @@
                                                 <div class="flex items-center justify-between">
                                                     <div>
                                                         <h5 class="text-sm font-semibold text-gray-900">
-                                                            Contacts <span class="text-gray-400 font-normal">({{ contactList.length }})</span>
+                                                            {{ $t('Contacts') }} <span class="text-gray-400 font-normal">({{ contactList.length }})</span>
                                                         </h5>
-                                                        <p class="text-xs text-gray-500">Numbers specific to this phonebook.</p>
+                                                        <p class="text-xs text-gray-500">{{ $t('Numbers specific to this phonebook.') }}</p>
                                                     </div>
                                                     <button type="button" @click="startAdd"
                                                         class="shrink-0 rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
-                                                        + Add contact
+                                                        {{ $t('+ Add contact') }}
                                                     </button>
                                                 </div>
 
                                                 <div v-if="contactForm" class="mt-3 rounded-md ring-1 ring-gray-200 bg-gray-50 p-3 space-y-2">
                                                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                                                        <input v-model="contactForm.first_name" placeholder="First name"
+                                                        <input v-model="contactForm.first_name" :placeholder="$t('First name')"
                                                             autocomplete="off" data-lpignore="true" data-1p-ignore @keyup.enter="commitContact"
                                                             class="block w-full rounded-md border-0 py-1.5 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600" />
-                                                        <input v-model="contactForm.last_name" placeholder="Last name"
+                                                        <input v-model="contactForm.last_name" :placeholder="$t('Last name')"
                                                             autocomplete="off" data-lpignore="true" data-1p-ignore @keyup.enter="commitContact"
                                                             class="block w-full rounded-md border-0 py-1.5 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600" />
-                                                        <input v-model="contactForm.phone_number" placeholder="Phone number"
+                                                        <input v-model="contactForm.phone_number" :placeholder="$t('Phone number')"
                                                             autocomplete="off" data-lpignore="true" data-1p-ignore @keyup.enter="commitContact"
                                                             class="block w-full rounded-md border-0 py-1.5 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600" />
                                                     </div>
                                                     <div class="flex justify-end gap-2">
                                                         <button type="button" @click="cancelContact"
-                                                            class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Cancel</button>
+                                                            class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50">{{ $t('Cancel') }}</button>
                                                         <button type="button" @click="commitContact"
                                                             class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white hover:bg-indigo-500">
-                                                            {{ editIndex === null ? 'Add' : 'Update' }}
+                                                            {{ editIndex === null ? $t('Add') : $t('Update') }}
                                                         </button>
                                                     </div>
                                                 </div>
@@ -115,19 +114,19 @@
                                                         </div>
                                                         <div class="flex items-center gap-1 shrink-0">
                                                             <PencilSquareIcon @click="startEdit(i)"
-                                                                class="h-8 w-8 py-1.5 rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 cursor-pointer" title="Edit" />
+                                                                class="h-8 w-8 py-1.5 rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 cursor-pointer" :title="$t('Edit')" />
                                                             <TrashIcon @click="removeContact(i)"
-                                                                class="h-8 w-8 py-1.5 rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 cursor-pointer" title="Remove" />
+                                                                class="h-8 w-8 py-1.5 rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 cursor-pointer" :title="$t('Remove')" />
                                                         </div>
                                                     </li>
                                                 </ul>
-                                                <p v-else class="mt-3 text-sm text-gray-400">No contacts yet.</p>
+                                                <p v-else class="mt-3 text-sm text-gray-400">{{ $t('No contacts yet.') }}</p>
                                             </div>
                                         </StaticElement>
 
-                                        <TextareaElement name="description" label="Description" :rows="2" :floating="false" />
+                                        <TextareaElement name="description" :label="$t('Description')" :rows="2" :floating="false" />
 
-                                        <ButtonElement name="submit" button-label="Save" :submits="true" align="right" />
+                                        <ButtonElement name="submit" :button-label="$t('Save')" :submits="true" align="right" />
                                     </FormElements>
                                 </template>
                             </Vueform>
@@ -140,6 +139,7 @@
 </template>
 
 <script setup>
+import { trans, transChoice } from '@i18n';
 import { computed, ref, watch } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from "@headlessui/vue";
 import { XMarkIcon, PencilSquareIcon, TrashIcon } from "@heroicons/vue/24/solid";
@@ -157,7 +157,7 @@ const form$ = ref(null);
 
 const extensionsCount = computed(() => props.options?.extensions_count ?? 0);
 const extensionsDescription = computed(() =>
-    `Adds all ${extensionsCount.value} enabled extension${extensionsCount.value === 1 ? "" : "s"} in this account (name + extension number).`
+    transChoice('{1} Adds :count enabled extension from this account (name + extension number).|[0,*] Adds all :count enabled extensions from this account (name + extension number).', extensionsCount.value, { count: extensionsCount.value })
 );
 
 const defaultValues = computed(() => ({
@@ -173,7 +173,7 @@ const contactList = ref([]);
 const contactForm = ref(null);
 const editIndex = ref(null);
 
-const contactName = (c) => (`${c.first_name ?? ""} ${c.last_name ?? ""}`).trim() || "(no name)";
+const contactName = (c) => (`${c.first_name ?? ""} ${c.last_name ?? ""}`).trim() || trans('(no name)');
 
 const startAdd = () => {
     contactForm.value = { first_name: "", last_name: "", phone_number: "" };
@@ -192,15 +192,12 @@ const cancelContact = () => {
 
 const commitContact = () => {
     const form = contactForm.value;
-    if (!form?.phone_number?.trim()) {
-        emit("error", { response: { data: { errors: { contact: ["A phone number is required."] } } } });
-        return;
-    }
+    if (!form) return;
 
     const entry = {
         first_name: (form.first_name ?? "").trim(),
         last_name: (form.last_name ?? "").trim(),
-        phone_number: form.phone_number.trim(),
+        phone_number: (form.phone_number ?? "").trim(),
     };
 
     if (editIndex.value === null) {
@@ -229,6 +226,8 @@ watch(() => props.options, () => {
 }, { immediate: true });
 
 const submitForm = async (FormData, form) => {
+    form.messageBag.clear();
+    Object.values(form.elements$).forEach(clearErrorsRecursive);
     const data = { ...form.data, contacts: contactList.value };
 
     if (props.mode === "create") {
@@ -237,6 +236,11 @@ const submitForm = async (FormData, form) => {
 
     return await form.$vueform.services.axios.put(props.options.routes.update_route, data);
 };
+
+function clearErrorsRecursive(element) {
+    element.messageBag?.clear();
+    Object.values(element.children$ ?? {}).forEach(clearErrorsRecursive);
+}
 
 const handleResponse = (response, form) => {
     if (response.data.errors) {
@@ -262,6 +266,6 @@ const handleError = (error, details, form) => {
         return;
     }
 
-    form.messageBag.append("Could not submit form");
+    form.messageBag.append(trans('Could not submit form'));
 };
 </script>

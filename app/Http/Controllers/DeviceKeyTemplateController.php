@@ -10,6 +10,7 @@ use App\Models\Domain;
 use App\Services\DeviceKeyTemplateService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Support\Localization\ValidationMessages;
 use Inertia\Inertia;
 use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\QueryBuilder;
@@ -55,7 +56,7 @@ class DeviceKeyTemplateController extends Controller
     {
         if (! userCheckPermission('device_key_template_view')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -80,13 +81,13 @@ class DeviceKeyTemplateController extends Controller
 
         if ($itemUuid && ! userCheckPermission('device_key_template_update')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
         if (! $itemUuid && ! userCheckPermission('device_key_template_create')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -135,14 +136,14 @@ class DeviceKeyTemplateController extends Controller
             $template = $service->save($request->validated());
 
             return response()->json([
-                'messages' => ['success' => ['Device key template created successfully.']],
+                'messages' => ['success' => [__('Device key template created successfully.')]],
                 'device_key_template_uuid' => $template->device_key_template_uuid,
             ], 201);
         } catch (\Throwable $e) {
             logger('DeviceKeyTemplateController@store error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Failed to create device key template.']],
+                'messages' => ['error' => [__('Failed to create device key template.')]],
             ], 500);
         }
     }
@@ -151,7 +152,7 @@ class DeviceKeyTemplateController extends Controller
     {
         if ($device_key_template->domain_uuid !== session('domain_uuid')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -159,13 +160,13 @@ class DeviceKeyTemplateController extends Controller
             $service->save($request->validated(), $device_key_template);
 
             return response()->json([
-                'messages' => ['success' => ['Device key template updated successfully.']],
+                'messages' => ['success' => [__('Device key template updated successfully.')]],
             ]);
         } catch (\Throwable $e) {
             logger('DeviceKeyTemplateController@update error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Failed to update device key template.']],
+                'messages' => ['error' => [__('Failed to update device key template.')]],
             ], 500);
         }
     }
@@ -174,7 +175,7 @@ class DeviceKeyTemplateController extends Controller
     {
         if (! userCheckPermission('device_key_template_view')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -185,7 +186,7 @@ class DeviceKeyTemplateController extends Controller
 
         return response()->json([
             'items' => $items,
-            'messages' => ['success' => ['All matching device key templates selected.']],
+            'messages' => ['success' => [__('All matching device key templates selected.')]],
         ]);
     }
 
@@ -193,11 +194,18 @@ class DeviceKeyTemplateController extends Controller
     {
         $data = $request->validate([
             'uuid' => ['required', 'uuid', 'exists:device_key_templates,device_key_template_uuid'],
+        ], ValidationMessages::common(), [
+            'items' => __('Device Key Templates'),
+            'items.*' => __('Device Key Template'),
+            'uuid' => __('Device Key Template'),
+            'target_domain_uuid' => __('Target domain'),
+            'name' => __('Name'),
+            'description' => __('Description'),
         ]);
 
         if (! userCheckPermission('device_key_template_create')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -211,14 +219,14 @@ class DeviceKeyTemplateController extends Controller
             $copy = $service->duplicate($template);
 
             return response()->json([
-                'messages' => ['success' => ['Device key template duplicated successfully.']],
+                'messages' => ['success' => [__('Device key template duplicated successfully.')]],
                 'device_key_template_uuid' => $copy->device_key_template_uuid,
             ], 201);
         } catch (\Throwable $e) {
             logger('DeviceKeyTemplateController@duplicate error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Failed to duplicate device key template.']],
+                'messages' => ['error' => [__('Failed to duplicate device key template.')]],
             ], 500);
         }
     }
@@ -227,24 +235,31 @@ class DeviceKeyTemplateController extends Controller
     {
         if (! userCheckPermission('device_key_template_create') || ! userCheckPermission('domain_select')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
         $data = $request->validate([
             'uuid' => ['required', 'uuid', 'exists:device_key_templates,device_key_template_uuid'],
             'target_domain_uuid' => ['required', 'uuid', 'exists:v_domains,domain_uuid'],
+        ], ValidationMessages::common(), [
+            'items' => __('Device Key Templates'),
+            'items.*' => __('Device Key Template'),
+            'uuid' => __('Device Key Template'),
+            'target_domain_uuid' => __('Target domain'),
+            'name' => __('Name'),
+            'description' => __('Description'),
         ]);
 
         if ($data['target_domain_uuid'] === session('domain_uuid')) {
             return response()->json([
-                'messages' => ['error' => ['Choose a different target domain.']],
+                'messages' => ['error' => [__('Choose a different target domain.')]],
             ], 422);
         }
 
         if (! $this->canAccessDomain($data['target_domain_uuid'])) {
             return response()->json([
-                'messages' => ['error' => ['Domain access denied.']],
+                'messages' => ['error' => [__('Domain access denied.')]],
             ], 403);
         }
 
@@ -257,7 +272,7 @@ class DeviceKeyTemplateController extends Controller
 
             if (! $template) {
                 return response()->json([
-                    'messages' => ['error' => ['Device key template was not found.']],
+                    'messages' => ['error' => [__('Device key template was not found.')]],
                 ], 404);
             }
 
@@ -266,14 +281,14 @@ class DeviceKeyTemplateController extends Controller
             $targetDomainLabel = $targetDomain->domain_description ?: $targetDomain->domain_name;
 
             return response()->json([
-                'messages' => ['success' => ["Device key template copied to {$targetDomainLabel}."]],
+                'messages' => ['success' => [__('Device key template copied to :account.', ['account' => $targetDomainLabel])]],
                 'device_key_template_uuid' => $copy->device_key_template_uuid,
             ], 201);
         } catch (\Throwable $e) {
             logger('DeviceKeyTemplateController@copyToDomain error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Failed to copy device key template.']],
+                'messages' => ['error' => [__('Failed to copy device key template.')]],
             ], 500);
         }
     }
@@ -282,13 +297,20 @@ class DeviceKeyTemplateController extends Controller
     {
         if (! userCheckPermission('device_key_template_delete')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
         $uuids = $request->validate([
             'items' => ['required', 'array'],
             'items.*' => ['uuid'],
+        ], ValidationMessages::common(), [
+            'items' => __('Device Key Templates'),
+            'items.*' => __('Device Key Template'),
+            'uuid' => __('Device Key Template'),
+            'target_domain_uuid' => __('Target domain'),
+            'name' => __('Name'),
+            'description' => __('Description'),
         ])['items'];
 
         $items = DeviceKeyTemplate::query()
@@ -299,7 +321,7 @@ class DeviceKeyTemplateController extends Controller
         $deleted = $service->delete($items);
 
         return response()->json([
-            'messages' => ['success' => ["Deleted {$deleted} device key template(s)."]],
+            'messages' => ['success' => [__('Deleted :count device key template(s).', ['count' => $deleted])]],
         ]);
     }
 
@@ -307,19 +329,26 @@ class DeviceKeyTemplateController extends Controller
     {
         if (! userCheckPermission('device_key_template_create')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
         if ($device->domain_uuid !== session('domain_uuid')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:100'],
             'description' => ['nullable', 'string'],
+        ], ValidationMessages::common(), [
+            'items' => __('Device Key Templates'),
+            'items.*' => __('Device Key Template'),
+            'uuid' => __('Device Key Template'),
+            'target_domain_uuid' => __('Target domain'),
+            'name' => __('Name'),
+            'description' => __('Description'),
         ]);
 
         $device->load(['keys' => function ($query) {
@@ -336,14 +365,14 @@ class DeviceKeyTemplateController extends Controller
 
         if ($device->keys->isEmpty()) {
             return response()->json([
-                'messages' => ['error' => ['This device does not have keys to save as a template.']],
+                'messages' => ['error' => [__('This device does not have keys to save as a template.')]],
             ], 422);
         }
 
         $template = $service->createFromDeviceKeys($data['name'], $data['description'] ?? null, $device->keys);
 
         return response()->json([
-            'messages' => ['success' => ['Device key template created successfully.']],
+            'messages' => ['success' => [__('Device key template created successfully.')]],
             'device_key_template_uuid' => $template->device_key_template_uuid,
         ], 201);
     }
