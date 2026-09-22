@@ -15,7 +15,10 @@ class RingotelWebhookProfile implements WebhookProfile
                 case 'typing':
                     return false;
                 case 'read':
-                    return false;
+                case 'unread':
+                    // Capture authenticated reports for verification. The job
+                    // deliberately does not mutate read state until semantics are known.
+                    return true;
                 case 'delivered':
                     return true;
                 case 'message':

@@ -5,6 +5,7 @@ import vue from '@vitejs/plugin-vue';
 import i18n from 'laravel-vue-i18n/vite';
 import collectModuleAssetsPaths from './vite-module-loader.js';
 import fs from 'fs';
+import deepChatImageLoadFix from './build/deep-chat-image-load-fix.mjs';
 
 const VITE_HOST = process.env.VITE_HOST || 'localhost';
 const VITE_PORT = process.env.VITE_PORT || 3000;
@@ -63,6 +64,7 @@ async function getConfig() {
 
         },
         plugins: [
+            deepChatImageLoadFix(),
             laravel({
                 hotFile: 'storage/vite.hot', // Customize the "hot" file...
                 buildDirectory: 'storage/vite', // Customize the build directory...
@@ -95,6 +97,8 @@ async function getConfig() {
             // catalogs the app loads directly via i18nVue's resolve().
             i18n('resources/lang'),
         ],
+        // Apply the image-load fix in development as well as production builds.
+        optimizeDeps: { exclude: ['deep-chat'] },
         build: {
             outDir: 'storage/app/public/vite',
             emptyOutDir: true,

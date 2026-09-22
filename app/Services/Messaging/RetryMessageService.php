@@ -3,7 +3,6 @@
 namespace App\Services\Messaging;
 
 use App\Jobs\DeliverMessageToEmail;
-use App\Jobs\DeliverMessageToRingotel;
 use App\Jobs\SendOutboundSMSMessage;
 use App\Models\Extensions;
 use App\Models\Messages;
@@ -52,6 +51,10 @@ class RetryMessageService
 
     protected function retryOutbound(Messages $message): void
     {
+        if (RingotelSyncDispatcher::carrierAccepted($message)) {
+            app(RingotelSyncDispatcher::class)->dispatch($message);
+            return;
+        }
         $carrier = data_get($message->delivery_meta, 'outbound.provider.name');
 
         messaging_webhook_debug('Retry outbound started', [
@@ -121,12 +124,8 @@ class RetryMessageService
             'email' => $route->email,
         ]);
 
-        if ($route->hasMobileApp && $route->orgId && $route->extension) {
-            DeliverMessageToRingotel::dispatch(
-                $message->message_uuid,
-                $route->orgId,
-                $route->extension
-            )->onQueue('messages');
+        $ringotelQueued = app(RingotelSyncDispatcher::class)->dispatch($message);
+        if ($ringotelQueued) {
 
             messaging_webhook_debug('Retry inbound Ringotel queued', [
                 'message_uuid' => $message->message_uuid,
@@ -146,7 +145,7 @@ class RetryMessageService
             ]);
         }
 
-        if (!$route->hasMobileApp && !$route->email) {
+        if (!$ringotelQueued && !$route->email) {
             throw new \RuntimeException(
                 "No retry destination found for inbound message {$message->message_uuid}"
             );

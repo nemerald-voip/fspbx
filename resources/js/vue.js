@@ -48,7 +48,7 @@ function resolvePage(name) {
 const localeChains = {};
 
 createInertiaApp({
-    title: (title) => `${title} - ${appName}`,
+    title: (title) => title ? `${title} - ${appName}` : appName,
     resolve: async (name) => await resolvePage(name),
     setup({ el, App, props, plugin }) {
       syncAxiosCsrfToken(props.initialPage);

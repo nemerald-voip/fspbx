@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\V1\CdrController;
 use App\Http\Controllers\Api\V1\ClickToDialController;
 use App\Http\Controllers\Api\V1\PhoneControlController;
 use App\Http\Controllers\Api\V1\RecordingController;
+use App\Http\Controllers\Api\V1\MessagingController;
 
 /*
 |--------------------------------------------------------------------------
@@ -201,6 +202,28 @@ Route::middleware(['auth:sanctum', 'api.token.auth', 'throttle:api'])->group(fun
 
     Route::delete('/domains/{domain_uuid}/phone-numbers/{destination_uuid}', [PhoneNumberController::class, 'destroy'])
         ->middleware('user.authorize:ring_group_delete');
+
+    /* Messaging (domain-scoped) */
+    Route::get('/domains/{domain_uuid}/messaging/numbers', [MessagingController::class, 'indexNumbers'])
+        ->middleware('user.authorize:message_settings_list_view');
+    Route::post('/domains/{domain_uuid}/messaging/numbers', [MessagingController::class, 'storeNumber'])
+        ->middleware('user.authorize:message_settings_manage');
+    Route::get('/domains/{domain_uuid}/messaging/numbers/{sms_destination_uuid}', [MessagingController::class, 'showNumber'])
+        ->middleware('user.authorize:message_settings_list_view');
+    Route::patch('/domains/{domain_uuid}/messaging/numbers/{sms_destination_uuid}', [MessagingController::class, 'updateNumber'])
+        ->middleware('user.authorize:message_settings_manage');
+    Route::delete('/domains/{domain_uuid}/messaging/numbers/{sms_destination_uuid}', [MessagingController::class, 'destroyNumber'])
+        ->middleware('user.authorize:message_settings_manage');
+    Route::get('/domains/{domain_uuid}/messaging/numbers/{sms_destination_uuid}/members', [MessagingController::class, 'members'])
+        ->middleware('user.authorize:message_settings_list_view');
+    Route::put('/domains/{domain_uuid}/messaging/numbers/{sms_destination_uuid}/members', [MessagingController::class, 'replaceMembers'])
+        ->middleware('user.authorize:message_settings_manage');
+    Route::post('/domains/{domain_uuid}/messaging/messages', [MessagingController::class, 'send'])
+        ->middleware('user.authorize:messages_view');
+    Route::get('/domains/{domain_uuid}/messaging/settings', [MessagingController::class, 'settings'])
+        ->middleware('user.authorize:message_settings_list_view');
+    Route::patch('/domains/{domain_uuid}/messaging/settings', [MessagingController::class, 'settings'])
+        ->middleware('user.authorize:message_settings_manage');
 
     /*
     |--------------------------------------------------------------------------

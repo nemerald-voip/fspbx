@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\Messages;
 use App\Services\Messaging\MessageRepository;
+use App\Services\Messaging\RingotelSyncDispatcher;
 use App\Services\Messaging\Outbound\OutboundProviderFactory;
 use Illuminate\Bus\Queueable;
 use Illuminate\Support\Facades\Redis;
@@ -12,6 +13,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\Middleware\RateLimitedWithRedis;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use RuntimeException;
 
 class SendOutboundSMSMessage implements ShouldQueue
@@ -29,7 +31,10 @@ class SendOutboundSMSMessage implements ShouldQueue
 
     public function middleware(): array
     {
-        return [new RateLimitedWithRedis('messages')];
+        return [
+            new RateLimitedWithRedis('messages'),
+            (new WithoutOverlapping('outbound-message:'.$this->messageUuid))->releaseAfter(5)->expireAfter(180),
+        ];
     }
 
 
@@ -48,6 +53,12 @@ class SendOutboundSMSMessage implements ShouldQueue
                 messaging_webhook_debug('SendOutboundMessage message not found', [
                     'message_uuid' => $this->messageUuid,
                 ]);
+                return;
+            }
+
+            // A replay of this job after carrier acceptance may only retry synchronization.
+            if (RingotelSyncDispatcher::carrierAccepted($message)) {
+                app(RingotelSyncDispatcher::class)->dispatch($message);
                 return;
             }
 
@@ -71,6 +82,7 @@ class SendOutboundSMSMessage implements ShouldQueue
             }
 
             try {
+                app(\App\Services\Messaging\OutboundPhotoService::class)->prepare($message);
                 $provider = $factory->make($carrier);
 
                 messaging_webhook_debug('SendOutboundMessage resolved provider instance', [
@@ -89,6 +101,15 @@ class SendOutboundSMSMessage implements ShouldQueue
                 ]);
 
                 $messages->applyOutboundSendResult($message, $carrier, $result);
+                if ($result->success) {
+                    app(RingotelSyncDispatcher::class)->dispatch($message);
+                }
+            } catch (\App\Services\Messaging\PhotoCompressionBusy $e) {
+                if ($this->attempts() >= $this->tries) {
+                    $messages->markOutboundFailure($message, $carrier, __('Photo compression is busy. Please retry the message.'));
+                } else {
+                    $this->release(10);
+                }
             } catch (RuntimeException $e) {
                 logger('Outbound provider resolution failed: ' . $e->getMessage());
 

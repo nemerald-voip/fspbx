@@ -107,6 +107,7 @@ class DatabaseSeeder extends Seeder
     {
         $permissions = [
             ['application_name' => 'Message Settings', 'permission_name' => 'message_settings_list_view'],
+            ['application_name' => 'Message Settings', 'permission_name' => 'message_settings_manage'],
             ['application_name' => 'Extensions', 'permission_name' => 'extension_suspended'],
             ['application_name' => 'Mobile Apps', 'permission_name' => 'mobile_apps_password_url_show'],
             ['application_name' => 'Mobile Apps', 'permission_name' => 'g722_enabled'],
@@ -226,6 +227,7 @@ class DatabaseSeeder extends Seeder
             ['application_name' => 'Call Block', 'permission_name' => 'call_block_view_all_records'],
             ['application_name' => 'Messages', 'permission_name' => 'messages_view'],
             ['application_name' => 'Messages', 'permission_name' => 'messages_view_as'],
+            ['application_name' => 'Messages', 'permission_name' => 'messages_delete'],
             ['application_name' => 'Basic Dialer', 'permission_name' => 'basic_dialer_view'],
             ['application_name' => 'Basic Dialer', 'permission_name' => 'basic_dialer_create'],
             ['application_name' => 'Basic Dialer', 'permission_name' => 'basic_dialer_update'],
@@ -277,7 +279,9 @@ class DatabaseSeeder extends Seeder
     {
         $permissionsByGroup = [
             'superadmin' => [
+                'messages_delete',
                 'message_settings_list_view',
+                'message_settings_manage',
                 'extension_suspended',
                 'mobile_apps_password_url_show',
                 'firewall_list_view',
@@ -482,6 +486,7 @@ class DatabaseSeeder extends Seeder
             ],
             'Message Admin' => [
                 'message_settings_list_view',
+                'message_settings_manage',
             ],
             'multi-site admin' => [
                 'domain_select',
@@ -693,6 +698,22 @@ class DatabaseSeeder extends Seeder
     private function createDefaultSettings()
     {
         $settings = [
+            [
+                'default_setting_category'      => 'messaging',
+                'default_setting_subcategory'   => 'compress_photos_setting',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => 'false',
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => 'Initial photo compression setting for newly created accounts only. Existing accounts are unchanged. Manage each account under Account Settings > Messaging.',
+            ],
+            [
+                'default_setting_category'      => 'messaging',
+                'default_setting_subcategory'   => 'webhook_url',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => '',
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => 'Initial messaging webhook URL for newly created accounts only. Leave blank to disable webhooks by default.',
+            ],
             [
                 'default_setting_category'      => 'pms',
                 'default_setting_subcategory'   => 'pms_provider',

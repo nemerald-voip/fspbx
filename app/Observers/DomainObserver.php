@@ -24,6 +24,9 @@ class DomainObserver
 
     public function created(Domain $domain): void
     {
+        app(\App\Services\Messaging\PhotoCompressionSettings::class)->initializeForNewDomain($domain->domain_uuid);
+        app(\App\Services\Messaging\MessagingWebhookSettings::class)->initializeForNewDomain($domain->domain_uuid);
+
         try {
             $this->dialplanProvisioningService->bootstrapForDomain($domain);
         } catch (\Throwable $e) {

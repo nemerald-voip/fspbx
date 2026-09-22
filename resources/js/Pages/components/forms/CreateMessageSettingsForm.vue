@@ -72,16 +72,11 @@
                                                 },
                                             }" />
 
-                                        <SelectElement name="chatplan_detail_data" :items="options.chatplan_detail_data"
-                                            :search="true" :native="false" label="Extension" input-type="search"
-                                            autocomplete="off" :floating="false" description="Assign the extension
-                                                        to which the messages should be
-                                                        forwarded." :strict="false" placeholder="Choose extension"
-                                            :columns="{
-                                                sm: {
-                                                    container: 6,
-                                                },
-                                            }" />
+                                        <TagsElement name="allowed_extension_uuids" :items="options.extensions" :close-on-select="false"
+                                            :search="true" :native="false" :floating="false"
+                                            :label="$t('Allowed extensions')" :placeholder="$t('Choose extensions')"
+                                            :description="$t('Selected extensions can send and receive messages using this number and see each other’s replies. Leave empty for no extension access.')"
+                                            :columns="{ sm: { container: 12 } }" />
 
                                         <TextElement name="email" label="Email" placeholder="Optional" :floating="false"
                                             :columns="{

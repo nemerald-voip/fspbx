@@ -38,7 +38,8 @@ class SinchOutboundProvider implements OutboundProviderInterface
 
         $payload = [
             'from' => preg_replace('/\D+/', '', (string) $message->source),
-            'to' => [preg_replace('/\D+/', '', (string) $message->destination)],
+            'to' => array_map(fn ($number) => preg_replace('/\D+/', '', $number),
+                $message->message_group_uuid ? $message->group->recipients : [$message->destination]),
             'referenceId' => $message->message_uuid,
         ];
 

@@ -6,6 +6,12 @@ use App\Models\Messages;
 use App\Models\Extensions;
 use App\Models\DomainSettings;
 use App\Models\SmsDestinations;
+use App\Models\RingotelConversation;
+use App\Models\RingotelMessageSync;
+use App\Models\RingotelMessageDelivery;
+use App\Services\Messaging\MessageParticipantService;
+use App\Services\Messaging\RingotelConversationService;
+use Illuminate\Support\Facades\Cache;
 use libphonenumber\PhoneNumberUtil;
 use Illuminate\Support\Facades\Redis;
 use libphonenumber\PhoneNumberFormat;
@@ -59,6 +65,13 @@ class ProcessRingotelWebhookJob extends SpatieProcessWebhookJob
         MessageMediaObjectStorageService $mediaStorage,
         CreateOutboundMessageService $outbound
     ) {
+        // The webhook client has already stored the authenticated payload.
+        // Read-state events are observational until their semantics are verified;
+        // never route them into carrier delivery or update personal read receipts.
+        if (in_array($this->webhookCall->payload['method'] ?? null, ['read', 'unread'], true)) {
+            return;
+        }
+
         Redis::throttle('messages')->allow(2)->every(1)->then(function () use ($mediaStorage, $outbound) {
             $this->message = $this->webhookCall->payload;
 
@@ -68,10 +81,17 @@ class ProcessRingotelWebhookJob extends SpatieProcessWebhookJob
                 if (($this->message['method'] ?? null) === 'delivered') {
                     $response = $this->handleDeliveryStatusUpdate();
                 } else {
-                    $response = $this->processOutgoingMessage($mediaStorage, $outbound);
+                    $key = hash('sha256', json_encode([
+                        $this->message['params']['orgid'] ?? null,
+                        $this->message['params']['messageid'] ?? $this->webhookCall->id,
+                    ]));
+                    $response = Cache::store('redis')->lock('ringotel:webhook:'.$key, 180)->block(2,
+                        fn () => $this->processOutgoingMessage($mediaStorage, $outbound));
                 }
 
                 return $response;
+            } catch (\Illuminate\Contracts\Cache\LockTimeoutException $e) {
+                return $this->release(5);
             } catch (\Exception $e) {
                 return $this->handleError($e);
             }
@@ -84,6 +104,9 @@ class ProcessRingotelWebhookJob extends SpatieProcessWebhookJob
         MessageMediaObjectStorageService $mediaStorage,
         CreateOutboundMessageService $outbound
     ) {
+        if ($this->alreadyProcessed()) {
+            return response()->json(['status' => 'Already processed']);
+        }
         $this->validateMessage();
 
         $this->mobileAppDomainConfig = $this->getMobileAppDomainConfig($this->message['params']['orgid']);
@@ -126,10 +149,25 @@ class ProcessRingotelWebhookJob extends SpatieProcessWebhookJob
                 : [],
             'meta' => [
                 'ringotel_orgid' => $this->message['params']['orgid'] ?? null,
+                'ringotel_sessionid' => $this->message['params']['sessionid'] ?? null,
+                'ringotel_userid' => $this->message['params']['userid'] ?? null,
+                'ringotel_messageid' => $this->message['params']['messageid'] ?? null,
+                'ringotel_remote_identifier' => $this->message['params']['to'] ?? null,
+                'ringotel_received_at' => $this->webhookCall->created_at->toIso8601String(),
             ],
         ]));
 
         $this->storedMessage = $message;
+
+        // Carrier delivery is already queued. Session tracking is local and best-effort;
+        // the persisted message metadata also permits later recovery.
+        try {
+            app(RingotelConversationService::class)->remember($message);
+        } catch (\Throwable $e) {
+            logger()->warning('Unable to record Ringotel conversation session.', [
+                'message_uuid' => $message->message_uuid, 'error' => $e->getMessage(),
+            ]);
+        }
 
         return response()->json([
             'status' => ucfirst($message->type) . ' queued',
@@ -193,15 +231,9 @@ class ProcessRingotelWebhookJob extends SpatieProcessWebhookJob
 
     public function handleDeliveryStatusUpdate()
     {
-        $message = Messages::where('reference_id', $this->message['params']['messageid'])
-            ->first();
-
-        if ($message) {
-            $message->status = 'delivered';
-            $message->save();
-        }
-
-        return response()->json(['status' => 'Delivery status updated']);
+        // These are Ringotel receipts, not carrier delivery receipts. They remain in
+        // the webhook audit log and must not overwrite the carrier status/reference.
+        return response()->json(['status' => 'Ringotel receipt recorded']);
     }
 
     private function validateMessage()
@@ -238,6 +270,7 @@ class ProcessRingotelWebhookJob extends SpatieProcessWebhookJob
     private function getMobileAppDomainConfig($orgId)
     {
         $mobileAppDomainConfig = DomainSettings::where('domain_setting_subcategory', 'org_id')
+            ->where('domain_setting_category', 'app shell')
             ->where('domain_setting_value', $orgId)
             ->with('domain')
             ->first();
@@ -251,9 +284,22 @@ class ProcessRingotelWebhookJob extends SpatieProcessWebhookJob
 
     private function getPhoneNumberSmsConfig($from, $domainUuid)
     {
-        $phoneNumberSmsConfig = SmsDestinations::where('domain_uuid', $domainUuid)
-            ->where('chatplan_detail_data', $from)
-            ->first();
+        $configs = app(MessageParticipantService::class)->routes($domainUuid, $this->extension_uuid);
+
+        if ($configs->count() > 1) {
+            $local = RingotelConversation::query()->where('domain_uuid', $domainUuid)
+                ->where('extension_uuid', $this->extension_uuid)
+                ->where('org_id', $this->message['params']['orgid'])
+                ->where('user_id', $this->message['params']['userid'] ?? '')
+                ->where('session_id', $this->message['params']['sessionid'] ?? '')
+                ->pluck('local_number')->unique();
+            if ($local->count() !== 1) {
+                throw new \RuntimeException('Multiple SMS numbers are assigned to this extension and its Ringotel session does not identify one number.');
+            }
+            $country = get_domain_setting('country', $domainUuid) ?? 'US';
+            $configs = $configs->filter(fn ($config) => formatPhoneNumber($config->destination, $country, PhoneNumberFormat::E164) === $local->first());
+        }
+        $phoneNumberSmsConfig = $configs->first();
 
         if (!$phoneNumberSmsConfig) {
             throw new \Exception("SMS/MMS configuration not found for extension " . $from);
@@ -266,11 +312,15 @@ class ProcessRingotelWebhookJob extends SpatieProcessWebhookJob
     {
         $extension = Extensions::where('domain_uuid', $this->domain_uuid)
             ->where('extension', $this->message['params']['from'])
-            ->select('extension_uuid')
+            ->without('advSettings')->with('mobile_app')
             ->first();
 
         if (!$extension) {
             throw new \Exception("Extension " . $this->message['params']['from'] . " not found");
+        }
+
+        if ((string) $extension->mobile_app?->user_id !== (string) ($this->message['params']['userid'] ?? '')) {
+            throw new \RuntimeException('Ringotel sender does not match the assigned user for this extension.');
         }
 
         return $extension->extension_uuid;
@@ -324,6 +374,34 @@ class ProcessRingotelWebhookJob extends SpatieProcessWebhookJob
             2 => 'mms',
             default => 'sms',
         };
+    }
+
+    private function alreadyProcessed(): bool
+    {
+        $orgId = $this->message['params']['orgid'] ?? null;
+        $messageId = $this->message['params']['messageid'] ?? null;
+        if (!$orgId || !$messageId) {
+            return false;
+        }
+
+        if (Messages::query()->where('delivery_meta->outbound->meta->ringotel_orgid', $orgId)
+            ->where('delivery_meta->outbound->meta->ringotel_messageid', $messageId)->exists()) {
+            return true;
+        }
+
+        // Suppress known sync echoes rather than send the SMS through the carrier again.
+        $syncs = RingotelMessageDelivery::query()
+            ->whereIn('ringotel_conversation_uuid', RingotelConversation::query()->select('ringotel_conversation_uuid')
+                ->where('org_id', $orgId))
+            ->cursor();
+        foreach ($syncs as $sync) {
+            foreach ($sync->parts ?? [] as $part) {
+                if (($part['message_id'] ?? null) === $messageId) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private function isValidMmsContent(string $content): bool

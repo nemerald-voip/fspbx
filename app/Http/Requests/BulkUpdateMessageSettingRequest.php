@@ -15,7 +15,7 @@ class BulkUpdateMessageSettingRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return Auth::check();
+        return \App\Services\Messaging\MessageSettingsAccess::canManage();
     }
 
     /**
@@ -32,6 +32,10 @@ class BulkUpdateMessageSettingRequest extends FormRequest
                 'required',
                 'array'
             ],
+            'items.*' => ['uuid', 'distinct', Rule::exists('v_sms_destinations', 'sms_destination_uuid')
+                ->whereIn('domain_uuid', \App\Services\Messaging\MessageSettingsAccess::domains())],
+            'allowed_extension_uuids' => ['sometimes', 'array'],
+            'allowed_extension_uuids.*' => ['uuid', 'distinct', Rule::exists('v_extensions', 'extension_uuid')->where('domain_uuid', session('domain_uuid'))],
             'carrier' => [
                 'nullable',
             ],

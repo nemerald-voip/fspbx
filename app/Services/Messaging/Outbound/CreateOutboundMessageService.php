@@ -19,6 +19,16 @@ class CreateOutboundMessageService
 
     public function create(CreateOutboundMessageData $data): Messages
     {
+        if ($data->messageGroupUuid) {
+            $group = \App\Models\MessageGroup::where('domain_uuid', $data->domainUuid)
+                ->where('local_number', $data->source)->findOrFail($data->messageGroupUuid);
+            if ($data->carrier !== 'sinch' || ! in_array($data->origin, ['portal', 'api'], true)) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'recipients' => [__('Group messaging is available through Inteliquent in FS PBX.')],
+                ]);
+            }
+            $data->destination = $group->recipients[0];
+        }
         messaging_webhook_debug('CreateOutboundMessageService create() started', [
             'domain_uuid' => $data->domainUuid,
             'extension_uuid' => $data->extensionUuid,
@@ -59,18 +69,25 @@ class CreateOutboundMessageService
             ]);
         }
 
+        $sender = \App\Models\Extensions::without('advSettings')->where('domain_uuid', $data->domainUuid)
+            ->where('extension_uuid', $data->extensionUuid)->first();
+        $meta = $data->meta;
+        $meta['sender_name'] = $sender?->name_formatted;
+        $meta['sender_extension'] = $sender?->extension;
+
         $message = $this->messages->storeOutbound(
             domainUuid: $data->domainUuid,
             extensionUuid: $data->extensionUuid,
             source: $data->source,
             destination: $data->destination,
             text: $data->message,
-            type: !empty($storedMedia) ? 'mms' : 'sms',
+            type: $data->messageGroupUuid || !empty($storedMedia) ? 'mms' : 'sms',
             carrier: $data->carrier,
             origin: $data->origin,
             providerReferenceId: $data->providerReferenceId,
             media: $storedMedia,
-            meta: $data->meta,
+            meta: $meta,
+            messageGroupUuid: $data->messageGroupUuid,
         );
 
         messaging_webhook_debug('Outbound message created', [

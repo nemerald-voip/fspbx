@@ -22,7 +22,7 @@
             </template>
 
             <template #action>
-                <button type="button" @click.prevent="handleCreateButtonClick()"
+                <button v-if="permissions.manage" type="button" @click.prevent="handleCreateButtonClick()"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     Create
                 </button>
@@ -57,7 +57,7 @@
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
                 <TableColumnHeader header="Carrier" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Assigned Extension"
+                <TableColumnHeader :header="$t('Allowed extensions')"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Assigned Email"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
@@ -90,10 +90,11 @@
                         :text="row.destination_formatted">
                         <input v-if="row.destination" v-model="selectedItems" type="checkbox" name="action_box[]"
                             :value="row.sms_destination_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                        <div class="ml-4 cursor-pointer hover:text-gray-900"
+                        <button v-if="permissions.manage" type="button" class="ml-4 cursor-pointer hover:text-gray-900"
                             @click="handleEditButtonClick(row.sms_destination_uuid)">
                             {{ row.destination_formatted }}
-                        </div>
+                        </button>
+                        <span v-else class="ml-4">{{ row.destination_formatted }}</span>
                         <ejs-tooltip :content="tooltipCopyContent" position='TopLeft' class="ml-2"
                             @click="handleCopyToClipboard(row.destination)" target="#destination_tooltip_target">
                             <div id="destination_tooltip_target">
@@ -113,20 +114,15 @@
                         </ejs-tooltip>
                     </TableField>
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.carrier" />
-                    <TableField class="flex whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.extension ? row.extension.name_formatted : row.chatplan_detail_data">
-                        <template #action-buttons>
-                            <Warning v-if="!row.extension && !row.chatplan_detail_data == ''"
-                                class="ml-2 h-5 w-5 text-amber-500" />
-                        </template>
-                    </TableField>
+                    <TableField class="px-2 py-2 text-sm text-gray-500"
+                        :text="(row.allowed_extensions || []).map(ext => ext.label).join(', ') || '—'" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.email" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.description" />
                     <TableField class="whitespace-nowrap text-sm text-gray-500">
 
                         <template #action-buttons>
 
-                            <div class="flex items-center whitespace-nowrap">
+                            <div v-if="permissions.manage" class="flex items-center whitespace-nowrap">
                                 <ejs-tooltip :content="'Edit'" position='TopCenter'
                                     target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
@@ -198,7 +194,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import axios from 'axios';
 import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
@@ -254,6 +250,7 @@ const data = ref({
 
 const props = defineProps({
     routes: Object,
+    permissions: { type: Object, default: () => ({}) },
 });
 
 onMounted(() => {
@@ -267,18 +264,18 @@ const filterData = ref({
 
 const showGlobal = ref(false);
 
-const bulkActions = ref([
-    // {
-    //     id: 'bulk_update',
-    //     label: 'Edit',
-    //     icon: 'PencilSquareIcon'
-    // },
+const bulkActions = computed(() => props.permissions.manage ? [
+    {
+        id: 'bulk_update',
+        label: 'Edit',
+        icon: 'PencilSquareIcon'
+    },
     {
         id: 'bulk_delete',
         label: 'Delete',
         icon: 'TrashIcon'
     },
-]);
+] : []);
 
 const handleSelectPageItems = () => {
     if (selectPageItems.value) {
@@ -348,6 +345,8 @@ const handleBulkUpdateRequest = (form) => {
         })
         .catch((error) => {
             bulkUpdateFormSubmiting.value = false;
+            formErrors.value = error.response?.data?.errors || null;
+            if (!formErrors.value) handleErrorResponse(error);
         });
 }
 
@@ -430,6 +429,7 @@ const getItemOptions = async (itemUuid = null) => {
 }
 
 const handleEditButtonClick = (itemUuid) => {
+    if (!props.permissions.manage) return;
     getItemOptions(itemUuid);
 }
 

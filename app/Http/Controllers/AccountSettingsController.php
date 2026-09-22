@@ -54,6 +54,7 @@ class AccountSettingsController extends Controller
                 'routes' => [
                     'dashboard_route' => route('dashboard'),
                     'settings_update' => route('account-settings.update'),
+                    'messaging_update' => route('account-settings.messaging.update'),
                     'emergency_calls' => route('emergency-calls.index'),
                     'emergency_calls_store' => route('emergency-calls.store'),
                     'emergency_calls_item_options' => route('emergency-calls.item.options'),
@@ -90,6 +91,10 @@ class AccountSettingsController extends Controller
                     //'bulk_update' => route('devices.bulk.update'),
                 ],
                 'pms_provider_options' => app(PmsProviderSettings::class)->options(),
+                'messagingSettings' => array_merge([
+                    'enabled' => app(\App\Services\Messaging\PhotoCompressionSettings::class)->enabled(session('domain_uuid')),
+                    'available' => app(\App\Services\Messaging\PhotoCompressionClient::class)->available(),
+                ], app(\App\Services\Messaging\MessagingWebhookSettings::class)->get(session('domain_uuid'))),
                 // Schema-driven General-tab settings: the declarative field
                 // list, its resolved option lists, and this account's own
                 // override values (null = inheriting the default).
@@ -298,9 +303,40 @@ class AccountSettingsController extends Controller
         ]);
     }
 
+    public function updateMessaging(Request $request)
+    {
+        abort_unless(userCheckPermission('account_settings_list_view')
+            && \App\Services\Messaging\MessageSettingsAccess::canManage(), 403);
+        $data = $request->validate([
+            'enabled' => ['sometimes', 'boolean'],
+            'webhook_url' => ['nullable', 'url', 'max:2048', 'regex:/^https:\/\//i'],
+            'webhook_enabled' => ['sometimes', 'boolean'],
+        ]);
+        if (($data['enabled'] ?? false) && !app(\App\Services\Messaging\PhotoCompressionClient::class)->available()) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'enabled' => [__('Photo compression is unavailable. Please contact your administrator.')],
+            ]);
+        }
+        if (array_key_exists('enabled', $data)) {
+            app(\App\Services\Messaging\PhotoCompressionSettings::class)->set(session('domain_uuid'), $data['enabled']);
+        }
+        if (array_key_exists('webhook_url', $data) || array_key_exists('webhook_enabled', $data)) {
+            app(\App\Services\Messaging\MessagingWebhookSettings::class)->set(
+                session('domain_uuid'),
+                $data['webhook_url'] ?? app(\App\Services\Messaging\MessagingWebhookSettings::class)->get(session('domain_uuid'))['webhook_url'],
+                $data['webhook_enabled'] ?? app(\App\Services\Messaging\MessagingWebhookSettings::class)->get(session('domain_uuid'))['webhook_enabled'],
+            );
+        }
+        return response()->json(array_merge([
+            'enabled' => app(\App\Services\Messaging\PhotoCompressionSettings::class)->enabled(session('domain_uuid')),
+            'messages' => ['success' => [__('Messaging settings saved.')]],
+        ], app(\App\Services\Messaging\MessagingWebhookSettings::class)->get(session('domain_uuid'))));
+    }
+
     public function getUserPermissions()
     {
         $permissions = [];
+        $permissions['messaging_manage'] = \App\Services\Messaging\MessageSettingsAccess::canManage();
         $permissions['location_view'] = userCheckPermission('location_view');
         $permissions['location_create'] = userCheckPermission('location_create');
         $permissions['ldap_directory_view'] = userCheckPermission('ldap_directory_view');

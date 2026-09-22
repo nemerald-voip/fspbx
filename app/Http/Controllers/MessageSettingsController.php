@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Session;
 use App\Http\Requests\CreateMessageSettingRequest;
 use App\Http\Requests\UpdateMessageSettingRequest;
 use App\Http\Requests\BulkUpdateMessageSettingRequest;
+use App\Services\Messaging\MessageParticipantService;
+use App\Services\Messaging\MessageSettingsAccess;
 
 class MessageSettingsController extends Controller
 {
@@ -44,6 +46,7 @@ class MessageSettingsController extends Controller
         return Inertia::render(
             $this->viewName,
             [
+                'permissions' => ['manage' => MessageSettingsAccess::canManage()],
                 'routes' => [
                     'current_page' => route('messages.settings'),
                     'data_route' => route('messages.settings.data'),
@@ -59,6 +62,7 @@ class MessageSettingsController extends Controller
 
     public function getItemOptions()
     {
+        abort_unless(userCheckPermission('message_settings_list_view'), 403);
         try {
             $itemUuid = request('itemUuid');
 
@@ -77,7 +81,10 @@ class MessageSettingsController extends Controller
                         'email',
                     ])
                     ->whereKey($itemUuid)
+                    ->whereIn('domain_uuid', MessageSettingsAccess::domains())
                     ->firstOrFail();
+
+                $item->allowed_extension_uuids = app(MessageParticipantService::class)->assigned($item)->pluck('extension_uuid')->all();
 
 
                 $routes = array_merge($routes, [
@@ -101,7 +108,7 @@ class MessageSettingsController extends Controller
             ];
 
             // Define the options for the 'chatplan_detail_data' field
-            $extensions = Extensions::where('domain_uuid', session('domain_uuid'))
+            $extensions = Extensions::where('domain_uuid', $item->domain_uuid ?? session('domain_uuid'))
                 ->get([
                     'extension_uuid',
                     'extension',
@@ -127,6 +134,7 @@ class MessageSettingsController extends Controller
                 'item' => $item ?? null,
                 'carrier' => $carrierOptions,
                 'chatplan_detail_data' => $chatplanDetailDataOptions,
+                'extensions' => $extensions->map(fn ($ext) => ['value' => $ext->extension_uuid, 'label' => $ext->name_formatted])->values(),
                 'routes' => $routes,
                 // Define options for other fields as needed
             ];
@@ -144,6 +152,7 @@ class MessageSettingsController extends Controller
 
     public function getData()
     {
+        abort_unless(userCheckPermission('message_settings_list_view'), 403);
 
         $perPage = 50;
         $currentDomain = session('domain_uuid');
@@ -159,6 +168,7 @@ class MessageSettingsController extends Controller
         }
 
         $data = QueryBuilder::for(MessageSetting::class)
+            ->whereIn('domain_uuid', MessageSettingsAccess::domains())
             ->select([
                 'sms_destination_uuid',
                 'destination',
@@ -201,7 +211,7 @@ class MessageSettingsController extends Controller
         $rows = $data->getCollection();
 
         if (request('filter.showGlobal')) {
-            $domainUuids = Session::get('domains')->pluck('domain_uuid');
+            $domainUuids = MessageSettingsAccess::domains();
             $extensions = Extensions::whereIn('domain_uuid', $domainUuids)
                 ->get(['domain_uuid', 'extension', 'effective_caller_id_name']);
         } else {
@@ -216,6 +226,8 @@ class MessageSettingsController extends Controller
             });
 
             $destination->extension = $match;
+            $destination->allowed_extensions = app(MessageParticipantService::class)->assigned($destination)
+                ->map(fn ($ext) => ['value' => $ext->extension_uuid, 'label' => $ext->name_formatted])->values();
         }
 
         // Set modified collection back into paginator
@@ -252,7 +264,8 @@ class MessageSettingsController extends Controller
         try {
             DB::beginTransaction();
 
-            $setting->update($inputs);
+            $setting = MessageSetting::whereKey($setting->getKey())->lockForUpdate()->firstOrFail();
+            $this->saveSetting($setting, $inputs);
 
             DB::commit();
 
@@ -282,8 +295,8 @@ class MessageSettingsController extends Controller
         try {
             DB::beginTransaction();
 
-            $newSetting = new MessageSetting($data);
-            $newSetting->save();
+            $newSetting = new MessageSetting();
+            $this->saveSetting($newSetting, $data);
 
             DB::commit();
 
@@ -308,9 +321,10 @@ class MessageSettingsController extends Controller
      */
     public function selectAll()
     {
+        abort_unless(userCheckPermission('message_settings_list_view'), 403);
         try {
             if (request()->get('showGlobal')) {
-                $uuids = $this->model::get($this->model->getKeyName())->pluck($this->model->getKeyName());
+                $uuids = $this->model::whereIn('domain_uuid', MessageSettingsAccess::domains())->pluck($this->model->getKeyName());
             } else {
                 $uuids = $this->model::where('domain_uuid', session('domain_uuid'))
                     ->get($this->model->getKeyName())->pluck($this->model->getKeyName());
@@ -344,16 +358,20 @@ class MessageSettingsController extends Controller
      */
     public function BulkDelete()
     {
+        abort_unless(MessageSettingsAccess::canManage(), 403);
         try {
             // Begin Transaction
             DB::beginTransaction();
 
             // Retrieve all items
-            $items = $this->model::whereIn('sms_destination_uuid', request('items'))->get();
+            $items = $this->model::whereIn('domain_uuid', MessageSettingsAccess::domains())
+                ->whereIn('sms_destination_uuid', request('items', []))->lockForUpdate()->get();
 
             foreach ($items as $item) {
 
                 // Delete the item itself
+                DB::table('sms_destination_members')->where('domain_uuid', $item->domain_uuid)
+                    ->where('sms_destination_uuid', $item->sms_destination_uuid)->delete();
                 $item->delete();
             }
 
@@ -387,22 +405,30 @@ class MessageSettingsController extends Controller
 
         try {
             // Prepare the data for updating
-            $updateData = collect(request()->all())->only([
+            $updateData = collect($request->validated())->only([
                 'carrier',
                 'chatplan_detail_data',
+                'allowed_extension_uuids',
                 'email',
                 'description'
             ])->filter(function ($value) {
                 return $value !== null;
             })->toArray();
 
-            $updated = MessageSetting::whereIn('sms_destination_uuid', request()->items)
-                ->update($updateData);
+            DB::transaction(function () use ($request, $updateData) {
+                $items = MessageSetting::whereIn('domain_uuid', MessageSettingsAccess::domains())
+                    ->whereIn('sms_destination_uuid', $request->validated('items'))->lockForUpdate()->get();
+                foreach ($items as $item) {
+                    $this->saveSetting($item, $updateData);
+                }
+            });
 
             // Return a JSON response indicating success
             return response()->json([
                 'messages' => ['success' => ['Selected items updated']],
             ], 200);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             logger($e->getMessage());
             // Handle any other exception that may occur
@@ -416,5 +442,21 @@ class MessageSettingsController extends Controller
             'success' => false,
             'errors' => ['server' => ['Failed to update selected items']]
         ], 500); // 500 Internal Server Error for any other errors
+    }
+    private function saveSetting(MessageSetting $setting, array $data): void
+    {
+        $hasMembers = array_key_exists('allowed_extension_uuids', $data);
+        $members = $data['allowed_extension_uuids'] ?? [];
+        unset($data['allowed_extension_uuids']);
+        $legacyAssignment = array_key_exists('chatplan_detail_data', $data);
+        $setting->fill($data);
+        $setting->save();
+        if (!$hasMembers && $legacyAssignment) {
+            $members = Extensions::where('domain_uuid', $setting->domain_uuid)
+                ->where('extension', $setting->chatplan_detail_data)->pluck('extension_uuid')->all();
+        }
+        if ($hasMembers || $legacyAssignment) {
+            app(MessageParticipantService::class)->assign($setting, $members);
+        }
     }
 }

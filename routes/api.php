@@ -796,6 +796,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::get('account-settings/pms-provider', [AccountSettingsController::class, 'pmsProvider'])->name('account-settings.pms-provider');
     Route::put('account-settings/pms-provider', [AccountSettingsController::class, 'updatePmsProvider'])->name('account-settings.pms-provider.update');
     Route::put('account-settings/update', [AccountSettingsController::class, 'update'])->name('account-settings.update');
+    Route::put('account-settings/messaging', [AccountSettingsController::class, 'updateMessaging'])->name('account-settings.messaging.update');
 
     // Default Settings
     Route::get('default-settings/data', [DefaultSettingsController::class, 'data'])->name('default-settings.data');
@@ -892,11 +893,14 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
 
     // Messages
     Route::get('/messages/rooms', [MessageController::class, 'rooms'])->name('messages.rooms');
+    Route::post('/messages/conversations', [MessageController::class, 'prepareConversation'])->name('messages.prepare-conversation');
     Route::get('/messages/rooms/{roomId}/messages', [MessageController::class, 'roomMessages'])->name('messages.room.messages');
     Route::post('/messages/send', [MessageController::class, 'send'])->name('messages.send');
     Route::get('/messages/logs', [MessageController::class, 'logs'])->name('messages.logs');
     Route::get('/messages/data', [MessageController::class, 'getData'])->name('messages.data');
     Route::post('/messages/mark-read', [MessageController::class, 'markRead'])->name('messages.mark-read');
+    Route::post('/messages/hide-conversation', [MessageController::class, 'hideConversation'])->name('messages.hide-conversation');
+    Route::delete('/messages/conversation', [MessageController::class, 'deleteConversation'])->name('messages.delete-conversation');
     Route::post('/messages/retry', [MessageController::class, 'retry'])->name('messages.retry');
 
     // Message Settings

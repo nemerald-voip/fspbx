@@ -19,6 +19,7 @@ class MessageRepository
         ?string $providerReferenceId,
         array $media = [],
         ?string $providerEvent = null,
+        ?string $messageGroupUuid = null,
     ): Messages {
         $countryCode = get_domain_setting('country', $domainUuid) ?? 'US';
 
@@ -39,6 +40,7 @@ class MessageRepository
         ]);
 
         $message = Messages::create([
+            'message_group_uuid' => $messageGroupUuid,
             'domain_uuid'    => $domainUuid,
             'extension_uuid' => $extensionUuid,
             'source'         => $normalizedSource,
@@ -50,6 +52,7 @@ class MessageRepository
             'status'         => 'received',
             'media'          => $media,
             'delivery_meta'  => [
+                'ringotel_tracking' => 1,
                 'provider' => [
                     'name'         => $providerName,
                     'reference_id' => $providerReferenceId,
@@ -144,6 +147,7 @@ class MessageRepository
         ?string $providerReferenceId = null,
         array $media = [],
         array $meta = [],
+        ?string $messageGroupUuid = null,
     ): Messages {
         messaging_webhook_debug('storeOutbound called', [
             'domain_uuid' => $domainUuid,
@@ -171,8 +175,10 @@ class MessageRepository
             'type'           => $type,
             'reference_id'   => $providerReferenceId,
             'status'         => 'queued',
+            'message_group_uuid' => $messageGroupUuid,
             'media'          => $media,
             'delivery_meta'  => [
+                'ringotel_tracking' => 1,
                 'outbound' => [
                     'origin' => $origin,
                     'provider' => [
@@ -230,6 +236,10 @@ class MessageRepository
         data_set($meta, 'outbound.provider.response', $result->providerResponse);
         data_set($meta, 'outbound.provider.updated_at', now()->toIso8601String());
 
+        if ($result->success) {
+            data_set($meta, 'outbound.provider.accepted_at', now()->toIso8601String());
+        }
+
         $message->delivery_meta = $meta;
         $message->status = $result->status;
 
@@ -246,6 +256,9 @@ class MessageRepository
             'provider_reference_id' => $result->providerReferenceId,
             'error' => $result->error,
         ]);
+        if ($result->success) {
+            app(MessageReadService::class)->notify($message->domain_uuid, $message->source);
+        }
     }
 
 
@@ -265,14 +278,14 @@ class MessageRepository
             return;
         }
 
-        $meta = $message->delivery_meta ?? [];
-
-        data_set($meta, 'ringotel.status', $status);
-        data_set($meta, 'ringotel.attempted_at', now()->toIso8601String());
-        data_set($meta, 'ringotel.error', $error);
-
-        $message->delivery_meta = $meta;
-        $message->save();
+        // Separate workers also update provider status: do not replace their metadata.
+        Messages::whereKey($messageUuid)->update([
+            'delivery_meta->ringotel' => [
+                'status' => $status,
+                'attempted_at' => now()->toIso8601String(),
+                'error' => $error,
+            ],
+        ]);
     }
 
     public function markEmailStatus(string $messageUuid, string $status, ?string $to = null, ?string $error = null): void

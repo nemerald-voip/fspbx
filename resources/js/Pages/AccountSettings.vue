@@ -62,6 +62,14 @@
                 </Vueform>
             </section>
 
+            <!-- MESSAGING -->
+            <section v-show="selectedMenuOption === 'messaging'">
+                <MessagingSettingsForm :settings="messagingSettings" :route="routes.messaging_update"
+                    :can-manage="permissions?.messaging_manage"
+                    @success="messages => showNotification('success', messages)"
+                    @error="messages => showNotification('error', messages)" />
+            </section>
+
             <!-- LOCATIONS -->
             <section v-show="selectedMenuOption === 'locations'">
                 <Vueform>
@@ -204,6 +212,7 @@
 
 <script setup>
 import { ref, computed, onMounted, markRaw } from 'vue'
+import { trans } from 'laravel-vue-i18n'
 import PageWithSideMenu from '../Layouts/PageWithSideMenu.vue'
 import Notification from "./components/notifications/Notification.vue";
 import EmergencyCalls from "./components/EmergencyCalls.vue";
@@ -221,6 +230,7 @@ import CallTranscriptionOptionsForm from "./components/forms/CallTranscriptionOp
 import AssemblyAiForm from "./components/forms/AssemblyAiForm.vue"
 import CallWebhookSettingsForm from "./components/forms/CallWebhookSettingsForm.vue"
 import LdapDirectorySettings from "./components/LdapDirectorySettings.vue"
+import MessagingSettingsForm from "./components/forms/MessagingSettingsForm.vue"
 import {
     Cog6ToothIcon,
     MapPinIcon,
@@ -233,6 +243,7 @@ import {
     AdjustmentsVerticalIcon,
     ArrowPathRoundedSquareIcon,
     ServerStackIcon,
+    ChatBubbleLeftRightIcon,
 } from '@heroicons/vue/24/outline'
 
 const props = defineProps({
@@ -242,6 +253,7 @@ const props = defineProps({
     },
     routes: Object,
     permissions: Object,
+    messagingSettings: { type: Object, default: () => ({ enabled: false, available: false }) },
     pms_provider_options: {
         type: Array,
         default: () => [],
@@ -328,6 +340,7 @@ const handleUpdateSelectedMenuOption = (key) => {
 
 const navigation = [
     { key: 'general', name: 'General', icon: Cog6ToothIcon },
+    { key: 'messaging', name: trans('Messaging'), icon: ChatBubbleLeftRightIcon },
     { key: 'locations', name: 'Locations', icon: MapPinIcon },
     ...(props.ldapDirectorySettings && props.permissions?.ldap_directory_view
         ? [{ key: 'active_directory', name: 'Directory Services', icon: ServerStackIcon }]

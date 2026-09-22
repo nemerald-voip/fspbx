@@ -167,6 +167,12 @@ return [
     */
 
     'defaults' => [
+        'ringotel' => [
+            'connection' => 'ringotel', 'queue' => ['ringotel'],
+            'balance' => 'auto', 'minProcesses' => 1, 'maxProcesses' => 2,
+            'maxTime' => 3600, 'maxJobs' => 1000, 'memory' => 128,
+            'tries' => 5, 'timeout' => 120, 'nice' => 0,
+        ],
         'scheduled-jobs' => [
             'connection' => 'scheduled-jobs', 'queue' => ['scheduled-jobs'],
             'balance' => 'auto', 'minProcesses' => 1, 'maxProcesses' => 2,
@@ -190,6 +196,7 @@ return [
 
     'environments' => [
         'production' => [
+            'ringotel' => ['maxProcesses' => 2],
             'scheduled-jobs' => ['maxProcesses' => 2],
             'supervisor-1' => [
                 'maxProcesses' => 10,
@@ -199,6 +206,7 @@ return [
         ],
 
         'local' => [
+            'ringotel' => ['maxProcesses' => 1],
             'scheduled-jobs' => ['maxProcesses' => 2],
             'supervisor-1' => [
                 'queue' => ['default', 'emails', 'faxes', 'slack', 'messages', 'voicemails', 'ztp', 'stripe', 'transcriptions', 'dialer', 'webhooks'],
