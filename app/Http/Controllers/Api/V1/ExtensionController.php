@@ -21,6 +21,61 @@ use App\Http\Requests\Api\V1\StoreExtensionRequest;
 use App\Http\Requests\Api\V1\UpdateExtensionRequest;
 
 class ExtensionController extends Controller
+
+/**
+ * Return extension and mobile app counts for one domain.
+ */
+public function summary(string $domain_uuid)
+{
+    if (! preg_match('/^[0-9a-fA-F-]{36}$/', $domain_uuid)) {
+        throw new ApiException(
+            400,
+            'invalid_request_error',
+            'Invalid domain UUID.',
+            'invalid_request',
+            'domain_uuid'
+        );
+    }
+
+    if (! Domain::where('domain_uuid', $domain_uuid)->exists()) {
+        throw new ApiException(
+            404,
+            'invalid_request_error',
+            'Domain not found.',
+            'resource_missing',
+            'domain_uuid'
+        );
+    }
+
+    $extensions = Extensions::query()
+        ->where('domain_uuid', $domain_uuid);
+
+    $total = (clone $extensions)->count();
+
+    $suspended = (clone $extensions)
+        ->whereHas('advSettings', function ($query) {
+            $query->where('suspended', true);
+        })
+        ->count();
+
+    $mobileApps = (clone $extensions)
+        ->whereHas('mobile_app', function ($query) use ($domain_uuid) {
+            $query->where('domain_uuid', $domain_uuid)
+                ->where('status', 1);
+        })
+        ->count();
+
+    return response()->json([
+        'object' => 'extension_summary',
+        'domain_uuid' => $domain_uuid,
+        'total_extensions' => $total,
+        'suspended_extensions' => $suspended,
+        'active_extensions' => $total - $suspended,
+        'active_mobile_apps' => $mobileApps,
+    ]);
+}
+
+
 {
     /**
      * List extensions

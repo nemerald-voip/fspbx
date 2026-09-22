@@ -56,6 +56,9 @@ Route::middleware(['auth:sanctum', 'api.token.auth', 'throttle:api'])->group(fun
     Route::get('/domains/{domain_uuid}/extensions/{extension_uuid}', [ExtensionController::class, 'show'])
         ->middleware('user.authorize:extension_view');
 
+    Route::get('/domains/{domain_uuid}/extensions/summary', [ExtensionController::class, 'summary'])
+        ->middleware('user.authorize:extension_view');
+
     Route::get('/domains/{domain_uuid}/extension-statistics', [ExtensionStatisticController::class, 'index'])
         ->middleware('user.authorize:xml_cdr_view');
 
