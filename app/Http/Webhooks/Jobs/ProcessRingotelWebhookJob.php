@@ -11,6 +11,7 @@ use App\Models\RingotelMessageSync;
 use App\Models\RingotelMessageDelivery;
 use App\Services\Messaging\MessageParticipantService;
 use App\Services\Messaging\RingotelConversationService;
+use App\Services\Messaging\RingotelReadService;
 use Illuminate\Support\Facades\Cache;
 use libphonenumber\PhoneNumberUtil;
 use Illuminate\Support\Facades\Redis;
@@ -65,10 +66,13 @@ class ProcessRingotelWebhookJob extends SpatieProcessWebhookJob
         MessageMediaObjectStorageService $mediaStorage,
         CreateOutboundMessageService $outbound
     ) {
-        // The webhook client has already stored the authenticated payload.
-        // Read-state events are observational until their semantics are verified;
-        // never route them into carrier delivery or update personal read receipts.
-        if (in_array($this->webhookCall->payload['method'] ?? null, ['read', 'unread'], true)) {
+        // Ringotel cannot mark a conversation unread by API. A read report is
+        // safe to apply only when its session and message map unambiguously.
+        if (($this->webhookCall->payload['method'] ?? null) === 'read') {
+            app(RingotelReadService::class)->capture($this->webhookCall->payload['params'] ?? []);
+            return;
+        }
+        if (($this->webhookCall->payload['method'] ?? null) === 'unread') {
             return;
         }
 
