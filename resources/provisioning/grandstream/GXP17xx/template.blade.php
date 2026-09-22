@@ -1,4 +1,4 @@
-{{-- version: 1.1.10 --}}
+{{-- version: 1.1.11 --}}
 
 @switch($flavor)
 
@@ -6849,6 +6849,8 @@ PVALUES;
         $set('P6713', $settings['grandstream_phonebook_username'] ?? '');
         $set('P6714', $settings['grandstream_phonebook_password'] ?? '');
     }
+
+    $set('P76', $settings['grandstream_stun_server'] ?? '');
 
     $natTraversal = trim((string) ($settings['grandstream_nat_traversal'] ?? ''));
     if (!in_array($natTraversal, ['0', '1', '2', '3', '4', '5'], true)) {

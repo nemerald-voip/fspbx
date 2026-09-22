@@ -1,4 +1,4 @@
-{{-- version: 1.0.10 --}}
+{{-- version: 1.0.11 --}}
 
 @switch($flavor)
 
@@ -1235,7 +1235,7 @@
 		<item name="sip.userNatIp"/>
 
 		<!-- STUN Server -->
-		<item name="network.stunServer"/>
+		<item name="network.stunServer">{{ $settings['grandstream_stun_server'] ?? '' }}</item>
 
 		<!-- # Delay Registration. Default is 0. -->
 		<!-- # Number: 0 - 90 -->
