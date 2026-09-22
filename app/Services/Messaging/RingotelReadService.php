@@ -62,24 +62,41 @@ class RingotelReadService
             return false;
         }
 
-        $users = User::query()->where('domain_uuid', $conversation->domain_uuid)
-            ->where('extension_uuid', $conversation->extension_uuid)
-            ->where('user_enabled', 'true')->pluck('user_uuid');
-        if ($users->count() !== 1) {
-            logger()->warning('Ringotel read event has no unique FS PBX user.', [
-                'extension_uuid' => $conversation->extension_uuid,
-                'session_id' => $sessionId,
-            ]);
+        // Ringotel reports the message current when its user opened the chat.
+        // Treat that as a conversation read through this point, without
+        // consuming a newer message that could have arrived concurrently.
+        $conversationKey = $message->message_group_uuid ?: $conversation->remote_number;
+        $messageUuids = app(MessageGroupService::class)->conversation(
+            Messages::query()->where('domain_uuid', $conversation->domain_uuid)
+                ->where('direction', 'in'),
+            $conversation->local_number,
+            $conversationKey,
+        )->where('created_at', '<=', $message->created_at)
+            ->pluck('message_uuid')->all();
+        if ($messageUuids === []) {
             return false;
         }
 
-        return app(MessageReadService::class)->markRead(
-            $conversation->domain_uuid,
-            $users->first(),
-            $conversation->local_number,
-            $conversation->remote_number,
-            [$message->message_uuid],
-            $conversation->extension_uuid,
-        ) > 0;
+        $users = User::query()->where('domain_uuid', $conversation->domain_uuid)
+            ->where('extension_uuid', $conversation->extension_uuid)
+            ->where('user_enabled', 'true')->pluck('user_uuid');
+        if ($users->isEmpty()) {
+            return false;
+        }
+
+        $marked = 0;
+        $reads = app(MessageReadService::class);
+        foreach ($users as $userUuid) {
+            $marked += $reads->markRead(
+                $conversation->domain_uuid,
+                $userUuid,
+                $conversation->local_number,
+                $conversation->remote_number,
+                $messageUuids,
+                $conversation->extension_uuid,
+            );
+        }
+
+        return $marked > 0;
     }
 }

@@ -25,6 +25,7 @@ use App\Services\Messaging\RetryMessageService;
 use App\Services\Messaging\MessageParticipantService;
 use App\Services\Messaging\MessageGroupService;
 use App\Models\MessageGroup;
+use App\Models\User;
 use Inertia\Inertia;
 use libphonenumber\PhoneNumberFormat;
 use Spatie\QueryBuilder\AllowedFilter;
@@ -209,8 +210,9 @@ class MessageController extends Controller
         // Personal unread counts exclude incoming messages already answered by the team.
 
         // Efficiently build a query for these specific pairs
+        $readUserUuids = $this->readUserUuids($targetExtensionUuid);
         $visibleUnread = app(\App\Services\Messaging\MessageConversationVisibility::class)->visible(
-            app(\App\Services\Messaging\MessageReadService::class)->unread($domainUuid, auth()->id()), auth()->id()
+            app(\App\Services\Messaging\MessageReadService::class)->unreadForUsers($domainUuid, $readUserUuids), auth()->id()
         );
         $unreadCounts = (clone $visibleUnread)
             ->selectRaw('destination, COALESCE(message_group_uuid::text, source) as conversation_key, count(*) as count')
@@ -558,10 +560,12 @@ class MessageController extends Controller
         $customerDid = $parts[1];
         $this->authorizeNumber($myDid);
 
-        app(\App\Services\Messaging\MessageReadService::class)->markRead(
-            $this->currentDomainUuid(), auth()->id(), $myDid, $customerDid, $request->message_uuids,
-            $this->authorizedExtension($request->input('extension_uuid'))
-        );
+        $extensionUuid = $this->authorizedExtension($request->input('extension_uuid'));
+        $reads = app(\App\Services\Messaging\MessageReadService::class);
+        foreach ($this->readUserUuids($extensionUuid) as $userUuid) {
+            $reads->markRead($this->currentDomainUuid(), $userUuid, $myDid, $customerDid,
+                $request->message_uuids, $extensionUuid);
+        }
 
         return response()->json(['success' => true]);
     }
@@ -585,6 +589,19 @@ class MessageController extends Controller
         abort_unless(Extensions::where('domain_uuid', $this->currentDomainUuid())
             ->where('extension_uuid', $extensionUuid)->exists(), 403);
         return $extensionUuid;
+    }
+
+    private function readUserUuids(string $extensionUuid): array
+    {
+        if ($extensionUuid === auth()->user()->extension_uuid) {
+            return [auth()->id()];
+        }
+
+        $userUuids = User::query()->where('domain_uuid', $this->currentDomainUuid())
+            ->where('extension_uuid', $extensionUuid)
+            ->where('user_enabled', 'true')->pluck('user_uuid')->all();
+
+        return $userUuids ?: [auth()->id()];
     }
 
     private function authorizeNumber(string $number): void

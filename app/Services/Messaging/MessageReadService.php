@@ -22,13 +22,27 @@ class MessageReadService
 
     public function unread(string $domainUuid, string $userUuid): Builder
     {
+        return $this->unreadForUsers($domainUuid, [$userUuid]);
+    }
+
+    /**
+     * Build unread state for one extension view. A View As administrator sees
+     * the selected extension's state instead of their own unrelated account.
+     */
+    public function unreadForUsers(string $domainUuid, array $userUuids): Builder
+    {
+        $userUuids = array_values(array_unique(array_filter($userUuids)));
+        if ($userUuids === []) {
+            return Messages::query()->whereRaw('1 = 0');
+        }
+
         return Messages::query()->where('messages.domain_uuid', $domainUuid)
             ->where('messages.direction', 'in')
-            ->whereNotExists(function ($q) use ($userUuid) {
+            ->whereNotExists(function ($q) use ($userUuids) {
                 $q->selectRaw('1')->from('message_user_reads as reads')
                     ->whereColumn('reads.message_uuid', 'messages.message_uuid')
                     ->whereColumn('reads.domain_uuid', 'messages.domain_uuid')
-                    ->where('reads.user_uuid', $userUuid);
+                    ->whereIn('reads.user_uuid', $userUuids);
             })
             // A reply clears only messages preceding that reply, even if carrier
             // acceptance arrives after a newer customer message.
