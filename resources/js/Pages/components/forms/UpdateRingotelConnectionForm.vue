@@ -23,17 +23,17 @@
                     <div class="shadow sm:rounded-md">
                         <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
                             <div class="flex justify-between items-center">
-                                <h3 class="text-base font-semibold leading-6 text-gray-900">Connection Details</h3>
+                                <h3 class="text-base font-semibold leading-6 text-gray-900">{{ $t('Connection Details') }}</h3>
 
                                 </div>
 
                             <div class="grid grid-cols-6 gap-6">
                                 <div class="col-span-6 sm:col-span-3">
-                                    <LabelInputRequired target="connection_name" label="Connection Name"
+                                    <LabelInputRequired target="connection_name" :label="$t('Connection Name')"
                                         class="truncate mb-1" />
                                     <InputField v-model="form.connection_name" type="text" name="connection_name"
                                         id="connection_name" class="mt-1" :error="!!errors?.connection_name"
-                                        :placeholder="'Enter connection name'" />
+                                        :placeholder="$t('Enter connection name')" />
                                     <div v-if="errors?.connection_name" class="mt-2 text-xs text-red-600">
                                         {{ errors.connection_name[0] }}
                                     </div>
@@ -42,8 +42,8 @@
 
 
                                 <div class="col-span-6 sm:col-span-3">
-                                    <LabelInputRequired label="Protocol" class="truncate mb-1" />
-                                    <ComboBox :options="options.protocols" :search="true" :placeholder="'Select protocol'"
+                                    <LabelInputRequired :label="$t('Protocol')" class="truncate mb-1" />
+                                    <ComboBox :options="options.protocols" :search="true" :placeholder="$t('Select protocol')"
                                         :error="errors?.protocol && errors.protocol.length > 0"
                                         :selectedItem="props.selectedConnection.provision.protocol"
                                         @update:model-value="handleUpdateProtocolField" />
@@ -54,10 +54,10 @@
                                 </div>
 
                                 <div class="col-span-6 sm:col-span-3">
-                                    <LabelInputRequired target="domain" label="Domain or IP Address"
+                                    <LabelInputRequired target="domain" :label="$t('Domain or IP Address')"
                                         class="truncate mb-1" />
                                     <InputField v-model="form.domain" type="text" name="domain"
-                                        :placeholder="'Enter domain or IP'" id="domain" class="mt-1"
+                                        :placeholder="$t('Enter domain or IP')" id="domain" class="mt-1"
                                         :error="!!errors?.domain" />
                                     <div v-if="errors?.domain" class="mt-2 text-xs text-red-600">
                                         {{ errors.domain[0] }}
@@ -65,8 +65,8 @@
                                 </div>
 
                                 <div class="col-span-6 sm:col-span-3">
-                                    <LabelInputOptional target="domain" label="Port" class="truncate mb-1" />
-                                    <InputField v-model="form.port" type="text" name="port" :placeholder="'Enter port'"
+                                    <LabelInputOptional target="domain" :label="$t('Port')" class="truncate mb-1" />
+                                    <InputField v-model="form.port" type="text" name="port" :placeholder="$t('Enter port')"
                                         id="port" class="mt-1" :error="!!errors?.port" />
                                     <div v-if="errors?.port" class="mt-2 text-xs text-red-600">
                                         {{ errors.port[0] }}
@@ -75,10 +75,10 @@
 
                                 <div class="divide-y divide-gray-200 col-span-6 ">
 
-                                    <Toggle label="Do not verify server certificate" description=""
+                                    <Toggle :label="$t('Do not verify server certificate')" description=""
                                         v-model="form.dont_verify_server_certificate" customClass="py-4" />
 
-                                    <Toggle label="Disable SRTP" description="" v-model="form.disable_srtp"
+                                    <Toggle :label="$t('Disable SRTP')" description="" v-model="form.disable_srtp"
                                         customClass="py-4" />
 
                                 </div>
@@ -88,15 +88,15 @@
                             <div class="w-full border-t border-gray-300" />
 
                             <div class="flex justify-between items-center">
-                                <h3 class="text-base font-semibold leading-6 text-gray-900">Outbound Proxy Settings</h3>
+                                <h3 class="text-base font-semibold leading-6 text-gray-900">{{ $t('Outbound Proxy Settings') }}</h3>
                             </div>
 
 
                             <div class="grid grid-cols-6 gap-6">
                                 <div class="col-span-6">
-                                    <LabelInputOptional target="proxy" label="Address" class="truncate mb-1" />
+                                    <LabelInputOptional target="proxy" :label="$t('Address')" class="truncate mb-1" />
                                     <InputField v-model="form.proxy" type="text" name="proxy" id="proxy" class="mt-1"
-                                        :error="!!errors?.proxy" :placeholder="'Enter proxy address'" />
+                                        :error="!!errors?.proxy" :placeholder="$t('Enter proxy address')" />
                                     <div v-if="errors?.proxy" class="mt-2 text-xs text-red-600">
                                         {{ errors.proxy[0] }}
                                     </div>
@@ -107,7 +107,7 @@
                             <div class="w-full border-t border-gray-300" />
 
                             <div class="flex justify-between items-center">
-                                <h3 class="text-base font-semibold leading-6 text-gray-900">Audio Codecs</h3>
+                                <h3 class="text-base font-semibold leading-6 text-gray-900">{{ $t('Audio Codecs') }}</h3>
                             </div>
 
 
@@ -139,7 +139,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <p class="mt-2 text-xs text-gray-500">Drag to reorder the priority of the codecs.</p>
+                                        <p class="mt-2 text-xs text-gray-500">{{ $t('Drag to reorder the priority of the codecs.') }}</p>
                                     </fieldset>
                                 </div>
 
@@ -148,13 +148,13 @@
                             <div class="w-full border-t border-gray-300" />
 
                             <div class="flex justify-between items-center">
-                                <h3 class="text-base font-semibold leading-6 text-gray-900">Miscellaneous</h3>
+                                <h3 class="text-base font-semibold leading-6 text-gray-900">{{ $t('Miscellaneous') }}</h3>
                             </div>
 
 
                             <div class="grid grid-cols-6 gap-6">
                                 <div class="col-span-6 sm:col-span-3">
-                                    <LabelInputRequired target="registration_ttl" label="Registration TTL"
+                                    <LabelInputRequired target="registration_ttl" :label="$t('Registration TTL')"
                                         class="truncate mb-1" />
                                     <InputField v-model="form.registration_ttl" type="text" name="registration_ttl"
                                         id="registration_ttl" class="mt-1" :error="!!errors?.registration_ttl"
@@ -165,7 +165,7 @@
                                 </div>
 
                                 <div class="col-span-6 sm:col-span-3">
-                                    <LabelInputRequired target="max_registrations" label="Max. registrations per user"
+                                    <LabelInputRequired target="max_registrations" :label="$t('Max. registrations per user')"
                                         class="truncate mb-1" />
                                     <InputField v-model="form.max_registrations" type="text" name="max_registrations"
                                         id="max_registrations" class="mt-1" :error="!!errors?.max_registrations"
@@ -177,11 +177,11 @@
 
                                 <div class="divide-y divide-gray-200 col-span-6">
 
-                                    <Toggle label="Use OPUS audio codec"
-                                        description="Enabling the OPUS audio codec between the softphone apps and a softphone server improves call quality on low bandwidth/congested networks, but may cause small audio delays."
+                                    <Toggle :label="$t('Use OPUS audio codec')"
+                                        :description="$t('Enabling the OPUS audio codec between the softphone apps and a softphone server improves call quality on low bandwidth/congested networks, but may cause small audio delays.')"
                                         v-model="form.app_opus_codec" customClass="py-4" />
-                                    <Toggle label="Send one push notification"
-                                        description="This option can be useful for Queues or Ring groups with sequential ring strategy. It doesn't try to send second push notification in the case of the user's mobile app was not waked up by the first one."
+                                    <Toggle :label="$t('Send one push notification')"
+                                        :description="$t('This option can be useful for Queues or Ring groups with sequential ring strategy. It doesn\'t try to send second push notification in the case of the user\'s mobile app was not waked up by the first one.')"
                                         v-model="form.one_push" customClass="py-4" />
 
                                 </div>
@@ -198,10 +198,10 @@
                                     class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 sm:ml-3 sm:w-auto"
                                     @click="open = false">
                                     <Spinner :show="isSubmitting" />
-                                    Save
+                                    {{ $t('Save') }}
                                 </button>
                                 <button type="button" @click="emits('cancel')"
-                                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">Cancel</button>
+                                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">{{ $t('Cancel') }}</button>
                             </div>
                         </div>
                     </div>
@@ -211,7 +211,7 @@
                     <div class="shadow sm:rounded-md">
                         <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
                             <div class="flex justify-between items-center">
-                                <h3 class="text-base font-semibold leading-6 text-gray-900">Features</h3>
+                                <h3 class="text-base font-semibold leading-6 text-gray-900">{{ $t('Features') }}</h3>
 
                                 </div>
 
@@ -222,27 +222,27 @@
 
                                 <div class="divide-y divide-gray-200 col-span-6">
 
-                                    <Toggle label="Show call settings"
-                                        description="Allow users to configure call settings from within the app, such as call forwarding, voicemail, call waiting."
+                                    <Toggle :label="$t('Show call settings')"
+                                        :description="$t('Allow users to configure call settings from within the app, such as call forwarding, voicemail, call waiting.')"
                                         v-model="form.show_call_settings" customClass="py-4" />
 
-                                    <Toggle label="Allow call recording"
-                                        description="Allow users to record calls. IMPORTANT: You are responsible for your compliance with call recording laws. We do not indemnify against legal claims that may arise from the use of this feature."
+                                    <Toggle :label="$t('Allow call recording')"
+                                        :description="$t('Allow users to record calls. IMPORTANT: You are responsible for your compliance with call recording laws. We do not indemnify against legal claims that may arise from the use of this feature.')"
                                         v-model="form.allow_call_recording" customClass="py-4" />
 
-                                    <Toggle label="Allow state change"
-                                        description="Allow users to change their state from the app, such as Online/DND/At the desk."
+                                    <Toggle :label="$t('Allow state change')"
+                                        :description="$t('Allow users to change their state from the app, such as Online/DND/At the desk.')"
                                         v-model="form.allow_state_change" customClass="py-4" />
 
-                                    <Toggle label="Allow video calls" description="Allow users to make 1-on-1 video calls."
+                                    <Toggle :label="$t('Allow video calls')" :description="$t('Allow users to make 1-on-1 video calls.')"
                                         v-model="form.allow_video_calls" customClass="py-4" />
 
-                                    <Toggle label="Allow internal chat"
-                                        description="Allow users to use internal chat feature and create new chats."
+                                    <Toggle :label="$t('Allow internal chat')"
+                                        :description="$t('Allow users to use internal chat feature and create new chats.')"
                                         v-model="form.allow_internal_chat" customClass="py-4" />
 
-                                    <Toggle label="Disable call history syncing in iPhone Recents "
-                                        description="If enabled, this option disables call history syncing in iPhone Recents and hides the 'Show calls in iPhone Recents' option from the app's settings."
+                                    <Toggle :label="$t('Disable call history syncing in iPhone Recents')"
+                                        :description="$t('If enabled, this option disables call history syncing in iPhone Recents and hides the \'Show calls in iPhone Recents\' option from the app\'s settings.')"
                                         v-model="form.disable_iphone_recents" customClass="py-4" />
 
                                 </div>
@@ -255,7 +255,7 @@
                                     <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
                                         <label for="call_delay"
                                             class="block text-sm font-medium leading-6 text-gray-900 sm:whitespace-nowrap">
-                                            Call Delay for 'At the Desk' Status (Seconds)<span class="ml-1 ordinal text-red-600">*</span>
+                                            {{ $t('Call Delay for \'At the Desk\' Status (Seconds)') }}<span class="ml-1 ordinal text-red-600">*</span>
                                         </label>
                                         <input v-model="form.call_delay" type="text" name="call_delay" id="call_delay"
                                             inputmode="numeric" maxlength="2" @input="handleCallDelayInput"
@@ -270,7 +270,7 @@
 
                                 <div class="divide-y divide-gray-200 col-span-6">
 
-                                    <Toggle label="Delay incoming calls to the desktop app" description=""
+                                    <Toggle :label="$t('Delay incoming calls to the desktop app')" description=""
                                         v-model="form.desktop_app_delay" customClass="py-4" />
 
 
@@ -287,10 +287,10 @@
                                     class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 sm:ml-3 sm:w-auto"
                                     @click="open = false">
                                     <Spinner :show="isSubmitting" />
-                                    Save
+                                    {{ $t('Save') }}
                                 </button>
                                 <button type="button" @click="emits('cancel')"
-                                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">Cancel</button>
+                                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">{{ $t('Cancel') }}</button>
                             </div>
                         </div>
                     </div>
@@ -300,9 +300,8 @@
                     <div class="shadow sm:rounded-md">
                         <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
                             <div>
-                                <h3 class="text-base font-semibold leading-6 text-gray-900">PBX Features</h3>
-                                <p class="mt-1 text-sm text-gray-500">Provide feature codes configured on your PBX to handle
-                                    them on your server.</p>
+                                <h3 class="text-base font-semibold leading-6 text-gray-900">{{ $t('PBX Features') }}</h3>
+                                <p class="mt-1 text-sm text-gray-500">{{ $t('Provide feature codes configured on your PBX to handle them on your server.') }}</p>
                             </div>
 
 
@@ -310,8 +309,8 @@
                             <div class="grid grid-cols-6 gap-6">
                                 <div class="divide-y divide-gray-200 col-span-6">
 
-                                    <Toggle label="Enable PBX features"
-                                        description="Handle features on the PBX. NOTE: Please ensure you provide shortcodes for the PBX features."
+                                    <Toggle :label="$t('Enable PBX features')"
+                                        :description="$t('Handle features on the PBX. NOTE: Please ensure you provide shortcodes for the PBX features.')"
                                         v-model="form.pbx_features" customClass="py-4" />
 
                                 </div>
@@ -319,12 +318,12 @@
 
                             <div v-if="form.pbx_features">
                                 <div>
-                                    <h3 class="text-base font-semibold leading-6 text-gray-900">Voicemail</h3>
+                                    <h3 class="text-base font-semibold leading-6 text-gray-900">{{ $t('Voicemail') }}</h3>
                                 </div>
 
                                 <div class="grid grid-cols-6 gap-6 mt-1">
                                     <div class="col-span-6 sm:col-span-3">
-                                        <LabelInputOptional target="voicemail_extension" label="Voicemail code"
+                                        <LabelInputOptional target="voicemail_extension" :label="$t('Voicemail code')"
                                             class="truncate mb-1" />
                                         <InputField v-model="form.voicemail_extension" type="text"
                                             name="voicemail_extension" id="voicemail_extension" class="mt-1"
@@ -339,12 +338,12 @@
 
                             <div v-if="form.pbx_features">
                                 <div>
-                                    <h3 class="text-base font-semibold leading-6 text-gray-900">Do Not Disturb</h3>
+                                    <h3 class="text-base font-semibold leading-6 text-gray-900">{{ $t('Do Not Disturb') }}</h3>
                                 </div>
 
                                 <div class="grid grid-cols-6 gap-6 mt-1">
                                     <div class="col-span-6 sm:col-span-3">
-                                        <LabelInputOptional target="dnd_on_code" label="Activate DND"
+                                        <LabelInputOptional target="dnd_on_code" :label="$t('Activate DND')"
                                             class="truncate mb-1" />
                                         <InputField v-model="form.dnd_on_code" type="text"
                                             name="dnd_on_code" id="dnd_on_code" class="mt-1"
@@ -354,7 +353,7 @@
                                         </div>
                                     </div>
                                     <div class="col-span-6 sm:col-span-3">
-                                        <LabelInputOptional target="dnd_off_code" label="Deactivate DND"
+                                        <LabelInputOptional target="dnd_off_code" :label="$t('Deactivate DND')"
                                             class="truncate mb-1" />
                                         <InputField v-model="form.dnd_off_code" type="text"
                                             name="dnd_off_code" id="dnd_off_code" class="mt-1"
@@ -369,12 +368,12 @@
 
                             <div v-if="form.pbx_features">
                                 <div>
-                                    <h3 class="text-base font-semibold leading-6 text-gray-900">Call Forwarding</h3>
+                                    <h3 class="text-base font-semibold leading-6 text-gray-900">{{ $t('Call Forwarding') }}</h3>
                                 </div>
 
                                 <div class="grid grid-cols-6 gap-6 mt-1">
                                     <div class="col-span-6 sm:col-span-3">
-                                        <LabelInputOptional target="cf_on_code" label="Activate Call Forwarding"
+                                        <LabelInputOptional target="cf_on_code" :label="$t('Activate Call Forwarding')"
                                             class="truncate mb-1" />
                                         <InputField v-model="form.cf_on_code" type="text"
                                             name="cf_on_code" id="cf_on_code" class="mt-1"
@@ -384,7 +383,7 @@
                                         </div>
                                     </div>
                                     <div class="col-span-6 sm:col-span-3">
-                                        <LabelInputOptional target="cf_off_code" label="Deactivate Call Forwarding"
+                                        <LabelInputOptional target="cf_off_code" :label="$t('Deactivate Call Forwarding')"
                                             class="truncate mb-1" />
                                         <InputField v-model="form.cf_off_code" type="text"
                                             name="cf_off_code" id="cf_off_code" class="mt-1"
@@ -399,12 +398,12 @@
 
                             <div v-if="form.pbx_features">
                                 <div>
-                                    <h3 class="text-base font-semibold leading-6 text-gray-900">Call Waiting</h3>
+                                    <h3 class="text-base font-semibold leading-6 text-gray-900">{{ $t('Call Waiting') }}</h3>
                                 </div>
 
                                 <div class="grid grid-cols-6 gap-6 mt-1">
                                     <div class="col-span-6 sm:col-span-3">
-                                        <LabelInputOptional target="callwaiting_on" label="Call Waiting On Code"
+                                        <LabelInputOptional target="callwaiting_on" :label="$t('Call Waiting On Code')"
                                             class="truncate mb-1" />
                                         <InputField v-model="form.callwaiting.on" type="text" name="callwaiting_on"
                                             id="callwaiting_on" class="mt-1" :error="!!errors?.['callwaiting.on']"
@@ -415,7 +414,7 @@
                                     </div>
 
                                     <div class="col-span-6 sm:col-span-3">
-                                        <LabelInputOptional target="callwaiting_off" label="Call Waiting Off Code"
+                                        <LabelInputOptional target="callwaiting_off" :label="$t('Call Waiting Off Code')"
                                             class="truncate mb-1" />
                                         <InputField v-model="form.callwaiting.off" type="text" name="callwaiting_off"
                                             id="callwaiting_off" class="mt-1" :error="!!errors?.['callwaiting.off']"
@@ -433,10 +432,10 @@
                                     class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 sm:ml-3 sm:w-auto"
                                     @click="open = false">
                                     <Spinner :show="isSubmitting" />
-                                    Save
+                                    {{ $t('Save') }}
                                 </button>
                                 <button type="button" @click="emits('cancel')"
-                                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">Cancel</button>
+                                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">{{ $t('Cancel') }}</button>
                             </div>
                         </div>
                     </div>
@@ -446,12 +445,12 @@
                     <div class="shadow sm:rounded-md">
                         <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
                             <div>
-                                <h3 class="text-base font-semibold leading-6 text-gray-900">SMS Settings</h3>
+                                <h3 class="text-base font-semibold leading-6 text-gray-900">{{ $t('SMS Settings') }}</h3>
                             </div>
 
                             <div class="grid grid-cols-6 gap-6">
                                 <div class="col-span-6 sm:col-span-3">
-                                    <LabelInputOptional target="sms" label="Enable SMS" class="truncate mb-1" />
+                                    <LabelInputOptional target="sms" :label="$t('Enable SMS')" class="truncate mb-1" />
                                     <select v-model.number="form.sms" name="sms" id="sms"
                                         class="mt-1 block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6">
                                         <option v-for="option in smsModeOptions" :key="option.value"
@@ -465,7 +464,7 @@
                                 </div>
 
                                 <div class="divide-y divide-gray-200 col-span-6">
-                                    <Toggle label="Send missed SMS, voicemail and call notifications to email" description="" v-model="form.sms2email"
+                                    <Toggle :label="$t('Send missed SMS, voicemail and call notifications to email')" description="" v-model="form.sms2email"
                                         customClass="py-4" />
                                 </div>
                             </div>
@@ -475,10 +474,10 @@
                                     class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 sm:ml-3 sm:w-auto"
                                     @click="open = false">
                                     <Spinner :show="isSubmitting" />
-                                    Save
+                                    {{ $t('Save') }}
                                 </button>
                                 <button type="button" @click="emits('cancel')"
-                                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">Cancel</button>
+                                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">{{ $t('Cancel') }}</button>
                             </div>
                         </div>
                     </div>
@@ -488,12 +487,12 @@
                     <div class="shadow sm:rounded-md">
                         <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
                             <div>
-                                <h3 class="text-base font-semibold leading-6 text-gray-900">Visual Call Park</h3>
+                                <h3 class="text-base font-semibold leading-6 text-gray-900">{{ $t('Visual Call Park') }}</h3>
                             </div>
 
                             <div class="grid grid-cols-6 gap-6">
                                 <div class="col-span-6 sm:col-span-3">
-                                    <LabelInputOptional target="callpark_subscribe" label="BLF Subscription Prefix"
+                                    <LabelInputOptional target="callpark_subscribe" :label="$t('BLF Subscription Prefix')"
                                         class="truncate mb-1" />
                                     <InputField v-model="form.callpark.subscribe" type="text" name="callpark_subscribe"
                                         id="callpark_subscribe" class="mt-1" :error="!!errors?.['callpark.subscribe']"
@@ -507,14 +506,14 @@
                             <div class="w-full border-t border-gray-300" />
 
                             <div>
-                                <h3 class="text-base font-semibold leading-6 text-gray-900">Parking Slots</h3>
+                                <h3 class="text-base font-semibold leading-6 text-gray-900">{{ $t('Parking Slots') }}</h3>
                             </div>
 
                             <div class="space-y-3">
                                 <div v-for="(slot, index) in form.callpark.slots" :key="index"
                                     class="grid grid-cols-6 gap-4 rounded-md border border-gray-200 bg-white p-4">
                                     <div class="col-span-6 sm:col-span-3">
-                                        <LabelInputOptional :target="`callpark_slot_alias_${index}`" label="Label"
+                                        <LabelInputOptional :target="`callpark_slot_alias_${index}`" :label="$t('Label')"
                                             class="truncate mb-1" />
                                         <InputField v-model="slot.alias" type="text"
                                             :name="`callpark_slot_alias_${index}`"
@@ -527,7 +526,7 @@
                                     </div>
 
                                     <div class="col-span-6 sm:col-span-2">
-                                        <LabelInputOptional :target="`callpark_slot_${index}`" label="Number"
+                                        <LabelInputOptional :target="`callpark_slot_${index}`" :label="$t('Number')"
                                             class="truncate mb-1" />
                                         <InputField v-model="slot.slot" type="text" :name="`callpark_slot_${index}`"
                                             :id="`callpark_slot_${index}`" class="mt-1"
@@ -541,7 +540,7 @@
                                     <div class="col-span-6 flex items-end sm:col-span-1">
                                         <button type="button" @click="removeCallParkSlot(index)"
                                             class="inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                                            Remove
+                                            {{ $t('Remove') }}
                                         </button>
                                     </div>
                                 </div>
@@ -549,7 +548,7 @@
 
                             <button type="button" @click="addCallParkSlot"
                                 class="inline-flex justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                                Add Slot
+                                {{ $t('Add Slot') }}
                             </button>
 
                             <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
@@ -557,10 +556,10 @@
                                     class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 sm:ml-3 sm:w-auto"
                                     @click="open = false">
                                     <Spinner :show="isSubmitting" />
-                                    Save
+                                    {{ $t('Save') }}
                                 </button>
                                 <button type="button" @click="emits('cancel')"
-                                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">Cancel</button>
+                                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">{{ $t('Cancel') }}</button>
                             </div>
                         </div>
                     </div>
@@ -570,14 +569,14 @@
                     <div class="shadow sm:rounded-md">
                         <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
                             <div>
-                                <h3 class="text-base font-semibold leading-6 text-gray-900">Speed Dial Numbers</h3>
+                                <h3 class="text-base font-semibold leading-6 text-gray-900">{{ $t('Speed Dial Numbers') }}</h3>
                             </div>
 
                             <div class="space-y-3">
                                 <div v-for="(item, index) in form.speeddial" :key="index"
                                     class="grid grid-cols-6 gap-4 rounded-md border border-gray-200 bg-white p-4">
                                     <div class="col-span-6 sm:col-span-3">
-                                        <LabelInputOptional :target="`speeddial_title_${index}`" label="Title"
+                                        <LabelInputOptional :target="`speeddial_title_${index}`" :label="$t('Title')"
                                             class="truncate mb-1" />
                                         <InputField v-model="item.title" type="text" :name="`speeddial_title_${index}`"
                                             :id="`speeddial_title_${index}`" class="mt-1"
@@ -585,7 +584,7 @@
                                     </div>
 
                                     <div class="col-span-6 sm:col-span-2">
-                                        <LabelInputOptional :target="`speeddial_number_${index}`" label="Number"
+                                        <LabelInputOptional :target="`speeddial_number_${index}`" :label="$t('Number')"
                                             class="truncate mb-1" />
                                         <InputField v-model="item.number" type="text" :name="`speeddial_number_${index}`"
                                             :id="`speeddial_number_${index}`" class="mt-1"
@@ -595,7 +594,7 @@
                                     <div class="col-span-6 flex items-end sm:col-span-1">
                                         <button type="button" @click="removeSpeedDial(index)"
                                             class="inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                                            Remove
+                                            {{ $t('Remove') }}
                                         </button>
                                     </div>
                                 </div>
@@ -603,7 +602,7 @@
 
                             <button type="button" @click="addSpeedDial"
                                 class="inline-flex justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                                Add Speed Dial
+                                {{ $t('Add Speed Dial') }}
                             </button>
 
                             <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
@@ -611,10 +610,10 @@
                                     class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 sm:ml-3 sm:w-auto"
                                     @click="open = false">
                                     <Spinner :show="isSubmitting" />
-                                    Save
+                                    {{ $t('Save') }}
                                 </button>
                                 <button type="button" @click="emits('cancel')"
-                                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">Cancel</button>
+                                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">{{ $t('Cancel') }}</button>
                             </div>
                         </div>
                     </div>
@@ -624,14 +623,14 @@
                     <div class="shadow sm:rounded-md">
                         <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
                             <div>
-                                <h3 class="text-base font-semibold leading-6 text-gray-900">BLF Indicators</h3>
+                                <h3 class="text-base font-semibold leading-6 text-gray-900">{{ $t('BLF Indicators') }}</h3>
                             </div>
 
                             <div class="space-y-3">
                                 <div v-for="(item, index) in form.blfs" :key="index"
                                     class="grid grid-cols-6 gap-4 rounded-md border border-gray-200 bg-white p-4">
                                     <div class="col-span-6 sm:col-span-3">
-                                        <LabelInputOptional :target="`blf_title_${index}`" label="Label"
+                                        <LabelInputOptional :target="`blf_title_${index}`" :label="$t('Label')"
                                             class="truncate mb-1" />
                                         <InputField v-model="item.title" type="text" :name="`blf_title_${index}`"
                                             :id="`blf_title_${index}`" class="mt-1"
@@ -639,7 +638,7 @@
                                     </div>
 
                                     <div class="col-span-6 sm:col-span-2">
-                                        <LabelInputOptional :target="`blf_number_${index}`" label="Number/BLF Code"
+                                        <LabelInputOptional :target="`blf_number_${index}`" :label="$t('Number/BLF Code')"
                                             class="truncate mb-1" />
                                         <InputField v-model="item.number" type="text" :name="`blf_number_${index}`"
                                             :id="`blf_number_${index}`" class="mt-1"
@@ -649,7 +648,7 @@
                                     <div class="col-span-6 flex items-end sm:col-span-1">
                                         <button type="button" @click="removeBlf(index)"
                                             class="inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                                            Remove
+                                            {{ $t('Remove') }}
                                         </button>
                                     </div>
                                 </div>
@@ -657,7 +656,7 @@
 
                             <button type="button" @click="addBlf"
                                 class="inline-flex justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                                Add BLF
+                                {{ $t('Add BLF') }}
                             </button>
 
                             <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
@@ -665,10 +664,10 @@
                                     class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 sm:ml-3 sm:w-auto"
                                     @click="open = false">
                                     <Spinner :show="isSubmitting" />
-                                    Save
+                                    {{ $t('Save') }}
                                 </button>
                                 <button type="button" @click="emits('cancel')"
-                                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">Cancel</button>
+                                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">{{ $t('Cancel') }}</button>
                             </div>
                         </div>
                     </div>
@@ -678,18 +677,18 @@
                     <div class="shadow sm:rounded-md">
                         <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
                             <div>
-                                <h3 class="text-base font-semibold leading-6 text-gray-900">Miscellaneous</h3>
+                                <h3 class="text-base font-semibold leading-6 text-gray-900">{{ $t('Miscellaneous') }}</h3>
                             </div>
 
                             <div class="grid grid-cols-6 gap-6">
                                 <div class="divide-y divide-gray-200 col-span-6">
-                                    <Toggle label="Don't log &quot;Answered elsewhere&quot;" description=""
+                                    <Toggle :label="$t('Do not log calls answered elsewhere')" description=""
                                         v-model="form.nologae" customClass="py-4" />
-                                    <Toggle label="Don't log Missed calls" description=""
+                                    <Toggle :label="$t('Don\'t log Missed calls')" description=""
                                         v-model="form.nologmc" customClass="py-4" />
-                                    <Toggle label="Allow users to block contacts" description=""
+                                    <Toggle :label="$t('Allow users to block contacts')" description=""
                                         v-model="form.allow_block_contacts" customClass="py-4" />
-                                    <Toggle label="Screenshot prevention" description=""
+                                    <Toggle :label="$t('Screenshot prevention')" description=""
                                         v-model="form.screenshotPrevention" customClass="py-4" />
                                 </div>
                             </div>
@@ -699,10 +698,10 @@
                                     class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 sm:ml-3 sm:w-auto"
                                     @click="open = false">
                                     <Spinner :show="isSubmitting" />
-                                    Save
+                                    {{ $t('Save') }}
                                 </button>
                                 <button type="button" @click="emits('cancel')"
-                                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">Cancel</button>
+                                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">{{ $t('Cancel') }}</button>
                             </div>
                         </div>
                     </div>
@@ -712,14 +711,14 @@
                     <div class="shadow sm:rounded-md">
                         <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
                             <div>
-                                <h3 class="text-base font-semibold leading-6 text-gray-900">Custom Web Pages</h3>
+                                <h3 class="text-base font-semibold leading-6 text-gray-900">{{ $t('Custom Web Pages') }}</h3>
                             </div>
 
                             <div class="space-y-3">
                                 <div v-for="(page, index) in form.custompages" :key="index"
                                     class="grid grid-cols-6 gap-4 rounded-md border border-gray-200 bg-white p-4">
                                     <div class="col-span-6 sm:col-span-2">
-                                        <LabelInputOptional :target="`custom_page_title_${index}`" label="Title"
+                                        <LabelInputOptional :target="`custom_page_title_${index}`" :label="$t('Title')"
                                             class="truncate mb-1" />
                                         <InputField v-model="page.title" type="text"
                                             :name="`custom_page_title_${index}`"
@@ -732,7 +731,7 @@
                                     </div>
 
                                     <div class="col-span-6 sm:col-span-3">
-                                        <LabelInputOptional :target="`custom_page_url_${index}`" label="URL"
+                                        <LabelInputOptional :target="`custom_page_url_${index}`" :label="$t('URL')"
                                             class="truncate mb-1" />
                                         <InputField v-model="page.url" type="text" :name="`custom_page_url_${index}`"
                                             :id="`custom_page_url_${index}`" class="mt-1"
@@ -746,7 +745,7 @@
                                     <div class="col-span-6 flex items-end sm:col-span-1">
                                         <button type="button" @click="removeCustomPage(index)"
                                             class="inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                                            Remove
+                                            {{ $t('Remove') }}
                                         </button>
                                     </div>
                                 </div>
@@ -754,7 +753,7 @@
 
                             <button type="button" @click="addCustomPage"
                                 class="inline-flex justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                                Add Web Page
+                                {{ $t('Add Web Page') }}
                             </button>
 
                             <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
@@ -762,10 +761,10 @@
                                     class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 sm:ml-3 sm:w-auto"
                                     @click="open = false">
                                     <Spinner :show="isSubmitting" />
-                                    Save
+                                    {{ $t('Save') }}
                                 </button>
                                 <button type="button" @click="emits('cancel')"
-                                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">Cancel</button>
+                                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">{{ $t('Cancel') }}</button>
                             </div>
                         </div>
                     </div>
@@ -775,11 +774,11 @@
                     <div class="shadow sm:rounded-md">
                         <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
                             <div>
-                                <h3 class="text-base font-semibold leading-6 text-gray-900">App Updates</h3>
+                                <h3 class="text-base font-semibold leading-6 text-gray-900">{{ $t('App Updates') }}</h3>
                             </div>
 
                             <div class="divide-y divide-gray-200">
-                                <Toggle label="Beta updates" description="" v-model="form.beta_updates"
+                                <Toggle :label="$t('Beta updates')" description="" v-model="form.beta_updates"
                                     customClass="py-4" />
                             </div>
 
@@ -788,10 +787,10 @@
                                     class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 sm:ml-3 sm:w-auto"
                                     @click="open = false">
                                     <Spinner :show="isSubmitting" />
-                                    Save
+                                    {{ $t('Save') }}
                                 </button>
                                 <button type="button" @click="emits('cancel')"
-                                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">Cancel</button>
+                                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">{{ $t('Cancel') }}</button>
                             </div>
                         </div>
                     </div>
@@ -803,7 +802,8 @@
 </template>
 
 <script setup>
-import { reactive, ref } from "vue";
+import { trans } from "@i18n";
+import { computed, reactive, ref } from "vue";
 import { usePage } from '@inertiajs/vue3';
 
 
@@ -838,11 +838,11 @@ const props = defineProps({
 const page = usePage();
 
 const availableCodecs = ['G.711 Ulaw', 'G.711 Alaw', 'G.722', 'G.729', 'Opus'];
-const smsModeOptions = [
-    { value: 0, label: 'Disabled' },
-    { value: 2, label: 'via API' },
-    { value: 3, label: 'via Integrations' },
-];
+const smsModeOptions = computed(() => [
+    { value: 0, label: trans('Disabled') },
+    { value: 2, label: trans('via API') },
+    { value: 3, label: trans('via Integrations') },
+]);
 // Safely ensure it is an array
 const apiCodecsArray = Array.isArray(props.selectedConnection?.provision?.codecs) 
     ? props.selectedConnection.provision.codecs 

@@ -39,7 +39,7 @@ class StoreSpeedDialRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'contact_organization.required' => 'The contact name field is required',
+            'contact_organization.required' => __('The contact name field is required'),
         ];
     }
 

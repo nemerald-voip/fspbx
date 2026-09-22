@@ -35,14 +35,12 @@ use App\Http\Controllers\DialplanController;
 use App\Http\Controllers\DomainController;
 use App\Http\Controllers\DomainGroupsController;
 use App\Http\Controllers\DynamicRouteController;
-use App\Http\Controllers\EmailQueueController;
 use App\Http\Controllers\EmailTemplateController;
 use App\Http\Controllers\ExtensionsController;
 use App\Http\Controllers\ExtensionStatisticsController;
 use App\Http\Controllers\FaxesController;
 use App\Http\Controllers\FaxInboxController;
 use App\Http\Controllers\FaxLogController;
-use App\Http\Controllers\FaxQueueController;
 use App\Http\Controllers\FaxSentController;
 use App\Http\Controllers\FiberneticsMmsWebhookController;
 use App\Http\Controllers\FirewallController;
@@ -400,27 +398,15 @@ Route::group(['middleware' => 'auth'], function () {
 
     //Apps
     Route::resource('apps', AppsController::class);
-    Route::post('apps/item-options', [AppsController::class, 'getItemOptions'])->name('apps.item.options');
-    Route::post('/apps/organization/create', [AppsController::class, 'createOrganization'])->name('apps.organization.create');
-    Route::put('/apps/organization/update', [AppsController::class, 'updateOrganization'])->name('apps.organization.update');
-    Route::post('/apps/organization/destroy', [AppsController::class, 'destroyOrganization'])->name('apps.organization.destroy');
-    Route::post('/apps/organization/all', [AppsController::class, 'getOrganizations'])->name('apps.organization.all');
-    Route::post('/apps/organization/pair', [AppsController::class, 'pairOrganization'])->name('apps.organization.pair');
     Route::post('/apps/mobile-app-options', [AppsController::class, 'getMobileAppOptions'])->name('apps.user.options');
     //Route::get('/apps/organization/update', [AppsController::class, 'updateOrganization']) ->name('appsUpdateOrganization');
-    Route::post('/apps/connection/create', [AppsController::class, 'createConnection'])->name('apps.connection.create');
-    Route::put('/apps/connection/update', [AppsController::class, 'updateConnection'])->name('apps.connection.update');
-    Route::post('/apps/connection/delete', [AppsController::class, 'destroyConnection'])->name('apps.connection.destroy');
     Route::get('/apps/connection/update', [AppsController::class, 'updateConnection'])->name('appsUpdateConnection');
-    Route::post('/apps/token/get', [AppsController::class, 'getToken'])->name('apps.token.get');
-    Route::post('/apps/token/update', [AppsController::class, 'updateToken'])->name('apps.token.update');
     Route::post('/apps/user/create', [AppsController::class, 'createUser'])->name('apps.user.create');
     Route::post('/apps/user/delete', [AppsController::class, 'deleteUser'])->name('apps.user.delete');
     Route::post('/apps/user/activate', [AppsController::class, 'activateUser'])->name('apps.user.activate');
     Route::post('/apps/user/deactivate', [AppsController::class, 'deactivateUser'])->name('apps.user.deactivate');
     Route::post('/apps/user/state', [AppsController::class, 'setUserState'])->name('apps.user.state');
     Route::post('/apps/user/device/delete', [AppsController::class, 'deleteDevice'])->name('apps.user.device.delete');
-    Route::post('/apps/sync-users', [AppsController::class, 'syncUsers'])->name('apps.users.sync');
     Route::post('/apps/user/reset-password', [AppsController::class, 'resetPassword'])->name('apps.user.reset');
     Route::post('/apps/users/{extension}/status', [AppsController::class, 'SetStatus'])->name('appsSetStatus');
     Route::get('/apps/email', [AppsController::class, 'emailUser'])->name('emailUser');
@@ -449,14 +435,7 @@ Route::group(['middleware' => 'auth'], function () {
 
 
 
-    // Email Queues
-    Route::get('emailqueue', [EmailQueueController::class, 'index'])->name('emailqueue.index');
-    Route::get('emailqueue/{emailQueue}/{status?}', [EmailQueueController::class, 'updateStatus'])->name('emailqueue.updateStatus');
-
     // Fax Queue
-    Route::resource('faxqueue', FaxQueueController::class);
-    Route::post('/faxqueue/retry', [FaxQueueController::class, 'retry'])->name('faxqueue.retry');
-    Route::post('/faxqueue/select-all', [FaxQueueController::class, 'selectAll'])->name('faxqueue.select.all');
 
     // Recordings
     Route::get('recordings', [RecordingsController::class, 'index'])->name('recordings.index');
@@ -469,16 +448,12 @@ Route::group(['middleware' => 'auth'], function () {
     Route::put('recordings/{recording}/{entity}/{entityid}', [RecordingsController::class, 'use'])->name('recordings.use');
 
     //Route::get('/recordings/{filename?}', [RecordingsController::class, 'getRecordings']) ->name('getRecordings');
-    //Route::delete('recordings/{filename}',[RecordingsController::class, 'destroy'])->name('faxQueue.destroy');
 
     // Activity Log
-    Route::resource('activities', ActivityLogController::class);
-    Route::post('/activities/bulk-delete', [ActivityLogController::class, 'bulkDelete'])->name('activities.bulk.delete');
-    Route::post('/activities/select-all', [ActivityLogController::class, 'selectAll'])->name('activities.select.all');
+    Route::get('activities', [ActivityLogController::class, 'index'])->name('activities.index');
 
     // Reports
     Route::get('reports', [ReportsController::class, 'index'])->name('reports.index');
-    Route::post('reports/generate', [ReportsController::class, 'store'])->name('reports.generate');
 
     // Call Routing options
     Route::post('/call-routing-options', [CallRoutingOptionsController::class, 'getRoutingOptions'])->name('routing.options');
@@ -487,32 +462,10 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('registrations', [RegistrationsController::class, 'index'])->name('registrations.index');
 
     // Sansay Registrations
-    Route::resource('sansay/registrations', SansayRegistrationsController::class)->names([
-        'index' => 'sansay.registrations.index',
-        'create' => 'sansay.registrations.create',
-        'store' => 'sansay.registrations.store',
-        'show' => 'sansay.registrations.show',
-        'edit' => 'sansay.registrations.edit',
-        'update' => 'sansay.registrations.update',
-        'destroy' => 'sansay.registrations.destroy',
-    ]);
-
-    Route::post('sansay/registrations/select-all', [SansayRegistrationsController::class, 'selectAll'])->name('sansay.registrations.select.all');
-    Route::post('sansay/registrations/delete', [SansayRegistrationsController::class, 'destroy'])->name('sansay.registrations.delete');
+    Route::get('sansay/registrations', [SansayRegistrationsController::class, 'index'])->name('sansay.registrations.index');
 
     // Sansay Active Calls
-    Route::resource('sansay/active-calls', SansayActiveCallsController::class)->names([
-        'index' => 'sansay.active-calls.index',
-        'create' => 'sansay.active-calls.create',
-        'store' => 'sansay.active-calls.store',
-        'show' => 'sansay.active-calls.show',
-        'edit' => 'sansay.active-calls.edit',
-        'update' => 'sansay.active-calls.update',
-        'destroy' => 'sansay.active-calls.destroy',
-    ]);
-
-    Route::post('sansay/active-calls/select-all', [SansayActiveCallsController::class, 'selectAll'])->name('sansay.active-calls.select.all');
-    Route::post('sansay/active-calls/delete', [SansayActiveCallsController::class, 'destroy'])->name('sansay.active-calls.delete');
+    Route::get('sansay/active-calls', [SansayActiveCallsController::class, 'index'])->name('sansay.active-calls.index');
 
     // Active Calls
     Route::get('active-conferences', [ActiveConferenceController::class, 'index'])->name('active-conferences.index');
@@ -520,12 +473,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('active-calls', [ActiveCallsController::class, 'index'])->name('active-calls.index');
 
     // Pro Features
-    Route::resource('pro-features', ProFeaturesController::class);
-    // Route::post('/pro-features/action', [ProFeaturesController::class, 'handleAction'])->name('pro-features.action');
-    Route::post('pro-features/item-options', [ProFeaturesController::class, 'getItemOptions'])->name('pro-features.item.options');
-    Route::post('pro-features/activate', [ProFeaturesController::class, 'activate'])->name('pro-features.activate');
-    Route::post('pro-features/install', [ProFeaturesController::class, 'install'])->name('pro-features.install');
-    Route::post('pro-features/uninstall', [ProFeaturesController::class, 'uninstall'])->name('pro-features.uninstall');
+    Route::get('pro-features', [ProFeaturesController::class, 'index'])->name('pro-features.index');
 
 
     // Cloud Provisioning
@@ -542,9 +490,7 @@ Route::group(['middleware' => 'auth'], function () {
 
 
     // Whitelisted Numbers
-    Route::resource('whitelisted-numbers', WhitelistedNumbersController::class);
-    Route::post('/whitelisted-numbers/bulk-delete', [WhitelistedNumbersController::class, 'bulkDelete'])->name('whitelisted-numbers.bulk.delete');
-    Route::post('/whitelisted-numbers/select-all', [WhitelistedNumbersController::class, 'selectAll'])->name('whitelisted-numbers.select.all');
+    Route::get('whitelisted-numbers', [WhitelistedNumbersController::class, 'index'])->name('whitelisted-numbers.index');
 });
 
 

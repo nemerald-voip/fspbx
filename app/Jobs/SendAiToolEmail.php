@@ -25,6 +25,9 @@ class SendAiToolEmail implements ShouldQueue, ShouldBeUnique
     public array $backoff = [30, 60, 120, 300];
     public int $uniqueFor = 900;
 
+    // A default also supports jobs queued before the sender override was added.
+    private ?string $fromEmail = null;
+
     public function __construct(
         private readonly string $invocationUuid,
         private readonly string $domainUuid,
@@ -32,7 +35,9 @@ class SendAiToolEmail implements ShouldQueue, ShouldBeUnique
         private readonly string $subject,
         private readonly array $fields,
         private readonly ?string $notes,
+        ?string $fromEmail = null,
     ) {
+        $this->fromEmail = $fromEmail;
         $this->onQueue('emails');
     }
 
@@ -56,6 +61,7 @@ class SendAiToolEmail implements ShouldQueue, ShouldBeUnique
                 Mail::purge(config('mail.default'));
                 Mail::to($this->recipient)->send(new AiAgentToolEmail([
                     'domain_uuid' => $this->domainUuid,
+                    'from_email' => $this->fromEmail,
                     'email_subject' => $this->subject,
                     'fields' => $this->fields,
                     'notes' => $this->notes,

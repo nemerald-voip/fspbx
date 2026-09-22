@@ -49,7 +49,26 @@ class UsersController extends Controller
             return redirect('/');
         }
 
-        $perPage = fspbx_pagination_per_page();
+        return Inertia::render($this->viewName, [
+            'pagination' => [
+                'per_page' => fspbx_pagination_per_page($request),
+                'per_page_options' => fspbx_pagination_options(),
+            ],
+            'routes' => [
+                'data_route' => route('users.data'),
+                'item_options' => route('users.item.options'),
+                'bulk_delete' => route('users.bulk.delete'),
+                'select_all' => route('users.select.all'),
+            ],
+            'permissions' => $this->getUserPermissions(),
+        ]);
+    }
+
+    public function getData(Request $request)
+    {
+        abort_unless(userCheckPermission('user_view'), 403);
+
+        $perPage = fspbx_pagination_per_page($request);
         $currentDomain = session('domain_uuid');
 
         $select = [
@@ -120,28 +139,10 @@ class UsersController extends Controller
         // wrap in your DTO
         $usersDto = UserData::collect($users);
 
-        // logger($usersDto);
-
-        return Inertia::render(
-            $this->viewName,
-            [
-                'data' => $usersDto,
-                'pagination' => [
-                    'per_page' => fspbx_pagination_per_page(),
-                    'per_page_options' => fspbx_pagination_options(),
-                ],
-
-                'routes' => [
-                    'current_page' => route('users.index'),
-                    'item_options' => route('users.item.options'),
-                    'bulk_delete' => route('users.bulk.delete'),
-                    'select_all' => route('users.select.all'),
-                ],
-                'permissions' => $this->getUserPermissions(),
-                'has_directories' => $hasDirectories,
-                'selectable_total' => $this->selectableUserCount($request, $currentDomain, $hasDirectories),
-            ]
-        );
+        return response()->json(array_merge($usersDto->toArray(), [
+            'has_directories' => $hasDirectories,
+            'selectable_total' => $this->selectableUserCount($request, $currentDomain, $hasDirectories),
+        ]));
     }
 
 

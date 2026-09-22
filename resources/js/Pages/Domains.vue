@@ -3,7 +3,7 @@
 
     <div class="m-3">
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-            <template #title>Domains</template>
+            <template #title>{{ $t('Domains') }}</template>
 
             <template #filters>
                 <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
@@ -13,11 +13,11 @@
                     <input type="text" v-model="filterData.search" name="mobile-search-candidate"
                         id="mobile-search-candidate"
                         class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                        :placeholder="$t('Search')" @keydown.enter="handleSearchButtonClick" />
                     <input type="text" v-model="filterData.search" name="desktop-search-candidate"
                         id="desktop-search-candidate"
                         class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                        :placeholder="$t('Search')" @keydown.enter="handleSearchButtonClick" />
                 </div>
             </template>
 
@@ -25,7 +25,7 @@
                 <button v-if="permissions.domain_create" type="button"
                     @click.prevent="handleCreateButtonClick()"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                    Create
+                    {{ $t('Create') }}
                 </button>
 
 
@@ -40,16 +40,16 @@
 
             <template #table-header>
                 <!-- First column: checkbox + Domain (description) -->
-                <TableColumnHeader header="Domain" field="domain_description" :sortable="true" :sortedField="sortData.name" 
+                <TableColumnHeader :header="$t('Domain')" field="domain_description" :sortable="true" :sortedField="sortData.name"
                     :sortOrder="sortData.order" @sort="handleSortRequest"
                     class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600" />
-                    <span class="pl-4">Domain</span>
+                    <span class="pl-4">{{ $t('Domain') }}</span>
                 </TableColumnHeader>
 
                 <!-- Domain Name -->
-                <TableColumnHeader header="Host" field="domain_name" :sortable="true" :sortedField="sortData.name"
+                <TableColumnHeader :header="$t('Host')" field="domain_name" :sortable="true" :sortedField="sortData.name"
                     :sortOrder="sortData.order" @sort="handleSortRequest"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
@@ -58,7 +58,7 @@
 
                 <TableColumnHeader />
                 <!-- Enabled -->
-                <TableColumnHeader header="Status" field="domain_enabled" :sortable="true" :sortedField="sortData.name"
+                <TableColumnHeader :header="$t('Status')" field="domain_enabled" :sortable="true" :sortedField="sortData.name"
                     :sortOrder="sortData.order" @sort="handleSortRequest"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <!-- Actions -->
@@ -69,16 +69,16 @@
             <template v-if="selectPageItems" v-slot:current-selection>
                 <td colspan="10">
                     <div class="text-sm text-center m-2">
-                        <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
+                        {{ $t(':count items are selected.', { count: selectedItems.length }) }}
                         <button v-if="!selectAll && selectedItems.length !== data.total"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleSelectAll">
-                            Select all {{ data.total }} items
+                            {{ $t('Select all :total items', { total: data.total }) }}
                         </button>
                         <button v-if="selectAll"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleClearSelection">
-                            Clear selection
+                            {{ $t('Clear selection') }}
                         </button>
                     </div>
                 </td>
@@ -143,9 +143,9 @@
                         <template v-if="permissions.domain_settings_view">
                             <a :href="routes.domain_settings.replace('__DOMAIN__', row.domain_uuid)"
                                 class="inline-flex items-center px-2 py-1 rounded text-gray-700 hover:bg-gray-100 transition text-xs font-medium"
-                                title="Settings">
+                                :title="$t('Settings')">
                                 <SettingsApplications class="w-4 h-4 mr-1" />
-                                Settings
+                                {{ $t('Settings') }}
                             </a>
                         </template>
 
@@ -154,9 +154,9 @@
                     <!-- Enabled flag -->
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
 
-                        <Badge v-if="row.domain_enabled" text="Enabled" backgroundColor="bg-green-50"
+                        <Badge v-if="row.domain_enabled" :text="$t('Enabled')" backgroundColor="bg-green-50"
                             textColor="text-green-700" ringColor="ring-green-600/20" />
-                        <Badge v-else text="Disabled" backgroundColor="bg-rose-50" textColor="text-rose-700"
+                        <Badge v-else :text="$t('Disabled')" backgroundColor="bg-rose-50" textColor="text-rose-700"
                             ringColor="ring-rose-600/20" />
                     </TableField>
 
@@ -165,7 +165,7 @@
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap justify-end">
                                 <!-- Edit -->
-                                <ejs-tooltip v-if="permissions.domain_update" :content="'Edit'"
+                                <ejs-tooltip v-if="permissions.domain_update" :content="$t('Edit')"
                                     position="TopCenter" target="#edit_domain_tooltip_target">
                                     <div id="edit_domain_tooltip_target">
                                         <PencilSquareIcon @click="handleEditButtonClick(row.domain_uuid)"
@@ -174,7 +174,7 @@
                                 </ejs-tooltip>
 
                                 <!-- Delete -->
-                                <ejs-tooltip v-if="permissions.domain_destroy" :content="'Delete'"
+                                <ejs-tooltip v-if="permissions.domain_destroy" :content="$t('Delete')"
                                     position="TopCenter" target="#delete_domain_tooltip_target">
                                     <div id="delete_domain_tooltip_target">
                                         <TrashIcon @click="handleSingleItemDeleteRequest(row.domain_uuid)"
@@ -192,9 +192,9 @@
                 <!-- Conditional rendering for 'no records' message -->
                 <div v-if="data.data.length === 0" class="text-center my-5 ">
                     <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
+                    <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ $t('No results found') }}</h3>
                     <p class="mt-1 text-sm text-gray-500">
-                        Adjust your search and try again.
+                        {{ $t('Adjust your search and try again.') }}
                     </p>
                 </div>
             </template>
@@ -214,11 +214,11 @@
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
     <CreateDomainForm :show="showCreateModal" :options="itemOptions" :loading="isModalLoading"
-        :header="'Create New Domain'" @close="showCreateModal = false" @error="handleErrorResponse"
+        :header="$t('Create New Domain')" @close="showCreateModal = false" @error="handleErrorResponse"
         @success="showNotification" @refresh-data="refreshCurrentPage" />
 
     <UpdateDomainForm :show="showUpdateModal" :options="itemOptions" :loading="isModalLoading"
-        :header="'Update Domain - ' + (itemOptions?.item?.domain_name ?? 'loading')"
+        :header="$t('Update Domain - :name', { name: itemOptions?.item?.domain_name ?? $t('Loading...') })"
         @close="showUpdateModal = false" @error="handleErrorResponse" @success="showNotification"
         @refresh-data="refreshCurrentPage" />
 
@@ -227,15 +227,16 @@
         @refresh-data="handleSearchButtonClick" /> -->
 
     <ConfirmationModal :show="showConfirmationModal" @close="showConfirmationModal = false"
-        @confirm="confirmDeleteAction" :header="'Confirm Deletion'"
-        :text="'This action will permanently delete the selected domain(s). Are you sure you want to proceed?'"
-        :confirm-button-label="'Delete'" cancel-button-label="Cancel" />
+        @confirm="confirmDeleteAction" :header="$t('Confirm Deletion')"
+        :text="$t('This action will permanently delete the selected domain(s). Are you sure you want to proceed?')"
+        :confirm-button-label="$t('Delete')" :cancel-button-label="$t('Cancel')" />
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
 </template>
 
 <script setup>
+import { trans } from "@i18n";
 import { computed, onMounted, ref } from "vue";
 import { router, usePage } from '@inertiajs/vue3'
 import axios from 'axios';
@@ -276,7 +277,7 @@ const formErrors = ref(null);
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(null);
-let tooltipCopyContent = ref('Copy to Clipboard');
+let tooltipCopyContent = ref(trans('Copy to Clipboard'));
 
 const data = ref({
     data: [],
@@ -352,7 +353,7 @@ const bulkActions = computed(() => {
     if (props.permissions.domain_destroy) {
         actions.push({
             id: 'bulk_delete',
-            label: 'Delete',
+            label: trans('Delete'),
             icon: 'TrashIcon'
         });
     }
@@ -459,9 +460,9 @@ const handleSelectAll = () => {
 
 const handleCopyToClipboard = (macAddress) => {
     navigator.clipboard.writeText(macAddress).then(() => {
-        tooltipCopyContent.value = 'Copied'
+        tooltipCopyContent.value = trans('Copied')
         setTimeout(() => {
-            tooltipCopyContent.value = 'Copy to Clipboard'
+            tooltipCopyContent.value = trans('Copy to Clipboard')
         }, 500);
     }).catch((error) => {
         // Handle the error case
@@ -547,7 +548,7 @@ const renderRequestedPage = (url) => {
 
 const handleFormErrorResponse = (error) => {
     if (error.request?.status === 419) {
-        showNotification('error', { request: ["Session expired. Reload the page"] });
+        showNotification('error', { request: [trans('Session expired. Reload the page')] });
     } else if (error.response) {
         // The request was made and the server responded with a status code
         // that falls out of the range of 2xx

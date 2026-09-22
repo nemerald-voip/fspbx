@@ -35,7 +35,7 @@ class StoreAccessControlRequest extends FormRequest
                     continue;
                 }
 
-                $validator->errors()->add("nodes.{$index}.node_cidr", 'Enter a valid IP address or CIDR range.');
+                $validator->errors()->add("nodes.{$index}.node_cidr", __('Enter a valid IP address or CIDR range.'));
             }
         });
     }

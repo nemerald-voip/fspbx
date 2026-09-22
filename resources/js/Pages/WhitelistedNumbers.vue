@@ -3,7 +3,7 @@
 
     <div class="m-3">
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-            <template #title>Whitelisted Numbers</template>
+            <template #title>{{ $t('Whitelisted Numbers') }}</template>
 
             <template #filters>
                 <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
@@ -13,11 +13,11 @@
                     <input type="text" v-model="filterData.search" name="mobile-search-candidate"
                         id="mobile-search-candidate"
                         class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
-                        placeholder="Search" />
+                        :placeholder="$t('Search')" @keydown.enter="handleSearchButtonClick" />
                     <input type="text" v-model="filterData.search" name="desktop-search-candidate"
                         id="desktop-search-candidate"
                         class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
-                        placeholder="Search" />
+                        :placeholder="$t('Search')" @keydown.enter="handleSearchButtonClick" />
                 </div>
             </template>
 
@@ -25,7 +25,7 @@
                 <button type="button" @click.prevent="handleCreateButtonClick()"
                     class="inline-flex items-center gap-x-1.5  rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     <PlusIcon aria-hidden="true" class="h-5 w-5" className="-ml-0.5 size-5" />
-                    Add
+                    {{ $t('Add') }}
                 </button>
 
             </template>
@@ -42,12 +42,12 @@
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                     <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
                         :has-selected-items="selectedItems.length > 0" />
-                    <span class="pl-4">Number</span>
+                    <span class="pl-4">{{ $t('Number') }}</span>
                 </TableColumnHeader>
 
-                <TableColumnHeader header="Description" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t('Description')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
-                <TableColumnHeader header="Created" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t('Created')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
                 <TableColumnHeader header="" class="px-2 py-3.5 text-left  text-sm font-semibold text-gray-900" />
             </template>
@@ -55,16 +55,16 @@
             <template v-if="selectPageItems" v-slot:current-selection>
                 <td colspan="8">
                     <div class="text-sm text-center m-2">
-                        <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
+                        {{ $t(':count items are selected.', { count: selectedItems.length }) }}
                         <button v-if="!selectAll && selectedItems.length != data.total"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleSelectAll">
-                            Select all {{ data.total }} items
+                            {{ $t('Select all :total items', { total: data.total }) }}
                         </button>
                         <button v-if="selectAll"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleClearSelection">
-                            Clear selection
+                            {{ $t('Clear selection') }}
                         </button>
                     </div>
                 </td>
@@ -103,11 +103,11 @@
             </template>
             <template #empty>
                 <!-- Conditional rendering for 'no records' message -->
-                <div v-if="data.data.length === 0" class="text-center my-5 ">
+                <div v-if="!loading && data.data.length === 0" class="text-center my-5 ">
                     <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
+                    <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ $t('No results found') }}</h3>
                     <p class="mt-1 text-sm text-gray-500">
-                        Adjust your search and try again.
+                        {{ $t('Adjust your search and try again.') }}
                     </p>
                 </div>
             </template>
@@ -119,14 +119,16 @@
             <template #footer>
                 <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
                     :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
-                    @pagination-change-page="renderRequestedPage" />
+                    @pagination-change-page="renderRequestedPage" :page-size="perPage"
+                    :page-size-options="props.pagination?.per_page_options ?? []"
+                    :show-page-size-selector="true" @page-size-change="handlePageSizeChange" />
             </template>
         </DataTable>
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
 
-    <AddEditItemModal :show="showCreateModal" :header="'Add new number to whitelist'" :loading="loadingModal"
+    <AddEditItemModal :show="showCreateModal" :header="$t('Add new number to whitelist')" :loading="loadingModal"
         @close="handleModalClose">
         <template #modal-body>
             <CreateNewWhitelistNumberForm :errors="formErrors" :is-submitting="createFormSubmiting"
@@ -146,10 +148,9 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from "vue";
-import { usePage } from '@inertiajs/vue3'
+import { trans } from "@i18n";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 import axios from 'axios';
-import { router } from "@inertiajs/vue3";
 import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";
@@ -166,7 +167,6 @@ import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
 import Notification from "./components/notifications/Notification.vue";
 
-const page = usePage()
 const loading = ref(false)
 const loadingModal = ref(false)
 const selectAll = ref(false);
@@ -183,12 +183,33 @@ const notificationMessages = ref(null);
 const notificationShow = ref(null);
 
 const props = defineProps({
-    data: Object,
+    pagination: Object,
     routes: Object,
     // itemData: Object,
     // itemOptions: Object,
 });
 
+
+const perPage = ref(props.pagination?.per_page ?? 50);
+
+
+const data = ref({
+    data: [],
+    prev_page_url: null,
+    next_page_url: null,
+    from: null,
+    to: null,
+    total: 0,
+    current_page: 1,
+    last_page: 1,
+    links: [],
+});
+const currentPage = ref(1);
+let activeRequest = null;
+let requestSequence = 0;
+let isUnmounted = false;
+
+const sortData = ref({ name: 'number', order: 'asc' });
 
 const filterData = ref({
     search: null,
@@ -200,7 +221,7 @@ const bulkActions = computed(() => {
     const actions = [
         {
             id: 'bulk_delete',
-            label: 'Delete',
+            label: trans('Delete'),
             icon: 'TrashIcon'
         },
 
@@ -209,9 +230,6 @@ const bulkActions = computed(() => {
     return actions;
 });
 
-onMounted(() => {
-    // console.log(props.data);
-});
 
 
 const handleCreateRequest = (form) => {
@@ -222,7 +240,7 @@ const handleCreateRequest = (form) => {
         .then((response) => {
             createFormSubmiting.value = false;
             showNotification('success', response.data.messages);
-            handleSearchButtonClick();
+            refreshData();
             handleModalClose();
             handleClearSelection();
         }).catch((error) => {
@@ -240,26 +258,16 @@ const handleSingleItemDeleteRequest = (url) => {
 }
 
 const executeSingleDelete = (url) => {
-    router.delete(url, {
-        preserveScroll: true,
-        preserveState: true,
-        onSuccess: (page) => {
-            if (page.props.flash.error) {
-                showNotification('error', page.props.flash.error);
-            }
-            if (page.props.flash.message) {
-                showNotification('success', page.props.flash.message);
-            }
-            confirmationModalTrigger.value = false;
-        },
-        onFinish: () => {
-            confirmationModalTrigger.value = false;
-        },
-        onError: (errors) => {
-            console.log(errors);
-        },
-    });
-}
+    axios.delete(url)
+        .then((response) => {
+            handleModalClose();
+            showNotification('success', response.data.messages);
+            refreshData();
+        }).catch((error) => {
+            handleModalClose();
+            handleErrorResponse(error);
+        });
+};
 
 const handleBulkActionRequest = (action) => {
     if (action === 'bulk_delete') {
@@ -274,7 +282,7 @@ const executeBulkDelete = () => {
         .then((response) => {
             handleModalClose();
             showNotification('success', response.data.messages);
-            handleSearchButtonClick();
+            refreshData();
         })
         .catch((error) => {
             handleClearSelection();
@@ -290,36 +298,87 @@ const handleCreateButtonClick = () => {
 }
 
 const handleSelectAll = () => {
-    console.log('here');
-    axios.post(props.routes.select_all, filterData._rawValue)
+    const sequence = requestSequence;
+    axios.post(props.routes.select_all, { filter: { ...filterData.value } })
         .then((response) => {
+            if (isUnmounted || sequence !== requestSequence) return;
             selectedItems.value = response.data.items;
             selectAll.value = true;
             showNotification('success', response.data.messages);
 
         }).catch((error) => {
+            if (isUnmounted || sequence !== requestSequence) return;
             handleClearSelection();
             handleErrorResponse(error);
         });
 
 };
 
-const handleSearchButtonClick = () => {
-    loading.value = true;
-    router.visit(props.routes.current_page, {
-        data: {
-            filterData: filterData._rawValue,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: [
-            "data",
-        ],
-        onSuccess: (page) => {
-            loading.value = false;
-            handleClearSelection();
+const handleSortRequest = (column) => {
+    if (sortData.value.name === column) {
+        sortData.value.order = sortData.value.order === 'asc' ? 'desc' : 'asc';
+    } else {
+        sortData.value.name = column;
+        sortData.value.order = 'asc';
+    }
+
+    handleSearchButtonClick();
+};
+
+
+
+const getData = async (page = currentPage.value, { background = false } = {}) => {
+    if (isUnmounted) return;
+
+    activeRequest?.abort();
+    const controller = new AbortController();
+    activeRequest = controller;
+    const sequence = ++requestSequence;
+    handleClearSelection();
+    loading.value = !background;
+    currentPage.value = Number(page) || 1;
+
+    const sort = sortData.value.order === 'desc' ? `-${sortData.value.name}` : sortData.value.name;
+
+    try {
+        const response = await axios.get(props.routes.data_route, {
+            params: {
+                filter: { ...filterData.value },
+                page: currentPage.value,
+                per_page: perPage.value,
+                sort,
+            },
+            signal: controller.signal,
+        });
+
+        if (isUnmounted || sequence !== requestSequence) return;
+
+        // A deletion may have removed the last row on this page.
+        if (response.data.last_page && currentPage.value > response.data.last_page) {
+            return await getData(response.data.last_page, { background });
         }
-    });
+
+        data.value = response.data;
+        currentPage.value = response.data.current_page ?? currentPage.value;
+        handleClearSelection();
+    } catch (error) {
+        if (!isUnmounted && sequence === requestSequence && !axios.isCancel(error)) {
+            handleErrorResponse(error);
+        }
+    } finally {
+        if (!isUnmounted && sequence === requestSequence) {
+            activeRequest = null;
+            loading.value = false;
+        }
+    }
+};
+
+const handleSearchButtonClick = () => {
+    getData(1);
+};
+
+const refreshData = () => {
+    getData(currentPage.value);
 };
 
 const handleFiltersReset = () => {
@@ -329,54 +388,27 @@ const handleFiltersReset = () => {
 }
 
 
+const handlePageSizeChange = (newPerPage) => {
+    perPage.value = newPerPage;
+    handleSearchButtonClick();
+};
+
 const renderRequestedPage = (url) => {
-    loading.value = true;
-    router.visit(url, {
-        data: {
-            filterData: filterData._rawValue,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: ["data"],
-        onSuccess: (page) => {
-            loading.value = false;
-        }
-    });
+    if (!url) return;
+
+    const urlObj = new URL(url, window.location.origin);
+    getData(urlObj.searchParams.get('page') ?? 1);
 };
 
 
-const getItemOptions = (domain_uuid) => {
-    router.get(props.routes.current_page,
-        {
-            'domain_uuid': domain_uuid,
-        },
-        {
-            preserveScroll: true,
-            preserveState: true,
-            only: [
-                'itemOptions',
-            ],
-            onSuccess: (page) => {
-                loadingModal.value = false;
-            },
-            onFinish: () => {
-                loadingModal.value = false;
-            },
-            onError: (errors) => {
-                console.log(errors);
-            },
-
-        });
-}
-
 const handleFormErrorResponse = (error) => {
     if (error.request?.status == 419) {
-        showNotification('error', { request: ["Session expired. Reload the page"] });
+        showNotification('error', { request: [trans('Session expired. Reload the page')] });
     } else if (error.response) {
         // The request was made and the server responded with a status code
         // that falls out of the range of 2xx
         // console.log(error.response.data);
-        showNotification('error', error.response.data.errors || { request: [error.message] });
+        showNotification('error', error.response.data.errors || error.response.data.messages || { request: [error.response.data.message || error.message] });
         formErrors.value = error.response.data.errors;
     } else if (error.request) {
         // The request was made but no response was received
@@ -397,7 +429,7 @@ const handleErrorResponse = (error) => {
         // The request was made and the server responded with a status code
         // that falls out of the range of 2xx
         // console.log(error.response.data);
-        showNotification('error', error.response.data.errors || { request: [error.message] });
+        showNotification('error', error.response.data.errors || error.response.data.messages || { request: [error.response.data.message || error.message] });
     } else if (error.request) {
         // The request was made but no response was received
         // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
@@ -413,7 +445,7 @@ const handleErrorResponse = (error) => {
 
 const handleSelectPageItems = () => {
     if (selectPageItems.value) {
-        selectedItems.value = props.data.data.map(item => item.uuid);
+        selectedItems.value = data.value.data.map(item => item.uuid);
     } else {
         selectedItems.value = [];
     }
@@ -444,22 +476,9 @@ const showNotification = (type, messages = null) => {
     notificationShow.value = true;
 }
 
-const determineColor = (status) => {
-    switch (status) {
-        case 'blocked':
-            return {
-                backgroundColor: 'bg-rose-50',
-                textColor: 'text-rose-700',
-                ringColor: 'ring-rose-600/20'
-            };
-        default:
-            return {
-                backgroundColor: 'bg-yellow-50',
-                textColor: 'text-yellow-700',
-                ringColor: 'ring-yellow-600/20'
-            };
-    }
-};
-
-
+onMounted(() => getData());
+onUnmounted(() => {
+    isUnmounted = true;
+    activeRequest?.abort();
+});
 </script>

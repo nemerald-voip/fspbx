@@ -116,8 +116,11 @@ class BasicQueueService
                     'update_user' => session('user_uuid'),
                 ]);
 
-            $this->clearCaches();
-            $this->refreshRuntimeAgent($agent);
+            // The XML handler reads through another database connection.
+            DB::afterCommit(function () use ($agent, $isNew) {
+                $this->clearCaches();
+                $this->refreshRuntimeAgent($agent, $isNew);
+            });
 
             return $agent;
         });
@@ -447,22 +450,38 @@ class BasicQueueService
         });
     }
 
-    private function refreshRuntimeAgent(CallCenterAgents $agent): void
+    private function refreshRuntimeAgent(CallCenterAgents $agent, bool $isNew = false): void
     {
         if (blank($agent->call_center_agent_uuid)) {
             return;
         }
 
-        $this->withEventSocket(function ($fp) use ($agent) {
+        // Contact Center XML never reapplies defaults. Initialize new local
+        // agents explicitly; HA initializes availability through its observer.
+        $initializeStatus = $isNew
+            && class_exists(\Modules\ContactCenter\Services\Ha\HaSettings::class)
+            && ! app(\Modules\ContactCenter\Services\Ha\HaSettings::class)->enabled();
+
+        $this->withEventSocket(function ($fp) use ($agent, $initializeStatus) {
+            $commandType = $initializeStatus ? 'api' : 'bgapi';
             event_socket_request($fp, sprintf(
-                'bgapi callcenter_config agent add %s %s',
+                '%s callcenter_config agent add %s %s',
+                $commandType,
                 $agent->call_center_agent_uuid,
                 $agent->agent_type ?: 'callback'
             ));
             event_socket_request($fp, sprintf(
-                'bgapi callcenter_config agent reload %s',
+                '%s callcenter_config agent reload %s',
+                $commandType,
                 $agent->call_center_agent_uuid
             ));
+            if ($initializeStatus) {
+                event_socket_request($fp, sprintf(
+                    "api callcenter_config agent set status %s '%s'",
+                    $agent->call_center_agent_uuid,
+                    $agent->agent_status ?: 'Logged Out'
+                ));
+            }
         });
     }
 
@@ -644,8 +663,9 @@ class BasicQueueService
 
     private function agentXml(): string
     {
-        $preserveStatus = class_exists(\Modules\ContactCenter\Services\Ha\HaSettings::class)
-            && app(\Modules\ContactCenter\Services\Ha\HaSettings::class)->enabled();
+        // Both editors share agents. Installing Contact Center is sufficient;
+        // preserving local availability must not depend on peer approval.
+        $preserveStatus = class_exists(\Modules\ContactCenter\Services\Ha\HaSettings::class);
         return CallCenterAgents::query()
             ->with('domain:domain_uuid,domain_name')
             ->orderBy('agent_name')

@@ -3,11 +3,11 @@
 
     <div class="m-3">
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-            <template #title>Email Templates</template>
+            <template #title>{{ $t('Email Templates') }}</template>
             <template #subtitle>
                 {{ activeTab === "default"
-                    ? "Read-only templates shipped with FS PBX. Create a custom override to make account-specific changes."
-                    : "Custom overrides and account-specific templates you can edit." }}
+                    ? $t('Read-only templates shipped with FS PBX. Create a custom override to make account-specific changes.')
+                    : $t('Custom overrides and account-specific templates you can edit.') }}
             </template>
 
             <template #filters>
@@ -17,7 +17,7 @@
                     <div class="grid grid-cols-1 sm:hidden">
                         <select
                             v-model="activeTab"
-                            aria-label="Select a template type"
+                            :aria-label="$t('Select a template type')"
                             class="col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-2 pl-3 pr-8 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600"
                         >
                             <option v-for="tab in tabs" :key="tab.id" :value="tab.id">{{ tab.name }}</option>
@@ -31,7 +31,7 @@
                     <!-- Desktop -->
                     <div class="hidden sm:block">
                         <div class="border-b border-gray-200">
-                            <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                            <nav class="-mb-px flex space-x-8" :aria-label="$t('Tabs')">
                                 <a
                                     v-for="tab in tabs"
                                     :key="tab.id"
@@ -60,7 +60,7 @@
                         v-model="filterData.search"
                         type="search"
                         class="block w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600"
-                        placeholder="Search subjects, categories, and descriptions"
+                        :placeholder="$t('Search subjects, categories, and descriptions')"
                         @keydown.enter="handleSearchButtonClick"
                     />
                 </div>
@@ -68,22 +68,22 @@
                 <select
                     v-model="filterData.category"
                     class="mb-2 min-w-48 rounded-md border-0 py-1.5 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:mr-4"
-                    aria-label="Filter by category"
+                    :aria-label="$t('Filter by category')"
                     @change="handleSearchButtonClick"
                 >
-                    <option :value="null">All categories</option>
+                    <option :value="null">{{ $t('All categories') }}</option>
                     <option v-for="category in categoryOptions" :key="category.value" :value="category.value">
-                        {{ formatLabel(category.label) }}
+                        {{ formatLabel(category.value) }}
                     </option>
                 </select>
 
                 <select
                     v-model="filterData.language"
                     class="mb-2 min-w-40 rounded-md border-0 py-1.5 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:mr-4"
-                    aria-label="Filter by language"
+                    :aria-label="$t('Filter by language')"
                     @change="handleSearchButtonClick"
                 >
-                    <option :value="null">All languages</option>
+                    <option :value="null">{{ $t('All languages') }}</option>
                     <option v-for="language in languageOptions" :key="language.value" :value="language.value">
                         {{ language.label }}
                     </option>
@@ -97,7 +97,7 @@
                     class="ml-2 rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:ml-4"
                     @click="handleCreateButtonClick"
                 >
-                    Create
+                    {{ $t('Create') }}
                 </button>
             </template>
 
@@ -125,11 +125,11 @@
                             v-model="selectPageItems"
                             type="checkbox"
                             class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
-                            aria-label="Select this page"
+                            :aria-label="$t('Select this page')"
                             @change="handleSelectPageItems"
                         />
                         <button type="button" class="ml-4 flex items-center" @click="handleSortRequest('template_category')">
-                            <span class="mr-2">Category</span>
+                            <span class="mr-2">{{ $t('Category') }}</span>
                             <ChevronUpIcon v-if="sortData.name === 'template_category' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
                             <ChevronDownIcon v-else-if="sortData.name === 'template_category' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
                         </button>
@@ -137,36 +137,36 @@
                 </TableColumnHeader>
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <button type="button" class="flex items-center" @click="handleSortRequest('template_subcategory')">
-                        <span class="mr-2">Purpose</span>
+                        <span class="mr-2">{{ $t('Purpose') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'template_subcategory' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'template_subcategory' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
                     </button>
                 </TableColumnHeader>
-                <TableColumnHeader header="Language" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t('Language')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <button type="button" class="flex items-center" @click="handleSortRequest('template_subject')">
-                        <span class="mr-2">Subject</span>
+                        <span class="mr-2">{{ $t('Subject') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'template_subject' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'template_subject' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
                     </button>
                 </TableColumnHeader>
-                <TableColumnHeader v-if="activeTab === 'default'" header="Version" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader v-if="activeTab === 'custom'" header="Scope" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader v-if="activeTab === 'custom'" header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader v-if="activeTab === 'default'" :header="$t('Version')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader v-if="activeTab === 'custom'" :header="$t('Scope')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader v-if="activeTab === 'custom'" :header="$t('Status')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
             </template>
 
             <template v-if="selectPageItems" #current-selection>
                 <td :colspan="columnCount">
                     <div class="m-2 text-center text-sm">
-                        <span class="font-semibold">{{ selectedItems.length }}</span> templates selected.
+                        {{ $t(':count templates selected.', { count: selectedItems.length }) }}
                         <button
                             v-if="!selectAll && selectedItems.length !== data.total"
                             type="button"
                             class="rounded px-2 py-2 text-blue-600 hover:bg-blue-50"
                             @click="handleSelectAll"
                         >
-                            Select all {{ data.total }} matching templates
+                            {{ $t('Select all :total matching templates', { total: data.total }) }}
                         </button>
                         <button
                             v-if="selectAll"
@@ -174,7 +174,7 @@
                             class="rounded px-2 py-2 text-blue-600 hover:bg-blue-50"
                             @click="handleClearSelection"
                         >
-                            Clear selection
+                            {{ $t('Clear selection') }}
                         </button>
                     </div>
                 </td>
@@ -189,7 +189,7 @@
                                 type="checkbox"
                                 :value="row.email_template_uuid"
                                 class="h-4 w-4 flex-none rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
-                                :aria-label="`Select ${formatLabel(row.template_category)}`"
+                                :aria-label="$t('Select :name', { name: formatLabel(row.template_category) })"
                             />
                             <button
                                 type="button"
@@ -233,11 +233,11 @@
                             type="button"
                             class="rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                             :disabled="!permissions.update"
-                            :aria-label="`Toggle status for ${formatLabel(row.template_category)}`"
+                            :aria-label="$t('Toggle status for :name', { name: formatLabel(row.template_category) })"
                             @click="permissions.update && executeToggle([row.email_template_uuid])"
                         >
                             <Badge
-                                :text="row.template_enabled ? 'Enabled' : 'Disabled'"
+                                :text="row.template_enabled ? $t('Enabled') : $t('Disabled')"
                                 :background-color="row.template_enabled ? 'bg-green-50' : 'bg-gray-50'"
                                 :text-color="row.template_enabled ? 'text-green-700' : 'text-gray-600'"
                                 :ring-color="row.template_enabled ? 'ring-green-600/20' : 'ring-gray-500/20'"
@@ -245,7 +245,7 @@
                         </button>
                         <Badge
                             v-else
-                            :text="row.template_enabled ? 'Enabled' : 'Disabled'"
+                            :text="row.template_enabled ? $t('Enabled') : $t('Disabled')"
                             :background-color="row.template_enabled ? 'bg-green-50' : 'bg-gray-50'"
                             :text-color="row.template_enabled ? 'text-green-700' : 'text-gray-600'"
                             :ring-color="row.template_enabled ? 'ring-green-600/20' : 'ring-gray-500/20'"
@@ -260,20 +260,20 @@
                                     v-if="activeTab === 'default'"
                                     type="button"
                                     class="rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                                    title="View template"
+                                    :title="$t('View template')"
                                     @click="handleEditButtonClick(row.email_template_uuid)"
                                 >
-                                    <span class="sr-only">View template</span>
+                                    <span class="sr-only">{{ $t('View template') }}</span>
                                     <MagnifyingGlassIcon class="h-9 w-9 p-2" />
                                 </button>
                                 <button
                                     v-if="activeTab === 'default' && permissions.create"
                                     type="button"
                                     class="rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                                    title="Create custom override"
+                                    :title="$t('Create custom override')"
                                     @click="executeCopy([row.email_template_uuid])"
                                 >
-                                    <span class="sr-only">Create custom override</span>
+                                    <span class="sr-only">{{ $t('Create custom override') }}</span>
                                     <DocumentDuplicateIcon class="h-9 w-9 p-2" />
                                 </button>
 
@@ -282,20 +282,20 @@
                                     v-if="activeTab === 'custom' && permissions.update && row.manageable"
                                     type="button"
                                     class="rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                                    title="Edit"
+                                    :title="$t('Edit')"
                                     @click="handleEditButtonClick(row.email_template_uuid)"
                                 >
-                                    <span class="sr-only">Edit</span>
+                                    <span class="sr-only">{{ $t('Edit') }}</span>
                                     <PencilSquareIcon class="h-9 w-9 p-2" />
                                 </button>
                                 <button
                                     v-if="activeTab === 'custom' && permissions.destroy && row.manageable"
                                     type="button"
                                     class="rounded-full text-gray-400 hover:bg-red-50 hover:text-red-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600"
-                                    title="Delete"
+                                    :title="$t('Delete')"
                                     @click="handleSingleItemDeleteRequest(row.email_template_uuid)"
                                 >
-                                    <span class="sr-only">Delete</span>
+                                    <span class="sr-only">{{ $t('Delete') }}</span>
                                     <TrashIcon class="h-9 w-9 p-2" />
                                 </button>
                             </div>
@@ -307,11 +307,11 @@
             <template #empty>
                 <div v-if="!loading && data.data.length === 0" class="px-6 py-12 text-center">
                     <EnvelopeIcon class="mx-auto h-10 w-10 text-gray-300" />
-                    <h3 class="mt-3 text-sm font-semibold text-gray-900">No email templates found</h3>
+                    <h3 class="mt-3 text-sm font-semibold text-gray-900">{{ $t('No email templates found') }}</h3>
                     <p class="mt-1 text-sm text-gray-500">
                         {{ activeTab === "default"
-                            ? "Adjust the filters to find a default template."
-                            : "Create a custom template or copy one from the default templates." }}
+                            ? $t('Adjust the filters to find a default template.')
+                            : $t('Create a custom template or copy one from the default templates.') }}
                     </p>
                 </div>
             </template>
@@ -345,7 +345,7 @@
         :header="confirmationHeader"
         :text="confirmationText"
         :confirm-button-label="confirmationButtonLabel"
-        cancel-button-label="Cancel"
+        :cancel-button-label="$t('Cancel')"
         @close="handleModalClose"
         @confirm="confirmAction"
     />
@@ -371,6 +371,7 @@
 </template>
 
 <script setup>
+import { trans } from '@i18n';
 import { computed, onMounted, ref, watch } from "vue";
 import axios from "axios";
 import MainLayout from "../Layouts/MainLayout.vue";
@@ -414,17 +415,17 @@ const loadingForm = ref(false);
 const itemOptions = ref({ item: {}, routes: {} });
 const confirmationModalTrigger = ref(false);
 const confirmAction = ref(null);
-const confirmationHeader = ref("Confirm action");
+const confirmationHeader = ref(trans('Confirm action'));
 const confirmationText = ref("");
-const confirmationButtonLabel = ref("Continue");
+const confirmationButtonLabel = ref(trans('Continue'));
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(false);
 
-const tabs = [
-    { id: "default", name: "Default Templates" },
-    { id: "custom", name: "Custom Templates" },
-];
+const tabs = computed(() => [
+    { id: "default", name: trans('Default Templates') },
+    { id: "custom", name: trans('Custom Templates') },
+]);
 const activeTab = ref("default");
 
 const data = ref({
@@ -456,6 +457,46 @@ const sortData = ref({
 const categoryOptions = computed(() => props.options?.categories ?? []);
 const languageOptions = computed(() => props.options?.languages ?? []);
 
+const templateLabels = computed(() => ({
+    'ai-agent': trans('AI Agent'),
+    app: trans('App'),
+    archive: trans('Archive'),
+    authentication: trans('Authentication'),
+    emergency: trans('Emergency'),
+    export: trans('Export'),
+    extension: trans('Extension'),
+    fax: trans('Fax'),
+    messages: trans('Messages'),
+    missed: trans('Missed'),
+    system: trans('System'),
+    transcription: trans('Transcription'),
+    voicemail: trans('Voicemail'),
+    call: trans('Call'),
+    'call-ready': trans('Call Ready'),
+    completed: trans('Completed'),
+    'contact-center': trans('Contact Center'),
+    credentials: trans('Credentials'),
+    default: trans('Default'),
+    'escalation-completion': trans('Escalation Completion'),
+    failed: trans('Failed'),
+    inbound: trans('Inbound'),
+    'in-transit': trans('In Transit'),
+    'invalid-destination': trans('Invalid Destination'),
+    'not-authorized': trans('Not Authorized'),
+    received: trans('Received'),
+    'reset-password': trans('Reset Password'),
+    'ring-group': trans('Ring Group'),
+    'send-email': trans('Send Email'),
+    sent: trans('Sent'),
+    'service-alert': trans('Service Alert'),
+    'storage-report': trans('Storage Report'),
+    test: trans('Test'),
+    'verification-code': trans('Verification Code'),
+    welcome: trans('Welcome'),
+}));
+const formatLabel = (value) => templateLabels.value[value]
+    ?? String(value ?? '').replace(/[_-]/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
+
 // Map a stored template_language code to its friendly label (e.g. "en-us" ->
 // "English (en-us)") using the same registry-backed options that feed the
 // filter, so the table column reads consistently with the create form.
@@ -470,19 +511,19 @@ const columnCount = computed(() => (activeTab.value === "default" ? 6 : 7));
 const bulkActions = computed(() => {
     if (activeTab.value === "default") {
         return permissions.create
-            ? [{ id: "bulk_copy", label: "Create custom from defaults", icon: "DocumentDuplicateIcon" }]
+            ? [{ id: "bulk_copy", label: trans('Create custom from defaults'), icon: "DocumentDuplicateIcon" }]
             : [];
     }
 
     return [
-        ...(permissions.update ? [{ id: "bulk_toggle", label: "Toggle status", icon: "SyncIcon" }] : []),
-        ...(permissions.destroy ? [{ id: "bulk_delete", label: "Delete", icon: "TrashIcon" }] : []),
+        ...(permissions.update ? [{ id: "bulk_toggle", label: trans('Toggle status'), icon: "SyncIcon" }] : []),
+        ...(permissions.destroy ? [{ id: "bulk_delete", label: trans('Delete'), icon: "TrashIcon" }] : []),
     ];
 });
 
 const formHeader = computed(() => {
     if (formMode.value === "create") {
-        return "Create Custom Email Template";
+        return trans('Create Custom Email Template');
     }
 
     const category = formatLabel(itemOptions.value?.item?.template_category);
@@ -491,12 +532,12 @@ const formHeader = computed(() => {
 
     if (itemOptions.value?.locked) {
         if (itemOptions.value?.item?.template_type === "default") {
-            return label ? `Default Email Template: ${label}` : "Default Email Template";
+            return label ? trans('Default Email Template: :label', { label }) : trans('Default Email Template');
         }
 
-        return label ? `Global Email Template: ${label}` : "Global Email Template";
+        return label ? trans('Global Email Template: :label', { label }) : trans('Global Email Template');
     }
-    return label ? `Update Custom Template: ${label}` : "Update Custom Email Template";
+    return label ? trans('Update Custom Template: :label', { label }) : trans('Update Custom Email Template');
 });
 
 onMounted(() => getData());
@@ -630,9 +671,9 @@ const handleClearSelection = () => {
 
 const handleSingleItemDeleteRequest = (uuid) => {
     showConfirmation({
-        header: "Delete Email Template",
-        text: "Delete this email template? This action cannot be undone.",
-        button: "Delete",
+        header: trans('Delete Email Template'),
+        text: trans('Delete this email template? This action cannot be undone.'),
+        button: trans('Delete'),
         action: () => executeDelete([uuid]),
     });
 };
@@ -640,27 +681,27 @@ const handleSingleItemDeleteRequest = (uuid) => {
 const handleBulkActionRequest = (action) => {
     if (action === "bulk_copy") {
         showConfirmation({
-            header: "Create Custom Email Templates",
-            text: "Create an editable custom override from each selected default template? Existing overrides are left unchanged.",
-            button: "Create custom",
+            header: trans('Create Custom Email Templates'),
+            text: trans('Create an editable custom override from each selected default template? Existing overrides are left unchanged.'),
+            button: trans('Create custom'),
             action: () => executeCopy(),
         });
     }
 
     if (action === "bulk_toggle") {
         showConfirmation({
-            header: "Toggle Email Template Status",
-            text: "Toggle the enabled status of each selected email template?",
-            button: "Toggle status",
+            header: trans('Toggle Email Template Status'),
+            text: trans('Toggle the enabled status of each selected email template?'),
+            button: trans('Toggle status'),
             action: () => executeToggle(),
         });
     }
 
     if (action === "bulk_delete") {
         showConfirmation({
-            header: "Delete Email Templates",
-            text: "Delete the selected email templates? This action cannot be undone.",
-            button: "Delete",
+            header: trans('Delete Email Templates'),
+            text: trans('Delete the selected email templates? This action cannot be undone.'),
+            button: trans('Delete'),
             action: () => executeDelete(),
         });
     }
@@ -697,10 +738,6 @@ const executeBulkRoute = (route, items) => {
         });
 };
 
-const formatLabel = (value) => String(value ?? "")
-    .replaceAll("_", " ")
-    .replaceAll("-", " ")
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
 
 const showNotification = (type, messages) => {
     notificationType.value = type;
@@ -715,7 +752,7 @@ const hideNotification = () => {
 const handleErrorResponse = (error) => {
     const messages = error?.response?.data?.messages
         ?? error?.response?.data?.errors
-        ?? { error: ["An unexpected error occurred."] };
+        ?? { error: [trans('An unexpected error occurred.')] };
 
     showNotification("error", messages);
 };

@@ -4,17 +4,12 @@ namespace App\Http\Controllers;
 
 use Inertia\Inertia;
 use App\Services\SansayApiService;
-use Illuminate\Support\Collection;
-use Illuminate\Pagination\Paginator;
-use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Http\Request;
 
 class SansayActiveCallsController extends Controller
 {
 
     public $sansayApiService;
-    public $filters = [];
-    public $sortField;
-    public $sortOrder;
     protected $viewName = 'SansayActiveCalls';
     protected $searchable = ['orig_ip', 'dnis', 'ani', 'term_ip'];
 
@@ -29,19 +24,19 @@ class SansayActiveCallsController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
 
         return Inertia::render(
             $this->viewName,
             [
 
-                'data' => function () {
-                    return $this->getData();
-                },
-
+                'pagination' => [
+                    'per_page' => fspbx_pagination_per_page($request),
+                    'per_page_options' => fspbx_pagination_options(),
+                ],
                 'routes' => [
-                    'current_page' => route('sansay.active-calls.index'),
+                    'data_route' => route('sansay.active-calls.data'),
                     'delete' => route('sansay.active-calls.delete'),
                     'select_all' => route('sansay.active-calls.select.all'),
                 ]
@@ -53,34 +48,14 @@ class SansayActiveCallsController extends Controller
     /**
      *  Get data
      */
-    public function getData($paginate = 50)
+    public function getData(Request $request)
     {
-        // Check if search parameter is present and not empty
-        if (!empty(request('filterData.search'))) {
-            $this->filters['search'] = request('filterData.search');
-        }
+        $data = $this->builder($request->input('filter', []));
+        $perPage = fspbx_pagination_per_page($request);
+        $lastPage = max(1, (int) ceil($data->count() / $perPage));
+        $page = min(max(1, $request->integer('page', 1)), $lastPage);
 
-        // Check if showGlobal parameter is present and not empty
-        if (!empty(request('filterData.showGlobal'))) {
-            $this->filters['showGlobal'] = request('filterData.showGlobal') === 'true';
-        } else {
-            $this->filters['showGlobal'] = null;
-        }
-
-        // Add sorting criteria
-        $this->sortField = request()->get('sortField', 'duration'); // Default to 'created_at'
-        $this->sortOrder = request()->get('sortOrder', 'asc'); // Default to descending
-
-        $data = $this->builder($this->filters);
-
-        // Apply pagination manually
-        if ($paginate) {
-            $data = $this->paginateCollection($data, $paginate);
-        }
-
-        // logger($data);
-
-        return $data;
+        return fspbx_paginate_collection($data, $perPage, $page);
     }
 
     /**
@@ -89,20 +64,9 @@ class SansayActiveCallsController extends Controller
      */
     public function builder(array $filters = [])
     {
-        // Return an empty Collection if the request variable is empty
-        if (empty(request('filterData.server'))) return collect();
+        if (empty($filters['server'])) return collect();
 
-        // get a list of current registrations
-        $data = $this->sansayApiService->fetchActiveCalls(request('filterData.server'));
-
-        // logger($data);
-
-        // Apply sorting using sortBy or sortByDesc depending on the sort order
-        if ($this->sortOrder === 'asc') {
-            $data = $data->sortBy($this->sortField);
-        } else {
-            $data = $data->sortByDesc($this->sortField);
-        }
+        $data = $this->sansayApiService->fetchActiveCalls($filters['server'])->sortBy('duration');
 
         // Format duration in human-readable form (HH:MM:SS)
         $data = $data->map(function ($item) {
@@ -114,47 +78,13 @@ class SansayActiveCallsController extends Controller
         });
 
 
-        // Apply additional filters, if any
-        if (is_array($filters)) {
-            foreach ($filters as $field => $value) {
-                if (method_exists($this, $method = "filter" . ucfirst($field))) {
-                    // Pass the collection by reference to modify it directly
-                    $data = $this->$method($data, $value);
-                }
-            }
+        if (isset($filters['search']) && $filters['search'] !== '') {
+            $data = $this->filterSearch($data, (string) $filters['search']);
         }
 
         // logger($data);
 
         return $data->values(); // Ensure re-indexing of the collection
-    }
-
-    /**
-     * Paginate a given collection.
-     *
-     * @param \Illuminate\Support\Collection $items
-     * @param int $perPage
-     * @param int|null $page
-     * @param array $options
-     * @return \Illuminate\Pagination\LengthAwarePaginator
-     */
-    public function paginateCollection($items, $perPage = 50, $page = null, $options = [])
-    {
-        $page = $page ?: (Paginator::resolveCurrentPage() ?: 1);
-        $items = $items instanceof Collection ? $items : Collection::make($items);
-
-        $paginator = new LengthAwarePaginator(
-            $items->forPage($page, $perPage),
-            $items->count(),
-            $perPage,
-            $page,
-            $options
-        );
-
-        // Manually set the path to the current route with proper parameters
-        $paginator->setPath(url()->current());
-
-        return $paginator;
     }
 
     /**
@@ -169,7 +99,7 @@ class SansayActiveCallsController extends Controller
         // Case-insensitive partial string search in the specified fields
         $collection = $collection->filter(function ($item) use ($value, $searchable) {
             foreach ($searchable as $field) {
-                if (stripos($item[$field], $value) !== false) {
+                if (stripos((string) ($item[$field] ?? ''), $value) !== false) {
                     return true;
                 }
             }
@@ -180,16 +110,15 @@ class SansayActiveCallsController extends Controller
     }
 
 
-    public function destroy()
+    public function destroy(Request $request)
     {
-        logger(request());
         try {
             // submit API request to delete selected records
-            $data = $this->sansayApiService->deleteActiveCalls(request('filterData.server'), request('callsData'));
+            $this->sansayApiService->deleteActiveCalls($request->input('filter.server'), $request->input('callsData'));
 
             // Return a JSON response indicating success
             return response()->json([
-                'messages' => ['success' => ['Request to delete was successfully sent']]
+                'messages' => ['success' => [__('Request to delete was successfully sent')]]
             ], 200);
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
@@ -206,17 +135,17 @@ class SansayActiveCallsController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function selectAll()
+    public function selectAll(Request $request)
     {
         try {
             // Fetch all active calls without pagination
-            $allActiveCalls = $this->builder($this->filters);
+            $allActiveCalls = $this->builder($request->input('filter', []));
 
             // Extract only the IDs from the collection
             $ids = $allActiveCalls->pluck('callID');
 
             return response()->json([
-                'messages' => ['success' => ['All items selected']],
+                'messages' => ['success' => [__('All items selected')]],
                 'items' => $ids,  // Returning only the IDs
             ], 200);
         } catch (\Exception $e) {
@@ -224,7 +153,7 @@ class SansayActiveCallsController extends Controller
 
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to select all items']]
+                'errors' => ['server' => [__('Failed to select all items')]]
             ], 500); // 500 Internal Server Error for any other errors
         }
     }

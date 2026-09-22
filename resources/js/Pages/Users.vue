@@ -243,11 +243,11 @@
 
     <UpdateUserForm :show="showUpdateModal" :options="itemOptions" :loading="isModalLoading" :header="$t('Update User')"
         @close="showUpdateModal = false" @error="handleErrorResponse" @success="showNotification"
-        @refresh-data="handleSearchButtonClick" />
+        @refresh-data="refreshData" />
 
     <CreateUserForm :show="showCreateModal" :options="itemOptions" :loading="isModalLoading" :header="$t('Create User')"
         @close="showCreateModal = false" @error="handleErrorResponse" @success="showNotification" @open-edit-form="handleEditButtonClick"
-        @refresh-data="handleSearchButtonClick" />
+        @refresh-data="refreshData" />
 
 
     <ConfirmationModal :show="showDeleteConfirmationModal" @close="showDeleteConfirmationModal = false"
@@ -260,9 +260,8 @@
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 import axios from 'axios';
-import { router } from "@inertiajs/vue3";
 import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";
@@ -282,7 +281,7 @@ import { trans } from "@i18n";
 
 
 
-const loading = ref(false)
+const loading = ref(true)
 const isModalLoading = ref(false)
 const selectAll = ref(false);
 const selectedItems = ref([]);
@@ -297,15 +296,28 @@ const notificationShow = ref(null);
 const showDeleteConfirmationModal = ref(false);
 
 const props = defineProps({
-    data: Object,
     routes: Object,
     permissions: Object,
     pagination: Object,
-    has_directories: Boolean,
-    selectable_total: Number,
 });
 
-const perPage = ref(props.pagination?.per_page);
+const perPage = ref(props.pagination?.per_page ?? 50);
+
+const data = ref({
+    data: [],
+    prev_page_url: null,
+    next_page_url: null,
+    from: null,
+    to: null,
+    total: 0,
+    current_page: 1,
+    last_page: 1,
+    links: [],
+});
+const currentPage = ref(1);
+let activeRequest = null;
+let requestSequence = 0;
+let isUnmounted = false;
 
 const filterData = ref({
     search: null,
@@ -315,8 +327,8 @@ const filterData = ref({
 // Nothing about directory provenance is shown unless this account has a
 // directory configured -- accounts that never use Active Directory get the
 // plain user list, with no extra column, filter or marker.
-const hasDirectories = computed(() => props.has_directories === true);
-const selectableTotal = computed(() => props.selectable_total ?? 0);
+const hasDirectories = computed(() => data.value.has_directories === true);
+const selectableTotal = computed(() => data.value.selectable_total ?? 0);
 
 const sortData = ref({
     name: 'username',
@@ -364,7 +376,7 @@ const executeBulkDelete = (items = selectedItems.value) => {
         .then((response) => {
             handleModalClose();
             showNotification('success', response.data.messages);
-            handleSearchButtonClick();
+            refreshData();
         })
         .catch((error) => {
             handleModalClose();
@@ -408,33 +420,57 @@ const handleSelectAll = () => {
 
 
 
-const handleSearchButtonClick = () => {
-    let sort = sortData.value.name;
-    if (sortData.value.order === 'desc') {
-        sort = `-${sort}`;
-    }
+const getData = async (page = currentPage.value, { background = false } = {}) => {
+    if (isUnmounted) return;
 
-    loading.value = true;
-    router.visit(props.routes.current_page, {
-        data: {
-            filter: {
-                search: filterData.value.search,
-                source: filterData.value.source,
+    activeRequest?.abort();
+    const controller = new AbortController();
+    activeRequest = controller;
+    const sequence = ++requestSequence;
+    loading.value = !background;
+    currentPage.value = Number(page) || 1;
+
+    const sort = sortData.value.order === 'desc' ? `-${sortData.value.name}` : sortData.value.name;
+
+    try {
+        const response = await axios.get(props.routes.data_route, {
+            params: {
+                filter: { ...filterData.value },
+                page: currentPage.value,
+                per_page: perPage.value,
+                sort,
             },
-            sort,
-            per_page: perPage.value,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: [
-            "data",
-            "selectable_total",
-        ],
-        onSuccess: (page) => {
-            loading.value = false;
-            handleClearSelection();
+            signal: controller.signal,
+        });
+
+        if (isUnmounted || sequence !== requestSequence) return;
+
+        // A deletion may have removed the last row on this page.
+        if (response.data.last_page && currentPage.value > response.data.last_page) {
+            return await getData(response.data.last_page, { background });
         }
-    });
+
+        data.value = response.data;
+        currentPage.value = response.data.current_page ?? currentPage.value;
+        handleClearSelection();
+    } catch (error) {
+        if (!isUnmounted && sequence === requestSequence && !axios.isCancel(error)) {
+            handleErrorResponse(error);
+        }
+    } finally {
+        if (!isUnmounted && sequence === requestSequence) {
+            activeRequest = null;
+            loading.value = false;
+        }
+    }
+};
+
+const handleSearchButtonClick = () => {
+    getData(1);
+};
+
+const refreshData = () => {
+    getData(currentPage.value);
 };
 
 const handleFiltersReset = () => {
@@ -451,29 +487,12 @@ const handlePageSizeChange = (newPerPage) => {
 };
 
 const renderRequestedPage = (url) => {
-    let sort = sortData.value.name;
-    if (sortData.value.order === 'desc') {
-        sort = `-${sort}`;
-    }
+    if (!url) return;
 
-    loading.value = true;
-    router.visit(url, {
-        data: {
-            filter: {
-                search: filterData.value.search,
-                source: filterData.value.source,
-            },
-            sort,
-            per_page: perPage.value,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: ["data", "selectable_total"],
-        onSuccess: (page) => {
-            loading.value = false;
-        }
-    });
+    const urlObj = new URL(url, window.location.origin);
+    getData(urlObj.searchParams.get('page') ?? 1);
 };
+
 
 const handleSortRequest = (column) => {
     if (sortData.value.name === column) {
@@ -544,7 +563,7 @@ const handleErrorResponse = (error) => {
 
 const handleSelectPageItems = () => {
     if (selectPageItems.value) {
-        selectedItems.value = props.data.data
+        selectedItems.value = data.value.data
             .filter(item => item.can_delete_target)
             .map(item => item.user_uuid);
     } else {
@@ -579,6 +598,13 @@ const showNotification = (type, messages = null) => {
     notificationShow.value = true;
 }
 
+
+onMounted(() => getData());
+
+onUnmounted(() => {
+    isUnmounted = true;
+    activeRequest?.abort();
+});
 
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');
 

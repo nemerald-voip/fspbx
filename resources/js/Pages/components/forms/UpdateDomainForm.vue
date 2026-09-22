@@ -20,7 +20,7 @@
                                 <button type="button"
                                     class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                     @click="emit('close')">
-                                    <span class="sr-only">Close</span>
+                                    <span class="sr-only">{{ $t('Close') }}</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
@@ -38,13 +38,13 @@
                                             </path>
                                         </svg>
                                     </div>
-                                    <div class="text-lg text-blue-600 m-auto">Loading...</div>
+                                    <div class="text-lg text-blue-600 m-auto">{{ $t('Loading...') }}</div>
                                 </div>
                             </div>
 
 
                             <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
-                                @error="handleError" @response="handleResponse" :display-errors="false" :default="{
+                                @error="handleError" @response="handleResponse" :display-errors="false" validate-on="" :default="{
                                     domain_description: options.item.domain_description,
                                     domain_name: options.item.domain_name,
                                     domain_enabled: options.item.domain_enabled,
@@ -62,7 +62,7 @@
 
                                                 <!-- The Label -->
                                                 <div class="text-sm font-medium text-gray-600 mb-1">
-                                                    Unique ID
+                                                    {{ $t('Unique ID') }}
                                                 </div>
 
                                                 <!-- The Value & Copy Button Row -->
@@ -76,7 +76,7 @@
                                                     <button type="button"
                                                         @click="handleCopyToClipboard(options.item.domain_uuid)"
                                                         class="ml-2 p-1 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
-                                                        title="Copy to clipboard">
+                                                        :title="$t('Copy to clipboard')">
                                                         <!-- Small Copy Icon -->
                                                         <ClipboardDocumentIcon
                                                             class="h-4 w-4 text-gray-500 hover:text-gray-900  cursor-pointer" />
@@ -89,18 +89,18 @@
 
 
 
-                                        <TextElement name="domain_description" label="Domain Label"
-                                            placeholder="Enter Domain Label" :floating="false" />
+                                        <TextElement name="domain_description" :label="$t('Domain Label')"
+                                            :placeholder="$t('Enter Domain Label')" :floating="false" />
 
-                                        <TextElement name="domain_name" label="Domain Name"
-                                            placeholder="Enter Domain Name" :floating="false" :disabled="true" />
+                                        <TextElement name="domain_name" :label="$t('Domain Name')"
+                                            :placeholder="$t('Enter Domain Name')" :floating="false" :disabled="true" />
 
 
-                                        <ToggleElement name="domain_enabled" text="Status" />
+                                        <ToggleElement name="domain_enabled" :text="$t('Status')" />
 
                                         <GroupElement name="container_3" />
 
-                                        <ButtonElement name="submit" button-label="Save" :submits="true"
+                                        <ButtonElement name="submit" :button-label="$t('Save')" :submits="true"
                                             align="right" />
 
                                     </FormElements>
@@ -118,6 +118,7 @@
 </template>
 
 <script setup>
+import { trans } from "@i18n";
 import { ref } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { XMarkIcon } from "@heroicons/vue/24/solid";
@@ -137,6 +138,8 @@ const props = defineProps({
 const form$ = ref(null)
 
 const submitForm = async (FormData, form$) => {
+    form$.messageBag.clear();
+    Object.values(form$.elements$).forEach(clearErrorsRecursive);
     // Using form$.requestData will EXCLUDE conditional elements and it 
     // will submit the form as Content-Type: application/json . 
     const requestData = form$.requestData
@@ -191,7 +194,7 @@ const handleError = (error, details, form$) => {
         case 'prepare':
             console.log(error) // Error object
 
-            form$.messageBag.append('Could not prepare form')
+            form$.messageBag.append(trans('Could not prepare form'))
             break
 
         // Error occured because response status is outside of 2xx
@@ -211,24 +214,24 @@ const handleError = (error, details, form$) => {
         case 'cancel':
             console.log(error) // Error object
 
-            form$.messageBag.append('Request cancelled')
+            form$.messageBag.append(trans('Request cancelled'))
             break
 
         // Some other errors happened (no response object)
         case 'other':
             console.log(error) // Error object
 
-            form$.messageBag.append('Couldn\'t submit form')
+            form$.messageBag.append(trans('Could not submit form'))
             break
     }
 }
 
 const handleCopyToClipboard = (text) => {
     navigator.clipboard.writeText(text).then(() => {
-        emit('success', 'success', { message: ['Copied to clipboard.'] });
+        emit('success', 'success', { message: [trans('Copied to clipboard.')] });
     }).catch((error) => {
         // Handle the error case
-        emit('error', { response: { data: { errors: { request: ['Failed to copy to clipboard.'] } } } });
+        emit('error', { response: { data: { errors: { request: [trans('Failed to copy to clipboard.')] } } } });
     });
 }
 

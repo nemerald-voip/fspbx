@@ -86,7 +86,7 @@ class ProFeaturesService
 
             return $result;
         } catch (\Throwable $e) {
-            $result['errors'][] = "Failed to uninstall modules: {$e->getMessage()}";
+            $result['errors'][] = __('Failed to uninstall modules: :error', ['error' => $e->getMessage()]);
             return $result;
         }
     }
@@ -122,7 +122,7 @@ class ProFeaturesService
                         $this->keygenApiService->activateMachine($licenseKey, $licenseId);
                     }
                 } else {
-                    $result['errors'][] = 'Max machine limit reached';
+                    $result['errors'][] = __('Max machine limit reached');
                     return $result;
                 }
             }
@@ -146,13 +146,13 @@ class ProFeaturesService
         try {
             $pro = $this->getProRow();
             if (!$pro) {
-                $result['errors'][] = 'ProFeatures row not found (slug=fspbx).';
+                $result['errors'][] = __('ProFeatures row not found (slug=fspbx).');
                 return $result;
             }
 
             $licenseKey = $licenseOverride ?: $pro->license;
             if (!$licenseKey) {
-                $result['errors'][] = 'No Pro Features license key found.';
+                $result['errors'][] = __('No Pro Features license key found.');
                 return $result;
             }
 
@@ -196,13 +196,13 @@ class ProFeaturesService
 
                     $latest = $this->findLatestReleaseForCode($releases, $code);
                     if (!$latest) {
-                        $result['errors'][] = "{$moduleName}: no release found for {$code}";
+                        $result['errors'][] = __(':module: no release found for :code', ['module' => $moduleName, 'code' => $code]);
                         continue;
                     }
 
                     $version = $latest['attributes']['version'] ?? null;
                     if (!$version) {
-                        $result['errors'][] = "{$moduleName}: latest release missing version";
+                        $result['errors'][] = __(':module: latest release missing version', ['module' => $moduleName]);
                         continue;
                     }
 
@@ -228,7 +228,7 @@ class ProFeaturesService
                     $result['updated'][] = "{$moduleName}: refreshed{$from} to latest ({$version})";
                 } catch (\Throwable $e) {
                     // Don't let one module kill the rest
-                    $result['errors'][] = "Module loop failure: {$e->getMessage()}";
+                    $result['errors'][] = __('Module processing failed: :error', ['error' => $e->getMessage()]);
                     continue;
                 }
             }
@@ -237,20 +237,20 @@ class ProFeaturesService
                 try {
                     Artisan::call('route:cache');
                 } catch (\Throwable $e) {
-                    $result['errors'][] = "route:cache failed: {$e->getMessage()}";
+                    $result['errors'][] = __('Failed to cache routes: :error', ['error' => $e->getMessage()]);
                 }
             }
 
             try {
                 $this->clearLicenseCaches($licenseKey);
             } catch (\Throwable $e) {
-                $result['errors'][] = "Failed clearing license caches: {$e->getMessage()}";
+                $result['errors'][] = __('Failed to clear license caches: :error', ['error' => $e->getMessage()]);
             }
 
             return $result;
         } catch (\Throwable $e) {
             // Absolute last line of defense — never throw.
-            $result['errors'][] = "syncModules crashed: {$e->getMessage()}";
+            $result['errors'][] = __('Module synchronization failed: :error', ['error' => $e->getMessage()]);
             return $result;
         }
     }
@@ -261,12 +261,12 @@ class ProFeaturesService
         try {
             // Don't overwrite a git-managed module folder
             if ($this->isGitManagedModule($moduleName)) {
-                return "skipped artifact deploy for {$moduleName} (git-managed dev module)";
+                return __('Skipped deployment for :module (managed by Git)', ['module' => $moduleName]);
             }
 
             $content = $this->keygenApiService->downloadArtifact($licenseKey, $version, $artifactName);
             if (!$content) {
-                return "failed to download artifact {$artifactName}";
+                return __('Failed to download :artifact', ['artifact' => $artifactName]);
             }
 
             $this->saveAndExtract($artifactName, $content, $moduleName);
@@ -275,7 +275,7 @@ class ProFeaturesService
 
             return true;
         } catch (\Throwable $e) {
-            return "deploy failed: {$e->getMessage()}";
+            return __('Deployment failed: :error', ['error' => $e->getMessage()]);
         }
     }
 
@@ -371,7 +371,7 @@ class ProFeaturesService
         // logger($licenseResponse);
 
         if (!$licenseResponse || !($licenseResponse['meta']['valid'] ?? false)) {
-            return ['__error' => 'Pro Features License invalid or expired.'];
+            return ['__error' => __('Pro Features License invalid or expired.')];
         }
 
         return $licenseResponse;
@@ -381,7 +381,7 @@ class ProFeaturesService
     {
         $entitlements = $this->keygenApiService->getEntitlementsByLicense($licenseResponse) ?? [];
         if (empty($entitlements)) {
-            return ['__error' => 'No entitlements found for this license.'];
+            return ['__error' => __('No entitlements found for this license.')];
         }
         return $entitlements;
     }
@@ -390,7 +390,7 @@ class ProFeaturesService
     {
         $releases = $this->keygenApiService->getReleases($licenseKey) ?? [];
         if (empty($releases)) {
-            return ['__error' => 'No releases found for this license.'];
+            return ['__error' => __('No releases found for this license.')];
         }
         return $releases;
     }

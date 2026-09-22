@@ -109,8 +109,10 @@ class DeviceKeyTemplateService
     private function copyName(?string $name): string
     {
         $base = trim((string) $name);
-        $name = $base === '' ? 'Device Key Template' : $base;
+        $name = $base === '' ? __('Device Key Template') : $base;
 
-        return substr($name, 0, 93) . ' (Copy)';
+        $suffix = ' (' . __('Copy') . ')';
+
+        return mb_substr($name, 0, max(0, 100 - mb_strlen($suffix))) . $suffix;
     }
 }

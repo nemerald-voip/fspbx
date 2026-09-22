@@ -3,10 +3,10 @@
 
     <div class="m-3">
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-            <template #title>Access Controls</template>
+            <template #title>{{ $t('Access Controls') }}</template>
 
             <template #subtitle>
-                Manage FreeSWITCH ACL lists used to allow or deny provider and network traffic.
+                {{ $t('Manage FreeSWITCH ACL lists used to allow or deny provider and network traffic.') }}
             </template>
 
             <template #filters>
@@ -17,19 +17,19 @@
                     <input type="text" v-model="filterData.search" name="desktop-search-access-controls"
                         id="desktop-search-access-controls"
                         class="block w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                        :placeholder="$t('Search')" @keydown.enter="handleSearchButtonClick" />
                 </div>
             </template>
 
             <template #action>
                 <button type="button" @click.prevent="reloadAccessControls"
                     class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                    Reload ACL
+                    {{ $t('Reload ACL') }}
                 </button>
 
                 <button v-if="permissions.create" type="button" @click.prevent="handleCreateButtonClick"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                    Create
+                    {{ $t('Create') }}
                 </button>
             </template>
 
@@ -47,32 +47,32 @@
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                     <div class="pl-4 flex items-center cursor-pointer select-none"
                         @click="handleSortRequest('access_control_name')">
-                        <span class="mr-2">Name</span>
+                        <span class="mr-2">{{ $t('Name') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'access_control_name' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'access_control_name' && sortData.order === 'desc'"
                             class="h-4 w-4 text-gray-500" />
                     </div>
                 </TableColumnHeader>
-                <TableColumnHeader header="Default Policy" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Rules" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Description" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t('Default Policy')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t('Rules')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t('Description')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
             </template>
 
             <template v-if="selectPageItems" v-slot:current-selection>
                 <td colspan="5">
                     <div class="text-sm text-center m-2">
-                        <span class="font-semibold">{{ selectedItems.length }}</span> items are selected.
+                        {{ $t(':count items are selected.', { count: selectedItems.length }) }}
                         <button v-if="!selectAll && selectedItems.length !== data.total"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleSelectAll">
-                            Select all {{ data.total }} items
+                            {{ $t('Select all :total items', { total: data.total }) }}
                         </button>
                         <button v-if="selectAll"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleClearSelection">
-                            Clear selection
+                            {{ $t('Clear selection') }}
                         </button>
                     </div>
                 </td>
@@ -102,14 +102,14 @@
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap justify-end">
-                                <button v-if="permissions.update" type="button" title="Edit"
-                                    aria-label="Edit access control" class="rounded-full"
+                                <button v-if="permissions.update" type="button" :title="$t('Edit')"
+                                    :aria-label="$t('Edit access control')" class="rounded-full"
                                     @click="handleEditButtonClick(row.access_control_uuid)">
                                     <PencilSquareIcon
                                         class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                 </button>
-                                <button v-if="permissions.destroy" type="button" title="Delete"
-                                    aria-label="Delete access control" class="rounded-full"
+                                <button v-if="permissions.destroy" type="button" :title="$t('Delete')"
+                                    :aria-label="$t('Delete access control')" class="rounded-full"
                                     @click="handleSingleItemDeleteRequest(row.access_control_uuid)">
                                     <TrashIcon
                                         class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
@@ -123,8 +123,8 @@
             <template #empty>
                 <div v-if="data.data.length === 0" class="text-center my-5">
                     <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
-                    <p class="mt-1 text-sm text-gray-500">Adjust your search and try again.</p>
+                    <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ $t('No results found') }}</h3>
+                    <p class="mt-1 text-sm text-gray-500">{{ $t('Adjust your search and try again.') }}</p>
                 </div>
             </template>
 
@@ -142,7 +142,7 @@
 
     <ConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
         @confirm="confirmAction" :header="confirmationHeader" :text="confirmationText"
-        :confirm-button-label="confirmationButtonLabel" cancel-button-label="Cancel" />
+        :confirm-button-label="confirmationButtonLabel" :cancel-button-label="$t('Cancel')" />
 
     <AccessControlForm :show="showForm" :options="itemOptions" :mode="formMode" :loading="loadingForm"
         :header="formHeader" @close="handleFormClose" @error="handleErrorResponse" @success="showNotification"
@@ -153,6 +153,7 @@
 </template>
 
 <script setup>
+import { trans } from "@i18n";
 import { computed, onMounted, ref } from "vue";
 import axios from "axios";
 import MainLayout from "../Layouts/MainLayout.vue";
@@ -188,9 +189,9 @@ const selectedItems = ref([]);
 const selectPageItems = ref(false);
 const confirmationModalTrigger = ref(false);
 const confirmAction = ref(null);
-const confirmationHeader = ref("Are you sure?");
+const confirmationHeader = ref(trans("Are you sure?"));
 const confirmationText = ref("");
-const confirmationButtonLabel = ref("Continue");
+const confirmationButtonLabel = ref(trans("Continue"));
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(false);
@@ -227,11 +228,11 @@ const bulkActions = computed(() => {
     const actions = [];
 
     if (permissions.create) {
-        actions.push({ id: "bulk_copy", label: "Copy", icon: "PencilSquareIcon" });
+        actions.push({ id: "bulk_copy", label: trans("Copy"), icon: "PencilSquareIcon" });
     }
 
     if (permissions.destroy) {
-        actions.push({ id: "bulk_delete", label: "Delete", icon: "TrashIcon" });
+        actions.push({ id: "bulk_delete", label: trans("Delete"), icon: "TrashIcon" });
     }
 
     return actions;
@@ -239,10 +240,10 @@ const bulkActions = computed(() => {
 
 const formHeader = computed(() => {
     if (formMode.value === "create") {
-        return "Create Access Control";
+        return trans("Create Access Control");
     }
 
-    return `Update Access Control - ${itemOptions.value?.item?.access_control_name || "Loading..."}`;
+    return trans("Update Access Control - :name", { name: itemOptions.value?.item?.access_control_name || trans("Loading...") });
 });
 
 onMounted(() => {
@@ -365,9 +366,9 @@ const handleClearSelection = () => {
 
 const handleSingleItemDeleteRequest = (uuid) => {
     showConfirmation({
-        header: "Confirm Deletion",
-        text: "This action will permanently delete the selected access control list.",
-        button: "Delete",
+        header: trans("Confirm Deletion"),
+        text: trans("This action will permanently delete the selected access control list."),
+        button: trans("Delete"),
         action: () => executeBulkDelete([uuid]),
     });
 };
@@ -375,18 +376,18 @@ const handleSingleItemDeleteRequest = (uuid) => {
 const handleBulkActionRequest = (action) => {
     if (action === "bulk_delete") {
         showConfirmation({
-            header: "Confirm Deletion",
-            text: "This action will permanently delete the selected access control list(s).",
-            button: "Delete",
+            header: trans("Confirm Deletion"),
+            text: trans("This action will permanently delete the selected access control list(s)."),
+            button: trans("Delete"),
             action: () => executeBulkDelete(),
         });
     }
 
     if (action === "bulk_copy") {
         showConfirmation({
-            header: "Confirm Copy",
-            text: "Copy the selected access control list(s)?",
-            button: "Copy",
+            header: trans("Confirm Copy"),
+            text: trans("Copy the selected access control list(s)?"),
+            button: trans("Copy"),
             action: () => executeBulkCopy(),
         });
     }
@@ -465,7 +466,7 @@ const handleErrorResponse = (error) => {
     }
 };
 
-const defaultLabel = (value) => value === "allow" ? "Allow" : "Deny";
+const defaultLabel = (value) => value === "allow" ? trans("Allow") : trans("Deny");
 
 const defaultBadgeProps = (value) => value === "allow"
     ? {

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Inertia\Inertia;
+use Illuminate\Http\Request;
 use App\Models\FaxQueues;
 use App\Models\UserLog;
 use Illuminate\Support\Carbon;
@@ -12,9 +13,6 @@ class UserLogsController extends Controller
 {
 
     public $model;
-    public $filters = [];
-    public $sortField;
-    public $sortOrder;
     protected $viewName = 'UserLogs';
     protected $searchable = ['remote_address', 'username', 'user.user_email'];
 
@@ -28,86 +26,58 @@ class UserLogsController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        // Check permissions
-        if (!userCheckPermission("user_log_view")) {
-            return redirect('/');
-        }
+        if (! userCheckPermission('user_log_view')) return redirect('/');
 
-        return Inertia::render(
-            $this->viewName,
-            [
-                'data' => function () {
-                    return $this->getData();
-                },
-                'startPeriod' => function () {
-                    return $this->filters['startPeriod'];
-                },
-                'endPeriod' => function () {
-                    return $this->filters['endPeriod'];
-                },
-                'timezone' => function () {
-                    return get_local_time_zone(session('domain_uuid'));
-                },
-                'routes' => [
-                    'current_page' => route('user-logs.index'),
-                    'select_all' => route('user-logs.select.all'),
-                ]
-
-            ]
-        );
-
+        $timezone = get_local_time_zone(session('domain_uuid'));
+        return Inertia::render($this->viewName, [
+            'startPeriod' => Carbon::now($timezone)->startOfDay()->utc()->toIso8601String(),
+            'endPeriod' => Carbon::now($timezone)->endOfDay()->utc()->toIso8601String(),
+            'timezone' => $timezone,
+            'pagination' => [
+                'per_page' => fspbx_pagination_per_page($request),
+                'per_page_options' => fspbx_pagination_options(),
+            ],
+            'routes' => [
+                'data_route' => route('user-logs.data'),
+                'select_all' => route('user-logs.select.all'),
+            ],
+        ]);
     }
 
-    public function getData($paginate = 50)
+    public function getData(Request $request)
     {
-        if (!empty(request('filterData.dateRange'))) {
-            $startPeriod = Carbon::parse(request('filterData.dateRange')[0])->setTimeZone('UTC');
-            $endPeriod = Carbon::parse(request('filterData.dateRange')[1])->setTimeZone('UTC');
-        } else {
-            $domain_uuid = session('domain_uuid');
-            $startPeriod = Carbon::now(get_local_time_zone($domain_uuid))->startOfDay()->setTimeZone('UTC');
-            $endPeriod = Carbon::now(get_local_time_zone($domain_uuid))->endOfDay()->setTimeZone('UTC');
-        }
+        abort_unless(userCheckPermission('user_log_view'), 403);
 
-        // Add sorting criteria
-        $this->sortField = request()->get('sortField', 'timestamp'); // Default to 'timestamp'
-        $this->sortOrder = request()->get('sortOrder', 'desc'); // Default to descending
+        return $this->builder($this->requestFilters($request), (string) $request->input('sort', '-timestamp'))
+            ->paginate(fspbx_pagination_per_page($request));
+    }
 
-        $this->filters = [
-            'startPeriod' => $startPeriod,
-            'endPeriod' => $endPeriod,
-            // 'direction' => request('filterData.direction') ?? null,
-            'search' => request('filterData.search') ?? null,
+    private function requestFilters(Request $request): array
+    {
+        $request->validate([
+            'filter.dateRange' => ['nullable', 'array', 'size:2'],
+            'filter.dateRange.0' => ['required_with:filter.dateRange', 'date'],
+            'filter.dateRange.1' => ['required_with:filter.dateRange', 'date', 'after_or_equal:filter.dateRange.0'],
+            'filter.search' => ['nullable', 'string'],
+        ]);
+        $range = $request->input('filter.dateRange');
+        $timezone = get_local_time_zone(session('domain_uuid'));
+
+        return [
+            'startPeriod' => $range ? Carbon::parse($range[0])->utc() : Carbon::now($timezone)->startOfDay()->utc(),
+            'endPeriod' => $range ? Carbon::parse($range[1])->utc() : Carbon::now($timezone)->endOfDay()->utc(),
+            'search' => $request->input('filter.search'),
+            'showGlobal' => $request->boolean('filter.showGlobal'),
         ];
-
-        // Check if showGlobal parameter is present and not empty
-        if (!empty(request('filterData.showGlobal'))) {
-            $this->filters['showGlobal'] = request('filterData.showGlobal') === 'true';
-        } else {
-            $this->filters['showGlobal'] = null;
-        }
-
-        $data = $this->builder($this->filters);
-
-        // Apply pagination if requested
-        if ($paginate) {
-            $data = $data->paginate($paginate);
-        } else {
-            $data = $data->get(); // This will return a collection
-        }
-
-        // logger($data);
-
-        return $data;
     }
 
     /**
      * @param  array  $filters
      * @return Builder
      */
-    public function builder(array $filters = [])
+    public function builder(array $filters = [], string $sort = '-timestamp')
     {
         $data =  $this->model::query();
         if (isset($filters['showGlobal']) && $filters['showGlobal']) {
@@ -115,7 +85,7 @@ class UserLogsController extends Controller
                 $query->select('domain_uuid', 'domain_name', 'domain_description'); // Specify the fields you need
             }]);
             // Access domains through the session and filter devices by those domains
-            $domainUuids = Session::get('domains')->pluck('domain_uuid');
+            $domainUuids = collect(Session::get('domains', []))->pluck('domain_uuid');
             $data->whereHas('domain', function ($query) use ($domainUuids) {
                 $query->whereIn($this->model->getTable() . '.domain_uuid', $domainUuids);
             });
@@ -142,6 +112,7 @@ class UserLogsController extends Controller
 
         if (is_array($filters)) {
             foreach ($filters as $field => $value) {
+                if ($value === null || $value === '') continue;
                 if (method_exists($this, $method = "filter" . ucfirst($field))) {
                     $this->$method($data, $value);
                 }
@@ -149,7 +120,12 @@ class UserLogsController extends Controller
         }
 
         // Apply sorting
-        $data->orderBy($this->sortField, $this->sortOrder);
+        $field = ltrim($sort, '-');
+        if (! in_array($field, ['timestamp', 'username', 'email', 'type', 'result', 'remote_address'], true)) {
+            $sort = '-timestamp';
+            $field = 'timestamp';
+        }
+        $data->orderBy($field, str_starts_with($sort, '-') ? 'desc' : 'asc');
 
         return $data;
     }
@@ -256,31 +232,15 @@ class UserLogsController extends Controller
      * @throws \Psr\Container\ContainerExceptionInterface
      * @throws \Psr\Container\NotFoundExceptionInterface
      */
-    public function selectAll()
+    public function selectAll(Request $request)
     {
-        try {
-            if (request()->get('showGlobal')) {
-                $uuids = $this->model::get($this->model->getKeyName())->pluck($this->model->getKeyName());
-            } else {
-                $uuids = $this->model::where('domain_uuid', session('domain_uuid'))
-                    ->get($this->model->getKeyName())->pluck($this->model->getKeyName());
-            }
+        abort_unless(userCheckPermission('user_log_view'), 403);
 
-            // Return a JSON response indicating success
-            return response()->json([
-                'messages' => ['success' => ['All items selected']],
-                'items' => $uuids,
-            ], 200);
-        } catch (\Exception $e) {
-            logger($e);
-            // Handle any other exception that may occur
-            return response()->json([
-                'success' => false,
-                'errors' => ['server' => ['Failed to select all items']]
-            ], 500); // 500 Internal Server Error for any other errors
-        }
+        return response()->json([
+            'messages' => ['success' => [__('All items selected')]],
+            'items' => $this->builder($this->requestFilters($request))->pluck('user_log_uuid'),
+        ]);
     }
-    
 
     public function getStatusOptions()
     {

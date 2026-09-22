@@ -24,14 +24,14 @@
                 <div class="shadow sm:rounded-md">
                     <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
                         <div>
-                            <h3 class="text-base font-semibold leading-6 text-gray-900">General</h3>
-                            <p class="mt-1 text-sm text-gray-500">Update speed dial details.</p>
+                            <h3 class="text-base font-semibold leading-6 text-gray-900">{{ $t('General') }}</h3>
+                            <p class="mt-1 text-sm text-gray-500">{{ $t('Update speed dial details.') }}</p>
                         </div>
 
                         <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
 
                             <div class="col-span-3 sm:col-span-3">
-                                <LabelInputRequired target="contact_organization" label="Speed Dial Name" class="truncate" />
+                                <LabelInputRequired target="contact_organization" :label="$t('Speed Dial Name')" class="truncate" />
                                 <InputField v-model="form.contact_organization" type="text" name="contact_organization"
                                     id="contact_organization" class="mt-2" :error="!!errors?.contact_organization" />
                                 <div v-if="errors?.contact_organization" class="mt-2 text-xs text-red-600">
@@ -40,7 +40,7 @@
                             </div>
 
                             <div class="col-span-3 sm:col-span-3">
-                                <LabelInputRequired target="destination_number" label="Destination Number"
+                                <LabelInputRequired target="destination_number" :label="$t('Destination Number')"
                                     class="truncate" />
                                 <InputField v-model="form.destination_number" type="text" name="destination_number"
                                     id="destination_number" class="mt-2" :error="!!errors?.destination_number" />
@@ -50,7 +50,7 @@
                             </div>
 
                             <div class="col-span-3 sm:col-span-3">
-                                <LabelInputOptional target="phone_speed_dial" label="Speed Dial Code" class="truncate" />
+                                <LabelInputOptional target="phone_speed_dial" :label="$t('Speed Dial Code')" class="truncate" />
                                 <InputField v-model="form.phone_speed_dial" type="text" name="phone_speed_dial"
                                     id="phone_speed_dial" class="mt-2" :error="!!errors?.phone_speed_dial" />
                                 <div v-if="errors?.phone_speed_dial" class="mt-2 text-xs text-red-600">
@@ -63,7 +63,7 @@
                 </div>
                 <div class="bg-gray-100 px-4 py-3 text-right sm:px-6">
                     <button type="submit"
-                        class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Save</button>
+                        class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">{{ $t('Save') }}</button>
                 </div>
 
             </div>
@@ -73,7 +73,7 @@
                 <div class="shadow sm:rounded-md">
                     <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
                         <div>
-                            <h3 class="text-base font-semibold leading-6 text-gray-900">Advanced Settings</h3>
+                            <h3 class="text-base font-semibold leading-6 text-gray-900">{{ $t('Advanced Settings') }}</h3>
                             <!-- <p class="mt-1 text-sm text-gray-500">Update contact details.</p> -->
                         </div>
 
@@ -81,20 +81,20 @@
 
                             <div class="col-span-6 sm:col-span-3 space-y-3">
                                 <div class="flex items-center gap-1">
-                                    <LabelInputOptional target="" label="Assigned Users" />
+                                    <LabelInputOptional target="" :label="$t('Assigned Users')" />
 
                                     <Popover>
                                         <template v-slot:popover-button>
                                             <InformationCircleIcon class="h-5 w-5 text-blue-500" />
                                         </template>
                                         <template v-slot:popover-panel>
-                                            <div>This parameter enables the automatic provisioning of speed dial entries on phones that are assigned to the same users</div>
+                                            <div>{{ $t('This parameter enables the automatic provisioning of speed dial entries on phones that are assigned to the same users') }}</div>
                                         </template>
                                     </Popover>
                                 </div>
 
                                 <ComboBox :options="options.users" :selectedItem="options.speed_dial_users" :search="true"
-                                    multiple placeholder="Choose Assigned User(s)" @update:model-value="handleUserUpdate"
+                                    multiple :placeholder="$t('Choose Assigned User(s)')" @update:model-value="handleUserUpdate"
                                     :error="errors?.user_uuid && errors.user_uuid.length > 0" />
                                 <div v-if="errors?.user_uuid" class="mt-2 text-xs text-red-600">
                                     {{ errors.user_uuid[0] }}
@@ -107,7 +107,7 @@
 
                 <div class="bg-gray-100 px-4 py-3 text-right sm:px-6">
                     <button type="submit"
-                        class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Save</button>
+                        class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">{{ $t('Save') }}</button>
                 </div>
 
 

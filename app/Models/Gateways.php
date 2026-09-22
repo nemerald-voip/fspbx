@@ -107,12 +107,12 @@ class Gateways extends Model
 
     public function getEnabledLabelAttribute(): string
     {
-        return $this->enabled === 'true' ? 'Enabled' : 'Disabled';
+        return $this->enabled === 'true' ? __('Enabled') : __('Disabled');
     }
 
     public function getRegisterLabelAttribute(): string
     {
-        return $this->register === 'true' ? 'Register' : 'No Register';
+        return $this->register === 'true' ? __('Register') : __('No Register');
     }
 
 }

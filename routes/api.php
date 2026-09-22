@@ -8,6 +8,8 @@ use App\Http\Controllers\AiProviderIntegrationController;
 use App\Http\Controllers\AiToolController;
 use App\Http\Controllers\ActiveConferenceController;
 use App\Http\Controllers\ActiveCallsController;
+use App\Http\Controllers\SansayActiveCallsController;
+use App\Http\Controllers\SansayRegistrationsController;
 use App\Http\Controllers\Api\EmergencyCallController;
 use App\Http\Controllers\Api\HolidayHoursController;
 use App\Http\Controllers\Api\LocationsController;
@@ -38,12 +40,15 @@ use App\Http\Controllers\PhonebookManagerController;
 use App\Http\Controllers\DialplanController;
 use App\Http\Controllers\DefaultSettingsController;
 use App\Http\Controllers\DomainController;
+use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\WhitelistedNumbersController;
+use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\DomainGroupsController;
+use App\Http\Controllers\ProFeaturesController;
 use App\Http\Controllers\DomainSettingsController;
 use App\Http\Controllers\DynamicRouteController;
 use App\Http\Controllers\EmailLogsController;
 use App\Http\Controllers\AiAgentLogsController;
-use App\Http\Controllers\EmailQueueController;
 use App\Http\Controllers\LdapDirectoryController;
 use App\Http\Controllers\ScheduledJobCoordinationController;
 use App\Http\Controllers\ScheduledJobPeerController;
@@ -318,6 +323,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
         ->where('file_name', '(.*)');
 
     // Business Hours
+    Route::get('business-hours/data', [BusinessHoursController::class, 'getData'])->name('business-hours.data');
     Route::post('business-hours', [BusinessHoursController::class, 'store'])->name('business-hours.store');
     Route::put('business-hours/{business_hour}', [BusinessHoursController::class, 'update'])->name('business-hours.update');
     Route::post('business-hours/item-options', [BusinessHoursController::class, 'getItemOptions'])->name('business-hours.item.options');
@@ -356,7 +362,29 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::delete('menus/{menu}/items/{menuItem}', [MenuManagerController::class, 'destroyItem'])->name('menus.items.destroy');
     Route::post('menus/{menu}/items/bulk-delete', [MenuManagerController::class, 'bulkDestroyItems'])->name('menus.items.bulk-destroy');
 
+    // Activity Log
+    Route::get('activities/data', [ActivityLogController::class, 'getData'])->name('activities.data');
+
+    // Whitelisted Numbers
+    Route::get('whitelisted-numbers/data', [WhitelistedNumbersController::class, 'getData'])->name('whitelisted-numbers.data');
+    Route::post('whitelisted-numbers/select-all', [WhitelistedNumbersController::class, 'selectAll'])->name('whitelisted-numbers.select.all');
+    Route::post('whitelisted-numbers/bulk-delete', [WhitelistedNumbersController::class, 'bulkDelete'])->name('whitelisted-numbers.bulk.delete');
+    Route::resource('whitelisted-numbers', WhitelistedNumbersController::class)->only(['store', 'destroy']);
+
+    // Reports
+    Route::get('reports/data', [ReportsController::class, 'getData'])->name('reports.data');
+    Route::post('reports/generate', [ReportsController::class, 'store'])->name('reports.generate');
+
+    // Pro Features
+    Route::get('pro-features/data', [ProFeaturesController::class, 'getData'])->name('pro-features.data');
+    Route::post('pro-features/select-all', [ProFeaturesController::class, 'selectAll'])->name('pro-features.select.all');
+    Route::post('pro-features/item-options', [ProFeaturesController::class, 'getItemOptions'])->name('pro-features.item.options');
+    Route::post('pro-features/install', [ProFeaturesController::class, 'install'])->name('pro-features.install');
+    Route::post('pro-features/uninstall', [ProFeaturesController::class, 'uninstall'])->name('pro-features.uninstall');
+    Route::resource('pro-features', ProFeaturesController::class)->only(['update', 'destroy']);
+
     // Domain Groups
+    Route::get('domain-groups/data', [DomainGroupsController::class, 'getData'])->name('domain-groups.data');
     Route::post('domain-groups', [DomainGroupsController::class, 'store'])->name('domain-groups.store');
     Route::put('domain-groups/{domain_group}', [DomainGroupsController::class, 'update'])->name('domain-groups.update');
     Route::post('domain-groups/item-options', [DomainGroupsController::class, 'getItemOptions'])->name('domain-groups.item.options');
@@ -364,6 +392,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('domain-groups/select-all', [DomainGroupsController::class, 'selectAll'])->name('domain-groups.select.all');
 
     // Users
+    Route::get('users/data', [UsersController::class, 'getData'])->name('users.data');
     Route::post('users', [UsersController::class, 'store'])->name('users.store');
     Route::put('users/{user}', [UsersController::class, 'update'])->name('users.update');
     Route::post('users/item-options', [UsersController::class, 'getItemOptions'])->name('users.item.options');
@@ -466,6 +495,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::get('/inbound-webhooks/data', [InboundWebhooksController::class, 'getData'])->name('inbound-webhooks.data');
 
     // User logs
+    Route::get('user-logs/data', [UserLogsController::class, 'getData'])->name('user-logs.data');
     Route::post('user-logs/select-all', [UserLogsController::class, 'selectAll'])->name('user-logs.select.all');
 
     // Database Transactions
@@ -524,6 +554,32 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/call-webhooks/test', [CallWebhookController::class, 'test'])->name('call-webhooks.test');
     Route::post('/call-webhooks/rotate-secret', [CallWebhookController::class, 'rotateSecret'])->name('call-webhooks.rotate-secret');
     Route::delete('/call-webhooks', [CallWebhookController::class, 'destroy'])->name('call-webhooks.destroy');
+
+    // Ringotel account settings
+    Route::get('apps/data', [AppsController::class, 'getData'])->name('apps.data');
+    Route::post('apps/select-all', [AppsController::class, 'selectAll'])->name('apps.select.all');
+    Route::post('apps/item-options', [AppsController::class, 'getItemOptions'])->name('apps.item.options');
+    Route::post('/apps/organization/create', [AppsController::class, 'createOrganization'])->name('apps.organization.create');
+    Route::put('/apps/organization/update', [AppsController::class, 'updateOrganization'])->name('apps.organization.update');
+    Route::post('/apps/organization/destroy', [AppsController::class, 'destroyOrganization'])->name('apps.organization.destroy');
+    Route::post('/apps/organization/all', [AppsController::class, 'getOrganizations'])->name('apps.organization.all');
+    Route::post('/apps/organization/pair', [AppsController::class, 'pairOrganization'])->name('apps.organization.pair');
+    Route::post('/apps/connection/create', [AppsController::class, 'createConnection'])->name('apps.connection.create');
+    Route::put('/apps/connection/update', [AppsController::class, 'updateConnection'])->name('apps.connection.update');
+    Route::post('/apps/connection/delete', [AppsController::class, 'destroyConnection'])->name('apps.connection.destroy');
+    Route::post('/apps/token/get', [AppsController::class, 'getToken'])->name('apps.token.get');
+    Route::post('/apps/token/update', [AppsController::class, 'updateToken'])->name('apps.token.update');
+    Route::post('/apps/sync-users', [AppsController::class, 'syncUsers'])->name('apps.users.sync');
+
+    // Sansay Registrations
+    Route::get('sansay/registrations/data', [SansayRegistrationsController::class, 'getData'])->name('sansay.registrations.data');
+    Route::post('sansay/registrations/select-all', [SansayRegistrationsController::class, 'selectAll'])->name('sansay.registrations.select.all');
+    Route::post('sansay/registrations/delete', [SansayRegistrationsController::class, 'destroy'])->name('sansay.registrations.delete');
+
+    // Sansay Active Calls
+    Route::get('/sansay/active-calls/data', [SansayActiveCallsController::class, 'getData'])->name('sansay.active-calls.data');
+    Route::post('/sansay/active-calls/select-all', [SansayActiveCallsController::class, 'selectAll'])->name('sansay.active-calls.select.all');
+    Route::post('/sansay/active-calls/delete', [SansayActiveCallsController::class, 'destroy'])->name('sansay.active-calls.delete');
 
     // Active Calls
     Route::get('/active-calls/data', [ActiveCallsController::class, 'getData'])->name('active-calls.data');
@@ -850,12 +906,6 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     // Route::post('/contacts/import', [ContactsController::class, 'import'])->name('contacts.import');
     // Route::get('/contacts/template/download', [ContactsController::class, 'downloadTemplate'])->name('contacts.download.template');
     // Route::get('/contacts-export', [ContactsController::class, 'export'])->name('contacts.export');
-
-    // Email Queue
-    Route::get('/emailqueue/data', [EmailQueueController::class, 'getData'])->name('emailqueue.data');
-    Route::post('/emailqueue/select-all', [EmailQueueController::class, 'selectAll'])->name('emailqueue.select.all');
-    Route::post('/emailqueue/bulk-delete', [EmailQueueController::class, 'bulkDelete'])->name('emailqueue.bulk.delete');
-    Route::post('/emailqueue/update-status', [EmailQueueController::class, 'updateStatus'])->name('emailqueue.update-status');
 
     //Organizations
     Route::get('/organizations', [OrganizationController::class, 'index'])->name('organizations.index');
