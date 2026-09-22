@@ -1,4 +1,4 @@
-{{-- version: 1.1.9 --}}
+{{-- version: 1.1.10 --}}
 
 @switch($flavor)
 
@@ -6850,6 +6850,11 @@ PVALUES;
         $set('P6714', $settings['grandstream_phonebook_password'] ?? '');
     }
 
+    $natTraversal = trim((string) ($settings['grandstream_nat_traversal'] ?? ''));
+    if (!in_array($natTraversal, ['0', '1', '2', '3', '4', '5'], true)) {
+        $natTraversal = '2';
+    }
+
     $accountCodes = [
         1 => ['active' => 'P271', 'account' => 'P270', 'server' => 'P47', 'outbound' => 'P48',  'backupOutbound' => 'P2333', 'blf' => 'P2375', 'user' => 'P35',  'auth' => 'P36',  'password' => 'P34',  'name' => 'P3',   'voicemail' => 'P33',  'dns' => 'P103', 'nat' => 'P52',  'register' => 'P31',  'expires' => 'P32',  'subscribe' => 'P26051', 'keepAlive' => 'P2397', 'keepInterval' => 'P2398', 'keepMaxLost' => 'P2399', 'localPort' => 'P40',  'retry' => 'P138', 'transport' => 'P130', 'mwi' => 'P99',  'srtp' => 'P183', 'dialPlan' => 'P290', 'features' => 'P191', 'xGrandstream' => 'P26054', 'pani' => 'P26058', 'pei' => 'P26059'],
         2 => ['active' => 'P401', 'account' => 'P417', 'server' => 'P402', 'outbound' => 'P403', 'backupOutbound' => 'P2433', 'blf' => 'P2475', 'user' => 'P404', 'auth' => 'P405', 'password' => 'P406', 'name' => 'P407', 'voicemail' => 'P426', 'dns' => 'P408', 'nat' => 'P414', 'register' => 'P410', 'expires' => 'P412', 'subscribe' => 'P26151', 'keepAlive' => 'P2497', 'keepInterval' => 'P2498', 'keepMaxLost' => 'P2499', 'localPort' => 'P413', 'retry' => 'P471', 'transport' => 'P448', 'mwi' => 'P415', 'srtp' => 'P443', 'dialPlan' => 'P459', 'features' => 'P420', 'xGrandstream' => 'P26154', 'pani' => 'P26158', 'pei' => 'P26159'],
@@ -6884,7 +6889,7 @@ PVALUES;
         $set($codes['name'], $displayName);
         $set($codes['voicemail'], $settings['voicemail_number'] ?? '');
         $set($codes['dns'], $settings['grandstream_dns_mode'] ?? '0');
-        $set($codes['nat'], '2');
+        $set($codes['nat'], $natTraversal);
         $set($codes['register'], '1');
         $set($codes['expires'], $registerExpires);
         $set($codes['subscribe'], '60');

@@ -1,4 +1,4 @@
-{{-- version: 1.0.9 --}}
+{{-- version: 1.0.10 --}}
 
 @switch($flavor)
 
@@ -75,7 +75,19 @@
 
 		<!-- NAT Traversal -->
 		<!-- No, STUN, KeepAlive, UPnP, Auto, VPN -->
+		@if (trim((string) ($settings['grandstream_nat_traversal'] ?? '')) === '0')
+		<item name="account.{{ $n }}.network.natTraversal">No</item>
+		@elseif (trim((string) ($settings['grandstream_nat_traversal'] ?? '')) === '1')
+		<item name="account.{{ $n }}.network.natTraversal">STUN</item>
+		@elseif (trim((string) ($settings['grandstream_nat_traversal'] ?? '')) === '3')
+		<item name="account.{{ $n }}.network.natTraversal">UPnP</item>
+		@elseif (trim((string) ($settings['grandstream_nat_traversal'] ?? '')) === '4')
+		<item name="account.{{ $n }}.network.natTraversal">Auto</item>
+		@elseif (trim((string) ($settings['grandstream_nat_traversal'] ?? '')) === '5')
+		<item name="account.{{ $n }}.network.natTraversal">VPN</item>
+		@else
 		<item name="account.{{ $n }}.network.natTraversal">KeepAlive</item>
+		@endif
 
 		<!-- Support Rport (RFC 3581) -->
 		<!-- Yes, No -->
