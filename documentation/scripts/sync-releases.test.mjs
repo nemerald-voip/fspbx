@@ -5,7 +5,7 @@ import path from 'node:path';
 import test from 'node:test';
 import { compile } from '@mdx-js/mdx';
 import yaml from 'js-yaml';
-import { fetchReleases, renderRelease, syncReleases } from './sync-releases.mjs';
+import { createReleasePreview, fetchReleases, renderRelease, syncReleases } from './sync-releases.mjs';
 
 const release = (id, changes = {}) => ({
     id,
@@ -91,6 +91,33 @@ test('refuses to overwrite a manual post with a matching release filename', asyn
     await writeFile(path.join(directory, '1.md'), 'Manual content');
     await assert.rejects(syncReleases({ directory, fetchImpl: async () => response([release(1)]) }), /manual blog post/);
     assert.equal(await readFile(path.join(directory, '1.md'), 'utf8'), 'Manual content');
+});
+
+test('extracts the opening paragraph without headings or Markdown formatting and preserves the complete notes', () => {
+    const body = '## What\'s new\n\n### Queue callbacks\n\nThe updated **Contact Center module** lets callers\nrequest a [callback](https://example.com) instead of remaining on hold.\n\n### Other changes\n\nAll the later release details.';
+    const post = renderRelease(release(1, { body }));
+    const metadata = yaml.load(post.split('---\n')[1]);
+    const expected = 'The updated Contact Center module lets callers request a callback instead of remaining on hold.';
+    assert.equal(metadata.release_preview, expected);
+    assert.equal(metadata.description, expected);
+    assert.ok(post.endsWith(`${body}\n`));
+});
+
+test('previews the first three changes for older releases that start with a list', () => {
+    assert.equal(createReleasePreview('##What\'s new\r\n* Yealink RPS integration\r\n* Improved **device filtering**\r\n* Updated `T7` templates\r\n* More changes'),
+        'Yealink RPS integration; Improved device filtering; Updated T7 templates');
+});
+
+test('caps long previews at a word boundary and skips non-text content', () => {
+    const text = 'Callers can request a callback. '.repeat(20).trim();
+    const preview = createReleasePreview(text);
+    assert.ok(preview.length <= 300);
+    assert.ok(preview.endsWith('…'));
+    assert.ok(text.startsWith(`${preview.slice(0, -1)} `));
+    assert.equal(createReleasePreview('<!-- hidden -->\n\n![Screenshot](image.png)\n\n```sh\nignore this command\n```\n\nUse &lt;10 with `account_id`.'),
+        'Use <10 with account_id.');
+    assert.equal(createReleasePreview(null), 'See the GitHub release for details.');
+    assert.equal(createReleasePreview('## Heading only'), 'See the GitHub release for details.');
 });
 
 test('escapes front matter and compiles GitHub Markdown without evaluating MDX expressions', async () => {
