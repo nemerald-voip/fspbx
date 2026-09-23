@@ -10,6 +10,7 @@ use App\Models\DomainSettings;
 use Illuminate\Console\Command;
 use App\Jobs\SendS3UploadReport;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Symfony\Component\Process\Process;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 
@@ -82,6 +83,17 @@ class UploadCallRecordingsToS3Storage extends Command
             $originalRecordPath = $rec->record_path;
             $originalRecordName = $rec->record_name;
             $recordingFile = rtrim($originalRecordPath, '/') . '/' . $originalRecordName;
+
+            // Prepared Contact Center hold audio shares the recordings disk but is
+            // not a call recording. Uploading it would delete the source segments a
+            // published revision still plays from, so refuse before any file work.
+            if ($this->isManagedQueueAudio($recordingFile)) {
+                $failed[] = [
+                    'msg' => 'Skipped: path is Contact Center hold audio, not a call recording.',
+                    'name' => $originalRecordName,
+                ];
+                return;
+            }
 
             // 1. Check if file exists. 
             // If it is missing, it might be because a sibling CDR record sharing the same file
@@ -212,6 +224,25 @@ class UploadCallRecordingsToS3Storage extends Command
         }
     }
 
+
+    /**
+     * True for {recordings root}/{account}/contact-center-audio/... which holds
+     * compiled queue hold audio. An account whose own name is
+     * "contact-center-audio" records into .../contact-center-audio/archive/...,
+     * so the segment is matched by position rather than anywhere in the path.
+     */
+    protected function isManagedQueueAudio(string $file): bool
+    {
+        $root = rtrim(Storage::disk('recordings')->path(''), '/') . '/';
+
+        if (! str_starts_with($file, $root)) {
+            return false;
+        }
+
+        $segments = explode('/', substr($file, strlen($root)));
+
+        return ($segments[1] ?? null) === 'contact-center-audio';
+    }
 
     protected function getTimeZonesByDomain(array $domainUuids)
     {

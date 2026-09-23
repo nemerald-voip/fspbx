@@ -146,21 +146,10 @@ class FSPBXInitialDBSeed extends Command
         // Step 14: Set Correct Permissions
         $this->updatePermissions();
 
-        // Step 15: Migrate SQLite to RAM
-        $this->info("Migrating SQLite to RAM...");
-        $this->call('fs:migrate-sqlite-to-ram');
-        $this->info("SQLite migration to RAM completed.");
-
         // Step 16: Set App version
         Artisan::call('version:set', ['version' => config('version.release'), '--force' => true]);
         Artisan::call('config:cache');
         $this->info("App version is " . config('version.release') . ".");
-
-        // Step 17: Restart FreeSWITCH
-        $this->restartFreeSwitch();
-
-        // Step 17a: Restart Supervisor
-        $this->restartSupervisorJobs();
 
         DefaultSettings::where('default_setting_category', 'switch')->delete();
         $this->runUpgradeDefaults();
@@ -175,6 +164,18 @@ class FSPBXInitialDBSeed extends Command
         $this->info("Seeding recommended settings...");
         Artisan::call('db:seed', ['--class' => 'DeviceVendorsSeeder', '--force' => true]);
         $this->info("Recommended settings seeded successfully.");
+
+        // Finalize storage and generated XML after all settings have been seeded.
+        // Fresh setup must also work before FreeSWITCH/ESL is running.
+        $this->info("Migrating SQLite to RAM...");
+        if ($this->call('fs:migrate-sqlite-to-ram') !== self::SUCCESS) {
+            $this->error('FreeSWITCH configuration preparation failed. FreeSWITCH was not restarted.');
+
+            return self::FAILURE;
+        }
+
+        $this->restartFreeSwitch();
+        $this->restartSupervisorJobs();
 
         // Step 20: Display Installation Summary
         $this->displayCompletionMessage($username, $password);

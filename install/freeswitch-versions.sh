@@ -1,0 +1,6 @@
+#!/bin/bash
+# Shared by the source installer and the Debian package builder.
+FREESWITCH_VERSION=${FREESWITCH_VERSION:-v1.11}
+SOFIA_SIP_VERSION=${SOFIA_SIP_VERSION:-v1.13.18}
+SPANDSP_VERSION=${SPANDSP_VERSION:-v3.1.1}
+LIBKS_VERSION=${LIBKS_VERSION:-v2.0.11}

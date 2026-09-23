@@ -1,306 +1,98 @@
 #!/bin/bash
 
-# Honor the Bash requirement even when invoked as `sh install_freeswitch.sh`.
 if [ -z "${BASH_VERSION:-}" ]; then
     exec /bin/bash "$0" "$@"
 fi
+set -Eeuo pipefail
 
-# Set error handling
-set -e
-
-# Function to print success messages
-print_success() {
-    echo -e "\e[32m$1 \e[0m"
-}
-
-# Function to print error messages
-print_error() {
-    echo -e "\e[31m$1 \e[0m"
-}
-
+source "$(dirname -- "$(readlink -f "$0")")/freeswitch-common.sh"
 FRESH_INSTALL=false
-RESTART_PREPARATION_COMPLETE=true
+case "${1:-}" in
+    --fresh-install) FRESH_INSTALL=true; shift ;;
+esac
+[[ $# == 0 ]] || fs_die 'Usage: install_freeswitch.sh [--fresh-install]'
+fs_preflight
+fs_protect_services
 
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        --fresh-install)
-            FRESH_INSTALL=true
-            ;;
-        *)
-            print_error "Unknown option: $1"
-            exit 1
-            ;;
-    esac
-    shift
-done
+JOBS=${JOBS:-$(getconf _NPROCESSORS_ONLN)}
+BUILD_ROOT=${BUILD_ROOT:-/usr/src/fspbx-freeswitch-builds}
+mkdir -p "$BUILD_ROOT"
+BUILD_DIR=$(mktemp -d "$BUILD_ROOT/build-XXXXXX")
+fs_info "Building FreeSWITCH $FREESWITCH_VERSION in $BUILD_DIR"
+fs_info 'Avoid editing FreeSWITCH configuration until this installation finishes.'
 
-# Detect OS codename
-OS_CODENAME=$(lsb_release -sc 2>/dev/null || echo "")
-echo "Detected OS_CODENAME=$OS_CODENAME"
+apt-get update
+fs_apt_install autoconf automake build-essential libtool libtool-bin pkg-config \
+    git ca-certificates cmake ccache python3 rsync uuid-dev libssl-dev libpcre2-dev \
+    libncurses-dev libjpeg-dev flac libgdbm-dev libdb-dev gettext \
+    libpq-dev liblua5.2-dev libtiff-dev libperl-dev libcurl4-openssl-dev libsqlite3-dev \
+    libspeexdsp-dev libspeex-dev libldns-dev libedit-dev libopus-dev libopencore-amrnb-dev \
+    libmemcached-dev libhiredis-dev libshout3-dev libmpg123-dev libmp3lame-dev \
+    yasm nasm libsndfile1-dev libuv1-dev libvpx-dev libavformat-dev libavcodec-dev \
+    libavutil-dev libswscale-dev libswresample-dev libyuv-dev libvlc-dev flite1-dev \
+    sox libsox-fmt-all sqlite3 unzip
 
-# SW Token Handling
-if [[ "$OS_CODENAME" == "trixie" ]]; then
-
-  ENCODED_SW_TOKEN="cGF0X2V0MW1MckRhR2hiV0NOYTI4TWJMYXp4Yw=="
-
-  _b64_decode() {
-
-    # read from stdin and decode
-    if base64 --help >/dev/null 2>&1; then
-      base64 --decode
-    else
-      base64 -d
-    fi
-  }
-
-if [[ -n "$ENCODED_SW_TOKEN" ]]; then
-  SW_TOKEN="$(printf '%s' "$ENCODED_SW_TOKEN" | _b64_decode)"
-else
-  printf "Enter your Signalwire token: " >/dev/tty
-  read -rs SW_TOKEN </dev/tty
-  printf "\n" >/dev/tty
-  if [[ -z "$SW_TOKEN" ]]; then
-    echo "No token provided. Exiting." >&2
-    exit 1
-  fi
-fi
-
-export SW_TOKEN
-
-fi
-
-print_success "Starting FreeSWITCH Installation (Version 1.11)..."
-
-# Detect OS version
-os_codename=$(lsb_release -c -s)
-
-print_success "Detected OS Codename: $os_codename"
-
-# Upgrade packages
-apt update
-
-# Install dependencies
-apt install -y autoconf automake devscripts g++ git-core libncurses5-dev libtool make libjpeg-dev \
-               pkg-config flac libgdbm-dev libdb-dev gettext sudo equivs git dpkg-dev \
-               libpq-dev liblua5.2-dev libtiff5-dev libperl-dev libcurl4-openssl-dev libsqlite3-dev \
-               devscripts libspeexdsp-dev libspeex-dev libldns-dev libedit-dev libopus-dev \
-               libmemcached-dev libhiredis-dev libshout3-dev libmpg123-dev libmp3lame-dev yasm nasm libsndfile1-dev \
-               libuv1-dev libvpx-dev libavformat-dev libswscale-dev libvlc-dev \
-               sox libsox-fmt-all sqlite3 unzip cmake uuid-dev libssl-dev
-
-    if [[ "$OS_CODENAME" == "bookworm" ]]; then
-        apt install -y mlocate python3-distutils
-	fi
-
-    if [[ "$OS_CODENAME" == "trixie" ]]; then
-        apt install -y plocate python3-setuptools
-	fi
-
-print_success "All required dependencies installed."
-
-# Install additional required libraries
-print_success "Installing required external libraries..."
-
-# Install libks
-cd /usr/src
-rm -rf libks
-git clone https://github.com/signalwire/libks.git
-cd libks
-cmake .
-make -j $(getconf _NPROCESSORS_ONLN)
-make install
-export C_INCLUDE_PATH=/usr/include/libks
-print_success "libks installed successfully."
-
-# Install sofia-sip
-cd /usr/src
-rm -rf sofia-sip
-git clone https://github.com/freeswitch/sofia-sip.git
-cd sofia-sip
-
-# FreeSWITCH 1.11 uses nua_reload_tls for TLS certificate hot-reload.
-# Debian 12 and 13 package Sofia-SIP 1.12.11, which does not provide it.
-SOFIA_SIP_VERSION=${SOFIA_SIP_VERSION:-"100d3577f5c5a6790ab68a5e3425ab1a091236c5"}
-git checkout "$SOFIA_SIP_VERSION"
-sh autogen.sh
-./configure --enable-debug
-make -j $(getconf _NPROCESSORS_ONLN)
-make install
-/sbin/ldconfig
-
-if [[ "$OS_CODENAME" == "trixie" ]]; then
-    curl -sSL https://freeswitch.org/fsget | bash -s $SW_TOKEN
-fi
-
-print_success "sofia-sip installed successfully."
-
-# Install spandsp
-    if [[ "$OS_CODENAME" == "bookworm" ]]; then
-cd /usr/src
-rm -rf spandsp
-git clone https://github.com/freeswitch/spandsp.git
-cd spandsp
-git reset --hard 0d2e6ac65e0e8f53d652665a743015a88bf048d4  # Stable version
-sh autogen.sh
-./configure --enable-debug
-make -j $(getconf _NPROCESSORS_ONLN)
-make install
-/sbin/ldconfig
-    fi
-
-if [[ "$OS_CODENAME" == "trixie" ]]; then
-    apt install -y libspandsp3-dev libspandsp3
-fi
-
-print_success "spandsp installed successfully."
-
-# Move to `/usr/src/` for FreeSWITCH installation
-cd /usr/src
-
-# Remove any existing FreeSWITCH directory
-rm -rf freeswitch
-
-# Set default PHP version to 8.1 if not set
-FREESWITCH_VERSION=${FREESWITCH_VERSION:-"v1.11"}
-
-# Clone the FreeSWITCH repo (Branch: 1.11)
-print_success "Cloning FreeSWITCH $FREESWITCH_VERSION from repository..."
-git clone --depth 1 --branch $FREESWITCH_VERSION https://github.com/nemerald-voip/freeswitch.git freeswitch
-cd freeswitch
-
-# Bootstrap the build
-print_success "Bootstrapping FreeSWITCH build..."
-./bootstrap.sh -j
-
-# Enable required modules and disable unnecessary ones
-print_success "Configuring FreeSWITCH modules..."
-sed -i modules.conf -e s:'#applications/mod_callcenter:applications/mod_callcenter:'
-sed -i modules.conf -e s:'#applications/mod_cidlookup:applications/mod_cidlookup:'
-sed -i modules.conf -e s:'#applications/mod_memcache:applications/mod_memcache:'
-sed -i modules.conf -e s:'#applications/mod_hiredis:applications/mod_hiredis:'
-sed -i modules.conf -e s:'#applications/mod_curl:applications/mod_curl:'
-sed -i modules.conf -e s:'#applications/mod_translate:applications/mod_translate:'
-sed -i modules.conf -e s:'#formats/mod_shout:formats/mod_shout:'
-sed -i modules.conf -e s:'#formats/mod_pgsql:formats/mod_pgsql:'
-sed -i modules.conf -e s:'#applications/mod_signalwire:applications/mod_signalwire:'
-
-# Disable unnecessary modules
-sed -i modules.conf -e s:'applications/mod_signalwire:#applications/mod_signalwire:'
-sed -i modules.conf -e s:'endpoints/mod_skinny:#endpoints/mod_skinny:'
-sed -i modules.conf -e s:'endpoints/mod_verto:#endpoints/mod_verto:'
-sed -i modules.conf -e s:'applications/mod_say_es:#applications/mod_say_es:'
-sed -i modules.conf -e s:'applications/mod_say_fr:#applications/mod_say_fr:'
-sed -i modules.conf -e s:'applications/mod_nibblebill:#applications/mod_nibblebill:'
-sed -i modules.conf -e s:'applications/mod_av:#applications/mod_av:'
-sed -i modules.conf -e s:'xml_int/mod_xml_rpc:#xml_int/mod_xml_rpc:'
-
-print_success "Modules configured successfully."
-
-# Configure the build
-print_success "Configuring FreeSWITCH..."
+fs_prepare_compiler_cache
 export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig:/usr/local/lib/$(gcc -dumpmachine)/pkgconfig:${PKG_CONFIG_PATH:-}"
-if ! printf '#include <sofia-sip/nua.h>\n#ifndef HAVE_NUA_RELOAD_TLS\n#error HAVE_NUA_RELOAD_TLS missing\n#endif\nint main(void) { return nua_reload_tls(0, 0); }\n' | gcc $(pkg-config --cflags sofia-sip-ua) -xc - -o /tmp/sofia_tls_reload_check $(pkg-config --libs sofia-sip-ua); then
-    print_error "Installed Sofia-SIP does not provide nua_reload_tls required by FreeSWITCH 1.11."
-    exit 1
+
+fs_clone https://github.com/nemerald-voip/freeswitch.git "$FREESWITCH_VERSION" "$BUILD_DIR/freeswitch"
+CONFIG_SOURCE="$FS_CONF_DIR"
+if [[ "$FRESH_INSTALL" == true ]]; then
+    CONFIG_SOURCE="$BUILD_DIR/default-config"
+    mkdir -p "$CONFIG_SOURCE/autoload_configs"
+    cp -a "$FS_APP_DIR/resources/autoload_configs/." "$CONFIG_SOURCE/autoload_configs/"
 fi
-rm -f /tmp/sofia_tls_reload_check
-export CPPFLAGS="${CPPFLAGS} -DHAVE_NUA_RELOAD_TLS"
-./configure -C --enable-portable-binary --disable-dependency-tracking --enable-debug \
-            --prefix=/usr --localstatedir=/var --sysconfdir=/etc \
-            --with-openssl --enable-core-pgsql-support
-
-# Compile and install
-print_success "Compiling FreeSWITCH..."
-make -j $(getconf _NPROCESSORS_ONLN)
-make install
-
-# If /etc/freeswitch.orig exists, remove it
-if [ -d "/etc/freeswitch.orig" ]; then
-    print_success "Existing backup found. Removing it..."
-    rm -rf /etc/freeswitch.orig
+python3 "$FS_CONFIG_TOOL" select-modules "$BUILD_DIR/freeswitch" "$CONFIG_SOURCE" \
+    "${FREESWITCH_MODULES_FILE:-$FS_INSTALL_DIR/freeswitch-modules.conf}" "$BUILD_DIR/modules.conf"
+if grep -qx 'languages/mod_v8' "$BUILD_DIR/modules.conf"; then
+    fs_apt_install libnode-dev
 fi
 
-# Move config files
-mv /etc/freeswitch /etc/freeswitch.orig
-mkdir /etc/freeswitch
-legacy_conf_source=/var/www/fspbx/public/app/switch/resources/conf
-for source_path in "$legacy_conf_source"/*; do
-    if [[ "$source_path" == "$legacy_conf_source/autoload_configs" ]]; then
-        continue
+fs_build_dependencies
+
+cd "$BUILD_DIR/freeswitch"
+./bootstrap.sh -j
+cp "$BUILD_DIR/modules.conf" modules.conf
+export CPPFLAGS="${CPPFLAGS:-} -DHAVE_NUA_RELOAD_TLS"
+./configure --enable-portable-binary --disable-dependency-tracking --enable-debug \
+    --prefix=/usr --localstatedir=/var --sysconfdir=/etc --with-modinstdir="$FS_MOD_DIR" \
+    --with-openssl
+make -j "$JOBS"
+ccache --show-stats > "$FS_BACKUP_DIR/compiler-cache-after.txt"
+STAGE="$BUILD_DIR/stage"
+make DESTDIR="$STAGE" install
+python3 "$FS_CONFIG_TOOL" check-modules "$CONFIG_SOURCE" "$STAGE$FS_MOD_DIR"
+export LD_LIBRARY_PATH="$STAGE/usr/lib:$STAGE/usr/lib/$(gcc -dumpmachine):${LD_LIBRARY_PATH:-}"
+if ldd "$STAGE/usr/bin/freeswitch" | grep -q 'not found'; then
+    fs_die 'The candidate FreeSWITCH binary has unresolved shared libraries.'
+fi
+LD_BIND_NOW=1 "$STAGE/usr/bin/freeswitch" -version > "$FS_BACKUP_DIR/candidate-version.txt"
+unset LD_LIBRARY_PATH
+
+fs_begin_install
+# Replace program files by rename, avoiding writes into mapped library inodes.
+# Configuration and application data are deliberately outside this copy.
+rsync -a --delay-updates --exclude='/share/freeswitch/scripts/' "$STAGE/usr/" /usr/
+/sbin/ldconfig
+
+if [[ "$FRESH_INSTALL" == true ]]; then
+    for directory in /var/lib/freeswitch /var/log/freeswitch /var/run/freeswitch /var/cache/fusionpbx; do
+        install -d -o www-data -g www-data "$directory"
+    done
+    install -m 644 debian/freeswitch-systemd.freeswitch.service /lib/systemd/system/freeswitch.service
+    sed -i -e 's/Environment="USER=freeswitch"/Environment="USER=www-data"/' \
+        -e 's/Environment="GROUP=freeswitch"/Environment="GROUP=www-data"/' \
+        -e '/^ExecStartPre=\/bin\/chown/i ExecStartPre=/bin/mkdir -p /var/run/freeswitch' \
+        /lib/systemd/system/freeswitch.service
+    if [[ -d /proc/vz || -e /proc/user_beancounters ]]; then
+        sed -i 's/^CPUSchedulingPolicy=rr/;CPUSchedulingPolicy=rr/' /lib/systemd/system/freeswitch.service
     fi
-
-    cp -R "$source_path" /etc/freeswitch/
-done
-mkdir -p /etc/freeswitch/autoload_configs
-cp -R /var/www/fspbx/resources/autoload_configs/. /etc/freeswitch/autoload_configs/
-
-# Default permissions
-chown -R www-data:www-data /etc/freeswitch
-chown -R www-data:www-data /var/lib/freeswitch
-chown -R www-data:www-data /usr/share/freeswitch
-chown -R www-data:www-data /var/log/freeswitch
-chown -R www-data:www-data /var/run/freeswitch
-chown -R www-data:www-data /var/cache/fusionpbx
-
-# PHP-FPM may have started before these paths existed, causing systemd to skip
-# the optional ReadWritePaths entries. Restart it to rebuild its mount namespace.
-systemctl daemon-reload
-systemctl restart php8.4-fpm
-print_success "Restarted php8.4-fpm with access to the FreeSWITCH directories."
-
-if [[ "$FRESH_INSTALL" == "false" ]]; then
-    print_success "Preparing FS PBX configuration for the FreeSWITCH restart..."
-
-    if sudo -u www-data -- php /var/www/fspbx/artisan freeswitch:prepare-restart --no-interaction; then
-        print_success "FreeSWITCH variables and XML cache prepared successfully."
-    else
-        RESTART_PREPARATION_COMPLETE=false
-        print_error "Automatic FreeSWITCH restart preparation was incomplete."
-        print_error "Before restarting, use Advanced > Variables > Sync XML and Status > SIP Status > Flush Cache."
-    fi
+    systemctl enable freeswitch
 fi
 
-print_success "FreeSWITCH $FREESWITCH_VERSION installed successfully!"
-
-print_success "Removing existing FreeSWITCH service..."
-
-# Remove existing FreeSWITCH systemd service if installed
-if dpkg-query -W -f='${Status}' freeswitch-systemd 2>/dev/null | grep -q "install ok installed"; then
-    apt-get remove -y freeswitch-systemd
-    print_success "FreeSWITCH systemd package removed successfully."
-else
-    print_success "FreeSWITCH systemd package is not installed. Skipping removal."
+# Retain previous sources; generated makefiles keep their original build path.
+if [[ -e /usr/src/freeswitch || -L /usr/src/freeswitch ]]; then
+    mv /usr/src/freeswitch "$FS_BACKUP_DIR/previous-source"
 fi
-
-print_success "Installing new FreeSWITCH service..."
-# Verify and copy FreeSWITCH systemd service file
-if [ -f "/usr/src/freeswitch/debian/freeswitch-systemd.freeswitch.service" ]; then
-    cp /usr/src/freeswitch/debian/freeswitch-systemd.freeswitch.service /lib/systemd/system/freeswitch.service
-else
-    print_error "Error: freeswitch.service not found!" >&2
-    exit 1
-fi
-
-# Keep the v1.11 unit aligned with FS PBX's existing runtime user.
-sed -i -e 's/Environment="USER=freeswitch"/Environment="USER=www-data"/' /lib/systemd/system/freeswitch.service
-sed -i -e 's/Environment="GROUP=freeswitch"/Environment="GROUP=www-data"/' /lib/systemd/system/freeswitch.service
-sed -i -e '/^ExecStartPre=\/bin\/chown/i ExecStartPre=/bin/mkdir -p /var/run/freeswitch' /lib/systemd/system/freeswitch.service
-
-# Set correct permissions
-chmod 644 /lib/systemd/system/freeswitch.service 
-
-print_success "Enabling FreeSWITCH service to start at boot..."
-systemctl enable freeswitch
-
-# Detect OpenVZ and disable CPU scheduling if necessary
-if [ -d "/proc/vz" ] || [ -e "/proc/user_beancounters" ]; then
-    print_success "Detected OpenVZ, disabling CPU scheduling for FreeSWITCH..."
-    sed -i -e "s/CPUSchedulingPolicy=rr/;CPUSchedulingPolicy=rr/g" /lib/systemd/system/freeswitch.service
-fi
-
-if [[ "$RESTART_PREPARATION_COMPLETE" == "false" ]]; then
-    print_error "ACTION REQUIRED: Synchronize Variables XML and flush the SIP Status cache before restarting FreeSWITCH."
-fi
-
-#Remove SW Token
-  unset SW_TOKEN
+ln -s "$BUILD_DIR/freeswitch" /usr/src/freeswitch
+fs_finish

@@ -1,123 +1,58 @@
 #!/bin/bash
-
-# Honor the Bash requirement even when invoked as `sh install_freeswitch_packages.sh`.
 if [ -z "${BASH_VERSION:-}" ]; then
     exec /bin/bash "$0" "$@"
 fi
+set -Eeuo pipefail
+source "$(dirname -- "$(readlink -f "$0")")/freeswitch-common.sh"
 
-set -euo pipefail
+FRESH_INSTALL=false
+if [[ "${1:-}" == --fresh-install ]]; then FRESH_INSTALL=true; shift; fi
+[[ $# -le 1 ]] || fs_die 'Usage: install_freeswitch_packages.sh [--fresh-install] PACKAGE_DIR'
+fs_preflight
+PACKAGE_DIR=$(realpath "${1:-${FREESWITCH_DEB_DIR:-$FS_APP_DIR/storage/app/freeswitch-packages/$OS_CODENAME}}")
+[[ -f "$PACKAGE_DIR/SHA256SUMS" && -f "$PACKAGE_DIR/runtime-packages.txt" ]] || fs_die 'Use a complete bundle from build_freeswitch_debian_packages.sh.'
+[[ $(cat "$PACKAGE_DIR/debian-codename") == "$OS_CODENAME" ]] || fs_die 'The package bundle targets a different Debian release.'
+[[ $(cat "$PACKAGE_DIR/architecture") == "$(dpkg --print-architecture)" ]] || fs_die 'The package bundle targets a different architecture.'
+(cd "$PACKAGE_DIR" && sha256sum --check --strict SHA256SUMS)
 
-print_success() {
-    echo -e "\e[32m$1 \e[0m"
-}
-
-print_error() {
-    echo -e "\e[31m$1 \e[0m"
-}
-
-detect_os_codename() {
-    lsb_release -sc 2>/dev/null && return
-
-    if [[ -r /etc/os-release ]]; then
-        . /etc/os-release
-        printf '%s\n' "${VERSION_CODENAME:-}"
-    fi
-}
-
-OS_CODENAME=${OS_CODENAME:-$(detect_os_codename)}
-PACKAGE_DIR=${1:-${FREESWITCH_DEB_DIR:-"/var/www/fspbx/storage/app/freeswitch-packages/${OS_CODENAME}"}}
-
-if [[ "$(id -u)" -ne 0 ]]; then
-    print_error "Run this package installer as root."
-    exit 1
+STAGE="$FS_BACKUP_DIR/candidate"
+mkdir "$STAGE"
+RUNTIME_DEBS=()
+while IFS= read -r filename; do
+    [[ "$filename" != */* && "$filename" == *.deb && -f "$PACKAGE_DIR/$filename" ]] || fs_die 'Invalid runtime package list.'
+    RUNTIME_DEBS+=("$PACKAGE_DIR/$filename")
+    dpkg-deb -x "$PACKAGE_DIR/$filename" "$STAGE"
+done < "$PACKAGE_DIR/runtime-packages.txt"
+[[ ${#RUNTIME_DEBS[@]} -gt 0 && -x "$STAGE/usr/bin/freeswitch" ]] || fs_die 'The bundle has no FreeSWITCH binary.'
+CONFIG_SOURCE="$FS_CONF_DIR"
+if [[ "$FRESH_INSTALL" == true ]]; then CONFIG_SOURCE="$FS_APP_DIR/resources"; fi
+python3 "$FS_CONFIG_TOOL" check-modules "$CONFIG_SOURCE" "$STAGE$FS_MOD_DIR"
+# Locally compiled libraries take precedence over Debian libraries. Keep source
+# installations on the source path unless those libraries have been migrated.
+if /sbin/ldconfig -p | grep 'libsofia-sip-ua.so' | grep -q '/usr/local/'; then
+    fs_die 'Source-built Sofia-SIP is installed in /usr/local. Use install_freeswitch.sh on this server.'
 fi
 
-if [[ ! -d "$PACKAGE_DIR" ]]; then
-    print_error "FreeSWITCH package directory not found: $PACKAGE_DIR"
-    exit 1
-fi
-
-mapfile -t RUNTIME_DEBS < <(
-    find "$PACKAGE_DIR" -maxdepth 1 -type f -name '*.deb' \
-        ! -name '*-dbg_*' \
-        ! -name '*-dev_*' \
-        ! -name '*-doc_*' \
-        | sort
-)
-
-if [[ "${#RUNTIME_DEBS[@]}" -eq 0 ]]; then
-    print_error "No runtime FreeSWITCH packages found in $PACKAGE_DIR"
-    exit 1
-fi
-
-print_success "Installing FreeSWITCH packages from $PACKAGE_DIR..."
+fs_protect_services
 apt-get update
-DEBIAN_FRONTEND=noninteractive apt-get install -y "${RUNTIME_DEBS[@]}"
-
-if [ -d "/etc/freeswitch.orig" ]; then
-    print_success "Existing FreeSWITCH config backup found. Removing it..."
-    rm -rf /etc/freeswitch.orig
-fi
-
-if [ -d "/etc/freeswitch" ]; then
-    mv /etc/freeswitch /etc/freeswitch.orig
-fi
-
-mkdir -p /etc/freeswitch
-legacy_conf_source=/var/www/fspbx/public/app/switch/resources/conf
-for source_path in "$legacy_conf_source"/*; do
-    if [[ "$source_path" == "$legacy_conf_source/autoload_configs" ]]; then
-        continue
-    fi
-
-    cp -R "$source_path" /etc/freeswitch/
-done
-mkdir -p /etc/freeswitch/autoload_configs
-cp -R /var/www/fspbx/resources/autoload_configs/. /etc/freeswitch/autoload_configs/
-
-chown -R www-data:www-data /etc/freeswitch
-chown -R www-data:www-data /var/lib/freeswitch
-chown -R www-data:www-data /usr/share/freeswitch
-chown -R www-data:www-data /var/log/freeswitch
-chown -R www-data:www-data /var/run/freeswitch
-chown -R www-data:www-data /var/cache/fusionpbx
-
-# PHP-FPM may have started before these paths existed, causing systemd to skip
-# the optional ReadWritePaths entries. Restart it to rebuild its mount namespace.
-systemctl daemon-reload
-systemctl restart php8.4-fpm
-print_success "Restarted php8.4-fpm with access to the FreeSWITCH directories."
-
-print_success "Preparing FS PBX configuration for the FreeSWITCH restart..."
-RESTART_PREPARATION_COMPLETE=true
-
-if sudo -u www-data -- php /var/www/fspbx/artisan freeswitch:prepare-restart --no-interaction; then
-    print_success "FreeSWITCH variables and XML cache prepared successfully."
+LC_ALL=C apt-get -s -o Dpkg::Options::=--force-confold install "${RUNTIME_DEBS[@]}" > "$FS_BACKUP_DIR/apt-plan.txt"
+python3 "$FS_CONFIG_TOOL" check-package-plan "$FS_BACKUP_DIR/apt-plan.txt"
+fs_begin_install
+if grep -q '^Remv ' "$FS_BACKUP_DIR/apt-plan.txt"; then
+    # Permit removal of retired module packages only; validated above.
+    DEBIAN_FRONTEND=noninteractive apt-get -o Dpkg::Options::=--force-confold install -y "${RUNTIME_DEBS[@]}"
 else
-    RESTART_PREPARATION_COMPLETE=false
-    print_error "Automatic FreeSWITCH restart preparation was incomplete."
-    print_error "Before restarting, use Advanced > Variables > Sync XML and Status > SIP Status > Flush Cache."
+    fs_apt_install "${RUNTIME_DEBS[@]}"
 fi
-
-if [ -f "/lib/systemd/system/freeswitch.service" ]; then
-    sed -i -e 's/Environment="USER=freeswitch"/Environment="USER=www-data"/' /lib/systemd/system/freeswitch.service
-    sed -i -e 's/Environment="GROUP=freeswitch"/Environment="GROUP=www-data"/' /lib/systemd/system/freeswitch.service
-    if ! grep -qF 'ExecStartPre=/bin/mkdir -p /var/run/freeswitch' /lib/systemd/system/freeswitch.service; then
-        sed -i -e '/^ExecStartPre=\/bin\/chown/i ExecStartPre=/bin/mkdir -p /var/run/freeswitch' /lib/systemd/system/freeswitch.service
+/sbin/ldconfig
+LD_BIND_NOW=1 /usr/bin/freeswitch -version > "$FS_BACKUP_DIR/candidate-version.txt"
+if [[ "$FRESH_INSTALL" == true ]]; then
+    for directory in /var/lib/freeswitch /var/log/freeswitch /var/run/freeswitch /var/cache/fusionpbx; do
+        install -d -o www-data -g www-data "$directory"
+    done
+    if [[ -d /proc/vz || -e /proc/user_beancounters ]]; then
+        sed -i 's/^CPUSchedulingPolicy=rr/;CPUSchedulingPolicy=rr/' "$FS_SERVICE_PATH"
     fi
-    chmod 644 /lib/systemd/system/freeswitch.service
+    systemctl enable freeswitch
 fi
-
-if [ -d "/proc/vz" ] || [ -e "/proc/user_beancounters" ]; then
-    print_success "Detected OpenVZ, disabling CPU scheduling for FreeSWITCH..."
-    sed -i -e "s/CPUSchedulingPolicy=rr/;CPUSchedulingPolicy=rr/g" /lib/systemd/system/freeswitch.service
-fi
-
-systemctl daemon-reload
-systemctl enable freeswitch
-
-print_success "FreeSWITCH packages installed successfully."
-
-if [[ "$RESTART_PREPARATION_COMPLETE" == "false" ]]; then
-    print_error "ACTION REQUIRED: Synchronize Variables XML and flush the SIP Status cache before restarting FreeSWITCH."
-fi
+fs_finish

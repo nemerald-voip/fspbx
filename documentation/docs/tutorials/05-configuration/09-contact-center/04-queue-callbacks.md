@@ -13,7 +13,7 @@ Callbacks are enabled separately for each Contact Center queue. You choose when 
 
 ## How a callback works
 
-1. A caller waits in the queue. After the configured delay, they hear an offer to receive a callback.
+1. A caller waits in the queue. In continuous mode, they hear a callback offer after the configured delay. In [audio sequence mode](/docs/configuration/contact-center/hold-audio-sequences/), the offer plays at the callback step instead.
 2. They press the offered key, confirm a callback number, and record their name.
 3. FS PBX confirms that the request was saved and ends the incoming call.
 4. When an agent is available, FS PBX calls the agent first and reserves them for the callback.

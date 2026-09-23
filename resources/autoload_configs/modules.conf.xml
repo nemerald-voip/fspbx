@@ -36,9 +36,7 @@
 		<!-- Codecs -->
 		<load module="mod_g729"/>
 		<load module="mod_g723_1"/>
-		<load module="mod_bv"/>
 		<load module="mod_amr"/>
-		<load module="mod_h26x"/>
 
 		<!-- Dialplan Interfaces -->
 		<load module="mod_dialplan_xml"/>
