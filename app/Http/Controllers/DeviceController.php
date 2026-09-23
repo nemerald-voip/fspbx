@@ -728,6 +728,7 @@ class DeviceController extends Controller
                 'templates' => $this->getDeviceTemplateDropdownOptions(),
                 'profiles' => getProfileCollection($domain_uuid),
                 'key_templates' => $this->getDeviceKeyTemplateDropdownOptions($domain_uuid),
+                'park_key_count' => fspbx_park_key_count($domain_uuid),
                 'extensions' => $extensionOptions,
                 'domains' => $domainOptions,
                 'lines' => $lines,

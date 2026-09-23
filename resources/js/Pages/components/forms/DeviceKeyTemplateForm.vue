@@ -308,7 +308,7 @@ const getKeyValueSelectItems = async (query, input, index, listName) => {
     }
 
     if (keyType === "park") {
-        return Array.from({ length: 10 }, (_, i) => {
+        return Array.from({ length: props.options.park_key_count }, (_, i) => {
             const ext = String(5901 + i);
             return { extension: ext, name: trans('Park :number (:extension)', { number: i + 1, extension: ext }) };
         });

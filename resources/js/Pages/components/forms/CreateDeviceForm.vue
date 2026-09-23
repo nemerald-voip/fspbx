@@ -687,7 +687,7 @@ const getKeyValueSelectItems = async (query, input, index) => {
     if (keyType === 'park') {
         const base = 5901
 
-        return Array.from({ length: 10 }, (_, i) => {
+        return Array.from({ length: props.options.park_key_count }, (_, i) => {
             const ext = String(base + i)
             return {
                 extension: ext,

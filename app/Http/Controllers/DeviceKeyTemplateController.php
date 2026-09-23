@@ -117,6 +117,7 @@ class DeviceKeyTemplateController extends Controller
         return response()->json([
             'item' => $item,
             'extensions' => $this->extensionOptions(),
+            'park_key_count' => fspbx_park_key_count(session('domain_uuid')),
             'permissions' => [
                 'is_superadmin' => isSuperAdmin(),
             ],

@@ -1032,6 +1032,14 @@ class DatabaseSeeder extends Seeder
                 'default_setting_description'   => "Prevents the phone from provisioning duplicate self-monitoring keys by removing non-line keys that point to its own extensions. Turn this off when you intentionally want those keys to be kept.",
             ],
             [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'park_key_count',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => '10',
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => 'Number of predefined Park options in device and key template editors, starting at 5901. Use 1-99; missing or invalid values use 10.',
+            ],
+            [
                 'default_setting_category'      => 'company',
                 'default_setting_subcategory'   => 'billing_suspension',
                 'default_setting_name'          => 'text',

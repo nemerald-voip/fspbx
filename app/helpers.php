@@ -1736,6 +1736,18 @@ if (!function_exists('buildDestinationAction')) {
         }
     }
 
+    if (!function_exists('fspbx_park_key_count')) {
+        function fspbx_park_key_count(?string $domainUuid = null): int
+        {
+            $count = filter_var(get_domain_setting('park_key_count', $domainUuid), FILTER_VALIDATE_INT, [
+                // The shipped parking dialplan supports 5901 through 5999.
+                'options' => ['min_range' => 1, 'max_range' => 99],
+            ]);
+
+            return $count === false ? 10 : $count;
+        }
+    }
+
     if (!function_exists('fspbx_vendor_key_type_code')) {
         function fspbx_vendor_key_type_code(string $vendor, string $simple_type, ?string $category = null): string
         {
