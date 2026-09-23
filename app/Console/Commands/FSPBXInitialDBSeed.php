@@ -180,7 +180,7 @@ class FSPBXInitialDBSeed extends Command
         // Finalize storage and generated XML after all settings have been seeded.
         // Fresh setup must also work before FreeSWITCH/ESL is running.
         $this->info("Migrating SQLite to RAM...");
-        if ($this->call('fs:migrate-sqlite-to-ram') !== self::SUCCESS) {
+        if ($this->call('fs:migrate-sqlite-to-ram', ['--no-restart-reminder' => true]) !== self::SUCCESS) {
             $this->error('FreeSWITCH configuration preparation failed. FreeSWITCH was not restarted.');
 
             return self::FAILURE;

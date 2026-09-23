@@ -536,13 +536,37 @@ else
 fi
 
 
-# Create a symbolic link from "public/storage" to "storage/app/public"
-php artisan storage:link
-if [ $? -eq 0 ]; then
-    print_success "Storage link created successfully."
-else
-    print_error "Error occurred while creating storage link."
+# The downloaded public files may already contain the storage link.
+FSPBX_STORAGE_LINK=/var/www/fspbx/public/storage
+FSPBX_STORAGE_TARGET=/var/www/fspbx/storage/app/public
+if [[ -L "$FSPBX_STORAGE_LINK" ]]; then
+    if [[ "$(readlink -m -- "$FSPBX_STORAGE_LINK")" != "$(readlink -m -- "$FSPBX_STORAGE_TARGET")" ]]; then
+        print_error "Storage link points to an unexpected location: $FSPBX_STORAGE_LINK"
+        exit 1
+    fi
+elif [[ -e "$FSPBX_STORAGE_LINK" ]]; then
+    print_error "$FSPBX_STORAGE_LINK exists but is not a symbolic link."
     exit 1
+fi
+
+if ! mkdir -p "$FSPBX_STORAGE_TARGET"; then
+    print_error "Unable to create storage directory: $FSPBX_STORAGE_TARGET"
+    exit 1
+fi
+
+if [[ -L "$FSPBX_STORAGE_LINK" ]]; then
+    print_success "Storage link already configured."
+else
+    if ! php artisan storage:link; then
+        print_error "Error occurred while creating storage link."
+        exit 1
+    fi
+    # Artisan can report success without creating the link; verify the result.
+    if ! [[ -L "$FSPBX_STORAGE_LINK" && "$FSPBX_STORAGE_LINK" -ef "$FSPBX_STORAGE_TARGET" ]]; then
+        print_error "Storage link was not created correctly: $FSPBX_STORAGE_LINK"
+        exit 1
+    fi
+    print_success "Storage link created successfully."
 fi
 
 # Copy assets to storage/app/public
