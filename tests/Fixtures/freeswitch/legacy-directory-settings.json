@@ -1,0 +1,154 @@
+{
+    "source": "fusionpbx/resources/classes/switch_settings.php",
+    "source_git_blob": "186dde3098dc412fd08dff3a43ae17fdacced14a",
+    "globals": {
+        "base_dir": "/usr",
+        "conf_dir": "/etc/freeswitch",
+        "db_dir": "/var/lib/freeswitch/db",
+        "recordings_dir": "/var/lib/freeswitch/recordings",
+        "script_dir": "/usr/share/freeswitch/scripts",
+        "sounds_dir": "/usr/share/freeswitch/sounds",
+        "storage_dir": "/var/lib/freeswitch/storage",
+        "grammar_dir": "/usr/share/freeswitch/grammar",
+        "log_dir": "/var/log/freeswitch",
+        "mod_dir": "/usr/lib/freeswitch/mod"
+    },
+    "settings": [
+        {
+            "default_setting_category": "switch",
+            "default_setting_subcategory": "bin",
+            "default_setting_name": "dir",
+            "default_setting_value": "",
+            "default_setting_enabled": "true",
+            "default_setting_description": ""
+        },
+        {
+            "default_setting_category": "switch",
+            "default_setting_subcategory": "base",
+            "default_setting_name": "dir",
+            "default_setting_value": "/usr",
+            "default_setting_enabled": "true",
+            "default_setting_description": ""
+        },
+        {
+            "default_setting_category": "switch",
+            "default_setting_subcategory": "call_center",
+            "default_setting_name": "dir",
+            "default_setting_value": "/etc/freeswitch/autoload_configs",
+            "default_setting_enabled": "false",
+            "default_setting_description": ""
+        },
+        {
+            "default_setting_category": "switch",
+            "default_setting_subcategory": "conf",
+            "default_setting_name": "dir",
+            "default_setting_value": "/etc/freeswitch",
+            "default_setting_enabled": "true",
+            "default_setting_description": ""
+        },
+        {
+            "default_setting_category": "switch",
+            "default_setting_subcategory": "db",
+            "default_setting_name": "dir",
+            "default_setting_value": "/var/lib/freeswitch/db",
+            "default_setting_enabled": "true",
+            "default_setting_description": ""
+        },
+        {
+            "default_setting_category": "switch",
+            "default_setting_subcategory": "dialplan",
+            "default_setting_name": "dir",
+            "default_setting_value": "/etc/freeswitch/dialplan",
+            "default_setting_enabled": "false",
+            "default_setting_description": ""
+        },
+        {
+            "default_setting_category": "switch",
+            "default_setting_subcategory": "extensions",
+            "default_setting_name": "dir",
+            "default_setting_value": "/etc/freeswitch/directory",
+            "default_setting_enabled": "false",
+            "default_setting_description": ""
+        },
+        {
+            "default_setting_category": "switch",
+            "default_setting_subcategory": "grammar",
+            "default_setting_name": "dir",
+            "default_setting_value": "/usr/share/freeswitch/grammar",
+            "default_setting_enabled": "true",
+            "default_setting_description": ""
+        },
+        {
+            "default_setting_category": "switch",
+            "default_setting_subcategory": "log",
+            "default_setting_name": "dir",
+            "default_setting_value": "/var/log/freeswitch",
+            "default_setting_enabled": "true",
+            "default_setting_description": ""
+        },
+        {
+            "default_setting_category": "switch",
+            "default_setting_subcategory": "mod",
+            "default_setting_name": "dir",
+            "default_setting_value": "/usr/lib/freeswitch/mod",
+            "default_setting_enabled": "true",
+            "default_setting_description": ""
+        },
+        {
+            "default_setting_category": "switch",
+            "default_setting_subcategory": "languages",
+            "default_setting_name": "dir",
+            "default_setting_value": "/etc/freeswitch/languages",
+            "default_setting_enabled": "true",
+            "default_setting_description": ""
+        },
+        {
+            "default_setting_category": "switch",
+            "default_setting_subcategory": "recordings",
+            "default_setting_name": "dir",
+            "default_setting_value": "/var/lib/freeswitch/recordings",
+            "default_setting_enabled": "true",
+            "default_setting_description": ""
+        },
+        {
+            "default_setting_category": "switch",
+            "default_setting_subcategory": "scripts",
+            "default_setting_name": "dir",
+            "default_setting_value": "/usr/share/freeswitch/scripts",
+            "default_setting_enabled": "true",
+            "default_setting_description": ""
+        },
+        {
+            "default_setting_category": "switch",
+            "default_setting_subcategory": "sip_profiles",
+            "default_setting_name": "dir",
+            "default_setting_value": "/etc/freeswitch/sip_profiles",
+            "default_setting_enabled": "false",
+            "default_setting_description": ""
+        },
+        {
+            "default_setting_category": "switch",
+            "default_setting_subcategory": "sounds",
+            "default_setting_name": "dir",
+            "default_setting_value": "/usr/share/freeswitch/sounds",
+            "default_setting_enabled": "true",
+            "default_setting_description": ""
+        },
+        {
+            "default_setting_category": "switch",
+            "default_setting_subcategory": "storage",
+            "default_setting_name": "dir",
+            "default_setting_value": "/var/lib/freeswitch/storage",
+            "default_setting_enabled": "true",
+            "default_setting_description": ""
+        },
+        {
+            "default_setting_category": "switch",
+            "default_setting_subcategory": "voicemail",
+            "default_setting_name": "dir",
+            "default_setting_value": "/var/lib/freeswitch/storage/voicemail",
+            "default_setting_enabled": "true",
+            "default_setting_description": ""
+        }
+    ]
+}

@@ -1,6 +1,10 @@
 <configuration name="modules.conf" description="Modules">
 	<modules>
 
+		<!-- Loggers: capture initialization before other modules load. -->
+		<load module="mod_logfile"/>
+		<load module="mod_console"/>
+
 		<!-- Applications -->
 		<load module="mod_commands"/>
 		<load module="mod_memcache"/>
@@ -11,10 +15,6 @@
 
 		<!-- Endpoints -->
 		<load module="mod_sofia"/>
-
-		<!-- Loggers -->
-		<load module="mod_logfile"/>
-		<load module="mod_console"/>
 
 		<!-- Applications -->
 		<load module="mod_callcenter"/>

@@ -1,5 +1,6 @@
 """Isolated checks: never run apt or touch live configuration or services."""
 import importlib.util
+import json
 import os
 from pathlib import Path
 import shutil
@@ -133,6 +134,16 @@ fs_restore_configuration
         config.retire_binaries(modules)
         self.assertFalse((modules / 'mod_bv.so').exists())
         self.assertTrue((modules / 'mod_commands.so').exists())
+
+    def test_native_defaults_cover_exactly_the_fresh_installer_modules(self):
+        baseline = {
+            Path(line.strip()).name
+            for line in (REPO / 'install/freeswitch-modules.conf').read_text().splitlines()
+            if line.strip() and not line.lstrip().startswith('#')
+        }
+        selected = (baseline | config.loaded_modules(REPO / 'resources')) - config.EXCLUDED_MODULES
+        defaults = json.loads((REPO / 'resources/freeswitch_modules.json').read_text())
+        self.assertEqual(set(defaults), selected)
 
     def test_removal_is_silent_preserves_comments_and_other_xml_bytes(self):
         before = self.modules.read_bytes() + b'<!-- <load module="mod_h26x"/> -->\r\n'

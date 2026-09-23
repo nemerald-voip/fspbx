@@ -11,6 +11,35 @@ use Illuminate\Support\Str;
 
 class SwitchModuleService
 {
+    private ?array $moduleDefaults = null;
+
+    /**
+     * Replace legacy app/modules/app_defaults.php during fresh installation.
+     * This prepares startup XML without connecting to or reloading FreeSWITCH.
+     */
+    public function initializeForInstallation(): void
+    {
+        $modDir = $this->switchDir('mod');
+        $confDir = $this->switchDir('conf');
+        if (! $modDir || ! File::isDirectory($modDir)) {
+            throw new \RuntimeException('The FreeSWITCH module directory is missing.');
+        }
+        if (! $confDir || ! File::isDirectory($confDir.'/autoload_configs')) {
+            throw new \RuntimeException('The FreeSWITCH configuration directory is missing.');
+        }
+
+        DB::transaction(function () {
+            foreach (SwitchModule::query()->whereNull('module_order')->get() as $module) {
+                $module->update(['module_order' => $this->defaultModuleInfo((string) $module->module_name)['module_order']]);
+            }
+            $this->syncFromDisk(true);
+        });
+
+        if (! $this->writeXml()) {
+            throw new \RuntimeException('Unable to write FreeSWITCH modules.conf.xml.');
+        }
+    }
+
     public function save(array $data, ?SwitchModule $module = null): array
     {
         $module ??= new SwitchModule();
@@ -61,7 +90,7 @@ class SwitchModuleService
         return $result;
     }
 
-    public function syncFromDisk(): int
+    public function syncFromDisk(bool $useInstallDefaults = false): int
     {
         $modDir = $this->switchDir('mod');
 
@@ -79,7 +108,7 @@ class SwitchModuleService
             ->filter(fn ($file) => str_ends_with($file, '.so') || str_ends_with($file, '.dll'))
             ->map(fn ($file) => preg_replace('/\.(so|dll)$/', '', $file))
             ->filter(fn ($name) => $name && ! $existing->has($name))
-            ->map(fn ($name) => $this->newModuleRow($name))
+            ->map(fn ($name) => $this->newModuleRow($name, $useInstallDefaults))
             ->values();
 
         if ($rows->isEmpty()) {
@@ -386,9 +415,9 @@ class SwitchModuleService
         return false;
     }
 
-    private function newModuleRow(string $name): array
+    private function newModuleRow(string $name, bool $useInstallDefaults = false): array
     {
-        return [
+        $row = [
             'module_uuid' => (string) Str::uuid(),
             'module_label' => Str::of($name)->after('mod_')->replace('_', ' ')->title()->toString(),
             'module_name' => $name,
@@ -399,6 +428,25 @@ class SwitchModuleService
             'module_default_enabled' => 'false',
             'insert_date' => now(),
             'insert_user' => session('user_uuid'),
+        ];
+
+        return $useInstallDefaults ? array_replace($row, $this->defaultModuleInfo($name)) : $row;
+    }
+
+    private function defaultModuleInfo(string $name): array
+    {
+        // Ported from the legacy modules::info() catalog. Only fresh setup uses
+        // its autoload defaults; normal module discovery still adds disabled rows.
+        $this->moduleDefaults ??= json_decode(File::get(resource_path('freeswitch_modules.json')), true, 512, JSON_THROW_ON_ERROR);
+
+        return $this->moduleDefaults[$name] ?? [
+            'module_label' => ucwords(str_replace('_', ' ', substr($name, 4))),
+            'module_name' => $name,
+            'module_order' => 800,
+            'module_enabled' => 'false',
+            'module_default_enabled' => 'false',
+            'module_description' => '',
+            'module_category' => 'Auto',
         ];
     }
 

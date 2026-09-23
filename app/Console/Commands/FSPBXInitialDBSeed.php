@@ -3,7 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Services\Install\InstallSchema;
-use App\Models\DefaultSettings;
+use Database\Seeders\FreeswitchSettingsSeeder;
+use Database\Seeders\FreeswitchModulesSeeder;
 use App\Models\User;
 use App\Models\UserSetting;
 use App\Models\Domain;
@@ -32,6 +33,18 @@ class FSPBXInitialDBSeed extends Command
         $this->info("Ensuring FS PBX install schemas...");
         $installSchema->ensureSchemas();
         $this->info("FS PBX install schemas are ready.");
+
+        // Directory settings belong to FS PBX and must exist before any legacy
+        // domain/default upgrades, without requiring a running FreeSWITCH.
+        $this->info('Initializing FreeSWITCH directory settings...');
+        if ($this->call('db:seed', ['--class' => FreeswitchSettingsSeeder::class, '--force' => true]) !== self::SUCCESS) {
+            return self::FAILURE;
+        }
+
+        $this->info('Initializing FreeSWITCH modules...');
+        if ($this->call('db:seed', ['--class' => FreeswitchModulesSeeder::class, '--force' => true]) !== self::SUCCESS) {
+            return self::FAILURE;
+        }
 
         // Step 2: Create the Admin Domain
         $domain = Domain::firstOrCreate(
@@ -151,7 +164,6 @@ class FSPBXInitialDBSeed extends Command
         Artisan::call('config:cache');
         $this->info("App version is " . config('version.release') . ".");
 
-        DefaultSettings::where('default_setting_category', 'switch')->delete();
         $this->runUpgradeDefaults();
         $this->runUpgradeDomains();
 
