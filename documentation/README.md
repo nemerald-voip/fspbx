@@ -19,10 +19,38 @@ This command starts a local development server and opens up a browser window. Mo
 ## Build
 
 ```bash
-yarn build
+npm run build
 ```
 
-This command generates static content into the `build` directory and can be served using any static contents hosting service.
+This fetches published stable releases from `nemerald-voip/fspbx`, generates their
+blog posts, and builds the website into `build/`. Set `GITHUB_TOKEN` when building
+repeatedly to avoid GitHub's anonymous API rate limit. API errors fail the build
+so a deployment cannot silently lose release history.
+
+## Release notes
+
+Write and correct release notes in GitHub Releases. Publishing or editing a
+release requests the **Deploy to GitHub Pages** workflow on `main`. The same
+workflow runs for pushes to `main` and can be started with **Run workflow**.
+It generates the release pages, builds Docusaurus, and deploys the resulting
+artifact. Release promotion, unpublishing, and deletion also request a rebuild.
+
+The release workflow dispatches to `main` because the `github-pages` environment
+allows that branch, not release tags. It uses the built-in `GITHUB_TOKEN`; no
+personal token or generated commits are needed. The workflow files must be
+present in the ref GitHub uses for the event; for older release tags without
+these workflows, run the deployment manually on `main` to refresh the notes.
+
+`scripts/sync-releases.mjs` regenerates all stable releases on every build,
+including historical releases. Drafts and prereleases are excluded. Files in
+`blog/releases/` are generated and ignored by Git; edit the original GitHub
+release to change them. Existing manually written posts are preserved, including
+older announcements that may discuss the same version. The generated posts are
+available in the blog and under its **Release Notes** tag.
+
+For a local preview, run `npm run releases:sync` followed by `npm start`.
+Run `npm run test:releases` for the generator's offline tests. The pull-request
+website check also runs these tests and builds with the actual release history.
 
 ## Deployment
 

@@ -32,3 +32,8 @@ osupgrade:
   label: os-upgrade
   permalink: /os-upgrade
   description: os upgrade
+
+release:
+  label: Release Notes
+  permalink: /releases
+  description: FS PBX release notes

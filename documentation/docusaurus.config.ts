@@ -58,8 +58,9 @@ const config: Config = {
                     },
                     // Please change this to your repo.
                     // Remove this to remove the "edit this page" links.
-                    editUrl:
-                        'https://github.com/nemerald-voip/fspbx/tree/main/documentation/',
+                    editUrl: ({ blogPath }) => blogPath.startsWith('releases/')
+                        ? undefined
+                        : `https://github.com/nemerald-voip/fspbx/tree/main/documentation/blog/${blogPath}`,
                     // Useful options to enforce blogging best practices
                     onInlineTags: 'warn',
                     onInlineAuthors: 'warn',
