@@ -22,15 +22,7 @@ fs_info "Building FreeSWITCH $FREESWITCH_VERSION in $BUILD_DIR"
 fs_info 'Avoid editing FreeSWITCH configuration until this installation finishes.'
 
 apt-get update
-fs_apt_install autoconf automake build-essential libtool libtool-bin pkg-config \
-    git ca-certificates cmake ccache python3 rsync uuid-dev libssl-dev libpcre2-dev \
-    libncurses-dev libjpeg-dev flac libgdbm-dev libdb-dev gettext \
-    libpq-dev liblua5.2-dev libtiff-dev libperl-dev libcurl4-openssl-dev libsqlite3-dev \
-    libspeexdsp-dev libspeex-dev libldns-dev libedit-dev libopus-dev libopencore-amrnb-dev \
-    libmemcached-dev libhiredis-dev libshout3-dev libmpg123-dev libmp3lame-dev \
-    yasm nasm libsndfile1-dev libuv1-dev libvpx-dev libavformat-dev libavcodec-dev \
-    libavutil-dev libswscale-dev libswresample-dev libyuv-dev libvlc-dev flite1-dev \
-    sox libsox-fmt-all sqlite3 unzip
+fs_install_build_dependencies
 
 fs_prepare_compiler_cache
 export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig:/usr/local/lib/$(gcc -dumpmachine)/pkgconfig:${PKG_CONFIG_PATH:-}"
@@ -79,6 +71,9 @@ if [[ "$FRESH_INSTALL" == true ]]; then
     for directory in /var/lib/freeswitch /var/log/freeswitch /var/run/freeswitch /var/cache/fusionpbx; do
         install -d -o www-data -g www-data "$directory"
     done
+    # Restore the original fresh-install permissions for writable shared data.
+    # Existing servers keep their custom ownership.
+    chown -R www-data:www-data /usr/share/freeswitch
     install -m 644 debian/freeswitch-systemd.freeswitch.service /lib/systemd/system/freeswitch.service
     sed -i -e 's/Environment="USER=freeswitch"/Environment="USER=www-data"/' \
         -e 's/Environment="GROUP=freeswitch"/Environment="GROUP=www-data"/' \

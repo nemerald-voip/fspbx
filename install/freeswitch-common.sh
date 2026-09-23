@@ -124,6 +124,25 @@ fs_apt_install() {
     DEBIAN_FRONTEND=noninteractive apt-get -o Dpkg::Options::=--force-confold install --no-remove -y "$@"
 }
 
+fs_install_build_dependencies() {
+    fs_apt_install autoconf automake build-essential libtool libtool-bin pkg-config \
+        git ca-certificates cmake ccache python3 rsync sudo curl wget libc-bin \
+        uuid-dev libssl-dev libpcre2-dev libncurses-dev libjpeg-dev flac libgdbm-dev libdb-dev gettext \
+        libpq-dev liblua5.2-dev libtiff-dev libperl-dev libcurl4-openssl-dev libsqlite3-dev \
+        libspeexdsp-dev libspeex-dev libldns-dev libedit-dev libopus-dev libopencore-amrnb-dev \
+        libmemcached-dev libhiredis-dev libshout3-dev libmpg123-dev libmp3lame-dev \
+        yasm nasm libsndfile1-dev libuv1-dev libvpx-dev libavformat-dev libavcodec-dev \
+        libavutil-dev libswscale-dev libswresample-dev libyuv-dev libvlc-dev flite1-dev \
+        sox libsox-fmt-all sqlite3 unzip
+    # Debian 13 removed python3-distutils; setuptools supplies its replacement.
+    # Keep the release-specific tools from the original Debian compatibility fix.
+    case "$OS_CODENAME" in
+        bookworm) fs_apt_install mlocate python3-distutils ;;
+        trixie) fs_apt_install plocate python3-setuptools ;;
+        *) fs_die 'Build dependencies require Debian 12 or 13.' ;;
+    esac
+}
+
 fs_begin_install() {
     if [[ "$FS_CONFIG_PROTECTED" == true ]]; then
         python3 "$FS_CONFIG_TOOL" compare "$FS_BACKUP_DIR/config" "$FS_CONF_DIR" > "$FS_BACKUP_DIR/config-changes.txt" ||
@@ -252,7 +271,10 @@ fs_build_dependencies() {
         fs_info 'Using the installed libks library.'
     else
         fs_clone https://github.com/signalwire/libks.git "$LIBKS_VERSION" "$BUILD_DIR/libks"
+        # CPack's changelog generation needs Git history; this is a library-only
+        # install. Override libks's /usr default to match the staged copy below.
         cmake -S "$BUILD_DIR/libks" -B "$BUILD_DIR/libks/build" -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=/usr/local -DWITH_PACKAGING=OFF \
             "-DCMAKE_C_FLAGS=${CFLAGS:-} ${FS_BUILD_PREFIX_FLAGS:-}" \
             "-DCMAKE_CXX_FLAGS=${CXXFLAGS:-} ${FS_BUILD_PREFIX_FLAGS:-}"
         cmake --build "$BUILD_DIR/libks/build" --parallel "$JOBS"

@@ -69,6 +69,51 @@ fs_dependency_ready sofia-sip-ua {reference}
     def test_missing_dependency_is_not_reused(self):
         self.probe_sofia(expected=1)
 
+    def test_build_dependencies_preserve_debian_release_compatibility(self):
+        for release, included, excluded in (
+            ('bookworm', {'mlocate', 'python3-distutils'}, {'python3-setuptools'}),
+            ('trixie', {'plocate', 'python3-setuptools'}, {'mlocate', 'python3-distutils'}),
+        ):
+            with self.subTest(release=release):
+                result = self.run_shell('''
+OS_CODENAME=''' + release + '''
+fs_apt_install() { printf '%s\\n' "$@"; }
+fs_install_build_dependencies
+''')
+                packages = set(result.stdout.splitlines())
+                self.assertTrue(included <= packages)
+                self.assertFalse(excluded & packages)
+                self.assertTrue({'sudo', 'libc-bin', 'libtool-bin', 'libhiredis-dev',
+                                 'libpq-dev', 'libpcre2-dev', 'libncurses-dev',
+                                 'libtiff-dev', 'curl', 'wget'} <= packages)
+                self.assertFalse({'libpcre3-dev', 'libncurses5-dev', 'libtiff5-dev'} & packages)
+
+    @unittest.skipUnless(os.environ.get('FSPBX_TEST_LIBKS_REPOSITORY'),
+                         'Set FSPBX_TEST_LIBKS_REPOSITORY to a local libks repository for the real build check')
+    def test_real_libks_build_from_shallow_clone_installs_usable_staged_library(self):
+        # This regression needs the actual libks CMake build, not a toy project:
+        # it defaults to /usr and generates a changelog unless packaging is off.
+        self.run_shell('''
+export CCACHE_DIR="$FIXTURE/cache"
+mkdir -p "$BUILD_DIR"
+fs_prepare_compiler_cache
+fs_clone "file://$FSPBX_TEST_LIBKS_REPOSITORY" "$LIBKS_VERSION" "$BUILD_DIR/libks"
+[[ $(git -C "$BUILD_DIR/libks" rev-parse --is-shallow-repository) == true ]]
+fs_clone() { [[ "$2" == "$LIBKS_VERSION" && "$3" == "$BUILD_DIR/libks" ]]; }
+fs_dependency_ready() { [[ "$1" != libks2 ]]; }
+fs_publish_dependencies() {
+    local prefix="$BUILD_DIR/dependencies/usr/local"
+    [[ -f "$prefix/lib/libks2.so" && -f "$prefix/include/libks2/libks/ks.h" ]]
+    # Relocate the staged pkg-config prefix for the probe; never publish to /usr.
+    sed -i "s|^prefix=.*|prefix=$prefix|" "$prefix/lib/pkgconfig/libks2.pc"
+    export PKG_CONFIG_PATH="$prefix/lib/pkgconfig"
+    export LD_LIBRARY_PATH="$prefix/lib"
+}
+fs_check_libraries() { :; }
+fs_build_dependencies
+''')
+        self.assertIn('libks2 v2.0.11 built', (self.root / 'dependency-actions.txt').read_text())
+
     def test_version_alone_does_not_allow_missing_tls_header_support(self):
         self.sofia_fixture(tls_header=False)
         self.probe_sofia(expected=1)
