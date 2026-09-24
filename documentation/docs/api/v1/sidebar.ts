@@ -242,6 +242,42 @@ const sidebar: SidebarsConfig = {
     },
     {
       type: "category",
+      label: "Recordings",
+      items: [
+        {
+          type: "doc",
+          id: "api/v1/list-recordings",
+          label: "List recordings",
+          className: "api-method get",
+        },
+        {
+          type: "doc",
+          id: "api/v1/create-a-recording",
+          label: "Create a recording",
+          className: "api-method post",
+        },
+        {
+          type: "doc",
+          id: "api/v1/retrieve-a-recording",
+          label: "Retrieve a recording",
+          className: "api-method get",
+        },
+        {
+          type: "doc",
+          id: "api/v1/update-a-recording",
+          label: "Update a recording",
+          className: "api-method patch",
+        },
+        {
+          type: "doc",
+          id: "api/v1/delete-a-recording",
+          label: "Delete a recording",
+          className: "api-method delete",
+        },
+      ],
+    },
+    {
+      type: "category",
       label: "Registrations",
       items: [
         {

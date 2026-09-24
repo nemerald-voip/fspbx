@@ -568,7 +568,7 @@ class GroupsController extends Controller
             DB::beginTransaction();
 
             $groupManager = Groups::create(array_merge($validated, [
-                'domain_uuid' => session('domain_uuid'),
+                'domain_uuid' => $validated['domain_uuid'] ?? null,
                 'group_uuid'  => Str::uuid(),
                 'group_protected' => 'false',
             ]));

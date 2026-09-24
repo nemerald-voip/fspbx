@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\RingGroups;
 use App\Rules\UniqueExtension;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
@@ -16,13 +17,16 @@ class UpdateRingGroupRequest extends FormRequest
      */
     public function authorize()
     {
-        return Auth::check();
+        if (!Auth::check() || !userCheckPermission('ring_group_edit')) {
+            return false;
+        }
+        return true;
     }
 
     public function rules(): array
     {
         return [
-            'ring_group_uuid'   => ['sometimes', 'required', 'uuid', 'exists:v_ring_groups,ring_group_uuid'],
+            'ring_group_uuid'   => ['sometimes', 'required', 'uuid', Rule::in([$this->route('ring_group')->getKey()])],
             'ring_group_name'              => ['sometimes', 'required', 'string', 'max:75'],
 
             'ring_group_extension' => [

@@ -1,0 +1,79 @@
+---
+id: delete-a-recording
+title: "Delete a recording"
+description: "Deletes the recording database row and its stored audio file."
+sidebar_label: "Delete a recording"
+hide_title: true
+hide_table_of_contents: true
+api: eJztWFlv2zgQ/isEnxJAvjYukhpFgXSbbAMs0KCpgRaJ4Y6kkcWWJlUeTg1D/31BSpZkS0mdbvOwwObFscXjO2Y4HG2ozFCBYVJcxXRCY+Ro8PwDRlLFTCxoQGPUkWKZG0In9K0foIlJkajtKBKDgRA0EiXvCYiYMKOJNlJhTMDGTJKEcezfiTtxHkWoNVGWo57ciR75EzhHRZZWG5LCCgkUI4z0mxhQCzQklktgghyVnzqSGR73O+e7WV8qbPOC0heSoVoyrZkUHocn4rBDg8cS1iTiCIooTFChiFCTRMklSRCMVZ44GGI1Emb6ZKrxTtgsBoPkPkXh915I4IR5AgozDhGWGtwzk0prSJSCWLjtIuCcKGkdjj4NaAYKlmhQaTq53VDmBM/ApDSgApbo/PH059ayuGXNxxS3Mk2nV2/dgvgDlhl3E8fD0VlyCie9MxxCb3wahr2XyTjpDcfh6GR0gkMchTSgCr9bpjCmE6MsBlRHKS6BTjbUrDO3jjbKhUWeB534atkfhFir3UYZDTE6G41OegCjF73xEKLe2fjktDc+HZ29iOOXcZSMn4Ry5gbrTAqN2j3/Yzh0H10x7dBGUhgUxg2BLOMs8pkx+KrduE17Hxl+xcg0KWyoJ34wlXKFhnJetAKQp5cHNFMuSw0rOBQb7HN9sox5vflja9W48gawakYoJUcQzSketP8L6LhL7yuxAs7ivUj4TfKjUlI1xrBis7mLGdRmXjwP6BK1hgU+CKfv8cQdS2wTtR3uecurfTQV4t1hxdPHbOimkTd4PDb7IYr5luMTtnaTSv4Hxc1WmjokRu2QmAqwJkVhnOe/LRX31W/swaToCIU9GI0YsHsAn9HqTpSHOt1icJDFbXa1Wydtty6lClkco/hNPmnrSz6dJMA1Ng2pdiJHvniLRaOOH/visZW9NCrZzpjXA50J9ZdmbBYHWoebFaTHTjoP91BnfkYlDw4NoZ/72SlCvqvCYclbCVQHxLgdENV9kQhpSCKteK4U/vlx3oGlkccKtbQqwnnpwX/wMO8keFCat8j/y6P8xcO3KZIA4893kGesw/nd22UkLY+9RCGS8uKyU9QNKgF8K/4znucV2EMdPoTIgaV7j2RlnYGFazLqYNJ05tCZVNZ9oE8Ok9IJHUDGBqvRoOgv9GDTaETyQYVVDza7wZLTgGpUq21LYxWnE5oak+nJYLBJpTZ5q0u4vCHXbz6R8+srUsylAV2BYhDyQnM3rQi8BCx3t+fP76cfepc3128+9d69v/nYWvKd1Ma1KK5LU0jKHZjrQ4VwIh+Vok1IorPwR38treoVJPsCzbHTbua4RFYxs/Zkqu1vZ81nNy6iC6DViMokR52WHYuvKgjKE9zF+1laEoEgCo1iuELi8BAjv6Eg4ZqsmGa+efU/x6DTUIKKfesdcRZ9c89eha//QuG6e/Ra+tmvBuHrvo92JhLpgTFT1KdK9RYapz+qsniuRv7YkNoswWdw2fqVed9op/fX2dRnwf/vEZ7zPUIZawZ/mEHGgfna71NvUyb0rTuVnK0jZ1KR1DSgk933C3Veu2d7ZWAWlHl4SzcbZ9pU8Tx3P3+3qFyGzOq0LfKFafd/XN3zHoyOow9lh39MOt5qdNLbVgax9qcFt1gE7jdc7703ca8ufhlKu0n8BTT7BXWWBzRFiFF5nYpBLsAz05jeqp5588R+e/H3xccLmuf/AAwP5GE=
+sidebar_class_name: "delete api-method"
+info_path: docs/api/v1/fs-pbx-api
+custom_edit_url: null
+hide_send_button: true
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Delete a recording"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"delete"}
+  path={"/api/v1/domains/{domain_uuid}/recordings/{recording_uuid}"}
+  context={"endpoint"}
+>
+  
+</MethodEndpoint>
+
+
+
+Deletes the recording database row and its stored audio file.
+
+Access rules:
+- Caller must have access to the target domain (domain scope).
+- Caller must have the `recording_delete` permission.
+
+Deleting a recording may clear references from features that use it. Use
+update when the goal is to replace audio without changing call routing.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"in":"path","name":"domain_uuid","description":"The domain UUID.","example":"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b","required":true,"schema":{"type":"string"}},{"in":"path","name":"recording_uuid","description":"The recording UUID.","example":"c0ec8113-aa15-40ac-8437-47185dd9dcf4","required":true,"schema":{"type":"string"}}]}
+>
+  
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+  
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"Deleted","content":{"application/json":{"schema":{"type":"object","example":{"uuid":"c0ec8113-aa15-40ac-8437-47185dd9dcf4","object":"recording","deleted":true},"properties":{"uuid":{"type":"string","example":"c0ec8113-aa15-40ac-8437-47185dd9dcf4"},"object":{"type":"string","example":"recording"},"deleted":{"type":"boolean","example":true}}}}}},"400":{"description":"Invalid recording UUID","content":{"application/json":{"schema":{"type":"object","example":{"error":{"type":"invalid_request_error","message":"Invalid recording UUID.","code":"invalid_request","param":"recording_uuid"}},"properties":{"error":{"type":"object","properties":{"type":{"type":"string","example":"invalid_request_error"},"message":{"type":"string","example":"Invalid recording UUID."},"code":{"type":"string","example":"invalid_request"},"param":{"type":"string","example":"recording_uuid"}}}}}}}},"401":{"description":"Unauthenticated","content":{"application/json":{"schema":{"type":"object","example":{"error":{"type":"authentication_error","message":"Unauthenticated.","code":"unauthenticated"}},"properties":{"error":{"type":"object","properties":{"type":{"type":"string","example":"authentication_error"},"message":{"type":"string","example":"Unauthenticated."},"code":{"type":"string","example":"unauthenticated"}}}}}}}},"403":{"description":"Forbidden","content":{"application/json":{"schema":{"type":"object","example":{"success":false,"message":"Forbidden (missing permission).","error":{"code":"forbidden_permission","permission":"recording_delete"}},"properties":{"success":{"type":"boolean","example":false},"message":{"type":"string","example":"Forbidden (missing permission)."},"error":{"type":"object","properties":{"code":{"type":"string","example":"forbidden_permission"},"permission":{"type":"string","example":"recording_delete"}}}}}}}},"404":{"description":"Recording not found","content":{"application/json":{"schema":{"type":"object","example":{"error":{"type":"invalid_request_error","message":"Recording not found.","code":"resource_missing","param":"recording_uuid"}},"properties":{"error":{"type":"object","properties":{"type":{"type":"string","example":"invalid_request_error"},"message":{"type":"string","example":"Recording not found."},"code":{"type":"string","example":"resource_missing"},"param":{"type":"string","example":"recording_uuid"}}}}}}}},"500":{"description":"Delete failed","content":{"application/json":{"schema":{"type":"object","example":{"error":{"type":"api_error","message":"The recording could not be deleted.","code":"internal_error"}},"properties":{"error":{"type":"object","properties":{"type":{"type":"string","example":"api_error"},"message":{"type":"string","example":"The recording could not be deleted."},"code":{"type":"string","example":"internal_error"}}}}}}}}}}
+>
+  
+</StatusCodes>
+
+
+      

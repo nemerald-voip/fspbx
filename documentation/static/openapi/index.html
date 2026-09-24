@@ -209,6 +209,28 @@
                             </li>
                                                                         </ul>
                             </ul>
+                    <ul id="tocify-header-recordings" class="tocify-header">
+                <li class="tocify-item level-1" data-unique="recordings">
+                    <a href="#recordings">Recordings</a>
+                </li>
+                                    <ul id="tocify-subheader-recordings" class="tocify-subheader">
+                                                    <li class="tocify-item level-2" data-unique="recordings-GETapi-v1-domains--domain_uuid--recordings">
+                                <a href="#recordings-GETapi-v1-domains--domain_uuid--recordings">List recordings</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="recordings-POSTapi-v1-domains--domain_uuid--recordings">
+                                <a href="#recordings-POSTapi-v1-domains--domain_uuid--recordings">Create a recording</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="recordings-GETapi-v1-domains--domain_uuid--recordings--recording_uuid-">
+                                <a href="#recordings-GETapi-v1-domains--domain_uuid--recordings--recording_uuid-">Retrieve a recording</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="recordings-PATCHapi-v1-domains--domain_uuid--recordings--recording_uuid-">
+                                <a href="#recordings-PATCHapi-v1-domains--domain_uuid--recordings--recording_uuid-">Update a recording</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="recordings-DELETEapi-v1-domains--domain_uuid--recordings--recording_uuid-">
+                                <a href="#recordings-DELETEapi-v1-domains--domain_uuid--recordings--recording_uuid-">Delete a recording</a>
+                            </li>
+                                                                        </ul>
+                            </ul>
                     <ul id="tocify-header-registrations" class="tocify-header">
                 <li class="tocify-item level-1" data-unique="registrations">
                     <a href="#registrations">Registrations</a>
@@ -284,7 +306,7 @@
     </ul>
 
     <ul class="toc-footer" id="last-updated">
-        <li>Last updated: July 22, 2026</li>
+        <li>Last updated: September 24, 2026</li>
     </ul>
 </div>
 
@@ -1051,7 +1073,7 @@ equal to the last item's <code>xml_cdr_uuid</code> from the previous response.</
 <li><code>direction</code> filters by call direction.</li>
 <li><code>status</code> filters by call status.
 Accepted values: <code>answered</code>, <code>no answer</code>, <code>cancelled</code>, <code>voicemail</code>,
-<code>missed call</code>, <code>abandoned</code>.</li>
+<code>missed call</code>, <code>abandoned</code>, <code>callback_requested</code>.</li>
 <li><code>extension_uuid</code> filters by extension UUID.</li>
 <li><code>call_center_queue_uuid</code> filters by queue UUID.</li>
 <li><code>date_from</code> and <code>date_to</code> filter by <code>start_epoch</code> in epoch seconds.</li>
@@ -1397,7 +1419,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value="answered"
                data-component="query">
     <br>
-<p>Optional. Filter by status. Accepted values: answered, no answer, cancelled, voicemail, missed call, abandoned. Example: <code>answered</code></p>
+<p>Optional. Filter by status. Accepted values: answered, no answer, cancelled, voicemail, missed call, abandoned, callback_requested. Example: <code>answered</code></p>
             </div>
                                     <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>extension_uuid</code></b>&nbsp;&nbsp;
@@ -2472,11 +2494,11 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"device_template\": \"Yealink T46U\",
     \"device_template_uuid\": \"a6cf59ba-4b2b-4bdd-b870-35cc55bca146\",
     \"device_keys\": [
-        \"inventore\"
+        \"ab\"
     ],
-    \"phonebook_mode\": \"custom\",
+    \"phonebook_mode\": \"default\",
     \"phonebook_uuids\": [
-        \"a6603e7c-f9b6-3036-bc6b-a28ba3577c16\"
+        \"3b9267c9-bae3-323c-ad4f-7b59d1f46c9e\"
     ],
     \"device_description\": \"Reception desk device\",
     \"device_lines\": [
@@ -2504,11 +2526,11 @@ let body = {
     "device_template": "Yealink T46U",
     "device_template_uuid": "a6cf59ba-4b2b-4bdd-b870-35cc55bca146",
     "device_keys": [
-        "inventore"
+        "ab"
     ],
-    "phonebook_mode": "custom",
+    "phonebook_mode": "default",
     "phonebook_uuids": [
-        "a6603e7c-f9b6-3036-bc6b-a28ba3577c16"
+        "3b9267c9-bae3-323c-ad4f-7b59d1f46c9e"
     ],
     "device_description": "Reception desk device",
     "device_lines": [
@@ -2757,10 +2779,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="device_keys.0.key_index"                data-endpoint="POSTapi-v1-domains--domain_uuid--devices"
-               value="4"
+               value="9"
                data-component="body">
     <br>
-<p>Example: <code>4</code></p>
+<p>Example: <code>9</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>key_area</code></b>&nbsp;&nbsp;
@@ -2768,10 +2790,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="device_keys.0.key_area"                data-endpoint="POSTapi-v1-domains--domain_uuid--devices"
-               value="main"
+               value="side"
                data-component="body">
     <br>
-<p>Example: <code>main</code></p>
+<p>Example: <code>side</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>main</code></li> <li><code>side</code></li> <li><code>multi_purpose</code></li> <li><code>expansion</code></li></ul>
                     </div>
@@ -2781,10 +2803,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="device_keys.0.key_type"                data-endpoint="POSTapi-v1-domains--domain_uuid--devices"
-               value="ir"
+               value="nizlavywxyireapkeluf"
                data-component="body">
     <br>
-<p>Must not be greater than 50 characters. Example: <code>ir</code></p>
+<p>Must not be greater than 50 characters. Example: <code>nizlavywxyireapkeluf</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>key_value</code></b>&nbsp;&nbsp;
@@ -2792,10 +2814,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="device_keys.0.key_value"                data-endpoint="POSTapi-v1-domains--domain_uuid--devices"
-               value="vypuzdnnygzolrprlu"
+               value="xwigzhevesewuwslepcgxfayr"
                data-component="body">
     <br>
-<p>Must not be greater than 64 characters. Example: <code>vypuzdnnygzolrprlu</code></p>
+<p>Must not be greater than 64 characters. Example: <code>xwigzhevesewuwslepcgxfayr</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>key_label</code></b>&nbsp;&nbsp;
@@ -2803,10 +2825,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="device_keys.0.key_label"                data-endpoint="POSTapi-v1-domains--domain_uuid--devices"
-               value="tkeu"
+               value="anobub"
                data-component="body">
     <br>
-<p>Must not be greater than 80 characters. Example: <code>tkeu</code></p>
+<p>Must not be greater than 80 characters. Example: <code>anobub</code></p>
                     </div>
                                     </details>
         </div>
@@ -2816,10 +2838,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="phonebook_mode"                data-endpoint="POSTapi-v1-domains--domain_uuid--devices"
-               value="custom"
+               value="default"
                data-component="body">
     <br>
-<p>Example: <code>custom</code></p>
+<p>Example: <code>default</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>default</code></li> <li><code>custom</code></li></ul>
         </div>
@@ -5930,7 +5952,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value="+12135551212"
                data-component="body">
     <br>
-<p>Outbound caller ID number (E.164 recommended). Example: <code>+12135551212</code></p>
+<p>Outbound caller ID number. Valid national numbers are normalized to E.164 using the domain country. Example: <code>+12135551212</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>emergency_caller_id_number</code></b>&nbsp;&nbsp;
@@ -5941,7 +5963,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value="+12135559876"
                data-component="body">
     <br>
-<p>Emergency caller ID number (E.164 recommended). Example: <code>+12135559876</code></p>
+<p>Emergency caller ID number. Valid national numbers are normalized to E.164 using the domain country. Example: <code>+12135559876</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>outbound_caller_id_name</code></b>&nbsp;&nbsp;
@@ -6832,7 +6854,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value="+12135551212"
                data-component="body">
     <br>
-<p>Outbound caller ID number (E.164 recommended). If omitted, value is unchanged. Example: <code>+12135551212</code></p>
+<p>Outbound caller ID number. Valid national numbers are normalized to E.164 using the domain country. If omitted, value is unchanged. Example: <code>+12135551212</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>emergency_caller_id_number</code></b>&nbsp;&nbsp;
@@ -6843,7 +6865,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value="+12135559876"
                data-component="body">
     <br>
-<p>Emergency caller ID number (E.164 recommended). If omitted, value is unchanged. Example: <code>+12135559876</code></p>
+<p>Emergency caller ID number. Valid national numbers are normalized to E.164 using the domain country. If omitted, value is unchanged. Example: <code>+12135559876</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>outbound_caller_id_name</code></b>&nbsp;&nbsp;
@@ -8585,7 +8607,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value="yealink"
                data-component="body">
     <br>
-<p>Optional. Broader selector for a supported driver: yealink, snom, poly, grandstream, or generic. Example: <code>yealink</code></p>
+<p>Optional. Broader selector for a supported driver: yealink, snom, poly, polycom, ringotel, grandstream, or generic. Example: <code>yealink</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>lan_ip</code></b>&nbsp;&nbsp;
@@ -8688,7 +8710,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <p>Access rules:</p>
 <ul>
 <li>Caller must have access to the target domain (domain scope).</li>
-<li>Caller must have the <code>destination_domain</code> permission.</li>
+<li>Caller must have the <code>destination_view</code> permission.</li>
 </ul>
 <p>Pagination (cursor-based):</p>
 <ul>
@@ -9602,7 +9624,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     <br>
 <p>Routing type. This field is required when <code>routing_options</code> is present. Example: <code>ring_groups</code></p>
 Must be one of:
-<ul style="list-style-type: square;"><li><code>extensions</code></li> <li><code>ring_groups</code></li> <li><code>ivrs</code></li> <li><code>business_hours</code></li> <li><code>contact_centers</code></li> <li><code>bridges</code></li> <li><code>faxes</code></li> <li><code>conferences</code></li> <li><code>call_flows</code></li> <li><code>voicemails</code></li> <li><code>company_directory</code></li> <li><code>check_voicemail</code></li> <li><code>hangup</code></li></ul>
+<ul style="list-style-type: square;"><li><code>extensions</code></li> <li><code>ring_groups</code></li> <li><code>ivrs</code></li> <li><code>business_hours</code></li> <li><code>contact_centers</code></li> <li><code>ai_agents</code></li> <li><code>bridges</code></li> <li><code>faxes</code></li> <li><code>conferences</code></li> <li><code>call_flows</code></li> <li><code>dynamic_routes</code></li> <li><code>voicemails</code></li> <li><code>company_directory</code></li> <li><code>check_voicemail</code></li> <li><code>hangup</code></li></ul>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>extension</code></b>&nbsp;&nbsp;
@@ -9614,6 +9636,17 @@ Must be one of:
                data-component="body">
     <br>
 <p>Digits target for this routing type (extension or external). Example: <code>9000</code></p>
+                    </div>
+                                                                <div style="margin-left: 14px; clear: unset;">
+                        <b style="line-height: 2;"><code>bridge_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="routing_options.0.bridge_uuid"                data-endpoint="POSTapi-v1-domains--domain_uuid--phone-numbers"
+               value="9a458dfd-a989-4e77-ab1d-711f5ecd35cb"
+               data-component="body">
+    <br>
+<p>Optional bridge UUID used to keep the route synchronized when the bridge changes. Must be a valid UUID. Example: <code>9a458dfd-a989-4e77-ab1d-711f5ecd35cb</code></p>
                     </div>
                                     </details>
         </div>
@@ -10091,7 +10124,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     <br>
 <p>Routing type. This field is required when <code>routing_options</code> is present. Example: <code>ring_groups</code></p>
 Must be one of:
-<ul style="list-style-type: square;"><li><code>extensions</code></li> <li><code>ring_groups</code></li> <li><code>ivrs</code></li> <li><code>business_hours</code></li> <li><code>contact_centers</code></li> <li><code>bridges</code></li> <li><code>faxes</code></li> <li><code>conferences</code></li> <li><code>call_flows</code></li> <li><code>voicemails</code></li> <li><code>company_directory</code></li> <li><code>check_voicemail</code></li> <li><code>hangup</code></li></ul>
+<ul style="list-style-type: square;"><li><code>extensions</code></li> <li><code>ring_groups</code></li> <li><code>ivrs</code></li> <li><code>business_hours</code></li> <li><code>contact_centers</code></li> <li><code>ai_agents</code></li> <li><code>bridges</code></li> <li><code>faxes</code></li> <li><code>conferences</code></li> <li><code>call_flows</code></li> <li><code>dynamic_routes</code></li> <li><code>voicemails</code></li> <li><code>company_directory</code></li> <li><code>check_voicemail</code></li> <li><code>hangup</code></li></ul>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>extension</code></b>&nbsp;&nbsp;
@@ -10103,6 +10136,17 @@ Must be one of:
                data-component="body">
     <br>
 <p>Digits target for this routing type (extension or external). Example: <code>9000</code></p>
+                    </div>
+                                                                <div style="margin-left: 14px; clear: unset;">
+                        <b style="line-height: 2;"><code>bridge_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="routing_options.0.bridge_uuid"                data-endpoint="PATCHapi-v1-domains--domain_uuid--phone-numbers--destination_uuid-"
+               value="9a458dfd-a989-4e77-ab1d-711f5ecd35cb"
+               data-component="body">
+    <br>
+<p>Optional bridge UUID used to keep the route synchronized when the bridge changes. Must be a valid UUID. Example: <code>9a458dfd-a989-4e77-ab1d-711f5ecd35cb</code></p>
                     </div>
                                     </details>
         </div>
@@ -10326,6 +10370,1381 @@ You can check the Dev Tools console for debugging information.</code></pre>
                data-component="url">
     <br>
 <p>The destination UUID. Example: <code>ad45f53d-405b-48bc-aac2-d51b2b3b3e55</code></p>
+            </div>
+                    </form>
+
+                <h1 id="recordings">Recordings</h1>
+
+    
+
+                                <h2 id="recordings-GETapi-v1-domains--domain_uuid--recordings">List recordings</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Returns recordings for the specified domain the caller is allowed to access.</p>
+<p>Access rules:</p>
+<ul>
+<li>Caller must have access to the target domain (domain scope).</li>
+<li>Caller must have the <code>recording_view</code> permission.</li>
+</ul>
+<p>Pagination (cursor-based):</p>
+<ul>
+<li>Both <code>limit</code> and <code>starting_after</code> are optional.</li>
+<li>If <code>limit</code> is not provided, it defaults to 50.</li>
+<li>If <code>starting_after</code> is not provided, results start from the beginning.</li>
+<li>If <code>has_more</code> is true, request the next page by passing <code>starting_after</code>
+equal to the last item's <code>recording_uuid</code> from the previous response.</li>
+</ul>
+<p>Examples:</p>
+<ul>
+<li>First page: <code>GET /api/v1/domains/{domain_uuid}/recordings</code></li>
+<li>Next page: <code>GET /api/v1/domains/{domain_uuid}/recordings?starting_after={last_recording_uuid}</code></li>
+<li>Custom size: <code>GET /api/v1/domains/{domain_uuid}/recordings?limit=50</code></li>
+</ul>
+
+<span id="example-requests-GETapi-v1-domains--domain_uuid--recordings">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/recordings?limit=50&amp;starting_after=c0ec8113-aa15-40ac-8437-47185dd9dcf4" \
+    --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/recordings"
+);
+
+const params = {
+    "limit": "50",
+    "starting_after": "c0ec8113-aa15-40ac-8437-47185dd9dcf4",
+};
+Object.keys(params)
+    .forEach(key =&gt; url.searchParams.append(key, params[key]));
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-v1-domains--domain_uuid--recordings">
+            <blockquote>
+            <p>Example response (200, Success):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;object&quot;: &quot;list&quot;,
+    &quot;url&quot;: &quot;/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/recordings&quot;,
+    &quot;has_more&quot;: true,
+    &quot;data&quot;: [
+        {
+            &quot;recording_uuid&quot;: &quot;c0ec8113-aa15-40ac-8437-47185dd9dcf4&quot;,
+            &quot;object&quot;: &quot;recording&quot;,
+            &quot;domain_uuid&quot;: &quot;4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b&quot;,
+            &quot;recording_name&quot;: &quot;Main Menu Greeting&quot;,
+            &quot;recording_description&quot;: &quot;Primary virtual receptionist greeting&quot;,
+            &quot;recording_filename&quot;: &quot;uploaded_abc123.wav&quot;,
+            &quot;audio_available&quot;: true,
+            &quot;audio_replaced&quot;: false,
+            &quot;bytes&quot;: null,
+            &quot;sha256&quot;: null
+        }
+    ]
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Invalid domain UUID):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Invalid domain UUID.&quot;,
+        &quot;code&quot;: &quot;invalid_request&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Invalid cursor UUID):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Invalid starting_after UUID.&quot;,
+        &quot;code&quot;: &quot;invalid_request&quot;,
+        &quot;param&quot;: &quot;starting_after&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401, Unauthenticated):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403, Forbidden):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;success&quot;: false,
+    &quot;message&quot;: &quot;Forbidden (missing permission).&quot;,
+    &quot;error&quot;: {
+        &quot;code&quot;: &quot;forbidden_permission&quot;,
+        &quot;permission&quot;: &quot;recording_view&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Domain not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Domain not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-v1-domains--domain_uuid--recordings" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-v1-domains--domain_uuid--recordings"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-v1-domains--domain_uuid--recordings"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-v1-domains--domain_uuid--recordings" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-v1-domains--domain_uuid--recordings">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-v1-domains--domain_uuid--recordings" data-method="GET"
+      data-path="api/v1/domains/{domain_uuid}/recordings"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-v1-domains--domain_uuid--recordings', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/v1/domains/{domain_uuid}/recordings</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-domains--domain_uuid--recordings"
+               value="Bearer {YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-v1-domains--domain_uuid--recordings"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-v1-domains--domain_uuid--recordings"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>domain_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_uuid"                data-endpoint="GETapi-v1-domains--domain_uuid--recordings"
+               value="4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
+               data-component="url">
+    <br>
+<p>The domain UUID. Example: <code>4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>Query Parameters</b></h4>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>limit</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="limit"                data-endpoint="GETapi-v1-domains--domain_uuid--recordings"
+               value="50"
+               data-component="query">
+    <br>
+<p>Optional. Number of results to return (min 1, max 100). Defaults to 50. Example: <code>50</code></p>
+            </div>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>starting_after</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="starting_after"                data-endpoint="GETapi-v1-domains--domain_uuid--recordings"
+               value="c0ec8113-aa15-40ac-8437-47185dd9dcf4"
+               data-component="query">
+    <br>
+<p>Optional. Return results after this recording UUID (cursor). Example: <code>c0ec8113-aa15-40ac-8437-47185dd9dcf4</code></p>
+            </div>
+                </form>
+
+                    <h2 id="recordings-POSTapi-v1-domains--domain_uuid--recordings">Create a recording</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Creates a recording in the specified domain and converts the uploaded audio
+to mono, 16 kHz, 16-bit PCM WAV for FreeSWITCH playback.</p>
+<p>Access rules:</p>
+<ul>
+<li>Caller must have access to the target domain (domain scope).</li>
+<li>Caller must have the <code>recording_upload</code> permission.</li>
+</ul>
+<p>Send this request as <code>multipart/form-data</code>.</p>
+
+<span id="example-requests-POSTapi-v1-domains--domain_uuid--recordings">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request POST \
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/recordings" \
+    --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
+    --header "Content-Type: multipart/form-data" \
+    --header "Accept: application/json" \
+    --form "recording_name=Main Menu Greeting"\
+    --form "recording_description=Primary virtual receptionist greeting"\
+    --form "file=@/tmp/phpvp2415msr9mb3CgPHz6" </code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/recordings"
+);
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_KEY}",
+    "Content-Type": "multipart/form-data",
+    "Accept": "application/json",
+};
+
+const body = new FormData();
+body.append('recording_name', 'Main Menu Greeting');
+body.append('recording_description', 'Primary virtual receptionist greeting');
+body.append('file', document.querySelector('input[name="file"]').files[0]);
+
+fetch(url, {
+    method: "POST",
+    headers,
+    body,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-POSTapi-v1-domains--domain_uuid--recordings">
+            <blockquote>
+            <p>Example response (201, Created):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;recording_uuid&quot;: &quot;c0ec8113-aa15-40ac-8437-47185dd9dcf4&quot;,
+    &quot;object&quot;: &quot;recording&quot;,
+    &quot;domain_uuid&quot;: &quot;4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b&quot;,
+    &quot;recording_name&quot;: &quot;Main Menu Greeting&quot;,
+    &quot;recording_description&quot;: &quot;Primary virtual receptionist greeting&quot;,
+    &quot;recording_filename&quot;: &quot;uploaded_abc123.wav&quot;,
+    &quot;audio_available&quot;: true,
+    &quot;audio_replaced&quot;: true,
+    &quot;bytes&quot;: 384044,
+    &quot;sha256&quot;: &quot;6d27ccf17b7106932c46d299f908f793b52cb168f4cc47b70ef661755adb59f4&quot;
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Invalid domain UUID):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Invalid domain UUID.&quot;,
+        &quot;code&quot;: &quot;invalid_request&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401, Unauthenticated):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403, Forbidden):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;success&quot;: false,
+    &quot;message&quot;: &quot;Forbidden (missing permission).&quot;,
+    &quot;error&quot;: {
+        &quot;code&quot;: &quot;forbidden_permission&quot;,
+        &quot;permission&quot;: &quot;recording_upload&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Domain not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Domain not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (422, Validation error):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;message&quot;: &quot;The file field is required.&quot;,
+    &quot;errors&quot;: {
+        &quot;file&quot;: [
+            &quot;The file field is required.&quot;
+        ]
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (422, Audio processing failed):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;The uploaded audio could not be converted to a valid recording.&quot;,
+        &quot;code&quot;: &quot;audio_processing_failed&quot;,
+        &quot;param&quot;: &quot;file&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (500, Internal error):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;api_error&quot;,
+        &quot;message&quot;: &quot;The recording operation failed.&quot;,
+        &quot;code&quot;: &quot;internal_error&quot;
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-POSTapi-v1-domains--domain_uuid--recordings" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-POSTapi-v1-domains--domain_uuid--recordings"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-POSTapi-v1-domains--domain_uuid--recordings"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-POSTapi-v1-domains--domain_uuid--recordings" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-POSTapi-v1-domains--domain_uuid--recordings">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-POSTapi-v1-domains--domain_uuid--recordings" data-method="POST"
+      data-path="api/v1/domains/{domain_uuid}/recordings"
+      data-authed="1"
+      data-hasfiles="1"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('POSTapi-v1-domains--domain_uuid--recordings', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+            </h3>
+            <p>
+            <small class="badge badge-black">POST</small>
+            <b><code>api/v1/domains/{domain_uuid}/recordings</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="POSTapi-v1-domains--domain_uuid--recordings"
+               value="Bearer {YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="POSTapi-v1-domains--domain_uuid--recordings"
+               value="multipart/form-data"
+               data-component="header">
+    <br>
+<p>Example: <code>multipart/form-data</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="POSTapi-v1-domains--domain_uuid--recordings"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>domain_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_uuid"                data-endpoint="POSTapi-v1-domains--domain_uuid--recordings"
+               value="4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
+               data-component="url">
+    <br>
+<p>The domain UUID. Example: <code>4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b</code></p>
+            </div>
+                            <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
+        <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>recording_name</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="recording_name"                data-endpoint="POSTapi-v1-domains--domain_uuid--recordings"
+               value="Main Menu Greeting"
+               data-component="body">
+    <br>
+<p>The recording display name. Example: <code>Main Menu Greeting</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>recording_description</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="recording_description"                data-endpoint="POSTapi-v1-domains--domain_uuid--recordings"
+               value="Primary virtual receptionist greeting"
+               data-component="body">
+    <br>
+<p>Optional description. Example: <code>Primary virtual receptionist greeting</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>file</code></b>&nbsp;&nbsp;
+<small>file</small>&nbsp;
+ &nbsp;
+                <input type="file" style="display: none"
+                              name="file"                data-endpoint="POSTapi-v1-domains--domain_uuid--recordings"
+               value=""
+               data-component="body">
+    <br>
+<p>WAV, MP3, M4A/MP4, OGG, or FLAC audio file. Maximum size: 50 MB. Example: <code>/tmp/phpvp2415msr9mb3CgPHz6</code></p>
+        </div>
+        </form>
+
+                    <h2 id="recordings-GETapi-v1-domains--domain_uuid--recordings--recording_uuid-">Retrieve a recording</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Returns one recording and details about its stored audio file.</p>
+<p>Access rules:</p>
+<ul>
+<li>Caller must have access to the target domain (domain scope).</li>
+<li>Caller must have the <code>recording_view</code> permission.</li>
+</ul>
+
+<span id="example-requests-GETapi-v1-domains--domain_uuid--recordings--recording_uuid-">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/recordings/c0ec8113-aa15-40ac-8437-47185dd9dcf4" \
+    --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/recordings/c0ec8113-aa15-40ac-8437-47185dd9dcf4"
+);
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-v1-domains--domain_uuid--recordings--recording_uuid-">
+            <blockquote>
+            <p>Example response (200, Success):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;recording_uuid&quot;: &quot;c0ec8113-aa15-40ac-8437-47185dd9dcf4&quot;,
+    &quot;object&quot;: &quot;recording&quot;,
+    &quot;domain_uuid&quot;: &quot;4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b&quot;,
+    &quot;recording_name&quot;: &quot;Main Menu Greeting&quot;,
+    &quot;recording_description&quot;: &quot;Primary virtual receptionist greeting&quot;,
+    &quot;recording_filename&quot;: &quot;uploaded_abc123.wav&quot;,
+    &quot;audio_available&quot;: true,
+    &quot;audio_replaced&quot;: false,
+    &quot;bytes&quot;: 384044,
+    &quot;sha256&quot;: &quot;6d27ccf17b7106932c46d299f908f793b52cb168f4cc47b70ef661755adb59f4&quot;
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Invalid domain UUID):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Invalid domain UUID.&quot;,
+        &quot;code&quot;: &quot;invalid_request&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Invalid recording UUID):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Invalid recording UUID.&quot;,
+        &quot;code&quot;: &quot;invalid_request&quot;,
+        &quot;param&quot;: &quot;recording_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401, Unauthenticated):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403, Forbidden):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;success&quot;: false,
+    &quot;message&quot;: &quot;Forbidden (missing permission).&quot;,
+    &quot;error&quot;: {
+        &quot;code&quot;: &quot;forbidden_permission&quot;,
+        &quot;permission&quot;: &quot;recording_view&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Domain not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Domain not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Recording not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Recording not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;recording_uuid&quot;
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-v1-domains--domain_uuid--recordings--recording_uuid-" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-v1-domains--domain_uuid--recordings--recording_uuid-"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-v1-domains--domain_uuid--recordings--recording_uuid-"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-v1-domains--domain_uuid--recordings--recording_uuid-" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-v1-domains--domain_uuid--recordings--recording_uuid-">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-v1-domains--domain_uuid--recordings--recording_uuid-" data-method="GET"
+      data-path="api/v1/domains/{domain_uuid}/recordings/{recording_uuid}"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-v1-domains--domain_uuid--recordings--recording_uuid-', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/v1/domains/{domain_uuid}/recordings/{recording_uuid}</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-domains--domain_uuid--recordings--recording_uuid-"
+               value="Bearer {YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-v1-domains--domain_uuid--recordings--recording_uuid-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-v1-domains--domain_uuid--recordings--recording_uuid-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>domain_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_uuid"                data-endpoint="GETapi-v1-domains--domain_uuid--recordings--recording_uuid-"
+               value="4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
+               data-component="url">
+    <br>
+<p>The domain UUID. Example: <code>4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b</code></p>
+            </div>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>recording_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="recording_uuid"                data-endpoint="GETapi-v1-domains--domain_uuid--recordings--recording_uuid-"
+               value="c0ec8113-aa15-40ac-8437-47185dd9dcf4"
+               data-component="url">
+    <br>
+<p>The recording UUID. Example: <code>c0ec8113-aa15-40ac-8437-47185dd9dcf4</code></p>
+            </div>
+                    </form>
+
+                    <h2 id="recordings-PATCHapi-v1-domains--domain_uuid--recordings--recording_uuid-">Update a recording</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Updates the name, description, audio file, or any combination of those
+fields. Supplying <code>file</code> converts and atomically updates the stored audio
+while retaining the recording UUID and filename, so existing call-routing
+references continue to use the updated audio.</p>
+<p>Access rules:</p>
+<ul>
+<li>Caller must have access to the target domain (domain scope).</li>
+<li>Caller must have the <code>recording_upload</code> permission.</li>
+</ul>
+<p>For metadata-only updates, send <code>PATCH</code> normally. For an audio upload, send
+<code>multipart/form-data</code> as POST with <code>_method=PATCH</code> so PHP parses the file.
+At least one update field is required.</p>
+
+<span id="example-requests-PATCHapi-v1-domains--domain_uuid--recordings--recording_uuid-">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request PATCH \
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/recordings/c0ec8113-aa15-40ac-8437-47185dd9dcf4" \
+    --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
+    --header "Content-Type: multipart/form-data" \
+    --header "Accept: application/json" \
+    --form "recording_name=Updated Main Menu Greeting"\
+    --form "recording_description=Updated automatically"\
+    --form "_method=PATCH"\
+    --form "file=@/tmp/phpdnqsdtklurkh9EOGqQB" </code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/recordings/c0ec8113-aa15-40ac-8437-47185dd9dcf4"
+);
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_KEY}",
+    "Content-Type": "multipart/form-data",
+    "Accept": "application/json",
+};
+
+const body = new FormData();
+body.append('recording_name', 'Updated Main Menu Greeting');
+body.append('recording_description', 'Updated automatically');
+body.append('_method', 'PATCH');
+body.append('file', document.querySelector('input[name="file"]').files[0]);
+
+fetch(url, {
+    method: "PATCH",
+    headers,
+    body,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-PATCHapi-v1-domains--domain_uuid--recordings--recording_uuid-">
+            <blockquote>
+            <p>Example response (200, Audio and metadata updated):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;recording_uuid&quot;: &quot;c0ec8113-aa15-40ac-8437-47185dd9dcf4&quot;,
+    &quot;object&quot;: &quot;recording&quot;,
+    &quot;domain_uuid&quot;: &quot;4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b&quot;,
+    &quot;recording_name&quot;: &quot;Updated Main Menu Greeting&quot;,
+    &quot;recording_description&quot;: &quot;Updated automatically&quot;,
+    &quot;recording_filename&quot;: &quot;uploaded_abc123.wav&quot;,
+    &quot;audio_available&quot;: true,
+    &quot;audio_replaced&quot;: true,
+    &quot;bytes&quot;: 512044,
+    &quot;sha256&quot;: &quot;9ecf58932d0d11dc64e30b6f96f24c49ecaffdf8ce739dfa0e2e73198c331d2e&quot;
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (200, Metadata updated):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;recording_uuid&quot;: &quot;c0ec8113-aa15-40ac-8437-47185dd9dcf4&quot;,
+    &quot;object&quot;: &quot;recording&quot;,
+    &quot;domain_uuid&quot;: &quot;4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b&quot;,
+    &quot;recording_name&quot;: &quot;Updated Main Menu Greeting&quot;,
+    &quot;recording_description&quot;: &quot;Updated automatically&quot;,
+    &quot;recording_filename&quot;: &quot;uploaded_abc123.wav&quot;,
+    &quot;audio_available&quot;: true,
+    &quot;audio_replaced&quot;: false,
+    &quot;bytes&quot;: 384044,
+    &quot;sha256&quot;: &quot;6d27ccf17b7106932c46d299f908f793b52cb168f4cc47b70ef661755adb59f4&quot;
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Invalid domain UUID):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Invalid domain UUID.&quot;,
+        &quot;code&quot;: &quot;invalid_request&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Invalid recording UUID):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Invalid recording UUID.&quot;,
+        &quot;code&quot;: &quot;invalid_request&quot;,
+        &quot;param&quot;: &quot;recording_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401, Unauthenticated):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403, Forbidden):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;success&quot;: false,
+    &quot;message&quot;: &quot;Forbidden (missing permission).&quot;,
+    &quot;error&quot;: {
+        &quot;code&quot;: &quot;forbidden_permission&quot;,
+        &quot;permission&quot;: &quot;recording_upload&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Domain not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Domain not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Recording not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Recording not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;recording_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (422, No update fields):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Provide a name, description, or audio file to update.&quot;,
+        &quot;code&quot;: &quot;validation_error&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (422, Audio processing failed):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;The uploaded audio could not be converted to a valid recording.&quot;,
+        &quot;code&quot;: &quot;audio_processing_failed&quot;,
+        &quot;param&quot;: &quot;file&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (500, Internal error):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;api_error&quot;,
+        &quot;message&quot;: &quot;The recording operation failed.&quot;,
+        &quot;code&quot;: &quot;internal_error&quot;
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-PATCHapi-v1-domains--domain_uuid--recordings--recording_uuid-" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-PATCHapi-v1-domains--domain_uuid--recordings--recording_uuid-"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-PATCHapi-v1-domains--domain_uuid--recordings--recording_uuid-"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-PATCHapi-v1-domains--domain_uuid--recordings--recording_uuid-" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-PATCHapi-v1-domains--domain_uuid--recordings--recording_uuid-">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-PATCHapi-v1-domains--domain_uuid--recordings--recording_uuid-" data-method="PATCH"
+      data-path="api/v1/domains/{domain_uuid}/recordings/{recording_uuid}"
+      data-authed="1"
+      data-hasfiles="1"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('PATCHapi-v1-domains--domain_uuid--recordings--recording_uuid-', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+            </h3>
+            <p>
+            <small class="badge badge-purple">PATCH</small>
+            <b><code>api/v1/domains/{domain_uuid}/recordings/{recording_uuid}</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="PATCHapi-v1-domains--domain_uuid--recordings--recording_uuid-"
+               value="Bearer {YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="PATCHapi-v1-domains--domain_uuid--recordings--recording_uuid-"
+               value="multipart/form-data"
+               data-component="header">
+    <br>
+<p>Example: <code>multipart/form-data</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="PATCHapi-v1-domains--domain_uuid--recordings--recording_uuid-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>domain_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_uuid"                data-endpoint="PATCHapi-v1-domains--domain_uuid--recordings--recording_uuid-"
+               value="4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
+               data-component="url">
+    <br>
+<p>The domain UUID. Example: <code>4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b</code></p>
+            </div>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>recording_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="recording_uuid"                data-endpoint="PATCHapi-v1-domains--domain_uuid--recordings--recording_uuid-"
+               value="c0ec8113-aa15-40ac-8437-47185dd9dcf4"
+               data-component="url">
+    <br>
+<p>The recording UUID. Example: <code>c0ec8113-aa15-40ac-8437-47185dd9dcf4</code></p>
+            </div>
+                            <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
+        <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>recording_name</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="recording_name"                data-endpoint="PATCHapi-v1-domains--domain_uuid--recordings--recording_uuid-"
+               value="Updated Main Menu Greeting"
+               data-component="body">
+    <br>
+<p>Optional recording display name. Example: <code>Updated Main Menu Greeting</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>recording_description</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="recording_description"                data-endpoint="PATCHapi-v1-domains--domain_uuid--recordings--recording_uuid-"
+               value="Updated automatically"
+               data-component="body">
+    <br>
+<p>Optional description; may be null. Example: <code>Updated automatically</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>file</code></b>&nbsp;&nbsp;
+<small>file</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="file" style="display: none"
+                              name="file"                data-endpoint="PATCHapi-v1-domains--domain_uuid--recordings--recording_uuid-"
+               value=""
+               data-component="body">
+    <br>
+<p>Optional WAV, MP3, M4A/MP4, OGG, or FLAC audio file. Maximum size: 50 MB. Example: <code>/tmp/phpdnqsdtklurkh9EOGqQB</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>_method</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="_method"                data-endpoint="PATCHapi-v1-domains--domain_uuid--recordings--recording_uuid-"
+               value="PATCH"
+               data-component="body">
+    <br>
+<p>Required only for multipart audio uploads. Must be <code>PATCH</code>. Example: <code>PATCH</code></p>
+        </div>
+        </form>
+
+                    <h2 id="recordings-DELETEapi-v1-domains--domain_uuid--recordings--recording_uuid-">Delete a recording</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Deletes the recording database row and its stored audio file.</p>
+<p>Access rules:</p>
+<ul>
+<li>Caller must have access to the target domain (domain scope).</li>
+<li>Caller must have the <code>recording_delete</code> permission.</li>
+</ul>
+<p>Deleting a recording may clear references from features that use it. Use
+update when the goal is to replace audio without changing call routing.</p>
+
+<span id="example-requests-DELETEapi-v1-domains--domain_uuid--recordings--recording_uuid-">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request DELETE \
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/recordings/c0ec8113-aa15-40ac-8437-47185dd9dcf4" \
+    --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/recordings/c0ec8113-aa15-40ac-8437-47185dd9dcf4"
+);
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "DELETE",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-DELETEapi-v1-domains--domain_uuid--recordings--recording_uuid-">
+            <blockquote>
+            <p>Example response (200, Deleted):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;uuid&quot;: &quot;c0ec8113-aa15-40ac-8437-47185dd9dcf4&quot;,
+    &quot;object&quot;: &quot;recording&quot;,
+    &quot;deleted&quot;: true
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Invalid domain UUID):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Invalid domain UUID.&quot;,
+        &quot;code&quot;: &quot;invalid_request&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Invalid recording UUID):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Invalid recording UUID.&quot;,
+        &quot;code&quot;: &quot;invalid_request&quot;,
+        &quot;param&quot;: &quot;recording_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401, Unauthenticated):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403, Forbidden):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;success&quot;: false,
+    &quot;message&quot;: &quot;Forbidden (missing permission).&quot;,
+    &quot;error&quot;: {
+        &quot;code&quot;: &quot;forbidden_permission&quot;,
+        &quot;permission&quot;: &quot;recording_delete&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Domain not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Domain not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Recording not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Recording not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;recording_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (500, Delete failed):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;api_error&quot;,
+        &quot;message&quot;: &quot;The recording could not be deleted.&quot;,
+        &quot;code&quot;: &quot;internal_error&quot;
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-DELETEapi-v1-domains--domain_uuid--recordings--recording_uuid-" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-DELETEapi-v1-domains--domain_uuid--recordings--recording_uuid-"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-DELETEapi-v1-domains--domain_uuid--recordings--recording_uuid-"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-DELETEapi-v1-domains--domain_uuid--recordings--recording_uuid-" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-DELETEapi-v1-domains--domain_uuid--recordings--recording_uuid-">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-DELETEapi-v1-domains--domain_uuid--recordings--recording_uuid-" data-method="DELETE"
+      data-path="api/v1/domains/{domain_uuid}/recordings/{recording_uuid}"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('DELETEapi-v1-domains--domain_uuid--recordings--recording_uuid-', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+            </h3>
+            <p>
+            <small class="badge badge-red">DELETE</small>
+            <b><code>api/v1/domains/{domain_uuid}/recordings/{recording_uuid}</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="DELETEapi-v1-domains--domain_uuid--recordings--recording_uuid-"
+               value="Bearer {YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="DELETEapi-v1-domains--domain_uuid--recordings--recording_uuid-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="DELETEapi-v1-domains--domain_uuid--recordings--recording_uuid-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>domain_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_uuid"                data-endpoint="DELETEapi-v1-domains--domain_uuid--recordings--recording_uuid-"
+               value="4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
+               data-component="url">
+    <br>
+<p>The domain UUID. Example: <code>4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b</code></p>
+            </div>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>recording_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="recording_uuid"                data-endpoint="DELETEapi-v1-domains--domain_uuid--recordings--recording_uuid-"
+               value="c0ec8113-aa15-40ac-8437-47185dd9dcf4"
+               data-component="url">
+    <br>
+<p>The recording UUID. Example: <code>c0ec8113-aa15-40ac-8437-47185dd9dcf4</code></p>
             </div>
                     </form>
 
@@ -11677,7 +13096,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <p>Access rules:</p>
 <ul>
 <li>Caller must have access to the target domain (domain scope).</li>
-<li>Caller must have the <code>ring_group_domain</code> permission.</li>
+<li>Caller must have the <code>ring_group_view</code> permission.</li>
 </ul>
 
 <span id="example-requests-GETapi-v1-domains--domain_uuid--ring-groups--ring_group_uuid-">
@@ -12252,7 +13671,7 @@ Must be one of:
     <br>
 <p>Optional no-answer action. Example: <code>voicemails</code></p>
 Must be one of:
-<ul style="list-style-type: square;"><li><code>extensions</code></li> <li><code>ring_groups</code></li> <li><code>ivrs</code></li> <li><code>business_hours</code></li> <li><code>contact_centers</code></li> <li><code>bridges</code></li> <li><code>faxes</code></li> <li><code>conferences</code></li> <li><code>call_flows</code></li> <li><code>voicemails</code></li> <li><code>recordings</code></li> <li><code>check_voicemail</code></li> <li><code>company_directory</code></li> <li><code>hangup</code></li></ul>
+<ul style="list-style-type: square;"><li><code>extensions</code></li> <li><code>ring_groups</code></li> <li><code>ivrs</code></li> <li><code>business_hours</code></li> <li><code>contact_centers</code></li> <li><code>ai_agents</code></li> <li><code>bridges</code></li> <li><code>faxes</code></li> <li><code>conferences</code></li> <li><code>call_flows</code></li> <li><code>dynamic_routes</code></li> <li><code>voicemails</code></li> <li><code>recordings</code></li> <li><code>check_voicemail</code></li> <li><code>company_directory</code></li> <li><code>hangup</code></li></ul>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>timeout_target</code></b>&nbsp;&nbsp;
@@ -12297,7 +13716,7 @@ Must be one of:
     <br>
 <p>Forward action. This field is required when <code>ring_group_forward_enabled</code> is <code>true</code>. Example: <code>ring_groups</code></p>
 Must be one of:
-<ul style="list-style-type: square;"><li><code>extensions</code></li> <li><code>ring_groups</code></li> <li><code>ivrs</code></li> <li><code>business_hours</code></li> <li><code>contact_centers</code></li> <li><code>faxes</code></li> <li><code>conferences</code></li> <li><code>call_flows</code></li> <li><code>voicemails</code></li> <li><code>external</code></li></ul>
+<ul style="list-style-type: square;"><li><code>extensions</code></li> <li><code>ring_groups</code></li> <li><code>ivrs</code></li> <li><code>business_hours</code></li> <li><code>contact_centers</code></li> <li><code>faxes</code></li> <li><code>conferences</code></li> <li><code>call_flows</code></li> <li><code>dynamic_routes</code></li> <li><code>voicemails</code></li> <li><code>external</code></li></ul>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>forward_target</code></b>&nbsp;&nbsp;
@@ -12433,10 +13852,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="members.0.destination_number"                data-endpoint="POSTapi-v1-domains--domain_uuid--ring-groups"
-               value="+8687"
+               value="+25"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present.  Must match the regex /^+?\d+$/. Example: <code>+8687</code></p>
+<p>This field is required when <code>members</code> is present.  Must match the regex /^+?\d+$/. Example: <code>+25</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_delay</code></b>&nbsp;&nbsp;
@@ -12444,10 +13863,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="members.0.destination_delay"                data-endpoint="POSTapi-v1-domains--domain_uuid--ring-groups"
-               value="1"
+               value="0"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>1</code></p>
+<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>0</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_timeout</code></b>&nbsp;&nbsp;
@@ -12455,10 +13874,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="members.0.destination_timeout"                data-endpoint="POSTapi-v1-domains--domain_uuid--ring-groups"
-               value="10"
+               value="23"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>10</code></p>
+<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>23</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_prompt</code></b>&nbsp;&nbsp;
@@ -12479,7 +13898,7 @@ Must be one of:
             <code>false</code>
         </label>
     <br>
-<p>This field is required when <code>members</code> is present. Example: <code>true</code></p>
+<p>This field is required when <code>members</code> is present. Example: <code>false</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_enabled</code></b>&nbsp;&nbsp;
@@ -12500,7 +13919,7 @@ Must be one of:
             <code>false</code>
         </label>
     <br>
-<p>This field is required when <code>members</code> is present. Example: <code>true</code></p>
+<p>This field is required when <code>members</code> is present. Example: <code>false</code></p>
                     </div>
                                     </details>
         </div>
@@ -12891,7 +14310,7 @@ Must be one of:
     <br>
 <p>Optional no-answer action. Example: <code>voicemails</code></p>
 Must be one of:
-<ul style="list-style-type: square;"><li><code>extensions</code></li> <li><code>ring_groups</code></li> <li><code>ivrs</code></li> <li><code>business_hours</code></li> <li><code>contact_centers</code></li> <li><code>bridges</code></li> <li><code>faxes</code></li> <li><code>conferences</code></li> <li><code>call_flows</code></li> <li><code>voicemails</code></li> <li><code>recordings</code></li> <li><code>check_voicemail</code></li> <li><code>company_directory</code></li> <li><code>hangup</code></li></ul>
+<ul style="list-style-type: square;"><li><code>extensions</code></li> <li><code>ring_groups</code></li> <li><code>ivrs</code></li> <li><code>business_hours</code></li> <li><code>contact_centers</code></li> <li><code>ai_agents</code></li> <li><code>bridges</code></li> <li><code>faxes</code></li> <li><code>conferences</code></li> <li><code>call_flows</code></li> <li><code>dynamic_routes</code></li> <li><code>voicemails</code></li> <li><code>recordings</code></li> <li><code>check_voicemail</code></li> <li><code>company_directory</code></li> <li><code>hangup</code></li></ul>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>timeout_target</code></b>&nbsp;&nbsp;
@@ -12969,7 +14388,7 @@ Must be one of:
     <br>
 <p>Forward action. This field is required when <code>ring_group_forward_enabled</code> is <code>true</code>. Example: <code>ring_groups</code></p>
 Must be one of:
-<ul style="list-style-type: square;"><li><code>extensions</code></li> <li><code>ring_groups</code></li> <li><code>ivrs</code></li> <li><code>business_hours</code></li> <li><code>contact_centers</code></li> <li><code>faxes</code></li> <li><code>conferences</code></li> <li><code>call_flows</code></li> <li><code>voicemails</code></li> <li><code>external</code></li></ul>
+<ul style="list-style-type: square;"><li><code>extensions</code></li> <li><code>ring_groups</code></li> <li><code>ivrs</code></li> <li><code>business_hours</code></li> <li><code>contact_centers</code></li> <li><code>faxes</code></li> <li><code>conferences</code></li> <li><code>call_flows</code></li> <li><code>dynamic_routes</code></li> <li><code>voicemails</code></li> <li><code>external</code></li></ul>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>forward_target</code></b>&nbsp;&nbsp;
@@ -13094,10 +14513,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="members.0.destination_number"                data-endpoint="PATCHapi-v1-domains--domain_uuid--ring-groups--ring_group_uuid-"
-               value="5276"
+               value="+10992"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present.  Must match the regex /^+?\d+$/. Example: <code>5276</code></p>
+<p>This field is required when <code>members</code> is present.  Must match the regex /^+?\d+$/. Example: <code>+10992</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_delay</code></b>&nbsp;&nbsp;
@@ -13105,10 +14524,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="members.0.destination_delay"                data-endpoint="PATCHapi-v1-domains--domain_uuid--ring-groups--ring_group_uuid-"
-               value="73"
+               value="43"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>73</code></p>
+<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>43</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_timeout</code></b>&nbsp;&nbsp;
@@ -13116,10 +14535,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="members.0.destination_timeout"                data-endpoint="PATCHapi-v1-domains--domain_uuid--ring-groups--ring_group_uuid-"
-               value="22"
+               value="63"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>22</code></p>
+<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>63</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_prompt</code></b>&nbsp;&nbsp;
@@ -13140,7 +14559,7 @@ Must be one of:
             <code>false</code>
         </label>
     <br>
-<p>This field is required when <code>members</code> is present. Example: <code>true</code></p>
+<p>This field is required when <code>members</code> is present. Example: <code>false</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_enabled</code></b>&nbsp;&nbsp;
@@ -13161,7 +14580,7 @@ Must be one of:
             <code>false</code>
         </label>
     <br>
-<p>This field is required when <code>members</code> is present. Example: <code>false</code></p>
+<p>This field is required when <code>members</code> is present. Example: <code>true</code></p>
                     </div>
                                     </details>
         </div>

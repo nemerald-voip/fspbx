@@ -10,7 +10,7 @@
     ],
     "info": {
         "name": "FS PBX",
-        "_postman_id": "3d97c031-234f-4282-848a-588832f9214f",
+        "_postman_id": "7eac4249-fdbc-495c-9cad-38bec185c654",
         "description": "",
         "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
     },
@@ -312,7 +312,7 @@
                                 {
                                     "key": "status",
                                     "value": "answered",
-                                    "description": "Optional. Filter by status. Accepted values: answered, no answer, cancelled, voicemail, missed call, abandoned.",
+                                    "description": "Optional. Filter by status. Accepted values: answered, no answer, cancelled, voicemail, missed call, abandoned, callback_requested.",
                                     "disabled": false
                                 },
                                 {
@@ -362,7 +362,7 @@
                             }
                         ],
                         "body": null,
-                        "description": "Returns CDRs for the specified domain the caller is allowed to access.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `xml_cdr_view` permission.\n\nPagination (cursor-based):\n- Both `limit` and `starting_after` are optional.\n- If `limit` is not provided, it defaults to 500.\n- If `starting_after` is not provided, results start from the beginning.\n- If `has_more` is true, request the next page by passing `starting_after`\n  equal to the last item's `xml_cdr_uuid` from the previous response.\n\nOptional filters:\n- `search` matches caller\/destination fields and status.\n- `direction` filters by call direction.\n- `status` filters by call status.\n  Accepted values: `answered`, `no answer`, `cancelled`, `voicemail`,\n  `missed call`, `abandoned`.\n- `extension_uuid` filters by extension UUID.\n- `call_center_queue_uuid` filters by queue UUID.\n- `date_from` and `date_to` filter by `start_epoch` in epoch seconds.\n\nExamples:\n- First page: `GET \/api\/v1\/domains\/{domain_uuid}\/cdrs`\n- Next page:  `GET \/api\/v1\/domains\/{domain_uuid}\/cdrs?starting_after={last_xml_cdr_uuid}`\n- Custom size: `GET \/api\/v1\/domains\/{domain_uuid}\/cdrs?limit=25`\n- Search: `GET \/api\/v1\/domains\/{domain_uuid}\/cdrs?search=2135551212`\n- Date range (epoch): `GET \/api\/v1\/domains\/{domain_uuid}\/cdrs?date_from=1775001600&date_to=1775087999`"
+                        "description": "Returns CDRs for the specified domain the caller is allowed to access.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `xml_cdr_view` permission.\n\nPagination (cursor-based):\n- Both `limit` and `starting_after` are optional.\n- If `limit` is not provided, it defaults to 500.\n- If `starting_after` is not provided, results start from the beginning.\n- If `has_more` is true, request the next page by passing `starting_after`\n  equal to the last item's `xml_cdr_uuid` from the previous response.\n\nOptional filters:\n- `search` matches caller\/destination fields and status.\n- `direction` filters by call direction.\n- `status` filters by call status.\n  Accepted values: `answered`, `no answer`, `cancelled`, `voicemail`,\n  `missed call`, `abandoned`, `callback_requested`.\n- `extension_uuid` filters by extension UUID.\n- `call_center_queue_uuid` filters by queue UUID.\n- `date_from` and `date_to` filter by `start_epoch` in epoch seconds.\n\nExamples:\n- First page: `GET \/api\/v1\/domains\/{domain_uuid}\/cdrs`\n- Next page:  `GET \/api\/v1\/domains\/{domain_uuid}\/cdrs?starting_after={last_xml_cdr_uuid}`\n- Custom size: `GET \/api\/v1\/domains\/{domain_uuid}\/cdrs?limit=25`\n- Search: `GET \/api\/v1\/domains\/{domain_uuid}\/cdrs?search=2135551212`\n- Date range (epoch): `GET \/api\/v1\/domains\/{domain_uuid}\/cdrs?date_from=1775001600&date_to=1775087999`"
                     },
                     "response": [
                         {
@@ -780,7 +780,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"device_address\":\"0004f23a5bc7\",\"serial_number\":\"8603123456789\",\"device_profile_uuid\":\"51759db8-c8bf-4b2f-b48a-6577d7ad6a1a\",\"device_template\":\"Yealink T46U\",\"device_template_uuid\":\"a6cf59ba-4b2b-4bdd-b870-35cc55bca146\",\"device_keys\":[\"inventore\"],\"phonebook_mode\":\"custom\",\"phonebook_uuids\":[\"a6603e7c-f9b6-3036-bc6b-a28ba3577c16\"],\"device_description\":\"Reception desk device\",\"device_lines\":[[]]}"
+                            "raw": "{\"device_address\":\"0004f23a5bc7\",\"serial_number\":\"8603123456789\",\"device_profile_uuid\":\"51759db8-c8bf-4b2f-b48a-6577d7ad6a1a\",\"device_template\":\"Yealink T46U\",\"device_template_uuid\":\"a6cf59ba-4b2b-4bdd-b870-35cc55bca146\",\"device_keys\":[\"ab\"],\"phonebook_mode\":\"default\",\"phonebook_uuids\":[\"3b9267c9-bae3-323c-ad4f-7b59d1f46c9e\"],\"device_description\":\"Reception desk device\",\"device_lines\":[[]]}"
                         },
                         "description": "Creates a new device in the specified domain.\n\nNotes:\n- `device_template` is deprecated and retained for backward compatibility.\n- Use `device_template_uuid` as its successor."
                     },
@@ -2203,7 +2203,7 @@
                             }
                         ],
                         "body": null,
-                        "description": "Returns phone numbers for the specified domain the caller is allowed to access.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `destination_domain` permission.\n\nPagination (cursor-based):\n- Both `limit` and `starting_after` are optional.\n- If `limit` is not provided, it defaults to 50.\n- If `starting_after` is not provided, results start from the beginning.\n- If `has_more` is true, request the next page by passing `starting_after`\n  equal to the last item's `destination_uuid` from the previous response.\n\nExamples:\n- First page: `GET \/api\/v1\/domains\/{domain_uuid}\/phone-numbers`\n- Next page:  `GET \/api\/v1\/domains\/{domain_uuid}\/phone-numbers?starting_after={destination_uuid}`\n- Custom size: `GET \/api\/v1\/domains\/{domain_uuid}\/phone-numbers?limit=50`"
+                        "description": "Returns phone numbers for the specified domain the caller is allowed to access.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `destination_view` permission.\n\nPagination (cursor-based):\n- Both `limit` and `starting_after` are optional.\n- If `limit` is not provided, it defaults to 50.\n- If `starting_after` is not provided, results start from the beginning.\n- If `has_more` is true, request the next page by passing `starting_after`\n  equal to the last item's `destination_uuid` from the previous response.\n\nExamples:\n- First page: `GET \/api\/v1\/domains\/{domain_uuid}\/phone-numbers`\n- Next page:  `GET \/api\/v1\/domains\/{domain_uuid}\/phone-numbers?starting_after={destination_uuid}`\n- Custom size: `GET \/api\/v1\/domains\/{domain_uuid}\/phone-numbers?limit=50`"
                     },
                     "response": [
                         {
@@ -2563,6 +2563,506 @@
                             "code": 500,
                             "body": "{\"error\":{\"type\":\"api_error\",\"message\":\"Internal server error.\",\"code\":\"internal_error\"}}",
                             "name": "Internal server error"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Recordings",
+            "description": "",
+            "item": [
+                {
+                    "name": "List recordings",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/recordings",
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "50",
+                                    "description": "Optional. Number of results to return (min 1, max 100). Defaults to 50.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "starting_after",
+                                    "value": "c0ec8113-aa15-40ac-8437-47185dd9dcf4",
+                                    "description": "Optional. Return results after this recording UUID (cursor).",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/recordings?limit=50&starting_after=c0ec8113-aa15-40ac-8437-47185dd9dcf4",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The domain UUID."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Returns recordings for the specified domain the caller is allowed to access.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `recording_view` permission.\n\nPagination (cursor-based):\n- Both `limit` and `starting_after` are optional.\n- If `limit` is not provided, it defaults to 50.\n- If `starting_after` is not provided, results start from the beginning.\n- If `has_more` is true, request the next page by passing `starting_after`\n  equal to the last item's `recording_uuid` from the previous response.\n\nExamples:\n- First page: `GET \/api\/v1\/domains\/{domain_uuid}\/recordings`\n- Next page: `GET \/api\/v1\/domains\/{domain_uuid}\/recordings?starting_after={last_recording_uuid}`\n- Custom size: `GET \/api\/v1\/domains\/{domain_uuid}\/recordings?limit=50`"
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\n  \"object\": \"list\",\n  \"url\": \"\/api\/v1\/domains\/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\/recordings\",\n  \"has_more\": true,\n  \"data\": [\n    {\n      \"recording_uuid\": \"c0ec8113-aa15-40ac-8437-47185dd9dcf4\",\n      \"object\": \"recording\",\n      \"domain_uuid\": \"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\n      \"recording_name\": \"Main Menu Greeting\",\n      \"recording_description\": \"Primary virtual receptionist greeting\",\n      \"recording_filename\": \"uploaded_abc123.wav\",\n      \"audio_available\": true,\n      \"audio_replaced\": false,\n      \"bytes\": null,\n      \"sha256\": null\n    }\n  ]\n}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid domain UUID.\",\"code\":\"invalid_request\",\"param\":\"domain_uuid\"}}",
+                            "name": "Invalid domain UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid starting_after UUID.\",\"code\":\"invalid_request\",\"param\":\"starting_after\"}}",
+                            "name": "Invalid cursor UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\"}}",
+                            "name": "Unauthenticated"
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\"success\":false,\"message\":\"Forbidden (missing permission).\",\"error\":{\"code\":\"forbidden_permission\",\"permission\":\"recording_view\"}}",
+                            "name": "Forbidden"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Domain not found.\",\"code\":\"resource_missing\",\"param\":\"domain_uuid\"}}",
+                            "name": "Domain not found"
+                        }
+                    ]
+                },
+                {
+                    "name": "Create a recording",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/recordings",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/recordings",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The domain UUID."
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "multipart\/form-data"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "recording_name",
+                                    "value": "Main Menu Greeting",
+                                    "type": "text",
+                                    "description": "The recording display name."
+                                },
+                                {
+                                    "key": "recording_description",
+                                    "value": "Primary virtual receptionist greeting",
+                                    "type": "text",
+                                    "description": "Optional description."
+                                },
+                                {
+                                    "key": "file",
+                                    "src": [],
+                                    "type": "file"
+                                }
+                            ]
+                        },
+                        "description": "Creates a recording in the specified domain and converts the uploaded audio\nto mono, 16 kHz, 16-bit PCM WAV for FreeSWITCH playback.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `recording_upload` permission.\n\nSend this request as `multipart\/form-data`."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 201,
+                            "body": "{\n  \"recording_uuid\": \"c0ec8113-aa15-40ac-8437-47185dd9dcf4\",\n  \"object\": \"recording\",\n  \"domain_uuid\": \"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\n  \"recording_name\": \"Main Menu Greeting\",\n  \"recording_description\": \"Primary virtual receptionist greeting\",\n  \"recording_filename\": \"uploaded_abc123.wav\",\n  \"audio_available\": true,\n  \"audio_replaced\": true,\n  \"bytes\": 384044,\n  \"sha256\": \"6d27ccf17b7106932c46d299f908f793b52cb168f4cc47b70ef661755adb59f4\"\n}",
+                            "name": "Created"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid domain UUID.\",\"code\":\"invalid_request\",\"param\":\"domain_uuid\"}}",
+                            "name": "Invalid domain UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\"}}",
+                            "name": "Unauthenticated"
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\"success\":false,\"message\":\"Forbidden (missing permission).\",\"error\":{\"code\":\"forbidden_permission\",\"permission\":\"recording_upload\"}}",
+                            "name": "Forbidden"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Domain not found.\",\"code\":\"resource_missing\",\"param\":\"domain_uuid\"}}",
+                            "name": "Domain not found"
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"message\":\"The file field is required.\",\"errors\":{\"file\":[\"The file field is required.\"]}}",
+                            "name": "Validation error"
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"The uploaded audio could not be converted to a valid recording.\",\"code\":\"audio_processing_failed\",\"param\":\"file\"}}",
+                            "name": "Audio processing failed"
+                        },
+                        {
+                            "header": [],
+                            "code": 500,
+                            "body": "{\"error\":{\"type\":\"api_error\",\"message\":\"The recording operation failed.\",\"code\":\"internal_error\"}}",
+                            "name": "Internal error"
+                        }
+                    ]
+                },
+                {
+                    "name": "Retrieve a recording",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/recordings\/:recording_uuid",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/recordings\/:recording_uuid",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The domain UUID."
+                                },
+                                {
+                                    "id": "recording_uuid",
+                                    "key": "recording_uuid",
+                                    "value": "c0ec8113-aa15-40ac-8437-47185dd9dcf4",
+                                    "description": "The recording UUID."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Returns one recording and details about its stored audio file.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `recording_view` permission."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\n  \"recording_uuid\": \"c0ec8113-aa15-40ac-8437-47185dd9dcf4\",\n  \"object\": \"recording\",\n  \"domain_uuid\": \"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\n  \"recording_name\": \"Main Menu Greeting\",\n  \"recording_description\": \"Primary virtual receptionist greeting\",\n  \"recording_filename\": \"uploaded_abc123.wav\",\n  \"audio_available\": true,\n  \"audio_replaced\": false,\n  \"bytes\": 384044,\n  \"sha256\": \"6d27ccf17b7106932c46d299f908f793b52cb168f4cc47b70ef661755adb59f4\"\n}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid domain UUID.\",\"code\":\"invalid_request\",\"param\":\"domain_uuid\"}}",
+                            "name": "Invalid domain UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid recording UUID.\",\"code\":\"invalid_request\",\"param\":\"recording_uuid\"}}",
+                            "name": "Invalid recording UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\"}}",
+                            "name": "Unauthenticated"
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\"success\":false,\"message\":\"Forbidden (missing permission).\",\"error\":{\"code\":\"forbidden_permission\",\"permission\":\"recording_view\"}}",
+                            "name": "Forbidden"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Domain not found.\",\"code\":\"resource_missing\",\"param\":\"domain_uuid\"}}",
+                            "name": "Domain not found"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Recording not found.\",\"code\":\"resource_missing\",\"param\":\"recording_uuid\"}}",
+                            "name": "Recording not found"
+                        }
+                    ]
+                },
+                {
+                    "name": "Update a recording",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/recordings\/:recording_uuid",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/recordings\/:recording_uuid",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The domain UUID."
+                                },
+                                {
+                                    "id": "recording_uuid",
+                                    "key": "recording_uuid",
+                                    "value": "c0ec8113-aa15-40ac-8437-47185dd9dcf4",
+                                    "description": "The recording UUID."
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "multipart\/form-data"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "recording_name",
+                                    "value": "Updated Main Menu Greeting",
+                                    "type": "text",
+                                    "description": "Optional recording display name."
+                                },
+                                {
+                                    "key": "recording_description",
+                                    "value": "Updated automatically",
+                                    "type": "text",
+                                    "description": "Optional description; may be null."
+                                },
+                                {
+                                    "key": "_method",
+                                    "value": "PATCH",
+                                    "type": "text",
+                                    "description": "Required only for multipart audio uploads. Must be `PATCH`."
+                                },
+                                {
+                                    "key": "file",
+                                    "src": [],
+                                    "type": "file"
+                                },
+                                {
+                                    "key": "_method",
+                                    "value": "PATCH",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        "description": "Updates the name, description, audio file, or any combination of those\nfields. Supplying `file` converts and atomically updates the stored audio\nwhile retaining the recording UUID and filename, so existing call-routing\nreferences continue to use the updated audio.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `recording_upload` permission.\n\nFor metadata-only updates, send `PATCH` normally. For an audio upload, send\n`multipart\/form-data` as POST with `_method=PATCH` so PHP parses the file.\nAt least one update field is required."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\n  \"recording_uuid\": \"c0ec8113-aa15-40ac-8437-47185dd9dcf4\",\n  \"object\": \"recording\",\n  \"domain_uuid\": \"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\n  \"recording_name\": \"Updated Main Menu Greeting\",\n  \"recording_description\": \"Updated automatically\",\n  \"recording_filename\": \"uploaded_abc123.wav\",\n  \"audio_available\": true,\n  \"audio_replaced\": true,\n  \"bytes\": 512044,\n  \"sha256\": \"9ecf58932d0d11dc64e30b6f96f24c49ecaffdf8ce739dfa0e2e73198c331d2e\"\n}",
+                            "name": "Audio and metadata updated"
+                        },
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\n  \"recording_uuid\": \"c0ec8113-aa15-40ac-8437-47185dd9dcf4\",\n  \"object\": \"recording\",\n  \"domain_uuid\": \"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\n  \"recording_name\": \"Updated Main Menu Greeting\",\n  \"recording_description\": \"Updated automatically\",\n  \"recording_filename\": \"uploaded_abc123.wav\",\n  \"audio_available\": true,\n  \"audio_replaced\": false,\n  \"bytes\": 384044,\n  \"sha256\": \"6d27ccf17b7106932c46d299f908f793b52cb168f4cc47b70ef661755adb59f4\"\n}",
+                            "name": "Metadata updated"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid domain UUID.\",\"code\":\"invalid_request\",\"param\":\"domain_uuid\"}}",
+                            "name": "Invalid domain UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid recording UUID.\",\"code\":\"invalid_request\",\"param\":\"recording_uuid\"}}",
+                            "name": "Invalid recording UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\"}}",
+                            "name": "Unauthenticated"
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\"success\":false,\"message\":\"Forbidden (missing permission).\",\"error\":{\"code\":\"forbidden_permission\",\"permission\":\"recording_upload\"}}",
+                            "name": "Forbidden"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Domain not found.\",\"code\":\"resource_missing\",\"param\":\"domain_uuid\"}}",
+                            "name": "Domain not found"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Recording not found.\",\"code\":\"resource_missing\",\"param\":\"recording_uuid\"}}",
+                            "name": "Recording not found"
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Provide a name, description, or audio file to update.\",\"code\":\"validation_error\"}}",
+                            "name": "No update fields"
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"The uploaded audio could not be converted to a valid recording.\",\"code\":\"audio_processing_failed\",\"param\":\"file\"}}",
+                            "name": "Audio processing failed"
+                        },
+                        {
+                            "header": [],
+                            "code": 500,
+                            "body": "{\"error\":{\"type\":\"api_error\",\"message\":\"The recording operation failed.\",\"code\":\"internal_error\"}}",
+                            "name": "Internal error"
+                        }
+                    ]
+                },
+                {
+                    "name": "Delete a recording",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/recordings\/:recording_uuid",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/recordings\/:recording_uuid",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The domain UUID."
+                                },
+                                {
+                                    "id": "recording_uuid",
+                                    "key": "recording_uuid",
+                                    "value": "c0ec8113-aa15-40ac-8437-47185dd9dcf4",
+                                    "description": "The recording UUID."
+                                }
+                            ]
+                        },
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Deletes the recording database row and its stored audio file.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `recording_delete` permission.\n\nDeleting a recording may clear references from features that use it. Use\nupdate when the goal is to replace audio without changing call routing."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\n  \"uuid\": \"c0ec8113-aa15-40ac-8437-47185dd9dcf4\",\n  \"object\": \"recording\",\n  \"deleted\": true\n}",
+                            "name": "Deleted"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid domain UUID.\",\"code\":\"invalid_request\",\"param\":\"domain_uuid\"}}",
+                            "name": "Invalid domain UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid recording UUID.\",\"code\":\"invalid_request\",\"param\":\"recording_uuid\"}}",
+                            "name": "Invalid recording UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\"}}",
+                            "name": "Unauthenticated"
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\"success\":false,\"message\":\"Forbidden (missing permission).\",\"error\":{\"code\":\"forbidden_permission\",\"permission\":\"recording_delete\"}}",
+                            "name": "Forbidden"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Domain not found.\",\"code\":\"resource_missing\",\"param\":\"domain_uuid\"}}",
+                            "name": "Domain not found"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Recording not found.\",\"code\":\"resource_missing\",\"param\":\"recording_uuid\"}}",
+                            "name": "Recording not found"
+                        },
+                        {
+                            "header": [],
+                            "code": 500,
+                            "body": "{\"error\":{\"type\":\"api_error\",\"message\":\"The recording could not be deleted.\",\"code\":\"internal_error\"}}",
+                            "name": "Delete failed"
                         }
                     ]
                 }
@@ -3077,7 +3577,7 @@
                             }
                         ],
                         "body": null,
-                        "description": "Returns a single ring group for the specified domain the caller is allowed to access.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `ring_group_domain` permission."
+                        "description": "Returns a single ring group for the specified domain the caller is allowed to access.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `ring_group_view` permission."
                     },
                     "response": [
                         {

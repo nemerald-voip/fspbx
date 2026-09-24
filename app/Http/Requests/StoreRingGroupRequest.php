@@ -15,7 +15,8 @@ class StoreRingGroupRequest extends FormRequest
      */
     public function authorize()
     {
-        return Auth::check();
+        return Auth::check()
+            && userCheckPermission('ring_group_add');
     }
 
     public function rules(): array

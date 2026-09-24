@@ -565,7 +565,7 @@ paths:
     get:
       summary: 'List Call Detail Records'
       operationId: listCallDetailRecords
-      description: "Returns CDRs for the specified domain the caller is allowed to access.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `xml_cdr_view` permission.\n\nPagination (cursor-based):\n- Both `limit` and `starting_after` are optional.\n- If `limit` is not provided, it defaults to 500.\n- If `starting_after` is not provided, results start from the beginning.\n- If `has_more` is true, request the next page by passing `starting_after`\n  equal to the last item's `xml_cdr_uuid` from the previous response.\n\nOptional filters:\n- `search` matches caller/destination fields and status.\n- `direction` filters by call direction.\n- `status` filters by call status.\n  Accepted values: `answered`, `no answer`, `cancelled`, `voicemail`,\n  `missed call`, `abandoned`.\n- `extension_uuid` filters by extension UUID.\n- `call_center_queue_uuid` filters by queue UUID.\n- `date_from` and `date_to` filter by `start_epoch` in epoch seconds.\n\nExamples:\n- First page: `GET /api/v1/domains/{domain_uuid}/cdrs`\n- Next page:  `GET /api/v1/domains/{domain_uuid}/cdrs?starting_after={last_xml_cdr_uuid}`\n- Custom size: `GET /api/v1/domains/{domain_uuid}/cdrs?limit=25`\n- Search: `GET /api/v1/domains/{domain_uuid}/cdrs?search=2135551212`\n- Date range (epoch): `GET /api/v1/domains/{domain_uuid}/cdrs?date_from=1775001600&date_to=1775087999`"
+      description: "Returns CDRs for the specified domain the caller is allowed to access.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `xml_cdr_view` permission.\n\nPagination (cursor-based):\n- Both `limit` and `starting_after` are optional.\n- If `limit` is not provided, it defaults to 500.\n- If `starting_after` is not provided, results start from the beginning.\n- If `has_more` is true, request the next page by passing `starting_after`\n  equal to the last item's `xml_cdr_uuid` from the previous response.\n\nOptional filters:\n- `search` matches caller/destination fields and status.\n- `direction` filters by call direction.\n- `status` filters by call status.\n  Accepted values: `answered`, `no answer`, `cancelled`, `voicemail`,\n  `missed call`, `abandoned`, `callback_requested`.\n- `extension_uuid` filters by extension UUID.\n- `call_center_queue_uuid` filters by queue UUID.\n- `date_from` and `date_to` filter by `start_epoch` in epoch seconds.\n\nExamples:\n- First page: `GET /api/v1/domains/{domain_uuid}/cdrs`\n- Next page:  `GET /api/v1/domains/{domain_uuid}/cdrs?starting_after={last_xml_cdr_uuid}`\n- Custom size: `GET /api/v1/domains/{domain_uuid}/cdrs?limit=25`\n- Search: `GET /api/v1/domains/{domain_uuid}/cdrs?search=2135551212`\n- Date range (epoch): `GET /api/v1/domains/{domain_uuid}/cdrs?date_from=1775001600&date_to=1775087999`"
       parameters:
         -
           in: query
@@ -610,12 +610,12 @@ paths:
         -
           in: query
           name: status
-          description: 'Optional. Filter by status. Accepted values: answered, no answer, cancelled, voicemail, missed call, abandoned.'
+          description: 'Optional. Filter by status. Accepted values: answered, no answer, cancelled, voicemail, missed call, abandoned, callback_requested.'
           example: answered
           required: false
           schema:
             type: string
-            description: 'Optional. Filter by status. Accepted values: answered, no answer, cancelled, voicemail, missed call, abandoned.'
+            description: 'Optional. Filter by status. Accepted values: answered, no answer, cancelled, voicemail, missed call, abandoned, callback_requested.'
             example: answered
         -
           in: query
@@ -1749,13 +1749,13 @@ paths:
                   type: array
                   description: ''
                   example:
-                    - inventore
+                    - ab
                   items:
                     type: integer
                 phonebook_mode:
                   type: string
                   description: ''
-                  example: custom
+                  example: default
                   enum:
                     - default
                     - custom
@@ -1763,7 +1763,7 @@ paths:
                   type: array
                   description: 'Must be a valid UUID.'
                   example:
-                    - a6603e7c-f9b6-3036-bc6b-a28ba3577c16
+                    - 3b9267c9-bae3-323c-ad4f-7b59d1f46c9e
                   items:
                     type: string
                 device_description:
@@ -3730,11 +3730,11 @@ paths:
                   example: localnet
                 outbound_caller_id_number:
                   type: string
-                  description: 'Outbound caller ID number (E.164 recommended).'
+                  description: 'Outbound caller ID number. Valid national numbers are normalized to E.164 using the domain country.'
                   example: '+12135551212'
                 emergency_caller_id_number:
                   type: string
-                  description: 'Emergency caller ID number (E.164 recommended).'
+                  description: 'Emergency caller ID number. Valid national numbers are normalized to E.164 using the domain country.'
                   example: '+12135559876'
                 outbound_caller_id_name:
                   type: string
@@ -4348,11 +4348,11 @@ paths:
                   example: localnet
                 outbound_caller_id_number:
                   type: string
-                  description: 'Outbound caller ID number (E.164 recommended). If omitted, value is unchanged.'
+                  description: 'Outbound caller ID number. Valid national numbers are normalized to E.164 using the domain country. If omitted, value is unchanged.'
                   example: '+12135551212'
                 emergency_caller_id_number:
                   type: string
-                  description: 'Emergency caller ID number (E.164 recommended). If omitted, value is unchanged.'
+                  description: 'Emergency caller ID number. Valid national numbers are normalized to E.164 using the domain country. If omitted, value is unchanged.'
                   example: '+12135559876'
                 outbound_caller_id_name:
                   type: string
@@ -5534,7 +5534,7 @@ paths:
                   example: SIP-T53W
                 vendor:
                   type: string
-                  description: 'Optional. Broader selector for a supported driver: yealink, snom, poly, grandstream, or generic.'
+                  description: 'Optional. Broader selector for a supported driver: yealink, snom, poly, polycom, ringotel, grandstream, or generic.'
                   example: yealink
                 lan_ip:
                   type: string
@@ -5572,7 +5572,7 @@ paths:
     get:
       summary: 'List phone numbers'
       operationId: listPhoneNumbers
-      description: "Returns phone numbers for the specified domain the caller is allowed to access.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `destination_domain` permission.\n\nPagination (cursor-based):\n- Both `limit` and `starting_after` are optional.\n- If `limit` is not provided, it defaults to 50.\n- If `starting_after` is not provided, results start from the beginning.\n- If `has_more` is true, request the next page by passing `starting_after`\n  equal to the last item's `destination_uuid` from the previous response.\n\nExamples:\n- First page: `GET /api/v1/domains/{domain_uuid}/phone-numbers`\n- Next page:  `GET /api/v1/domains/{domain_uuid}/phone-numbers?starting_after={destination_uuid}`\n- Custom size: `GET /api/v1/domains/{domain_uuid}/phone-numbers?limit=50`"
+      description: "Returns phone numbers for the specified domain the caller is allowed to access.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `destination_view` permission.\n\nPagination (cursor-based):\n- Both `limit` and `starting_after` are optional.\n- If `limit` is not provided, it defaults to 50.\n- If `starting_after` is not provided, results start from the beginning.\n- If `has_more` is true, request the next page by passing `starting_after`\n  equal to the last item's `destination_uuid` from the previous response.\n\nExamples:\n- First page: `GET /api/v1/domains/{domain_uuid}/phone-numbers`\n- Next page:  `GET /api/v1/domains/{domain_uuid}/phone-numbers?starting_after={destination_uuid}`\n- Custom size: `GET /api/v1/domains/{domain_uuid}/phone-numbers?limit=50`"
       parameters:
         -
           in: query
@@ -6676,6 +6676,1050 @@ paths:
         name: destination_uuid
         description: 'The destination UUID.'
         example: ad45f53d-405b-48bc-aac2-d51b2b3b3e55
+        required: true
+        schema:
+          type: string
+  '/api/v1/domains/{domain_uuid}/recordings':
+    get:
+      summary: 'List recordings'
+      operationId: listRecordings
+      description: "Returns recordings for the specified domain the caller is allowed to access.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `recording_view` permission.\n\nPagination (cursor-based):\n- Both `limit` and `starting_after` are optional.\n- If `limit` is not provided, it defaults to 50.\n- If `starting_after` is not provided, results start from the beginning.\n- If `has_more` is true, request the next page by passing `starting_after`\n  equal to the last item's `recording_uuid` from the previous response.\n\nExamples:\n- First page: `GET /api/v1/domains/{domain_uuid}/recordings`\n- Next page: `GET /api/v1/domains/{domain_uuid}/recordings?starting_after={last_recording_uuid}`\n- Custom size: `GET /api/v1/domains/{domain_uuid}/recordings?limit=50`"
+      parameters:
+        -
+          in: query
+          name: limit
+          description: 'Optional. Number of results to return (min 1, max 100). Defaults to 50.'
+          example: 50
+          required: false
+          schema:
+            type: integer
+            description: 'Optional. Number of results to return (min 1, max 100). Defaults to 50.'
+            example: 50
+        -
+          in: query
+          name: starting_after
+          description: 'Optional. Return results after this recording UUID (cursor).'
+          example: c0ec8113-aa15-40ac-8437-47185dd9dcf4
+          required: false
+          schema:
+            type: string
+            description: 'Optional. Return results after this recording UUID (cursor).'
+            example: c0ec8113-aa15-40ac-8437-47185dd9dcf4
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  object: list
+                  url: /api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/recordings
+                  has_more: true
+                  data:
+                    -
+                      recording_uuid: c0ec8113-aa15-40ac-8437-47185dd9dcf4
+                      object: recording
+                      domain_uuid: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                      recording_name: 'Main Menu Greeting'
+                      recording_description: 'Primary virtual receptionist greeting'
+                      recording_filename: uploaded_abc123.wav
+                      audio_available: true
+                      audio_replaced: false
+                      bytes: null
+                      sha256: null
+                properties:
+                  object:
+                    type: string
+                    example: list
+                  url:
+                    type: string
+                    example: /api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/recordings
+                  has_more:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    example:
+                      -
+                        recording_uuid: c0ec8113-aa15-40ac-8437-47185dd9dcf4
+                        object: recording
+                        domain_uuid: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                        recording_name: 'Main Menu Greeting'
+                        recording_description: 'Primary virtual receptionist greeting'
+                        recording_filename: uploaded_abc123.wav
+                        audio_available: true
+                        audio_replaced: false
+                        bytes: null
+                        sha256: null
+                    items:
+                      type: object
+                      properties:
+                        recording_uuid:
+                          type: string
+                          example: c0ec8113-aa15-40ac-8437-47185dd9dcf4
+                        object:
+                          type: string
+                          example: recording
+                        domain_uuid:
+                          type: string
+                          example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                        recording_name:
+                          type: string
+                          example: 'Main Menu Greeting'
+                        recording_description:
+                          type: string
+                          example: 'Primary virtual receptionist greeting'
+                        recording_filename:
+                          type: string
+                          example: uploaded_abc123.wav
+                        audio_available:
+                          type: boolean
+                          example: true
+                        audio_replaced:
+                          type: boolean
+                          example: false
+                        bytes:
+                          type: string
+                          example: null
+                        sha256:
+                          type: string
+                          example: null
+        400:
+          description: 'Invalid cursor UUID'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Invalid starting_after UUID.'
+                    code: invalid_request
+                    param: starting_after
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Invalid starting_after UUID.'
+                      code:
+                        type: string
+                        example: invalid_request
+                      param:
+                        type: string
+                        example: starting_after
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        403:
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: false
+                  message: 'Forbidden (missing permission).'
+                  error:
+                    code: forbidden_permission
+                    permission: recording_view
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: 'Forbidden (missing permission).'
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: forbidden_permission
+                      permission:
+                        type: string
+                        example: recording_view
+        404:
+          description: 'Domain not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Domain not found.'
+                    code: resource_missing
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Domain not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: domain_uuid
+      tags:
+        - Recordings
+    post:
+      summary: 'Create a recording'
+      operationId: createARecording
+      description: "Creates a recording in the specified domain and converts the uploaded audio\nto mono, 16 kHz, 16-bit PCM WAV for FreeSWITCH playback.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `recording_upload` permission.\n\nSend this request as `multipart/form-data`."
+      parameters: []
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  recording_uuid: c0ec8113-aa15-40ac-8437-47185dd9dcf4
+                  object: recording
+                  domain_uuid: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                  recording_name: 'Main Menu Greeting'
+                  recording_description: 'Primary virtual receptionist greeting'
+                  recording_filename: uploaded_abc123.wav
+                  audio_available: true
+                  audio_replaced: true
+                  bytes: 384044
+                  sha256: 6d27ccf17b7106932c46d299f908f793b52cb168f4cc47b70ef661755adb59f4
+                properties:
+                  recording_uuid:
+                    type: string
+                    example: c0ec8113-aa15-40ac-8437-47185dd9dcf4
+                  object:
+                    type: string
+                    example: recording
+                  domain_uuid:
+                    type: string
+                    example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                  recording_name:
+                    type: string
+                    example: 'Main Menu Greeting'
+                  recording_description:
+                    type: string
+                    example: 'Primary virtual receptionist greeting'
+                  recording_filename:
+                    type: string
+                    example: uploaded_abc123.wav
+                  audio_available:
+                    type: boolean
+                    example: true
+                  audio_replaced:
+                    type: boolean
+                    example: true
+                  bytes:
+                    type: integer
+                    example: 384044
+                  sha256:
+                    type: string
+                    example: 6d27ccf17b7106932c46d299f908f793b52cb168f4cc47b70ef661755adb59f4
+        400:
+          description: 'Invalid domain UUID'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Invalid domain UUID.'
+                    code: invalid_request
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Invalid domain UUID.'
+                      code:
+                        type: string
+                        example: invalid_request
+                      param:
+                        type: string
+                        example: domain_uuid
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        403:
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: false
+                  message: 'Forbidden (missing permission).'
+                  error:
+                    code: forbidden_permission
+                    permission: recording_upload
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: 'Forbidden (missing permission).'
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: forbidden_permission
+                      permission:
+                        type: string
+                        example: recording_upload
+        404:
+          description: 'Domain not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Domain not found.'
+                    code: resource_missing
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Domain not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: domain_uuid
+        422:
+          description: 'Audio processing failed'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'The uploaded audio could not be converted to a valid recording.'
+                    code: audio_processing_failed
+                    param: file
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'The uploaded audio could not be converted to a valid recording.'
+                      code:
+                        type: string
+                        example: audio_processing_failed
+                      param:
+                        type: string
+                        example: file
+        500:
+          description: 'Internal error'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: api_error
+                    message: 'The recording operation failed.'
+                    code: internal_error
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: api_error
+                      message:
+                        type: string
+                        example: 'The recording operation failed.'
+                      code:
+                        type: string
+                        example: internal_error
+      tags:
+        - Recordings
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                recording_name:
+                  type: string
+                  description: 'The recording display name.'
+                  example: 'Main Menu Greeting'
+                recording_description:
+                  type: string
+                  description: 'Optional description.'
+                  example: 'Primary virtual receptionist greeting'
+                file:
+                  type: string
+                  format: binary
+                  description: 'WAV, MP3, M4A/MP4, OGG, or FLAC audio file. Maximum size: 50 MB.'
+              required:
+                - recording_name
+                - file
+    parameters:
+      -
+        in: path
+        name: domain_uuid
+        description: 'The domain UUID.'
+        example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+        required: true
+        schema:
+          type: string
+  '/api/v1/domains/{domain_uuid}/recordings/{recording_uuid}':
+    get:
+      summary: 'Retrieve a recording'
+      operationId: retrieveARecording
+      description: "Returns one recording and details about its stored audio file.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `recording_view` permission."
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  recording_uuid: c0ec8113-aa15-40ac-8437-47185dd9dcf4
+                  object: recording
+                  domain_uuid: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                  recording_name: 'Main Menu Greeting'
+                  recording_description: 'Primary virtual receptionist greeting'
+                  recording_filename: uploaded_abc123.wav
+                  audio_available: true
+                  audio_replaced: false
+                  bytes: 384044
+                  sha256: 6d27ccf17b7106932c46d299f908f793b52cb168f4cc47b70ef661755adb59f4
+                properties:
+                  recording_uuid:
+                    type: string
+                    example: c0ec8113-aa15-40ac-8437-47185dd9dcf4
+                  object:
+                    type: string
+                    example: recording
+                  domain_uuid:
+                    type: string
+                    example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                  recording_name:
+                    type: string
+                    example: 'Main Menu Greeting'
+                  recording_description:
+                    type: string
+                    example: 'Primary virtual receptionist greeting'
+                  recording_filename:
+                    type: string
+                    example: uploaded_abc123.wav
+                  audio_available:
+                    type: boolean
+                    example: true
+                  audio_replaced:
+                    type: boolean
+                    example: false
+                  bytes:
+                    type: integer
+                    example: 384044
+                  sha256:
+                    type: string
+                    example: 6d27ccf17b7106932c46d299f908f793b52cb168f4cc47b70ef661755adb59f4
+        400:
+          description: 'Invalid recording UUID'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Invalid recording UUID.'
+                    code: invalid_request
+                    param: recording_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Invalid recording UUID.'
+                      code:
+                        type: string
+                        example: invalid_request
+                      param:
+                        type: string
+                        example: recording_uuid
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        403:
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: false
+                  message: 'Forbidden (missing permission).'
+                  error:
+                    code: forbidden_permission
+                    permission: recording_view
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: 'Forbidden (missing permission).'
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: forbidden_permission
+                      permission:
+                        type: string
+                        example: recording_view
+        404:
+          description: 'Recording not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Recording not found.'
+                    code: resource_missing
+                    param: recording_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Recording not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: recording_uuid
+      tags:
+        - Recordings
+    patch:
+      summary: 'Update a recording'
+      operationId: updateARecording
+      description: "Updates the name, description, audio file, or any combination of those\nfields. Supplying `file` converts and atomically updates the stored audio\nwhile retaining the recording UUID and filename, so existing call-routing\nreferences continue to use the updated audio.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `recording_upload` permission.\n\nFor metadata-only updates, send `PATCH` normally. For an audio upload, send\n`multipart/form-data` as POST with `_method=PATCH` so PHP parses the file.\nAt least one update field is required."
+      parameters: []
+      responses:
+        200:
+          description: 'Metadata updated'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  recording_uuid: c0ec8113-aa15-40ac-8437-47185dd9dcf4
+                  object: recording
+                  domain_uuid: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                  recording_name: 'Updated Main Menu Greeting'
+                  recording_description: 'Updated automatically'
+                  recording_filename: uploaded_abc123.wav
+                  audio_available: true
+                  audio_replaced: false
+                  bytes: 384044
+                  sha256: 6d27ccf17b7106932c46d299f908f793b52cb168f4cc47b70ef661755adb59f4
+                properties:
+                  recording_uuid:
+                    type: string
+                    example: c0ec8113-aa15-40ac-8437-47185dd9dcf4
+                  object:
+                    type: string
+                    example: recording
+                  domain_uuid:
+                    type: string
+                    example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                  recording_name:
+                    type: string
+                    example: 'Updated Main Menu Greeting'
+                  recording_description:
+                    type: string
+                    example: 'Updated automatically'
+                  recording_filename:
+                    type: string
+                    example: uploaded_abc123.wav
+                  audio_available:
+                    type: boolean
+                    example: true
+                  audio_replaced:
+                    type: boolean
+                    example: false
+                  bytes:
+                    type: integer
+                    example: 384044
+                  sha256:
+                    type: string
+                    example: 6d27ccf17b7106932c46d299f908f793b52cb168f4cc47b70ef661755adb59f4
+        400:
+          description: 'Invalid recording UUID'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Invalid recording UUID.'
+                    code: invalid_request
+                    param: recording_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Invalid recording UUID.'
+                      code:
+                        type: string
+                        example: invalid_request
+                      param:
+                        type: string
+                        example: recording_uuid
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        403:
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: false
+                  message: 'Forbidden (missing permission).'
+                  error:
+                    code: forbidden_permission
+                    permission: recording_upload
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: 'Forbidden (missing permission).'
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: forbidden_permission
+                      permission:
+                        type: string
+                        example: recording_upload
+        404:
+          description: 'Recording not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Recording not found.'
+                    code: resource_missing
+                    param: recording_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Recording not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: recording_uuid
+        422:
+          description: 'Audio processing failed'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'The uploaded audio could not be converted to a valid recording.'
+                    code: audio_processing_failed
+                    param: file
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'The uploaded audio could not be converted to a valid recording.'
+                      code:
+                        type: string
+                        example: audio_processing_failed
+                      param:
+                        type: string
+                        example: file
+        500:
+          description: 'Internal error'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: api_error
+                    message: 'The recording operation failed.'
+                    code: internal_error
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: api_error
+                      message:
+                        type: string
+                        example: 'The recording operation failed.'
+                      code:
+                        type: string
+                        example: internal_error
+      tags:
+        - Recordings
+      requestBody:
+        required: false
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                recording_name:
+                  type: string
+                  description: 'Optional recording display name.'
+                  example: 'Updated Main Menu Greeting'
+                recording_description:
+                  type: string
+                  description: 'Optional description; may be null.'
+                  example: 'Updated automatically'
+                file:
+                  type: string
+                  format: binary
+                  description: 'Optional WAV, MP3, M4A/MP4, OGG, or FLAC audio file. Maximum size: 50 MB.'
+                _method:
+                  type: string
+                  description: 'Required only for multipart audio uploads. Must be `PATCH`.'
+                  example: PATCH
+    delete:
+      summary: 'Delete a recording'
+      operationId: deleteARecording
+      description: "Deletes the recording database row and its stored audio file.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `recording_delete` permission.\n\nDeleting a recording may clear references from features that use it. Use\nupdate when the goal is to replace audio without changing call routing."
+      parameters: []
+      responses:
+        200:
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  uuid: c0ec8113-aa15-40ac-8437-47185dd9dcf4
+                  object: recording
+                  deleted: true
+                properties:
+                  uuid:
+                    type: string
+                    example: c0ec8113-aa15-40ac-8437-47185dd9dcf4
+                  object:
+                    type: string
+                    example: recording
+                  deleted:
+                    type: boolean
+                    example: true
+        400:
+          description: 'Invalid recording UUID'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Invalid recording UUID.'
+                    code: invalid_request
+                    param: recording_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Invalid recording UUID.'
+                      code:
+                        type: string
+                        example: invalid_request
+                      param:
+                        type: string
+                        example: recording_uuid
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        403:
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: false
+                  message: 'Forbidden (missing permission).'
+                  error:
+                    code: forbidden_permission
+                    permission: recording_delete
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: 'Forbidden (missing permission).'
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: forbidden_permission
+                      permission:
+                        type: string
+                        example: recording_delete
+        404:
+          description: 'Recording not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Recording not found.'
+                    code: resource_missing
+                    param: recording_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Recording not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: recording_uuid
+        500:
+          description: 'Delete failed'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: api_error
+                    message: 'The recording could not be deleted.'
+                    code: internal_error
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: api_error
+                      message:
+                        type: string
+                        example: 'The recording could not be deleted.'
+                      code:
+                        type: string
+                        example: internal_error
+      tags:
+        - Recordings
+    parameters:
+      -
+        in: path
+        name: domain_uuid
+        description: 'The domain UUID.'
+        example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+        required: true
+        schema:
+          type: string
+      -
+        in: path
+        name: recording_uuid
+        description: 'The recording UUID.'
+        example: c0ec8113-aa15-40ac-8437-47185dd9dcf4
         required: true
         schema:
           type: string
@@ -8010,10 +9054,12 @@ paths:
                     - ivrs
                     - business_hours
                     - contact_centers
+                    - ai_agents
                     - bridges
                     - faxes
                     - conferences
                     - call_flows
+                    - dynamic_routes
                     - voicemails
                     - recordings
                     - check_voicemail
@@ -8040,6 +9086,7 @@ paths:
                     - faxes
                     - conferences
                     - call_flows
+                    - dynamic_routes
                     - voicemails
                     - external
                 forward_target:
@@ -8106,7 +9153,7 @@ paths:
     get:
       summary: 'Retrieve a ring group'
       operationId: retrieveARingGroup
-      description: "Returns a single ring group for the specified domain the caller is allowed to access.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `ring_group_domain` permission."
+      description: "Returns a single ring group for the specified domain the caller is allowed to access.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `ring_group_view` permission."
       parameters: []
       responses:
         200:
@@ -8622,10 +9669,12 @@ paths:
                     - ivrs
                     - business_hours
                     - contact_centers
+                    - ai_agents
                     - bridges
                     - faxes
                     - conferences
                     - call_flows
+                    - dynamic_routes
                     - voicemails
                     - recordings
                     - check_voicemail
@@ -8664,6 +9713,7 @@ paths:
                     - faxes
                     - conferences
                     - call_flows
+                    - dynamic_routes
                     - voicemails
                     - external
                 forward_target:
@@ -9586,6 +10636,9 @@ tags:
     description: ''
   -
     name: 'Phone Numbers'
+    description: ''
+  -
+    name: Recordings
     description: ''
   -
     name: Registrations
