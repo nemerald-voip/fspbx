@@ -76,7 +76,7 @@ class RecordingsController extends Controller
         }
 
         if (! $audio) {
-            return response()->json(['error' => 422, 'message' => 'Failed to upload file'], 422);
+            return response()->json(['error' => 422, 'message' => __('Failed to upload file')], 422);
         }
 
         try {
@@ -100,7 +100,7 @@ class RecordingsController extends Controller
             'id' => $recording->recording_uuid,
             'name' => $recording->recording_name,
             'filename' => $recording->recording_filename,
-            'message' => 'Greeting created successfully'
+            'message' => __('Greeting created successfully')
         ]);
     }
 
@@ -116,14 +116,14 @@ class RecordingsController extends Controller
                 $outputPath = Storage::path($encodedFilename);
                 shell_exec('ffmpeg -i '.$inputPath.' -acodec pcm_s16le -ac 1 -ar 16000 '.$outputPath);
                 if (!Storage::exists($encodedFilename) || !Storage::size($encodedFilename)) {
-                    throw new \Exception('Failed to encode audio');
+                    throw new \Exception(__('Failed to encode audio'));
                 }
                 return response()->json([
                     'status' => "success",
                     'tempfile' => $encodedFilename
                 ]);
             } else {
-                throw new \Exception("Failed to upload file");
+                throw new \Exception(__("Failed to upload file"));
             }
         } catch (\Exception $e) {
             return response()->json([
@@ -179,7 +179,7 @@ class RecordingsController extends Controller
             'status' => "success",
             'id' => $recording->recording_uuid,
             'filename' => $recording->recording_filename,
-            'message' => 'Recording has been saved'
+            'message' => __('Recording has been saved')
         ]);
     }
 
@@ -209,7 +209,7 @@ class RecordingsController extends Controller
             default:
                 return response()->json([
                     'error' => 401,
-                  'message' => 'Invalid entity'
+                  'message' => __('Invalid entity')
                 ]);
         }
 
@@ -217,7 +217,7 @@ class RecordingsController extends Controller
             'status' => "success",
             'id' => $recording->recording_uuid,
             'filename' => $recording->recording_filename,
-            'message' => 'Recording has been set'
+            'message' => __('Recording has been set')
         ]);
     }
 
@@ -252,12 +252,12 @@ class RecordingsController extends Controller
                 'status' => 'success',
                 'id' => $recording->recording_uuid,
                 'filename' => $recording->recording_filename,
-                'message' => 'Recording have been deleted'
+                'message' => __('Recording have been deleted')
             ]);
         } else {
             return response()->json([
                 'error' => 401,
-                'message' => 'There was an error deleting this Recording'
+                'message' => __('There was an error deleting this Recording')
             ]);
         }
     }

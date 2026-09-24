@@ -23,7 +23,7 @@
                                 <button type="button"
                                     class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                     @click="emit('close')">
-                                    <span class="sr-only">Close</span>
+                                    <span class="sr-only">{{ $t('Close') }}</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
@@ -37,18 +37,18 @@
                                         <path class="opacity-75" fill="currentColor"
                                             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                     </svg>
-                                    <div class="text-lg text-blue-600 m-auto">Loading...</div>
+                                    <div class="text-lg text-blue-600 m-auto">{{ $t('Loading...') }}</div>
                                 </div>
                             </div>
 
-                            <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
+                            <Vueform @mounted="(form) => form.disableValidation()" @submit="clearServerFormErrors" v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
                                 @error="handleError" @response="handleResponse" :display-errors="false"
                                 :default="defaultValues">
                                 <template #empty>
                                     <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
                                         <div class="px-2 py-6 sm:px-6 lg:col-span-2 lg:px-0 lg:py-0">
                                             <FormTabs view="vertical">
-                                                <FormTab name="settings" label="Settings" :elements="[
+                                                <FormTab name="settings" :label="$t('Settings')" :elements="[
                                                     'conference_profile_uuid',
                                                     'settings_header',
                                                     'profile_name',
@@ -57,7 +57,7 @@
                                                     'button_container',
                                                     'settings_submit',
                                                 ]" />
-                                                <FormTab v-if="mode === 'edit'" name="parameters" label="Parameters" :elements="[
+                                                <FormTab v-if="mode === 'edit'" name="parameters" :label="$t('Parameters')" :elements="[
                                                     'parameters_header',
                                                     'parameters_table',
                                                 ]" />
@@ -69,49 +69,49 @@
                                             <FormElements>
                                                 <HiddenElement name="conference_profile_uuid" :meta="true" />
 
-                                                <StaticElement name="settings_header" tag="h4" content="Conference Profile Settings"
-                                                    description="Configure the profile name and availability." />
+                                                <StaticElement name="settings_header" tag="h4" :content="$t('Conference Profile Settings')"
+                                                    :description="$t('Configure the profile name and availability.')" />
 
-                                                <TextElement name="profile_name" label="Name"
-                                                    placeholder="Conference profile name" :floating="false"
+                                                <TextElement name="profile_name" :label="$t('Name')"
+                                                    :placeholder="$t('Conference profile name')" :floating="false"
                                                     :columns="{ sm: { container: 6 } }" />
 
-                                                <ToggleElement name="profile_enabled" text="Conference Profile Enabled"
+                                                <ToggleElement name="profile_enabled" :text="$t('Conference Profile Enabled')"
                                                     true-value="true" false-value="false" :labels="{ on: 'On', off: 'Off' }"
                                                     :columns="{ sm: { container: 6 } }" label="&nbsp;" />
 
-                                                <TextareaElement name="profile_description" label="Description" :rows="2" />
+                                                <TextareaElement name="profile_description" :label="$t('Description')" :rows="2" />
 
                                                 <GroupElement name="button_container" />
-                                                <ButtonElement name="settings_submit" button-label="Save"
+                                                <ButtonElement name="settings_submit" :button-label="$t('Save')"
                                                     :submits="true" align="right" />
 
-                                                <StaticElement name="parameters_header" tag="h4" content="Parameters"
-                                                    description="Manage the name/value parameters applied by this conference profile." />
+                                                <StaticElement name="parameters_header" tag="h4" :content="$t('Parameters')"
+                                                    :description="$t('Manage the name/value parameters applied by this conference profile.')" />
 
                                                 <StaticElement name="parameters_table">
                                                     <div class="space-y-4">
                                                         <div class="flex flex-wrap items-center justify-between gap-2">
                                                             <div class="text-sm text-gray-500">
-                                                                {{ params.length }} parameters
+                                                                {{ $tChoice('{1} :count parameter|[0,*] :count parameters', params.length) }}
                                                             </div>
                                                             <div class="flex flex-wrap justify-end gap-2">
                                                                 <button v-if="paramPermissions.param_create" type="button"
                                                                     @click="openParamForm()"
                                                                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
-                                                                    Add
+                                                                    {{ $t('Add') }}
                                                                 </button>
                                                                 <button v-if="paramPermissions.param_update" type="button"
                                                                     :disabled="selectedParams.length === 0"
                                                                     @click="toggleSelectedParams"
                                                                     class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50">
-                                                                    Toggle
+                                                                    {{ $t('Toggle') }}
                                                                 </button>
                                                                 <button v-if="paramPermissions.param_destroy" type="button"
                                                                     :disabled="selectedParams.length === 0"
                                                                     @click="confirmBulkDeleteParams"
                                                                     class="rounded-md bg-red-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-50">
-                                                                    Delete
+                                                                    {{ $t('Delete') }}
                                                                 </button>
                                                             </div>
                                                         </div>
@@ -134,10 +134,10 @@
                                                                                 @change="toggleParamPageSelection"
                                                                                 class="h-4 w-4 rounded border-gray-300 text-indigo-600" />
                                                                         </th>
-                                                                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-900">Name</th>
-                                                                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-900">Value</th>
-                                                                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-900">Description</th>
-                                                                        <th class="px-4 py-3 text-center text-sm font-semibold text-gray-900">Enabled</th>
+                                                                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-900">{{ $t('Name') }}</th>
+                                                                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-900">{{ $t('Value') }}</th>
+                                                                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-900">{{ $t('Description') }}</th>
+                                                                        <th class="px-4 py-3 text-center text-sm font-semibold text-gray-900">{{ $t('Enabled') }}</th>
                                                                         <th v-if="hasParamActions" class="px-4 py-3 text-right text-sm font-semibold text-gray-900"></th>
                                                                     </tr>
                                                                 </thead>
@@ -159,23 +159,23 @@
                                                                             <button v-if="paramPermissions.param_update" type="button"
                                                                                 @click="toggleParam(param)"
                                                                                 class="cursor-pointer">
-                                                                                <Badge :text="param.profile_param_enabled === 'true' ? 'True' : 'False'"
+                                                                                <Badge :text="param.profile_param_enabled === 'true' ? $t('True') : $t('False')"
                                                                                     v-bind="enabledBadgeProps(param.profile_param_enabled)" />
                                                                             </button>
-                                                                            <Badge v-else :text="param.profile_param_enabled === 'true' ? 'True' : 'False'"
+                                                                            <Badge v-else :text="param.profile_param_enabled === 'true' ? $t('True') : $t('False')"
                                                                                 v-bind="enabledBadgeProps(param.profile_param_enabled)" />
                                                                         </td>
                                                                         <td v-if="hasParamActions" class="whitespace-nowrap px-3 py-1 text-right text-sm">
                                                                             <button v-if="paramPermissions.param_update" type="button"
                                                                                 @click="openParamForm(param)"
                                                                                 class="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
-                                                                                title="Edit">
+                                                                                :title="$t('Edit')">
                                                                                 <PencilSquareIcon class="h-5 w-5" />
                                                                             </button>
                                                                             <button v-if="paramPermissions.param_destroy" type="button"
                                                                                 @click="confirmDeleteParam(param)"
                                                                                 class="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-red-600"
-                                                                                title="Delete">
+                                                                                :title="$t('Delete')">
                                                                                 <TrashIcon class="h-5 w-5" />
                                                                             </button>
                                                                         </td>
@@ -183,7 +183,7 @@
                                                                     <tr v-if="params.length === 0">
                                                                         <td :colspan="hasParamActions ? 6 : 4"
                                                                             class="px-4 py-6 text-center text-sm text-gray-500">
-                                                                            No parameters found.
+                                                                            {{ $t('No parameters found.') }}
                                                                         </td>
                                                                     </tr>
                                                                 </tbody>
@@ -205,25 +205,27 @@
 
     <AddEditItemModal :show="showParamForm" :header="paramFormHeader" :loading="false" @close="closeParamForm">
         <template #modal-body>
-            <Vueform ref="paramForm$" :endpoint="submitParamForm" @success="handleParamSuccess"
+            <Vueform @mounted="(form) => form.disableValidation()" @submit="clearServerFormErrors" ref="paramForm$" :endpoint="submitParamForm" @success="handleParamSuccess"
                 @error="handleParamError" @response="handleParamResponse" :display-errors="false"
                 :default="paramDefaultValues">
-                <TextElement name="profile_param_name" label="Name" placeholder="Parameter name" :floating="false" />
-                <TextElement name="profile_param_value" label="Value" placeholder="Parameter value" :floating="false" />
-                <TextElement name="profile_param_description" label="Description" placeholder="Optional description" :floating="false" />
-                <ToggleElement name="profile_param_enabled" text="Parameter Enabled" true-value="true" false-value="false"
+                <TextElement name="profile_param_name" :label="$t('Name')" :placeholder="$t('Parameter name')" :floating="false" />
+                <TextElement name="profile_param_value" :label="$t('Value')" :placeholder="$t('Parameter value')" :floating="false" />
+                <TextElement name="profile_param_description" :label="$t('Description')" :placeholder="$t('Optional description')" :floating="false" />
+                <ToggleElement name="profile_param_enabled" :text="$t('Parameter Enabled')" true-value="true" false-value="false"
                     :labels="{ on: 'On', off: 'Off' }" label="&nbsp;" />
-                <ButtonElement name="param_submit" button-label="Save" :submits="true" align="right" />
+                <ButtonElement name="param_submit" :button-label="$t('Save')" :submits="true" align="right" />
             </Vueform>
         </template>
     </AddEditItemModal>
 
     <ConfirmationModal :show="showParamDeleteConfirmation" @close="showParamDeleteConfirmation = false"
-        @confirm="executeParamDelete" :header="'Are you sure?'" :text="paramDeleteText"
-        :confirm-button-label="'Delete'" cancel-button-label="Cancel" :loading="paramDeleteSubmitting" />
+        @confirm="executeParamDelete" :header="$t('Are you sure?')" :text="paramDeleteText"
+        :confirm-button-label="$t('Delete')" :cancel-button-label="$t('Cancel')" :loading="paramDeleteSubmitting" />
 </template>
 
 <script setup>
+import { clearServerFormErrors } from '../../../composables/serverFormErrors.js';
+import { trans, transChoice } from '@i18n';
 import { computed, ref, watch } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from "@headlessui/vue";
 import { PencilSquareIcon, TrashIcon, XMarkIcon } from "@heroicons/vue/24/solid";
@@ -237,7 +239,7 @@ const props = defineProps({
     loading: Boolean,
     header: {
         type: String,
-        default: "Conference Profile",
+        default: () => trans('Conference Profile'),
     },
     mode: {
         type: String,
@@ -272,7 +274,7 @@ const allParamsSelected = computed(() => (
     params.value.length > 0 && selectedParams.value.length === params.value.length
 ));
 const paramFormHeader = computed(() => (
-    editingParam.value ? "Edit Conference Profile Parameter" : "Create Conference Profile Parameter"
+    editingParam.value ? trans('Edit Conference Profile Parameter') : trans('Create Conference Profile Parameter')
 ));
 const paramDefaultValues = computed(() => ({
     profile_param_name: editingParam.value?.profile_param_name ?? null,
@@ -282,10 +284,10 @@ const paramDefaultValues = computed(() => ({
 }));
 const paramDeleteText = computed(() => {
     if (paramDeleteTarget.value === "bulk") {
-        return `Delete ${selectedParams.value.length} selected profile parameter(s)?`;
+        return transChoice('{1} Delete :count selected profile parameter?|[0,*] Delete :count selected profile parameters?', selectedParams.value.length);
     }
 
-    return "Delete this conference profile parameter?";
+    return trans('Delete this conference profile parameter?');
 });
 
 watch(
@@ -380,7 +382,7 @@ const handleError = (error, params, form$) => {
         return;
     }
 
-    form$.messageBag.append("Could not submit form");
+    form$.messageBag.append(trans('Could not submit form'));
 };
 
 const handleParamError = (error, param, form$) => {
@@ -391,7 +393,7 @@ const handleParamError = (error, param, form$) => {
         return;
     }
 
-    form$.messageBag.append("Could not submit form");
+    form$.messageBag.append(trans('Could not submit form'));
 };
 
 const openParamForm = (param = null) => {

@@ -1,12 +1,12 @@
 <template>
     <AddEditItemModal :show="show" :loading="loading" :header="header" custom-class="sm:max-w-2xl" @close="emit('close')">
         <template #modal-body>
-            <Vueform v-if="!loading" :key="options.item?.stream_uuid || 'create'" :default="defaults"
+            <Vueform @mounted="(form) => form.disableValidation()" @submit="clearServerFormErrors" v-if="!loading" :key="options.item?.stream_uuid || 'create'" :default="defaults"
                 :endpoint="submit" @success="success" @response="response" @error="error" :display-errors="false">
                 <template #empty>
                     <FormElements>
-                        <TextElement name="stream_name" :label="$t('Name')" :floating="false" rules="required|max:255" />
-                        <TextElement name="stream_location" :label="$t('Location')" :floating="false" rules="required|max:255"
+                        <TextElement name="stream_name" :label="$t('Name')" :floating="false" />
+                        <TextElement name="stream_location" :label="$t('Location')" :floating="false"
                             placeholder="shouts://radio.example.com/live.mp3"
                             :description="$t('Enter the direct MP3 audio endpoint using shout:// for HTTP or shouts:// for HTTPS.')" />
                         <StaticElement name="location_help">
@@ -28,7 +28,7 @@
                             </details>
                         </StaticElement>
                         <SelectElement v-if="options.domains?.length" name="domain_uuid" :label="$t('Account')"
-                            :items="options.domains" :native="false" :floating="false" :can-clear="false" rules="required"
+                            :items="options.domains" :native="false" :floating="false" :can-clear="false"
                             :description="$t('Global streams are available to every account.')" />
                         <ToggleElement name="stream_enabled" :text="$t('Enabled')" true-value="true" false-value="false" />
                         <TextareaElement name="stream_description" :label="$t('Description')" :floating="false" />
@@ -41,6 +41,7 @@
 </template>
 
 <script setup>
+import { clearServerFormErrors } from '../../../composables/serverFormErrors.js';
 import { computed } from 'vue';
 import AddEditItemModal from '../modal/AddEditItemModal.vue';
 

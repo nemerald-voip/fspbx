@@ -35,7 +35,7 @@ class GreetingsController extends Controller
 
             array_unshift(
                 $greetingsArray,
-                ['value' => '0', 'label' => 'None']
+                ['value' => '0', 'label' => __('None')]
             );
 
             return response()->json($greetingsArray);
@@ -43,7 +43,7 @@ class GreetingsController extends Controller
             logger('Error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
-                ['value' => '0', 'label' => 'None']
+                ['value' => '0', 'label' => __('None')]
             ]);
         }
     }
@@ -63,7 +63,7 @@ class GreetingsController extends Controller
 
             // Check if the greeting exists
             if (!$file_name) {
-                throw new \Exception('File not found');
+                throw new \Exception(__('File not found'));
             }
 
             // Generate the file URL using the defined route
@@ -96,7 +96,7 @@ class GreetingsController extends Controller
             // File not found
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => 'File not found']
+                'errors' => ['server' => __('File not found')]
             ], 404);  // 404 Not Found status for file not found
         }
 
@@ -188,7 +188,7 @@ class GreetingsController extends Controller
             $filePath = $domain_name . "/" . $file_name;
 
             if (!Storage::disk('recordings')->exists($filePath)) {
-                throw new \Exception("File not found"); // File not found
+                throw new \Exception(__("File not found")); // File not found
             }
 
             // Step 2: Generate new greeting_id and filename
@@ -204,7 +204,7 @@ class GreetingsController extends Controller
             if (!Storage::disk('recordings')->move($filePath, $newFilePath)) {
                 return response()->json([
                     'success' => false,
-                    'errors' => ['server' => ['Failed to save the file']]
+                    'errors' => ['server' => [__('Failed to save the file')]]
                 ], 500);
             }
 
@@ -222,7 +222,7 @@ class GreetingsController extends Controller
                 'greeting_id' => $newFileName,
                 'greeting_name' => "AI Greeting " . $datePart,
                 'description' => $sanitizedDescription,
-                'messages' => ['success' => ['Your AI-generated greeting has been saved.']]
+                'messages' => ['success' => [__('Your AI-generated greeting has been saved.')]]
             ], 200);
         } catch (\Exception $e) {
             // Log the error message
@@ -250,7 +250,7 @@ class GreetingsController extends Controller
 
             // Check if the greeting exists
             if (!$file_name) {
-                throw new \Exception('File not found');
+                throw new \Exception(__('File not found'));
             }
 
             // Generate the file URL using the defined route
@@ -299,7 +299,7 @@ class GreetingsController extends Controller
                 // File not found in either location
                 return response()->json([
                     'success' => false,
-                    'errors' => ['server' => 'File not found']
+                    'errors' => ['server' => __('File not found')]
                 ], 404);
             }
 
@@ -331,7 +331,7 @@ class GreetingsController extends Controller
             if (blank($file_name)) {
                 return response()->json([
                     'success' => false,
-                    'errors' => ['file_name' => ['Greeting file name is required.']]
+                    'errors' => ['file_name' => [__('Greeting file name is required.')]]
                 ], 422);
             }
 
@@ -343,7 +343,7 @@ class GreetingsController extends Controller
             // If the greeting is found, proceed to delete from the database
             if ($greeting) {
                 if (!$greeting->delete()) {
-                    throw new \Exception('Failed to delete greeting from the database.');
+                    throw new \Exception(__('Failed to delete greeting from the database.'));
                 }
             }
 
@@ -352,7 +352,7 @@ class GreetingsController extends Controller
             // Check if the file exists in storage and delete it if present
             if (Storage::disk('recordings')->exists($filePath)) {
                 if (!Storage::disk('recordings')->delete($filePath)) {
-                    throw new \Exception('Failed to delete greeting file from storage.');
+                    throw new \Exception(__('Failed to delete greeting file from storage.'));
                 }
             } else {
                 logger('Greeting file does not exist in storage: ' . $filePath);
@@ -361,7 +361,7 @@ class GreetingsController extends Controller
             // Return a successful JSON response
             return response()->json([
                 'success' => true,
-                'messages' => ['success' => ['Greeting has been removed.']]
+                'messages' => ['success' => [__('Greeting has been removed.')]]
             ], 200);
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
@@ -380,7 +380,7 @@ class GreetingsController extends Controller
                 ->first();
 
             if (!$greeting) {
-                throw new \Exception('Greeting not found');
+                throw new \Exception(__('Greeting not found'));
             }
 
             $greeting->recording_name = request('new_name');
@@ -389,7 +389,7 @@ class GreetingsController extends Controller
             // Return a successful JSON response
             return response()->json([
                 'success' => true,
-                'messages' => ['success' => ['Greeting has been updated.']]
+                'messages' => ['success' => [__('Greeting has been updated.')]]
             ], 200);
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
@@ -402,6 +402,8 @@ class GreetingsController extends Controller
         // Validate the file input
         $request->validate([
             'file' => 'required|mimes:wav,mp3,m4a|max:51200', // Allow only WAV and MP3 files, max size 50MB
+        ], \App\Support\Localization\ValidationMessages::common(), [
+            'file' => __('Audio File'),
         ]);
 
         $file = $request->file('file');
@@ -452,7 +454,7 @@ class GreetingsController extends Controller
                     'success' => true,
                     'greeting_id' => $convertedFileName,
                     'greeting_name' => "Uploaded File " . $datePart,
-                    'messages' => ['success' => ['Your greeting has been uploaded and activated.']]
+                    'messages' => ['success' => [__('Your greeting has been uploaded and activated.')]]
                 ], 200);
             } else {
                 // If conversion fails, retain the original file and notify the user
@@ -460,7 +462,7 @@ class GreetingsController extends Controller
 
                 return response()->json([
                     'success' => false,
-                    'message' => ['warning' => 'File uploaded, but conversion failed. Original file retained.']
+                    'message' => ['warning' => __('File uploaded, but conversion failed. Original file retained.')]
                 ], 200); // Indicate partial success
             }
         } catch (\Exception $e) {

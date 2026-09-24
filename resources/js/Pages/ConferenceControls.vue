@@ -3,10 +3,10 @@
 
     <div class="m-3">
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-            <template #title>Conference Controls</template>
+            <template #title>{{ $t('Conference Controls') }}</template>
 
             <template #subtitle>
-                Manage conference call control sets used to assign digits to in-call actions.
+                {{ $t('Manage conference call control sets used to assign digits to in-call actions.') }}
             </template>
 
             <template #filters>
@@ -17,7 +17,7 @@
                     <input type="text" v-model="filterData.search" name="desktop-search-conference-controls"
                         id="desktop-search-conference-controls"
                         class="block w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                        :placeholder="$t('Search')" @keydown.enter="handleSearchButtonClick" />
                 </div>
             </template>
 
@@ -26,12 +26,12 @@
                     <button v-if="permissions.create" type="button" @click.prevent="openCreateModal"
                         class="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                         <PlusIcon aria-hidden="true" class="h-5 w-5" />
-                        Add
+                        {{ $t('Add') }}
                     </button>
 
                     <a :href="routes.conference_centers"
                         class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                        Conference Centers
+                        {{ $t('Conference Centers') }}
                     </a>
                 </div>
             </template>
@@ -49,7 +49,7 @@
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                     <div class="pl-4 flex items-center cursor-pointer select-none" @click="handleSortRequest('control_name')">
-                        <span class="mr-2">Name</span>
+                        <span class="mr-2">{{ $t('Name') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'control_name' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'control_name' && sortData.order === 'desc'"
@@ -60,7 +60,7 @@
                 <TableColumnHeader class="w-32 px-2 py-3.5 text-center text-sm font-semibold text-gray-900 [&>div]:justify-center">
                     <div class="flex items-center justify-center cursor-pointer select-none"
                         @click="handleSortRequest('control_enabled')">
-                        <span class="mr-2">Enabled</span>
+                        <span class="mr-2">{{ $t('Enabled') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'control_enabled' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'control_enabled' && sortData.order === 'desc'"
@@ -68,7 +68,7 @@
                     </div>
                 </TableColumnHeader>
 
-                <TableColumnHeader header="Description" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t('Description')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
                 <TableColumnHeader v-if="hasRowActions" header=""
                     class="w-24 px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
@@ -77,16 +77,16 @@
             <template v-if="selectPageItems" v-slot:current-selection>
                 <td :colspan="hasRowActions ? 4 : 3">
                     <div class="text-sm text-center m-2">
-                        <span class="font-semibold">{{ selectedItems.length }}</span> items are selected.
+                        {{ $tChoice('{1} :count item is selected.|[0,*] :count items are selected.', selectedItems.length) }}
                         <button v-if="!selectAll && selectedItems.length !== data.total"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleSelectAll">
-                            Select all {{ data.total }} items
+                            {{ $tChoice('{1} Select all :count item|[0,*] Select all :count items', data.total) }}
                         </button>
                         <button v-if="selectAll"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleClearSelection">
-                            Clear selection
+                            {{ $t('Clear selection') }}
                         </button>
                     </div>
                 </td>
@@ -108,10 +108,10 @@
 
                     <TableField class="w-32 whitespace-nowrap px-2 py-2 text-center text-sm text-gray-500">
                         <button v-if="permissions.update" type="button" @click="executeBulkToggle([row.conference_control_uuid])">
-                            <Badge :text="row.control_enabled === 'true' ? 'True' : 'False'"
+                            <Badge :text="row.control_enabled === 'true' ? $t('True') : $t('False')"
                                 v-bind="enabledBadgeProps(row.control_enabled)" />
                         </button>
-                        <Badge v-else :text="row.control_enabled === 'true' ? 'True' : 'False'"
+                        <Badge v-else :text="row.control_enabled === 'true' ? $t('True') : $t('False')"
                             v-bind="enabledBadgeProps(row.control_enabled)" />
                     </TableField>
 
@@ -122,13 +122,13 @@
                             <div class="flex items-center justify-end gap-1 whitespace-nowrap">
                                 <button v-if="permissions.update" type="button" @click="openEditModal(row)"
                                     class="rounded-full p-2 text-gray-400 transition duration-150 hover:bg-gray-100 hover:text-gray-600"
-                                    title="Edit">
+                                    :title="$t('Edit')">
                                     <PencilSquareIcon class="h-5 w-5" />
                                 </button>
 
                                 <button v-if="permissions.destroy" type="button" @click="openDeleteModal(row)"
                                     class="rounded-full p-2 text-gray-400 transition duration-150 hover:bg-gray-100 hover:text-red-600"
-                                    title="Delete">
+                                    :title="$t('Delete')">
                                     <TrashIcon class="h-5 w-5" />
                                 </button>
                             </div>
@@ -140,8 +140,8 @@
             <template #empty>
                 <div v-if="!loading && data.data.length === 0" class="text-center my-5">
                     <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
-                    <p class="mt-1 text-sm text-gray-500">Adjust your search and try again.</p>
+                    <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ $t('No results found') }}</h3>
+                    <p class="mt-1 text-sm text-gray-500">{{ $t('Adjust your search and try again.') }}</p>
                 </div>
             </template>
 
@@ -158,8 +158,8 @@
     </div>
 
     <ConfirmationModal :show="showDeleteConfirmationModal" @close="showDeleteConfirmationModal = false"
-        @confirm="deleteSelectedControl" :header="'Are you sure?'" :text="deleteConfirmationText"
-        :confirm-button-label="'Delete'" :cancel-button-label="'Cancel'" :loading="deleteSubmitting" />
+        @confirm="deleteSelectedControl" :header="$t('Are you sure?')" :text="deleteConfirmationText"
+        :confirm-button-label="$t('Delete')" :cancel-button-label="$t('Cancel')" :loading="deleteSubmitting" />
 
     <ConferenceControlForm :show="showForm" :options="itemOptions" :mode="formMode" :loading="loadingForm"
         :header="formHeader" @close="handleFormClose" @error="handleErrorResponse" @success="showNotification"
@@ -170,6 +170,7 @@
 </template>
 
 <script setup>
+import { trans, transChoice } from '@i18n';
 import { computed, onMounted, ref } from "vue";
 import axios from "axios";
 import MainLayout from "../Layouts/MainLayout.vue";
@@ -247,33 +248,33 @@ const bulkActions = computed(() => {
     const actions = [];
 
     if (permissions.create) {
-        actions.push({ id: "bulk_copy", label: "Copy", icon: "DocumentDuplicateIcon" });
+        actions.push({ id: "bulk_copy", label: trans('Copy'), icon: "DocumentDuplicateIcon" });
     }
 
     if (permissions.update) {
-        actions.push({ id: "bulk_toggle", label: "Toggle Enabled", icon: "PencilSquareIcon" });
+        actions.push({ id: "bulk_toggle", label: trans('Toggle Enabled'), icon: "PencilSquareIcon" });
     }
 
     if (permissions.destroy) {
-        actions.push({ id: "bulk_delete", label: "Delete", icon: "TrashIcon" });
+        actions.push({ id: "bulk_delete", label: trans('Delete'), icon: "TrashIcon" });
     }
 
     return actions;
 });
 const deleteConfirmationText = computed(() => {
     if (deleteControl.value === "bulk") {
-        return `Delete ${selectedItems.value.length} selected conference control(s)? Any control details assigned to them will also be deleted.`;
+        return transChoice('{1} Delete :count selected conference control? Any control details assigned to it will also be deleted.|[0,*] Delete :count selected conference controls? Any control details assigned to them will also be deleted.', selectedItems.value.length);
     }
 
-    const name = deleteControl.value?.control_name ?? "this conference control";
-    return `Delete ${name}? Any control details assigned to it will also be deleted.`;
+    const name = deleteControl.value?.control_name ?? trans('this conference control');
+    return trans('Delete :name? Any control details assigned to it will also be deleted.', { name });
 });
 const formHeader = computed(() => {
     if (formMode.value === "create") {
-        return "Create Conference Control";
+        return trans('Create Conference Control');
     }
 
-    return `Update Conference Control - ${itemOptions.value?.item?.control_name || "Loading..."}`;
+    return trans('Update Conference Control - :name', { name: itemOptions.value?.item?.control_name || trans('Loading...') });
 });
 
 onMounted(() => {
@@ -489,7 +490,7 @@ function enabledBadgeProps(value) {
 
 function handleErrorResponse(error) {
     if (error.request?.status === 419) {
-        showNotification("error", { request: ["Session expired. Reload the page."] });
+        showNotification("error", { request: [trans('Session expired. Reload the page.')] });
         return;
     }
 

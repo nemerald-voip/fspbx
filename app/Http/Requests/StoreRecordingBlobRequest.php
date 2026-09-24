@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Support\Localization\ValidationMessages;
 use Illuminate\Support\Facades\Auth;
 
 class StoreRecordingBlobRequest extends FormRequest
@@ -30,8 +31,16 @@ class StoreRecordingBlobRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'recorded_file.required' => 'File is required',
-            'recorded_file.mimes' => 'Only wav files allowed'
+            ...ValidationMessages::common(),
+            'recorded_file.required' => __('File is required'),
+            'recorded_file.mimes' => __('Only wav files allowed')
+        ];
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'recorded_file' => __('File'),
         ];
     }
 }

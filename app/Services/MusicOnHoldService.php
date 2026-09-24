@@ -426,7 +426,7 @@ class MusicOnHoldService
         if ($message === null || $message === '') {
             return [
                 'success' => false,
-                'message' => 'No response received from FreeSWITCH.',
+                'message' => __('No response received from FreeSWITCH.'),
             ];
         }
 
@@ -728,7 +728,7 @@ class MusicOnHoldService
             File::delete($targetPath);
 
             throw ValidationException::withMessages([
-                'file' => ['Could not convert the uploaded file for FreeSWITCH playback.'],
+                'file' => [__('Could not convert the uploaded file for FreeSWITCH playback.')],
             ]);
         }
     }

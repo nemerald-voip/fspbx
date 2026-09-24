@@ -3,10 +3,10 @@
 
     <div class="m-3">
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-            <template #title>Conference Rooms</template>
+            <template #title>{{ $t('Conference Rooms') }}</template>
 
             <template #subtitle>
-                Manage individual meeting rooms within conference centers.
+                {{ $t('Manage individual meeting rooms within conference centers.') }}
             </template>
 
             <template #filters>
@@ -17,33 +17,33 @@
                     <input type="text" v-model="filterData.search" name="mobile-search-conference-rooms"
                         id="mobile-search-conference-rooms"
                         class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                        :placeholder="$t('Search')" @keydown.enter="handleSearchButtonClick" />
                     <input type="text" v-model="filterData.search" name="desktop-search-conference-rooms"
                         id="desktop-search-conference-rooms"
                         class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                        :placeholder="$t('Search')" @keydown.enter="handleSearchButtonClick" />
                 </div>
             </template>
 
             <template #action>
                 <a :href="routes.centers"
                     class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                    Conference Centers
+                    {{ $t('Conference Centers') }}
                 </a>
 
                 <a v-if="permissions.profile_view" :href="routes.conference_profiles"
                     class="ml-2 sm:ml-4 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                    Profiles
+                    {{ $t('Profiles') }}
                 </a>
 
                 <a v-if="permissions.active_view" :href="routes.active_conferences"
                     class="ml-2 sm:ml-4 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                    Active Conferences
+                    {{ $t('Active Conferences') }}
                 </a>
 
                 <button v-if="permissions.create" type="button" @click.prevent="handleCreateButtonClick"
                     class="ml-2 sm:ml-4 rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                    Create
+                    {{ $t('Create') }}
                 </button>
             </template>
 
@@ -61,7 +61,7 @@
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                     <div class="pl-4 flex items-center cursor-pointer select-none"
                         @click="handleSortRequest('conference_room_name')">
-                        <span class="mr-2">Name</span>
+                        <span class="mr-2">{{ $t('Name') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'conference_room_name' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'conference_room_name' && sortData.order === 'desc'"
@@ -69,10 +69,10 @@
                     </div>
                 </TableColumnHeader>
 
-                <TableColumnHeader header="Center" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t('Center')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('moderator_pin')">
-                        <span class="mr-2">Moderator PIN</span>
+                        <span class="mr-2">{{ $t('Moderator PIN') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'moderator_pin' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'moderator_pin' && sortData.order === 'desc'"
@@ -81,7 +81,7 @@
                 </TableColumnHeader>
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('participant_pin')">
-                        <span class="mr-2">Participant PIN</span>
+                        <span class="mr-2">{{ $t('Participant PIN') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'participant_pin' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'participant_pin' && sortData.order === 'desc'"
@@ -90,7 +90,7 @@
                 </TableColumnHeader>
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('record')">
-                        <span class="mr-2">Record</span>
+                        <span class="mr-2">{{ $t('Record') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'record' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'record' && sortData.order === 'desc'"
@@ -99,7 +99,7 @@
                 </TableColumnHeader>
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('wait_mod')">
-                        <span class="mr-2">Wait Moderator</span>
+                        <span class="mr-2">{{ $t('Wait Moderator') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'wait_mod' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'wait_mod' && sortData.order === 'desc'"
@@ -108,7 +108,7 @@
                 </TableColumnHeader>
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('mute')">
-                        <span class="mr-2">Muted</span>
+                        <span class="mr-2">{{ $t('Muted') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'mute' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'mute' && sortData.order === 'desc'"
@@ -117,17 +117,17 @@
                 </TableColumnHeader>
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('sounds')">
-                        <span class="mr-2">Sounds</span>
+                        <span class="mr-2">{{ $t('Sounds') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'sounds' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'sounds' && sortData.order === 'desc'"
                             class="h-4 w-4 text-gray-500" />
                     </div>
                 </TableColumnHeader>
-                <TableColumnHeader header="Members" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t('Members')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader v-if="permissions.enabled" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('enabled')">
-                        <span class="mr-2">Enabled</span>
+                        <span class="mr-2">{{ $t('Enabled') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'enabled' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'enabled' && sortData.order === 'desc'"
@@ -136,7 +136,7 @@
                 </TableColumnHeader>
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('description')">
-                        <span class="mr-2">Description</span>
+                        <span class="mr-2">{{ $t('Description') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'description' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'description' && sortData.order === 'desc'"
@@ -149,16 +149,16 @@
             <template v-if="selectPageItems" v-slot:current-selection>
                 <td :colspan="selectionColspan">
                     <div class="text-sm text-center m-2">
-                        <span class="font-semibold">{{ selectedItems.length }}</span> items are selected.
+                        {{ $tChoice('{1} :count item is selected.|[0,*] :count items are selected.', selectedItems.length) }}
                         <button v-if="!selectAll && selectedItems.length !== data.total"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleSelectAll">
-                            Select all {{ data.total }} items
+                            {{ $tChoice('{1} Select all :count item|[0,*] Select all :count items', data.total) }}
                         </button>
                         <button v-if="selectAll"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleClearSelection">
-                            Clear selection
+                            {{ $t('Clear selection') }}
                         </button>
                     </div>
                 </td>
@@ -216,7 +216,7 @@
                                 <a v-if="permissions.interactive_view || permissions.active_view"
                                     :href="toolUrl(permissions.interactive_view ? routes.interactive : routes.active_conferences, row.conference_room_uuid)"
                                     class="rounded px-2 py-1 text-xs font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-700">
-                                    View
+                                    {{ $t('View') }}
                                 </a>
                                 <a v-if="permissions.cdr_view" :href="toolUrl(routes.cdr, row.conference_room_uuid)"
                                     class="rounded px-2 py-1 text-xs font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-700">
@@ -224,14 +224,14 @@
                                 </a>
                                 <a v-if="permissions.session_view" :href="toolUrl(routes.sessions, row.conference_room_uuid)"
                                     class="rounded px-2 py-1 text-xs font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-700">
-                                    Sessions
+                                    {{ $t('Sessions') }}
                                 </a>
                                 <PencilSquareIcon v-if="permissions.update" @click="handleEditButtonClick(row.conference_room_uuid)"
                                     class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
-                                    title="Edit" />
+                                    :title="$t('Edit')" />
                                 <TrashIcon v-if="permissions.destroy" @click="handleSingleItemDeleteRequest(row.conference_room_uuid)"
                                     class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
-                                    title="Delete" />
+                                    :title="$t('Delete')" />
                             </div>
                         </template>
                     </TableField>
@@ -241,8 +241,8 @@
             <template #empty>
                 <div v-if="data.data.length === 0" class="text-center my-5">
                     <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
-                    <p class="mt-1 text-sm text-gray-500">Adjust your search and try again.</p>
+                    <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ $t('No results found') }}</h3>
+                    <p class="mt-1 text-sm text-gray-500">{{ $t('Adjust your search and try again.') }}</p>
                 </div>
             </template>
 
@@ -260,7 +260,7 @@
 
     <ConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
         @confirm="confirmAction" :header="confirmationHeader" :text="confirmationText"
-        :confirm-button-label="confirmationButtonLabel" cancel-button-label="Cancel" />
+        :confirm-button-label="confirmationButtonLabel" :cancel-button-label="$t('Cancel')" />
 
     <ConferenceRoomForm :show="showForm" :options="itemOptions" :mode="formMode" :loading="loadingForm"
         :header="formHeader" @close="handleFormClose" @error="handleErrorResponse" @success="showNotification"
@@ -271,6 +271,7 @@
 </template>
 
 <script setup>
+import { trans } from '@i18n';
 import { computed, defineComponent, h, onMounted, ref } from "vue";
 import axios from "axios";
 import DataTable from "./components/general/DataTable.vue";
@@ -296,7 +297,7 @@ const BooleanToggle = defineComponent({
             props.editable ? "button" : "span",
             props.editable ? { type: "button", onClick: () => emit("toggle") } : {},
             h(Badge, {
-                text: props.enabled === "true" ? "True" : "False",
+                text: props.enabled === "true" ? trans('True') : trans('False'),
                 ...enabledBadgeProps(props.enabled),
             }),
         );
@@ -315,9 +316,9 @@ const selectedItems = ref([]);
 const selectPageItems = ref(false);
 const confirmationModalTrigger = ref(false);
 const confirmAction = ref(null);
-const confirmationHeader = ref("Are you sure?");
+const confirmationHeader = ref(trans('Are you sure?'));
 const confirmationText = ref("");
-const confirmationButtonLabel = ref("Continue");
+const confirmationButtonLabel = ref(trans('Continue'));
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(false);
@@ -361,13 +362,13 @@ const bulkActions = computed(() => {
     const actions = [];
 
     if (permissions.update) {
-        actions.push({ id: "toggle_enabled", label: "Toggle Enabled", icon: "PencilSquareIcon" });
-        actions.push({ id: "toggle_record", label: "Toggle Record", icon: "PencilSquareIcon" });
-        actions.push({ id: "toggle_wait_mod", label: "Toggle Wait Moderator", icon: "PencilSquareIcon" });
+        actions.push({ id: "toggle_enabled", label: trans('Toggle Enabled'), icon: "PencilSquareIcon" });
+        actions.push({ id: "toggle_record", label: trans('Toggle Record'), icon: "PencilSquareIcon" });
+        actions.push({ id: "toggle_wait_mod", label: trans('Toggle Wait Moderator'), icon: "PencilSquareIcon" });
     }
 
     if (permissions.destroy) {
-        actions.push({ id: "bulk_delete", label: "Delete", icon: "TrashIcon" });
+        actions.push({ id: "bulk_delete", label: trans('Delete'), icon: "TrashIcon" });
     }
 
     return actions;
@@ -377,10 +378,10 @@ const selectionColspan = computed(() => permissions.enabled ? 12 : 11);
 
 const formHeader = computed(() => {
     if (formMode.value === "create") {
-        return "Create Conference Room";
+        return trans('Create Conference Room');
     }
 
-    return `Update Conference Room - ${itemOptions.value?.item?.conference_room_name || "Loading..."}`;
+    return trans('Update Conference Room - :name', { name: itemOptions.value?.item?.conference_room_name || trans('Loading...') });
 });
 
 onMounted(() => {
@@ -515,9 +516,9 @@ const handleClearSelection = () => {
 
 const handleSingleItemDeleteRequest = (uuid) => {
     showConfirmation({
-        header: "Confirm Deletion",
-        text: "This action will permanently delete the selected conference room.",
-        button: "Delete",
+        header: trans('Confirm Deletion'),
+        text: trans('This action will permanently delete the selected conference room.'),
+        button: trans('Delete'),
         action: () => executeBulkDelete([uuid]),
     });
 };
@@ -525,9 +526,9 @@ const handleSingleItemDeleteRequest = (uuid) => {
 const handleBulkActionRequest = (action) => {
     if (action === "bulk_delete") {
         showConfirmation({
-            header: "Confirm Deletion",
-            text: "This action will permanently delete the selected conference room(s).",
-            button: "Delete",
+            header: trans('Confirm Deletion'),
+            text: trans('This action will permanently delete the selected conference room(s).'),
+            button: trans('Delete'),
             action: () => executeBulkDelete(),
         });
         return;
@@ -535,9 +536,9 @@ const handleBulkActionRequest = (action) => {
 
     const field = action.replace("toggle_", "");
     showConfirmation({
-        header: "Confirm Toggle",
-        text: "Toggle this setting for the selected conference room(s)?",
-        button: "Toggle",
+        header: trans('Confirm Toggle'),
+        text: trans('Toggle this setting for the selected conference room(s)?'),
+        button: trans('Toggle'),
         action: () => executeToggle(selectedItems.value, field),
     });
 };

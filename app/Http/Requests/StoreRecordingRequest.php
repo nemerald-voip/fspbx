@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Support\Localization\ValidationMessages;
 use Illuminate\Support\Facades\Auth;
 
 class StoreRecordingRequest extends FormRequest
@@ -45,10 +46,11 @@ class StoreRecordingRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'greeting_name.required' => 'Greeting name is required',
-            'greeting_filename.required_without' => 'Filename is required',
-            'greeting_recorded_file.required_without' => 'Recording is required',
-            'greeting_filename.mimes' => 'Only wav files allowed'
+            ...ValidationMessages::common(),
+            'greeting_name.required' => __('Greeting name is required'),
+            'greeting_filename.required_without' => __('Filename is required'),
+            'greeting_recorded_file.required_without' => __('Recording is required'),
+            'greeting_filename.mimes' => __('Only wav files allowed')
         ];
     }
 
@@ -63,5 +65,15 @@ class StoreRecordingRequest extends FormRequest
             'greeting_name' => 'Recording '.date('m/d/y h:i A'),
             'greeting_description' => null
         ]);
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'greeting_name' => __('Name'),
+            'greeting_description' => __('Description'),
+            'greeting_filename' => __('File'),
+            'greeting_recorded_file' => __('Recording'),
+        ];
     }
 }

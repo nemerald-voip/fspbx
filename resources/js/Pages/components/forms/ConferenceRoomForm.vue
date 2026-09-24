@@ -23,7 +23,7 @@
                                 <button type="button"
                                     class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                     @click="emit('close')">
-                                    <span class="sr-only">Close</span>
+                                    <span class="sr-only">{{ $t('Close') }}</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
@@ -37,18 +37,18 @@
                                         <path class="opacity-75" fill="currentColor"
                                             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                     </svg>
-                                    <div class="text-lg text-blue-600 m-auto">Loading...</div>
+                                    <div class="text-lg text-blue-600 m-auto">{{ $t('Loading...') }}</div>
                                 </div>
                             </div>
 
-                            <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
+                            <Vueform @mounted="(form) => form.disableValidation()" @submit="clearServerFormErrors" v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
                                 @error="handleError" @response="handleResponse" :display-errors="false"
                                 :default="defaultValues">
                                 <template #empty>
                                     <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
                                         <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
                                             <FormTabs view="vertical">
-                                                <FormTab name="settings" label="Settings" :elements="[
+                                                <FormTab name="settings" :label="$t('Settings')" :elements="[
                                                     'conference_room_uuid',
                                                     'settings_header',
                                                     'conference_room_uuid_clean',
@@ -61,7 +61,7 @@
                                                     'button_container',
                                                     'settings_submit',
                                                 ]" />
-                                                <FormTab name="advanced" label="Advanced" :elements="[
+                                                <FormTab name="advanced" :label="$t('Advanced')" :elements="[
                                                     'advanced_header',
                                                     'profile',
                                                     'record',
@@ -90,14 +90,14 @@
                                             <FormElements>
                                                 <HiddenElement name="conference_room_uuid" :meta="true" />
 
-                                                <StaticElement name="settings_header" tag="h4" content="Conference Room Settings"
-                                                    description="Configure the room name, access PINs, and availability." />
+                                                <StaticElement name="settings_header" tag="h4" :content="$t('Conference Room Settings')"
+                                                    :description="$t('Configure the room name, access PINs, and availability.')" />
 
                                                 <StaticElement name="conference_room_uuid_clean"
                                                     :conditions="[() => props.options?.item?.conference_room_uuid]">
                                                     <div class="mb-1">
                                                         <div class="text-sm font-medium text-gray-600 mb-1">
-                                                            Unique ID
+                                                            {{ $t('Unique ID') }}
                                                         </div>
 
                                                         <div class="flex items-center group">
@@ -108,7 +108,7 @@
                                                             <button type="button"
                                                                 @click="handleCopyToClipboard(props.options?.item?.conference_room_uuid)"
                                                                 class="ml-2 p-1 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
-                                                                title="Copy to clipboard">
+                                                                :title="$t('Copy to clipboard')">
                                                                 <ClipboardDocumentIcon
                                                                     class="h-4 w-4 text-gray-500 hover:text-gray-900 cursor-pointer" />
                                                             </button>
@@ -116,114 +116,114 @@
                                                     </div>
                                                 </StaticElement>
 
-                                                <SelectElement name="conference_center_uuid" label="Conference Center"
+                                                <SelectElement name="conference_center_uuid" :label="$t('Conference Center')"
                                                     :items="conferenceCenters" :search="true" :native="false"
                                                     input-type="search" autocomplete="off" :floating="false"
                                                     :columns="{ sm: { container: 6 } }" />
 
-                                                <TextElement name="conference_room_name" label="Room Name"
-                                                    placeholder="Conference room name" :floating="false"
+                                                <TextElement name="conference_room_name" :label="$t('Room Name')"
+                                                    :placeholder="$t('Conference room name')" :floating="false"
                                                     :columns="{ sm: { container: 6 } }" />
 
-                                                <TextElement name="moderator_pin" label="Moderator PIN"
-                                                    placeholder="Moderator PIN" :floating="false"
+                                                <TextElement name="moderator_pin" :label="$t('Moderator PIN')"
+                                                    :placeholder="$t('Moderator PIN')" :floating="false"
                                                     :columns="{ sm: { container: 6 } }" />
 
-                                                <TextElement name="participant_pin" label="Participant PIN"
-                                                    placeholder="Participant PIN" :floating="false"
+                                                <TextElement name="participant_pin" :label="$t('Participant PIN')"
+                                                    :placeholder="$t('Participant PIN')" :floating="false"
                                                     :columns="{ sm: { container: 6 } }" />
 
-                                                <ToggleElement name="enabled" text="Conference Room Enabled"
+                                                <ToggleElement name="enabled" :text="$t('Conference Room Enabled')"
                                                     true-value="true" false-value="false" :labels="{ on: 'On', off: 'Off' }"
                                                     :conditions="[() => permissions.enabled]"
                                                     :columns="{ sm: { container: 6 } }" label="&nbsp;" />
 
-                                                <TextareaElement name="description" label="Description" :rows="2" />
+                                                <TextareaElement name="description" :label="$t('Description')" :rows="2" />
 
                                                 <GroupElement name="button_container" />
-                                                <ButtonElement name="settings_submit" button-label="Save"
+                                                <ButtonElement name="settings_submit" :button-label="$t('Save')"
                                                     :submits="true" align="right" />
 
-                                                <StaticElement name="advanced_header" tag="h4" content="Advanced Settings"
-                                                    description="Manage room behavior, scheduling, and optional accounting fields." />
+                                                <StaticElement name="advanced_header" tag="h4" :content="$t('Advanced Settings')"
+                                                    :description="$t('Manage room behavior, scheduling, and optional accounting fields.')" />
 
-                                                <SelectElement name="profile" label="Profile" :items="profiles"
+                                                <SelectElement name="profile" :label="$t('Profile')" :items="profiles"
                                                     :native="false" :search="true" :floating="false"
                                                     :conditions="[() => permissions.profile]"
                                                     :columns="{ sm: { container: 6 } }" />
 
-                                                <ToggleElement name="record" text="Record Calls" true-value="true"
+                                                <ToggleElement name="record" :text="$t('Record Calls')" true-value="true"
                                                     false-value="false" :labels="{ on: 'On', off: 'Off' }"
                                                     :conditions="[() => permissions.record]"
                                                     :columns="{ sm: { container: 6 } }" label="&nbsp;" />
 
-                                                <TextElement name="max_members" input-type="number" label="Max Members"
+                                                <TextElement name="max_members" input-type="number" :label="$t('Max Members')"
                                                     :floating="false" :conditions="[() => permissions.max_members]"
                                                     :columns="{ sm: { container: 6 } }" />
 
                                                 <GroupElement name="placeholder" />
 
-                                                <DateElement name="start_datetime" label="Start Date/Time"
+                                                <DateElement name="start_datetime" :label="$t('Start Date/Time')"
                                                     :time="true" :seconds="true" :hour24="true"
                                                     value-format="YYYY-MM-DD HH:mm:ss"
                                                     load-format="YYYY-MM-DD HH:mm:ss"
                                                     display-format="YYYY-MM-DD HH:mm:ss"
                                                     :columns="{ sm: { container: 6 } }" />
 
-                                                <DateElement name="stop_datetime" label="Stop Date/Time"
+                                                <DateElement name="stop_datetime" :label="$t('Stop Date/Time')"
                                                     :time="true" :seconds="true" :hour24="true"
                                                     value-format="YYYY-MM-DD HH:mm:ss"
                                                     load-format="YYYY-MM-DD HH:mm:ss"
                                                     display-format="YYYY-MM-DD HH:mm:ss"
                                                     :columns="{ sm: { container: 6 } }" />
 
-                                                <ToggleElement name="wait_mod" text="Wait for Moderator"
+                                                <ToggleElement name="wait_mod" :text="$t('Wait for Moderator')"
                                                     true-value="true" false-value="false" :labels="{ on: 'On', off: 'Off' }"
                                                     :conditions="[() => permissions.wait_mod]"
                                                     :columns="{ sm: { container: 6 } }" label="&nbsp;" />
 
-                                                <ToggleElement name="moderator_endconf" text="Moderator Ends Conference"
+                                                <ToggleElement name="moderator_endconf" :text="$t('Moderator Ends Conference')"
                                                     true-value="true" false-value="false" :labels="{ on: 'On', off: 'Off' }"
                                                     :conditions="[() => permissions.moderator_endconf]"
                                                     :columns="{ sm: { container: 6 } }" label="&nbsp;" />
 
-                                                <ToggleElement name="announce_name" text="Announce Name"
+                                                <ToggleElement name="announce_name" :text="$t('Announce Name')"
                                                     true-value="true" false-value="false" :labels="{ on: 'On', off: 'Off' }"
                                                     :conditions="[() => permissions.announce_name]"
                                                     :columns="{ sm: { container: 6 } }" label="&nbsp;" />
 
-                                                <ToggleElement name="announce_count" text="Announce Count"
+                                                <ToggleElement name="announce_count" :text="$t('Announce Count')"
                                                     true-value="true" false-value="false" :labels="{ on: 'On', off: 'Off' }"
                                                     :conditions="[() => permissions.announce_count]"
                                                     :columns="{ sm: { container: 6 } }" label="&nbsp;" />
 
-                                                <ToggleElement name="announce_recording" text="Announce Recording"
+                                                <ToggleElement name="announce_recording" :text="$t('Announce Recording')"
                                                     true-value="true" false-value="false" :labels="{ on: 'On', off: 'Off' }"
                                                     :conditions="[() => permissions.announce_recording]"
                                                     :columns="{ sm: { container: 6 } }" label="&nbsp;" />
 
-                                                <ToggleElement name="mute" text="Mute" true-value="true"
+                                                <ToggleElement name="mute" :text="$t('Mute')" true-value="true"
                                                     false-value="false" :labels="{ on: 'On', off: 'Off' }"
                                                     :conditions="[() => permissions.mute]"
                                                     :columns="{ sm: { container: 6 } }" label="&nbsp;" />
 
-                                                <ToggleElement name="sounds" text="Sounds" true-value="true"
+                                                <ToggleElement name="sounds" :text="$t('Sounds')" true-value="true"
                                                     false-value="false" :labels="{ on: 'On', off: 'Off' }"
                                                     :conditions="[() => permissions.sounds]"
                                                     :columns="{ sm: { container: 6 } }" label="&nbsp;" />
 
-                                                <TextElement name="email_address" label="Email Address"
+                                                <TextElement name="email_address" :label="$t('Email Address')"
                                                     :floating="false" :conditions="[() => permissions.email_address]"
                                                     :columns="{ sm: { container: 6 } }" />
 
                                                 <GroupElement name="placeholder1" />
 
-                                                <TextElement name="account_code" label="Account Code"
+                                                <TextElement name="account_code" :label="$t('Account Code')"
                                                     :floating="false" :conditions="[() => permissions.account_code]"
                                                     :columns="{ sm: { container: 6 } }" />
 
                                                 <GroupElement name="advanced_button_container" />
-                                                <ButtonElement name="advanced_submit" button-label="Save"
+                                                <ButtonElement name="advanced_submit" :button-label="$t('Save')"
                                                     :submits="true" align="right" />
                                             </FormElements>
                                         </div>
@@ -239,6 +239,8 @@
 </template>
 
 <script setup>
+import { clearServerFormErrors } from '../../../composables/serverFormErrors.js';
+import { trans } from '@i18n';
 import { computed, ref } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from "@headlessui/vue";
 import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
@@ -250,7 +252,7 @@ const props = defineProps({
     loading: Boolean,
     header: {
         type: String,
-        default: "Conference Room",
+        default: () => trans('Conference Room'),
     },
     mode: {
         type: String,
@@ -268,9 +270,9 @@ const profiles = computed(() => props.options?.profiles ?? []);
 
 const handleCopyToClipboard = (text) => {
     navigator.clipboard.writeText(text).then(() => {
-        emit("success", "success", { message: ["Copied to clipboard."] });
+        emit("success", "success", { message: [trans('Copied to clipboard.')] });
     }).catch(() => {
-        emit("error", { response: { data: { errors: { request: ["Failed to copy to clipboard."] } } } });
+        emit("error", { response: { data: { errors: { request: [trans('Failed to copy to clipboard.')] } } } });
     });
 };
 
@@ -349,6 +351,6 @@ const handleError = (error, details, form$) => {
         return;
     }
 
-    form$.messageBag.append("Could not submit form");
+    form$.messageBag.append(trans('Could not submit form'));
 };
 </script>

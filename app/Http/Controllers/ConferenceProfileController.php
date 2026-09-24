@@ -51,13 +51,13 @@ class ConferenceProfileController extends Controller
 
         if ($itemUuid && ! userCheckPermission('conference_profile_edit')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
         if (! $itemUuid && ! userCheckPermission('conference_profile_add')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -107,7 +107,7 @@ class ConferenceProfileController extends Controller
     {
         if (! userCheckPermission('conference_profile_view')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -143,7 +143,7 @@ class ConferenceProfileController extends Controller
     {
         if (! userCheckPermission('conference_profile_view')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -154,7 +154,7 @@ class ConferenceProfileController extends Controller
 
         return response()->json([
             'items' => $items,
-            'messages' => ['success' => ['All matching conference profiles selected.']],
+            'messages' => ['success' => [__('All matching conference profiles selected.')]],
         ]);
     }
 
@@ -162,7 +162,7 @@ class ConferenceProfileController extends Controller
     {
         if (! userCheckPermission('conference_profile_add')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -178,14 +178,14 @@ class ConferenceProfileController extends Controller
             $profile->save();
 
             return response()->json([
-                'messages' => ['success' => ['Conference profile created successfully.']],
+                'messages' => ['success' => [__('Conference profile created successfully.')]],
                 'conference_profile_uuid' => $profile->conference_profile_uuid,
             ], 201);
         } catch (\Throwable $e) {
             logger('ConferenceProfileController@store error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Failed to create conference profile.']],
+                'messages' => ['error' => [__('Failed to create conference profile.')]],
             ], 500);
         }
     }
@@ -194,7 +194,7 @@ class ConferenceProfileController extends Controller
     {
         if (! userCheckPermission('conference_profile_edit')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -207,13 +207,13 @@ class ConferenceProfileController extends Controller
             $conference_profile->save();
 
             return response()->json([
-                'messages' => ['success' => ['Conference profile updated successfully.']],
+                'messages' => ['success' => [__('Conference profile updated successfully.')]],
             ]);
         } catch (\Throwable $e) {
             logger('ConferenceProfileController@update error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Failed to update conference profile.']],
+                'messages' => ['error' => [__('Failed to update conference profile.')]],
             ], 500);
         }
     }
@@ -222,7 +222,7 @@ class ConferenceProfileController extends Controller
     {
         if (! userCheckPermission('conference_profile_delete')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -236,13 +236,13 @@ class ConferenceProfileController extends Controller
             });
 
             return response()->json([
-                'messages' => ['success' => ['Conference profile deleted successfully.']],
+                'messages' => ['success' => [__('Conference profile deleted successfully.')]],
             ]);
         } catch (\Throwable $e) {
             logger('ConferenceProfileController@destroy error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Failed to delete conference profile.']],
+                'messages' => ['error' => [__('Failed to delete conference profile.')]],
             ], 500);
         }
     }
@@ -251,14 +251,14 @@ class ConferenceProfileController extends Controller
     {
         if (! userCheckPermission('conference_profile_delete')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
         $uuids = $this->validatedUuids($request);
         if (empty($uuids)) {
             return response()->json([
-                'messages' => ['error' => ['No conference profiles selected.']],
+                'messages' => ['error' => [__('No conference profiles selected.')]],
             ], 422);
         }
 
@@ -277,7 +277,7 @@ class ConferenceProfileController extends Controller
         });
 
         return response()->json([
-            'messages' => ['success' => ["Deleted {$profiles->count()} conference profile(s)."]],
+            'messages' => ['success' => [trans_choice('{1} Deleted :count conference profile.|[0,*] Deleted :count conference profiles.', $profiles->count())]],
         ]);
     }
 
@@ -285,14 +285,14 @@ class ConferenceProfileController extends Controller
     {
         if (! userCheckPermission('conference_profile_edit')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
         $uuids = $this->validatedUuids($request);
         if (empty($uuids)) {
             return response()->json([
-                'messages' => ['error' => ['No conference profiles selected.']],
+                'messages' => ['error' => [__('No conference profiles selected.')]],
             ], 422);
         }
 
@@ -308,7 +308,7 @@ class ConferenceProfileController extends Controller
         }
 
         return response()->json([
-            'messages' => ['success' => ['Conference profile status toggled.']],
+            'messages' => ['success' => [__('Conference profile status toggled.')]],
         ]);
     }
 
@@ -316,14 +316,14 @@ class ConferenceProfileController extends Controller
     {
         if (! userCheckPermission('conference_profile_add')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
         $uuids = $this->validatedUuids($request);
         if (empty($uuids)) {
             return response()->json([
-                'messages' => ['error' => ['No conference profiles selected.']],
+                'messages' => ['error' => [__('No conference profiles selected.')]],
             ], 422);
         }
 
@@ -360,7 +360,7 @@ class ConferenceProfileController extends Controller
         });
 
         return response()->json([
-            'messages' => ['success' => ["Copied {$profiles->count()} conference profile(s)."]],
+            'messages' => ['success' => [trans_choice('{1} Copied :count conference profile.|[0,*] Copied :count conference profiles.', $profiles->count())]],
         ]);
     }
 
@@ -368,7 +368,7 @@ class ConferenceProfileController extends Controller
     {
         if (! userCheckPermission('conference_profile_param_add')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -385,14 +385,14 @@ class ConferenceProfileController extends Controller
             $param->save();
 
             return response()->json([
-                'messages' => ['success' => ['Conference profile parameter created successfully.']],
+                'messages' => ['success' => [__('Conference profile parameter created successfully.')]],
                 'param' => $this->serializeParam($param),
             ], 201);
         } catch (\Throwable $e) {
             logger('ConferenceProfileController@storeParam error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Failed to create conference profile parameter.']],
+                'messages' => ['error' => [__('Failed to create conference profile parameter.')]],
             ], 500);
         }
     }
@@ -401,7 +401,7 @@ class ConferenceProfileController extends Controller
     {
         if (! userCheckPermission('conference_profile_param_edit')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -414,14 +414,14 @@ class ConferenceProfileController extends Controller
             $conference_profile_param->save();
 
             return response()->json([
-                'messages' => ['success' => ['Conference profile parameter updated successfully.']],
+                'messages' => ['success' => [__('Conference profile parameter updated successfully.')]],
                 'param' => $this->serializeParam($conference_profile_param),
             ]);
         } catch (\Throwable $e) {
             logger('ConferenceProfileController@updateParam error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Failed to update conference profile parameter.']],
+                'messages' => ['error' => [__('Failed to update conference profile parameter.')]],
             ], 500);
         }
     }
@@ -430,7 +430,7 @@ class ConferenceProfileController extends Controller
     {
         if (! userCheckPermission('conference_profile_param_delete')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -438,13 +438,13 @@ class ConferenceProfileController extends Controller
             $conference_profile_param->delete();
 
             return response()->json([
-                'messages' => ['success' => ['Conference profile parameter deleted successfully.']],
+                'messages' => ['success' => [__('Conference profile parameter deleted successfully.')]],
             ]);
         } catch (\Throwable $e) {
             logger('ConferenceProfileController@destroyParam error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Failed to delete conference profile parameter.']],
+                'messages' => ['error' => [__('Failed to delete conference profile parameter.')]],
             ], 500);
         }
     }
@@ -453,14 +453,14 @@ class ConferenceProfileController extends Controller
     {
         if (! userCheckPermission('conference_profile_param_delete')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
         $uuids = $this->validatedUuids($request);
         if (empty($uuids)) {
             return response()->json([
-                'messages' => ['error' => ['No conference profile parameters selected.']],
+                'messages' => ['error' => [__('No conference profile parameters selected.')]],
             ], 422);
         }
 
@@ -469,7 +469,7 @@ class ConferenceProfileController extends Controller
             ->delete();
 
         return response()->json([
-            'messages' => ['success' => ["Deleted {$deleted} conference profile parameter(s)."]],
+            'messages' => ['success' => [trans_choice('{1} Deleted :count conference profile parameter.|[0,*] Deleted :count conference profile parameters.', $deleted)]],
         ]);
     }
 
@@ -477,14 +477,14 @@ class ConferenceProfileController extends Controller
     {
         if (! userCheckPermission('conference_profile_param_edit')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
         $uuids = $this->validatedUuids($request);
         if (empty($uuids)) {
             return response()->json([
-                'messages' => ['error' => ['No conference profile parameters selected.']],
+                'messages' => ['error' => [__('No conference profile parameters selected.')]],
             ], 422);
         }
 
@@ -500,7 +500,7 @@ class ConferenceProfileController extends Controller
         }
 
         return response()->json([
-            'messages' => ['success' => ['Conference profile parameter status toggled.']],
+            'messages' => ['success' => [__('Conference profile parameter status toggled.')]],
         ]);
     }
 
@@ -510,6 +510,10 @@ class ConferenceProfileController extends Controller
             'profile_name' => ['required', 'string', 'max:255'],
             'profile_enabled' => ['required', 'string', 'in:true,false'],
             'profile_description' => ['nullable', 'string'],
+        ], \App\Support\Localization\ValidationMessages::common(), [
+            'profile_name' => __('Name'),
+            'profile_enabled' => __('Enabled'),
+            'profile_description' => __('Description'),
         ]);
     }
 
@@ -535,6 +539,11 @@ class ConferenceProfileController extends Controller
             'profile_param_value' => ['required', 'string', 'max:255'],
             'profile_param_enabled' => ['required', 'string', 'in:true,false'],
             'profile_param_description' => ['nullable', 'string', 'max:255'],
+        ], \App\Support\Localization\ValidationMessages::common(), [
+            'profile_param_name' => __('Name'),
+            'profile_param_value' => __('Value'),
+            'profile_param_enabled' => __('Enabled'),
+            'profile_param_description' => __('Description'),
         ]);
     }
 

@@ -82,7 +82,9 @@ class StreamController extends Controller
 
     public function getItemOptions(Request $request)
     {
-        $input = $request->validate(['itemUuid' => ['nullable', 'uuid']]);
+        $input = $request->validate(['itemUuid' => ['nullable', 'uuid']], \App\Support\Localization\ValidationMessages::common(), [
+            'itemUuid' => __('Unique ID'),
+        ]);
         $id = $input['itemUuid'] ?? null;
         abort_unless(userCheckPermission($id ? 'stream_edit' : 'stream_add'), 403);
         $item = $id ? $this->service->visible()->whereKey($id)->firstOrFail() : null;
@@ -90,8 +92,8 @@ class StreamController extends Controller
         return response()->json([
             'item' => $item ?? ['stream_enabled' => 'true', 'domain_uuid' => session('domain_uuid')],
             'domains' => userCheckPermission('stream_all') ? [
-                ['value' => session('domain_uuid'), 'label' => 'Current account'],
-                ['value' => '__global__', 'label' => 'Global'],
+                ['value' => session('domain_uuid'), 'label' => __('Current account')],
+                ['value' => '__global__', 'label' => __('Global')],
             ] : [],
             'routes' => [
                 'store_route' => route('streams.store'),
@@ -103,13 +105,13 @@ class StreamController extends Controller
     public function store(SaveStreamRequest $request)
     {
         $item = $this->service->save($request->validated());
-        return response()->json(['stream_uuid' => $item->stream_uuid, 'messages' => ['success' => ['Stream created.']]], 201);
+        return response()->json(['stream_uuid' => $item->stream_uuid, 'messages' => ['success' => [__('Stream created.')]]], 201);
     }
 
     public function update(SaveStreamRequest $request, MusicStreams $stream)
     {
         $this->service->save($request->validated(), $stream);
-        return response()->json(['messages' => ['success' => ['Stream updated.']]]);
+        return response()->json(['messages' => ['success' => [__('Stream updated.')]]]);
     }
 
     public function selectAll(Request $request)
@@ -123,12 +125,16 @@ class StreamController extends Controller
         $values = $request->validate([
             'items' => ['required', 'array', 'min:1'], 'items.*' => ['required', 'uuid', 'distinct'],
             'action' => ['required', Rule::in(['delete', 'copy', 'enable', 'disable'])],
+        ], \App\Support\Localization\ValidationMessages::common(), [
+            'items' => __('Selected items'),
+            'items.*' => __('Selected item'),
+            'action' => __('Action'),
         ]);
         $permission = match ($values['action']) {
             'copy' => 'stream_add', 'delete' => 'stream_delete', default => 'stream_edit',
         };
         abort_unless(userCheckPermission($permission), 403);
         $this->service->bulk($values['items'], $values['action']);
-        return response()->json(['messages' => ['success' => ['Streams updated.']]]);
+        return response()->json(['messages' => ['success' => [__('Streams updated.')]]]);
     }
 }

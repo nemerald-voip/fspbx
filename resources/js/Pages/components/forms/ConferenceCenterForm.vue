@@ -23,7 +23,7 @@
                                 <button type="button"
                                     class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                     @click="emit('close')">
-                                    <span class="sr-only">Close</span>
+                                    <span class="sr-only">{{ $t('Close') }}</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
@@ -37,18 +37,18 @@
                                         <path class="opacity-75" fill="currentColor"
                                             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                     </svg>
-                                    <div class="text-lg text-blue-600 m-auto">Loading...</div>
+                                    <div class="text-lg text-blue-600 m-auto">{{ $t('Loading...') }}</div>
                                 </div>
                             </div>
 
-                            <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
+                            <Vueform @mounted="(form) => form.disableValidation()" @submit="clearServerFormErrors" v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
                                 @error="handleError" @response="handleResponse" :display-errors="false"
                                 :default="defaultValues">
                                 <template #empty>
                                     <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
                                         <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
                                             <FormTabs view="vertical">
-                                                <FormTab name="settings" label="Settings" :elements="[
+                                                <FormTab name="settings" :label="$t('Settings')" :elements="[
                                                     'conference_center_uuid',
                                                     'conference_center_uuid_clean',
                                                     'settings_header',
@@ -60,7 +60,7 @@
                                                     'button_container',
                                                     'settings_submit',
                                                 ]" />
-                                                <FormTab name="advanced" label="Advanced" :elements="[
+                                                <FormTab name="advanced" :label="$t('Advanced')" :elements="[
                                                     'advanced_header',
                                                     'conference_center_pin_length',
                                                     'advanced_button_container',
@@ -74,14 +74,14 @@
                                             <FormElements>
                                                 <HiddenElement name="conference_center_uuid" :meta="true" />
 
-                                                <StaticElement name="settings_header" tag="h4" content="Conference Center Settings"
-                                                    description="Configure the conference center extension, greeting, and dialplan state." />
+                                                <StaticElement name="settings_header" tag="h4" :content="$t('Conference Center Settings')"
+                                                    :description="$t('Configure the conference center extension, greeting, and dialplan state.')" />
 
                                                 <StaticElement name="conference_center_uuid_clean"
                                                     :conditions="[() => props.options?.item?.conference_center_uuid]">
                                                     <div class="mb-1">
                                                         <div class="text-sm font-medium text-gray-600 mb-1">
-                                                            Unique ID
+                                                            {{ $t('Unique ID') }}
                                                         </div>
 
                                                         <div class="flex items-center group">
@@ -92,7 +92,7 @@
                                                             <button type="button"
                                                                 @click="handleCopyToClipboard(props.options?.item?.conference_center_uuid)"
                                                                 class="ml-2 p-1 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
-                                                                title="Copy to clipboard">
+                                                                :title="$t('Copy to clipboard')">
                                                                 <ClipboardDocumentIcon
                                                                     class="h-4 w-4 text-gray-500 hover:text-gray-900 cursor-pointer" />
                                                             </button>
@@ -100,42 +100,42 @@
                                                     </div>
                                                 </StaticElement>
 
-                                                <TextElement name="conference_center_name" label="Name"
-                                                    placeholder="Conference center name" :floating="false"
+                                                <TextElement name="conference_center_name" :label="$t('Name')"
+                                                    :placeholder="$t('Conference center name')" :floating="false"
                                                     :columns="{ sm: { container: 6 } }" />
 
-                                                <ToggleElement name="conference_center_enabled" text="Conference Center Enabled"
+                                                <ToggleElement name="conference_center_enabled" :text="$t('Conference Center Enabled')"
                                                     true-value="true" false-value="false" :labels="{ on: 'On', off: 'Off' }"
                                                     :columns="{ sm: { container: 6 } }" label="&nbsp;" />
 
-                                                <TextElement name="conference_center_extension" label="Extension"
-                                                    placeholder="Extension callers dial" :floating="false"
+                                                <TextElement name="conference_center_extension" :label="$t('Extension')"
+                                                    :placeholder="$t('Extension callers dial')" :floating="false"
                                                     :columns="{ sm: { container: 6 } }" />
 
                                                 <SelectElement name="conference_center_greeting" :items="soundOptions"
-                                                    :groups="true" :search="true" :native="false" label="Greeting"
+                                                    :groups="true" :search="true" :native="false" :label="$t('Greeting')"
                                                     input-type="search" allow-absent autocomplete="off"
-                                                    placeholder="Optional greeting" :floating="false" :strict="false"
+                                                    :placeholder="$t('Optional greeting')" :floating="false" :strict="false"
                                                     :columns="{ sm: { container: 6 } }" />
 
-                                                <TextareaElement name="conference_center_description" label="Description"
+                                                <TextareaElement name="conference_center_description" :label="$t('Description')"
                                                     :rows="2" />
 
                                                 <GroupElement name="button_container" />
 
-                                                <ButtonElement name="settings_submit" button-label="Save"
+                                                <ButtonElement name="settings_submit" :button-label="$t('Save')"
                                                     :submits="true" align="right" />
 
-                                                <StaticElement name="advanced_header" tag="h4" content="Advanced Settings"
-                                                    description="PIN length is used by conference rooms that collect PIN digits from the dialed number." />
+                                                <StaticElement name="advanced_header" tag="h4" :content="$t('Advanced Settings')"
+                                                    :description="$t('PIN length is used by conference rooms that collect PIN digits from the dialed number.')" />
 
                                                 <TextElement name="conference_center_pin_length" input-type="number"
-                                                    label="PIN Length" :floating="false"
+                                                    :label="$t('PIN Length')" :floating="false"
                                                     :columns="{ sm: { container: 6 } }" />
 
                                                 <GroupElement name="advanced_button_container" />
 
-                                                <ButtonElement name="advanced_submit" button-label="Save"
+                                                <ButtonElement name="advanced_submit" :button-label="$t('Save')"
                                                     :submits="true" align="right" />
                                             </FormElements>
                                         </div>
@@ -151,6 +151,8 @@
 </template>
 
 <script setup>
+import { clearServerFormErrors } from '../../../composables/serverFormErrors.js';
+import { trans } from '@i18n';
 import { computed, ref } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from "@headlessui/vue";
 import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
@@ -162,7 +164,7 @@ const props = defineProps({
     loading: Boolean,
     header: {
         type: String,
-        default: "Conference Center",
+        default: () => trans('Conference Center'),
     },
     mode: {
         type: String,
@@ -188,9 +190,9 @@ const soundOptions = computed(() => props.options?.sound_options ?? []);
 
 const handleCopyToClipboard = (text) => {
     navigator.clipboard.writeText(text).then(() => {
-        emit("success", "success", { message: ["Copied to clipboard."] });
+        emit("success", "success", { message: [trans('Copied to clipboard.')] });
     }).catch(() => {
-        emit("error", { response: { data: { errors: { request: ["Failed to copy to clipboard."] } } } });
+        emit("error", { response: { data: { errors: { request: [trans('Failed to copy to clipboard.')] } } } });
     });
 };
 
@@ -245,6 +247,6 @@ const handleError = (error, details, form$) => {
         return;
     }
 
-    form$.messageBag.append("Could not submit form");
+    form$.messageBag.append(trans('Could not submit form'));
 };
 </script>

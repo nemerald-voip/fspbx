@@ -150,7 +150,7 @@ import StreamForm from './components/forms/StreamForm.vue';
 import { ChevronDownIcon, ChevronUpIcon, MagnifyingGlassIcon, PencilSquareIcon, TrashIcon, DocumentDuplicateIcon, PlayCircleIcon } from '@heroicons/vue/24/solid';
 
 const props = defineProps({ routes: Object, permissions: Object, pagination: Object });
-const columns = [{ key: 'stream_name', label: 'Name' }, { key: 'stream_location', label: 'Location' }, { key: 'stream_enabled', label: 'Enabled' }, { key: 'stream_description', label: 'Description' }];
+const columns = computed(() => [{ key: 'stream_name', label: trans('Name') }, { key: 'stream_location', label: trans('Location') }, { key: 'stream_enabled', label: trans('Enabled') }, { key: 'stream_description', label: trans('Description') }]);
 const iconButton = 'flex h-9 w-9 items-center justify-center rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:opacity-50';
 const filters = ref({ search: '' });
 const appliedFilters = ref({ search: '' });

@@ -75,7 +75,7 @@ class ActiveConferenceController extends Controller
     {
         if (! userCheckPermission('conference_active_view')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -88,7 +88,7 @@ class ActiveConferenceController extends Controller
     {
         if (! userCheckPermission('conference_interactive_view') || ! $this->validConferenceIdentifier($conference)) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -115,7 +115,7 @@ class ActiveConferenceController extends Controller
     {
         if (! userCheckPermission('conference_interactive_view') || ! $this->validConferenceIdentifier($conference)) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -124,11 +124,16 @@ class ActiveConferenceController extends Controller
             'id' => ['nullable', 'integer'],
             'uuid' => ['nullable', 'uuid'],
             'direction' => ['nullable', 'in:up,down'],
+        ], \App\Support\Localization\ValidationMessages::common(), [
+            'action' => __('Action'),
+            'id' => __('Member ID'),
+            'uuid' => __('Unique ID'),
+            'direction' => __('Direction'),
         ]);
 
         if (! $this->canExecuteInteractiveAction($validated['action'])) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -136,13 +141,13 @@ class ActiveConferenceController extends Controller
             $this->executeConferenceCommand($conference, $validated, $eslService);
 
             return response()->json([
-                'messages' => ['success' => ['Request has been successfully processed.']],
+                'messages' => ['success' => [__('Request has been successfully processed.')]],
             ]);
         } catch (\Throwable $e) {
             logger('ActiveConferenceController@executeInteractiveAction error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Failed to process request.']],
+                'messages' => ['error' => [__('Failed to process request.')]],
             ], 500);
         }
     }

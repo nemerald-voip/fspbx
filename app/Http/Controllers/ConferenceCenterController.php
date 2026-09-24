@@ -52,14 +52,14 @@ class ConferenceCenterController extends Controller
             $conferenceCenter = $service->save($request->validated());
 
             return response()->json([
-                'messages' => ['success' => ['Conference center created successfully.']],
+                'messages' => ['success' => [__('Conference center created successfully.')]],
                 'conference_center_uuid' => $conferenceCenter->conference_center_uuid,
             ], 201);
         } catch (\Throwable $e) {
             logger('ConferenceCenterController@store error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Failed to create conference center.']],
+                'messages' => ['error' => [__('Failed to create conference center.')]],
             ], 500);
         }
     }
@@ -68,7 +68,7 @@ class ConferenceCenterController extends Controller
     {
         if ($conference_center->domain_uuid !== session('domain_uuid')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -76,13 +76,13 @@ class ConferenceCenterController extends Controller
             $service->save($request->validated(), $conference_center);
 
             return response()->json([
-                'messages' => ['success' => ['Conference center updated successfully.']],
+                'messages' => ['success' => [__('Conference center updated successfully.')]],
             ]);
         } catch (\Throwable $e) {
             logger('ConferenceCenterController@update error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Failed to update conference center.']],
+                'messages' => ['error' => [__('Failed to update conference center.')]],
             ], 500);
         }
     }
@@ -93,13 +93,13 @@ class ConferenceCenterController extends Controller
 
         if ($itemUuid && ! userCheckPermission('conference_center_edit')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
         if (! $itemUuid && ! userCheckPermission('conference_center_add')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -129,7 +129,7 @@ class ConferenceCenterController extends Controller
     {
         if (! userCheckPermission('conference_center_view')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -164,7 +164,7 @@ class ConferenceCenterController extends Controller
     {
         if (! userCheckPermission('conference_center_view')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -175,7 +175,7 @@ class ConferenceCenterController extends Controller
 
         return response()->json([
             'items' => $items,
-            'messages' => ['success' => ['All matching conference centers selected.']],
+            'messages' => ['success' => [__('All matching conference centers selected.')]],
         ]);
     }
 
@@ -183,14 +183,14 @@ class ConferenceCenterController extends Controller
     {
         if (! userCheckPermission('conference_center_delete')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
         $uuids = $this->validatedUuids($request);
         if (empty($uuids)) {
             return response()->json([
-                'messages' => ['error' => ['No conference centers selected.']],
+                'messages' => ['error' => [__('No conference centers selected.')]],
             ], 422);
         }
 
@@ -202,7 +202,7 @@ class ConferenceCenterController extends Controller
         $deleted = $service->delete($items);
 
         return response()->json([
-            'messages' => ['success' => ["Deleted {$deleted} conference center(s)."]],
+            'messages' => ['success' => [trans_choice('{1} Deleted :count conference center.|[0,*] Deleted :count conference centers.', $deleted)]],
         ]);
     }
 
@@ -210,14 +210,14 @@ class ConferenceCenterController extends Controller
     {
         if (! userCheckPermission('conference_center_edit')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
         $uuids = $this->validatedUuids($request);
         if (empty($uuids)) {
             return response()->json([
-                'messages' => ['error' => ['No conference centers selected.']],
+                'messages' => ['error' => [__('No conference centers selected.')]],
             ], 422);
         }
 
@@ -229,7 +229,7 @@ class ConferenceCenterController extends Controller
         $service->toggle($items);
 
         return response()->json([
-            'messages' => ['success' => ['Conference center status toggled.']],
+            'messages' => ['success' => [__('Conference center status toggled.')]],
         ]);
     }
 

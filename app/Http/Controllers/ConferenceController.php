@@ -49,14 +49,14 @@ class ConferenceController extends Controller
             $conference = $service->save($request->validated());
 
             return response()->json([
-                'messages' => ['success' => ['Conference created successfully.']],
+                'messages' => ['success' => [__('Conference created successfully.')]],
                 'conference_uuid' => $conference->conference_uuid,
             ], 201);
         } catch (\Throwable $e) {
             logger('ConferenceController@store error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Failed to create conference.']],
+                'messages' => ['error' => [__('Failed to create conference.')]],
             ], 500);
         }
     }
@@ -65,7 +65,7 @@ class ConferenceController extends Controller
     {
         if ($conference->domain_uuid !== session('domain_uuid')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -73,13 +73,13 @@ class ConferenceController extends Controller
             $service->save($request->validated(), $conference);
 
             return response()->json([
-                'messages' => ['success' => ['Conference updated successfully.']],
+                'messages' => ['success' => [__('Conference updated successfully.')]],
             ]);
         } catch (\Throwable $e) {
             logger('ConferenceController@update error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Failed to update conference.']],
+                'messages' => ['error' => [__('Failed to update conference.')]],
             ], 500);
         }
     }
@@ -90,13 +90,13 @@ class ConferenceController extends Controller
 
         if ($itemUuid && ! userCheckPermission('conference_edit')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
         if (! $itemUuid && ! userCheckPermission('conference_add')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -129,7 +129,7 @@ class ConferenceController extends Controller
     {
         if (! userCheckPermission('conference_view')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -165,7 +165,7 @@ class ConferenceController extends Controller
     {
         if (! userCheckPermission('conference_view')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -176,7 +176,7 @@ class ConferenceController extends Controller
 
         return response()->json([
             'items' => $items,
-            'messages' => ['success' => ['All matching conferences selected.']],
+            'messages' => ['success' => [__('All matching conferences selected.')]],
         ]);
     }
 
@@ -184,21 +184,21 @@ class ConferenceController extends Controller
     {
         if (! userCheckPermission('conference_add')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
         $items = $this->itemsFromRequest($request);
         if ($items->isEmpty()) {
             return response()->json([
-                'messages' => ['error' => ['No conferences selected.']],
+                'messages' => ['error' => [__('No conferences selected.')]],
             ], 422);
         }
 
         $copied = $service->copy($items);
 
         return response()->json([
-            'messages' => ['success' => ["Copied {$copied} conference(s)."]],
+            'messages' => ['success' => [trans_choice('{1} Copied :count conference.|[0,*] Copied :count conferences.', $copied)]],
         ]);
     }
 
@@ -206,21 +206,21 @@ class ConferenceController extends Controller
     {
         if (! userCheckPermission('conference_delete')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
         $items = $this->itemsFromRequest($request);
         if ($items->isEmpty()) {
             return response()->json([
-                'messages' => ['error' => ['No conferences selected.']],
+                'messages' => ['error' => [__('No conferences selected.')]],
             ], 422);
         }
 
         $deleted = $service->delete($items);
 
         return response()->json([
-            'messages' => ['success' => ["Deleted {$deleted} conference(s)."]],
+            'messages' => ['success' => [trans_choice('{1} Deleted :count conference.|[0,*] Deleted :count conferences.', $deleted)]],
         ]);
     }
 
@@ -228,21 +228,21 @@ class ConferenceController extends Controller
     {
         if (! userCheckPermission('conference_edit')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
         $items = $this->itemsFromRequest($request);
         if ($items->isEmpty()) {
             return response()->json([
-                'messages' => ['error' => ['No conferences selected.']],
+                'messages' => ['error' => [__('No conferences selected.')]],
             ], 422);
         }
 
         $service->toggle($items);
 
         return response()->json([
-            'messages' => ['success' => ['Conference status toggled.']],
+            'messages' => ['success' => [__('Conference status toggled.')]],
         ]);
     }
 

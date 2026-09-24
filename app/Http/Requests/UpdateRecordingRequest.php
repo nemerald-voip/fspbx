@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Support\Localization\ValidationMessages;
 use Illuminate\Support\Facades\Auth;
 
 class UpdateRecordingRequest extends FormRequest
@@ -34,7 +35,16 @@ class UpdateRecordingRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'greeting_name.required' => 'Greeting name is required'
+            ...ValidationMessages::common(),
+            'greeting_name.required' => __('Greeting name is required')
+        ];
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'greeting_name' => __('Name'),
+            'greeting_description' => __('Description'),
         ];
     }
 }

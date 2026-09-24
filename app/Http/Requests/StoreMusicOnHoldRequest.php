@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Support\Localization\ValidationMessages;
 use Illuminate\Validation\Rule;
 
 class StoreMusicOnHoldRequest extends FormRequest
@@ -56,5 +57,27 @@ class StoreMusicOnHoldRequest extends FormRequest
         $value = trim((string) $value);
 
         return in_array($value, ['', '__global__'], true) ? null : $value;
+    }
+
+    public function messages(): array
+    {
+        return ValidationMessages::common();
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'domain_uuid' => __('Domain'),
+            'music_on_hold_name' => __('Name'),
+            'music_on_hold_path' => __('Generated path'),
+            'music_on_hold_rate' => __('Rate'),
+            'music_on_hold_shuffle' => __('Shuffle'),
+            'music_on_hold_channels' => __('Channels'),
+            'music_on_hold_interval' => __('Interval'),
+            'music_on_hold_timer_name' => __('Timer Name'),
+            'music_on_hold_chime_list' => __('Chime'),
+            'music_on_hold_chime_freq' => __('Chime Frequency'),
+            'music_on_hold_chime_max' => __('Chime Maximum'),
+        ];
     }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Models\MusicStreams;
 use App\Rules\StreamLocation;
 use Illuminate\Foundation\Http\FormRequest;
+use App\Support\Localization\ValidationMessages;
 use Illuminate\Validation\Rule;
 
 class SaveStreamRequest extends FormRequest
@@ -38,6 +39,22 @@ class SaveStreamRequest extends FormRequest
             'stream_enabled' => ['required', Rule::in(['true', 'false'])],
             'stream_description' => ['nullable', 'string', 'max:4096'],
             'domain_uuid' => ['sometimes', 'nullable', Rule::in([session('domain_uuid')])],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return ValidationMessages::common();
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'stream_name' => __('Name'),
+            'stream_location' => __('Location'),
+            'stream_enabled' => __('Enabled'),
+            'stream_description' => __('Description'),
+            'domain_uuid' => __('Domain'),
         ];
     }
 }

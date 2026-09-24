@@ -31,7 +31,7 @@
                                         <div class="flex items-start justify-between gap-3">
                                             <div class="min-w-0 flex-1">
                                                 <DialogTitle class="truncate text-lg font-semibold text-gray-900" :title="stream?.music_on_hold_name">
-                                                    {{ stream?.music_on_hold_name || "Music on Hold" }}
+                                                    {{ stream?.music_on_hold_name || $t('Music on Hold') }}
                                                 </DialogTitle>
                                                 <p v-if="stream?.domain_label" class="mt-0.5 text-xs text-gray-500">
                                                     {{ stream.domain_label }}
@@ -45,7 +45,7 @@
                                                     v-if="permissions.update && stream?.can_modify"
                                                     type="button"
                                                     class="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
-                                                    title="Edit stream"
+                                                    :title="$t('Edit stream')"
                                                     @click="emit('edit')"
                                                 >
                                                     <PencilSquareIcon class="h-5 w-5" />
@@ -54,7 +54,7 @@
                                                     v-if="permissions.destroy && stream?.can_modify"
                                                     type="button"
                                                     class="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
-                                                    title="Delete stream"
+                                                    :title="$t('Delete stream')"
                                                     @click="emit('delete')"
                                                 >
                                                     <TrashIcon class="h-5 w-5" />
@@ -62,7 +62,7 @@
                                                 <button
                                                     type="button"
                                                     class="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
-                                                    title="Close"
+                                                    :title="$t('Close')"
                                                     @click="emit('close')"
                                                 >
                                                     <XMarkIcon class="h-5 w-5" />
@@ -72,12 +72,12 @@
 
                                         <div class="mt-3 flex flex-wrap gap-1">
                                             <Badge v-if="stream?.rate_label" :text="stream.rate_label" v-bind="grayBadge" />
-                                            <Badge :text="stream?.music_on_hold_channels === '2' ? 'Stereo' : 'Mono'" v-bind="grayBadge" />
+                                            <Badge :text="stream?.music_on_hold_channels === '2' ? $t('Stereo') : $t('Mono')" v-bind="grayBadge" />
                                             <Badge
-                                                :text="stream?.music_on_hold_shuffle === 'true' ? 'Shuffle' : 'Ordered'"
+                                                :text="stream?.music_on_hold_shuffle === 'true' ? $t('Shuffle') : $t('Ordered')"
                                                 v-bind="stream?.music_on_hold_shuffle === 'true' ? blueBadge : grayBadge"
                                             />
-                                            <Badge v-if="stream?.music_on_hold_chime_list" text="Chime" v-bind="amberBadge" />
+                                            <Badge v-if="stream?.music_on_hold_chime_list" :text="$t('Chime')" v-bind="amberBadge" />
                                         </div>
                                     </div>
 
@@ -97,7 +97,7 @@
                                     <div class="flex-1 overflow-y-auto px-6 py-4">
                                         <div class="mb-2 flex items-center justify-between">
                                             <h4 class="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                                                Files<span v-if="stream?.files?.length"> ({{ stream.files.length }})</span>
+                                                {{ $t('Files') }}<span v-if="stream?.files?.length"> ({{ stream.files.length }})</span>
                                             </h4>
                                         </div>
 
@@ -118,7 +118,7 @@
                                                             ? 'bg-indigo-600 text-white hover:bg-indigo-500'
                                                             : 'text-indigo-500 hover:bg-indigo-100 hover:text-indigo-700',
                                                     ]"
-                                                    title="Select file"
+                                                    :title="$t('Select file')"
                                                     @click="setActiveFile(file)"
                                                 >
                                                     <MusicalNoteIcon class="h-4 w-4" />
@@ -136,7 +136,7 @@
                                                 <button
                                                     type="button"
                                                     class="rounded-full p-1.5 text-gray-400 transition hover:bg-gray-200 hover:text-gray-600"
-                                                    title="Download"
+                                                    :title="$t('Download')"
                                                     @click="emit('download', file.download_url)"
                                                 >
                                                     <ArrowDownTrayIcon class="h-4 w-4" />
@@ -145,7 +145,7 @@
                                                     v-if="permissions.destroy && stream?.can_modify"
                                                     type="button"
                                                     class="rounded-full p-1.5 text-gray-400 transition hover:bg-gray-200 hover:text-gray-600"
-                                                    title="Delete"
+                                                    :title="$t('Delete')"
                                                     @click="emit('delete-file', file)"
                                                 >
                                                     <TrashIcon class="h-4 w-4" />
@@ -155,7 +155,7 @@
 
                                         <div v-else class="mt-6 text-center">
                                             <MusicalNoteIcon class="mx-auto h-10 w-10 text-gray-300" />
-                                            <p class="mt-2 text-sm text-gray-500">No audio files in this stream yet.</p>
+                                            <p class="mt-2 text-sm text-gray-500">{{ $t('No audio files in this stream yet.') }}</p>
                                         </div>
                                     </div>
 
@@ -166,7 +166,7 @@
                                             @click="emit('upload')"
                                         >
                                             <ArrowUpTrayIcon class="h-4 w-4" />
-                                            Upload to this stream
+                                            {{ $t('Upload to this stream') }}
                                         </button>
                                     </div>
                                 </div>

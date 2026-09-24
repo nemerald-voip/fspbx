@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Models\ConferenceCenter;
 use App\Models\ConferenceRoom;
 use Illuminate\Foundation\Http\FormRequest;
+use App\Support\Localization\ValidationMessages;
 use Illuminate\Validation\Rule;
 
 class StoreConferenceRoomRequest extends FormRequest
@@ -31,7 +32,7 @@ class StoreConferenceRoomRequest extends FormRequest
 
                 $otherPinField = $attribute === 'moderator_pin' ? 'participant_pin' : 'moderator_pin';
                 if ((string) $value === (string) $this->input($otherPinField)) {
-                    $fail('Moderator and participant PINs must be different.');
+                    $fail(__('Moderator and participant PINs must be different.'));
                     return;
                 }
 
@@ -45,7 +46,7 @@ class StoreConferenceRoomRequest extends FormRequest
                     ->exists();
 
                 if ($exists) {
-                    $fail('This PIN is already in use.');
+                    $fail(__('This PIN is already in use.'));
                 }
             },
         ];
@@ -115,5 +116,36 @@ class StoreConferenceRoomRequest extends FormRequest
             ->where('domain_uuid', session('domain_uuid'))
             ->where('conference_center_uuid', $centerUuid)
             ->value('conference_center_pin_length');
+    }
+
+    public function messages(): array
+    {
+        return ValidationMessages::common();
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'conference_center_uuid' => __('Conference Center'),
+            'conference_room_name' => __('Room Name'),
+            'moderator_pin' => __('Moderator PIN'),
+            'participant_pin' => __('Participant PIN'),
+            'profile' => __('Profile'),
+            'record' => __('Record Calls'),
+            'max_members' => __('Max Members'),
+            'start_datetime' => __('Start Date/Time'),
+            'stop_datetime' => __('Stop Date/Time'),
+            'wait_mod' => __('Wait for Moderator'),
+            'moderator_endconf' => __('Moderator Ends Conference'),
+            'announce_name' => __('Announce Name'),
+            'announce_recording' => __('Announce Recording'),
+            'announce_count' => __('Announce Count'),
+            'sounds' => __('Sounds'),
+            'mute' => __('Mute'),
+            'email_address' => __('Email Address'),
+            'account_code' => __('Account Code'),
+            'enabled' => __('Enabled'),
+            'description' => __('Description'),
+        ];
     }
 }
