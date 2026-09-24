@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\V1\DomainController;
 use App\Http\Controllers\Api\V1\ActiveCallController;
+use App\Http\Controllers\Api\V1\ActiveExtensionReportController;
 use App\Http\Controllers\Api\V1\DeviceController;
 use App\Http\Controllers\Api\V1\ExtensionController;
 use App\Http\Controllers\Api\V1\ExtensionStatisticController;
@@ -67,6 +68,14 @@ Route::middleware(['auth:sanctum', 'api.token.auth', 'throttle:api'])->group(fun
 
     Route::delete('/domains/{domain_uuid}/extensions/{extension_uuid}', [ExtensionController::class, 'destroy'])
         ->middleware('user.authorize:extension_delete');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Reports (domain-scoped)
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/domains/{domain_uuid}/reports/active-extensions', [ActiveExtensionReportController::class, 'show'])
+        ->middleware('user.authorize:extension_view');
 
     /*
     |--------------------------------------------------------------------------

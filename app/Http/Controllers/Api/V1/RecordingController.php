@@ -110,7 +110,7 @@ class RecordingController extends Controller
      * @urlParam domain_uuid string required The domain UUID. Example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
      * @bodyParam recording_name string required The recording display name. Example: Main Menu Greeting
      * @bodyParam recording_description string Optional description. Example: Primary virtual receptionist greeting
-     * @bodyParam file file required WAV, MP3, M4A/MP4, OGG, or FLAC audio file. Maximum size: 50 MB.
+     * @bodyParam file file required WAV, MP3, or M4A audio file. Maximum size: 50 MB.
      *
      * @response 201 scenario="Created" {
      *   "recording_uuid": "c0ec8113-aa15-40ac-8437-47185dd9dcf4",
@@ -218,7 +218,7 @@ class RecordingController extends Controller
      * @urlParam recording_uuid string required The recording UUID. Example: c0ec8113-aa15-40ac-8437-47185dd9dcf4
      * @bodyParam recording_name string Optional recording display name. Example: Updated Main Menu Greeting
      * @bodyParam recording_description string Optional description; may be null. Example: Updated automatically
-     * @bodyParam file file Optional WAV, MP3, M4A/MP4, OGG, or FLAC audio file. Maximum size: 50 MB.
+     * @bodyParam file file Optional WAV, MP3, or M4A audio file. Maximum size: 50 MB.
      * @bodyParam _method string Required only for multipart audio uploads. Must be `PATCH`. Example: PATCH
      *
      * @response 200 scenario="Audio and metadata updated" {

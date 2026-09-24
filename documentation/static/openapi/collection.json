@@ -10,7 +10,7 @@
     ],
     "info": {
         "name": "FS PBX",
-        "_postman_id": "7eac4249-fdbc-495c-9cad-38bec185c654",
+        "_postman_id": "e3a2331c-0bc3-46eb-a04f-5e1668db0ebf",
         "description": "",
         "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
     },
@@ -780,7 +780,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"device_address\":\"0004f23a5bc7\",\"serial_number\":\"8603123456789\",\"device_profile_uuid\":\"51759db8-c8bf-4b2f-b48a-6577d7ad6a1a\",\"device_template\":\"Yealink T46U\",\"device_template_uuid\":\"a6cf59ba-4b2b-4bdd-b870-35cc55bca146\",\"device_keys\":[\"ab\"],\"phonebook_mode\":\"default\",\"phonebook_uuids\":[\"3b9267c9-bae3-323c-ad4f-7b59d1f46c9e\"],\"device_description\":\"Reception desk device\",\"device_lines\":[[]]}"
+                            "raw": "{\"device_address\":\"0004f23a5bc7\",\"serial_number\":\"8603123456789\",\"device_profile_uuid\":\"51759db8-c8bf-4b2f-b48a-6577d7ad6a1a\",\"device_template\":\"Yealink T46U\",\"device_template_uuid\":\"a6cf59ba-4b2b-4bdd-b870-35cc55bca146\",\"device_keys\":[\"quisquam\"],\"phonebook_mode\":\"default\",\"phonebook_uuids\":[\"47a7712d-f566-3f8d-9756-d0c08fafc02b\"],\"device_description\":\"Reception desk device\",\"device_lines\":[[]]}"
                         },
                         "description": "Creates a new device in the specified domain.\n\nNotes:\n- `device_template` is deprecated and retained for backward compatibility.\n- Use `device_template_uuid` as its successor."
                     },
@@ -3456,6 +3456,82 @@
                             "code": 500,
                             "body": "{\"error\":{\"type\":\"api_error\",\"message\":\"Internal server error.\",\"code\":\"internal_error\"}}",
                             "name": "Internal server error"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Reports",
+            "description": "",
+            "item": [
+                {
+                    "name": "Retrieve active and suspended extensions report",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/reports\/active-extensions",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/reports\/active-extensions",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The domain UUID."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Returns the current \"Active and suspended extensions per domain\" report\nfor one domain as a single JSON object. No export or email is generated.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `extension_view` permission.\n\nCounts follow the report's definitions:\n- Total extensions includes all extensions, including disabled extensions.\n- Suspended extensions have their advanced setting `suspended` set to true.\n- Active extensions equals total minus suspended. Missing advanced settings\n  mean the extension is not suspended. This is not a SIP registration count.\n- Active mobile apps counts extensions with a linked mobile app in the same\n  domain whose stored status is 1, independently of extension suspension.\n- Domains without extensions return zero for every count."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\n  \"domain_uuid\": \"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\n  \"object\": \"active_extension_report\",\n  \"domain_name\": \"10001.fspbx.com\",\n  \"domain_description\": \"BluePeak Solutions\",\n  \"total_extensions\": 11,\n  \"suspended_extensions\": 2,\n  \"active_extensions\": 9,\n  \"active_mobile_apps\": 3\n}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid domain UUID.\",\"code\":\"invalid_request\",\"param\":\"domain_uuid\"}}",
+                            "name": "Invalid domain UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\"}}",
+                            "name": "Unauthenticated"
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"You do not have access to this domain.\",\"code\":\"forbidden_domain\",\"param\":\"domain_uuid\"}}",
+                            "name": "Forbidden (domain access)"
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\"success\":false,\"message\":\"Forbidden (missing permission).\",\"error\":{\"code\":\"forbidden_permission\",\"permission\":\"extension_view\"}}",
+                            "name": "Forbidden (missing permission)"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Domain not found.\",\"code\":\"resource_missing\",\"param\":\"domain_uuid\"}}",
+                            "name": "Domain not found"
                         }
                     ]
                 }

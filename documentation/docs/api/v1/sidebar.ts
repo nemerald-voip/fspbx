@@ -314,6 +314,18 @@ const sidebar: SidebarsConfig = {
     },
     {
       type: "category",
+      label: "Reports",
+      items: [
+        {
+          type: "doc",
+          id: "api/v1/retrieve-active-and-suspended-extensions-report",
+          label: "Retrieve active and suspended extensions report",
+          className: "api-method get",
+        },
+      ],
+    },
+    {
+      type: "category",
       label: "Ring Groups",
       items: [
         {

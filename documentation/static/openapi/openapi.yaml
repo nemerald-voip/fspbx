@@ -1749,7 +1749,7 @@ paths:
                   type: array
                   description: ''
                   example:
-                    - ab
+                    - quisquam
                   items:
                     type: integer
                 phonebook_mode:
@@ -1763,7 +1763,7 @@ paths:
                   type: array
                   description: 'Must be a valid UUID.'
                   example:
-                    - 3b9267c9-bae3-323c-ad4f-7b59d1f46c9e
+                    - 47a7712d-f566-3f8d-9756-d0c08fafc02b
                   items:
                     type: string
                 device_description:
@@ -7129,7 +7129,7 @@ paths:
                 file:
                   type: string
                   format: binary
-                  description: 'WAV, MP3, M4A/MP4, OGG, or FLAC audio file. Maximum size: 50 MB.'
+                  description: 'WAV, MP3, or M4A audio file. Maximum size: 50 MB.'
               required:
                 - recording_name
                 - file
@@ -7541,7 +7541,7 @@ paths:
                 file:
                   type: string
                   format: binary
-                  description: 'Optional WAV, MP3, M4A/MP4, OGG, or FLAC audio file. Maximum size: 50 MB.'
+                  description: 'Optional WAV, MP3, or M4A audio file. Maximum size: 50 MB.'
                 _method:
                   type: string
                   description: 'Required only for multipart audio uploads. Must be `PATCH`.'
@@ -8575,6 +8575,180 @@ paths:
         name: call_id
         description: 'The registration call-id.'
         example: 8434b4e1-4f5d-4a85-9cab-2f31a8cb7010
+        required: true
+        schema:
+          type: string
+  '/api/v1/domains/{domain_uuid}/reports/active-extensions':
+    get:
+      summary: 'Retrieve active and suspended extensions report'
+      operationId: retrieveActiveAndSuspendedExtensionsReport
+      description: "Returns the current \"Active and suspended extensions per domain\" report\nfor one domain as a single JSON object. No export or email is generated.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `extension_view` permission.\n\nCounts follow the report's definitions:\n- Total extensions includes all extensions, including disabled extensions.\n- Suspended extensions have their advanced setting `suspended` set to true.\n- Active extensions equals total minus suspended. Missing advanced settings\n  mean the extension is not suspended. This is not a SIP registration count.\n- Active mobile apps counts extensions with a linked mobile app in the same\n  domain whose stored status is 1, independently of extension suspension.\n- Domains without extensions return zero for every count."
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  domain_uuid: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                  object: active_extension_report
+                  domain_name: 10001.fspbx.com
+                  domain_description: 'BluePeak Solutions'
+                  total_extensions: 11
+                  suspended_extensions: 2
+                  active_extensions: 9
+                  active_mobile_apps: 3
+                properties:
+                  domain_uuid:
+                    type: string
+                    example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                    description: 'UUID of the requested domain.'
+                  object:
+                    type: string
+                    example: active_extension_report
+                    description: 'Always `active_extension_report`.'
+                  domain_name:
+                    type: string
+                    example: 10001.fspbx.com
+                    description: 'Domain name.'
+                  domain_description:
+                    type: string
+                    example: 'BluePeak Solutions'
+                    description: 'Domain description, or null when unset.'
+                  total_extensions:
+                    type: integer
+                    example: 11
+                    description: 'Total number of extensions in the domain.'
+                  suspended_extensions:
+                    type: integer
+                    example: 2
+                    description: 'Number of suspended extensions.'
+                  active_extensions:
+                    type: integer
+                    example: 9
+                    description: 'Total extensions minus suspended extensions.'
+                  active_mobile_apps:
+                    type: integer
+                    example: 3
+                    description: 'Number of extensions with a linked mobile app whose stored status is 1.'
+        400:
+          description: 'Invalid domain UUID'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Invalid domain UUID.'
+                    code: invalid_request
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Invalid domain UUID.'
+                      code:
+                        type: string
+                        example: invalid_request
+                      param:
+                        type: string
+                        example: domain_uuid
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        403:
+          description: 'Forbidden (missing permission)'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: false
+                  message: 'Forbidden (missing permission).'
+                  error:
+                    code: forbidden_permission
+                    permission: extension_view
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: 'Forbidden (missing permission).'
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: forbidden_permission
+                      permission:
+                        type: string
+                        example: extension_view
+        404:
+          description: 'Domain not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Domain not found.'
+                    code: resource_missing
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Domain not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: domain_uuid
+      tags:
+        - Reports
+    parameters:
+      -
+        in: path
+        name: domain_uuid
+        description: 'The domain UUID.'
+        example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
         required: true
         schema:
           type: string
@@ -10642,6 +10816,9 @@ tags:
     description: ''
   -
     name: Registrations
+    description: ''
+  -
+    name: Reports
     description: ''
   -
     name: 'Ring Groups'

@@ -253,6 +253,16 @@
                             </li>
                                                                         </ul>
                             </ul>
+                    <ul id="tocify-header-reports" class="tocify-header">
+                <li class="tocify-item level-1" data-unique="reports">
+                    <a href="#reports">Reports</a>
+                </li>
+                                    <ul id="tocify-subheader-reports" class="tocify-subheader">
+                                                    <li class="tocify-item level-2" data-unique="reports-GETapi-v1-domains--domain_uuid--reports-active-extensions">
+                                <a href="#reports-GETapi-v1-domains--domain_uuid--reports-active-extensions">Retrieve active and suspended extensions report</a>
+                            </li>
+                                                                        </ul>
+                            </ul>
                     <ul id="tocify-header-ring-groups" class="tocify-header">
                 <li class="tocify-item level-1" data-unique="ring-groups">
                     <a href="#ring-groups">Ring Groups</a>
@@ -2494,11 +2504,11 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"device_template\": \"Yealink T46U\",
     \"device_template_uuid\": \"a6cf59ba-4b2b-4bdd-b870-35cc55bca146\",
     \"device_keys\": [
-        \"ab\"
+        \"quisquam\"
     ],
     \"phonebook_mode\": \"default\",
     \"phonebook_uuids\": [
-        \"3b9267c9-bae3-323c-ad4f-7b59d1f46c9e\"
+        \"47a7712d-f566-3f8d-9756-d0c08fafc02b\"
     ],
     \"device_description\": \"Reception desk device\",
     \"device_lines\": [
@@ -2526,11 +2536,11 @@ let body = {
     "device_template": "Yealink T46U",
     "device_template_uuid": "a6cf59ba-4b2b-4bdd-b870-35cc55bca146",
     "device_keys": [
-        "ab"
+        "quisquam"
     ],
     "phonebook_mode": "default",
     "phonebook_uuids": [
-        "3b9267c9-bae3-323c-ad4f-7b59d1f46c9e"
+        "47a7712d-f566-3f8d-9756-d0c08fafc02b"
     ],
     "device_description": "Reception desk device",
     "device_lines": [
@@ -2779,10 +2789,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="device_keys.0.key_index"                data-endpoint="POSTapi-v1-domains--domain_uuid--devices"
-               value="9"
+               value="15"
                data-component="body">
     <br>
-<p>Example: <code>9</code></p>
+<p>Example: <code>15</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>key_area</code></b>&nbsp;&nbsp;
@@ -2803,10 +2813,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="device_keys.0.key_type"                data-endpoint="POSTapi-v1-domains--domain_uuid--devices"
-               value="nizlavywxyireapkeluf"
+               value="ewiiryzgmkmqusfpfvhnl"
                data-component="body">
     <br>
-<p>Must not be greater than 50 characters. Example: <code>nizlavywxyireapkeluf</code></p>
+<p>Must not be greater than 50 characters. Example: <code>ewiiryzgmkmqusfpfvhnl</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>key_value</code></b>&nbsp;&nbsp;
@@ -2814,10 +2824,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="device_keys.0.key_value"                data-endpoint="POSTapi-v1-domains--domain_uuid--devices"
-               value="xwigzhevesewuwslepcgxfayr"
+               value="aqijlfvlqdyorpi"
                data-component="body">
     <br>
-<p>Must not be greater than 64 characters. Example: <code>xwigzhevesewuwslepcgxfayr</code></p>
+<p>Must not be greater than 64 characters. Example: <code>aqijlfvlqdyorpi</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>key_label</code></b>&nbsp;&nbsp;
@@ -2825,10 +2835,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="device_keys.0.key_label"                data-endpoint="POSTapi-v1-domains--domain_uuid--devices"
-               value="anobub"
+               value="wtkspzqtiuqbgp"
                data-component="body">
     <br>
-<p>Must not be greater than 80 characters. Example: <code>anobub</code></p>
+<p>Must not be greater than 80 characters. Example: <code>wtkspzqtiuqbgp</code></p>
                     </div>
                                     </details>
         </div>
@@ -10664,7 +10674,7 @@ to mono, 16 kHz, 16-bit PCM WAV for FreeSWITCH playback.</p>
     --header "Accept: application/json" \
     --form "recording_name=Main Menu Greeting"\
     --form "recording_description=Primary virtual receptionist greeting"\
-    --form "file=@/tmp/phpvp2415msr9mb3CgPHz6" </code></pre></div>
+    --form "file=@/tmp/phpu4rq5l60o8kucs78IEt" </code></pre></div>
 
 
 <div class="javascript-example">
@@ -10914,7 +10924,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value=""
                data-component="body">
     <br>
-<p>WAV, MP3, M4A/MP4, OGG, or FLAC audio file. Maximum size: 50 MB. Example: <code>/tmp/phpvp2415msr9mb3CgPHz6</code></p>
+<p>WAV, MP3, or M4A audio file. Maximum size: 50 MB. Example: <code>/tmp/phpu4rq5l60o8kucs78IEt</code></p>
         </div>
         </form>
 
@@ -11184,7 +11194,7 @@ At least one update field is required.</p>
     --form "recording_name=Updated Main Menu Greeting"\
     --form "recording_description=Updated automatically"\
     --form "_method=PATCH"\
-    --form "file=@/tmp/phpdnqsdtklurkh9EOGqQB" </code></pre></div>
+    --form "file=@/tmp/phpr0sngomb0iug9ROwh6z" </code></pre></div>
 
 
 <div class="javascript-example">
@@ -11491,7 +11501,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value=""
                data-component="body">
     <br>
-<p>Optional WAV, MP3, M4A/MP4, OGG, or FLAC audio file. Maximum size: 50 MB. Example: <code>/tmp/phpdnqsdtklurkh9EOGqQB</code></p>
+<p>Optional WAV, MP3, or M4A audio file. Maximum size: 50 MB. Example: <code>/tmp/phpr0sngomb0iug9ROwh6z</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>_method</code></b>&nbsp;&nbsp;
@@ -12839,7 +12849,287 @@ You can check the Dev Tools console for debugging information.</code></pre>
             </div>
                     </form>
 
-                <h1 id="ring-groups">Ring Groups</h1>
+                <h1 id="reports">Reports</h1>
+
+    
+
+                                <h2 id="reports-GETapi-v1-domains--domain_uuid--reports-active-extensions">Retrieve active and suspended extensions report</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Returns the current &quot;Active and suspended extensions per domain&quot; report
+for one domain as a single JSON object. No export or email is generated.</p>
+<p>Access rules:</p>
+<ul>
+<li>Caller must have access to the target domain (domain scope).</li>
+<li>Caller must have the <code>extension_view</code> permission.</li>
+</ul>
+<p>Counts follow the report's definitions:</p>
+<ul>
+<li>Total extensions includes all extensions, including disabled extensions.</li>
+<li>Suspended extensions have their advanced setting <code>suspended</code> set to true.</li>
+<li>Active extensions equals total minus suspended. Missing advanced settings
+mean the extension is not suspended. This is not a SIP registration count.</li>
+<li>Active mobile apps counts extensions with a linked mobile app in the same
+domain whose stored status is 1, independently of extension suspension.</li>
+<li>Domains without extensions return zero for every count.</li>
+</ul>
+
+<span id="example-requests-GETapi-v1-domains--domain_uuid--reports-active-extensions">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/reports/active-extensions" \
+    --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/reports/active-extensions"
+);
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-v1-domains--domain_uuid--reports-active-extensions">
+            <blockquote>
+            <p>Example response (200, Success):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;domain_uuid&quot;: &quot;4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b&quot;,
+    &quot;object&quot;: &quot;active_extension_report&quot;,
+    &quot;domain_name&quot;: &quot;10001.fspbx.com&quot;,
+    &quot;domain_description&quot;: &quot;BluePeak Solutions&quot;,
+    &quot;total_extensions&quot;: 11,
+    &quot;suspended_extensions&quot;: 2,
+    &quot;active_extensions&quot;: 9,
+    &quot;active_mobile_apps&quot;: 3
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Invalid domain UUID):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Invalid domain UUID.&quot;,
+        &quot;code&quot;: &quot;invalid_request&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401, Unauthenticated):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403, Forbidden (domain access)):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;You do not have access to this domain.&quot;,
+        &quot;code&quot;: &quot;forbidden_domain&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403, Forbidden (missing permission)):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;success&quot;: false,
+    &quot;message&quot;: &quot;Forbidden (missing permission).&quot;,
+    &quot;error&quot;: {
+        &quot;code&quot;: &quot;forbidden_permission&quot;,
+        &quot;permission&quot;: &quot;extension_view&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Domain not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Domain not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-v1-domains--domain_uuid--reports-active-extensions" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-v1-domains--domain_uuid--reports-active-extensions"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-v1-domains--domain_uuid--reports-active-extensions"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-v1-domains--domain_uuid--reports-active-extensions" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-v1-domains--domain_uuid--reports-active-extensions">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-v1-domains--domain_uuid--reports-active-extensions" data-method="GET"
+      data-path="api/v1/domains/{domain_uuid}/reports/active-extensions"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-v1-domains--domain_uuid--reports-active-extensions', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/v1/domains/{domain_uuid}/reports/active-extensions</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-domains--domain_uuid--reports-active-extensions"
+               value="Bearer {YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-v1-domains--domain_uuid--reports-active-extensions"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-v1-domains--domain_uuid--reports-active-extensions"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>domain_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_uuid"                data-endpoint="GETapi-v1-domains--domain_uuid--reports-active-extensions"
+               value="4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
+               data-component="url">
+    <br>
+<p>The domain UUID. Example: <code>4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b</code></p>
+            </div>
+                    </form>
+
+    <h3>Response</h3>
+    <h4 class="fancy-heading-panel"><b>Response Fields</b></h4>
+    <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>domain_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+<br>
+<p>UUID of the requested domain.</p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>object</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+<br>
+<p>Always <code>active_extension_report</code>.</p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>domain_name</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+<br>
+<p>Domain name.</p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>domain_description</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+<br>
+<p>Domain description, or null when unset.</p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>total_extensions</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+ &nbsp;
+<br>
+<p>Total number of extensions in the domain.</p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>suspended_extensions</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+ &nbsp;
+<br>
+<p>Number of suspended extensions.</p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>active_extensions</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+ &nbsp;
+<br>
+<p>Total extensions minus suspended extensions.</p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>active_mobile_apps</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+ &nbsp;
+<br>
+<p>Number of extensions with a linked mobile app whose stored status is 1.</p>
+        </div>
+                    <h1 id="ring-groups">Ring Groups</h1>
 
     
 
@@ -13852,10 +14142,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="members.0.destination_number"                data-endpoint="POSTapi-v1-domains--domain_uuid--ring-groups"
-               value="+25"
+               value="+04"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present.  Must match the regex /^+?\d+$/. Example: <code>+25</code></p>
+<p>This field is required when <code>members</code> is present.  Must match the regex /^+?\d+$/. Example: <code>+04</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_delay</code></b>&nbsp;&nbsp;
@@ -13863,10 +14153,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="members.0.destination_delay"                data-endpoint="POSTapi-v1-domains--domain_uuid--ring-groups"
-               value="0"
+               value="67"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>0</code></p>
+<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>67</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_timeout</code></b>&nbsp;&nbsp;
@@ -13874,10 +14164,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="members.0.destination_timeout"                data-endpoint="POSTapi-v1-domains--domain_uuid--ring-groups"
-               value="23"
+               value="68"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>23</code></p>
+<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>68</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_prompt</code></b>&nbsp;&nbsp;
@@ -13919,7 +14209,7 @@ Must be one of:
             <code>false</code>
         </label>
     <br>
-<p>This field is required when <code>members</code> is present. Example: <code>false</code></p>
+<p>This field is required when <code>members</code> is present. Example: <code>true</code></p>
                     </div>
                                     </details>
         </div>
@@ -14513,10 +14803,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="members.0.destination_number"                data-endpoint="PATCHapi-v1-domains--domain_uuid--ring-groups--ring_group_uuid-"
-               value="+10992"
+               value="4230"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present.  Must match the regex /^+?\d+$/. Example: <code>+10992</code></p>
+<p>This field is required when <code>members</code> is present.  Must match the regex /^+?\d+$/. Example: <code>4230</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_delay</code></b>&nbsp;&nbsp;
@@ -14524,10 +14814,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="members.0.destination_delay"                data-endpoint="PATCHapi-v1-domains--domain_uuid--ring-groups--ring_group_uuid-"
-               value="43"
+               value="88"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>43</code></p>
+<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>88</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_timeout</code></b>&nbsp;&nbsp;
@@ -14535,10 +14825,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="members.0.destination_timeout"                data-endpoint="PATCHapi-v1-domains--domain_uuid--ring-groups--ring_group_uuid-"
-               value="63"
+               value="29"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>63</code></p>
+<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>29</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_prompt</code></b>&nbsp;&nbsp;
@@ -14559,7 +14849,7 @@ Must be one of:
             <code>false</code>
         </label>
     <br>
-<p>This field is required when <code>members</code> is present. Example: <code>false</code></p>
+<p>This field is required when <code>members</code> is present. Example: <code>true</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_enabled</code></b>&nbsp;&nbsp;
@@ -14580,7 +14870,7 @@ Must be one of:
             <code>false</code>
         </label>
     <br>
-<p>This field is required when <code>members</code> is present. Example: <code>true</code></p>
+<p>This field is required when <code>members</code> is present. Example: <code>false</code></p>
                     </div>
                                     </details>
         </div>
