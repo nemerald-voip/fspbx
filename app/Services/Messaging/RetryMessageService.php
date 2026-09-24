@@ -47,7 +47,7 @@ class RetryMessageService
             return;
         }
 
-        throw new \RuntimeException("Unsupported message direction: {$message->direction}");
+        throw new \RuntimeException(__('Unsupported message direction: :direction', ['direction' => $message->direction]));
     }
 
     protected function retryOutbound(Messages $message): void
@@ -63,7 +63,7 @@ class RetryMessageService
             $extension = Extensions::find($message->extension_uuid);
 
             if (!$extension) {
-                throw new \RuntimeException("Extension not found for outbound message {$message->message_uuid}");
+                throw new \RuntimeException(__('Extension not found for outbound message :id', ['id' => $message->message_uuid]));
             }
 
             $smsConfig = SmsDestinations::where('domain_uuid', $message->domain_uuid)
@@ -73,7 +73,7 @@ class RetryMessageService
 
             if (!$smsConfig) {
                 throw new \RuntimeException(
-                    "SMS configuration not found for source {$message->source} on extension {$extension->extension}"
+                    __('SMS configuration not found for source :source on extension :extension', ['source' => $message->source, 'extension' => $extension->extension])
                 );
             }
 
@@ -148,7 +148,7 @@ class RetryMessageService
 
         if (!$route->hasMobileApp && !$route->email) {
             throw new \RuntimeException(
-                "No retry destination found for inbound message {$message->message_uuid}"
+                __('No retry destination found for inbound message :id', ['id' => $message->message_uuid])
             );
         }
     }

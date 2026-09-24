@@ -107,7 +107,7 @@ class EmailLogsController extends Controller
     {
         if (! userCheckPermission('logs_list_view')) {
             return response()->json([
-                'messages' => ['error' => ['Permission denied.']]
+                'messages' => ['error' => [__('Permission denied.')]]
             ], 403);
         }
 
@@ -121,7 +121,7 @@ class EmailLogsController extends Controller
 
         if (! $log) {
             return response()->json([
-                'messages' => ['error' => ['Email log not found.']]
+                'messages' => ['error' => [__('Email log not found.')]]
             ], 404);
         }
 
@@ -277,7 +277,7 @@ class EmailLogsController extends Controller
     {
         if (! userCheckPermission('logs_list_view')) {
             return response()->json([
-                'errors' => ['server' => ['Permission denied.']]
+                'errors' => ['server' => [__('Permission denied.')]]
             ], 403);
         }
 
@@ -301,7 +301,7 @@ class EmailLogsController extends Controller
             $log = $logs->get($uuid);
 
             if (! $log) {
-                $errors[] = "Email log {$uuid} was not found.";
+                $errors[] = __('Email log :id was not found.', ['id' => $uuid]);
                 continue;
             }
 
@@ -311,12 +311,12 @@ class EmailLogsController extends Controller
 
             RetryLoggedEmail::dispatch($log->uuid);
 
-            $messages[] = "Email to {$log->to} has been queued for retry.";
+            $messages[] = __('Email to :recipient has been queued for retry.', ['recipient' => $log->to]);
         }
 
         if (empty($messages)) {
             return response()->json([
-                'errors' => ['server' => $errors ?: ['No eligible emails were selected for retry.']]
+                'errors' => ['server' => $errors ?: [__('No eligible emails were selected for retry.')]]
             ], 422);
         }
 

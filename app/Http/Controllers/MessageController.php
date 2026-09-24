@@ -586,14 +586,14 @@ class MessageController extends Controller
             if ($items->isEmpty()) {
                 return response()->json([
                     'success' => false,
-                    'errors' => ['server' => ['No messages selected']]
+                    'errors' => ['server' => [__('No messages selected')]]
                 ], 422);
             }
 
             $retryService->retryMany($items);
 
             return response()->json([
-                'messages' => ['success' => ['Selected message(s) scheduled for retry']]
+                'messages' => ['success' => [__('Selected message(s) scheduled for retry')]]
             ], 201);
         } catch (\Throwable $e) {
             logger('Error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
@@ -749,12 +749,12 @@ class MessageController extends Controller
         $count = count($media);
 
         if ($count > 0) {
-            $label = $count === 1 ? 'attachment' : 'attachments';
+            $label = trans_choice('{1} :count attachment|[0,*] :count attachments', $count);
             $firstName = $media[0]['original_name'] ?? null;
 
             return $firstName
-                ? "📎 {$count} {$label} ({$firstName})"
-                : "📎 {$count} {$label}";
+                ? "📎 {$label} ({$firstName})"
+                : "📎 {$label}";
         }
 
         return '—';

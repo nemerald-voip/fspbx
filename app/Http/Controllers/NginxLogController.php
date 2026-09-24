@@ -20,7 +20,7 @@ class NginxLogController extends Controller
     {
         if (! userCheckPermission('log_view')) {
             return response()->json([
-                'messages' => ['error' => ['Permission denied.']],
+                'messages' => ['error' => [__('Permission denied.')]],
             ], 403);
         }
 
@@ -32,7 +32,7 @@ class NginxLogController extends Controller
                 'files' => [],
                 'lines' => [],
                 'meta' => [
-                    'errors' => ['No nginx log files were found.'],
+                    'errors' => [__('No nginx log files were found.')],
                     'log_dir' => $this->visibleLogDirectory($logDirectory),
                 ],
             ]);
@@ -55,7 +55,7 @@ class NginxLogController extends Controller
                 'files' => $this->fileOptions($approvedFiles),
                 'lines' => [],
                 'meta' => [
-                    'errors' => ['The selected log file is not available.'],
+                    'errors' => [__('The selected log file is not available.')],
                     'log_dir' => $this->visibleLogDirectory($logDirectory),
                 ],
             ], 422);
@@ -150,7 +150,7 @@ class NginxLogController extends Controller
             ])
             ->prepend([
                 'value' => 'all',
-                'label' => 'All nginx logs',
+                'label' => __('All nginx logs'),
                 'size' => $files->sum('size'),
                 'modified_at' => null,
                 'readable' => $files->contains(fn ($file) => $file['readable']),
@@ -202,13 +202,13 @@ class NginxLogController extends Controller
 
         foreach ($files as $file) {
             if (! $file['readable']) {
-                $errors[] = $file['basename'] . ' is not readable by the web server.';
+                $errors[] = __(':file is not readable by the web server.', ['file' => $file['basename']]);
                 continue;
             }
 
             $handle = @fopen($file['path'], 'rb');
             if (! $handle) {
-                $errors[] = 'Unable to open ' . $file['basename'] . '.';
+                $errors[] = __('Unable to open :file.', ['file' => $file['basename']]);
                 continue;
             }
 

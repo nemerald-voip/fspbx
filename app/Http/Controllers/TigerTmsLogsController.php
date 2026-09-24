@@ -15,13 +15,13 @@ class TigerTmsLogsController extends Controller
     {
         if (! userCheckPermission('logs_list_view')) {
             return response()->json([
-                'errors' => ['server' => ['Permission denied.']],
+                'errors' => ['server' => [__('Permission denied.')]],
             ], 403);
         }
 
         if (! $this->tigerTmsConfigured()) {
             return response()->json([
-                'errors' => ['server' => ['TigerTMS is not configured.']],
+                'errors' => ['server' => [__('TigerTMS is not configured.')]],
             ], 404);
         }
 
