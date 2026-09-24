@@ -6,7 +6,6 @@ use Throwable;
 use App\Models\Messages;
 use App\Events\MessageSent;
 use App\Events\ConversationUpdated;
-use App\Jobs\DeliverTenantMessagingWebhook;
 
 class MessageObserver
 {
@@ -14,15 +13,6 @@ class MessageObserver
     {
         if ($message->wasChanged(['status', 'media'])) $this->broadcast($message);
 
-        if ($message->wasChanged('status')) {
-            $event = match (strtolower((string) $message->status)) {
-                'success', 'accepted', 'queued' => 'message.accepted',
-                'delivered' => 'message.delivered',
-                'failed' => 'message.failed',
-                default => null,
-            };
-            if ($event) DeliverTenantMessagingWebhook::dispatch($message->message_uuid, $event)->onQueue('messages');
-        }
     }
 
     /**
@@ -30,11 +20,6 @@ class MessageObserver
      */
     public function created(Messages $message): void
     {
-        DeliverTenantMessagingWebhook::dispatch(
-            $message->message_uuid,
-            strtolower((string) $message->direction) === 'in' ? 'message.received' : 'message.queued'
-        )->onQueue('messages');
-
         $this->broadcast($message);
     }
 

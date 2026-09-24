@@ -707,14 +707,6 @@ class DatabaseSeeder extends Seeder
                 'default_setting_description'   => 'Initial photo compression setting for newly created accounts only. Existing accounts are unchanged. Manage each account under Account Settings > Messaging.',
             ],
             [
-                'default_setting_category'      => 'messaging',
-                'default_setting_subcategory'   => 'webhook_url',
-                'default_setting_name'          => 'text',
-                'default_setting_value'         => '',
-                'default_setting_enabled'       => true,
-                'default_setting_description'   => 'Initial messaging webhook URL for newly created accounts only. Leave blank to disable webhooks by default.',
-            ],
-            [
                 'default_setting_category'      => 'pms',
                 'default_setting_subcategory'   => 'pms_provider',
                 'default_setting_name'          => 'text',

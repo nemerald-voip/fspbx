@@ -91,10 +91,10 @@ class AccountSettingsController extends Controller
                     //'bulk_update' => route('devices.bulk.update'),
                 ],
                 'pms_provider_options' => app(PmsProviderSettings::class)->options(),
-                'messagingSettings' => array_merge([
+                'messagingSettings' => [
                     'enabled' => app(\App\Services\Messaging\PhotoCompressionSettings::class)->enabled(session('domain_uuid')),
                     'available' => app(\App\Services\Messaging\PhotoCompressionClient::class)->available(),
-                ], app(\App\Services\Messaging\MessagingWebhookSettings::class)->get(session('domain_uuid'))),
+                ],
                 // Schema-driven General-tab settings: the declarative field
                 // list, its resolved option lists, and this account's own
                 // override values (null = inheriting the default).
@@ -309,8 +309,6 @@ class AccountSettingsController extends Controller
             && \App\Services\Messaging\MessageSettingsAccess::canManage(), 403);
         $data = $request->validate([
             'enabled' => ['sometimes', 'boolean'],
-            'webhook_url' => ['nullable', 'url', 'max:2048', 'regex:/^https:\/\//i'],
-            'webhook_enabled' => ['sometimes', 'boolean'],
         ]);
         if (($data['enabled'] ?? false) && !app(\App\Services\Messaging\PhotoCompressionClient::class)->available()) {
             throw \Illuminate\Validation\ValidationException::withMessages([
@@ -320,17 +318,10 @@ class AccountSettingsController extends Controller
         if (array_key_exists('enabled', $data)) {
             app(\App\Services\Messaging\PhotoCompressionSettings::class)->set(session('domain_uuid'), $data['enabled']);
         }
-        if (array_key_exists('webhook_url', $data) || array_key_exists('webhook_enabled', $data)) {
-            app(\App\Services\Messaging\MessagingWebhookSettings::class)->set(
-                session('domain_uuid'),
-                $data['webhook_url'] ?? app(\App\Services\Messaging\MessagingWebhookSettings::class)->get(session('domain_uuid'))['webhook_url'],
-                $data['webhook_enabled'] ?? app(\App\Services\Messaging\MessagingWebhookSettings::class)->get(session('domain_uuid'))['webhook_enabled'],
-            );
-        }
-        return response()->json(array_merge([
+        return response()->json([
             'enabled' => app(\App\Services\Messaging\PhotoCompressionSettings::class)->enabled(session('domain_uuid')),
             'messages' => ['success' => [__('Messaging settings saved.')]],
-        ], app(\App\Services\Messaging\MessagingWebhookSettings::class)->get(session('domain_uuid'))));
+        ]);
     }
 
     public function getUserPermissions()
