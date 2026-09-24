@@ -60,7 +60,7 @@ class EmergencyCallController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages' => ['success' => ['New item created']]
+                'messages' => ['success' => [__('New item created')]]
             ], 201);
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -68,7 +68,7 @@ class EmergencyCallController extends Controller
             logger('EmergencyCall store error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Something went wrong while saving.']]
+                'messages' => ['error' => [__('Something went wrong while saving.')]]
             ], 500);
         }
     }
@@ -117,14 +117,14 @@ class EmergencyCallController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages' => ['success' => ['Item updated']]
+                'messages' => ['success' => [__('Item updated')]]
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
             logger('EmergencyCall update error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Something went wrong while updating.']]
+                'messages' => ['error' => [__('Something went wrong while updating.')]]
             ], 500);
         }
     }
@@ -173,7 +173,7 @@ class EmergencyCallController extends Controller
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to fetch item details']]
+                'errors' => ['server' => [__('Failed to fetch item details')]]
             ], 500);  // 500 Internal Server Error for any other errors
         }
     }
@@ -201,7 +201,7 @@ class EmergencyCallController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages' => ['success' => ['Selected item(s) were deleted successfully.']]
+                'messages' => ['success' => [__('Selected item(s) were deleted successfully.')]]
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -209,7 +209,7 @@ class EmergencyCallController extends Controller
             logger('EmergencyCall bulkDelete error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['An error occurred while deleting the selected item(s).']]
+                'messages' => ['error' => [__('An error occurred while deleting the selected item(s).')]]
             ], 500);
         }
     }
@@ -233,7 +233,7 @@ class EmergencyCallController extends Controller
             logger('checkServiceStatus error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['An error occurred while checking service status.']]
+                'messages' => ['error' => [__('An error occurred while checking service status.')]]
             ], 500);
         }
     }

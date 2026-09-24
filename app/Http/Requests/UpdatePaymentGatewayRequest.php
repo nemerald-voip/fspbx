@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Http\FormRequest;
+use App\Support\Localization\ValidationMessages;
 
 class UpdatePaymentGatewayRequest extends FormRequest
 {
@@ -39,11 +40,26 @@ class UpdatePaymentGatewayRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'sandbox_secret_key.regex'        => 'Sandbox secret key must start with sk_test_ (or rk_test_).',
-            'sandbox_publishable_key.regex'   => 'Sandbox publishable key must start with pk_test_.',
-            'live_mode_secret_key.regex'      => 'Live secret key must start with sk_live_ (or rk_live_).',
-            'live_mode_publishable_key.regex' => 'Live publishable key must start with pk_live_.',
-            'webhook_secret.regex'            => 'Webhook signing secret must start with whsec_.',
+            ...ValidationMessages::common(),
+            'sandbox_secret_key.regex'        => __('Sandbox secret key must start with sk_test_ (or rk_test_).'),
+            'sandbox_publishable_key.regex'   => __('Sandbox publishable key must start with pk_test_.'),
+            'live_mode_secret_key.regex'      => __('Live secret key must start with sk_live_ (or rk_live_).'),
+            'live_mode_publishable_key.regex' => __('Live publishable key must start with pk_live_.'),
+            'webhook_secret.regex'            => __('Webhook signing secret must start with whsec_.'),
+        ];
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'uuid' => __('Unique ID'),
+            'status' => __('Status'),
+            'sandbox' => __('Mode'),
+            'sandbox_secret_key' => __('Secret key'),
+            'sandbox_publishable_key' => __('Publishable key'),
+            'live_mode_secret_key' => __('Secret key'),
+            'live_mode_publishable_key' => __('Publishable key'),
+            'webhook_secret' => __('Signing Secret'),
         ];
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Support\Localization\ValidationMessages;
 
 class UpdateLocationRequest extends FormRequest
 {
@@ -22,5 +23,18 @@ class UpdateLocationRequest extends FormRequest
 
     public function prepareForValidation(): void
     {
+    }
+
+    public function messages(): array
+    {
+        return ValidationMessages::common();
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'name' => __('Name'),
+            'description' => __('Description'),
+        ];
     }
 }

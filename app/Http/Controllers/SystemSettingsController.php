@@ -100,7 +100,7 @@ class SystemSettingsController extends Controller
 
             if (! $result['runtime_synchronized']) {
                 $messages['error'] = [__(
-                    'The settings were saved, but FreeSWITCH could not apply them live. Check the event socket and rescan the affected SIP profiles.'
+                    __('The settings were saved, but FreeSWITCH could not apply them live. Check the event socket and rescan the affected SIP profiles.')
                 )];
             }
 
@@ -128,7 +128,7 @@ class SystemSettingsController extends Controller
     public function update(UpdateSystemSettingsRequest $request): JsonResponse
     {
         if (!userCheckPermission('default_setting_edit')) {
-            return response()->json(['errors' => ['authorization' => ['Access denied.']]], 403);
+            return response()->json(['errors' => ['authorization' => [__('Access denied.')]]], 403);
         }
 
         try {
@@ -139,7 +139,7 @@ class SystemSettingsController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages' => ['server' => ['Settings updated successfully.']],
+                'messages' => ['server' => [__('Settings updated successfully.')]],
             ], 200);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -148,7 +148,7 @@ class SystemSettingsController extends Controller
 
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Server returned an error while processing your request.']]
+                'errors' => ['server' => [__('Server returned an error while processing your request.')]]
             ], 500);
         }
     }
@@ -223,7 +223,7 @@ class SystemSettingsController extends Controller
             );
 
             return response()->json([
-                'messages' => ['error' => ['Something went wrong while loading payment gateways.']],
+                'messages' => ['error' => [__('Something went wrong while loading payment gateways.')]],
             ], 500);
         }
     }

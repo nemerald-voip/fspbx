@@ -27,13 +27,13 @@ class AccountSettingsSchema extends SettingsSchema
                 'subcategory' => 'time_zone',
                 'name' => 'name',
                 'type' => 'select',
-                'label' => 'Time Zone',
-                'group' => 'Regional',
-                'placeholder' => 'Select Time Zone',
+                'label' => __('Time Zone'),
+                'group' => __('Regional'),
+                'placeholder' => __('Select Time Zone'),
                 'options' => 'timezones',
                 'grouped' => true,
                 'searchable' => true,
-                'info' => 'Leave empty to inherit the system default.',
+                'info' => __('Leave empty to inherit the system default.'),
             ],
             [
                 'key' => 'language',
@@ -41,15 +41,13 @@ class AccountSettingsSchema extends SettingsSchema
                 'subcategory' => 'language',
                 'name' => 'code',
                 'type' => 'select',
-                'label' => 'Language',
-                'group' => 'Regional',
-                'placeholder' => 'Select Language',
+                'label' => __('Language'),
+                'group' => __('Regional'),
+                'placeholder' => __('Select Language'),
                 'options' => 'locales',
                 'grouped' => false,
                 'searchable' => true,
-                'info' => 'Sets the display language for everyone in this account. '
-                    . 'Only languages that are translated enough to use are listed. '
-                    . 'Leave empty to inherit the system default.',
+                'info' => __('Sets the display language for everyone in this account. Only languages that are translated enough to use are listed. Leave empty to inherit the system default.'),
             ],
         ];
     }

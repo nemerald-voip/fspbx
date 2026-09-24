@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Support\Localization\ValidationMessages;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
@@ -55,7 +56,8 @@ class BulkUpdateMessageSettingRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'items.required' => 'No items selected to update',
+            ...ValidationMessages::common(),
+            'items.required' => __('No items selected to update'),
         ];
     }
 
@@ -68,5 +70,17 @@ class BulkUpdateMessageSettingRequest extends FormRequest
         // }
 
         $this->merge($merge);
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'items' => __('Selected items'),
+            'carrier' => __('Message Provider'),
+            'chatplan_detail_data' => __('Extension'),
+            'email' => __('Email'),
+            'description' => __('Description'),
+            'domain_uuid' => __('Account'),
+        ];
     }
 }

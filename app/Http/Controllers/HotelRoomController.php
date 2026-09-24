@@ -63,7 +63,7 @@ class HotelRoomController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages' => ['success' => ['New hotel room created']]
+                'messages' => ['success' => [__('New hotel room created')]]
             ], 201);
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -71,7 +71,7 @@ class HotelRoomController extends Controller
             logger('HotelRoomController@store error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Something went wrong while saving.']]
+                'messages' => ['error' => [__('Something went wrong while saving.')]]
             ], 500);
         }
     }
@@ -105,7 +105,7 @@ class HotelRoomController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages' => ['success' => [count($created) . ' room(s) created']],
+                'messages' => ['success' => [trans_choice('{1} :count room created|[0,*] :count rooms created', count($created))]],
                 // If helpful for the UI:
                 // 'data' => collect($created)->map->only(['uuid','room_name','extension_uuid']),
             ], 201);
@@ -114,7 +114,7 @@ class HotelRoomController extends Controller
             logger('HotelRoomController@bulkStore error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Something went wrong while saving.']],
+                'messages' => ['error' => [__('Something went wrong while saving.')]],
             ], 500);
         }
     }
@@ -129,7 +129,7 @@ class HotelRoomController extends Controller
             $hotelRoom = HotelRoom::find($uuid);
             if (!$hotelRoom) {
                 return response()->json([
-                    'messages' => ['error' => ['Hotel room not found.']]
+                    'messages' => ['error' => [__('Hotel room not found.')]]
                 ], 404);
             }
 
@@ -138,14 +138,14 @@ class HotelRoomController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages' => ['success' => ['Hotel room updated']]
+                'messages' => ['success' => [__('Hotel room updated')]]
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
             logger('HotelRoomController@update error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Something went wrong while updating.']]
+                'messages' => ['error' => [__('Something went wrong while updating.')]]
             ], 500);
         }
     }
@@ -252,7 +252,7 @@ class HotelRoomController extends Controller
 
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to fetch item details']]
+                'errors' => ['server' => [__('Failed to fetch item details')]]
             ], 500);
         }
     }
@@ -280,7 +280,7 @@ class HotelRoomController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages' => ['success' => ['Selected hotel room(s) were deleted successfully.']]
+                'messages' => ['success' => [__('Selected hotel room(s) were deleted successfully.')]]
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -288,7 +288,7 @@ class HotelRoomController extends Controller
             logger('HotelRoomController@bulkDelete error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['An error occurred while deleting the selected hotel room(s).']]
+                'messages' => ['error' => [__('An error occurred while deleting the selected hotel room(s).')]]
             ], 500);
         }
     }

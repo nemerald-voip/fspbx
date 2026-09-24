@@ -32,7 +32,7 @@ class CallWebhookDeliveryService
         return Cache::pull($this->testResultKey($eventId), [
             'successful' => false,
             'status' => null,
-            'message' => 'The webhook test did not return a delivery result.',
+            'message' => __('The webhook test did not return a delivery result.'),
         ]);
     }
 

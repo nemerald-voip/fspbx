@@ -6,6 +6,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
 use libphonenumber\PhoneNumberFormat;
 use Illuminate\Foundation\Http\FormRequest;
+use App\Support\Localization\ValidationMessages;
 
 class UpdateMessageSettingRequest extends FormRequest
 {
@@ -55,6 +56,7 @@ class UpdateMessageSettingRequest extends FormRequest
     public function messages(): array
     {
         return [
+            ...ValidationMessages::common(),
             // 'device_profile_uuid.required' => 'Profile is required',
             // 'device_template.required' => 'Template is required'
         ];
@@ -73,5 +75,17 @@ class UpdateMessageSettingRequest extends FormRequest
         }
 
         $this->merge($merge);
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'destination' => __('Phone Number'),
+            'carrier' => __('Message Provider'),
+            'chatplan_detail_data' => __('Extension'),
+            'email' => __('Email'),
+            'description' => __('Description'),
+            'enabled' => __('Enabled'),
+        ];
     }
 }

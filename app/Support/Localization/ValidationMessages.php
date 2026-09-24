@@ -8,6 +8,19 @@ class ValidationMessages
     {
         return [
             'required' => __('The :attribute field is required.'),
+            'present' => __('The :attribute field must be present.'),
+            'required_with' => __('The :attribute field is required when :values is present.'),
+            'required_if' => __('The :attribute field is required when :other is :value.'),
+            'numeric' => __('The :attribute must be a number.'),
+            'email' => __('The :attribute must be a valid email address.'),
+            'url' => __('The :attribute must be a valid URL.'),
+            'date' => __('The :attribute is not a valid date.'),
+            'after_or_equal' => __('The :attribute must be a date after or equal to :date.'),
+            'regex' => __('The :attribute format is invalid.'),
+            'unique' => __('The :attribute has already been taken.'),
+            'between' => [
+                'numeric' => __('The :attribute must be between :min and :max.'),
+            ],
             'string' => __('The :attribute must be a string.'),
             'array' => __('The :attribute must be an array.'),
             'boolean' => __('The :attribute must be true or false.'),

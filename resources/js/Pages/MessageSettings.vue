@@ -3,7 +3,7 @@
 
     <div class="m-3">
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-            <template #title>Message Settings</template>
+            <template #title>{{ $t('Message Settings') }}</template>
 
             <template #filters>
                 <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
@@ -13,28 +13,28 @@
                     <input type="text" v-model="filterData.search" name="mobile-search-candidate"
                         id="mobile-search-candidate"
                         class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                        :placeholder="$t('Search')" @keydown.enter="handleSearchButtonClick" />
                     <input type="text" v-model="filterData.search" name="desktop-search-candidate"
                         id="desktop-search-candidate"
                         class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                        :placeholder="$t('Search')" @keydown.enter="handleSearchButtonClick" />
                 </div>
             </template>
 
             <template #action>
                 <button type="button" @click.prevent="handleCreateButtonClick()"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                    Create
+                    {{ $t('Create') }}
                 </button>
 
                 <button v-if="!showGlobal" type="button" @click.prevent="handleShowGlobal()"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                    Show global
+                    {{ $t('Show global') }}
                 </button>
 
                 <button v-if="showGlobal" type="button" @click.prevent="handleShowLocal()"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                    Show local
+                    {{ $t('Show local') }}
                 </button>
             </template>
 
@@ -47,38 +47,38 @@
 
 
             <template #table-header>
-                <TableColumnHeader header="Phone Number"
+                <TableColumnHeader :header="$t('Phone Number')"
                     class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                    <span class="pl-4">Phone Number</span>
+                    <span class="pl-4">{{ $t('Phone Number') }}</span>
                 </TableColumnHeader>
-                <TableColumnHeader v-if="showGlobal" header="Domain"
+                <TableColumnHeader v-if="showGlobal" :header="$t('Domain')"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
-                <TableColumnHeader header="Carrier" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Assigned Extension"
+                <TableColumnHeader :header="$t('Carrier')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t('Assigned Extension')"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Assigned Email"
+                <TableColumnHeader :header="$t('Assigned Email')"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Description"
+                <TableColumnHeader :header="$t('Description')"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t('Action')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
             </template>
 
             <template v-if="selectPageItems" v-slot:current-selection>
                 <td colspan="9">
                     <div class="text-sm text-center m-2">
-                        <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
+                        {{ $tChoice('{1} :count item is selected.|[0,*] :count items are selected.', selectedItems.length) }}
                         <button v-if="!selectAll && selectedItems.length != data.total"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleSelectAll">
-                            Select all {{ data.total }} items
+                            {{ $tChoice('{1} Select all :count item|[0,*] Select all :count items', data.total) }}
                         </button>
                         <button v-if="selectAll"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleClearSelection">
-                            Clear selection
+                            {{ $t('Clear selection') }}
                         </button>
                     </div>
                 </td>
@@ -127,7 +127,7 @@
                         <template #action-buttons>
 
                             <div class="flex items-center whitespace-nowrap">
-                                <ejs-tooltip :content="'Edit'" position='TopCenter'
+                                <ejs-tooltip :content="$t('Edit')" position='TopCenter'
                                     target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
                                         <PencilSquareIcon @click="handleEditButtonClick(row.sms_destination_uuid)"
@@ -136,7 +136,7 @@
                                     </div>
                                 </ejs-tooltip>
 
-                                <ejs-tooltip :content="'Delete'" position='TopCenter'
+                                <ejs-tooltip :content="$t('Delete')" position='TopCenter'
                                     target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
                                         <TrashIcon @click="handleSingleItemDeleteRequest(row.sms_destination_uuid)"
@@ -152,9 +152,9 @@
                 <!-- Conditional rendering for 'no records' message -->
                 <div v-if="data.data.length === 0" class="text-center my-5 ">
                     <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
+                    <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ $t('No results found') }}</h3>
                     <p class="mt-1 text-sm text-gray-500">
-                        Adjust your search and try again.
+                        {{ $t('Adjust your search and try again.') }}
                     </p>
                 </div>
             </template>
@@ -180,7 +180,7 @@
         @success="showNotification" @close="showUpdateModal = false" />
 
 
-    <AddEditItemModal :show="bulkUpdateModalTrigger" :header="'Bulk Edit'" :loading="isModalLoading"
+    <AddEditItemModal :show="bulkUpdateModalTrigger" :header="$t('Bulk Edit')" :loading="isModalLoading"
         @close="handleModalClose">
         <template #modal-body>
             <BulkUpdateMessageSettingsForm :items="selectedItems" :options="itemOptions" :errors="formErrors"
@@ -198,6 +198,7 @@
 </template>
 
 <script setup>
+import { trans } from '@i18n';
 import { ref, onMounted } from "vue";
 import axios from 'axios';
 import DataTable from "./components/general/DataTable.vue";
@@ -238,7 +239,7 @@ const bulkUpdateFormSubmiting = ref(null);
 const formErrors = ref(null);
 const confirmDeleteAction = ref(null);
 const itemOptions = ref([])
-let tooltipCopyContent = ref('Copy to Clipboard');
+let tooltipCopyContent = ref(trans('Copy to Clipboard'));
 const data = ref({
     data: [],
     prev_page_url: null,
@@ -275,7 +276,7 @@ const bulkActions = ref([
     // },
     {
         id: 'bulk_delete',
-        label: 'Delete',
+        label: trans('Delete'),
         icon: 'TrashIcon'
     },
 ]);
@@ -314,9 +315,9 @@ const handleCopyToClipboard = (value) => {
     // Use regular expression to remove any non-digit characters
     value = value.replace(/\D/g, '');
     navigator.clipboard.writeText(value).then(() => {
-        tooltipCopyContent.value = 'Copied'
+        tooltipCopyContent.value = trans('Copied')
         setTimeout(() => {
-            tooltipCopyContent.value = 'Copy to Clipboard'
+            tooltipCopyContent.value = trans('Copy to Clipboard')
         }, 500);
     }).catch((error) => {
         // Handle the error case

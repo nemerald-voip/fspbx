@@ -4,7 +4,7 @@ namespace Tests\Unit\CallWebhooks;
 
 use App\Services\CallWebhooks\PublicWebhookUrlValidator;
 use InvalidArgumentException;
-use PHPUnit\Framework\TestCase;
+use Tests\TestCase;
 
 class PublicWebhookUrlValidatorTest extends TestCase
 {

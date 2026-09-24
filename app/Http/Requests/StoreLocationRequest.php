@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Support\Localization\ValidationMessages;
 
 class StoreLocationRequest extends FormRequest
 {
@@ -26,5 +27,19 @@ class StoreLocationRequest extends FormRequest
         if (!$this->has('domain_uuid')) {
             $this->merge(['domain_uuid' => session('domain_uuid')]);
         }
+    }
+
+    public function messages(): array
+    {
+        return ValidationMessages::common();
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'name' => __('Name'),
+            'description' => __('Description'),
+            'domain_uuid' => __('Account'),
+        ];
     }
 }

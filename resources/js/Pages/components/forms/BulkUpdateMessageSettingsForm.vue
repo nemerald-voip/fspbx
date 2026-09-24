@@ -14,39 +14,37 @@
             </div> -->
 
             <div class="sm:col-span-12">
-                <LabelInputOptional :target="'carrier'" :label="'Message Provider'" />
+                <LabelInputOptional :target="'carrier'" :label="$t('Message Provider')" />
                 <div class="mt-2">
                     <SelectBox :options="options.carrier" :selectedItem="null"
-                        :search="true" :placeholder="'Choose carrier'" @update:model-value="handleUpdateCarrier" />
+                        :search="true" :placeholder="$t('Choose carrier')" @update:model-value="handleUpdateCarrier" />
                 </div>
 
             </div>
 
             <div class="sm:col-span-12">
-                <LabelInputOptional :target="'extension'" :label="'Extension'" />
+                <LabelInputOptional :target="'extension'" :label="$t('Extension')" />
                 <div class="mt-2">
                     <SelectBox :options="options.chatplan_detail_data" :selectedItem="null"
-                        :search="true" :placeholder="'Choose extension'" @update:model-value="handleUpdateExtension" />
+                        :search="true" :placeholder="$t('Choose extension')" @update:model-value="handleUpdateExtension" />
                 </div>
-                <p class="mt-3 text-sm leading-6 text-gray-600">Assign the extension to which the messages should be
-                    forwarded.</p>
+                <p class="mt-3 text-sm leading-6 text-gray-600">{{ $t('Assign the extension to which the messages should be forwarded.') }}</p>
             </div>
 
             <div class="sm:col-span-12">
-                <LabelInputOptional :target="'email'" :label="'Email'" />
+                <LabelInputOptional :target="'email'" :label="$t('Email')" />
                 <div class="mt-2">
-                    <InputField v-model="form.email" type="text" name="email" placeholder="Optional"
+                    <InputField v-model="form.email" type="text" name="email" :placeholder="$t('Optional')"
                         :error="errors?.email && errors.email.length > 0"/>
                 </div>
                 <div v-if="errors?.email" class="mt-2 text-sm text-red-600">
                     {{ errors.email[0] }}
                 </div>
-                <p class="mt-3 text-sm leading-6 text-gray-600">You can choose to use email instead of the extension if
-                    you'd like.</p>
+                <p class="mt-3 text-sm leading-6 text-gray-600">{{ $t('You can choose to use email instead of the extension if you\'d like.') }}</p>
             </div>
 
             <div class="sm:col-span-12">
-                <LabelInputOptional :target="'description'" :label="'Description'" />
+                <LabelInputOptional :target="'description'" :label="$t('Description')" />
                 <div class="mt-2">
                     <Textarea v-model="form.description" name="description" rows="2" />
                 </div>
@@ -58,11 +56,11 @@
                     class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
                     ref="saveButtonRef" :disabled="isSubmitting">
                     <Spinner :show="isSubmitting" />
-                    Save
+                    {{ $t('Save') }}
                 </button>
                 <button type="button"
                     class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0"
-                    @click="emits('cancel')" ref="cancelButtonRef">Cancel
+                    @click="emits('cancel')" ref="cancelButtonRef">{{ $t('Cancel') }}
                 </button>
             </div>
         </div>

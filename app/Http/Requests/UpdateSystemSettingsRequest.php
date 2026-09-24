@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Services\Settings\SystemSettingsSchema;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use App\Support\Localization\ValidationMessages;
 use Illuminate\Support\Facades\Auth;
 
 class UpdateSystemSettingsRequest extends FormRequest
@@ -45,7 +46,7 @@ class UpdateSystemSettingsRequest extends FormRequest
 
             foreach ((array) $this->input('settings', []) as $key => $value) {
                 if (! in_array($key, $keys, true)) {
-                    $validator->errors()->add("settings.{$key}", 'Unknown setting.');
+                    $validator->errors()->add("settings.{$key}", __('Unknown setting.'));
                     continue;
                 }
 
@@ -54,9 +55,24 @@ class UpdateSystemSettingsRequest extends FormRequest
                 }
 
                 if (isset($allowed[$key]) && ! in_array($value, $allowed[$key], true)) {
-                    $validator->errors()->add("settings.{$key}", 'The selected value is invalid.');
+                    $validator->errors()->add("settings.{$key}", __('The selected value is invalid.'));
                 }
             }
         });
+    }
+
+    public function messages(): array
+    {
+        return ValidationMessages::common();
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'settings' => __('Settings'),
+            'settings.*' => __('Setting'),
+            'settings.time_zone' => __('Time Zone'),
+            'settings.language' => __('Language'),
+        ];
     }
 }

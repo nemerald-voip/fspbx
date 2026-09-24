@@ -27,8 +27,8 @@ class RecordCallWebhookTestResult
             'successful' => $successful,
             'status' => $status,
             'message' => $successful
-                ? "Webhook test delivered successfully (HTTP {$status})."
-                : ($event->errorMessage ?: ($status ? "Webhook endpoint returned HTTP {$status}." : 'Webhook test failed.')),
+                ? __('Webhook test delivered successfully (HTTP :status).', ['status' => $status])
+                : ($event->errorMessage ?: ($status ? __('Webhook endpoint returned HTTP :status.', ['status' => $status]) : __('Webhook test failed.'))),
         ]);
     }
 }

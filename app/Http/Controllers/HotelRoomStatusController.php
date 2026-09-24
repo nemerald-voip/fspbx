@@ -59,12 +59,12 @@ class HotelRoomStatusController extends Controller
             $service->checkIn($room, $payload);
     
             return response()->json([
-                'messages' => ['success' => ['Guest checked in']],
+                'messages' => ['success' => [__('Guest checked in')]],
             ], 201);
         } catch (\Throwable $e) {
             logger('HotelRoomStatusController@store error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
             return response()->json([
-                'messages' => ['error' => ['Failed to check in guest']],
+                'messages' => ['error' => [__('Failed to check in guest')]],
             ], 500);
         }
     }
@@ -123,7 +123,7 @@ class HotelRoomStatusController extends Controller
             logger('HotelRoomStatusController@getItemOptions ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to fetch item details']]
+                'errors' => ['server' => [__('Failed to fetch item details')]]
             ], 500);
         }
     }
@@ -134,7 +134,7 @@ class HotelRoomStatusController extends Controller
             $uuids = (array) request('items', []);
             if (empty($uuids)) {
                 return response()->json([
-                    'messages' => ['error' => ['No rooms selected.']]
+                    'messages' => ['error' => [__('No rooms selected.')]]
                 ], 422);
             }
     
@@ -155,18 +155,14 @@ class HotelRoomStatusController extends Controller
             return response()->json([
                 'messages' => [
                     'success' => [
-                        sprintf(
-                            'Checkout processed: %d room(s)%s.',
-                            $checkedOut,
-                            $alreadyVacant ? " ({$alreadyVacant} already vacant)" : ''
-                        )
+                        trans_choice('{1} Checkout processed: :count room. Already vacant: :vacant.|[0,*] Checkout processed: :count rooms. Already vacant: :vacant.', $checkedOut, ['vacant' => $alreadyVacant])
                     ]
                 ],
             ]);
         } catch (\Throwable $e) {
             logger('HotelRoomController@bulkDelete error: '.$e->getMessage().' at '.$e->getFile().':'.$e->getLine());
             return response()->json([
-                'messages' => ['error' => ['An error occurred while checking out.']]
+                'messages' => ['error' => [__('An error occurred while checking out.')]]
             ], 500);
         }
     }

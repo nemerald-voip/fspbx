@@ -6,12 +6,12 @@
                     <table class="min-w-full divide-y divide-gray-200 mb-4">
                         <thead class="bg-gray-200">
                             <tr>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Name</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">{{ $t('Name') }}</th>
                                 <th class="hidden px-6 py-3 text-left text-sm font-semibold text-gray-900 sm:table-cell">
-                                    Description
+                                    {{ $t('Description') }}
                                 </th>
                                 <th class="relative px-6 py-3 text-left text-sm font-medium text-gray-500">
-                                    <span class="sr-only">Actions</span>
+                                    <span class="sr-only">{{ $t('Actions') }}</span>
                                 </th>
                             </tr>
                         </thead>
@@ -38,14 +38,14 @@
                                 <td class="whitespace-nowrap px-6 py-2 text-right text-sm font-medium">
                                     <div class="flex items-center justify-end space-x-2">
                                         <!-- Edit (if needed) -->
-                                        <ejs-tooltip v-if="permissions.location_update" :content="'Edit'"
+                                        <ejs-tooltip v-if="permissions.location_update" :content="$t('Edit')"
                                             position='TopCenter'>
                                             <PencilSquareIcon @click="handleEditButtonClick(location)"
                                                 class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                         </ejs-tooltip>
 
                                         <!-- Delete -->
-                                        <ejs-tooltip v-if="permissions.location_delete" :content="'Delete'"
+                                        <ejs-tooltip v-if="permissions.location_delete" :content="$t('Delete')"
                                             position='TopCenter'>
                                             <TrashIcon @click="handleSingleItemDeleteRequest(location.location_uuid)"
                                                 class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
@@ -60,7 +60,7 @@
                     <!-- Empty State -->
                     <div v-if="!loading && locations.length === 0" class="text-center my-5">
                         <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                        <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
+                        <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ $t('No results found') }}</h3>
                         <!-- <p class="mt-1 text-sm text-gray-500">
                 Adjust your search and try again.
               </p> -->

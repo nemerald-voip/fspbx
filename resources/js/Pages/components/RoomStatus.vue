@@ -9,11 +9,11 @@
                 <input type="text" v-model="filterData.search" name="mobile-search-candidate"
                     id="mobile-search-candidate"
                     class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
-                    placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                    :placeholder="$t('Search')" @keydown.enter="handleSearchButtonClick" />
                 <input type="text" v-model="filterData.search" name="desktop-search-candidate"
                     id="desktop-search-candidate"
                     class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
-                    placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                    :placeholder="$t('Search')" @keydown.enter="handleSearchButtonClick" />
             </div>
             <div class="relative">
                 <div class="flex justify-between">
@@ -21,12 +21,12 @@
                     <button type="button" @click.prevent="handleSearchButtonClick"
                         class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500
                                 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                        Search
+                        {{ $t('Search') }}
                     </button>
 
                     <button type="button" @click.prevent="handleFiltersReset"
                         class="rounded-md bg-white px-2.5 py-1.5 ml-2  sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                        Reset
+                        {{ $t('Reset') }}
                     </button>
                 </div>
             </div>
@@ -35,7 +35,7 @@
         <div class="mt-4">
             <button type="button" @click.prevent="handleManageCodesButtonClick()"
                 class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                Housekeeping Codes
+                {{ $t('Housekeeping Codes') }}
             </button>
         </div>
 
@@ -48,14 +48,14 @@
                     <table class="min-w-full divide-y divide-gray-200 mb-4">
                         <thead class="bg-gray-100">
                             <tr>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Room</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Occupancy</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Housekeeping</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Guest</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Arrival</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Departure</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">{{ $t('Room') }}</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">{{ $t('Occupancy') }}</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">{{ $t('Housekeeping') }}</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">{{ $t('Guest') }}</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">{{ $t('Arrival') }}</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">{{ $t('Departure') }}</th>
                                 <th class="relative px-6 py-3 text-left text-sm font-medium text-gray-500">
-                                    <span class="sr-only">Actions</span>
+                                    <span class="sr-only">{{ $t('Actions') }}</span>
                                 </th>
                             </tr>
                         </thead>
@@ -66,7 +66,7 @@
                                 </td>
                                 <td class="whitespace-nowrap px-6 py-2 text-sm">
 
-                                    {{ row.status?.occupancy_status || 'Not checked in' }}
+                                    {{ occupancyLabel(row.status?.occupancy_status) }}
 
                                 </td>
                                 <td class="whitespace-nowrap px-6 py-2 text-sm">
@@ -87,7 +87,7 @@
                                     : '—'
                                     )
                                     )
-                                    : 'Not checked in'
+                                    : $t('Not checked in')
                                     }}
                                 </td>
 
@@ -106,7 +106,7 @@
 
                                 <td class="whitespace-nowrap px-6 py-2 text-right text-sm font-medium">
                                     <div class="flex items-center whitespace-nowrap justify-end gap-1">
-                                        <ejs-tooltip v-if="!row.status?.occupancy_status" :content="'Check In'"
+                                        <ejs-tooltip v-if="!row.status?.occupancy_status" :content="$t('Check In')"
                                             position="TopCenter" target="#rs_edit_tt">
                                             <div id="rs_edit_tt">
                                                 <ArrowRightEndOnRectangleIcon
@@ -115,7 +115,7 @@
                                             </div>
                                         </ejs-tooltip>
 
-                                        <ejs-tooltip v-if="row.status?.occupancy_status" :content="'Check Out'"
+                                        <ejs-tooltip v-if="row.status?.occupancy_status" :content="$t('Check Out')"
                                             position="TopCenter" target="#rs_edit_tt">
                                             <div id="rs_edit_tt">
                                                 <ArrowRightStartOnRectangleIcon
@@ -134,7 +134,7 @@
                     <!-- Empty State -->
                     <div v-if="!isRoomsLoading && data.data?.length === 0" class="text-center my-5">
                         <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                        <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
+                        <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ $t('No results found') }}</h3>
                         <!-- <p class="mt-1 text-sm text-gray-500">
                 Adjust your search and try again.
               </p> -->
@@ -165,15 +165,16 @@
         @success="showNotification('success', $event)" />
 
     <ConfirmationModal :show="showDeleteConfirmationModal" @close="showDeleteConfirmationModal = false"
-        @confirm="confirmDeleteAction" :header="'Confirm Check-Out'"
-        :text="'This will check out the selected room(s). Proceed?'" :confirm-button-label="'Check Out'"
-        cancel-button-label="Cancel" />
+        @confirm="confirmDeleteAction" :header="$t('Confirm Check-Out')"
+        :text="$t('This will check out the selected room(s). Proceed?')" :confirm-button-label="$t('Check Out')"
+        :cancel-button-label="$t('Cancel')" />
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
 </template>
 
 <script setup>
+import { trans } from '@i18n';
 import { ref, computed, watch } from 'vue';
 import ManageHousekeepingCodesModal from "./modal/ManageHousekeepingCodesModal.vue";
 import HotelRoomCheckInModal from "./modal/HotelRoomCheckInModal.vue";
@@ -185,6 +186,8 @@ import { registerLicense } from '@syncfusion/ej2-base';
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import Paginator from "@generalComponents/Paginator.vue";
 
+
+const occupancyLabel = (status) => ({ 'Checked in': trans('Checked in'), 'Checked out': trans('Checked out') }[status] ?? status) || trans('Not checked in');
 
 const selectedItems = ref([]);
 
@@ -276,7 +279,7 @@ const bulkActions = computed(() => {
     if (props.permissions.user_destroy) {
         actions.push({
             id: 'bulk_delete',
-            label: 'Delete',
+            label: trans('Delete'),
             icon: 'TrashIcon'
         });
     }
@@ -398,7 +401,7 @@ const handleClearErrors = () => {
 
 const handleFormErrorResponse = (error) => {
     if (error.request?.status == 419) {
-        showNotification('error', { request: ["Session expired. Reload the page"] });
+        showNotification('error', { request: [trans('Session expired. Reload the page')] });
     } else if (error.response) {
         // The request was made and the server responded with a status code
         // that falls out of the range of 2xx

@@ -14,7 +14,7 @@
                     </div>
                 </div>
                 <div class="ml-3 w-0 flex-1 pt-0.5">
-                    <p class="text-sm font-medium text-gray-900">Emergency Call monitoring service</p>
+                    <p class="text-sm font-medium text-gray-900">{{ $t('Emergency Call monitoring service') }}</p>
                 </div>
 
             </div>
@@ -76,4 +76,3 @@ onMounted(() => {
 });
 
 </script>
-

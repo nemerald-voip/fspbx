@@ -25,6 +25,20 @@ class SettingsManagementService
         'uuid' => 'UUID',
     ];
 
+    public static function typeLabels(): array
+    {
+        return [
+            'array' => __('Array'),
+            'boolean' => __('Boolean'),
+            'code' => __('Code'),
+            'dir' => __('Dir'),
+            'name' => __('Name'),
+            'numeric' => __('Numeric'),
+            'text' => __('Text'),
+            'uuid' => __('UUID'),
+        ];
+    }
+
     public function effectiveDomainSettings(Domain $domain, array $filters = [], ?string $sort = null, int $page = 1, int $perPage = 50): LengthAwarePaginator
     {
         $defaults = DefaultSettings::query()
@@ -612,7 +626,7 @@ class SettingsManagementService
             'category_label' => $this->formatCategory((string) $category),
             'subcategory' => $subcategory,
             'type' => $name,
-            'type_label' => self::TYPE_OPTIONS[strtolower((string) $name)] ?? ucfirst((string) $name),
+            'type_label' => self::typeLabels()[strtolower((string) $name)] ?? ucfirst((string) $name),
             'default_value' => $default?->default_setting_value,
             'override_value' => $override?->domain_setting_value,
             'effective_value' => $override ? $override->domain_setting_value : $default?->default_setting_value,
@@ -620,7 +634,7 @@ class SettingsManagementService
             'override_enabled' => $override ? $this->boolValue($override->domain_setting_enabled) : null,
             'enabled' => $override ? $this->boolValue($override->domain_setting_enabled) : $this->boolValue($default?->default_setting_enabled),
             'source' => $override ? ($default ? 'override' : 'custom') : 'default',
-            'source_label' => $override ? ($default ? 'Domain Override' : 'Domain Only') : 'Default',
+            'source_label' => $override ? ($default ? __('Domain Override') : __('Domain Only')) : __('Default'),
             'description' => $override?->domain_setting_description ?? $default?->default_setting_description,
             'order' => $override?->domain_setting_order ?? $default?->default_setting_order,
             'is_secret' => $this->isSecret((string) $subcategory),
@@ -648,7 +662,7 @@ class SettingsManagementService
             'category_label' => $this->formatCategory((string) $row->default_setting_category),
             'subcategory' => $row->default_setting_subcategory,
             'type' => $row->default_setting_name,
-            'type_label' => self::TYPE_OPTIONS[strtolower((string) $row->default_setting_name)] ?? ucfirst((string) $row->default_setting_name),
+            'type_label' => self::typeLabels()[strtolower((string) $row->default_setting_name)] ?? ucfirst((string) $row->default_setting_name),
             'value' => $row->default_setting_value,
             'enabled' => $this->boolValue($row->default_setting_enabled),
             'description' => $row->default_setting_description,

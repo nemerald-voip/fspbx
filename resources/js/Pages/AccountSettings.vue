@@ -1,5 +1,5 @@
 <template>
-    <PageWithSideMenu title="Account Settings" :navigation="navigation" :pages="pages" :header-icon="Cog6ToothIcon"
+    <PageWithSideMenu :title="$t('Account Settings')" :navigation="navigation" :pages="pages" :header-icon="Cog6ToothIcon"
         :initial-menu-option="initialMenuOption" @update-selected-menu-option="handleUpdateSelectedMenuOption">
 
         <template #default="{ selectedMenuOption }">
@@ -7,7 +7,7 @@
             <!-- GENERAL -->
             <section v-show="selectedMenuOption === 'general'">
                 <Vueform ref="form$" :endpoint="submitForm" @success="handleSuccess" @error="handleError"
-                    @response="handleResponse" :display-errors="false">
+                    @response="handleResponse" :display-errors="false" @mounted="(form) => form.disableValidation()" @submit="clearServerFormErrors">
                     <template #empty>
 
                         <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
@@ -17,16 +17,16 @@
 
                                     <!-- General Tab -->
 
-                                    <StaticElement name="general_tab_label" tag="h4" content="General" />
+                                    <StaticElement name="general_tab_label" tag="h4" :content="$t('General')" />
                                     <HiddenElement name="domain_uuid" :meta="true" />
-                                    <ToggleElement name="domain_enabled" text="Account Status" />
-                                    <TextElement name="domain_description" label="Account Name"
-                                        placeholder="Enter Account Name" :floating="false" :columns="{
+                                    <ToggleElement name="domain_enabled" :text="$t('Account Status')" />
+                                    <TextElement name="domain_description" :label="$t('Account Name')"
+                                        :placeholder="$t('Enter Account Name')" :floating="false" :columns="{
                                             sm: {
                                                 container: 6,
                                             },
                                         }" />
-                                    <TextElement name="domain_name" label="Domain" :readonly="true" :columns="{
+                                    <TextElement name="domain_name" :label="$t('Domain')" :readonly="true" :columns="{
                                         sm: {
                                             container: 6,
                                         },
@@ -50,7 +50,7 @@
                                         </template>
                                     </template>
 
-                                    <ButtonElement name="general_submit" button-label="Save" :submits="true"
+                                    <ButtonElement name="general_submit" :button-label="$t('Save')" :submits="true"
                                         align="right" />
 
 
@@ -65,10 +65,10 @@
             <!-- LOCATIONS -->
             <section v-show="selectedMenuOption === 'locations'">
                 <Vueform>
-                    <StaticElement name="locations_title" tag="h4" content="Locations"
-                        description="Locations help you group your users and resources within your organization. When you assign users to specific locations, they will only be able to see the resources that belong to those locations." />
+                    <StaticElement name="locations_title" tag="h4" :content="$t('Locations')"
+                        :description="$t('Locations help you group your users and resources within your organization. When you assign users to specific locations, they will only be able to see the resources that belong to those locations.')" />
 
-                    <ButtonElement name="add_location" button-label="Add Location" align="right"
+                    <ButtonElement name="add_location" :button-label="$t('Add Location')" align="right"
                         @click="handleAddLocationButtonClick" :loading="addLocationButtonLoading"
                         :conditions="[() => permissions?.location_create]" />
                     <GroupElement name="container_1" />
@@ -101,8 +101,8 @@
             <!-- AUTO PROVISIONING -->
             <section v-show="selectedMenuOption === 'auto_provisioning'">
                 <Vueform>
-                    <StaticElement name="locations_title" tag="h4" content="Auto Provisioning"
-                        description="Manage your auto provisioning templates." />
+                    <StaticElement name="locations_title" tag="h4" :content="$t('Auto Provisioning')"
+                        :description="$t('Manage your auto provisioning templates.')" />
 
                     <GroupElement name="container_1" />
                 </Vueform>
@@ -126,18 +126,18 @@
             <!-- ROOM MANAGEMENT -->
             <section v-show="selectedMenuOption === 'room_management'">
                 <Vueform ref="pmsProviderForm$" :endpoint="submitPmsProviderForm" @success="handlePmsProviderSuccess"
-                    @error="handleError" @response="handleResponse" :display-errors="false">
-                    <StaticElement name="pms_provider_title" tag="h4" content="Hotel PMS Provider"
-                        description="Select which PMS integration to use." />
-                    <SelectElement name="pms_provider" label="Provider" :items="pmsProviderOptions" :native="false"
+                    @error="handleError" @response="handleResponse" :display-errors="false" @mounted="(form) => form.disableValidation()" @submit="clearServerFormErrors">
+                    <StaticElement name="pms_provider_title" tag="h4" :content="$t('Hotel PMS Provider')"
+                        :description="$t('Select which PMS integration to use.')" />
+                    <SelectElement name="pms_provider" :label="$t('Provider')" :items="pmsProviderOptions" :native="false"
                         :search="false" :floating="false" :columns="{
                             sm: {
                                 container: 6,
                             },
                         }" />
-                    <ButtonElement name="pms_provider_submit" button-label="Save PMS Provider" :submits="true"
+                    <ButtonElement name="pms_provider_submit" :button-label="$t('Save PMS Provider')" :submits="true"
                         align="right" />
-                    <StaticElement name="room_management_title" tag="h4" content="Room Management" description="" />
+                    <StaticElement name="room_management_title" tag="h4" :content="$t('Room Management')" description="" />
                 </Vueform>
 
                 <RoomManagement :trigger="roomManagementTrigger" :routes="routes" :permissions="permissions"
@@ -147,7 +147,7 @@
             <!-- ROOM STATUS -->
             <section v-show="selectedMenuOption === 'room_status'">
                 <Vueform>
-                    <StaticElement name="room_management_title" tag="h4" content="Room Status" description="" />
+                    <StaticElement name="room_management_title" tag="h4" :content="$t('Room Status')" description="" />
                     <GroupElement name="container_1" />
                 </Vueform>
 
@@ -159,7 +159,7 @@
             <section v-show="selectedMenuOption === 'emergency_calls'">
 
                 <Vueform>
-                    <StaticElement name="locations_title" tag="h4" content="Emergency Calls" description="" />
+                    <StaticElement name="locations_title" tag="h4" :content="$t('Emergency Calls')" description="" />
 
 
                     <GroupElement name="container_1" />
@@ -192,9 +192,9 @@
 
             <ConfirmationModal :show="showDeleteLocationConfirmationModal"
                 @close="showDeleteLocationConfirmationModal = false" @confirm="confirmDeleteLocationAction"
-                :header="'Confirm Deletion'" :loading="isDeleteLocationLoading"
-                :text="'This action will permanently delete the selected location. Are you sure you want to proceed?'"
-                confirm-button-label="Delete" cancel-button-label="Cancel" />
+                :header="$t('Confirm Deletion')" :loading="isDeleteLocationLoading"
+                :text="$t('This action will permanently delete the selected location. Are you sure you want to proceed?')"
+                :confirm-button-label="$t('Delete')" :cancel-button-label="$t('Cancel')" />
 
         </template>
 
@@ -203,6 +203,8 @@
 </template>
 
 <script setup>
+import { clearServerFormErrors } from '../composables/serverFormErrors.js';
+import { trans } from '@i18n';
 import { ref, computed, onMounted, markRaw } from 'vue'
 import PageWithSideMenu from '../Layouts/PageWithSideMenu.vue'
 import Notification from "./components/notifications/Notification.vue";
@@ -276,8 +278,8 @@ const props = defineProps({
 })
 
 const pages = [
-    { name: 'Dashboard', href: props.routes.dashboard_route, current: true },
-    { name: 'Account Settings', href: '#', current: true },
+    { name: trans('Dashboard'), href: props.routes.dashboard_route, current: true },
+    { name: trans('Account Settings'), href: '#', current: true },
 ]
 
 // State for collapsible navigation
@@ -327,37 +329,37 @@ const handleUpdateSelectedMenuOption = (key) => {
 }
 
 const navigation = [
-    { key: 'general', name: 'General', icon: Cog6ToothIcon },
-    { key: 'locations', name: 'Locations', icon: MapPinIcon },
+    { key: 'general', name: trans('General'), icon: Cog6ToothIcon },
+    { key: 'locations', name: trans('Locations'), icon: MapPinIcon },
     ...(props.ldapDirectorySettings && props.permissions?.ldap_directory_view
-        ? [{ key: 'active_directory', name: 'Directory Services', icon: ServerStackIcon }]
+        ? [{ key: 'active_directory', name: trans('Directory Services'), icon: ServerStackIcon }]
         : []),
-    { key: 'auto_provisioning', name: 'Auto Provisioning', icon: WrenchScrewdriverIcon },
+    { key: 'auto_provisioning', name: trans('Auto Provisioning'), icon: WrenchScrewdriverIcon },
     ...(props.permissions?.call_webhook_view
-        ? [{ key: 'call_webhooks', name: 'Call Webhooks', icon: ArrowPathRoundedSquareIcon }]
+        ? [{ key: 'call_webhooks', name: trans('Call Webhooks'), icon: ArrowPathRoundedSquareIcon }]
         : []),
     // { key: 'billing', name: 'Billing', icon: CreditCardIcon },
     {
         key: 'call_transcription',
-        name: 'Call Transcription',
+        name: trans('Call Transcription'),
         icon: markRaw(GraphicEqIcon),
         children: [
-            { key: 'transcription_options', name: 'Options', icon: markRaw(AdjustmentsVerticalIcon) },
+            { key: 'transcription_options', name: trans('Options'), icon: markRaw(AdjustmentsVerticalIcon) },
             { key: 'assemblyai', name: 'AssemblyAI', icon: markRaw(GraphicEqIcon) }
         ],
     },
     {
         key: 'hotel',
-        name: 'Hotel Management',
+        name: trans('Hotel Management'),
         icon: BuildingOffice2Icon,
         children: [
-            { key: 'room_management', name: 'Room Management', icon: KeyIcon },
-            { key: 'room_status', name: 'Room Status', icon: ClipboardDocumentCheckIcon },
-            { key: 'emergency_calls', name: 'Emergency Calls', icon: BellAlertIcon },
+            { key: 'room_management', name: trans('Room Management'), icon: KeyIcon },
+            { key: 'room_status', name: trans('Room Status'), icon: ClipboardDocumentCheckIcon },
+            { key: 'emergency_calls', name: trans('Emergency Calls'), icon: BellAlertIcon },
 
         ],
     },
-    ...(props.domainSettings ? [{ key: 'advanced', name: 'Advanced', icon: AdjustmentsHorizontalIcon }] : []),
+    ...(props.domainSettings ? [{ key: 'advanced', name: trans('Advanced'), icon: AdjustmentsHorizontalIcon }] : []),
 ]
 
 
@@ -516,8 +518,9 @@ const handleResponse = (response, form$) => {
     // Display custom errors for elements
     if (response?.data?.errors) {
         Object.keys(response.data.errors).forEach((elName) => {
-            if (form$.el$(elName)) {
-                form$.el$(elName).messageBag.append(response.data.errors[elName][0])
+            const field = elName.replace(/^settings\./, '')
+            if (form$.el$(field)) {
+                form$.el$(field).messageBag.append(response.data.errors[elName][0])
             }
         })
     }
@@ -540,7 +543,7 @@ const handleError = (error, details, form$) => {
         case 'prepare':
             console.log(error) // Error object
 
-            form$.messageBag.append('Could not prepare form')
+            form$.messageBag.append(trans('Could not prepare form'))
             break
 
         // Error occured because response status is outside of 2xx
@@ -560,14 +563,14 @@ const handleError = (error, details, form$) => {
         case 'cancel':
             console.log(error) // Error object
 
-            form$.messageBag.append('Request cancelled')
+            form$.messageBag.append(trans('Request cancelled'))
             break
 
         // Some other errors happened (no response object)
         case 'other':
             console.log(error) // Error object
 
-            form$.messageBag.append('Couldn\'t submit form')
+            form$.messageBag.append(trans('Couldn\'t submit form'))
             break
     }
 }

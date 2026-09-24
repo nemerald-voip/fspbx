@@ -60,7 +60,7 @@ class DomainSettingsController extends Controller
             ],
             'options' => [
                 'categories' => $this->settings->categories($domain),
-                'types' => SettingsManagementService::TYPE_OPTIONS,
+                'types' => SettingsManagementService::typeLabels(),
                 'domains' => $this->domainOptions($domain->domain_uuid),
             ],
         ];
@@ -69,7 +69,7 @@ class DomainSettingsController extends Controller
     public function data(Request $request, Domain $domain): JsonResponse
     {
         if (! userCheckPermission('domain_setting_view') || ! $this->canAccessDomain($domain->domain_uuid)) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $perPage = min(max((int) $request->input('per_page', 50), 1), 5000);
@@ -88,16 +88,16 @@ class DomainSettingsController extends Controller
     public function itemOptions(Request $request, Domain $domain): JsonResponse
     {
         if (! $this->canAccessDomain($domain->domain_uuid)) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $domainSettingUuid = $request->input('domain_setting_uuid');
         if ($domainSettingUuid && ! userCheckPermission('domain_setting_edit')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         if (! $domainSettingUuid && ! userCheckPermission('domain_setting_add')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         return response()->json([
@@ -106,36 +106,36 @@ class DomainSettingsController extends Controller
                 'default_setting_uuid',
                 'default_value',
             ])),
-            'types' => SettingsManagementService::TYPE_OPTIONS,
+            'types' => SettingsManagementService::typeLabels(),
         ]);
     }
 
     public function store(SaveDomainSettingRequest $request, Domain $domain): JsonResponse
     {
         if (! userCheckPermission('domain_setting_add') || ! $this->canAccessDomain($domain->domain_uuid)) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $this->settings->saveDomainOverride($domain, $request->validated());
 
-        return response()->json(['messages' => ['success' => ['Domain override created.']]], 201);
+        return response()->json(['messages' => ['success' => [__('Domain override created.')]]], 201);
     }
 
     public function update(SaveDomainSettingRequest $request, Domain $domain, DomainSettings $setting): JsonResponse
     {
         if (! userCheckPermission('domain_setting_edit') || ! $this->canAccessDomain($domain->domain_uuid) || $setting->domain_uuid !== $domain->domain_uuid) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $this->settings->saveDomainOverride($domain, $request->validated(), $setting);
 
-        return response()->json(['messages' => ['success' => ['Domain override updated.']]]);
+        return response()->json(['messages' => ['success' => [__('Domain override updated.')]]]);
     }
 
     public function selectAll(Request $request, Domain $domain): JsonResponse
     {
         if (! userCheckPermission('domain_setting_view') || ! $this->canAccessDomain($domain->domain_uuid)) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $items = collect($this->settings->effectiveDomainSettings($domain, $request->input('filter', []), $request->input('sort'), 1, 100000)->items())
@@ -145,67 +145,67 @@ class DomainSettingsController extends Controller
 
         return response()->json([
             'items' => $items,
-            'messages' => ['success' => ['All matching overrides selected.']],
+            'messages' => ['success' => [__('All matching overrides selected.')]],
         ]);
     }
 
     public function bulkRevert(BulkSettingsActionRequest $request, Domain $domain): JsonResponse
     {
         if (! userCheckPermission('domain_setting_delete') || ! $this->canAccessDomain($domain->domain_uuid)) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $count = $this->settings->revertDomain($domain, $request->validated('items'));
 
-        return response()->json(['messages' => ['success' => ["Reverted {$count} domain override(s)."]]]);
+        return response()->json(['messages' => ['success' => [trans_choice('{1} Reverted :count domain override.|[0,*] Reverted :count domain overrides.', $count)]]]);
     }
 
     public function bulkToggle(BulkSettingsActionRequest $request, Domain $domain): JsonResponse
     {
         if (! userCheckPermission('domain_setting_edit') || ! $this->canAccessDomain($domain->domain_uuid)) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $count = $this->settings->toggleDomain($domain, $request->validated('items'));
 
-        return response()->json(['messages' => ['success' => ["Toggled {$count} domain override(s)."]]]);
+        return response()->json(['messages' => ['success' => [trans_choice('{1} Toggled :count domain override.|[0,*] Toggled :count domain overrides.', $count)]]]);
     }
 
     public function copy(BulkSettingsActionRequest $request, Domain $domain): JsonResponse
     {
         if (! userCheckPermission('domain_select') || ! userCheckPermission('domain_setting_add') || ! $this->canAccessDomain($domain->domain_uuid)) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $target = (string) $request->input('target_domain_uuid');
         if ($target !== 'default' && ! $this->canAccessDomain($target)) {
-            return response()->json(['messages' => ['error' => ['Domain access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Domain access denied.')]]], 403);
         }
 
         if ($target === 'default' && (! userCheckPermission('default_setting_add') || ! userCheckPermission('default_setting_edit'))) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $count = $this->settings->copyDomainSettings($domain, $request->validated('items'), $target);
 
-        return response()->json(['messages' => ['success' => ["Copied {$count} domain setting(s)."]]]);
+        return response()->json(['messages' => ['success' => [trans_choice('{1} Copied :count domain setting.|[0,*] Copied :count domain settings.', $count)]]]);
     }
 
     public function reload(Domain $domain): JsonResponse
     {
         if (! userCheckPermission('default_setting_view') || ! $this->canAccessDomain($domain->domain_uuid)) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         try {
             $this->settings->reloadSessionSettings($domain);
 
-            return response()->json(['messages' => ['success' => ['Settings reloaded.']]]);
+            return response()->json(['messages' => ['success' => [__('Settings reloaded.')]]]);
         } catch (\Throwable $exception) {
             logger('DomainSettingsController@reload error: ' . $exception->getMessage() . ' at ' . $exception->getFile() . ':' . $exception->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Unable to reload settings.']],
+                'messages' => ['error' => [__('Unable to reload settings.')]],
             ], 500);
         }
     }
@@ -221,7 +221,7 @@ class DomainSettingsController extends Controller
             ->values();
 
         if (userCheckPermission('default_setting_add') && userCheckPermission('default_setting_edit')) {
-            $domains->push(['value' => 'default', 'label' => 'Default Settings']);
+            $domains->push(['value' => 'default', 'label' => __('Default Settings')]);
         }
 
         return $domains->all();

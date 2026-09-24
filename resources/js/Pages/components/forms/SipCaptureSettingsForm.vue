@@ -1,6 +1,6 @@
 <template>
     <Vueform ref="form$" :endpoint="submitForm" @success="handleSuccess" @error="handleError"
-        @response="handleResponse" :display-errors="false">
+        @response="handleResponse" :display-errors="false" @mounted="(form) => form.disableValidation()" @submit="clearServerFormErrors">
         <template #empty>
             <div class="space-y-6 bg-gray-50 px-4 py-6 text-gray-600 sm:p-6">
                 <FormElements>
@@ -90,6 +90,8 @@
 </template>
 
 <script setup>
+import { clearServerFormErrors } from '../../../composables/serverFormErrors.js';
+import { trans } from '@i18n';
 import { onMounted, ref } from 'vue'
 import { InformationCircleIcon } from '@heroicons/vue/24/outline'
 
@@ -157,6 +159,6 @@ const handleError = (error, details, form) => {
         return
     }
 
-    form.messageBag.append('Could not submit the SIP capture settings.')
+    form.messageBag.append(trans('Could not submit the SIP capture settings.'))
 }
 </script>

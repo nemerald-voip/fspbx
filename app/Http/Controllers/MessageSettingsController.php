@@ -137,7 +137,7 @@ class MessageSettingsController extends Controller
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to get item details']]
+                'errors' => ['server' => [__('Failed to get item details')]]
             ], 500); // 500 Internal Server Error for any other errors
         }
     }
@@ -245,7 +245,7 @@ class MessageSettingsController extends Controller
         if (!$setting) {
             return response()->json([
                 'success' => false,
-                'errors' => ['model' => ['Item not found']]
+                'errors' => ['model' => [__('Item not found')]]
             ], 404);
         }
 
@@ -257,14 +257,14 @@ class MessageSettingsController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages' => ['success' => ['Settings updated succesfully.']]
+                'messages' => ['success' => [__('Settings updated successfully.')]]
             ], 200);
         } catch (\Exception $e) {
             DB::rollBack();
             logger('MesssageSettingsController@update error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to update this device']]
+                'errors' => ['server' => [__('Failed to update message settings.')]]
             ], 500);
         }
     }
@@ -288,14 +288,14 @@ class MessageSettingsController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages' => ['success' => ['Request processed successfully.']]
+                'messages' => ['success' => [__('Request processed successfully.')]]
             ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
             logger('DeviceController@store error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to create device']]
+                'errors' => ['server' => [__('Failed to create message settings.')]]
             ], 500);
         }
     }
@@ -318,7 +318,7 @@ class MessageSettingsController extends Controller
 
             // Return a JSON response indicating success
             return response()->json([
-                'messages' => ['success' => ['All items selected']],
+                'messages' => ['success' => [__('All items selected')]],
                 'items' => $uuids,
             ], 200);
         } catch (\Exception $e) {
@@ -326,13 +326,13 @@ class MessageSettingsController extends Controller
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to select all items']]
+                'errors' => ['server' => [__('Failed to select all items')]]
             ], 500); // 500 Internal Server Error for any other errors
         }
 
         return response()->json([
             'success' => false,
-            'errors' => ['server' => ['Failed to select all items']]
+            'errors' => ['server' => [__('Failed to select all items')]]
         ], 500); // 500 Internal Server Error for any other errors
     }
 
@@ -361,7 +361,7 @@ class MessageSettingsController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages' => ['server' => ['All selected items have been deleted successfully.']],
+                'messages' => ['server' => [__('All selected items have been deleted successfully.')]],
             ], 200);
         } catch (\Exception $e) {
             // Rollback Transaction if any error occurs
@@ -371,7 +371,7 @@ class MessageSettingsController extends Controller
 
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Server returned an error while deleting the selected items.']]
+                'errors' => ['server' => [__('Server returned an error while deleting the selected items.')]]
             ], 500); // 500 Internal Server Error for any other errors
         }
     }
@@ -401,20 +401,20 @@ class MessageSettingsController extends Controller
 
             // Return a JSON response indicating success
             return response()->json([
-                'messages' => ['success' => ['Selected items updated']],
+                'messages' => ['success' => [__('Selected items updated')]],
             ], 200);
         } catch (\Exception $e) {
             logger($e->getMessage());
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to update selected items']]
+                'errors' => ['server' => [__('Failed to update selected items')]]
             ], 500); // 500 Internal Server Error for any other errors
         }
 
         return response()->json([
             'success' => false,
-            'errors' => ['server' => ['Failed to update selected items']]
+            'errors' => ['server' => [__('Failed to update selected items')]]
         ], 500); // 500 Internal Server Error for any other errors
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Support\Localization\ValidationMessages;
 use Illuminate\Validation\Rule;
 
 class UpdateHotelRoomRequest extends FormRequest
@@ -37,15 +38,17 @@ class UpdateHotelRoomRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'extension_uuid.exists' => 'Selected extension does not exist',
+            ...ValidationMessages::common(),
+            'extension_uuid.exists' => __('Selected extension does not exist'),
         ];
     }
 
     public function attributes(): array
     {
         return [
-            'room_name' => 'room name',
-            'extension_uuid' => 'extension',
+            'room_name' => __('Room Name'),
+            'extension_uuid' => __('Extension'),
+            'domain_uuid' => __('Account'),
         ];
     }
 
