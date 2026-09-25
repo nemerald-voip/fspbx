@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Inertia\Inertia;
+use App\Support\Localization\ValidationMessages;
 use App\Models\Domain;
 use App\Models\Extensions;
 use Illuminate\Support\Str;
@@ -736,7 +737,7 @@ class AppsController extends Controller
             'users' => $users,
             'status' => 200,
             'success' => [
-                'message' => 'The request processed successfully'
+                'message' => __('The request processed successfully')
             ]
         ]);
     }
@@ -770,7 +771,7 @@ class AppsController extends Controller
 
             // Check if the record was saved successfully
             if (!$domainSettings) {
-                throw new \Exception('Unable to connect this organization');
+                throw new \Exception(__('Unable to connect this organization'));
             }
 
             return response()->json([
@@ -878,7 +879,7 @@ class AppsController extends Controller
                 ->value('domain_setting_value');
 
             if (empty($org_id)) {
-                throw new \Exception("Contact your administrator to enable mobile apps.");
+                throw new \Exception(__("Contact your administrator to enable mobile apps."));
             }
 
             $connections = $this->ringotelApiService->getConnections($org_id);
@@ -1045,7 +1046,7 @@ class AppsController extends Controller
             return response()->json([
                 'user' => $user,
                 'qrcode' => ($qrcode != "") ? base64_encode($qrcode) : null,
-                'messages' => ['success' => ['Mobile app has been enabled']]
+                'messages' => ['success' => [__('Mobile app has been enabled')]]
             ]);
         } catch (\Throwable $e) {
             logger('ExtensionsController@createUser error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
@@ -1077,14 +1078,14 @@ class AppsController extends Controller
             $this->clearRingotelExtensionStatusCache(request('org_id'));
 
             return response()->json([
-                'messages' => ['success' => ['Mobile app has been removed']]
+                'messages' => ['success' => [__('Mobile app has been removed')]]
             ], 200);
         } catch (\Exception $e) {
             logger('ExtensionsController@deleteUser error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json([
                 'status' => 500,
                 'error' => [
-                    'message' => 'An unexpected error occurred. Please try again later.',
+                    'message' => __('An unexpected error occurred. Please try again later.'),
                 ],
             ]);
         }
@@ -1177,7 +1178,7 @@ class AppsController extends Controller
             return response()->json([
                 'user' => $user,
                 'qrcode' => ($qrcode != "") ? base64_encode($qrcode) : null,
-                'messages' => ['success' => ['Mobile app credentials have been reset']]
+                'messages' => ['success' => [__('Mobile app credentials have been reset')]]
             ]);
         } catch (\Throwable $e) {
             logger('ExtensionsController@resetPassword error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
@@ -1198,7 +1199,7 @@ class AppsController extends Controller
         if (!userCheckPermission('extension_edit') || !userCheckPermission('extension_mobile_app_settings')) {
             return response()->json([
                 'success' => false,
-                'errors' => ['permission' => ['Access denied.']],
+                'errors' => ['permission' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -1207,12 +1208,17 @@ class AppsController extends Controller
             'items.*' => ['uuid'],
             'action' => ['required', 'in:enable,add_contact,deactivate,remove,reset_credentials'],
             'connection' => ['nullable', 'string'],
+        ], ValidationMessages::common(), [
+            'items' => __('Extensions'),
+            'items.*' => __('Extension'),
+            'action' => __('Action'),
+            'connection' => __('Connection'),
         ]);
 
         if (in_array($data['action'], ['enable', 'add_contact'], true) && empty($data['connection'])) {
             return response()->json([
                 'success' => false,
-                'errors' => ['connection' => ['A mobile app connection is required.']],
+                'errors' => ['connection' => [__('A mobile app connection is required.')]],
             ], 422);
         }
 
@@ -1225,7 +1231,7 @@ class AppsController extends Controller
         if (empty($orgId)) {
             return response()->json([
                 'success' => false,
-                'errors' => ['mobile_app' => ['Contact your administrator to enable mobile apps.']],
+                'errors' => ['mobile_app' => [__('Contact your administrator to enable mobile apps.')]],
             ], 422);
         }
 
@@ -1450,8 +1456,11 @@ class AppsController extends Controller
         return response()->json([
             'messages' => [
                 'success' => [
-                    'Mobile app bulk action completed successfully.',
-                    "Processed {$processed}, skipped " . ($skipped + $failed) . '.',
+                    __('Mobile app bulk action completed successfully.'),
+                    __('Processed :processed, skipped :skipped.', [
+                        'processed' => $processed,
+                        'skipped' => $skipped + $failed,
+                    ]),
                 ],
             ],
         ], 200);
@@ -1560,14 +1569,14 @@ class AppsController extends Controller
             return response()->json([
                 'user' => $user,
                 'qrcode' => ($qrcode != "") ? base64_encode($qrcode) : null,
-                'messages' => ['success' => ['Mobile app has been activated']]
+                'messages' => ['success' => [__('Mobile app has been activated')]]
             ], 200);
         } catch (\Exception $e) {
             logger('ExtensionsController@activateUser error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json([
                 'status' => 500,
                 'error' => [
-                    'message' => 'An unexpected error occurred. Please try again later.',
+                    'message' => __('An unexpected error occurred. Please try again later.'),
                 ],
             ]);
         }
@@ -1605,14 +1614,14 @@ class AppsController extends Controller
             $this->clearRingotelExtensionStatusCache(request('org_id'));
 
             return response()->json([
-                'messages' => ['success' => ['Mobile app has been deactivated']]
+                'messages' => ['success' => [__('Mobile app has been deactivated')]]
             ], 200);
         } catch (\Exception $e) {
             logger('ExtensionsController@deactivateUser error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json([
                 'status' => 500,
                 'error' => [
-                    'message' => 'An unexpected error occurred. Please try again later.',
+                    'message' => __('An unexpected error occurred. Please try again later.'),
                 ],
             ]);
         }
@@ -1623,6 +1632,9 @@ class AppsController extends Controller
         $request->validate([
             'mobile_app_user_uuid' => ['required', 'uuid'],
             'dnd' => ['required', 'boolean'],
+        ], ValidationMessages::common(), [
+            'mobile_app_user_uuid' => __('Mobile App'),
+            'dnd' => __('Do Not Disturb'),
         ]);
 
         try {
@@ -1639,7 +1651,7 @@ class AppsController extends Controller
             return response()->json([
                 'ringotel_user' => $ringotelUser,
                 'messages' => [
-                    'success' => [$request->boolean('dnd') ? 'Mobile App DND has been enabled.' : 'Mobile App status changed to Available.'],
+                    'success' => [$request->boolean('dnd') ? __('Mobile App DND has been enabled.') : __('Mobile App status changed to Available.')],
                 ],
             ], 200);
         } catch (\Throwable $e) {
@@ -1647,7 +1659,7 @@ class AppsController extends Controller
 
             return response()->json([
                 'errors' => [
-                    'error' => ['Unable to update Mobile App state.'],
+                    'error' => [__('Unable to update Mobile App state.')],
                 ],
             ], 500);
         }
@@ -1658,6 +1670,9 @@ class AppsController extends Controller
         $request->validate([
             'mobile_app_user_uuid' => ['required', 'uuid'],
             'termid' => ['required', 'string'],
+        ], ValidationMessages::common(), [
+            'mobile_app_user_uuid' => __('Mobile App'),
+            'termid' => __('Device'),
         ]);
 
         try {
@@ -1676,7 +1691,7 @@ class AppsController extends Controller
             return response()->json([
                 'ringotel_user' => $ringotelUser,
                 'messages' => [
-                    'success' => ['Mobile App device has been removed.'],
+                    'success' => [__('Mobile App device has been removed.')],
                 ],
             ], 200);
         } catch (\Throwable $e) {
@@ -1684,7 +1699,7 @@ class AppsController extends Controller
 
             return response()->json([
                 'errors' => [
-                    'error' => ['Unable to remove Mobile App device.'],
+                    'error' => [__('Unable to remove Mobile App device.')],
                 ],
             ], 500);
         }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Support\Localization\ValidationMessages;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 
@@ -28,10 +29,24 @@ class SendExtensionWelcomeEmailRequest extends FormRequest
                 if ($this->filled('recipient') && count($this->input('items', [])) !== 1) {
                     $validator->errors()->add(
                         'recipient',
-                        'A recipient override can only be used when sending one welcome email.'
+                        __('A recipient override can only be used when sending one welcome email.')
                     );
                 }
             },
+        ];
+    }
+
+    public function messages(): array
+    {
+        return ValidationMessages::common();
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'items' => __('Extensions'),
+            'items.*' => __('Extension'),
+            'recipient' => __('Recipient'),
         ];
     }
 }

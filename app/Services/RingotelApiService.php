@@ -55,7 +55,7 @@ class RingotelApiService
         $token = $this->getRingotelApiToken();
 
         if (empty($token)) {
-            throw new \Exception("API token is missing.");
+            throw new \Exception(__("API token is missing."));
         }
 
         return $token;
@@ -84,7 +84,7 @@ class RingotelApiService
             ->withBody(json_encode($data), 'application/json')
             ->post('/')
             ->throw(function () {
-                throw new \Exception("Unable to activate organization");
+                throw new \Exception(__("Unable to activate organization"));
             })
             ->json();
 
@@ -93,7 +93,7 @@ class RingotelApiService
         }
 
         if (!isset($response['result'])) {
-            throw new \Exception("An unknown error has occurred");
+            throw new \Exception(__("An unknown error has occurred"));
         }
 
         return $response['result'];
@@ -121,7 +121,7 @@ class RingotelApiService
             ->withBody(json_encode($data), 'application/json')
             ->post('/')
             ->throw(function () {
-                throw new \Exception("Unable to update organization");
+                throw new \Exception(__("Unable to update organization"));
             })
             ->json();
 
@@ -131,7 +131,7 @@ class RingotelApiService
 
         // Handle empty response
         if (!$response) {
-            return ['success' => true, 'message' => 'Organization updated successfully'];
+            return ['success' => true, 'message' => __('Organization updated successfully')];
         }
 
         return $response['result'];
@@ -154,7 +154,7 @@ class RingotelApiService
             ->withBody(json_encode($data), 'application/json')
             ->post('/')
             ->throw(function () {
-                throw new \Exception("Unable to fetch organization");
+                throw new \Exception(__("Unable to fetch organization"));
             })
             ->json();
 
@@ -163,7 +163,7 @@ class RingotelApiService
         }
 
         if (!isset($response['result'])) {
-            throw new \Exception("An unknown error has occurred");
+            throw new \Exception(__("An unknown error has occurred"));
         }
 
         // Transform the result into OrganizationDTO
@@ -187,7 +187,7 @@ class RingotelApiService
             ->withBody(json_encode($data), 'application/json')
             ->post('/')
             ->throw(function ($response) {
-                throw new \Exception("Failed to delete organization: {$response->body()}");
+                throw new \Exception(__('Failed to delete organization: :error', ['error' => $response->body()]));
             })
             ->json();
 
@@ -198,7 +198,7 @@ class RingotelApiService
 
         // Handle empty response
         if (!$response) {
-            return ['success' => true, 'message' => 'Organization and its connections were successfully deleted.'];
+            return ['success' => true, 'message' => __('Organization and its connections were successfully deleted.')];
         }
 
         return $response['result'];
@@ -217,7 +217,7 @@ class RingotelApiService
             ->withBody(json_encode($data), 'application/json')
             ->post('/')
             ->throw(function () {
-                throw new \Exception("Unable to retrieve organizations");
+                throw new \Exception(__("Unable to retrieve organizations"));
             })
             ->json();
 
@@ -226,7 +226,7 @@ class RingotelApiService
         }
 
         if (!isset($response['result'])) {
-            throw new \Exception("An unknown error has occurred");
+            throw new \Exception(__("An unknown error has occurred"));
         }
 
         return collect($response['result'])->map(function ($item) {
@@ -416,7 +416,7 @@ class RingotelApiService
             ->withBody(json_encode($data), 'application/json')
             ->post('/')
             ->throw(function () {
-                throw new \Exception("Unable to create connection");
+                throw new \Exception(__("Unable to create connection"));
             })
             ->json();
 
@@ -425,7 +425,7 @@ class RingotelApiService
         }
 
         if (!isset($response['result'])) {
-            throw new \Exception("An unknown error has occurred");
+            throw new \Exception(__("An unknown error has occurred"));
         }
 
         return $response['result'];
@@ -613,7 +613,7 @@ class RingotelApiService
             ->withBody(json_encode($data), 'application/json')
             ->post('/')
             ->throw(function () {
-                throw new \Exception("Unable to update connection");
+                throw new \Exception(__("Unable to update connection"));
             })
             ->json();
 
@@ -623,7 +623,7 @@ class RingotelApiService
 
         // Handle empty response
         if (!$response) {
-            return ['success' => true, 'message' => 'Connection updated successfully'];
+            return ['success' => true, 'message' => __('Connection updated successfully')];
         }
 
         return $response['result'];
@@ -647,7 +647,7 @@ class RingotelApiService
             ->withBody(json_encode($data), 'application/json')
             ->post('/')
             ->throw(function () {
-                throw new \Exception("Unable to delete connection");
+                throw new \Exception(__("Unable to delete connection"));
             })
             ->json();
 
@@ -656,7 +656,7 @@ class RingotelApiService
         }
 
         if (!isset($response['result'])) {
-            throw new \Exception("An unknown error has occurred");
+            throw new \Exception(__("An unknown error has occurred"));
         }
 
         return $response['result'];
@@ -677,7 +677,7 @@ class RingotelApiService
             ->withBody(json_encode($data), 'application/json')
             ->post('/')
             ->throw(function () {
-                throw new \Exception("Unable to retrieve connections");
+                throw new \Exception(__("Unable to retrieve connections"));
             })
             ->json();
 
@@ -686,7 +686,7 @@ class RingotelApiService
         }
 
         if (!isset($response['result'])) {
-            throw new \Exception("An unknown error has occurred");
+            throw new \Exception(__("An unknown error has occurred"));
         }
 
         return collect($response['result'])->map(function ($item) {
@@ -719,7 +719,7 @@ class RingotelApiService
         }
 
         if (!isset($response['result'])) {
-            throw new \Exception("An unknown error has occurred");
+            throw new \Exception(__("An unknown error has occurred"));
         }
         // return $response['result'];
 
@@ -755,7 +755,7 @@ class RingotelApiService
         }
 
         if (!isset($response['result'])) {
-            throw new \Exception("An unknown error has occurred");
+            throw new \Exception(__("An unknown error has occurred"));
         }
 
         return collect($response['result'])->map(function ($item) {
@@ -789,7 +789,7 @@ class RingotelApiService
         }
 
         if (!isset($response['result'])) {
-            throw new \Exception("An unknown error has occurred");
+            throw new \Exception(__("An unknown error has occurred"));
         }
 
         return RingotelUserDTO::fromArray($response['result']);
@@ -960,7 +960,7 @@ class RingotelApiService
             ->withBody(json_encode($data), 'application/json')
             ->post('/')
             ->throw(function ($response, $e) {
-                throw new \Exception("Unable to create user.");
+                throw new \Exception(__("Unable to create user."));
             })
             ->json();
 
@@ -969,7 +969,7 @@ class RingotelApiService
         }
 
         if (!isset($response['result'])) {
-            throw new \Exception("An unknown error has occurred");
+            throw new \Exception(__("An unknown error has occurred"));
         }
         // return $response['result'];
 
@@ -1000,7 +1000,7 @@ class RingotelApiService
             ->withBody(json_encode($data), 'application/json')
             ->post('/')
             ->throw(function ($response, $e) {
-                throw new \Exception("Unable to create user.");
+                throw new \Exception(__("Unable to create user."));
             })
             ->json();
 
@@ -1009,7 +1009,7 @@ class RingotelApiService
         }
 
         if (!isset($response['result'])) {
-            throw new \Exception("An unknown error has occurred");
+            throw new \Exception(__("An unknown error has occurred"));
         }
         // return $response['result'];
 
@@ -1035,7 +1035,7 @@ class RingotelApiService
             ->withBody(json_encode($data), 'application/json')
             ->post('/')
             ->throw(function ($response, $e) {
-                throw new \Exception("Unable to create user.");
+                throw new \Exception(__("Unable to create user."));
             })
             ->json();
 
@@ -1044,7 +1044,7 @@ class RingotelApiService
         }
 
         if (!isset($response['result'])) {
-            throw new \Exception("An unknown error has occurred");
+            throw new \Exception(__("An unknown error has occurred"));
         }
         // return $response['result'];
 
@@ -1073,7 +1073,7 @@ class RingotelApiService
                 return response()->json([
                     'status' => 401,
                     'error' => [
-                        'message' => "Unable to reset password",
+                        'message' => __("Unable to reset password"),
                     ],
                 ])->getData(true);
             })
@@ -1084,7 +1084,7 @@ class RingotelApiService
         }
 
         if (!isset($response['result'])) {
-            throw new \Exception("An unknown error has occurred");
+            throw new \Exception(__("An unknown error has occurred"));
         }
         // return $response['result'];
 
@@ -1109,7 +1109,7 @@ class RingotelApiService
             ->withBody(json_encode($data), 'application/json')
             ->post('/')
             ->throw(function ($response, $e) {
-                throw new \Exception("Unable to create user.");
+                throw new \Exception(__("Unable to create user."));
             })
             ->json();
 
@@ -1118,7 +1118,7 @@ class RingotelApiService
         }
 
         if (!isset($response['result'])) {
-            throw new \Exception("An unknown error has occurred");
+            throw new \Exception(__("An unknown error has occurred"));
         }
         // return $response['result'];
 
@@ -1144,7 +1144,7 @@ class RingotelApiService
             ->withBody(json_encode($data), 'application/json')
             ->post('/')
             ->throw(function () {
-                throw new \Exception("Unable to initialize Ringotel call.");
+                throw new \Exception(__("Unable to initialize Ringotel call."));
             })
             ->json();
 
@@ -1153,7 +1153,7 @@ class RingotelApiService
         }
 
         if (!isset($response['result'])) {
-            throw new \Exception("An unknown error has occurred");
+            throw new \Exception(__("An unknown error has occurred"));
         }
 
         return $response['result'];
@@ -1173,7 +1173,7 @@ class RingotelApiService
             ->withBody(json_encode($data), 'application/json')
             ->post('/')
             ->throw(function ($response, $e) {
-                throw new \Exception("Unable to retrieve regions: " . $response->body());
+                throw new \Exception(__('Unable to retrieve regions: :error', ['error' => $response->body()]));
             })
             ->json();
 
@@ -1182,7 +1182,7 @@ class RingotelApiService
         }
 
         if (!isset($response['result'])) {
-            throw new \Exception("An unknown error has occurred while fetching regions");
+            throw new \Exception(__("An unknown error has occurred while fetching regions"));
         }
 
         return collect($response['result'])->map(function ($item) {
@@ -1348,7 +1348,7 @@ class RingotelApiService
         }
     
         if (!isset($response['result'])) {
-            throw new \Exception("An unknown error has occurred");
+            throw new \Exception(__("An unknown error has occurred"));
         }
         // return $response['result'];
     
