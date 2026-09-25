@@ -16,17 +16,17 @@
                         <DialogPanel
                             class="relative w-full max-w-3xl transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:p-6">
                             <DialogTitle as="h3" class="mb-1 pr-10 text-base font-semibold leading-6 text-gray-900">
-                                {{ header }}
+                                {{ header || $t('Contact List') }}
                             </DialogTitle>
                             <p class="mb-5 pr-10 text-sm text-gray-500">
-                                A reusable list of phone numbers that campaigns dial. Upload a CSV or paste lines below.
+                                {{ $t("A reusable list of phone numbers that campaigns dial. Upload a CSV or paste lines below.") }}
                             </p>
 
                             <div class="absolute right-0 top-0 pr-4 pt-4 sm:block">
                                 <button type="button"
                                     class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                     @click="emit('close')">
-                                    <span class="sr-only">Close</span>
+                                    <span class="sr-only">{{ $t("Close") }}</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
@@ -40,40 +40,39 @@
                                         <path class="opacity-75" fill="currentColor"
                                             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                     </svg>
-                                    <div class="text-lg text-blue-600">Loading...</div>
+                                    <div class="text-lg text-blue-600">{{ $t("Loading...") }}</div>
                                 </div>
                             </div>
 
-                            <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
+                            <Vueform :locale="formLocale" @mounted="form => form.disableValidation()" v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
                                 @error="handleError" @response="handleResponse" :display-errors="false"
                                 :default="defaultValues">
                                 <template #empty>
                                     <FormElements>
                                         <HiddenElement name="basic_dialer_contact_list_uuid" :meta="true" />
 
-                                        <StaticElement name="details_header" tag="h4" content="Details" />
+                                        <StaticElement name="details_header" tag="h4" :content="$t(&quot;Details&quot;)" />
 
-                                        <TextElement name="name" label="Name" :floating="false"
-                                            :rules="['required']" :columns="{ sm: { container: 9 } }" />
+                                        <TextElement name="name" :label="$t(&quot;Name&quot;)" :floating="false" :columns="{ sm: { container: 9 } }" />
 
-                                        <ToggleElement name="enabled" text="Enabled" :labels="{ on: 'On', off: 'Off' }"
+                                        <ToggleElement name="enabled" :text="$t(&quot;Enabled&quot;)" :labels="{ on: $t(&quot;On&quot;), off: $t(&quot;Off&quot;) }"
                                             :columns="{ sm: { container: 3 } }" label="&nbsp;" />
 
-                                        <TextareaElement name="description" label="Description" :rows="2"
+                                        <TextareaElement name="description" :label="$t(&quot;Description&quot;)" :rows="2"
                                             :floating="false" />
 
                                         <StaticElement name="contacts_header">
                                             <div class="flex flex-wrap items-start justify-between gap-2 border-t border-gray-200 pt-5">
                                                 <div>
-                                                    <h4 class="text-sm font-semibold text-gray-900">Add Contacts</h4>
+                                                    <h4 class="text-sm font-semibold text-gray-900">{{ $t("Add Contacts") }}</h4>
                                                     <p class="mt-0.5 text-xs text-gray-500">
-                                                        Upload a CSV or paste rows. Columns: phone number, name (optional), company (optional).
+                                                        {{ $t("Upload a CSV or paste rows. Columns: phone number, name (optional), company (optional).") }}
                                                     </p>
                                                 </div>
                                                 <button type="button" @click.prevent="downloadSampleCsv"
                                                     class="inline-flex shrink-0 items-center gap-x-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-500">
                                                     <DocumentArrowDownIcon class="h-4 w-4" aria-hidden="true" />
-                                                    Download sample CSV
+                                                    {{ $t("Download sample CSV") }}
                                                 </button>
                                             </div>
                                         </StaticElement>
@@ -84,22 +83,22 @@
                                             :remove-endpoint="false" :drop="true"
                                             @change="handleVueformFile" />
 
-                                        <TextareaElement name="contacts" label="Or paste rows" :rows="6"
+                                        <TextareaElement name="contacts" :label="$t(&quot;Or paste rows&quot;)" :rows="6"
                                             :floating="false"
-                                            placeholder="15551234567, Jane Smith, Acme&#10;15557654321, Bob Jones, Acme" />
+                                            :placeholder="$t(&quot;15551234567, Jane Smith, Acme\n15557654321, Bob Jones, Acme&quot;)" />
 
                                         <StaticElement name="existing_contacts_section"
                                             :conditions="[() => isEditMode]">
                                             <div class="mt-2 space-y-3">
                                                 <div class="flex flex-wrap items-center justify-between gap-2">
                                                     <h4 class="text-sm font-semibold text-gray-700">
-                                                        Existing contacts
+                                                        {{ $t("Existing contacts") }}
                                                         <span class="font-normal text-gray-400">({{ contactsData.total ?? 0 }})</span>
                                                     </h4>
                                                     <div class="relative w-full sm:w-64">
                                                         <MagnifyingGlassIcon
                                                             class="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                                                        <input v-model="contactsSearch" type="text" placeholder="Search..."
+                                                        <input v-model="contactsSearch" type="text" :placeholder="$t(&quot;Search...&quot;)"
                                                             class="block w-full rounded-md border-0 py-1.5 pl-8 pr-2 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600"
                                                             @keydown.enter.prevent="fetchContacts(1)"
                                                             @input="onSearchInput" />
@@ -108,7 +107,7 @@
 
                                                 <div v-if="contactsLoading"
                                                     class="rounded-md border border-gray-200 py-6 text-center text-xs text-gray-500">
-                                                    Loading contacts...
+                                                    {{ $t("Loading contacts...") }}
                                                 </div>
 
                                                 <div v-else-if="(contactsData.data ?? []).length > 0"
@@ -116,9 +115,9 @@
                                                     <table class="min-w-full divide-y divide-gray-200 text-sm">
                                                         <thead class="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                                                             <tr>
-                                                                <th class="px-3 py-2">Phone</th>
-                                                                <th class="px-3 py-2">Name</th>
-                                                                <th class="px-3 py-2">Company</th>
+                                                                <th class="px-3 py-2">{{ $t("Phone") }}</th>
+                                                                <th class="px-3 py-2">{{ $t("Name") }}</th>
+                                                                <th class="px-3 py-2">{{ $t("Company") }}</th>
                                                                 <th class="w-10 px-3 py-2"></th>
                                                             </tr>
                                                         </thead>
@@ -139,7 +138,7 @@
                                                                     <button type="button"
                                                                         @click.prevent="deleteContactRow(contact)"
                                                                         class="rounded-full p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
-                                                                        title="Delete contact">
+                                                                        :title="$t(&quot;Delete contact&quot;)">
                                                                         <TrashIcon class="h-4 w-4" />
                                                                     </button>
                                                                 </td>
@@ -150,16 +149,16 @@
 
                                                 <div v-else
                                                     class="rounded-md border border-gray-200 py-6 text-center text-xs text-gray-500">
-                                                    {{ contactsSearch ? "No contacts match your search." : "No contacts yet." }}
+                                                    {{ contactsSearch ? $t("No contacts match your search.") : $t("No contacts yet.") }}
                                                 </div>
 
                                                 <div v-if="(contactsData.total ?? 0) > 0"
                                                     class="flex items-center justify-between text-xs text-gray-500">
                                                     <span>
-                                                        Showing {{ contactsData.from ?? 0 }}–{{ contactsData.to ?? 0 }} of {{ contactsData.total }}
+                                                        {{ $t("Showing :from–:to of :total", { from: contactsData.from ?? 0, to: contactsData.to ?? 0, total: contactsData.total }) }}
                                                         <span v-if="(contactsData.last_page ?? 1) > 1" class="text-gray-300">&middot;</span>
                                                         <span v-if="(contactsData.last_page ?? 1) > 1">
-                                                            page {{ contactsData.current_page }} of {{ contactsData.last_page }}
+                                                            {{ $t("Page :page of :total", { page: contactsData.current_page, total: contactsData.last_page }) }}
                                                         </span>
                                                     </span>
                                                     <div class="flex gap-1">
@@ -167,20 +166,20 @@
                                                             :disabled="(contactsData.current_page ?? 1) <= 1"
                                                             class="rounded-md bg-white px-2.5 py-1 font-medium text-gray-700 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                                                             @click.prevent="fetchContacts((contactsData.current_page ?? 1) - 1)">
-                                                            Previous
+                                                            {{ $t("Previous") }}
                                                         </button>
                                                         <button type="button"
                                                             :disabled="(contactsData.current_page ?? 1) >= (contactsData.last_page ?? 1)"
                                                             class="rounded-md bg-white px-2.5 py-1 font-medium text-gray-700 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                                                             @click.prevent="fetchContacts((contactsData.current_page ?? 1) + 1)">
-                                                            Next
+                                                            {{ $t("Next") }}
                                                         </button>
                                                     </div>
                                                 </div>
                                             </div>
                                         </StaticElement>
 
-                                        <ButtonElement name="submit" button-label="Save Contact List" :submits="true"
+                                        <ButtonElement name="submit" :button-label="$t(&quot;Save Contact List&quot;)" :submits="true"
                                             align="right" />
                                     </FormElements>
                                 </template>
@@ -194,11 +193,15 @@
 </template>
 
 <script setup>
+import { useVueformLocale } from "../../../composables/useVueformLocale.js";
+import { trans } from "@i18n";
 import { computed, onMounted, ref, watch } from "vue";
 import axios from "axios";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from "@headlessui/vue";
 import { MagnifyingGlassIcon, TrashIcon, XMarkIcon } from "@heroicons/vue/24/solid";
 import { DocumentArrowDownIcon } from "@heroicons/vue/24/outline";
+
+const formLocale = useVueformLocale();
 
 const props = defineProps({
     show: Boolean,
@@ -206,7 +209,7 @@ const props = defineProps({
     loading: Boolean,
     header: {
         type: String,
-        default: "Contact List",
+        default: "",
     },
     mode: {
         type: String,
@@ -307,7 +310,7 @@ function onSearchInput() {
 
 function deleteContactRow(contact) {
     if (!contactDeleteRouteTemplate.value) return;
-    if (!confirm(`Delete ${contact.phone_number}?`)) return;
+    if (!confirm(trans("Delete :number?", { number: contact.phone_number }))) return;
 
     const url = contactDeleteRouteTemplate.value.replace(":contact", contact.basic_dialer_contact_uuid);
     axios.delete(url)
@@ -342,6 +345,8 @@ const defaultValues = computed(() => ({
 }));
 
 const submitForm = async (FormData, form$) => {
+    form$.messageBag.clear();
+    Object.values(form$.elements$).forEach(clearErrorsRecursive);
     const requestData = form$.requestData;
     const route = props.mode === "create"
         ? props.options.routes.store_route
@@ -385,6 +390,6 @@ const handleError = (error, details, form$) => {
         return;
     }
 
-    form$.messageBag.append("Could not submit form");
+    form$.messageBag.append(trans("Could not submit form"));
 };
 </script>

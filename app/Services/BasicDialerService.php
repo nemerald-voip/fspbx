@@ -496,9 +496,9 @@ class BasicDialerService
     private function defaultDestinationLabel(?string $destinationType): ?string
     {
         return match ($destinationType) {
-            'check_voicemail' => 'Check Voicemail',
-            'company_directory' => 'Company Directory',
-            'hangup' => 'Hang up',
+            'check_voicemail' => __('Check Voicemail'),
+            'company_directory' => __('Company Directory'),
+            'hangup' => __('Hang up'),
             default => null,
         };
     }

@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Http\FormRequest;
+use App\Support\Localization\ValidationMessages;
 
 class UpdateWakeupCallSettingsRequest extends FormRequest
 {
@@ -29,10 +30,7 @@ class UpdateWakeupCallSettingsRequest extends FormRequest
 
     public function messages(): array
     {
-        return [
-            // 'extension.uuid' => 'The extension field is required',
-
-        ];
+        return ValidationMessages::common();
     }
 
     public function prepareForValidation(): void
@@ -64,5 +62,13 @@ class UpdateWakeupCallSettingsRequest extends FormRequest
         $input = preg_replace('/[^\x20-\x7E]/', '', $input);
 
         return $input;
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'allowed_list' => __('Allowed Extensions'),
+            'domain_uuid' => __('Account'),
+        ];
     }
 }

@@ -16,14 +16,14 @@
                         <DialogPanel
                             class="relative transform rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-7xl sm:p-6">
                             <DialogTitle as="h3" class="mb-4 pr-8 text-base font-semibold leading-6 text-gray-900">
-                                {{ header }}
+                                {{ header || $t('Dialplan') }}
                             </DialogTitle>
 
                             <div class="absolute right-0 top-0 pr-4 pt-4 sm:block">
                                 <button type="button"
                                     class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                     @click="handleClose">
-                                    <span class="sr-only">Close</span>
+                                    <span class="sr-only">{{ $t("Close") }}</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
@@ -37,19 +37,19 @@
                                         <path class="opacity-75" fill="currentColor"
                                             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                     </svg>
-                                    <div class="text-lg text-blue-600">Loading...</div>
+                                    <div class="text-lg text-blue-600">{{ $t("Loading...") }}</div>
                                 </div>
                             </div>
 
                             <div v-if="!loading" ref="formContainer$" @keydown.enter.capture="handleEnterSubmit">
-                                <Vueform ref="form$" :endpoint="submitForm" @vue:mounted="handleFormMounted"
+                                <Vueform :locale="formLocale" @mounted="form => form.disableValidation()" ref="form$" :endpoint="submitForm" @vue:mounted="handleFormMounted"
                                     @success="handleSuccess" @error="handleError" @response="handleResponse"
                                     :display-errors="false" :default="defaultValues">
                                     <template #empty>
                                         <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
                                         <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
                                             <FormTabs view="vertical">
-                                                <FormTab name="settings" label="Settings" :elements="[
+                                                <FormTab name="settings" :label="$t(&quot;Settings&quot;)" :elements="[
                                                     'dialplan_uuid',
                                                     'dialplan_uuid_clean',
                                                     'settings_header',
@@ -67,13 +67,13 @@
                                                     'settings_button_container',
                                                     'settings_submit',
                                                 ]" />
-                                                <FormTab name="rules" label="Rules" :elements="[
+                                                <FormTab name="rules" :label="$t(&quot;Rules&quot;)" :elements="[
                                                     'rules_header',
                                                     'dialplan_rule_groups',
                                                     'rules_button_container',
                                                     'rules_submit',
                                                 ]" />
-                                                <FormTab name="xml" label="XML Editor" :elements="[
+                                                <FormTab name="xml" :label="$t(&quot;XML Editor&quot;)" :elements="[
                                                     'advanced_header',
                                                     'xml_editor',
                                                     'advanced_button_container',
@@ -88,13 +88,13 @@
                                                 <HiddenElement name="dialplan_uuid" :meta="true" />
 
                                                 <StaticElement name="settings_header" tag="h4"
-                                                    content="Dialplan Settings"
-                                                    description="Configure the extension metadata FreeSWITCH uses to order and match this dialplan." />
+                                                    :content="$t(&quot;Dialplan Settings&quot;)"
+                                                    :description="$t(&quot;Configure the extension metadata FreeSWITCH uses to order and match this dialplan.&quot;)" />
 
                                                 <StaticElement name="dialplan_uuid_clean"
                                                     :conditions="[() => props.options?.item?.dialplan_uuid]">
                                                     <div class="mb-1">
-                                                        <div class="mb-1 text-sm font-medium text-gray-600">Unique ID
+                                                        <div class="mb-1 text-sm font-medium text-gray-600">{{ $t("Unique ID") }}
                                                         </div>
                                                         <div class="flex items-center group">
                                                             <span class="select-all text-sm font-normal text-gray-900">
@@ -103,7 +103,7 @@
                                                             <button type="button"
                                                                 @click="handleCopyToClipboard(props.options?.item?.dialplan_uuid)"
                                                                 class="ml-2 rounded-full p-1 text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2"
-                                                                title="Copy to clipboard">
+                                                                :title="$t(&quot;Copy to clipboard&quot;)">
                                                                 <ClipboardDocumentIcon
                                                                     class="h-4 w-4 cursor-pointer text-gray-500 hover:text-gray-900" />
                                                             </button>
@@ -111,58 +111,58 @@
                                                     </div>
                                                 </StaticElement>
 
-                                                <TextElement name="dialplan_name" label="Name"
-                                                    placeholder="example_route" :floating="false"
+                                                <TextElement name="dialplan_name" :label="$t(&quot;Name&quot;)"
+                                                    :placeholder="$t(&quot;example_route&quot;)" :floating="false"
                                                     :columns="{ sm: { container: 6 } }" />
 
-                                                <ToggleElement name="dialplan_enabled" text="Dialplan Enabled"
+                                                <ToggleElement name="dialplan_enabled" :text="$t(&quot;Dialplan Enabled&quot;)"
                                                     true-value="true" false-value="false"
-                                                    :labels="{ on: 'On', off: 'Off' }"
+                                                    :labels="{ on: $t(&quot;On&quot;), off: $t(&quot;Off&quot;) }"
                                                     :columns="{ sm: { container: 6 } }" label="&nbsp;" />
 
-                                                <TextElement name="dialplan_number" label="Number"
-                                                    placeholder="Extension or pattern label" :floating="false"
+                                                <TextElement name="dialplan_number" :label="$t(&quot;Number&quot;)"
+                                                    :placeholder="$t(&quot;Extension or pattern label&quot;)" :floating="false"
                                                     :columns="{ sm: { container: 6 } }" />
 
                                                 <SelectElement name="domain_uuid" :items="domainOptions" :search="true"
-                                                    :native="false" label="Domain" input-type="search"
-                                                    autocomplete="off" placeholder="Select domain" :floating="false"
+                                                    :native="false" :label="$t(&quot;Domain&quot;)" input-type="search"
+                                                    autocomplete="off" :placeholder="$t(&quot;Select domain&quot;)" :floating="false"
                                                     :strict="false" :columns="{ sm: { container: 6 } }"
                                                     :conditions="[() => domainOptions.length > 0]" />
 
                                                 <SelectElement name="dialplan_context" :items="contextOptions"
-                                                    :search="true" :native="false" label="Context" input-type="search"
+                                                    :search="true" :native="false" :label="$t(&quot;Context&quot;)" input-type="search"
                                                     allow-absent autocomplete="off" :strict="false"
-                                                    placeholder="Select or enter context" :floating="false"
+                                                    :placeholder="$t(&quot;Select or enter context&quot;)" :floating="false"
                                                     :columns="{ sm: { container: 6 } }" />
 
-                                                <TextElement name="hostname" label="Hostname" :floating="false"
+                                                <TextElement name="hostname" :label="$t(&quot;Hostname&quot;)" :floating="false"
                                                     :columns="{ sm: { container: 6 } }" />
 
-                                                <TextElement name="dialplan_order" input-type="number" label="Order"
+                                                <TextElement name="dialplan_order" input-type="number" :label="$t(&quot;Order&quot;)"
                                                     :floating="false" :columns="{ sm: { container: 4 } }" />
 
                                                 <SelectElement name="dialplan_continue" :items="booleanOptions"
-                                                    :native="false" label="Continue" :floating="false" :strict="true"
+                                                    :native="false" :label="$t(&quot;Continue&quot;)" :floating="false" :strict="true"
                                                     :columns="{ sm: { container: 4 } }" />
 
                                                 <SelectElement name="dialplan_destination" :items="booleanOptions"
-                                                    :native="false" label="Destination" :floating="false" :strict="true"
+                                                    :native="false" :label="$t(&quot;Destination&quot;)" :floating="false" :strict="true"
                                                     :columns="{ sm: { container: 4 } }" />
 
                                                 <GroupElement name="description_container" />
 
-                                                <TextareaElement name="dialplan_description" label="Description"
+                                                <TextareaElement name="dialplan_description" :label="$t(&quot;Description&quot;)"
                                                     :rows="2" />
 
                                                 <GroupElement name="settings_button_container" />
 
-                                                <ButtonElement name="settings_submit" button-label="Save"
+                                                <ButtonElement name="settings_submit" :button-label="$t(&quot;Save&quot;)"
                                                     :submits="true" align="right"
                                                     @click="prepareSubmit('builder', 'settings')" />
 
-                                                <StaticElement name="rules_header" tag="h4" content="Rules"
-                                                    description="Build this dialplan as rule cards with conditions, actions, and optional otherwise actions." />
+                                                <StaticElement name="rules_header" tag="h4" :content="$t(&quot;Rules&quot;)"
+                                                    :description="$t(&quot;Build this dialplan as rule cards with conditions, actions, and optional otherwise actions.&quot;)" />
 
                                                 <ListElement name="dialplan_rule_groups" :sort="true" size="sm"
                                                     :initial="0" :controls="{ add: true, remove: true, sort: true }"
@@ -173,7 +173,7 @@
                                                                 :columns="{ sm: { container: 12 } }">
                                                                 <div>
                                                                     <div class="text-lg font-semibold text-gray-900">
-                                                                        Rule {{ index + 1 }}
+                                                                        {{ $t("Rule") }} {{ index + 1 }}
                                                                     </div>
                                                                 </div>
                                                             </StaticElement>
@@ -186,10 +186,10 @@
                                                             <StaticElement name="conditions_header">
                                                                 <div class="mb-4 mt-4">
                                                                     <div class="text-lg font-semibold text-gray-900">
-                                                                        When
+                                                                        {{ $t("When") }}
                                                                     </div>
                                                                     <div class="mt-1 text-sm text-gray-500">
-                                                                        All listed conditions must match before actions run.
+                                                                        {{ $t("All listed conditions must match before actions run.") }}
                                                                     </div>
                                                                 </div>
                                                             </StaticElement>
@@ -202,31 +202,31 @@
                                                                     <ObjectElement :name="conditionIndex">
                                                                         <SelectElement name="tag"
                                                                             :items="conditionTagOptions" :native="false"
-                                                                            label="Type" :floating="false"
+                                                                            :label="$t(&quot;Type&quot;)" :floating="false"
                                                                             :strict="true"
                                                                             :columns="{ default: { container: 12 }, sm: { wrapper:4, container: 12 }, xl: { wrapper:12, container: 2 } }" />
 
                                                                         <SelectElement name="field"
                                                                             :items="conditionOptions" :search="true"
-                                                                            :create="true" :native="false" label="Field"
+                                                                            :create="true" :native="false" :label="$t(&quot;Field&quot;)"
                                                                             input-type="search" allow-absent
                                                                             autocomplete="off" :strict="false"
                                                                             :floating="false"
                                                                             :columns="{ default: { container: 12 }, sm: { container: 4 }, xl: { container: 3 } }" />
 
                                                                         <TextElement name="expression"
-                                                                            label="Pattern"
-                                                                            placeholder="Regular expression or value"
+                                                                            :label="$t(&quot;Pattern&quot;)"
+                                                                            :placeholder="$t(&quot;Regular expression or value&quot;)"
                                                                             :floating="false"
                                                                             :columns="{ default: { container: 12 }, sm: { container: 8 }, xl: { container: 4 } }" />
 
                                                                         <SelectElement name="break"
                                                                             :items="breakOptions" :native="false"
-                                                                            label="Break" :floating="false"
+                                                                            :label="$t(&quot;Break&quot;)" :floating="false"
                                                                             :strict="false"
                                                                             :columns="{ default: { container: 12 }, sm: { container: 4 }, xl: { container: 2 } }" />
 
-                                                                        <ToggleElement name="enabled" label="On"
+                                                                        <ToggleElement name="enabled" :label="$t(&quot;On&quot;)"
                                                                             true-value="true" false-value="false"
                                                                             default="true"
                                                                             :columns="{ default: { container: 12 }, sm: { container: 6 }, xl: { container: 1 } }"
@@ -238,10 +238,10 @@
                                                             <StaticElement name="actions_header">
                                                                 <div class="mb-4 mt-8 border-t border-gray-200 pt-6">
                                                                     <div class="text-lg font-semibold text-gray-900">
-                                                                        Then
+                                                                        {{ $t("Then") }}
                                                                     </div>
                                                                     <div class="mt-1 text-sm text-gray-500">
-                                                                        Run these actions when the conditions match.
+                                                                        {{ $t("Run these actions when the conditions match.") }}
                                                                     </div>
                                                                 </div>
                                                             </StaticElement>
@@ -255,22 +255,22 @@
                                                                     <ObjectElement :name="actionIndex">
                                                                         <SelectElement name="application"
                                                                             :items="applicationOptions" :search="true"
-                                                                            :native="false" label="Do"
+                                                                            :native="false" :label="$t(&quot;Do&quot;)"
                                                                             input-type="search" allow-absent
                                                                             autocomplete="off" :strict="false"
                                                                             :floating="false"
                                                                             :columns="{ default: { container: 12 }, sm: { container: 3 }, xl: { container: 3 } }" />
 
-                                                                        <TextElement name="data" label="Arguments"
-                                                                            placeholder="Application data"
+                                                                        <TextElement name="data" :label="$t(&quot;Arguments&quot;)"
+                                                                            :placeholder="$t(&quot;Application data&quot;)"
                                                                             :floating="false"
                                                                             :columns="{ default: { container: 12 }, sm: { container: 9 }, xl: { container: 7 } }" />
 
-                                                                        <ToggleElement name="inline" label="Inline"
+                                                                        <ToggleElement name="inline" :label="$t(&quot;Inline&quot;)"
                                                                             :columns="{ default: { container: 6 }, sm: { container: 2 }, xl: { container: 1 } }"
                                                                             :add-class="{ wrapper: 'pt-1' }" />
 
-                                                                        <ToggleElement name="enabled" label="On"
+                                                                        <ToggleElement name="enabled" :label="$t(&quot;On&quot;)"
                                                                             true-value="true" false-value="false"
                                                                             default="true"
                                                                             :columns="{ default: { container: 6 }, sm: { container: 2 }, xl: { container: 1 } }"
@@ -282,10 +282,10 @@
                                                             <StaticElement name="anti_actions_header">
                                                                 <div class="mb-4 mt-8 border-t border-gray-200 pt-6">
                                                                     <div class="text-lg font-semibold text-gray-900">
-                                                                        Otherwise
+                                                                        {{ $t("Otherwise") }}
                                                                     </div>
                                                                     <div class="mt-1 text-sm text-gray-500">
-                                                                        Run these actions when the conditions do not match.
+                                                                        {{ $t("Run these actions when the conditions do not match.") }}
                                                                     </div>
                                                                 </div>
                                                             </StaticElement>
@@ -299,22 +299,22 @@
                                                                     <ObjectElement :name="antiActionIndex">
                                                                         <SelectElement name="application"
                                                                             :items="applicationOptions" :search="true"
-                                                                            :native="false" label="Do"
+                                                                            :native="false" :label="$t(&quot;Do&quot;)"
                                                                             input-type="search" allow-absent
                                                                             autocomplete="off" :strict="false"
                                                                             :floating="false"
                                                                             :columns="{ default: { container: 12 }, sm: { container: 3 }, xl: { container: 3 } }" />
 
-                                                                        <TextElement name="data" label="Arguments"
-                                                                            placeholder="Application data"
+                                                                        <TextElement name="data" :label="$t(&quot;Arguments&quot;)"
+                                                                            :placeholder="$t(&quot;Application data&quot;)"
                                                                             :floating="false"
                                                                             :columns="{ default: { container: 12 }, sm: { container: 9 }, xl: { container: 7 } }" />
 
-                                                                        <ToggleElement name="inline" label="Inline"
+                                                                        <ToggleElement name="inline" :label="$t(&quot;Inline&quot;)"
                                                                             :columns="{ default: { container: 12 }, sm: { container: 6 }, xl: { container: 1 } }"
                                                                             :add-class="{ wrapper: 'pt-1' }" />
 
-                                                                        <ToggleElement name="enabled" label="On"
+                                                                        <ToggleElement name="enabled" :label="$t(&quot;On&quot;)"
                                                                             true-value="true" false-value="false"
                                                                             default="true"
                                                                             :columns="{ default: { container: 12 }, sm: { container: 6 }, xl: { container: 1 } }"
@@ -328,21 +328,21 @@
 
                                                 <GroupElement name="rules_button_container" />
 
-                                                <ButtonElement name="rules_submit" button-label="Save" :submits="true"
+                                                <ButtonElement name="rules_submit" :button-label="$t(&quot;Save&quot;)" :submits="true"
                                                     align="right" @click="prepareSubmit('builder', 'rules')" />
 
-                                                <StaticElement name="advanced_header" tag="h4" content="XML Editor"
-                                                    description="Edit the raw FreeSWITCH XML for this dialplan. Saving here updates the XML directly." />
+                                                <StaticElement name="advanced_header" tag="h4" :content="$t(&quot;XML Editor&quot;)"
+                                                    :description="$t(&quot;Edit the raw FreeSWITCH XML for this dialplan. Saving here updates the XML directly.&quot;)" />
 
                                                 <StaticElement name="xml_editor">
                                                     <div>
                                                         <div class="mb-2 flex items-center justify-between gap-3">
-                                                            <div class="text-sm font-medium text-gray-700">Dialplan XML
+                                                            <div class="text-sm font-medium text-gray-700">{{ $t("Dialplan XML") }}
                                                             </div>
                                                             <select v-model="xmlEditorTheme"
                                                                 class="rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                                                <option value="chrome">Light</option>
-                                                                <option value="one_dark">Dark</option>
+                                                                <option value="chrome">{{ $t("Light") }}</option>
+                                                                <option value="one_dark">{{ $t("Dark") }}</option>
                                                             </select>
                                                         </div>
 
@@ -362,7 +362,7 @@
 
                                                 <GroupElement name="advanced_button_container" />
 
-                                                <ButtonElement name="advanced_submit" button-label="Save"
+                                                <ButtonElement name="advanced_submit" :button-label="$t(&quot;Save&quot;)"
                                                     :submits="true" align="right" @click="prepareSubmit('xml', 'xml')" />
                                             </FormElements>
                                         </div>
@@ -379,11 +379,15 @@
 </template>
 
 <script setup>
+import { useVueformLocale } from "../../../composables/useVueformLocale.js";
+import { trans } from "@i18n";
 import { computed, ref } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from "@headlessui/vue";
 import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
 import { XMarkIcon } from "@heroicons/vue/24/solid";
 import AceEditor from "@generalComponents/AceEditor.vue";
+
+const formLocale = useVueformLocale();
 
 const props = defineProps({
     show: Boolean,
@@ -391,7 +395,7 @@ const props = defineProps({
     loading: Boolean,
     header: {
         type: String,
-        default: "Dialplan",
+        default: "",
     },
     mode: {
         type: String,
@@ -467,23 +471,23 @@ const contextOptions = computed(() => props.options?.context_options ?? []);
 const conditionOptions = computed(() => props.options?.condition_options ?? []);
 const applicationOptions = computed(() => props.options?.application_options ?? []);
 
-const booleanOptions = [
-    { value: "true", label: "True" },
-    { value: "false", label: "False" },
-];
+const booleanOptions = computed(() => [
+    { value: "true", label: trans("True") },
+    { value: "false", label: trans("False") },
+]);
 
-const conditionTagOptions = [
-    { value: "condition", label: "Condition" },
-    { value: "regex", label: "Regex" },
-];
+const conditionTagOptions = computed(() => [
+    { value: "condition", label: trans("Condition") },
+    { value: "regex", label: trans("Regex") },
+]);
 
-const breakOptions = [
+const breakOptions = computed(() => [
     { value: null, label: "" },
-    { value: "on-true", label: "On True" },
-    { value: "on-false", label: "On False" },
-    { value: "always", label: "Always" },
-    { value: "never", label: "Never" },
-];
+    { value: "on-true", label: trans("On True") },
+    { value: "on-false", label: trans("On False") },
+    { value: "always", label: trans("Always") },
+    { value: "never", label: trans("Never") },
+]);
 
 const defaultXmlTemplate = (item = {}) => {
     const name = item.dialplan_name ?? "";
@@ -721,13 +725,15 @@ const ruleGroupsToDetails = (ruleGroups) => {
 
 const handleCopyToClipboard = (text) => {
     navigator.clipboard.writeText(text).then(() => {
-        emit("success", "success", { message: ["Copied to clipboard."] });
+        emit("success", "success", { message: [trans("Copied to clipboard.")] });
     }).catch(() => {
-        emit("error", { response: { data: { errors: { request: ["Failed to copy to clipboard."] } } } });
+        emit("error", { response: { data: { errors: { request: [trans("Failed to copy to clipboard.")] } } } });
     });
 };
 
 const submitForm = async (FormData, form$) => {
+    form$.messageBag.clear();
+    Object.values(form$.elements$).forEach(clearErrorsRecursive);
     const requestData = { ...form$.requestData };
     xmlEditorError.value = null;
 
@@ -774,7 +780,9 @@ const handleResponse = (response, form$) => {
 
     if (response.data.errors) {
         Object.keys(response.data.errors).forEach((elName) => {
-            const el$ = form$.el$(elName) || (elName === "dialplan_xml" ? form$.el$("xml_editor") : null);
+            const el$ = form$.el$(elName)
+                || (elName === "dialplan_xml" ? form$.el$("xml_editor") : null)
+                || (elName.startsWith("dialplan_details") ? form$.el$("dialplan_rule_groups") : null);
 
             if (elName === "dialplan_xml") {
                 xmlEditorError.value = response.data.errors[elName][0];
@@ -801,6 +809,6 @@ const handleError = (error, details, form$) => {
         return;
     }
 
-    form$.messageBag.append("Could not submit form");
+    form$.messageBag.append(trans("Could not submit form"));
 };
-</script>h
+</script>

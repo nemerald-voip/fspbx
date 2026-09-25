@@ -20,20 +20,20 @@
                             <button type="button"
                                 class="absolute right-4 top-4 rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                 @click="emit('close')">
-                                <span class="sr-only">Close</span>
+                                <span class="sr-only">{{ $t("Close") }}</span>
                                 <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                             </button>
 
-                            <div v-if="loading" class="py-10 text-center text-sm text-gray-500">Loading...</div>
+                            <div v-if="loading" class="py-10 text-center text-sm text-gray-500">{{ $t("Loading...") }}</div>
 
-                            <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
+                            <Vueform :locale="formLocale" @mounted="form => form.disableValidation()" v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
                                 @error="handleError" @response="handleResponse" :display-errors="false"
                                 :float-placeholders="false" :default="defaultValues">
                                 <template #empty>
                                     <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
                                         <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
                                             <FormTabs view="vertical">
-                                                <FormTab name="settings" label="Settings" :elements="[
+                                                <FormTab name="settings" :label="$t(&quot;Settings&quot;)" :elements="[
                                                     'agent_contact',
                                                     'agent_name',
                                                     'agent_type',
@@ -41,7 +41,7 @@
                                                     'agent_call_timeout',
                                                     'settings_submit',
                                                 ]" />
-                                                <FormTab name="advanced" label="Advanced" :elements="[
+                                                <FormTab name="advanced" :label="$t(&quot;Advanced&quot;)" :elements="[
                                                     'agent_id',
                                                     'agent_password',
                                                     'agent_max_no_answer',
@@ -57,51 +57,51 @@
 
                                         <div class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
                                             <FormElements>
-                                                <SelectElement name="agent_contact" label="Contact" :items="contactOptions"
+                                                <SelectElement name="agent_contact" :label="$t(&quot;Contact&quot;)" :items="contactOptions"
                                                     :search="true" :native="false" :strict="false" allow-absent
                                                     @change="handleAgentContactChange"
                                                     :columns="{ sm: { container: 12 } }" />
 
-                                                <TextElement name="agent_name" label="Agent Name" :floating="false"
+                                                <TextElement name="agent_name" :label="$t(&quot;Agent Name&quot;)" :floating="false"
                                                     :columns="{ sm: { container: 6 } }" />
 
-                                                <SelectElement name="agent_type" label="Type" :native="false"
+                                                <SelectElement name="agent_type" :label="$t(&quot;Type&quot;)" :native="false"
                                                     :items="typeOptions" :columns="{ sm: { container: 6 } }" />
 
-                                                <SelectElement name="agent_status" label="Default Status" :native="false"
+                                                <SelectElement name="agent_status" :label="$t(&quot;Default Status&quot;)" :native="false"
                                                     :items="statusOptions" :columns="{ sm: { container: 6 } }" />
 
-                                                <TextElement name="agent_call_timeout" input-type="number" label="Call Timeout"
+                                                <TextElement name="agent_call_timeout" input-type="number" :label="$t(&quot;Call Timeout&quot;)"
                                                     :floating="false" :columns="{ sm: { container: 6 } }" />
 
-                                                <ButtonElement name="settings_submit" button-label="Save" :submits="true" align="right" />
+                                                <ButtonElement name="settings_submit" :button-label="$t(&quot;Save&quot;)" :submits="true" align="right" />
 
-                                                <TextElement name="agent_id" input-type="number" label="Agent ID"
+                                                <TextElement name="agent_id" input-type="number" :label="$t(&quot;Agent ID&quot;)"
                                                     :floating="false" :columns="{ sm: { container: 6 } }" />
 
-                                                <TextElement name="agent_password" input-type="password" label="Agent Password"
+                                                <TextElement name="agent_password" input-type="password" :label="$t(&quot;Agent Password&quot;)"
                                                     :floating="false" :columns="{ sm: { container: 6 } }" />
 
-                                                <TextElement name="agent_max_no_answer" input-type="number" label="Max No Answer"
+                                                <TextElement name="agent_max_no_answer" input-type="number" :label="$t(&quot;Max No Answer&quot;)"
                                                     :floating="false" :columns="{ sm: { container: 6 } }" />
 
                                                 <TextElement name="agent_no_answer_delay_time" input-type="number"
-                                                    label="No Answer Delay" :floating="false" :columns="{ sm: { container: 6 } }" />
+                                                    :label="$t(&quot;No Answer Delay&quot;)" :floating="false" :columns="{ sm: { container: 6 } }" />
 
-                                                <TextElement name="agent_wrap_up_time" input-type="number" label="Wrap Up Time"
+                                                <TextElement name="agent_wrap_up_time" input-type="number" :label="$t(&quot;Wrap Up Time&quot;)"
                                                     :floating="false" :columns="{ sm: { container: 6 } }" />
 
                                                 <TextElement name="agent_reject_delay_time" input-type="number"
-                                                    label="Reject Delay" :floating="false" :columns="{ sm: { container: 6 } }" />
+                                                    :label="$t(&quot;Reject Delay&quot;)" :floating="false" :columns="{ sm: { container: 6 } }" />
 
-                                                <TextElement name="agent_busy_delay_time" input-type="number" label="Busy Delay"
+                                                <TextElement name="agent_busy_delay_time" input-type="number" :label="$t(&quot;Busy Delay&quot;)"
                                                     :floating="false" :columns="{ sm: { container: 6 } }" />
 
-                                                <ToggleElement name="agent_record" text="Record Agent"
-                                                    true-value="true" false-value="false" :labels="{ on: 'On', off: 'Off' }"
+                                                <ToggleElement name="agent_record" :text="$t(&quot;Record Agent&quot;)"
+                                                    true-value="true" false-value="false" :labels="{ on: $t(&quot;On&quot;), off: $t(&quot;Off&quot;) }"
                                                     label="&nbsp;" :columns="{ sm: { container: 6 } }" />
 
-                                                <ButtonElement name="advanced_submit" button-label="Save" :submits="true" align="right" />
+                                                <ButtonElement name="advanced_submit" :button-label="$t(&quot;Save&quot;)" :submits="true" align="right" />
                                             </FormElements>
                                         </div>
                                     </div>
@@ -116,9 +116,13 @@
 </template>
 
 <script setup>
+import { useVueformLocale } from "../../../composables/useVueformLocale.js";
+import { trans } from "@i18n";
 import { computed, ref } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from "@headlessui/vue";
 import { XMarkIcon } from "@heroicons/vue/24/solid";
+
+const formLocale = useVueformLocale();
 
 const props = defineProps({
     show: Boolean,
@@ -134,16 +138,16 @@ const props = defineProps({
 const emit = defineEmits(["close", "error", "success", "refresh-data"]);
 const form$ = ref(null);
 
-const typeOptions = [
-    { value: "callback", label: "Callback" },
-    { value: "uuid-standby", label: "UUID Standby" },
-];
+const typeOptions = computed(() => [
+    { value: "callback", label: trans("Callback") },
+    { value: "uuid-standby", label: trans("UUID Standby") },
+]);
 
-const statusOptions = [
-    { value: "Logged Out", label: "Logged Out" },
-    { value: "Available", label: "Available" },
-    { value: "On Break", label: "On Break" },
-];
+const statusOptions = computed(() => [
+    { value: "Logged Out", label: trans("Logged Out") },
+    { value: "Available", label: trans("Available") },
+    { value: "On Break", label: trans("On Break") },
+]);
 
 const defaultValues = computed(() => ({
     agent_name: props.options?.item?.agent_name ?? null,
@@ -216,6 +220,8 @@ function agentNameFromContact(value) {
 }
 
 const submitForm = async (FormData, form$) => {
+    form$.messageBag.clear();
+    Object.values(form$.elements$).forEach(clearErrorsRecursive);
     const requestData = form$.requestData;
     const route = props.mode === "create"
         ? props.options.routes.store_route
@@ -259,6 +265,6 @@ const handleError = (error, details, form$) => {
         return;
     }
 
-    form$.messageBag.append("Could not submit form");
+    form$.messageBag.append(trans("Could not submit form"));
 };
 </script>

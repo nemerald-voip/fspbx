@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\Localization\ValidationMessages;
+
 use App\Models\BasicDialerCampaign;
 use App\Models\BasicDialerCampaignAttempt;
 use App\Models\BasicDialerCampaignRecipient;
@@ -63,18 +65,18 @@ class BasicDialerController extends Controller
     public function startCampaign(BasicDialerCampaign $campaign, BasicDialerService $service): JsonResponse
     {
         if (! userCheckPermission('basic_dialer_start') || $campaign->domain_uuid !== session('domain_uuid')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         if (blank($campaign->destination_target)) {
             return response()->json([
-                'messages' => ['error' => ['Choose a campaign destination before starting.']],
+                'messages' => ['error' => [__('Choose a campaign destination before starting.')]],
             ], 422);
         }
 
         if (blank($campaign->caller_id_number)) {
             return response()->json([
-                'messages' => ['error' => ['Choose a caller ID number before starting.']],
+                'messages' => ['error' => [__('Choose a caller ID number before starting.')]],
             ], 422);
         }
 
@@ -82,40 +84,40 @@ class BasicDialerController extends Controller
         RunBasicDialerCampaignsJob::dispatch($campaign->basic_dialer_campaign_uuid);
 
         return response()->json([
-            'messages' => ['success' => ['Campaign started.']],
+            'messages' => ['success' => [__('Campaign started.')]],
         ]);
     }
 
     public function pauseCampaign(BasicDialerCampaign $campaign, BasicDialerService $service): JsonResponse
     {
         if (! userCheckPermission('basic_dialer_start') || $campaign->domain_uuid !== session('domain_uuid')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $service->pauseCampaign($campaign);
 
         return response()->json([
-            'messages' => ['success' => ['Campaign paused.']],
+            'messages' => ['success' => [__('Campaign paused.')]],
         ]);
     }
 
     public function stopCampaign(BasicDialerCampaign $campaign, BasicDialerService $service): JsonResponse
     {
         if (! userCheckPermission('basic_dialer_start') || $campaign->domain_uuid !== session('domain_uuid')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $service->stopCampaign($campaign);
 
         return response()->json([
-            'messages' => ['success' => ['Campaign stopped.']],
+            'messages' => ['success' => [__('Campaign stopped.')]],
         ]);
     }
 
     public function getOverview(): JsonResponse
     {
         if (! userCheckPermission('basic_dialer_view')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $domainUuid = session('domain_uuid');
@@ -259,7 +261,7 @@ class BasicDialerController extends Controller
     public function getCampaignStatus(BasicDialerCampaign $campaign): JsonResponse
     {
         if (! userCheckPermission('basic_dialer_view') || $campaign->domain_uuid !== session('domain_uuid')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $campaign->load(['contactList:basic_dialer_contact_list_uuid,name']);
@@ -377,7 +379,7 @@ class BasicDialerController extends Controller
     public function storeCampaign(Request $request, BasicDialerService $service): JsonResponse
     {
         if (! userCheckPermission('basic_dialer_create')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $validated = $this->validatedCampaign($request);
@@ -388,7 +390,7 @@ class BasicDialerController extends Controller
         $campaign = $service->saveCampaign($validated);
 
         return response()->json([
-            'messages' => ['success' => ['Campaign created.']],
+            'messages' => ['success' => [__('Campaign created.')]],
             'basic_dialer_campaign_uuid' => $campaign->basic_dialer_campaign_uuid,
         ], 201);
     }
@@ -396,7 +398,7 @@ class BasicDialerController extends Controller
     public function updateCampaign(Request $request, BasicDialerCampaign $campaign, BasicDialerService $service): JsonResponse
     {
         if (! userCheckPermission('basic_dialer_update') || $campaign->domain_uuid !== session('domain_uuid')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $validated = $this->validatedCampaign($request, $campaign);
@@ -407,14 +409,14 @@ class BasicDialerController extends Controller
         $service->saveCampaign($validated, $campaign);
 
         return response()->json([
-            'messages' => ['success' => ['Campaign updated.']],
+            'messages' => ['success' => [__('Campaign updated.')]],
         ]);
     }
 
     public function storeContactList(Request $request, BasicDialerService $service): JsonResponse
     {
         if (! userCheckPermission('basic_dialer_create')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $validated = $this->validatedContactList($request);
@@ -425,7 +427,7 @@ class BasicDialerController extends Controller
         $contactList = $service->saveContactList($validated);
 
         return response()->json([
-            'messages' => ['success' => ['Contact list created.']],
+            'messages' => ['success' => [__('Contact list created.')]],
             'basic_dialer_contact_list_uuid' => $contactList->basic_dialer_contact_list_uuid,
         ], 201);
     }
@@ -433,7 +435,7 @@ class BasicDialerController extends Controller
     public function updateContactList(Request $request, BasicDialerContactList $contactList, BasicDialerService $service): JsonResponse
     {
         if (! userCheckPermission('basic_dialer_update') || $contactList->domain_uuid !== session('domain_uuid')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $validated = $this->validatedContactList($request);
@@ -444,7 +446,7 @@ class BasicDialerController extends Controller
         $service->saveContactList($validated, $contactList);
 
         return response()->json([
-            'messages' => ['success' => ['Contact list updated.']],
+            'messages' => ['success' => [__('Contact list updated.')]],
         ]);
     }
 
@@ -453,11 +455,11 @@ class BasicDialerController extends Controller
         $itemUuid = $request->input('itemUuid', $request->input('item_uuid'));
 
         if ($itemUuid && ! userCheckPermission('basic_dialer_update')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         if (! $itemUuid && ! userCheckPermission('basic_dialer_create')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $item = $itemUuid
@@ -494,11 +496,11 @@ class BasicDialerController extends Controller
         $itemUuid = $request->input('itemUuid', $request->input('item_uuid'));
 
         if ($itemUuid && ! userCheckPermission('basic_dialer_update')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         if (! $itemUuid && ! userCheckPermission('basic_dialer_create')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $item = $itemUuid
@@ -528,7 +530,7 @@ class BasicDialerController extends Controller
     public function getContactsForList(Request $request, BasicDialerContactList $contactList): JsonResponse
     {
         if (! userCheckPermission('basic_dialer_view') || $contactList->domain_uuid !== session('domain_uuid')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $perPage = max(5, min(100, (int) $request->input('per_page', 20)));
@@ -562,25 +564,25 @@ class BasicDialerController extends Controller
     public function deleteContact(BasicDialerContactList $contactList, BasicDialerContact $contact): JsonResponse
     {
         if (! userCheckPermission('basic_dialer_update') || $contactList->domain_uuid !== session('domain_uuid')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         if ($contact->basic_dialer_contact_list_uuid !== $contactList->basic_dialer_contact_list_uuid
             || $contact->domain_uuid !== session('domain_uuid')) {
-            return response()->json(['messages' => ['error' => ['Contact not found.']]], 404);
+            return response()->json(['messages' => ['error' => [__('Contact not found.')]]], 404);
         }
 
         $contact->delete();
 
         return response()->json([
-            'messages' => ['success' => ['Contact deleted.']],
+            'messages' => ['success' => [__('Contact deleted.')]],
         ]);
     }
 
     public function getCampaignData(Request $request)
     {
         if (! userCheckPermission('basic_dialer_view')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         return $this->scopedCampaigns($request)
@@ -617,7 +619,7 @@ class BasicDialerController extends Controller
     public function getContactListData(Request $request)
     {
         if (! userCheckPermission('basic_dialer_view')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         return $this->scopedContactLists($request)
@@ -638,64 +640,64 @@ class BasicDialerController extends Controller
     public function selectAllCampaigns(Request $request): JsonResponse
     {
         if (! userCheckPermission('basic_dialer_view')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         return response()->json([
             'items' => $this->scopedCampaigns($request)
                 ->defaultSort('name')
                 ->pluck('basic_dialer_campaign_uuid'),
-            'messages' => ['success' => ['All matching campaigns selected.']],
+            'messages' => ['success' => [__('All matching campaigns selected.')]],
         ]);
     }
 
     public function selectAllContactLists(Request $request): JsonResponse
     {
         if (! userCheckPermission('basic_dialer_view')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         return response()->json([
             'items' => $this->scopedContactLists($request)
                 ->defaultSort('name')
                 ->pluck('basic_dialer_contact_list_uuid'),
-            'messages' => ['success' => ['All matching contact lists selected.']],
+            'messages' => ['success' => [__('All matching contact lists selected.')]],
         ]);
     }
 
     public function bulkDeleteCampaigns(Request $request, BasicDialerService $service): JsonResponse
     {
         if (! userCheckPermission('basic_dialer_delete')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $items = $this->campaignsFromRequest($request);
         if ($items->isEmpty()) {
-            return response()->json(['messages' => ['error' => ['No campaigns selected.']]], 422);
+            return response()->json(['messages' => ['error' => [__('No campaigns selected.')]]], 422);
         }
 
         $deleted = $service->deleteCampaigns($items);
 
         return response()->json([
-            'messages' => ['success' => ["Deleted {$deleted} campaign(s)."]],
+            'messages' => ['success' => [trans_choice('Deleted :count campaign.|Deleted :count campaigns.', $deleted)]],
         ]);
     }
 
     public function bulkDeleteContactLists(Request $request, BasicDialerService $service): JsonResponse
     {
         if (! userCheckPermission('basic_dialer_delete')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $items = $this->contactListsFromRequest($request);
         if ($items->isEmpty()) {
-            return response()->json(['messages' => ['error' => ['No contact lists selected.']]], 422);
+            return response()->json(['messages' => ['error' => [__('No contact lists selected.')]]], 422);
         }
 
         $deleted = $service->deleteContactLists($items);
 
         return response()->json([
-            'messages' => ['success' => ["Deleted {$deleted} contact list(s)."]],
+            'messages' => ['success' => [trans_choice('Deleted :count contact list.|Deleted :count contact lists.', $deleted)]],
         ]);
     }
 
@@ -787,12 +789,27 @@ class BasicDialerController extends Controller
             'retry_limit' => ['required', 'integer', 'min:0', 'max:10'],
             'retry_delay_minutes' => ['required', 'integer', 'min:1', 'max:10080'],
             'originate_timeout' => ['required', 'integer', 'min:5', 'max:300'],
+        ], ValidationMessages::common(), [
+            'name' => __('Name'),
+            'basic_dialer_contact_list_uuid' => __('Contact List'),
+            'description' => __('Description'),
+            'enabled' => __('Enabled'),
+            'caller_id_name' => __('Caller ID Name'),
+            'caller_id_number' => __('Caller ID Number'),
+            'destination_type' => __('Action'),
+            'destination_target' => __('Target'),
+            'max_concurrent_calls' => __('Concurrent Calls'),
+            'seconds_between_calls' => __('Seconds Between Calls'),
+            'retry_limit' => __('Retry Limit'),
+            'retry_delay_minutes' => __('Retry Delay (minutes)'),
+            'originate_timeout' => __('Call Timeout'),
+            'contacts' => __('Contacts'),
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'errors' => $validator->errors(),
-                'messages' => ['error' => ['Invalid campaign details.']],
+                'messages' => ['error' => [__('Invalid campaign details.')]],
             ], 422);
         }
 
@@ -808,8 +825,8 @@ class BasicDialerController extends Controller
             && blank($destinationValue)
         ) {
             return response()->json([
-                'errors' => ['destination_target' => ['Choose a target.']],
-                'messages' => ['error' => ['Invalid campaign details.']],
+                'errors' => ['destination_target' => [__('Choose a target.')]],
+                'messages' => ['error' => [__('Invalid campaign details.')]],
             ], 422);
         }
 
@@ -820,8 +837,8 @@ class BasicDialerController extends Controller
             ->whereKey($contactListUuid)
             ->exists()) {
             return response()->json([
-                'errors' => ['basic_dialer_contact_list_uuid' => ['Contact list not found.']],
-                'messages' => ['error' => ['Invalid campaign details.']],
+                'errors' => ['basic_dialer_contact_list_uuid' => [__('Contact list not found.')]],
+                'messages' => ['error' => [__('Invalid campaign details.')]],
             ], 422);
         }
 
@@ -835,12 +852,27 @@ class BasicDialerController extends Controller
             'description' => ['nullable', 'string'],
             'enabled' => ['nullable', 'boolean'],
             'contacts' => ['nullable', 'string'],
+        ], ValidationMessages::common(), [
+            'name' => __('Name'),
+            'basic_dialer_contact_list_uuid' => __('Contact List'),
+            'description' => __('Description'),
+            'enabled' => __('Enabled'),
+            'caller_id_name' => __('Caller ID Name'),
+            'caller_id_number' => __('Caller ID Number'),
+            'destination_type' => __('Action'),
+            'destination_target' => __('Target'),
+            'max_concurrent_calls' => __('Concurrent Calls'),
+            'seconds_between_calls' => __('Seconds Between Calls'),
+            'retry_limit' => __('Retry Limit'),
+            'retry_delay_minutes' => __('Retry Delay (minutes)'),
+            'originate_timeout' => __('Call Timeout'),
+            'contacts' => __('Contacts'),
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'errors' => $validator->errors(),
-                'messages' => ['error' => ['Invalid contact list details.']],
+                'messages' => ['error' => [__('Invalid contact list details.')]],
             ], 422);
         }
 

@@ -91,11 +91,11 @@ class ScheduledAnnouncementController extends Controller
             'speeds' => $voiceOptions['speeds'],
             'timezones' => getGroupedTimezones(),
             'phone_call_instructions' => [
-                'Dial <strong>*732</strong> from your phone.',
-                'Enter any extension number when prompted and press <strong>#</strong>.',
-                'Follow the prompts to record your greeting.',
+                __('Dial <strong>*732</strong> from your phone.'),
+                __('Enter any extension number when prompted and press <strong>#</strong>.'),
+                __('Follow the prompts to record your greeting.'),
             ],
-            'sample_message' => 'This is a scheduled announcement.',
+            'sample_message' => __('This is a scheduled announcement.'),
         ]);
     }
 
@@ -103,7 +103,7 @@ class ScheduledAnnouncementController extends Controller
     {
         $schedule = $service->saveSchedule($request->validatedData());
 
-        return response()->json(['messages' => ['server' => ['Schedule saved.']], 'schedule' => $schedule]);
+        return response()->json(['messages' => ['server' => [__('Schedule saved.')]], 'schedule' => $schedule]);
     }
 
     public function updateSchedule(UpdateScheduledAnnouncementScheduleRequest $request, ScheduledAnnouncementSchedule $schedule, ScheduledAnnouncementService $service): JsonResponse
@@ -111,7 +111,7 @@ class ScheduledAnnouncementController extends Controller
         $this->assertDomain($schedule);
         $schedule = $service->saveSchedule($request->validatedData(), $schedule);
 
-        return response()->json(['messages' => ['server' => ['Schedule updated.']], 'schedule' => $schedule]);
+        return response()->json(['messages' => ['server' => [__('Schedule updated.')]], 'schedule' => $schedule]);
     }
 
     public function destroySchedule(ScheduledAnnouncementSchedule $schedule): JsonResponse
@@ -122,14 +122,14 @@ class ScheduledAnnouncementController extends Controller
         ScheduledAnnouncementException::where('scheduled_announcement_schedule_uuid', $schedule->scheduled_announcement_schedule_uuid)->delete();
         $schedule->delete();
 
-        return response()->json(['messages' => ['server' => ['Schedule deleted.']]]);
+        return response()->json(['messages' => ['server' => [__('Schedule deleted.')]]]);
     }
 
     public function storeEvent(StoreScheduledAnnouncementEventRequest $request, ScheduledAnnouncementService $service): JsonResponse
     {
         $event = $service->saveEvent($request->validatedData());
 
-        return response()->json(['messages' => ['server' => ['Announcement time saved.']], 'event' => $event]);
+        return response()->json(['messages' => ['server' => [__('Announcement time saved.')]], 'event' => $event]);
     }
 
     public function updateEvent(UpdateScheduledAnnouncementEventRequest $request, ScheduledAnnouncementEvent $event, ScheduledAnnouncementService $service): JsonResponse
@@ -137,7 +137,7 @@ class ScheduledAnnouncementController extends Controller
         $this->assertDomain($event);
         $event = $service->saveEvent($request->validatedData(), $event);
 
-        return response()->json(['messages' => ['server' => ['Announcement time updated.']], 'event' => $event]);
+        return response()->json(['messages' => ['server' => [__('Announcement time updated.')]], 'event' => $event]);
     }
 
     public function destroyEvent(ScheduledAnnouncementEvent $event): JsonResponse
@@ -146,7 +146,7 @@ class ScheduledAnnouncementController extends Controller
         $this->assertDomain($event);
         $event->delete();
 
-        return response()->json(['messages' => ['server' => ['Announcement time deleted.']]]);
+        return response()->json(['messages' => ['server' => [__('Announcement time deleted.')]]]);
     }
 
     public function runEvent(ScheduledAnnouncementEvent $event, ScheduledAnnouncementService $service): JsonResponse
@@ -155,14 +155,14 @@ class ScheduledAnnouncementController extends Controller
         $this->assertDomain($event);
         $run = $service->runNow($event);
 
-        return response()->json(['messages' => ['server' => ['Run requested.']], 'run' => $run]);
+        return response()->json(['messages' => ['server' => [__('Run requested.')]], 'run' => $run]);
     }
 
     public function storeException(StoreScheduledAnnouncementExceptionRequest $request, ScheduledAnnouncementService $service): JsonResponse
     {
         $exception = $service->saveException($request->validatedData());
 
-        return response()->json(['messages' => ['server' => ['Exclusion saved.']], 'exception' => $exception]);
+        return response()->json(['messages' => ['server' => [__('Exclusion saved.')]], 'exception' => $exception]);
     }
 
     public function updateException(UpdateScheduledAnnouncementExceptionRequest $request, ScheduledAnnouncementException $exception, ScheduledAnnouncementService $service): JsonResponse
@@ -170,7 +170,7 @@ class ScheduledAnnouncementController extends Controller
         $this->assertDomain($exception);
         $exception = $service->saveException($request->validatedData(), $exception);
 
-        return response()->json(['messages' => ['server' => ['Exclusion updated.']], 'exception' => $exception]);
+        return response()->json(['messages' => ['server' => [__('Exclusion updated.')]], 'exception' => $exception]);
     }
 
     public function destroyException(ScheduledAnnouncementException $exception): JsonResponse
@@ -179,7 +179,7 @@ class ScheduledAnnouncementController extends Controller
         $this->assertDomain($exception);
         $exception->delete();
 
-        return response()->json(['messages' => ['server' => ['Exclusion deleted.']]]);
+        return response()->json(['messages' => ['server' => [__('Exclusion deleted.')]]]);
     }
 
     private function recordingOptions(string $domainUuid): array

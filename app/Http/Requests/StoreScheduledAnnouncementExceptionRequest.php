@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Support\Localization\ValidationMessages;
 use Illuminate\Validation\Rule;
 
 class StoreScheduledAnnouncementExceptionRequest extends FormRequest
@@ -32,5 +33,21 @@ class StoreScheduledAnnouncementExceptionRequest extends FormRequest
         $data['domain_uuid'] = session('domain_uuid');
 
         return $data;
+    }
+
+    public function messages(): array
+    {
+        return ValidationMessages::common() + [
+            'timezone' => __('The :attribute must be a valid timezone.'),
+        ];
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'scheduled_announcement_schedule_uuid' => __('Schedule'),
+            'exception_date' => __('Date'),
+            'comment' => __('Comment'),
+        ];
     }
 }

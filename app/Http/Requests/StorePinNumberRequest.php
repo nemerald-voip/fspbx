@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Support\Localization\ValidationMessages;
 use Illuminate\Validation\Rule;
 
 class StorePinNumberRequest extends FormRequest
@@ -27,5 +28,20 @@ class StorePinNumberRequest extends FormRequest
         $this->merge([
             'enabled' => $this->input('enabled', 'true'),
         ]);
+    }
+
+    public function messages(): array
+    {
+        return ValidationMessages::common();
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'pin_number' => __('PIN Number'),
+            'accountcode' => __('Account Code'),
+            'enabled' => __('Enabled'),
+            'description' => __('Description'),
+        ];
     }
 }

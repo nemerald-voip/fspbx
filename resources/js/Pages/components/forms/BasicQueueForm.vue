@@ -22,20 +22,20 @@
                             <button type="button"
                                 class="absolute right-4 top-4 rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                 @click="emit('close')">
-                                <span class="sr-only">Close</span>
+                                <span class="sr-only">{{ $t("Close") }}</span>
                                 <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                             </button>
 
-                            <div v-if="loading" class="py-10 text-center text-sm text-gray-500">Loading...</div>
+                            <div v-if="loading" class="py-10 text-center text-sm text-gray-500">{{ $t("Loading...") }}</div>
 
-                            <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
+                            <Vueform :locale="formLocale" @mounted="form => form.disableValidation()" v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
                                 @error="handleError" @response="handleResponse" :display-errors="false"
                                 :float-placeholders="false" :default="defaultValues">
                                 <template #empty>
                                     <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
                                         <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
                                             <FormTabs view="vertical">
-                                                <FormTab name="settings" label="Settings" :elements="[
+                                                <FormTab name="settings" :label="$t(&quot;Settings&quot;)" :elements="[
                                                     'queue_name',
                                                     'queue_extension',
                                                     'queue_strategy',
@@ -48,13 +48,13 @@
                                                     'queue_description',
                                                     'settings_submit',
                                                 ]" />
-                                                <FormTab name="agents" label="Agents" :elements="[
+                                                <FormTab name="agents" :label="$t(&quot;Agents&quot;)" :elements="[
                                                     'tiers_header',
                                                     'selected_agents',
                                                     'tiers',
                                                     'tiers_submit',
                                                 ]" />
-                                                <FormTab name="advanced" label="Advanced" :elements="[
+                                                <FormTab name="advanced" :label="$t(&quot;Advanced&quot;)" :elements="[
                                                     'advanced_header',
                                                     'queue_max_wait_time',
                                                     'queue_max_wait_time_with_no_agent',
@@ -70,20 +70,20 @@
                                         <div
                                             class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
                                             <FormElements>
-                                                <TextElement name="queue_name" label="Name" :floating="false"
+                                                <TextElement name="queue_name" :label="$t(&quot;Name&quot;)" :floating="false"
                                                     :columns="{ sm: { container: 6 } }" />
 
-                                                <TextElement name="queue_extension" label="Extension" :floating="false"
+                                                <TextElement name="queue_extension" :label="$t(&quot;Extension&quot;)" :floating="false"
                                                     :columns="{ sm: { container: 6 } }" />
 
-                                                <SelectElement name="queue_strategy" label="Strategy" :native="false"
+                                                <SelectElement name="queue_strategy" :label="$t(&quot;Strategy&quot;)" :native="false"
                                                     :items="strategyOptions" :columns="{ sm: { container: 6 } }" />
 
                                                 <GroupElement name="placeholder" />
 
-                                                <SelectElement name="queue_greeting" label="Greeting"
+                                                <SelectElement name="queue_greeting" :label="$t(&quot;Greeting&quot;)"
                                                     :items="fetchGreetings" :search="true" :native="false"
-                                                    input-type="search" autocomplete="off" placeholder="Select greeting"
+                                                    input-type="search" autocomplete="off" :placeholder="$t(&quot;Select greeting&quot;)"
                                                     :strict="false" allow-absent :columns="{ sm: { container: 6 } }">
                                                     <template #after>
                                                         <span v-if="greetingTranscription" class="text-xs italic">
@@ -144,7 +144,7 @@
                                                     </ButtonElement>
                                                 </GroupElement>
 
-                                                <SelectElement name="queue_moh_sound" label="Music on Hold"
+                                                <SelectElement name="queue_moh_sound" :label="$t(&quot;Music on Hold&quot;)"
                                                     :items="musicOnHoldOptions" :groups="true"
                                                     default="local_stream://default" :search="true" :native="false"
                                                     input-type="search" autocomplete="off" :strict="false" allow-absent
@@ -152,28 +152,28 @@
 
                                                 <GroupElement name="placeholder2" />
 
-                                                <ToggleElement name="queue_tier_rules_apply" text="Tier Rules"
+                                                <ToggleElement name="queue_tier_rules_apply" :text="$t(&quot;Tier Rules&quot;)"
                                                     true-value="true" false-value="false"
-                                                    :labels="{ on: 'On', off: 'Off' }" label="&nbsp;"
+                                                    :labels="{ on: $t(&quot;On&quot;), off: $t(&quot;Off&quot;) }" label="&nbsp;"
                                                     :columns="{ sm: { container: 6 } }" />
 
-                                                <TextareaElement name="queue_description" label="Description"
+                                                <TextareaElement name="queue_description" :label="$t(&quot;Description&quot;)"
                                                     :rows="2" />
 
-                                                <ButtonElement name="settings_submit" button-label="Save"
+                                                <ButtonElement name="settings_submit" :button-label="$t(&quot;Save&quot;)"
                                                     :submits="true" align="right" />
 
-                                                <StaticElement name="tiers_header" tag="h4" content="Queue Agents"
-                                                    description="Assign agents to this queue and order them by level and position." />
+                                                <StaticElement name="tiers_header" tag="h4" :content="$t(&quot;Queue Agents&quot;)"
+                                                    :description="$t(&quot;Assign agents to this queue and order them by level and position.&quot;)" />
 
                                                 <TagsElement name="selected_agents" :close-on-select="true"
                                                     :items="availableAgentOptions" :search="true" :groups="true"
-                                                    :native="false" label="Add Agent(s)" input-type="search"
-                                                    autocomplete="off" placeholder="Search by name or ID"
+                                                    :native="false" :label="$t(&quot;Add Agent(s)&quot;)" input-type="search"
+                                                    autocomplete="off" :placeholder="$t(&quot;Search by name or ID&quot;)"
                                                     :floating="false" :hide-selected="false" :object="true"
                                                     :group-hide-empty="true" :append-new-option="false" :submit="false"
                                                     @select="handleAgentSelect"
-                                                    description="Pick from the list to add an agent to this queue." />
+                                                    :description="$t(&quot;Pick from the list to add an agent to this queue.&quot;)" />
 
                                                 <ListElement name="tiers" :initial="0" :sort="true" size="sm"
                                                     :controls="{ add: false, remove: true, sort: true }"
@@ -184,7 +184,7 @@
                                                             <HiddenElement name="agent_label" :meta="true" />
                                                             <StaticElement name="agent_label_display" tag="div"
                                                                 :columns="{ default: { container: 12 }, sm: { container: 6 } }"
-                                                                label="Agent" :content="(el$) => {
+                                                                :label="$t(&quot;Agent&quot;)" :content="(el$) => {
                                                                     const label = getAgentLabel(
                                                                         el$.parent.value.call_center_agent_uuid,
                                                                         el$.parent.value.agent_label,
@@ -192,40 +192,40 @@
                                                                     return `<span class='text-base font-semibold'>${label}</span>`;
                                                                 }" />
                                                             <SelectElement name="tier_level" :items="tierOptions"
-                                                                :search="true" :native="false" allow-absent label="Level"
+                                                                :search="true" :native="false" allow-absent :label="$t(&quot;Level&quot;)"
                                                                 input-type="search" autocomplete="off"
                                                                 :columns="{ sm: { container: 3 } }" size="sm" />
                                                             <SelectElement name="tier_position" :items="tierOptions"
-                                                                :search="true" :native="false" allow-absent label="Position"
+                                                                :search="true" :native="false" allow-absent :label="$t(&quot;Position&quot;)"
                                                                 input-type="search" autocomplete="off"
                                                                 :columns="{ sm: { container: 3 } }" size="sm" />
                                                         </ObjectElement>
                                                     </template>
                                                 </ListElement>
 
-                                                <ButtonElement name="tiers_submit" button-label="Save" :submits="true"
+                                                <ButtonElement name="tiers_submit" :button-label="$t(&quot;Save&quot;)" :submits="true"
                                                     align="right" />
 
                                                 <StaticElement name="advanced_header" tag="h4"
-                                                    content="Advanced Settings" />
+                                                    :content="$t(&quot;Advanced Settings&quot;)" />
 
                                                 <TextElement name="queue_max_wait_time" input-type="number"
-                                                    label="Max Wait Time" :floating="false"
+                                                    :label="$t(&quot;Max Wait Time&quot;)" :floating="false"
                                                     :columns="{ sm: { container: 6 } }" />
 
                                                 <TextElement name="queue_max_wait_time_with_no_agent"
-                                                    input-type="number" label="Max Wait No Agent" :floating="false"
+                                                    input-type="number" :label="$t(&quot;Max Wait No Agent&quot;)" :floating="false"
                                                     :columns="{ sm: { container: 6 } }" />
 
-                                                <TextElement name="queue_cid_prefix" label="Caller ID Prefix"
+                                                <TextElement name="queue_cid_prefix" :label="$t(&quot;Caller ID Prefix&quot;)"
                                                     :floating="false" :columns="{ sm: { container: 6 } }" />
 
                                                 <GroupElement name="placeholder3" />
 
                                                 <SelectElement name="timeout_action" :items="routingTypes"
                                                     label-prop="name" :search="true" :native="false"
-                                                    label="Timeout Action" input-type="search" autocomplete="off"
-                                                    placeholder="Choose Action" :floating="false" :strict="false"
+                                                    :label="$t(&quot;Timeout Action&quot;)" input-type="search" autocomplete="off"
+                                                    :placeholder="$t(&quot;Choose Action&quot;)" :floating="false" :strict="false"
                                                     :columns="{ sm: { container: 6 } }" @change="(newValue, oldValue, el$) => {
                                                         const timeoutTarget = el$.form$.el$('timeout_target');
 
@@ -250,22 +250,22 @@
                                                         emit('error', error);
                                                         return [];
                                                     }
-                                                }" :search="true" label-prop="name" :native="false" label="Target"
+                                                }" :search="true" label-prop="name" :native="false" :label="$t(&quot;Target&quot;)"
                                                     input-type="search" allow-absent :object="true"
                                                     :format-data="formatTarget" autocomplete="off"
-                                                    placeholder="Choose Target" :floating="false" :strict="false"
+                                                    :placeholder="$t(&quot;Choose Target&quot;)" :floating="false" :strict="false"
                                                     :columns="{ sm: { container: 6 } }" :conditions="[
                                                         ['timeout_action', 'not_empty'],
                                                         ['timeout_action', 'not_in', ['check_voicemail', 'company_directory', 'hangup']]
                                                     ]" />
 
-                                                <ButtonElement name="advanced_submit" button-label="Save"
+                                                <ButtonElement name="advanced_submit" :button-label="$t(&quot;Save&quot;)"
                                                     :submits="true" align="right" />
 
                                                 <UpdateGreetingModal :greeting="greetingLabel" :show="showEditModal"
                                                     :loading="isGreetingUpdating" @confirm="handleGreetingUpdate"
                                                     @close="showEditModal = false" />
-                                                <NewGreetingForm header="New Greeting Message"
+                                                <NewGreetingForm :header="$t(&quot;New Greeting Message&quot;)"
                                                     :show="showNewGreetingModal" :voices="options?.voices"
                                                     :speeds="options?.speeds" :default_voice="options?.default_voice"
                                                     :phone_call_instructions="options?.phone_call_instructions"
@@ -276,9 +276,9 @@
                                                     @saved="handleNewGreetingAdded" />
                                                 <ConfirmationModal :show="showGreetingDeleteConfirmationModal"
                                                     @close="showGreetingDeleteConfirmationModal = false"
-                                                    @confirm="confirmGreetingDeleteAction" header="Confirm Deletion"
-                                                    text="This action will permanently delete this greeting. Are you sure you want to proceed?"
-                                                    confirm-button-label="Delete" cancel-button-label="Cancel" />
+                                                    @confirm="confirmGreetingDeleteAction" :header="$t(&quot;Confirm Deletion&quot;)"
+                                                    :text="$t(&quot;This action will permanently delete this greeting. Are you sure you want to proceed?&quot;)"
+                                                    :confirm-button-label="$t(&quot;Delete&quot;)" :cancel-button-label="$t(&quot;Cancel&quot;)" />
                                             </FormElements>
                                         </div>
                                     </div>
@@ -294,6 +294,8 @@
 </template>
 
 <script setup>
+import { useVueformLocale } from "../../../composables/useVueformLocale.js";
+import { trans } from "@i18n";
 import { computed, ref } from "vue";
 import axios from "axios";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from "@headlessui/vue";
@@ -305,6 +307,8 @@ import ConfirmationModal from "../modal/ConfirmationModal.vue";
 import NewGreetingForm from "./NewGreetingForm.vue";
 import Spinner from "../general/Spinner.vue";
 import UpdateGreetingModal from "../modal/UpdateGreetingModal.vue";
+
+const formLocale = useVueformLocale();
 
 const props = defineProps({
     show: Boolean,
@@ -339,16 +343,16 @@ const buttonIconClassOverrides = {
     },
 };
 
-const strategyOptions = [
-    { value: "ring-all", label: "Ring All" },
-    { value: "longest-idle-agent", label: "Longest Idle Agent" },
-    { value: "round-robin", label: "Round Robin" },
-    { value: "top-down", label: "Top Down" },
-    { value: "agent-with-least-talk-time", label: "Least Talk Time" },
-    { value: "agent-with-fewest-calls", label: "Fewest Calls" },
-    { value: "sequentially-by-agent-order", label: "Sequential Agent Order" },
-    { value: "random", label: "Random" },
-];
+const strategyOptions = computed(() => [
+    { value: "ring-all", label: trans("Ring All") },
+    { value: "longest-idle-agent", label: trans("Longest Idle Agent") },
+    { value: "round-robin", label: trans("Round Robin") },
+    { value: "top-down", label: trans("Top Down") },
+    { value: "agent-with-least-talk-time", label: trans("Least Talk Time") },
+    { value: "agent-with-fewest-calls", label: trans("Fewest Calls") },
+    { value: "sequentially-by-agent-order", label: trans("Sequential Agent Order") },
+    { value: "random", label: trans("Random") },
+]);
 
 const tierOptions = Array.from({ length: 10 }, (_, i) => {
     const value = String(i + 1);
@@ -404,7 +408,7 @@ const availableAgentOptions = computed(() => {
 
     return [
         {
-            label: "Agents",
+            label: trans("Agents"),
             items: agentOptions.value.filter((agent) => !selectedAgentUuids.includes(agent.value)),
         },
     ];
@@ -431,27 +435,27 @@ const handleAgentSelect = (option) => {
 const getAgentLabel = (agentUuid, fallback = null) => {
     const agent = agentOptions.value.find((option) => option.value === agentUuid);
 
-    return agent?.label || fallback || agentUuid || "Agent";
+    return agent?.label || fallback || agentUuid || trans("Agent");
 };
 
 const fetchGreetings = async () => {
     const route = props.options?.routes?.greeting_route;
 
     if (!route) {
-        availableGreetings.value = [{ value: "disabled", label: "No greeting" }];
+        availableGreetings.value = [{ value: "disabled", label: trans("No greeting") }];
         return availableGreetings.value;
     }
 
     try {
         const response = await axios.get(route);
         availableGreetings.value = [
-            { value: "disabled", label: "No greeting" },
+            { value: "disabled", label: trans("No greeting") },
             ...(response.data || []),
         ];
         return availableGreetings.value;
     } catch (error) {
         emit("error", error);
-        availableGreetings.value = [{ value: "disabled", label: "No greeting" }];
+        availableGreetings.value = [{ value: "disabled", label: trans("No greeting") }];
         return availableGreetings.value;
     }
 };
@@ -509,7 +513,7 @@ const playGreeting = () => {
 
     currentAudio.value.play().catch(() => {
         isAudioPlaying.value = false;
-        showNotification("error", { request: ["Audio playback failed"] });
+        showNotification("error", { request: [trans("Audio playback failed")] });
     });
 
     currentAudio.value.addEventListener("ended", () => {
@@ -518,7 +522,7 @@ const playGreeting = () => {
 
     currentAudio.value.addEventListener("error", () => {
         isAudioPlaying.value = false;
-        showNotification("error", { request: ["File not found or failed to load audio"] });
+        showNotification("error", { request: [trans("File not found or failed to load audio")] });
     });
 };
 
@@ -583,7 +587,7 @@ const handleGreetingUpdate = async (updatedGreeting) => {
     const newName = updatedGreeting?.label?.trim();
 
     if (!newName) {
-        showNotification("error", { request: ["Greeting name cannot be empty."] });
+        showNotification("error", { request: [trans("Greeting name cannot be empty.")] });
         return;
     }
 
@@ -662,6 +666,8 @@ const formatTarget = (name, value) => {
 };
 
 const submitForm = async (FormData, form$) => {
+    form$.messageBag.clear();
+    Object.values(form$.elements$).forEach(clearErrorsRecursive);
     const requestData = form$.requestData;
     const route = props.mode === "create"
         ? props.options.routes.store_route
@@ -705,6 +711,6 @@ const handleError = (error, details, form$) => {
         return;
     }
 
-    form$.messageBag.append("Could not submit form");
+    form$.messageBag.append(trans("Could not submit form"));
 };
 </script>

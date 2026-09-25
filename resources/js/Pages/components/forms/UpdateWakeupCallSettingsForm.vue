@@ -23,17 +23,17 @@
                 <div class="shadow sm:rounded-md">
                     <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
                         <div>
-                            <h3 class="text-base font-semibold leading-6 text-gray-900">Settings</h3>
-                            <p class="mt-1 text-sm text-gray-500">Specify the extensions that are permitted to initiate remote wakeup calls. Only these authorized extensions will be allowed to schedule wakeup alerts, ensuring secure and controlled access to the service.</p>
+                            <h3 class="text-base font-semibold leading-6 text-gray-900">{{ $t("Settings") }}</h3>
+                            <p class="mt-1 text-sm text-gray-500">{{ $t("Specify the extensions that are permitted to initiate remote wakeup calls. Only these authorized extensions will be allowed to schedule wakeup alerts, ensuring secure and controlled access to the service.") }}</p>
                         </div>
 
                         <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
 
 
                             <div class="col-span-6 sm:col-span-3 space-y-3">
-                                <LabelInputRequired target="" label="Allowed List" />
+                                <LabelInputRequired target="" :label="$t(&quot;Allowed List&quot;)" />
                                     <ComboBox :options="options.extensions" :search="true" multiple
-                                    :placeholder="'Select extension(s)'" :selectedItem="options.allowed_list"
+                                    :placeholder="$t(&quot;Select extension(s)&quot;)" :selectedItem="options.allowed_list"
                                     @update:model-value="handleUpdateAllowListField" />
                                 <!-- <div v-if="errors?.extension" class="mt-2 text-xs text-red-600">
                                     {{ errors.extension[0] }}
@@ -45,7 +45,7 @@
                 </div>
                 <div class="bg-gray-100 px-4 py-3 text-right sm:px-6">
                     <button type="submit"
-                        class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Save</button>
+                        class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">{{ $t("Save") }}</button>
                 </div>
 
 

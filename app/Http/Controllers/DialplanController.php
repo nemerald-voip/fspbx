@@ -91,14 +91,14 @@ class DialplanController extends Controller
             $dialplan = $service->save($request->validated());
 
             return response()->json([
-                'messages' => ['success' => ['Dialplan created successfully.']],
+                'messages' => ['success' => [__('Dialplan created successfully.')]],
                 'dialplan_uuid' => $dialplan->dialplan_uuid,
             ], 201);
         } catch (\Throwable $e) {
             logger('DialplanController@store error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Failed to create dialplan.']],
+                'messages' => ['error' => [__('Failed to create dialplan.')]],
             ], 500);
         }
     }
@@ -107,7 +107,7 @@ class DialplanController extends Controller
     {
         if (!$this->canModifyDialplan($dialplan)) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -115,14 +115,14 @@ class DialplanController extends Controller
             $dialplan = $service->save($request->validated(), $dialplan);
 
             return response()->json([
-                'messages' => ['success' => ['Dialplan updated successfully.']],
+                'messages' => ['success' => [__('Dialplan updated successfully.')]],
                 'dialplan_uuid' => $dialplan->dialplan_uuid,
             ]);
         } catch (\Throwable $e) {
             logger('DialplanController@update error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Failed to update dialplan.']],
+                'messages' => ['error' => [__('Failed to update dialplan.')]],
             ], 500);
         }
     }
@@ -131,7 +131,7 @@ class DialplanController extends Controller
     {
         if (!userCheckPermission('outbound_route_add')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -162,14 +162,14 @@ class DialplanController extends Controller
             $result = $service->create($request->validated());
 
             return response()->json([
-                'messages' => ['success' => ["Created {$result['count']} outbound route dialplan(s)."]],
+                'messages' => ['success' => [trans_choice('Created :count outbound route dialplan.|Created :count outbound route dialplans.', $result['count'])]],
                 'dialplan_uuids' => $result['dialplan_uuids'],
             ], 201);
         } catch (\Throwable $e) {
             logger('DialplanController@storeOutboundRoute error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Failed to create outbound route.']],
+                'messages' => ['error' => [__('Failed to create outbound route.')]],
             ], 500);
         }
     }
@@ -178,7 +178,7 @@ class DialplanController extends Controller
     {
         if (!userCheckPermission('dialplan_view')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -229,7 +229,7 @@ class DialplanController extends Controller
         $items->getCollection()->each(function (Dialplans $dialplan) {
             $enabled = $dialplan->getRawOriginal('dialplan_enabled') ?: 'false';
             $dialplan->setAttribute('dialplan_enabled_raw', $enabled);
-            $dialplan->setAttribute('enabled_label', $enabled === 'true' ? 'Enabled' : 'Disabled');
+            $dialplan->setAttribute('enabled_label', $enabled === 'true' ? __('Enabled') : __('Disabled'));
         });
 
         return $items;
@@ -241,13 +241,13 @@ class DialplanController extends Controller
 
         if ($itemUuid && !userCheckPermission('dialplan_edit')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
         if (!$itemUuid && !userCheckPermission('dialplan_add')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -261,7 +261,7 @@ class DialplanController extends Controller
 
             if (!$this->canViewDialplan($item)) {
                 return response()->json([
-                    'messages' => ['error' => ['Access denied.']],
+                    'messages' => ['error' => [__('Access denied.')]],
                 ], 403);
             }
 
@@ -320,7 +320,7 @@ class DialplanController extends Controller
     {
         if (!userCheckPermission('dialplan_view')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -329,7 +329,7 @@ class DialplanController extends Controller
 
         return response()->json([
             'items' => $items,
-            'messages' => ['success' => ['All matching dialplans selected.']],
+            'messages' => ['success' => [__('All matching dialplans selected.')]],
         ]);
     }
 
@@ -337,7 +337,7 @@ class DialplanController extends Controller
     {
         if (!userCheckPermission('dialplan_delete')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -345,7 +345,7 @@ class DialplanController extends Controller
 
         if ($dialplans->isEmpty()) {
             return response()->json([
-                'messages' => ['error' => ['No dialplans selected.']],
+                'messages' => ['error' => [__('No dialplans selected.')]],
             ], 422);
         }
 
@@ -353,13 +353,13 @@ class DialplanController extends Controller
             $service->delete($dialplans);
 
             return response()->json([
-                'messages' => ['success' => ["Deleted {$dialplans->count()} dialplan(s)."]],
+                'messages' => ['success' => [trans_choice('Deleted :count dialplan.|Deleted :count dialplans.', $dialplans->count())]],
             ]);
         } catch (\Throwable $e) {
             logger('DialplanController@bulkDelete error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['An error occurred while deleting the selected dialplans.']],
+                'messages' => ['error' => [__('An error occurred while deleting the selected dialplans.')]],
             ], 500);
         }
     }
@@ -368,7 +368,7 @@ class DialplanController extends Controller
     {
         if (!userCheckPermission('dialplan_add')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -376,7 +376,7 @@ class DialplanController extends Controller
 
         if ($dialplans->isEmpty()) {
             return response()->json([
-                'messages' => ['error' => ['No dialplans selected.']],
+                'messages' => ['error' => [__('No dialplans selected.')]],
             ], 422);
         }
 
@@ -384,13 +384,13 @@ class DialplanController extends Controller
             $dialplans->each(fn (Dialplans $dialplan) => $service->copy($dialplan));
 
             return response()->json([
-                'messages' => ['success' => ["Copied {$dialplans->count()} dialplan(s)."]],
+                'messages' => ['success' => [trans_choice('Copied :count dialplan.|Copied :count dialplans.', $dialplans->count())]],
             ], 201);
         } catch (\Throwable $e) {
             logger('DialplanController@bulkCopy error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['An error occurred while copying the selected dialplans.']],
+                'messages' => ['error' => [__('An error occurred while copying the selected dialplans.')]],
             ], 500);
         }
     }
@@ -399,7 +399,7 @@ class DialplanController extends Controller
     {
         if (!userCheckPermission('dialplan_edit')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -407,7 +407,7 @@ class DialplanController extends Controller
 
         if ($dialplans->isEmpty()) {
             return response()->json([
-                'messages' => ['error' => ['No dialplans selected.']],
+                'messages' => ['error' => [__('No dialplans selected.')]],
             ], 422);
         }
 
@@ -415,13 +415,13 @@ class DialplanController extends Controller
             $service->toggle($dialplans);
 
             return response()->json([
-                'messages' => ['success' => ['Dialplan enabled state toggled.']],
+                'messages' => ['success' => [__('Dialplan enabled state toggled.')]],
             ]);
         } catch (\Throwable $e) {
             logger('DialplanController@bulkToggle error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['An error occurred while toggling the selected dialplans.']],
+                'messages' => ['error' => [__('An error occurred while toggling the selected dialplans.')]],
             ], 500);
         }
     }
@@ -543,7 +543,7 @@ class DialplanController extends Controller
             return [];
         }
 
-        return collect([['value' => '', 'label' => 'Global']])
+        return collect([['value' => '', 'label' => __('Global')]])
             ->merge(
                 Domain::query()
                     ->orderBy('domain_name')
@@ -643,7 +643,7 @@ class DialplanController extends Controller
             ->get(['gateway_uuid', 'domain_uuid', 'gateway']);
 
         $options = $gateways
-            ->groupBy(fn (Gateways $gateway) => $gateway->domain?->domain_description ?: $gateway->domain?->domain_name ?: 'Global')
+            ->groupBy(fn (Gateways $gateway) => $gateway->domain?->domain_description ?: $gateway->domain?->domain_name ?: __('Global'))
             ->map(fn ($items, $label) => [
                 'label' => $label,
                 'items' => $items->map(fn (Gateways $gateway) => [
@@ -663,7 +663,7 @@ class DialplanController extends Controller
 
             if ($bridges->isNotEmpty()) {
                 $options[] = [
-                    'label' => 'Bridges',
+                    'label' => __('Bridges'),
                     'items' => $bridges->map(fn (Bridge $bridge) => [
                         'value' => 'bridge_uuid:' . $bridge->bridge_uuid,
                         'label' => $bridge->bridge_name,
@@ -673,11 +673,11 @@ class DialplanController extends Controller
         }
 
         $options[] = [
-            'label' => 'Advanced',
+            'label' => __('Advanced'),
             'items' => [
                 ['value' => 'enum', 'label' => 'ENUM'],
                 ['value' => 'freetdm', 'label' => 'FreeTDM'],
-                ['value' => 'transfer:', 'label' => 'Transfer'],
+                ['value' => 'transfer:', 'label' => __('Transfer')],
                 ['value' => 'xmpp', 'label' => 'XMPP'],
             ],
         ];
@@ -688,20 +688,20 @@ class DialplanController extends Controller
     private function outboundRoutePatternOptions(): array
     {
         return [
-            ['value' => '^(\\d{7})$', 'label' => '7 digit local'],
-            ['value' => '^(\\d{10})$', 'label' => '10 digit'],
-            ['value' => '^\\+?(\\d{11})$', 'label' => '11 digit'],
-            ['value' => '^(?:\\+?1)?([2-9]\\d{2}[2-9]\\d{2}\\d{4})$', 'label' => 'North America'],
-            ['value' => '^9999(?:\\+?1)?([2-9]\\d{2}[2-9]\\d{2}\\d{4})$', 'label' => 'FS PBX Fax North America (Prefix 9999)'],
-            ['value' => '^\\+([1-9]\\d{7,14})$', 'label' => 'E.164 international'],
-            ['value' => '^011([1-9]\\d{7,14})$', 'label' => '011 international'],
-            ['value' => '^00([1-9]\\d{7,14})$', 'label' => '00 international'],
-            ['value' => '^([1-9]\\d{7,14})$', 'label' => 'International digits'],
+            ['value' => '^(\\d{7})$', 'label' => __('7 digit local')],
+            ['value' => '^(\\d{10})$', 'label' => __('10 digit')],
+            ['value' => '^\\+?(\\d{11})$', 'label' => __('11 digit')],
+            ['value' => '^(?:\\+?1)?([2-9]\\d{2}[2-9]\\d{2}\\d{4})$', 'label' => __('North America')],
+            ['value' => '^9999(?:\\+?1)?([2-9]\\d{2}[2-9]\\d{2}\\d{4})$', 'label' => __('FS PBX Fax North America (Prefix 9999)')],
+            ['value' => '^\\+([1-9]\\d{7,14})$', 'label' => __('E.164 international')],
+            ['value' => '^011([1-9]\\d{7,14})$', 'label' => __('011 international')],
+            ['value' => '^00([1-9]\\d{7,14})$', 'label' => __('00 international')],
+            ['value' => '^([1-9]\\d{7,14})$', 'label' => __('International digits')],
             ['value' => '^(311)$', 'label' => '311'],
             ['value' => '^(411)$', 'label' => '411'],
             ['value' => '^(933|911)\\.?$', 'label' => '911 / 933'],
             ['value' => '^(988)$', 'label' => '988'],
-            ['value' => '^(?:\\+1|1)?(8(?:00|33|44|55|66|77|88)[2-9]\\d{6})$', 'label' => 'Toll free'],
+            ['value' => '^(?:\\+1|1)?(8(?:00|33|44|55|66|77|88)[2-9]\\d{6})$', 'label' => __('Toll free')],
         ];
     }
 

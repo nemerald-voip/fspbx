@@ -3,10 +3,10 @@
 
     <div class="m-3">
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-            <template #title>Basic Queues</template>
+            <template #title>{{ $t("Basic Queues") }}</template>
 
             <template #subtitle>
-                Manage queues, assigned agents, and the generated queue dialplans.
+                {{ $t("Manage queues, assigned agents, and the generated queue dialplans.") }}
             </template>
 
             <template #filters>
@@ -16,7 +16,7 @@
                     </div>
                     <input type="text" v-model="filterData.search" name="basic-queues-search"
                         class="block w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                        :placeholder="$t(&quot;Search&quot;)" @keydown.enter="handleSearchButtonClick" />
                 </div>
             </template>
 
@@ -24,51 +24,51 @@
                 <div class="flex flex-wrap items-center justify-end gap-2">
                     <div class="inline-flex rounded-md shadow-sm ring-1 ring-inset ring-gray-300">
                         <button type="button" @click="setActiveTab('queues')"
-                            :class="tabButtonClass(activeTab === 'queues')">Queues</button>
+                            :class="tabButtonClass(activeTab === 'queues')">{{ $t("Queues") }}</button>
                         <button v-if="permissions.agents.view" type="button" @click="setActiveTab('agents')"
-                            :class="tabButtonClass(activeTab === 'agents')">Agents</button>
+                            :class="tabButtonClass(activeTab === 'agents')">{{ $t("Agents") }}</button>
                     </div>
 
                     <a v-if="activeTab === 'queues' && permissions.queues.imports" :href="routes.queue_import"
                         class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                        Import
+                        {{ $t("Import") }}
                     </a>
 
                     <a v-if="activeTab === 'queues' && permissions.queues.wallboard" :href="routes.wallboard"
                         class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                        Wallboard
+                        {{ $t("Wallboard") }}
                     </a>
 
                     <a v-if="activeTab === 'queues' && permissions.queues.active" :href="routes.queue_status"
                         class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                        Status
+                        {{ $t("Status") }}
                     </a>
 
                     <a v-if="activeTab === 'agents'" :href="routes.agent_status"
                         class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                        Status
+                        {{ $t("Status") }}
                     </a>
 
                     <a v-if="activeTab === 'agents' && permissions.agents.imports" :href="routes.agent_import"
                         class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                        Import
+                        {{ $t("Import") }}
                     </a>
 
                     <button v-if="canCreateActiveTab" type="button" @click.prevent="handleCreateButtonClick"
                         class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                        Create
+                        {{ $t("Create") }}
                     </button>
 
                     <button v-if="!filterData.showGlobal && canViewAllActiveTab" type="button"
                         @click.prevent="handleShowGlobal"
                         class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                        Show all
+                        {{ $t("Show all") }}
                     </button>
 
                     <button v-if="filterData.showGlobal && canViewAllActiveTab" type="button"
                         @click.prevent="handleShowLocal"
                         class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                        Show local
+                        {{ $t("Show local") }}
                     </button>
                 </div>
             </template>
@@ -86,23 +86,23 @@
                         <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
                             class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                         <div class="pl-4 flex items-center cursor-pointer select-none" @click="handleSortRequest('queue_name')">
-                            <span class="mr-2">Name</span>
+                            <span class="mr-2">{{ $t("Name") }}</span>
                             <ChevronUpIcon v-if="sortData.name === 'queue_name' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
                             <ChevronDownIcon v-else-if="sortData.name === 'queue_name' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
                         </div>
                     </TableColumnHeader>
-                    <TableColumnHeader v-if="filterData.showGlobal" header="Domain" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader v-if="filterData.showGlobal" :header="$t(&quot;Domain&quot;)" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                     <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                         <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('queue_extension')">
-                            <span class="mr-2">Extension</span>
+                            <span class="mr-2">{{ $t("Extension") }}</span>
                             <ChevronUpIcon v-if="sortData.name === 'queue_extension' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
                             <ChevronDownIcon v-else-if="sortData.name === 'queue_extension' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
                         </div>
                     </TableColumnHeader>
-                    <TableColumnHeader header="Strategy" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="Agents" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="Tier Rules" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="Description" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader :header="$t(&quot;Strategy&quot;)" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader :header="$t(&quot;Agents&quot;)" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader :header="$t(&quot;Tier Rules&quot;)" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader :header="$t(&quot;Description&quot;)" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                     <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
                 </template>
 
@@ -111,18 +111,18 @@
                         <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
                             class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                         <div class="pl-4 flex items-center cursor-pointer select-none" @click="handleSortRequest('agent_name')">
-                            <span class="mr-2">Agent</span>
+                            <span class="mr-2">{{ $t("Agent") }}</span>
                             <ChevronUpIcon v-if="sortData.name === 'agent_name' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
                             <ChevronDownIcon v-else-if="sortData.name === 'agent_name' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
                         </div>
                     </TableColumnHeader>
-                    <TableColumnHeader v-if="filterData.showGlobal" header="Domain" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="Agent ID" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="Type" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="Timeout" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="Contact" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="Default Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="Queues" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader v-if="filterData.showGlobal" :header="$t(&quot;Domain&quot;)" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader :header="$t(&quot;Agent ID&quot;)" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader :header="$t(&quot;Type&quot;)" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader :header="$t(&quot;Timeout&quot;)" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader :header="$t(&quot;Contact&quot;)" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader :header="$t(&quot;Default Status&quot;)" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader :header="$t(&quot;Queues&quot;)" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                     <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
                 </template>
             </template>
@@ -130,16 +130,16 @@
             <template v-if="selectPageItems" v-slot:current-selection>
                 <td :colspan="selectionColspan">
                     <div class="text-sm text-center m-2">
-                        <span class="font-semibold">{{ selectedItems.length }}</span> items are selected.
+                        {{ $t(":count selected", { count: selectedItems.length }) }}
                         <button v-if="!selectAll && selectedItems.length !== data.total"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleSelectAll">
-                            Select all {{ data.total }} items
+                            {{ $t("Select all :count", { count: data.total }) }}
                         </button>
                         <button v-if="selectAll"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleClearSelection">
-                            Clear selection
+                            {{ $t("Clear selection") }}
                         </button>
                     </div>
                 </td>
@@ -164,7 +164,7 @@
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="formatStrategy(row.queue_strategy)" />
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="String(row.agents_count ?? 0)" />
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
-                            <Badge :text="row.queue_tier_rules_apply === 'true' ? 'On' : 'Off'"
+                            <Badge :text="row.queue_tier_rules_apply === 'true' ? $t(&quot;On&quot;) : $t(&quot;Off&quot;)"
                                 v-bind="row.queue_tier_rules_apply === 'true' ? greenBadge : grayBadge" />
                         </TableField>
                         <TableField class="px-2 py-2 text-sm text-gray-500" :text="row.queue_description" />
@@ -173,10 +173,10 @@
                                 <div class="flex items-center whitespace-nowrap justify-end">
                                     <PencilSquareIcon v-if="permissions.queues.update" @click="handleEditButtonClick(row.call_center_queue_uuid)"
                                         class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
-                                        title="Edit" />
+                                        :title="$t(&quot;Edit&quot;)" />
                                     <TrashIcon v-if="permissions.queues.destroy" @click="handleSingleItemDeleteRequest(row.call_center_queue_uuid)"
                                         class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
-                                        title="Delete" />
+                                        :title="$t(&quot;Delete&quot;)" />
                                 </div>
                             </template>
                         </TableField>
@@ -198,11 +198,11 @@
                         <TableField v-if="filterData.showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                             :text="domainLabel(row)" />
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.agent_id" />
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.agent_type" />
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.agent_type === 'callback' ? $t('Callback') : row.agent_type === 'uuid-standby' ? $t('UUID Standby') : row.agent_type" />
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.agent_call_timeout" />
                         <TableField class="max-w-md truncate px-2 py-2 text-sm text-gray-500" :text="row.agent_contact" />
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
-                            <Badge :text="row.agent_status || '-'" v-bind="statusBadge(row.agent_status)" />
+                            <Badge :text="queueStatusLabel(row.agent_status)" v-bind="statusBadge(row.agent_status)" />
                         </TableField>
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="String(row.queues_count ?? 0)" />
                         <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
@@ -210,10 +210,10 @@
                                 <div class="flex items-center whitespace-nowrap justify-end">
                                     <PencilSquareIcon v-if="permissions.agents.update" @click="handleEditButtonClick(row.call_center_agent_uuid)"
                                         class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
-                                        title="Edit" />
+                                        :title="$t(&quot;Edit&quot;)" />
                                     <TrashIcon v-if="permissions.agents.destroy" @click="handleSingleItemDeleteRequest(row.call_center_agent_uuid)"
                                         class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
-                                        title="Delete" />
+                                        :title="$t(&quot;Delete&quot;)" />
                                 </div>
                             </template>
                         </TableField>
@@ -224,8 +224,8 @@
             <template #empty>
                 <div v-if="data.data.length === 0" class="text-center my-5">
                     <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
-                    <p class="mt-1 text-sm text-gray-500">Adjust your search and try again.</p>
+                    <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ $t("No results found") }}</h3>
+                    <p class="mt-1 text-sm text-gray-500">{{ $t("Adjust your search and try again.") }}</p>
                 </div>
             </template>
 
@@ -243,7 +243,7 @@
 
     <ConfirmationModal :show="confirmationModalTrigger" @close="handleModalClose"
         @confirm="confirmAction" :header="confirmationHeader" :text="confirmationText"
-        :confirm-button-label="confirmationButtonLabel" cancel-button-label="Cancel" />
+        :confirm-button-label="confirmationButtonLabel" :cancel-button-label="$t(&quot;Cancel&quot;)" />
 
     <BasicQueueForm :show="showQueueForm" :options="itemOptions" :mode="formMode" :loading="loadingForm"
         :header="queueFormHeader" @close="handleFormClose" @error="handleErrorResponse" @success="showNotification"
@@ -258,6 +258,8 @@
 </template>
 
 <script setup>
+import { queueStatusLabel, queueStrategyLabel } from "./data/basicQueueLabels";
+import { trans } from "@i18n";
 import { computed, onMounted, ref } from "vue";
 import axios from "axios";
 import MainLayout from "../Layouts/MainLayout.vue";
@@ -289,9 +291,9 @@ const selectedItems = ref([]);
 const selectPageItems = ref(false);
 const confirmationModalTrigger = ref(false);
 const confirmAction = ref(null);
-const confirmationHeader = ref("Are you sure?");
+const confirmationHeader = ref(trans("Are you sure?"));
 const confirmationText = ref("");
-const confirmationButtonLabel = ref("Continue");
+const confirmationButtonLabel = ref(trans("Continue"));
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(false);
@@ -349,7 +351,7 @@ const canViewAllActiveTab = computed(() => activeTab.value === "queues"
     : permissions.queues.view_all);
 
 const bulkActions = computed(() => canDestroyActiveTab.value
-    ? [{ id: "bulk_delete", label: "Delete", icon: "TrashIcon" }]
+    ? [{ id: "bulk_delete", label: trans("Delete"), icon: "TrashIcon" }]
     : []);
 
 const selectionColspan = computed(() => {
@@ -361,12 +363,12 @@ const selectionColspan = computed(() => {
 });
 
 const queueFormHeader = computed(() => formMode.value === "create"
-    ? "Create Basic Queue"
-    : `Update Basic Queue - ${itemOptions.value?.item?.queue_name || "Loading..."}`);
+    ? trans("Create Basic Queue")
+    : trans("Update Basic Queue - :name", { name: itemOptions.value?.item?.queue_name || trans("Loading...") }));
 
 const agentFormHeader = computed(() => formMode.value === "create"
-    ? "Create Agent"
-    : `Update Agent - ${itemOptions.value?.item?.agent_name || "Loading..."}`);
+    ? trans("Create Agent")
+    : trans("Update Agent - :name", { name: itemOptions.value?.item?.agent_name || trans("Loading...") }));
 
 onMounted(() => {
     getData();
@@ -504,11 +506,11 @@ const handleClearSelection = () => {
 
 const handleSingleItemDeleteRequest = (uuid) => {
     showConfirmation({
-        header: "Confirm Deletion",
+        header: trans("Confirm Deletion"),
         text: activeTab.value === "queues"
-            ? "This action will permanently delete the selected queue, agent assignments, and generated dialplan."
-            : "This action will permanently delete the selected agent and remove queue assignments.",
-        button: "Delete",
+            ? trans("This action will permanently delete the selected queue, agent assignments, and generated dialplan.")
+            : trans("This action will permanently delete the selected agent and remove queue assignments."),
+        button: trans("Delete"),
         action: () => executeBulkDelete([uuid]),
     });
 };
@@ -516,11 +518,11 @@ const handleSingleItemDeleteRequest = (uuid) => {
 const handleBulkActionRequest = (action) => {
     if (action === "bulk_delete") {
         showConfirmation({
-            header: "Confirm Deletion",
+            header: trans("Confirm Deletion"),
             text: activeTab.value === "queues"
-                ? "This action will permanently delete the selected queues, agent assignments, and generated dialplans."
-                : "This action will permanently delete the selected agents and remove queue assignments.",
-            button: "Delete",
+                ? trans("This action will permanently delete the selected queues, agent assignments, and generated dialplans.")
+                : trans("This action will permanently delete the selected agents and remove queue assignments."),
+            button: trans("Delete"),
             action: () => executeBulkDelete(),
         });
     }
@@ -581,11 +583,9 @@ const tabButtonClass = (active) => [
     active ? "bg-indigo-600 text-white" : "bg-white text-gray-700 hover:bg-gray-50",
 ];
 
-const domainLabel = (row) => row.domain?.domain_description || row.domain?.domain_name || "Global";
+const domainLabel = (row) => row.domain?.domain_description || row.domain?.domain_name || trans("Global");
 
-const formatStrategy = (strategy) => String(strategy || "-")
-    .replaceAll("-", " ")
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+const formatStrategy = queueStrategyLabel;
 
 const greenBadge = {
     backgroundColor: "bg-green-50",

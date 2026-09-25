@@ -5,15 +5,15 @@
         <div class="px-4 sm:px-6 lg:px-8">
             <div class="mb-6 mt-2 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                    <p class="text-xs font-semibold uppercase tracking-wide text-indigo-600">Outbound Dialer</p>
-                    <h1 class="mt-1 text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl">Basic Dialer</h1>
-                    <p class="mt-1 text-sm text-gray-500">Lightweight outbound campaigns and reusable contact lists.</p>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-indigo-600">{{ $t("Outbound Dialer") }}</p>
+                    <h1 class="mt-1 text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl">{{ $t("Basic Dialer") }}</h1>
+                    <p class="mt-1 text-sm text-gray-500">{{ $t("Lightweight outbound campaigns and reusable contact lists.") }}</p>
                 </div>
             </div>
         </div>
 
         <div class="mb-6 border-b border-gray-200 px-4 sm:px-6 lg:px-8">
-            <nav class="-mb-px flex gap-0.5 overflow-x-auto sm:gap-2" aria-label="Tabs">
+            <nav class="-mb-px flex gap-0.5 overflow-x-auto sm:gap-2" :aria-label="$t(&quot;Tabs&quot;)">
                 <button v-for="tab in tabs" :key="tab.id" type="button"
                     :class="[
                         'group relative -mb-px inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-t-lg px-3 py-2.5 text-sm font-semibold tracking-tight transition-colors sm:gap-2.5 sm:px-6 sm:py-3.5 sm:text-base',
@@ -46,10 +46,10 @@
         </div>
 
         <DataTable v-else @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-            <template #title>{{ activeTab === "campaigns" ? "Campaigns" : "Contact Lists" }}</template>
+            <template #title>{{ activeTab === "campaigns" ? $t("Campaigns") : $t("Contact Lists") }}</template>
 
             <template #subtitle>
-                {{ activeTab === "campaigns" ? "Manage lightweight outbound dialer campaigns." : "Manage reusable dialer contact lists." }}
+                {{ activeTab === "campaigns" ? $t("Manage lightweight outbound dialer campaigns.") : $t("Manage reusable dialer contact lists.") }}
             </template>
 
             <template #filters>
@@ -60,18 +60,18 @@
                     <input type="text" v-model="filterData.search" name="mobile-search-basic-dialer"
                         id="mobile-search-basic-dialer"
                         class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                        :placeholder="$t(&quot;Search&quot;)" @keydown.enter="handleSearchButtonClick" />
                     <input type="text" v-model="filterData.search" name="desktop-search-basic-dialer"
                         id="desktop-search-basic-dialer"
                         class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                        :placeholder="$t(&quot;Search&quot;)" @keydown.enter="handleSearchButtonClick" />
                 </div>
             </template>
 
             <template #action>
                 <button v-if="permissions.create" type="button" @click.prevent="handleCreateButtonClick"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                    Create
+                    {{ $t("Create") }}
                 </button>
             </template>
 
@@ -89,18 +89,18 @@
                         <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
                             class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                         <div class="pl-4 flex items-center cursor-pointer select-none" @click="handleSortRequest('name')">
-                            <span class="mr-2">Name</span>
+                            <span class="mr-2">{{ $t("Name") }}</span>
                             <ChevronUpIcon v-if="sortData.name === 'name' && sortData.order === 'asc'"
                                 class="h-4 w-4 text-gray-500" />
                             <ChevronDownIcon v-else-if="sortData.name === 'name' && sortData.order === 'desc'"
                                 class="h-4 w-4 text-gray-500" />
                         </div>
                     </TableColumnHeader>
-                    <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="List" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="Recipients" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="Destination" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="Pacing" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader :header="$t(&quot;Status&quot;)" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader :header="$t(&quot;List&quot;)" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader :header="$t(&quot;Recipients&quot;)" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader :header="$t(&quot;Destination&quot;)" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader :header="$t(&quot;Pacing&quot;)" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                     <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
                 </template>
 
@@ -110,17 +110,17 @@
                         <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
                             class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                         <div class="pl-4 flex items-center cursor-pointer select-none" @click="handleSortRequest('name')">
-                            <span class="mr-2">Name</span>
+                            <span class="mr-2">{{ $t("Name") }}</span>
                             <ChevronUpIcon v-if="sortData.name === 'name' && sortData.order === 'asc'"
                                 class="h-4 w-4 text-gray-500" />
                             <ChevronDownIcon v-else-if="sortData.name === 'name' && sortData.order === 'desc'"
                                 class="h-4 w-4 text-gray-500" />
                         </div>
                     </TableColumnHeader>
-                    <TableColumnHeader header="Enabled" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="Contacts" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="Campaigns" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="Description" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader :header="$t(&quot;Enabled&quot;)" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader :header="$t(&quot;Contacts&quot;)" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader :header="$t(&quot;Campaigns&quot;)" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader :header="$t(&quot;Description&quot;)" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                     <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
                 </template>
             </template>
@@ -128,16 +128,16 @@
             <template v-if="selectPageItems" v-slot:current-selection>
                 <td :colspan="activeTab === 'campaigns' ? 7 : 6">
                     <div class="text-sm text-center m-2">
-                        <span class="font-semibold">{{ selectedItems.length }}</span> items are selected.
+                        {{ $t(":count selected", { count: selectedItems.length }) }}
                         <button v-if="!selectAll && selectedItems.length !== data.total"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleSelectAll">
-                            Select all {{ data.total }} items
+                            {{ $t("Select all :count", { count: data.total }) }}
                         </button>
                         <button v-if="selectAll"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleClearSelection">
-                            Clear selection
+                            {{ $t("Clear selection") }}
                         </button>
                     </div>
                 </td>
@@ -158,45 +158,45 @@
                             </div>
                         </TableField>
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
-                            <Badge :text="row.status" v-bind="statusBadgeProps(row.status)" />
+                            <Badge :text="dialerLabel(row.status)" v-bind="statusBadgeProps(row.status)" />
                         </TableField>
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                             :text="row.contact_list?.name || '-'" />
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
                             {{ row.recipients_count ?? 0 }}
-                            <span class="text-gray-400">/ {{ row.pending_recipients_count ?? 0 }} pending</span>
+                            <span class="text-gray-400">/ {{ $t(":count pending", { count: row.pending_recipients_count ?? 0 }) }}</span>
                         </TableField>
                         <TableField class="px-2 py-2 text-sm text-gray-500"
                             :text="row.destination_label || row.destination_type || '-'" />
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                            :text="`${row.max_concurrent_calls || 1} at a time, ${row.seconds_between_calls || 0}s gap`" />
+                            :text="$t(':count at a time, :seconds s gap', { count: row.max_concurrent_calls || 1, seconds: row.seconds_between_calls || 0 })" />
                         <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                             <template #action-buttons>
                                 <div class="flex items-center whitespace-nowrap justify-end">
                                     <EyeIcon v-if="activeTab === 'campaigns'"
                                         @click="handleStatusButtonClick(row.basic_dialer_campaign_uuid)"
                                         class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
-                                        title="Status" />
+                                        :title="$t(&quot;Status&quot;)" />
                                     <PlayIcon v-if="permissions.start && ['draft', 'paused', 'stopped'].includes(row.status)"
                                         @click="executeCampaignAction('start', row.basic_dialer_campaign_uuid)"
                                         class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
-                                        title="Start" />
+                                        :title="$t(&quot;Start&quot;)" />
                                     <PauseCircleIcon v-if="permissions.start && row.status === 'running'"
                                         @click="executeCampaignAction('pause', row.basic_dialer_campaign_uuid)"
                                         class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
-                                        title="Pause" />
+                                        :title="$t(&quot;Pause&quot;)" />
                                     <StopIcon v-if="permissions.start && ['running', 'paused'].includes(row.status)"
                                         @click="executeCampaignAction('stop', row.basic_dialer_campaign_uuid)"
                                         class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
-                                        title="Stop" />
+                                        :title="$t(&quot;Stop&quot;)" />
                                     <PencilSquareIcon v-if="permissions.update"
                                         @click="handleEditButtonClick(row.basic_dialer_campaign_uuid)"
                                         class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
-                                        title="Edit" />
+                                        :title="$t(&quot;Edit&quot;)" />
                                     <TrashIcon v-if="permissions.destroy"
                                         @click="handleSingleItemDeleteRequest(row.basic_dialer_campaign_uuid)"
                                         class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
-                                        title="Delete" />
+                                        :title="$t(&quot;Delete&quot;)" />
                                 </div>
                             </template>
                         </TableField>
@@ -217,7 +217,7 @@
                             </div>
                         </TableField>
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
-                            <Badge :text="row.enabled ? 'True' : 'False'" v-bind="enabledBadgeProps(row.enabled)" />
+                            <Badge :text="row.enabled ? $t(&quot;True&quot;) : $t(&quot;False&quot;)" v-bind="enabledBadgeProps(row.enabled)" />
                         </TableField>
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                             :text="row.contacts_count ?? 0" />
@@ -230,11 +230,11 @@
                                     <PencilSquareIcon v-if="permissions.update"
                                         @click="handleEditButtonClick(row.basic_dialer_contact_list_uuid)"
                                         class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
-                                        title="Edit" />
+                                        :title="$t(&quot;Edit&quot;)" />
                                     <TrashIcon v-if="permissions.destroy"
                                         @click="handleSingleItemDeleteRequest(row.basic_dialer_contact_list_uuid)"
                                         class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
-                                        title="Delete" />
+                                        :title="$t(&quot;Delete&quot;)" />
                                 </div>
                             </template>
                         </TableField>
@@ -245,8 +245,8 @@
             <template #empty>
                 <div v-if="data.data.length === 0" class="text-center my-5">
                     <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
-                    <p class="mt-1 text-sm text-gray-500">Adjust your search and try again.</p>
+                    <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ $t("No results found") }}</h3>
+                    <p class="mt-1 text-sm text-gray-500">{{ $t("Adjust your search and try again.") }}</p>
                 </div>
             </template>
 
@@ -264,7 +264,7 @@
 
     <ConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
         @confirm="confirmAction" :header="confirmationHeader" :text="confirmationText"
-        :confirm-button-label="confirmationButtonLabel" cancel-button-label="Cancel" />
+        :confirm-button-label="confirmationButtonLabel" :cancel-button-label="$t(&quot;Cancel&quot;)" />
 
     <BasicDialerCampaignForm v-if="activeForm === 'campaigns'" :show="showForm" :options="itemOptions"
         :mode="formMode" :loading="loadingForm" :header="formHeader" @close="handleFormClose"
@@ -282,6 +282,8 @@
 </template>
 
 <script setup>
+import { dialerLabel } from "./data/basicDialerLabels";
+import { trans } from "@i18n";
 import { computed, onMounted, ref } from "vue";
 import axios from "axios";
 import DataTable from "./components/general/DataTable.vue";
@@ -317,9 +319,9 @@ const selectedItems = ref([]);
 const selectPageItems = ref(false);
 const confirmationModalTrigger = ref(false);
 const confirmAction = ref(null);
-const confirmationHeader = ref("Are you sure?");
+const confirmationHeader = ref(trans("Are you sure?"));
 const confirmationText = ref("");
-const confirmationButtonLabel = ref("Continue");
+const confirmationButtonLabel = ref(trans("Continue"));
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(false);
@@ -352,16 +354,16 @@ const sortData = ref({
 });
 
 const tabs = computed(() => [
-    { id: "overview", label: "Overview", icon: ChartBarSquareIcon, count: null },
+    { id: "overview", label: trans("Overview"), icon: ChartBarSquareIcon, count: null },
     {
         id: "campaigns",
-        label: "Campaigns",
+        label: trans("Campaigns"),
         icon: MegaphoneIcon,
         count: activeTab.value === "campaigns" ? data.value.total : null,
     },
     {
         id: "contact_lists",
-        label: "Contact Lists",
+        label: trans("Contact Lists"),
         icon: UserGroupIcon,
         count: activeTab.value === "contact_lists" ? data.value.total : null,
     },
@@ -385,7 +387,7 @@ const bulkActions = computed(() => {
     const actions = [];
 
     if (permissions.destroy) {
-        actions.push({ id: "bulk_delete", label: "Delete", icon: "TrashIcon" });
+        actions.push({ id: "bulk_delete", label: trans("Delete"), icon: "TrashIcon" });
     }
 
     return actions;
@@ -393,11 +395,11 @@ const bulkActions = computed(() => {
 
 const formHeader = computed(() => {
     if (formMode.value === "create") {
-        return activeForm.value === "campaigns" ? "Create Campaign" : "Create Contact List";
+        return activeForm.value === "campaigns" ? trans("Create Campaign") : trans("Create Contact List");
     }
 
-    const name = itemOptions.value?.item?.name || "Loading...";
-    return activeForm.value === "campaigns" ? `Update Campaign - ${name}` : `Update Contact List - ${name}`;
+    const name = itemOptions.value?.item?.name || trans("Loading...");
+    return activeForm.value === "campaigns" ? trans("Update Campaign - :name", { name }) : trans("Update Contact List - :name", { name });
 });
 
 const statusRoute = computed(() => statusCampaignUuid.value
@@ -557,24 +559,24 @@ const handleClearSelection = () => {
 };
 
 const handleSingleItemDeleteRequest = (uuid) => {
-    const label = activeTab.value === "campaigns" ? "campaign" : "contact list";
-
     showConfirmation({
-        header: "Confirm Deletion",
-        text: `This action will permanently delete the selected ${label}.`,
-        button: "Delete",
+        header: trans("Confirm Deletion"),
+        text: activeTab.value === "campaigns"
+            ? trans("This action will permanently delete the selected campaigns.")
+            : trans("This action will permanently delete the selected contact lists."),
+        button: trans("Delete"),
         action: () => executeBulkDelete([uuid]),
     });
 };
 
 const handleBulkActionRequest = (action) => {
     if (action === "bulk_delete") {
-        const label = activeTab.value === "campaigns" ? "campaign(s)" : "contact list(s)";
-
         showConfirmation({
-            header: "Confirm Deletion",
-            text: `This action will permanently delete the selected ${label}.`,
-            button: "Delete",
+            header: trans("Confirm Deletion"),
+            text: activeTab.value === "campaigns"
+                ? trans("This action will permanently delete the selected campaigns.")
+                : trans("This action will permanently delete the selected contact lists."),
+            button: trans("Delete"),
             action: () => executeBulkDelete(),
         });
     }

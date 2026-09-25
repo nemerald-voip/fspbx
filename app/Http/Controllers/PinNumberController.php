@@ -79,14 +79,14 @@ class PinNumberController extends Controller
             $pinNumber = $service->save($request->validated());
 
             return response()->json([
-                'messages' => ['success' => ['PIN number created successfully.']],
+                'messages' => ['success' => [__('PIN number created successfully.')]],
                 'pin_number_uuid' => $pinNumber->pin_number_uuid,
             ], 201);
         } catch (\Throwable $e) {
             logger('PinNumberController@store error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Failed to create PIN number.']],
+                'messages' => ['error' => [__('Failed to create PIN number.')]],
             ], 500);
         }
     }
@@ -95,7 +95,7 @@ class PinNumberController extends Controller
     {
         if ($pin_number->domain_uuid !== session('domain_uuid')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -103,13 +103,13 @@ class PinNumberController extends Controller
             $service->save($request->validated(), $pin_number);
 
             return response()->json([
-                'messages' => ['success' => ['PIN number updated successfully.']],
+                'messages' => ['success' => [__('PIN number updated successfully.')]],
             ]);
         } catch (\Throwable $e) {
             logger('PinNumberController@update error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Failed to update PIN number.']],
+                'messages' => ['error' => [__('Failed to update PIN number.')]],
             ], 500);
         }
     }
@@ -120,13 +120,13 @@ class PinNumberController extends Controller
 
         if ($itemUuid && ! userCheckPermission('pin_number_edit')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
         if (! $itemUuid && ! userCheckPermission('pin_number_add')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -153,7 +153,7 @@ class PinNumberController extends Controller
     {
         if (! userCheckPermission('pin_number_view')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -180,7 +180,7 @@ class PinNumberController extends Controller
     {
         if (! userCheckPermission('pin_number_view')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -191,7 +191,7 @@ class PinNumberController extends Controller
 
         return response()->json([
             'items' => $items,
-            'messages' => ['success' => ['All matching PIN numbers selected.']],
+            'messages' => ['success' => [__('All matching PIN numbers selected.')]],
         ]);
     }
 
@@ -199,21 +199,21 @@ class PinNumberController extends Controller
     {
         if (! userCheckPermission('pin_number_add')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
         $items = $this->itemsFromRequest($request);
         if ($items->isEmpty()) {
             return response()->json([
-                'messages' => ['error' => ['No PIN numbers selected.']],
+                'messages' => ['error' => [__('No PIN numbers selected.')]],
             ], 422);
         }
 
         $copied = $service->copy($items);
 
         return response()->json([
-            'messages' => ['success' => ["Copied {$copied} PIN number(s)."]],
+            'messages' => ['success' => [trans_choice('Copied :count PIN number.|Copied :count PIN numbers.', $copied)]],
         ]);
     }
 
@@ -221,21 +221,21 @@ class PinNumberController extends Controller
     {
         if (! userCheckPermission('pin_number_delete')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
         $items = $this->itemsFromRequest($request);
         if ($items->isEmpty()) {
             return response()->json([
-                'messages' => ['error' => ['No PIN numbers selected.']],
+                'messages' => ['error' => [__('No PIN numbers selected.')]],
             ], 422);
         }
 
         $deleted = $service->delete($items);
 
         return response()->json([
-            'messages' => ['success' => ["Deleted {$deleted} PIN number(s)."]],
+            'messages' => ['success' => [trans_choice('Deleted :count PIN number.|Deleted :count PIN numbers.', $deleted)]],
         ]);
     }
 
@@ -243,21 +243,21 @@ class PinNumberController extends Controller
     {
         if (! userCheckPermission('pin_number_edit')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
         $items = $this->itemsFromRequest($request);
         if ($items->isEmpty()) {
             return response()->json([
-                'messages' => ['error' => ['No PIN numbers selected.']],
+                'messages' => ['error' => [__('No PIN numbers selected.')]],
             ], 422);
         }
 
         $service->toggle($items);
 
         return response()->json([
-            'messages' => ['success' => ['PIN number status toggled.']],
+            'messages' => ['success' => [__('PIN number status toggled.')]],
         ]);
     }
 

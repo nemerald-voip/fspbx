@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Support\Localization\ValidationMessages;
 use Illuminate\Validation\Rule;
 
 class StoreBasicQueueAgentRequest extends FormRequest
@@ -56,5 +57,29 @@ class StoreBasicQueueAgentRequest extends FormRequest
     protected function agentUuid(): ?string
     {
         return null;
+    }
+
+    public function messages(): array
+    {
+        return ValidationMessages::common();
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'agent_name' => __('Name'),
+            'agent_type' => __('Type'),
+            'agent_call_timeout' => __('Call Timeout'),
+            'agent_id' => __('Agent ID'),
+            'agent_password' => __('Password'),
+            'agent_contact' => __('Contact'),
+            'agent_status' => __('Status'),
+            'agent_no_answer_delay_time' => __('No Answer Delay'),
+            'agent_max_no_answer' => __('Max No Answer'),
+            'agent_wrap_up_time' => __('Wrap Up Time'),
+            'agent_reject_delay_time' => __('Reject Delay'),
+            'agent_busy_delay_time' => __('Busy Delay'),
+            'agent_record' => __('Record Calls'),
+        ];
     }
 }

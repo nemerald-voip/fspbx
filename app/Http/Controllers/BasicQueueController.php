@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\Localization\ValidationMessages;
+
 use App\Http\Requests\StoreBasicQueueAgentRequest;
 use App\Http\Requests\StoreBasicQueueRequest;
 use App\Http\Requests\UpdateBasicQueueAgentRequest;
@@ -90,7 +92,7 @@ class BasicQueueController extends Controller
         $queue = $service->saveQueue($request->validated());
 
         return response()->json([
-            'messages' => ['success' => ['Basic queue created.']],
+            'messages' => ['success' => [__('Basic queue created.')]],
             'call_center_queue_uuid' => $queue->call_center_queue_uuid,
         ], 201);
     }
@@ -98,13 +100,13 @@ class BasicQueueController extends Controller
     public function updateQueue(UpdateBasicQueueRequest $request, CallCenterQueues $queue, BasicQueueService $service): JsonResponse
     {
         if ($queue->domain_uuid !== session('domain_uuid')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $service->saveQueue($request->validated(), $queue);
 
         return response()->json([
-            'messages' => ['success' => ['Basic queue updated.']],
+            'messages' => ['success' => [__('Basic queue updated.')]],
         ]);
     }
 
@@ -113,7 +115,7 @@ class BasicQueueController extends Controller
         $agent = $service->saveAgent($request->validated());
 
         return response()->json([
-            'messages' => ['success' => ['Agent created.']],
+            'messages' => ['success' => [__('Agent created.')]],
             'call_center_agent_uuid' => $agent->call_center_agent_uuid,
         ], 201);
     }
@@ -121,13 +123,13 @@ class BasicQueueController extends Controller
     public function updateAgent(UpdateBasicQueueAgentRequest $request, CallCenterAgents $agent, BasicQueueService $service): JsonResponse
     {
         if ($agent->domain_uuid !== session('domain_uuid')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $service->saveAgent($request->validated(), $agent);
 
         return response()->json([
-            'messages' => ['success' => ['Agent updated.']],
+            'messages' => ['success' => [__('Agent updated.')]],
         ]);
     }
 
@@ -152,7 +154,7 @@ class BasicQueueController extends Controller
     public function getAgentStatusData(): JsonResponse
     {
         if (! userCheckPermission('call_center_agent_view')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $agents = CallCenterAgents::query()
@@ -200,7 +202,7 @@ class BasicQueueController extends Controller
     public function updateAgentStatus(Request $request): JsonResponse
     {
         if (! userCheckPermission('call_center_agent_edit')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $validator = Validator::make($request->all(), [
@@ -208,12 +210,17 @@ class BasicQueueController extends Controller
             'agent_uuids' => ['nullable', 'array', 'required_without:agent_uuid'],
             'agent_uuids.*' => ['uuid'],
             'status' => ['required', 'in:Available,On Break,Logged Out'],
+        ], ValidationMessages::common(), [
+            'agent_uuid' => __('Agent'),
+            'agent_uuids' => __('Agents'),
+            'agent_uuids.*' => __('Agent'),
+            'status' => __('Status'),
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'errors' => $validator->errors(),
-                'messages' => ['error' => ['Invalid status request.']],
+                'messages' => ['error' => [__('Invalid status request.')]],
             ], 422);
         }
 
@@ -228,11 +235,11 @@ class BasicQueueController extends Controller
             ->get();
 
         if ($agents->isEmpty()) {
-            return response()->json(['messages' => ['error' => ['No matching agents found.']]], 404);
+            return response()->json(['messages' => ['error' => [__('No matching agents found.')]]], 404);
         }
 
         if (! $this->eventSocketAvailable()) {
-            return response()->json(['messages' => ['error' => ['FreeSWITCH event socket is not available.']]], 503);
+            return response()->json(['messages' => ['error' => [__('FreeSWITCH event socket is not available.')]]], 503);
         }
 
         $status = $request->input('status');
@@ -263,8 +270,8 @@ class BasicQueueController extends Controller
         }
 
         $message = $agents->count() === 1
-            ? "{$agents->first()->agent_name} status updated."
-            : "{$agents->count()} agents updated to {$status}.";
+            ? __(':name status updated.', ['name' => $agents->first()->agent_name])
+            : trans_choice(':count agent updated to :status.|:count agents updated to :status.', $agents->count(), ['status' => collect($this->agentStatusOptions())->firstWhere('value', $status)['label']]);
 
         return response()->json([
             'response' => $responses,
@@ -275,7 +282,7 @@ class BasicQueueController extends Controller
     public function getQueueData(Request $request)
     {
         if (! userCheckPermission('call_center_queue_view')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         return $this->scopedQueues($request)
@@ -309,7 +316,7 @@ class BasicQueueController extends Controller
     public function getActiveBasicQueueData(Request $request)
     {
         if (! userCheckPermission('call_center_active_view')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $paginator = QueryBuilder::for(CallCenterQueues::class)
@@ -376,7 +383,7 @@ class BasicQueueController extends Controller
     public function getAgentData(Request $request)
     {
         if (! userCheckPermission('call_center_agent_view')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         return $this->scopedAgents($request)
@@ -413,11 +420,11 @@ class BasicQueueController extends Controller
         $itemUuid = $request->input('itemUuid', $request->input('item_uuid'));
 
         if ($itemUuid && ! userCheckPermission('call_center_queue_edit')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         if (! $itemUuid && ! userCheckPermission('call_center_queue_add')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $item = $itemUuid
@@ -462,11 +469,11 @@ class BasicQueueController extends Controller
             'default_voice' => $openAiService->getDefaultVoice(),
             'speeds' => $openAiService->getSpeeds(),
             'phone_call_instructions' => [
-                'Dial <strong>*732</strong> from your phone.',
-                'Enter the basic queue extension number when prompted and press <strong>#</strong>.',
-                'Follow the prompts to record your greeting.',
+                __('Dial <strong>*732</strong> from your phone.'),
+                __('Enter the basic queue extension number when prompted and press <strong>#</strong>.'),
+                __('Follow the prompts to record your greeting.'),
             ],
-            'sample_message' => 'Thank you for calling. Please hold while we connect you with the next available agent.',
+            'sample_message' => __('Thank you for calling. Please hold while we connect you with the next available agent.'),
             'routes' => [
                 'store_route' => route('basic-queues.queues.store'),
                 'update_route' => $itemUuid ? route('basic-queues.queues.update', ['queue' => $item->call_center_queue_uuid]) : null,
@@ -486,11 +493,11 @@ class BasicQueueController extends Controller
         $itemUuid = $request->input('itemUuid', $request->input('item_uuid'));
 
         if ($itemUuid && ! userCheckPermission('call_center_agent_edit')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         if (! $itemUuid && ! userCheckPermission('call_center_agent_add')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $item = $itemUuid
@@ -513,40 +520,40 @@ class BasicQueueController extends Controller
     public function selectAllQueues(Request $request): JsonResponse
     {
         if (! userCheckPermission('call_center_queue_view')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         return response()->json([
             'items' => $this->scopedQueues($request)
                 ->defaultSort('queue_name')
                 ->pluck('call_center_queue_uuid'),
-            'messages' => ['success' => ['All matching queues selected.']],
+            'messages' => ['success' => [__('All matching queues selected.')]],
         ]);
     }
 
     public function selectAllAgents(Request $request): JsonResponse
     {
         if (! userCheckPermission('call_center_agent_view')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         return response()->json([
             'items' => $this->scopedAgents($request)
                 ->defaultSort('agent_name')
                 ->pluck('call_center_agent_uuid'),
-            'messages' => ['success' => ['All matching agents selected.']],
+            'messages' => ['success' => [__('All matching agents selected.')]],
         ]);
     }
 
     public function bulkDeleteQueues(Request $request, BasicQueueService $service): JsonResponse
     {
         if (! userCheckPermission('call_center_queue_delete')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $uuids = $this->validatedUuids($request);
         if (empty($uuids)) {
-            return response()->json(['messages' => ['error' => ['No queues selected.']]], 422);
+            return response()->json(['messages' => ['error' => [__('No queues selected.')]]], 422);
         }
 
         $queues = CallCenterQueues::query()
@@ -557,19 +564,19 @@ class BasicQueueController extends Controller
         $deleted = $service->deleteQueues($queues);
 
         return response()->json([
-            'messages' => ['success' => ["Deleted {$deleted} basic queue(s)."]],
+            'messages' => ['success' => [trans_choice('Deleted :count basic queue.|Deleted :count basic queues.', $deleted)]],
         ]);
     }
 
     public function bulkDeleteAgents(Request $request, BasicQueueService $service): JsonResponse
     {
         if (! userCheckPermission('call_center_agent_delete')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $uuids = $this->validatedUuids($request);
         if (empty($uuids)) {
-            return response()->json(['messages' => ['error' => ['No agents selected.']]], 422);
+            return response()->json(['messages' => ['error' => [__('No agents selected.')]]], 422);
         }
 
         $agents = CallCenterAgents::query()
@@ -585,7 +592,7 @@ class BasicQueueController extends Controller
         }
 
         return response()->json([
-            'messages' => ['success' => ["Deleted {$deleted} agent(s)."]],
+            'messages' => ['success' => [trans_choice('Deleted :count agent.|Deleted :count agents.', $deleted)]],
         ]);
     }
 
@@ -678,9 +685,9 @@ class BasicQueueController extends Controller
     private function agentStatusOptions(): array
     {
         return [
-            ['value' => 'Available', 'label' => 'Available'],
-            ['value' => 'On Break', 'label' => 'On Break'],
-            ['value' => 'Logged Out', 'label' => 'Logged Out'],
+            ['value' => 'Available', 'label' => __('Available')],
+            ['value' => 'On Break', 'label' => __('On Break')],
+            ['value' => 'Logged Out', 'label' => __('Logged Out')],
         ];
     }
 

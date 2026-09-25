@@ -4,24 +4,24 @@
     <div class="m-3">
         <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div>
-                <h1 class="text-xl font-semibold text-gray-900">Agent Status</h1>
-                <p class="mt-1 text-sm text-gray-500">Basic Queue agents and their live call center state.</p>
+                <h1 class="text-xl font-semibold text-gray-900">{{ $t("Agent Status") }}</h1>
+                <p class="mt-1 text-sm text-gray-500">{{ $t("Basic Queue agents and their live call center state.") }}</p>
             </div>
             <div class="flex items-center gap-2">
                 <a :href="routes.back"
                     class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                    Back
+                    {{ $t("Back") }}
                 </a>
                 <button type="button" @click="getData"
                     class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                    Refresh
+                    {{ $t("Refresh") }}
                 </button>
             </div>
         </div>
 
         <div v-if="runtimeAvailable === false"
             class="mb-4 rounded-md bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800 ring-1 ring-inset ring-amber-200">
-            FreeSWITCH event socket is unavailable. Showing saved defaults only.
+            {{ $t("FreeSWITCH event socket is unavailable. Showing saved defaults only.") }}
         </div>
 
         <div v-if="permissions.update"
@@ -30,11 +30,11 @@
                 <BulkActions :actions="bulkActions" :has-selected-items="selectedItems.length > 0"
                     @bulk-action="handleBulkActionRequest" />
                 <p class="text-sm text-gray-600">
-                    <span class="font-semibold">{{ selectedItems.length }}</span> selected
+                    {{ $t(":count selected", { count: selectedItems.length }) }}
                 </p>
                 <button v-if="selectedItems.length > 0" type="button" @click="handleClearSelection"
                     class="text-sm font-semibold text-blue-600 hover:text-blue-500">
-                    Clear selection
+                    {{ $t("Clear selection") }}
                 </button>
             </div>
         </div>
@@ -48,22 +48,22 @@
                                 <input v-model="selectPageItems" type="checkbox" @change="handleSelectPageItems"
                                     class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                             </th>
-                            <th class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">Agent</th>
-                            <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Runtime Status</th>
-                            <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">State</th>
-                            <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Default</th>
-                            <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Answered</th>
-                            <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">No Answer</th>
-                            <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Set Status</th>
+                            <th class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">{{ $t("Agent") }}</th>
+                            <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">{{ $t("Runtime Status") }}</th>
+                            <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">{{ $t("State") }}</th>
+                            <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">{{ $t("Default") }}</th>
+                            <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">{{ $t("Answered") }}</th>
+                            <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">{{ $t("No Answer") }}</th>
+                            <th class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">{{ $t("Set Status") }}</th>
                             <th class="px-4 py-3.5 text-right text-sm font-semibold text-gray-900"></th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200 bg-white">
                         <tr v-if="loading">
-                            <td :colspan="tableColspan" class="px-4 py-8 text-center text-sm text-gray-500">Loading...</td>
+                            <td :colspan="tableColspan" class="px-4 py-8 text-center text-sm text-gray-500">{{ $t("Loading...") }}</td>
                         </tr>
                         <tr v-else-if="agents.length === 0">
-                            <td :colspan="tableColspan" class="px-4 py-8 text-center text-sm text-gray-500">No agents found.</td>
+                            <td :colspan="tableColspan" class="px-4 py-8 text-center text-sm text-gray-500">{{ $t("No agents found.") }}</td>
                         </tr>
                         <tr v-for="agent in agents" v-else :key="agent.call_center_agent_uuid">
                             <td v-if="permissions.update" class="whitespace-nowrap px-4 py-3 text-sm">
@@ -73,20 +73,20 @@
                             </td>
                             <td class="whitespace-nowrap px-4 py-3 text-sm">
                                 <div class="font-medium text-gray-900">{{ agent.agent_name }}</div>
-                                <div class="text-gray-500">{{ agent.agent_id || agent.agent_type || "-" }}</div>
+                                <div class="text-gray-500">{{ agent.agent_id || (agent.agent_type === 'callback' ? $t('Callback') : agent.agent_type === 'uuid-standby' ? $t('UUID Standby') : agent.agent_type) || "-" }}</div>
                             </td>
                             <td class="whitespace-nowrap px-3 py-3 text-sm">
-                                <Badge :text="agent.runtime_status || '-'" v-bind="statusBadge(agent.runtime_status)" />
+                                <Badge :text="queueStatusLabel(agent.runtime_status)" v-bind="statusBadge(agent.runtime_status)" />
                             </td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">{{ agent.runtime_state || "-" }}</td>
-                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">{{ agent.default_status || "-" }}</td>
+                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">{{ queueStatusLabel(agent.runtime_state) }}</td>
+                            <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">{{ queueStatusLabel(agent.default_status) }}</td>
                             <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">{{ agent.calls_answered || "0" }}</td>
                             <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-500">{{ agent.no_answer_count || "0" }}</td>
                             <td class="whitespace-nowrap px-3 py-3 text-sm">
                                 <select v-model="agent.pending_status" :disabled="!permissions.update || updatingUuid === agent.call_center_agent_uuid"
                                     class="block w-52 rounded-md border-0 py-1.5 pl-3 pr-8 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 disabled:bg-gray-100 disabled:text-gray-500">
                                     <option v-for="option in statusOptions" :key="option.value" :value="option.value">
-                                        {{ option.label }}
+                                        {{ queueStatusLabel(option.value) }}
                                     </option>
                                 </select>
                             </td>
@@ -94,7 +94,7 @@
                                 <button type="button" :disabled="!permissions.update || updatingUuid === agent.call_center_agent_uuid"
                                     @click="updateStatus(agent)"
                                     class="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:cursor-not-allowed disabled:bg-gray-300">
-                                    Save
+                                    {{ $t("Save") }}
                                 </button>
                             </td>
                         </tr>
@@ -109,10 +109,12 @@
 
     <ConfirmationModal :show="confirmationModalTrigger" @close="handleModalClose" @confirm="confirmAction"
         :header="confirmationHeader" :text="confirmationText" :confirm-button-label="confirmationButtonLabel"
-        cancel-button-label="Cancel" />
+        :cancel-button-label="$t(&quot;Cancel&quot;)" />
 </template>
 
 <script setup>
+import { queueStatusLabel } from "./data/basicQueueLabels";
+import { trans, transChoice } from "@i18n";
 import { computed, onMounted, ref, watch } from "vue";
 import axios from "axios";
 import MainLayout from "../Layouts/MainLayout.vue";
@@ -137,17 +139,17 @@ const loading = ref(false);
 const updatingUuid = ref(null);
 const confirmationModalTrigger = ref(false);
 const confirmAction = ref(null);
-const confirmationHeader = ref("Confirm Status Change");
+const confirmationHeader = ref(trans("Confirm Status Change"));
 const confirmationText = ref("");
-const confirmationButtonLabel = ref("Update");
+const confirmationButtonLabel = ref(trans("Update"));
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(false);
 
 const bulkActions = computed(() => [
-    { id: "bulk_available", label: "Set Available", icon: "PlayIcon" },
-    { id: "bulk_on_break", label: "Set On Break", icon: "StopIcon" },
-    { id: "bulk_logged_out", label: "Set Logged Out", icon: "PencilSquareIcon" },
+    { id: "bulk_available", label: trans("Set Available"), icon: "PlayIcon" },
+    { id: "bulk_on_break", label: trans("Set On Break"), icon: "StopIcon" },
+    { id: "bulk_logged_out", label: trans("Set Logged Out"), icon: "PencilSquareIcon" },
 ]);
 
 const tableColspan = computed(() => permissions.update ? 9 : 8);
@@ -212,9 +214,9 @@ const handleBulkActionRequest = (action) => {
     }
 
     showConfirmation({
-        header: "Confirm Status Change",
-        text: `Set ${selectedItems.value.length} selected agent(s) to ${status}?`,
-        button: "Update",
+        header: trans("Confirm Status Change"),
+        text: transChoice("Set :count selected agent to :status?|Set :count selected agents to :status?", selectedItems.value.length, { status: queueStatusLabel(status) }),
+        button: trans("Update"),
         action: () => executeBulkStatusUpdate(status),
     });
 };
@@ -306,6 +308,6 @@ const handleErrorResponse = (error) => {
         return;
     }
 
-    showNotification("error", { request: [error?.message || "Request failed."] });
+    showNotification("error", { request: [error?.message || trans("Request failed.")] });
 };
 </script>

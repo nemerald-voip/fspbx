@@ -75,7 +75,8 @@ class WakeupCall extends Model
         $timeZone = get_local_time_zone($this->domain_uuid);
         return Carbon::parse($timestamp)
             ->setTimezone($timeZone)
-            ->format('g:i:s A M d, Y');
+            ->locale(app()->getLocale())
+            ->translatedFormat('g:i:s A M d, Y');
     }
 
 

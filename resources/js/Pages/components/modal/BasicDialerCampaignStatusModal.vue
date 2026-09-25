@@ -18,40 +18,40 @@
                             <div class="flex items-start justify-between gap-3">
                                 <div class="min-w-0 flex-1">
                                     <DialogTitle as="h3" class="truncate text-base font-semibold leading-6 text-gray-900">
-                                        {{ campaign.name || "Campaign Status" }}
+                                        {{ campaign.name || $t("Campaign Status") }}
                                     </DialogTitle>
                                     <div class="mt-1 flex flex-wrap items-center gap-2 text-sm text-gray-500">
-                                        <Badge :text="campaign.status || 'loading'" v-bind="statusBadgeProps(campaign.status)" />
-                                        <span class="truncate">{{ campaign.contact_list_name || "No contact list" }}</span>
-                                        <span v-if="campaign.destination_label" class="truncate">to {{ campaign.destination_label }}</span>
+                                        <Badge :text="campaign.status ? dialerLabel(campaign.status) : $t('Loading...')" v-bind="statusBadgeProps(campaign.status)" />
+                                        <span class="truncate">{{ campaign.contact_list_name || $t("No contact list") }}</span>
+                                        <span v-if="campaign.destination_label" class="truncate">{{ $t('To :destination', { destination: campaign.destination_label }) }}</span>
                                     </div>
                                 </div>
 
                                 <div class="flex shrink-0 items-center gap-1">
                                     <button type="button"
                                         class="rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                        title="Refresh" @click="fetchStatus">
+                                        :title="$t(&quot;Refresh&quot;)" @click="fetchStatus">
                                         <ArrowPathIcon class="h-5 w-5" :class="{ 'animate-spin': loading }" />
                                     </button>
                                     <button type="button"
                                         class="rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                         @click="emit('close')">
-                                        <span class="sr-only">Close</span>
+                                        <span class="sr-only">{{ $t("Close") }}</span>
                                         <XMarkIcon class="h-5 w-5" />
                                     </button>
                                 </div>
                             </div>
 
                             <div v-if="loading" class="py-12 text-center text-sm text-gray-500">
-                                Loading status...
+                                {{ $t("Loading status...") }}
                             </div>
 
                             <div v-else class="mt-5 space-y-5">
                                 <div class="rounded-md border border-gray-200 p-4">
                                     <div class="flex flex-wrap items-baseline justify-between gap-2">
-                                        <div class="text-sm font-medium text-gray-700">Progress</div>
+                                        <div class="text-sm font-medium text-gray-700">{{ $t("Progress") }}</div>
                                         <div class="text-sm text-gray-500">
-                                            {{ completedRecipients }} / {{ summary.total_recipients ?? 0 }} contacts
+                                            {{ $tChoice(':completed / :count contact|:completed / :count contacts', summary.total_recipients ?? 0, { completed: completedRecipients }) }}
                                             <span class="ml-2 font-semibold text-gray-900">{{ summary.completion_percent ?? 0 }}%</span>
                                         </div>
                                     </div>
@@ -60,9 +60,9 @@
                                             :style="{ width: (summary.completion_percent ?? 0) + '%' }"></div>
                                     </div>
                                     <div class="mt-3 flex flex-wrap items-center gap-4 text-xs text-gray-500">
-                                        <span><span class="font-semibold text-gray-900">{{ summary.answer_rate ?? 0 }}%</span> answer rate</span>
-                                        <span>{{ summary.answered_attempts ?? 0 }} answered / {{ summary.total_attempts ?? 0 }} attempts</span>
-                                        <span>{{ formatDuration(summary.talk_seconds) }} talk time</span>
+                                        <span><span class="font-semibold text-gray-900">{{ summary.answer_rate ?? 0 }}%</span> {{ $t("answer rate") }}</span>
+                                        <span>{{ $tChoice(':answered answered / :count attempt|:answered answered / :count attempts', summary.total_attempts ?? 0, { answered: summary.answered_attempts ?? 0 }) }}</span>
+                                        <span>{{ $t(':duration talk time', { duration: formatDuration(summary.talk_seconds) }) }}</span>
                                     </div>
                                 </div>
 
@@ -77,12 +77,12 @@
                                 <div v-if="hasBreakdowns" class="grid grid-cols-1 gap-4 lg:grid-cols-2">
                                     <div class="rounded-md border border-gray-200 p-4">
                                         <div class="mb-2 flex items-baseline justify-between">
-                                            <h4 class="text-sm font-semibold text-gray-900">Outcomes</h4>
-                                            <span class="text-xs text-gray-400">{{ outcomeTotal }} attempts</span>
+                                            <h4 class="text-sm font-semibold text-gray-900">{{ $t("Outcomes") }}</h4>
+                                            <span class="text-xs text-gray-400">{{ $tChoice(':count attempt|:count attempts', outcomeTotal) }}</span>
                                         </div>
                                         <div v-if="outcomeBreakdown.length === 0"
                                             class="py-8 text-center text-xs text-gray-500">
-                                            No outcomes recorded yet.
+                                            {{ $t("No outcomes recorded yet.") }}
                                         </div>
                                         <div v-else class="flex flex-col items-center gap-4 sm:flex-row">
                                             <div class="relative h-32 w-32 shrink-0 sm:h-36 sm:w-36">
@@ -105,10 +105,10 @@
                                         </div>
                                     </div>
                                     <div class="rounded-md border border-gray-200 p-4">
-                                        <h4 class="mb-2 text-sm font-semibold text-gray-900">Hangup Causes</h4>
+                                        <h4 class="mb-2 text-sm font-semibold text-gray-900">{{ $t("Hangup Causes") }}</h4>
                                         <div v-if="hangupBreakdown.length === 0"
                                             class="py-8 text-center text-xs text-gray-500">
-                                            No hangup cause data yet.
+                                            {{ $t("No hangup cause data yet.") }}
                                         </div>
                                         <div v-else class="h-40">
                                             <Bar :data="hangupChartData" :options="barOptions" />
@@ -117,16 +117,16 @@
                                 </div>
 
                                 <div class="border-b border-gray-200">
-                                    <nav class="-mb-px flex gap-6" aria-label="Tabs">
+                                    <nav class="-mb-px flex gap-6" :aria-label="$t(&quot;Tabs&quot;)">
                                         <button type="button" class="border-b-2 px-1 py-2 text-sm font-medium"
                                             :class="activeTab === 'recipients' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'"
                                             @click="activeTab = 'recipients'">
-                                            Recipients
+                                            {{ $t("Recipients") }}
                                         </button>
                                         <button type="button" class="border-b-2 px-1 py-2 text-sm font-medium"
                                             :class="activeTab === 'attempts' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'"
                                             @click="activeTab = 'attempts'">
-                                            Attempts
+                                            {{ $t("Attempts") }}
                                         </button>
                                     </nav>
                                 </div>
@@ -135,13 +135,13 @@
                                     <table class="min-w-full divide-y divide-gray-200 text-sm">
                                         <thead>
                                             <tr class="text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                                                <th class="py-2 pr-3">Contact</th>
-                                                <th class="px-3 py-2">Phone</th>
-                                                <th class="px-3 py-2">Status</th>
-                                                <th class="px-3 py-2">Attempts</th>
-                                                <th class="px-3 py-2">Last Attempt</th>
-                                                <th class="px-3 py-2">Next Retry</th>
-                                                <th class="py-2 pl-3">Outcome</th>
+                                                <th class="py-2 pr-3">{{ $t("Contact") }}</th>
+                                                <th class="px-3 py-2">{{ $t("Phone") }}</th>
+                                                <th class="px-3 py-2">{{ $t("Status") }}</th>
+                                                <th class="px-3 py-2">{{ $t("Attempts") }}</th>
+                                                <th class="px-3 py-2">{{ $t("Last Attempt") }}</th>
+                                                <th class="px-3 py-2">{{ $t("Next Retry") }}</th>
+                                                <th class="py-2 pl-3">{{ $t("Outcome") }}</th>
                                             </tr>
                                         </thead>
                                         <tbody class="divide-y divide-gray-100">
@@ -151,7 +151,7 @@
                                                 </td>
                                                 <td class="whitespace-nowrap px-3 py-2 text-gray-500">{{ recipient.phone_number }}</td>
                                                 <td class="whitespace-nowrap px-3 py-2">
-                                                    <Badge :text="recipient.status" v-bind="statusBadgeProps(recipient.status)" />
+                                                    <Badge :text="dialerLabel(recipient.status)" v-bind="statusBadgeProps(recipient.status)" />
                                                 </td>
                                                 <td class="whitespace-nowrap px-3 py-2 text-gray-500">{{ recipient.attempts_count ?? 0 }}</td>
                                                 <td class="whitespace-nowrap px-3 py-2 text-gray-500">{{ formatDate(recipient.last_attempt_at) }}</td>
@@ -159,12 +159,12 @@
                                                 <td class="min-w-56 py-2 pl-3 text-gray-500">
                                                     <div>{{ recipient.last_outcome || "-" }}</div>
                                                     <div v-if="recipient.last_error" class="mt-1 max-w-md truncate text-xs text-red-600">
-                                                        {{ recipient.last_error }}
+                                                        {{ dialerError(recipient.last_error) }}
                                                     </div>
                                                 </td>
                                             </tr>
                                             <tr v-if="recipients.length === 0">
-                                                <td colspan="7" class="py-8 text-center text-gray-500">No recipients yet.</td>
+                                                <td colspan="7" class="py-8 text-center text-gray-500">{{ $t("No recipients yet.") }}</td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -174,14 +174,14 @@
                                     <table class="min-w-full divide-y divide-gray-200 text-sm">
                                         <thead>
                                             <tr class="text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                                                <th class="py-2 pr-3">Queued</th>
-                                                <th class="px-3 py-2">Phone</th>
-                                                <th class="px-3 py-2">Attempt</th>
-                                                <th class="px-3 py-2">Status</th>
-                                                <th class="px-3 py-2">Outcome</th>
-                                                <th class="px-3 py-2">Hangup</th>
-                                                <th class="px-3 py-2">Duration</th>
-                                                <th class="py-2 pl-3">Response</th>
+                                                <th class="py-2 pr-3">{{ $t("Queued") }}</th>
+                                                <th class="px-3 py-2">{{ $t("Phone") }}</th>
+                                                <th class="px-3 py-2">{{ $t("Attempt") }}</th>
+                                                <th class="px-3 py-2">{{ $t("Status") }}</th>
+                                                <th class="px-3 py-2">{{ $t("Outcome") }}</th>
+                                                <th class="px-3 py-2">{{ $t("Hangup") }}</th>
+                                                <th class="px-3 py-2">{{ $t("Duration") }}</th>
+                                                <th class="py-2 pl-3">{{ $t("Response") }}</th>
                                             </tr>
                                         </thead>
                                         <tbody class="divide-y divide-gray-100">
@@ -192,7 +192,7 @@
                                                 </td>
                                                 <td class="whitespace-nowrap px-3 py-2 text-gray-500">{{ attempt.attempt_number }}</td>
                                                 <td class="whitespace-nowrap px-3 py-2">
-                                                    <Badge :text="attempt.status" v-bind="statusBadgeProps(attempt.status)" />
+                                                    <Badge :text="dialerLabel(attempt.status)" v-bind="statusBadgeProps(attempt.status)" />
                                                 </td>
                                                 <td class="whitespace-nowrap px-3 py-2 text-gray-500">{{ attempt.outcome || "-" }}</td>
                                                 <td class="whitespace-nowrap px-3 py-2 text-gray-500">{{ attempt.hangup_cause || "-" }}</td>
@@ -202,7 +202,7 @@
                                                 </td>
                                             </tr>
                                             <tr v-if="attempts.length === 0">
-                                                <td colspan="8" class="py-8 text-center text-gray-500">No attempts yet.</td>
+                                                <td colspan="8" class="py-8 text-center text-gray-500">{{ $t("No attempts yet.") }}</td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -217,6 +217,9 @@
 </template>
 
 <script setup>
+import { dialerLabel, dialerError } from "../../data/basicDialerLabels";
+import { formatDuration } from "../../data/localizedTime";
+import { trans, currentLocale } from "@i18n";
 import { computed, ref, watch } from "vue";
 import axios from "axios";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from "@headlessui/vue";
@@ -276,13 +279,13 @@ const summaryItems = computed(() => {
     const recipientCounts = summary.value.recipients || {};
 
     return [
-        { key: "total", label: "Total", value: summary.value.total_recipients ?? 0 },
-        { key: "pending", label: "Pending", value: recipientCounts.pending ?? 0 },
-        { key: "dialing", label: "Dialing", value: recipientCounts.dialing ?? 0 },
-        { key: "answered", label: "Answered", value: recipientCounts.answered ?? 0 },
-        { key: "retry_wait", label: "Retry Wait", value: recipientCounts.retry_wait ?? 0 },
-        { key: "failed", label: "Failed", value: recipientCounts.failed ?? 0 },
-        { key: "attempts", label: "Attempts", value: summary.value.total_attempts ?? 0 },
+        { key: "total", label: trans("Total"), value: summary.value.total_recipients ?? 0 },
+        { key: "pending", label: trans("Pending"), value: recipientCounts.pending ?? 0 },
+        { key: "dialing", label: trans("Dialing"), value: recipientCounts.dialing ?? 0 },
+        { key: "answered", label: trans("Answered"), value: recipientCounts.answered ?? 0 },
+        { key: "retry_wait", label: trans("Retry Wait"), value: recipientCounts.retry_wait ?? 0 },
+        { key: "failed", label: trans("Failed"), value: recipientCounts.failed ?? 0 },
+        { key: "attempts", label: trans("Attempts"), value: summary.value.total_attempts ?? 0 },
     ];
 });
 
@@ -382,10 +385,7 @@ function percent(part, whole) {
     return Math.round((part / whole) * 100);
 }
 
-function formatLabel(value) {
-    if (!value) return "";
-    return String(value).replace(/_/g, " ");
-}
+const formatLabel = dialerLabel;
 
 function formatDate(value) {
     if (!value) return "-";
@@ -393,7 +393,7 @@ function formatDate(value) {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return "-";
 
-    return new Intl.DateTimeFormat(undefined, {
+    return new Intl.DateTimeFormat(currentLocale.value, {
         month: "short",
         day: "numeric",
         hour: "numeric",
@@ -401,17 +401,7 @@ function formatDate(value) {
     }).format(date);
 }
 
-function formatDuration(value) {
-    if (value === null || value === undefined || value === "") return "-";
 
-    const total = Math.max(0, parseInt(value, 10) || 0);
-    if (total < 60) return `${total}s`;
-    const mins = Math.floor(total / 60);
-    const secs = total % 60;
-    if (mins < 60) return `${mins}m ${secs}s`;
-    const hours = Math.floor(mins / 60);
-    return `${hours}h ${mins % 60}m`;
-}
 
 const statusBadgeProps = (status) => {
     if (["running", "dialing", "queued"].includes(status)) {
