@@ -53,7 +53,7 @@
                     <div class="relative min-w-36 mb-2 shrink-0 sm:mr-4">
                         <multiselect v-model="filterData.direction" :options="callDirections" :searchable="false"
                             :close-on-select="true" track-by="value" label="name" :show-labels="false"
-                            :placeholder="$t('Direction')" aria-label="pick a value"></multiselect>
+                            :placeholder="$t('Direction')" :aria-label="$t('Filter by call direction')"></multiselect>
                     </div>
 
                     <div v-if="permissions.all_cdr_view" class="relative min-w-64 mb-2 shrink-0 sm:mr-4">
@@ -67,14 +67,14 @@
                     <div class="relative min-w-36 mb-2 shrink-0 sm:mr-4">
                         <multiselect v-model="filterData.status" :options="statusOptions" :searchable="false"
                             :close-on-select="true" track-by="value" label="name" :show-labels="false"
-                            :placeholder="$t('Status')" aria-label="pick a value">
+                            :placeholder="$t('Status')" :aria-label="$t('Filter by call status')">
                         </multiselect>
                     </div>
 
                     <div v-if="permissions.search_sentiment && permissions.transcription_summary" class="relative min-w-36 mb-2 shrink-0 sm:mr-4">
                         <multiselect v-model="filterData.sentiment" :options="sentimentOptions" :searchable="false"
                             :close-on-select="true" track-by="value" label="name" :show-labels="false"
-                            :placeholder="$t('Sentiment')" aria-label="pick a value">
+                            :placeholder="$t('Sentiment')" :aria-label="$t('Filter by call sentiment')">
                         </multiselect>
                     </div>
 

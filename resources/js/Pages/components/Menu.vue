@@ -8,7 +8,7 @@
                         <DisclosureButton
                             class="relative inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500">
                             <span class="absolute -inset-0.5" />
-                            <span class="sr-only">Open main menu</span>
+                            <span class="sr-only">{{ $t('Open main menu') }}</span>
                             <Bars3Icon v-if="!open" class="block h-6 w-6" aria-hidden="true" />
                             <XMarkIcon v-else class="block h-6 w-6" aria-hidden="true" />
                         </DisclosureButton>
@@ -69,14 +69,14 @@
                             <MenuItems
                                 class="absolute right-0 mt-1 w-56 origin-top-right shadow-xl bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-20">
                                 <div class="px-4 py-3 border-b border-gray-100">
-                                    <p class="text-xs text-gray-400">Signed in as</p>
+                                    <p class="text-xs text-gray-400">{{ $t('Signed in as') }}</p>
                                     <p class="text-sm font-medium text-gray-700 truncate">{{ userEmail }}</p>
                                 </div>
                                 <MenuItem v-slot="{ active }">
                                     <a href="/logout"
                                         :class="[active ? 'bg-gray-100' : '', 'flex items-center gap-x-2 px-4 py-2 text-sm text-gray-600 whitespace-nowrap cursor-pointer no-underline']">
                                         <ArrowRightOnRectangleIcon class="h-5 w-5 text-gray-400" />
-                                        Logout
+                                        {{ $t('Logout') }}
                                     </a>
                                 </MenuItem>
                             </MenuItems>
@@ -155,15 +155,14 @@
                                 <div class="flex h-full flex-col overflow-y-scroll bg-white py-6 shadow-xl">
                                     <div class="px-4 sm:px-6">
                                         <div class="flex items-start justify-between">
-                                            <DialogTitle class="text-base font-semibold leading-6 text-gray-900">Select
-                                                account
+                                            <DialogTitle class="text-base font-semibold leading-6 text-gray-900">{{ $t('Select account') }}
                                             </DialogTitle>
                                             <div class="ml-3 flex h-7 items-center">
                                                 <button type="button"
                                                     class="relative rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                                     @click="isDomainPanelVisible = false">
                                                     <span class="absolute -inset-2.5" />
-                                                    <span class="sr-only">Close panel</span>
+                                                    <span class="sr-only">{{ $t('Close panel') }}</span>
                                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                                 </button>
                                             </div>
@@ -171,7 +170,7 @@
                                     </div>
                                     <!-- SEARCH BUTTON -->
                                     <div class="relative mt-6 px-4 sm:px-6">
-                                        <input type="text" v-model="searchQuery" placeholder="Search ..."
+                                        <input type="text" v-model="searchQuery" :placeholder="$t('Search...')"
                                             ref="searchFieldRef"
                                             class="mt-2 mb-4 w-full rounded-md border-gray-300 shadow-sm" />
                                     </div>

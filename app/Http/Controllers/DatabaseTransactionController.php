@@ -40,7 +40,7 @@ class DatabaseTransactionController extends Controller
     {
         if (! userCheckPermission('database_transaction_view')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -76,7 +76,7 @@ class DatabaseTransactionController extends Controller
     {
         if (! userCheckPermission('database_transaction_view')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -84,7 +84,7 @@ class DatabaseTransactionController extends Controller
 
         if (! $transaction) {
             return response()->json([
-                'messages' => ['error' => ['Transaction not found.']],
+                'messages' => ['error' => [__('Transaction not found.')]],
             ], 404);
         }
 
@@ -97,7 +97,7 @@ class DatabaseTransactionController extends Controller
     {
         if (! userCheckPermission('database_transaction_edit')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -105,21 +105,21 @@ class DatabaseTransactionController extends Controller
 
         if (! $transaction) {
             return response()->json([
-                'messages' => ['error' => ['Transaction not found.']],
+                'messages' => ['error' => [__('Transaction not found.')]],
             ], 404);
         }
 
         $type = $this->transactionType($transaction);
         if (! in_array($type, ['delete', 'update'], true)) {
             return response()->json([
-                'messages' => ['error' => ['Only delete and update transactions can be undone.']],
+                'messages' => ['error' => [__('Only delete and update transactions can be undone.')]],
             ], 422);
         }
 
         $payload = $this->decodeJson($transaction->transaction_old);
         if (! is_array($payload)) {
             return response()->json([
-                'messages' => ['error' => ['The original transaction payload is not valid JSON.']],
+                'messages' => ['error' => [__('The original transaction payload is not valid JSON.')]],
             ], 422);
         }
 
@@ -129,12 +129,12 @@ class DatabaseTransactionController extends Controller
             logger('DatabaseTransactionController@undo error: '.$e->getMessage().' at '.$e->getFile().':'.$e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Failed to undo the transaction.']],
+                'messages' => ['error' => [__('Failed to undo the transaction.')]],
             ], 500);
         }
 
         return response()->json([
-            'messages' => ['success' => ['Transaction undone successfully.']],
+            'messages' => ['success' => [__('Transaction undone successfully.')]],
         ]);
     }
 

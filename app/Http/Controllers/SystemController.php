@@ -29,7 +29,7 @@ class SystemController extends Controller
     {
         if (!$this->canViewPage()) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -65,10 +65,10 @@ class SystemController extends Controller
     private function info(FreeswitchEslService $eslService): array
     {
         $rows = [
-            ['label' => 'Application Version', 'value' => env('VERSION', config('app.version'))],
-            ['label' => 'Project Path', 'value' => base_path()],
-            ['label' => 'PHP Version', 'value' => PHP_VERSION],
-            ['label' => 'Date', 'value' => now()->toRfc2822String()],
+            ['label' => __('Application Version'), 'value' => env('VERSION', config('app.version'))],
+            ['label' => __('Project Path'), 'value' => base_path()],
+            ['label' => __('PHP Version'), 'value' => PHP_VERSION],
+            ['label' => __('Date'), 'value' => now()->toRfc2822String()],
         ];
 
         if ($eslService->isConnected()) {
@@ -76,21 +76,21 @@ class SystemController extends Controller
 
             if ($switchVersion !== '') {
                 $rows[] = [
-                    'label' => 'FreeSWITCH Version',
+                    'label' => __('FreeSWITCH Version'),
                     'value' => $this->formatSwitchVersion($switchVersion),
                 ];
             }
         } else {
             $rows[] = [
-                'label' => 'FreeSWITCH Version',
-                'value' => 'Unable to connect to the event socket.',
+                'label' => __('FreeSWITCH Version'),
+                'value' => __('Unable to connect to the event socket.'),
             ];
         }
 
         $osRows = [
-            ['label' => 'Operating System', 'value' => $this->osName()],
-            ['label' => 'Kernel', 'value' => trim(php_uname())],
-            ['label' => 'Uptime', 'value' => $this->command('uptime')],
+            ['label' => __('Operating System'), 'value' => $this->osName()],
+            ['label' => __('Kernel'), 'value' => trim(php_uname())],
+            ['label' => __('Uptime'), 'value' => $this->command('uptime')],
         ];
 
         return [
@@ -103,14 +103,14 @@ class SystemController extends Controller
     {
         if (stristr(PHP_OS, 'Linux')) {
             return [
-                'title' => 'Memory',
+                'title' => __('Memory'),
                 'output' => $this->command('free -hw'),
             ];
         }
 
         if (stristr(PHP_OS, 'FreeBSD')) {
             return [
-                'title' => 'Memory',
+                'title' => __('Memory'),
                 'output' => $this->command('sysctl vm.vmtotal'),
             ];
         }
@@ -122,14 +122,14 @@ class SystemController extends Controller
     {
         if (stristr(PHP_OS, 'Linux')) {
             return [
-                'title' => 'CPU',
+                'title' => __('CPU'),
                 'output' => $this->command("ps -e -o pcpu,cpu,nice,state,cputime,args --sort pcpu | sed '/^ 0.0 /d'"),
             ];
         }
 
         if (stristr(PHP_OS, 'FreeBSD')) {
             return [
-                'title' => 'CPU',
+                'title' => __('CPU'),
                 'output' => $this->command('top'),
             ];
         }
@@ -141,7 +141,7 @@ class SystemController extends Controller
     {
         if (stristr(PHP_OS, 'Linux') || stristr(PHP_OS, 'FreeBSD')) {
             return [
-                'title' => 'Drive Space',
+                'title' => __('Drive Space'),
                 'output' => $this->command('df -hP --total'),
             ];
         }
@@ -154,7 +154,7 @@ class SystemController extends Controller
         if (config('database.default') !== 'pgsql') {
             return [
                 'rows' => [
-                    ['label' => 'Driver', 'value' => config('database.default')],
+                    ['label' => __('Driver'), 'value' => config('database.default')],
                 ],
                 'databases' => [],
             ];
@@ -163,8 +163,8 @@ class SystemController extends Controller
         try {
             return [
                 'rows' => [
-                    ['label' => 'Version', 'value' => DB::selectOne('select version() as version')?->version],
-                    ['label' => 'Connections', 'value' => DB::selectOne('select count(*) as count from pg_stat_activity')?->count],
+                    ['label' => __('Version'), 'value' => DB::selectOne('select version() as version')?->version],
+                    ['label' => __('Connections'), 'value' => DB::selectOne('select count(*) as count from pg_stat_activity')?->count],
                 ],
                 'databases' => collect(DB::select(
                     'select datname, pg_size_pretty(pg_database_size(datname)) as size from pg_database order by datname'
@@ -178,7 +178,7 @@ class SystemController extends Controller
 
             return [
                 'rows' => [
-                    ['label' => 'Status', 'value' => 'Unable to read database status.'],
+                    ['label' => __('Status'), 'value' => __('Unable to read database status.')],
                 ],
                 'databases' => [],
             ];
@@ -191,7 +191,7 @@ class SystemController extends Controller
             return [
                 'available' => false,
                 'rows' => [
-                    ['label' => 'Status', 'value' => 'Unable to connect to the event socket.'],
+                    ['label' => __('Status'), 'value' => __('Unable to connect to the event socket.')],
                 ],
             ];
         }
@@ -214,7 +214,7 @@ class SystemController extends Controller
             return [
                 'available' => false,
                 'rows' => [
-                    ['label' => 'Status', 'value' => 'Unavailable'],
+                    ['label' => __('Status'), 'value' => __('Unavailable')],
                 ],
             ];
         }

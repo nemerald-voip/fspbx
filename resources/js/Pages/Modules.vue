@@ -4,9 +4,9 @@
     <div class="m-3 space-y-4">
         <header class="flex flex-wrap items-end justify-between gap-3">
             <div>
-                <p class="text-xs font-medium uppercase tracking-wider text-indigo-600">Switch configuration</p>
-                <h1 class="mt-1 text-2xl font-semibold text-gray-900">FreeSWITCH Modules</h1>
-                <p class="mt-1 text-sm text-gray-500">Manage module autoload settings and live FreeSWITCH status.</p>
+                <p class="text-xs font-medium uppercase tracking-wider text-indigo-600">{{ $t('Switch configuration') }}</p>
+                <h1 class="mt-1 text-2xl font-semibold text-gray-900">{{ $t('FreeSWITCH Modules') }}</h1>
+                <p class="mt-1 text-sm text-gray-500">{{ $t('Manage module autoload settings and live FreeSWITCH status.') }}</p>
             </div>
             <div class="flex flex-wrap gap-2">
                 <button
@@ -16,7 +16,7 @@
                     @click="refreshData"
                 >
                     <ArrowPathIcon class="h-4 w-4" :class="{ 'animate-spin': loading }" />
-                    Refresh
+                    {{ $t('Refresh') }}
                 </button>
                 <button
                     v-if="permissions.create"
@@ -31,10 +31,10 @@
         </header>
 
         <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <StatTile label="Total modules" :value="stats.total" tone="gray" />
-            <StatTile label="Autoload enabled" :value="stats.enabled" tone="indigo" />
-            <StatTile label="Running" :value="stats.running" tone="green" />
-            <StatTile label="Stopped" :value="stats.stopped" tone="rose" />
+            <StatTile :label="$t('Total modules')" :value="stats.total" tone="gray" />
+            <StatTile :label="$t('Autoload enabled')" :value="stats.enabled" tone="indigo" />
+            <StatTile :label="$t('Running')" :value="stats.running" tone="green" />
+            <StatTile :label="$t('Stopped')" :value="stats.stopped" tone="rose" />
         </div>
 
         <div class="flex flex-col gap-4 lg:flex-row">
@@ -45,41 +45,41 @@
                         <input
                             v-model="filterData.search"
                             type="text"
-                            placeholder="Search modules..."
+                            :placeholder="$t('Search modules...')"
                             class="block w-full rounded-md border-0 py-1.5 pl-9 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600"
                         />
                     </div>
 
                     <div class="mb-3 space-y-2">
                         <div>
-                            <label class="block text-xs font-medium text-gray-500">Runtime</label>
+                            <label class="block text-xs font-medium text-gray-500">{{ $t('Runtime') }}</label>
                             <select
                                 v-model="filterData.runtime"
                                 class="mt-1 block w-full rounded-md border-0 py-1.5 pl-2 pr-8 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600"
                             >
-                                <option value="all">Any status</option>
-                                <option value="running">Running</option>
-                                <option value="stopped">Stopped</option>
-                                <option value="unknown">Unknown</option>
+                                <option value="all">{{ $t('Any status') }}</option>
+                                <option value="running">{{ $t('Running') }}</option>
+                                <option value="stopped">{{ $t('Stopped') }}</option>
+                                <option value="unknown">{{ $t('Unknown') }}</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-gray-500">Autoload</label>
+                            <label class="block text-xs font-medium text-gray-500">{{ $t('Autoload') }}</label>
                             <select
                                 v-model="filterData.autoload"
                                 class="mt-1 block w-full rounded-md border-0 py-1.5 pl-2 pr-8 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600"
                             >
-                                <option value="all">Any status</option>
-                                <option value="true">Enabled</option>
-                                <option value="false">Disabled</option>
+                                <option value="all">{{ $t('Any status') }}</option>
+                                <option value="true">{{ $t('Enabled') }}</option>
+                                <option value="false">{{ $t('Disabled') }}</option>
                             </select>
                         </div>
                     </div>
 
-                    <p class="px-1 pb-1 text-xs font-medium uppercase tracking-wider text-gray-400">Categories</p>
-                    <nav class="max-h-[60vh] space-y-0.5 overflow-y-auto" aria-label="Module categories">
+                    <p class="px-1 pb-1 text-xs font-medium uppercase tracking-wider text-gray-400">{{ $t('Categories') }}</p>
+                    <nav class="max-h-[60vh] space-y-0.5 overflow-y-auto" :aria-label="$t('Module categories')">
                         <button type="button" :class="categoryButtonClass('')" @click="selectedCategory = ''">
-                            <span class="min-w-0 flex-1 truncate">All</span>
+                            <span class="min-w-0 flex-1 truncate">{{ $t('All') }}</span>
                             <span :class="categoryBadgeClass('')">{{ filteredRows.length }}</span>
                         </button>
                         <button
@@ -92,7 +92,7 @@
                             <span class="min-w-0 flex-1 truncate">{{ category.label }}</span>
                             <span :class="categoryBadgeClass(category.value)">{{ category.count }}</span>
                         </button>
-                        <p v-if="!categoriesWithCounts.length" class="px-3 py-2 text-xs text-gray-400">No matching categories</p>
+                        <p v-if="!categoriesWithCounts.length" class="px-3 py-2 text-xs text-gray-400">{{ $t('No matching categories') }}</p>
                     </nav>
                 </div>
             </aside>
@@ -102,7 +102,7 @@
                     <header class="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 px-4 py-3">
                         <div>
                             <h2 class="text-base font-semibold text-gray-900">{{ selectedCategoryLabel }}</h2>
-                            <p class="text-xs text-gray-500">{{ displayedRows.length }} module{{ displayedRows.length === 1 ? '' : 's' }} shown</p>
+                            <p class="text-xs text-gray-500">{{ $tChoice(':count module shown|:count modules shown', displayedRows.length) }}</p>
                         </div>
                         <div v-if="hasSelectableActions" class="flex flex-wrap items-center gap-2">
                             <button
@@ -111,14 +111,14 @@
                                 class="text-xs text-gray-500 hover:text-gray-900"
                                 @click="toggleSelectAllVisible"
                             >
-                                {{ allVisibleSelected ? 'Clear selection' : 'Select visible' }}
+                                {{ allVisibleSelected ? $t('Clear selection') : $t('Select visible') }}
                             </button>
                             <div v-if="selectedItems.length" class="flex flex-wrap items-center gap-1 rounded-md bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700">
-                                <span>{{ selectedItems.length }} selected</span>
-                                <button v-if="permissions.update" type="button" class="rounded px-1.5 py-0.5 hover:bg-indigo-100" @click="handleBulkActionRequest('start')">Start</button>
-                                <button v-if="permissions.update" type="button" class="rounded px-1.5 py-0.5 hover:bg-indigo-100" @click="handleBulkActionRequest('stop')">Stop</button>
-                                <button v-if="permissions.update" type="button" class="rounded px-1.5 py-0.5 hover:bg-indigo-100" @click="handleBulkActionRequest('toggle')">Toggle autoload</button>
-                                <button v-if="permissions.destroy" type="button" class="rounded px-1.5 py-0.5 text-rose-700 hover:bg-rose-100" @click="handleBulkActionRequest('delete')">Delete</button>
+                                <span>{{ $t(':count selected', { count: selectedItems.length }) }}</span>
+                                <button v-if="permissions.update" type="button" class="rounded px-1.5 py-0.5 hover:bg-indigo-100" @click="handleBulkActionRequest('start')">{{ $t('Start') }}</button>
+                                <button v-if="permissions.update" type="button" class="rounded px-1.5 py-0.5 hover:bg-indigo-100" @click="handleBulkActionRequest('stop')">{{ $t('Stop') }}</button>
+                                <button v-if="permissions.update" type="button" class="rounded px-1.5 py-0.5 hover:bg-indigo-100" @click="handleBulkActionRequest('toggle')">{{ $t('Toggle autoload') }}</button>
+                                <button v-if="permissions.destroy" type="button" class="rounded px-1.5 py-0.5 text-rose-700 hover:bg-rose-100" @click="handleBulkActionRequest('delete')">{{ $t('Delete') }}</button>
                             </div>
                         </div>
                     </header>
@@ -139,7 +139,7 @@
                                     v-model="selectedItems"
                                     type="checkbox"
                                     :value="row.module_uuid"
-                                    :aria-label="`Select ${row.module_label}`"
+                                    :aria-label="$t('Select :name', { name: row.module_label })"
                                     class="mt-1 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
                                 />
 
@@ -149,16 +149,16 @@
                                         <button
                                             type="button"
                                             class="inline-flex items-center rounded-md bg-indigo-50 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-indigo-700 ring-1 ring-inset ring-indigo-600/20 hover:bg-indigo-100"
-                                            :title="`Filter by ${row.module_category}`"
+                                            :title="$t('Filter by :category', { category: row.module_category })"
                                             @click="selectedCategory = row.module_category"
                                         >
-                                            {{ row.module_category }}
+                                            {{ moduleCategoryLabel(row.module_category) }}
                                         </button>
                                         <code class="rounded bg-gray-100 px-1.5 py-0.5 font-mono text-[11px] text-gray-600">{{ row.module_name }}</code>
                                     </div>
-                                    <p class="mt-1 text-xs text-gray-500">{{ row.module_description || 'No description' }}</p>
+                                    <p class="mt-1 text-xs text-gray-500">{{ row.module_description || $t('No description') }}</p>
                                     <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-400">
-                                        <span>Order {{ row.module_order ?? 0 }}</span>
+                                        <span>{{ $t('Order') }} {{ row.module_order ?? 0 }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -173,36 +173,36 @@
                                     type="button"
                                     class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-40"
                                     :disabled="!row.can_control_runtime"
-                                    title="Start module"
+                                    :title="$t('Start module')"
                                     @click="confirmAction('start', [row.module_uuid])"
                                 >
                                     <PlayIcon class="h-3.5 w-3.5" />
-                                    Start
+                                    {{ $t('Start') }}
                                 </button>
                                 <button
                                     v-if="permissions.update && row.status === 'running'"
                                     type="button"
                                     class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-amber-700 hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-40"
                                     :disabled="!row.can_control_runtime"
-                                    title="Stop module"
+                                    :title="$t('Stop module')"
                                     @click="confirmAction('stop', [row.module_uuid])"
                                 >
                                     <StopIcon class="h-3.5 w-3.5" />
-                                    Stop
+                                    {{ $t('Stop') }}
                                 </button>
                                 <button
                                     v-if="permissions.update"
                                     type="button"
                                     :class="autoloadStatusClass(row.module_enabled)"
-                                    :title="row.module_enabled === 'true' ? 'Disable module autoload' : 'Enable module autoload'"
+                                    :title="row.module_enabled === 'true' ? $t('Disable module autoload') : $t('Enable module autoload')"
                                     @click="confirmAction('toggle', [row.module_uuid])"
                                 >
                                     <span :class="['mr-1 inline-block h-1.5 w-1.5 rounded-full', row.module_enabled === 'true' ? 'bg-indigo-500' : 'bg-gray-400']" />
-                                    Autoload {{ row.module_enabled === 'true' ? 'enabled' : 'disabled' }}
+                                    {{ row.module_enabled === 'true' ? $t('Autoload enabled') : $t('Autoload disabled') }}
                                 </button>
                                 <span v-else :class="autoloadStatusClass(row.module_enabled)">
                                     <span :class="['mr-1 inline-block h-1.5 w-1.5 rounded-full', row.module_enabled === 'true' ? 'bg-indigo-500' : 'bg-gray-400']" />
-                                    Autoload {{ row.module_enabled === 'true' ? 'enabled' : 'disabled' }}
+                                    {{ row.module_enabled === 'true' ? $t('Autoload enabled') : $t('Autoload disabled') }}
                                 </span>
                                 <button
                                     v-if="permissions.update"
@@ -218,21 +218,21 @@
                                     class="rounded-md px-2 py-1 text-xs font-medium text-rose-600 hover:bg-rose-50"
                                     @click="confirmAction('delete', [row.module_uuid])"
                                 >
-                                    Delete
+                                    {{ $t('Delete') }}
                                 </button>
                             </div>
                         </li>
                     </ul>
 
                     <div v-else class="px-4 py-12 text-center">
-                        <p class="text-sm font-medium text-gray-900">No modules match your filters</p>
-                        <p class="mt-1 text-xs text-gray-500">Try clearing search, runtime, or autoload filters.</p>
+                        <p class="text-sm font-medium text-gray-900">{{ $t('No modules match your filters') }}</p>
+                        <p class="mt-1 text-xs text-gray-500">{{ $t('Try clearing search, runtime, or autoload filters.') }}</p>
                         <button
                             type="button"
                             class="mt-3 rounded-md bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
                             @click="resetFilters"
                         >
-                            Reset filters
+                            {{ $t('Reset filters') }}
                         </button>
                     </div>
                 </div>
@@ -249,7 +249,7 @@
         :header="confirmation.header"
         :text="confirmation.text"
         :confirm-button-label="confirmation.button"
-        cancel-button-label="Cancel"
+        :cancel-button-label="$t('Cancel')"
         :loading="confirmation.loading"
         :color="confirmation.color"
         @close="closeConfirmation"
@@ -260,6 +260,7 @@
 </template>
 
 <script setup>
+import { trans, transChoice } from '@i18n';
 import { computed, h, onMounted, ref, watch } from "vue";
 import axios from "axios";
 import MainLayout from "../Layouts/MainLayout.vue";
@@ -312,7 +313,7 @@ const confirmation = ref({
     items: [],
     header: "",
     text: "",
-    button: "Continue",
+    button: trans('Continue'),
     color: "indigo",
     loading: false,
 });
@@ -359,18 +360,18 @@ const categoriesWithCounts = computed(() => {
     const counts = new Map();
 
     for (const row of filteredRows.value) {
-        const category = row.module_category || "Uncategorized";
+        const category = row.module_category || 'Uncategorized';
         counts.set(category, (counts.get(category) || 0) + 1);
     }
 
     return Array.from(counts.entries())
-        .map(([value, count]) => ({ value, label: value, count }))
+        .map(([value, count]) => ({ value, label: moduleCategoryLabel(value), count }))
         .sort((a, b) => a.label.localeCompare(b.label));
 });
 
 const displayedRows = computed(() => {
     const rows = selectedCategory.value
-        ? filteredRows.value.filter((row) => row.module_category === selectedCategory.value)
+        ? filteredRows.value.filter((row) => (row.module_category || 'Uncategorized') === selectedCategory.value)
         : filteredRows.value;
 
     return [...rows].sort((a, b) => {
@@ -388,7 +389,26 @@ const displayedRows = computed(() => {
     });
 });
 
-const selectedCategoryLabel = computed(() => selectedCategory.value || "All modules");
+const selectedCategoryLabel = computed(() => selectedCategory.value ? moduleCategoryLabel(selectedCategory.value) : trans('All modules'));
+
+function moduleCategoryLabel(category) {
+    return {
+        Uncategorized: trans('Uncategorized'),
+        Applications: trans('Applications'),
+        Auto: trans('Auto'),
+        Codecs: trans('Codecs'),
+        'Dialplan Interfaces': trans('Dialplan Interfaces'),
+        Endpoints: trans('Endpoints'),
+        'Event Handlers': trans('Event Handlers'),
+        'File Format Interfaces': trans('File Format Interfaces'),
+        Languages: trans('Languages'),
+        Loggers: trans('Loggers'),
+        Say: trans('Say'),
+        'Speech Recognition / Text to Speech': trans('Speech Recognition / Text to Speech'),
+        'Streams / Files': trans('Streams / Files'),
+        'XML Interfaces': trans('XML Interfaces'),
+    }[category] ?? category;
+}
 
 const allVisibleSelected = computed(() => {
     if (!displayedRows.value.length) {
@@ -489,34 +509,34 @@ function handleBulkActionRequest(action) {
 
 function confirmAction(action, items) {
     if (!items.length) {
-        showNotification("error", { request: ["No modules selected."] });
+        showNotification("error", { request: [trans('No modules selected.')] });
         return;
     }
 
     const count = items.length;
     const copy = {
         start: {
-            header: "Start modules?",
-            text: `Start ${count} selected module${count === 1 ? "" : "s"} in FreeSWITCH.`,
-            button: "Start",
+            header: trans('Start modules?'),
+            text: transChoice('Start :count selected module in FreeSWITCH.|Start :count selected modules in FreeSWITCH.', count),
+            button: trans('Start'),
             color: "green",
         },
         stop: {
-            header: "Stop modules?",
-            text: `Stop ${count} selected module${count === 1 ? "" : "s"} in FreeSWITCH.`,
-            button: "Stop",
+            header: trans('Stop modules?'),
+            text: transChoice('Stop :count selected module in FreeSWITCH.|Stop :count selected modules in FreeSWITCH.', count),
+            button: trans('Stop'),
             color: "red",
         },
         toggle: {
-            header: "Toggle autoload?",
-            text: `Toggle autoload for ${count} selected module${count === 1 ? "" : "s"}.`,
-            button: "Toggle",
+            header: trans('Toggle autoload?'),
+            text: transChoice('Toggle autoload for :count selected module.|Toggle autoload for :count selected modules.', count),
+            button: trans('Toggle'),
             color: "indigo",
         },
         delete: {
-            header: "Delete modules?",
-            text: `Delete ${count} selected module${count === 1 ? "" : "s"}.`,
-            button: "Delete",
+            header: trans('Delete modules?'),
+            text: transChoice('Delete :count selected module.|Delete :count selected modules.', count),
+            button: trans('Delete'),
             color: "red",
         },
     }[action];
@@ -579,10 +599,10 @@ function categoryBadgeClass(category) {
 
 function runtimeLabel(status) {
     return {
-        running: "Running",
-        stopped: "Stopped",
-        unknown: "Unknown",
-    }[status] || "Unknown";
+        running: trans('Running'),
+        stopped: trans('Stopped'),
+        unknown: trans('Unknown'),
+    }[status] || trans('Unknown');
 }
 
 function runtimeStatusClass(status) {
@@ -619,7 +639,7 @@ function showNotification(type, messages = null) {
 
 function handleError(error) {
     if (error?.response?.status === 419) {
-        showNotification("error", { request: ["Session expired. Reload the page."] });
+        showNotification("error", { request: [trans('Session expired. Reload the page.')] });
         return;
     }
 
@@ -628,6 +648,6 @@ function handleError(error) {
         return;
     }
 
-    showNotification("error", { request: [error?.message || "Request failed."] });
+    showNotification("error", { request: [error?.message || trans('Request failed.')] });
 }
 </script>

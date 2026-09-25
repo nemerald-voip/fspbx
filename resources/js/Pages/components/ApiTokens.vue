@@ -6,15 +6,15 @@
                     <table class="min-w-full divide-y divide-gray-200 mb-4">
                         <thead class="bg-gray-200">
                             <tr>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Name</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">{{ $t('Name') }}</th>
                                 <th class="hidden px-6 py-3 text-left text-sm font-semibold text-gray-900 sm:table-cell">
-                                    Created At
+                                    {{ $t('Created At') }}
                                 </th>
                                 <th class="hidden px-6 py-3 text-left text-sm font-semibold text-gray-900 sm:table-cell">
-                                    Last Used
+                                    {{ $t('Last Used') }}
                                 </th>
                                 <th class="relative px-6 py-3 text-left text-sm font-medium text-gray-500">
-                                    <span class="sr-only">Actions</span>
+                                    <span class="sr-only">{{ $t('Actions') }}</span>
                                 </th>
                             </tr>
                         </thead>
@@ -31,8 +31,8 @@
 
                                     <!-- Last used: show in mobile view -->
                                     <div class="px-6 py-2 text-sm text-gray-500 sm:hidden">
-                                        <span v-if="token.last_used_at">Last used: {{ token.last_used_at }}</span>
-                                        <span v-else>Never used</span>
+                                        <span v-if="token.last_used_at">{{ $t('Last used: :date', { date: token.last_used_at }) }}</span>
+                                        <span v-else>{{ $t('Never used') }}</span>
                                     </div>
                                 </td>
 
@@ -43,7 +43,7 @@
                                 <!-- Last used: show in desktop view -->
                                 <td class="hidden px-6 py-2 text-sm text-gray-500 sm:table-cell">
                                     <span v-if="token.last_used_at">{{ token.last_used_at }}</span>
-                                    <span v-else>Never used</span>
+                                    <span v-else>{{ $t('Never used') }}</span>
                                 </td>
 
                                 <!-- Actions -->
@@ -57,7 +57,7 @@
                                         </ejs-tooltip> -->
 
                                         <!-- Revoke/Delete -->
-                                        <ejs-tooltip v-if="permissions.api_key_delete" :content="'Revoke'"
+                                        <ejs-tooltip v-if="permissions.api_key_delete" :content="$t('Revoke')"
                                             position='TopCenter'>
                                             <TrashIcon @click="handleSingleItemDeleteRequest(token.id)"
                                                 class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
@@ -72,7 +72,7 @@
                     <!-- Empty State -->
                     <div v-if="!loading && tokens.length === 0" class="text-center my-5">
                         <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                        <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
+                        <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ $t('No results found') }}</h3>
                         <!-- <p class="mt-1 text-sm text-gray-500">
                 Adjust your search and try again.
               </p> -->

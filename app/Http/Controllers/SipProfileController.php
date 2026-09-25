@@ -41,7 +41,7 @@ class SipProfileController extends Controller
     public function getData(Request $request): JsonResponse
     {
         if (! userCheckPermission('sip_profile_view')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $highlightKeys = ['sip-ip', 'sip-port', 'tls-sip-port', 'context', 'tls', 'auth-calls'];
@@ -101,11 +101,11 @@ class SipProfileController extends Controller
         $itemUuid = $request->input('itemUuid', $request->input('item_uuid'));
 
         if ($itemUuid && ! userCheckPermission('sip_profile_edit')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         if (! $itemUuid && ! userCheckPermission('sip_profile_add')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $profile = $itemUuid
@@ -127,14 +127,14 @@ class SipProfileController extends Controller
     public function selectAll(Request $request): JsonResponse
     {
         if (! userCheckPermission('sip_profile_view')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         return response()->json([
             'items' => $this->profileQuery($request)
                 ->defaultSort('sip_profile_name')
                 ->pluck('sip_profile_uuid'),
-            'messages' => ['success' => ['All matching SIP profiles selected.']],
+            'messages' => ['success' => [__('All matching SIP profiles selected.')]],
         ]);
     }
 
@@ -143,7 +143,7 @@ class SipProfileController extends Controller
         $profile = $service->save($request->validated());
 
         return response()->json([
-            'messages' => ['success' => ['SIP profile created.']],
+            'messages' => ['success' => [__('SIP profile created.')]],
             'sip_profile_uuid' => $profile->sip_profile_uuid,
         ], 201);
     }
@@ -153,33 +153,33 @@ class SipProfileController extends Controller
         $service->save($request->validated(), $sip_profile);
 
         return response()->json([
-            'messages' => ['success' => ['SIP profile updated.']],
+            'messages' => ['success' => [__('SIP profile updated.')]],
         ]);
     }
 
     public function destroy(SipProfiles $sip_profile, SipProfileService $service): JsonResponse
     {
         if (! userCheckPermission('sip_profile_delete')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $service->delete(collect([$sip_profile]));
 
         return response()->json([
-            'messages' => ['success' => ['SIP profile deleted.']],
+            'messages' => ['success' => [__('SIP profile deleted.')]],
         ]);
     }
 
     public function duplicate(SipProfiles $sip_profile, SipProfileService $service): JsonResponse
     {
         if (! userCheckPermission('sip_profile_add')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $copy = $service->duplicate($sip_profile);
 
         return response()->json([
-            'messages' => ['success' => ['SIP profile cloned.']],
+            'messages' => ['success' => [__('SIP profile cloned.')]],
             'sip_profile_uuid' => $copy->sip_profile_uuid,
         ], 201);
     }
@@ -187,37 +187,37 @@ class SipProfileController extends Controller
     public function bulkToggle(Request $request, SipProfileService $service): JsonResponse
     {
         if (! userCheckPermission('sip_profile_edit')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $profiles = $this->selectedProfiles($request);
         if ($profiles->isEmpty()) {
-            return response()->json(['messages' => ['error' => ['No SIP profiles selected.']]], 422);
+            return response()->json(['messages' => ['error' => [__('No SIP profiles selected.')]]], 422);
         }
 
         $service->toggle($profiles);
 
         return response()->json([
-            'messages' => ['success' => ['SIP profile enabled state toggled.']],
+            'messages' => ['success' => [__('SIP profile enabled state toggled.')]],
         ]);
     }
 
     public function bulkDelete(Request $request, SipProfileService $service): JsonResponse
     {
         if (! userCheckPermission('sip_profile_delete')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $profiles = $this->selectedProfiles($request);
         if ($profiles->isEmpty()) {
-            return response()->json(['messages' => ['error' => ['No SIP profiles selected.']]], 422);
+            return response()->json(['messages' => ['error' => [__('No SIP profiles selected.')]]], 422);
         }
 
         $count = $profiles->count();
         $service->delete($profiles);
 
         return response()->json([
-            'messages' => ['success' => ["Deleted {$count} SIP profile(s)."]],
+            'messages' => ['success' => [trans_choice('Deleted :count SIP profile.|Deleted :count SIP profiles.', $count)]],
         ]);
     }
 

@@ -3,7 +3,7 @@
 
     <div class="m-3">
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-            <template #title>Group Manager</template>
+            <template #title>{{ $t('Group Manager') }}</template>
 
             <template #filters>
                 <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
@@ -13,23 +13,23 @@
                     <input type="text" v-model="filterData.search" name="mobile-search-candidate"
                         id="mobile-search-candidate"
                         class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                        :placeholder="$t('Search')" @keydown.enter="handleSearchButtonClick" />
                     <input type="text" v-model="filterData.search" name="desktop-search-candidate"
                         id="desktop-search-candidate"
                         class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                        :placeholder="$t('Search')" @keydown.enter="handleSearchButtonClick" />
                 </div>
             </template>
 
             <template #action>
                 <button v-if="permissions.create" type="button" @click.prevent="handleCreateButtonClick()"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                    Create
+                    {{ $t('Create') }}
                 </button>
 
                 <a v-if="permissions.domain_groups_view" type="button" href="/domain-groups"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                    Domain Groups
+                    {{ $t('Domain Groups') }}
                 </a>
 
 
@@ -49,19 +49,19 @@
                     @sort="handleSortRequest">
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems" @click.stop
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                    <span class="pl-4">Name</span>
+                    <span class="pl-4">{{ $t('Name') }}</span>
                 </TableColumnHeader>
 
-                <TableColumnHeader header="Level" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
+                <TableColumnHeader :header="$t('Level')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
                     field="group_level" :sort-order="sortData.order" :sorted-field="sortData.name"
                     @sort="handleSortRequest" />
-                <TableColumnHeader header="Permissions" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
+                <TableColumnHeader :header="$t('Permissions')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
                     field="permissions_count" :sort-order="sortData.order" :sorted-field="sortData.name"
                     @sort="handleSortRequest" />
-                <TableColumnHeader header="Members" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
+                <TableColumnHeader :header="$t('Members')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
                     field="user_groups_count" :sort-order="sortData.order" :sorted-field="sortData.name"
                     @sort="handleSortRequest" />
-                <TableColumnHeader header="Description" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
+                <TableColumnHeader :header="$t('Description')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
                     field="group_description" :sort-order="sortData.order" :sorted-field="sortData.name"
                     @sort="handleSortRequest" />
                 <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900"
@@ -71,16 +71,16 @@
             <template v-if="selectPageItems" v-slot:current-selection>
                 <td colspan="6">
                     <div class="text-sm text-center m-2">
-                        <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
+                        <span class="font-semibold ">{{ $t(':count selected', { count: selectedItems.length }) }}</span>
                         <button v-if="!selectAll && selectedItems.length != data.total"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleSelectAll">
-                            Select all {{ data.total }} items
+                            {{ $t('Select all :count', { count: data.total }) }}
                         </button>
                         <button v-if="selectAll"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleClearSelection">
-                            Clear selection
+                            {{ $t('Clear selection') }}
                         </button>
                     </div>
                 </td>
@@ -110,8 +110,7 @@
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
                         <a :href="`/groups/${row.group_uuid}/permissions`"
                             class="inline-block rounded bg-white px-2 py-1 text-sm text-gray-600 shadow-sm hover:text-gray-900">
-                            Permissions
-                            ({{ row.permissions_count }})
+                            {{ $t('Permissions (:count)', { count: row.permissions_count }) }}
                         </a>
 
                     </TableField>
@@ -120,8 +119,7 @@
                         <button v-if="permissions.members" type="button"
                             @click="handleMembersButtonClick(row)"
                             class="inline-block rounded bg-white px-2 py-1 text-sm text-gray-600 shadow-sm hover:text-gray-900">
-                            Members
-                            ({{ row.user_groups_count }})
+                            {{ $t('Members (:count)', { count: row.user_groups_count }) }}
                         </button>
                         <span v-else>
                             {{ row.user_groups_count }}
@@ -136,7 +134,7 @@
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap justify-end">
-                                <ejs-tooltip v-if="permissions.update" :content="'Edit'" position='TopCenter'
+                                <ejs-tooltip v-if="permissions.update" :content="$t('Edit')" position='TopCenter'
                                     target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
                                         <PencilSquareIcon @click="handleEditButtonClick(row.group_uuid)"
@@ -145,7 +143,7 @@
                                     </div>
                                 </ejs-tooltip>
 
-                                <ejs-tooltip v-if="permissions.create" :content="'Clone'" position='TopCenter'
+                                <ejs-tooltip v-if="permissions.create" :content="$t('Clone')" position='TopCenter'
                                     target="#clone_tooltip_target">
                                     <div id="clone_tooltip_target">
                                         <DocumentDuplicateIcon @click="handleSingleItemCloneRequest(row.group_uuid)"
@@ -153,7 +151,7 @@
                                     </div>
                                 </ejs-tooltip>
 
-                                <ejs-tooltip v-if="permissions.destroy" :content="'Delete'"
+                                <ejs-tooltip v-if="permissions.destroy" :content="$t('Delete')"
                                     position='TopCenter' target="#delete_tooltip_target">
                                     <div id="delete_tooltip_target">
                                         <TrashIcon @click="handleSingleItemDeleteRequest(row.group_uuid)"
@@ -169,9 +167,9 @@
                 <!-- Conditional rendering for 'no records' message -->
                 <div v-if="data.data.length === 0" class="text-center my-5 ">
                     <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
+                    <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ $t('No results found') }}</h3>
                     <p class="mt-1 text-sm text-gray-500">
-                        Adjust your search and try again.
+                        {{ $t('Adjust your search and try again.') }}
                     </p>
                 </div>
             </template>
@@ -206,13 +204,14 @@
     <ConfirmationModal :show="showConfirmationModal" @close="handleModalClose"
         @confirm="confirmAction" :header="confirmationHeader"
         :text="confirmationText"
-        :confirm-button-label="confirmationButtonLabel" cancel-button-label="Cancel" />
+        :confirm-button-label="confirmationButtonLabel" :cancel-button-label="$t('Cancel')" />
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
 </template>
 
 <script setup>
+import { trans } from '@i18n';
 import { computed, onMounted, ref } from "vue";
 import axios from 'axios';
 import DataTable from "./components/general/DataTable.vue";
@@ -246,9 +245,9 @@ const showMembersModal = ref(false);
 const selectedMembersGroup = ref(null);
 const showConfirmationModal = ref(false);
 const confirmAction = ref(null);
-const confirmationHeader = ref('Are you sure?');
+const confirmationHeader = ref(trans('Are you sure?'));
 const confirmationText = ref('');
-const confirmationButtonLabel = ref('Continue');
+const confirmationButtonLabel = ref(trans('Continue'));
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(false);
@@ -292,7 +291,7 @@ const bulkActions = computed(() => {
     if (permissions.create) {
         actions.push({
             id: 'clone',
-            label: 'Clone',
+            label: trans('Clone'),
             icon: 'DocumentDuplicateIcon',
         });
     }
@@ -300,7 +299,7 @@ const bulkActions = computed(() => {
     if (permissions.destroy) {
         actions.push({
             id: 'bulk_delete',
-            label: 'Delete',
+            label: trans('Delete'),
             icon: 'TrashIcon'
         });
     }
@@ -339,18 +338,18 @@ const handleMemberCountChanged = ({ group_uuid, count }) => {
 
 const handleSingleItemDeleteRequest = (uuid) => {
     showConfirmation({
-        header: 'Confirm Deletion',
-        text: 'This action will permanently delete the selected group. Are you sure you want to proceed?',
-        button: 'Delete',
+        header: trans('Confirm Deletion'),
+        text: trans('This action will permanently delete the selected group. Are you sure you want to proceed?'),
+        button: trans('Delete'),
         action: () => executeBulkDelete([uuid]),
     });
 };
 
 const handleSingleItemCloneRequest = (uuid) => {
     showConfirmation({
-        header: 'Clone Group',
-        text: 'Clone this group and all of its permissions?',
-        button: 'Clone',
+        header: trans('Clone Group'),
+        text: trans('Clone this group and all of its permissions?'),
+        button: trans('Clone'),
         action: () => executeClone([uuid]),
     });
 };
@@ -371,23 +370,23 @@ const executeBulkDelete = (items = selectedItems.value) => {
 const handleBulkActionRequest = (action) => {
     if (action === 'bulk_delete') {
         showConfirmation({
-            header: 'Confirm Deletion',
-            text: 'This action will permanently delete the selected group(s). Are you sure you want to proceed?',
-            button: 'Delete',
+            header: trans('Confirm Deletion'),
+            text: trans('This action will permanently delete the selected group(s). Are you sure you want to proceed?'),
+            button: trans('Delete'),
             action: () => executeBulkDelete(),
         });
     }
 
     if (action === 'clone') {
         if (selectedItems.value.length !== 1) {
-            showNotification('error', { clone: ['Select exactly one group to clone.'] });
+            showNotification('error', { clone: [trans('Select exactly one group to clone.')] });
             return;
         }
 
         showConfirmation({
-            header: 'Clone Group',
-            text: 'Clone the selected group and all of its permissions?',
-            button: 'Clone',
+            header: trans('Clone Group'),
+            text: trans('Clone the selected group and all of its permissions?'),
+            button: trans('Clone'),
             action: () => executeClone(),
         });
     }

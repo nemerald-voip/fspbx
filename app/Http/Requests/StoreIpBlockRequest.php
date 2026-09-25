@@ -42,9 +42,24 @@ class StoreIpBlockRequest extends FormRequest
                         // Optional: Add IPv6 CIDR logic here if needed
                     }
 
-                    $fail('The ' . $attribute . ' must be a valid IP address or CIDR subnet.');
+                    $fail(__('The :attribute must be a valid IP address or CIDR subnet.', ['attribute' => __('IP Address')]));
                 },
             ],
+        ];
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'ip_address' => __('IP Address'),
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'required' => __('The :attribute field is required.'),
+            'string' => __('The :attribute must be a string.'),
         ];
     }
 }

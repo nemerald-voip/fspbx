@@ -81,7 +81,7 @@ class SwitchModuleController extends Controller
     public function getData(Request $request, SwitchModuleService $service): JsonResponse
     {
         if (! userCheckPermission('module_view')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $service->syncFromDisk();
@@ -117,14 +117,14 @@ class SwitchModuleController extends Controller
     public function selectAll(Request $request): JsonResponse
     {
         if (! userCheckPermission('module_view')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         return response()->json([
             'items' => $this->moduleQuery($request)
                 ->defaultSort('module_category', 'module_label')
                 ->pluck('module_uuid'),
-            'messages' => ['success' => ['All matching modules selected.']],
+            'messages' => ['success' => [__('All matching modules selected.')]],
         ]);
     }
 
@@ -141,13 +141,13 @@ class SwitchModuleController extends Controller
     public function bulkToggle(Request $request, SwitchModuleService $service): JsonResponse
     {
         if (! userCheckPermission('module_edit')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $modules = $this->selectedModules($request);
 
         if ($modules->isEmpty()) {
-            return response()->json(['messages' => ['error' => ['No modules selected.']]], 422);
+            return response()->json(['messages' => ['error' => [__('No modules selected.')]]], 422);
         }
 
         return response()->json($service->toggle($modules));
@@ -156,13 +156,13 @@ class SwitchModuleController extends Controller
     public function bulkDelete(Request $request, SwitchModuleService $service): JsonResponse
     {
         if (! userCheckPermission('module_delete')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $modules = $this->selectedModules($request);
 
         if ($modules->isEmpty()) {
-            return response()->json(['messages' => ['error' => ['No modules selected.']]], 422);
+            return response()->json(['messages' => ['error' => [__('No modules selected.')]]], 422);
         }
 
         return response()->json($service->delete($modules));
@@ -171,13 +171,13 @@ class SwitchModuleController extends Controller
     private function control(Request $request, SwitchModuleService $service, string $action): JsonResponse
     {
         if (! userCheckPermission('module_edit')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $modules = $this->selectedModules($request);
 
         if ($modules->isEmpty()) {
-            return response()->json(['messages' => ['error' => ['No modules selected.']]], 422);
+            return response()->json(['messages' => ['error' => [__('No modules selected.')]]], 422);
         }
 
         $result = $service->control($modules, $action);
@@ -258,7 +258,7 @@ class SwitchModuleController extends Controller
             'module_uuid' => $module->module_uuid,
             'module_label' => $module->module_label,
             'module_name' => $module->module_name,
-            'module_category' => $module->module_category ?: 'Uncategorized',
+            'module_category' => $module->module_category ?: __('Uncategorized'),
             'module_order' => $module->module_order,
             'module_enabled' => $module->module_enabled,
             'module_default_enabled' => $module->module_default_enabled,

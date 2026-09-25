@@ -3,10 +3,10 @@
 
     <div class="m-3">
         <DataTable @search-action="fetchData(1)" @reset-filters="resetFilters">
-            <template #title>SIP Profiles</template>
+            <template #title>{{ $t('SIP Profiles') }}</template>
 
             <template #subtitle>
-                Manage Sofia SIP profiles, and profile parameters.
+                {{ $t('Manage Sofia SIP profiles, and profile parameters.') }}
             </template>
 
             <template #filters>
@@ -18,7 +18,7 @@
                         v-model="filterData.search"
                         type="text"
                         class="block w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600"
-                        placeholder="Search"
+                        :placeholder="$t('Search')"
                         @keydown.enter="fetchData(1)"
                     />
                 </div>
@@ -29,9 +29,9 @@
                         class="block w-full rounded-md border-0 py-1.5 pl-3 pr-8 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600"
                         @change="fetchData(1)"
                     >
-                        <option value="">All states</option>
-                        <option value="true">Enabled</option>
-                        <option value="false">Disabled</option>
+                        <option value="">{{ $t('All states') }}</option>
+                        <option value="true">{{ $t('Enabled') }}</option>
+                        <option value="false">{{ $t('Disabled') }}</option>
                     </select>
                 </div>
             </template>
@@ -45,7 +45,7 @@
                         @click="openCreateModal"
                     >
                         <PlusIcon class="h-4 w-4" />
-                        Add
+                        {{ $t('Add') }}
                     </button>
                 </div>
             </template>
@@ -78,43 +78,43 @@
                             class="h-4 w-4 rounded border-gray-300 text-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
                         />
                         <button class="flex items-center" :class="{ 'ml-4': hasSelectableActions }" @click="setSort('sip_profile_name')">
-                            <span class="mr-2">Profile</span>
+                            <span class="mr-2">{{ $t('Profile') }}</span>
                             <ChevronUpIcon v-if="sortData.name === 'sip_profile_name' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
                             <ChevronDownIcon v-else-if="sortData.name === 'sip_profile_name' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
                         </button>
                     </div>
                 </TableColumnHeader>
-                <TableColumnHeader header="Bindings" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="State" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Config" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t('Bindings')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t('State')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t('Config')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <button class="flex items-center" @click="setSort('sip_profile_hostname')">
-                        <span class="mr-2">Hostname</span>
+                        <span class="mr-2">{{ $t('Hostname') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'sip_profile_hostname' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'sip_profile_hostname' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
                     </button>
                 </TableColumnHeader>
-                <TableColumnHeader header="Description" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t('Description')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader v-if="hasRowActions" header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
             </template>
 
             <template v-if="selectPageItems" #current-selection>
                 <td :colspan="columnCount">
                     <div class="m-2 text-center text-sm">
-                        <span class="font-semibold">{{ selectedItems.length }}</span> SIP profiles are selected.
+                        <span class="font-semibold">{{ $t(':count selected', { count: selectedItems.length }) }}</span>
                         <button
                             v-if="!selectAll && selectedItems.length !== data.total"
                             class="rounded px-2 py-2 text-blue-500 transition duration-500 ease-in-out hover:bg-blue-200 hover:text-blue-500 focus:bg-blue-200 focus:outline-none focus:ring-1 focus:ring-blue-300"
                             @click="selectAllMatching"
                         >
-                            Select all {{ data.total }} SIP profiles
+                            {{ $t('Select all :count', { count: data.total }) }}
                         </button>
                         <button
                             v-if="selectAll"
                             class="rounded px-2 py-2 text-blue-500 transition duration-500 ease-in-out hover:bg-blue-200 hover:text-blue-500 focus:bg-blue-200 focus:outline-none focus:ring-1 focus:ring-blue-300"
                             @click="clearSelection"
                         >
-                            Clear selection
+                            {{ $t('Clear selection') }}
                         </button>
                     </div>
                 </td>
@@ -140,7 +140,7 @@
                                 <span class="block font-medium text-gray-900" :class="{ 'hover:text-indigo-600': permissions.update }">
                                     {{ row.sip_profile_name }}
                                 </span>
-                                <span v-if="row.context" class="mt-1 block truncate text-xs text-gray-400">context: {{ row.context }}</span>
+                                <span v-if="row.context" class="mt-1 block truncate text-xs text-gray-400">{{ $t('context:') }} {{ row.context }}</span>
                             </button>
                         </div>
                     </TableField>
@@ -154,9 +154,9 @@
                             <div
                                 v-if="row.tls_enabled"
                                 class="flex items-center gap-1.5 font-mono text-xs text-emerald-700"
-                                :title="row.tls_value && row.tls_value.startsWith('$') ? `TLS gated by ${row.tls_value}` : 'TLS enabled'"
+                                :title="row.tls_value && row.tls_value.startsWith('$') ? $t('TLS gated by :value', { value: row.tls_value }) : $t('TLS enabled')"
                             >
-                                <span class="w-8 font-sans text-[10px] uppercase tracking-wide text-emerald-500">TLS</span>
+                                <span class="w-8 font-sans text-[10px] uppercase tracking-wide text-emerald-500">{{ $t('TLS') }}</span>
                                 {{ row.sip_ip || "—" }}<span class="text-emerald-400">:</span>{{ row.tls_port || "5061" }}
                             </div>
                         </div>
@@ -164,9 +164,9 @@
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
                         <button v-if="permissions.update" type="button" @click="confirmAction('toggle', [row.sip_profile_uuid])">
-                            <Badge :text="row.sip_profile_enabled === 'true' ? 'Enabled' : 'Disabled'" v-bind="enabledBadge(row.sip_profile_enabled)" />
+                            <Badge :text="row.sip_profile_enabled === 'true' ? $t('Enabled') : $t('Disabled')" v-bind="enabledBadge(row.sip_profile_enabled)" />
                         </button>
-                        <Badge v-else :text="row.sip_profile_enabled === 'true' ? 'Enabled' : 'Disabled'" v-bind="enabledBadge(row.sip_profile_enabled)" />
+                        <Badge v-else :text="row.sip_profile_enabled === 'true' ? $t('Enabled') : $t('Disabled')" v-bind="enabledBadge(row.sip_profile_enabled)" />
                     </TableField>
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
@@ -180,7 +180,7 @@
                     </TableField>
 
                     <TableField class="max-w-xl px-2 py-2 text-sm text-gray-500">
-                        <span class="line-clamp-2">{{ row.sip_profile_description || "No description" }}</span>
+                        <span class="line-clamp-2">{{ row.sip_profile_description || $t('No description') }}</span>
                     </TableField>
 
                     <TableField v-if="hasRowActions" class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
@@ -190,7 +190,7 @@
                                     v-if="permissions.update"
                                     type="button"
                                     class="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
-                                    title="Edit"
+                                    :title="$t('Edit')"
                                     @click="openEditModal(row)"
                                 >
                                     <PencilSquareIcon class="h-5 w-5" />
@@ -199,7 +199,7 @@
                                     v-if="permissions.create"
                                     type="button"
                                     class="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
-                                    title="Clone"
+                                    :title="$t('Clone')"
                                     @click="cloneProfile(row)"
                                 >
                                     <DocumentDuplicateIcon class="h-5 w-5" />
@@ -208,7 +208,7 @@
                                     v-if="permissions.destroy"
                                     type="button"
                                     class="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-red-600"
-                                    title="Delete"
+                                    :title="$t('Delete')"
                                     @click="confirmAction('delete', [row.sip_profile_uuid])"
                                 >
                                     <TrashIcon class="h-5 w-5" />
@@ -221,7 +221,7 @@
 
             <template #empty>
                 <div v-if="!loading && data.data.length === 0" class="px-6 py-8 text-center text-sm text-gray-500">
-                    No SIP profiles found.
+                    {{ $t('No SIP profiles found.') }}
                 </div>
             </template>
 
@@ -263,7 +263,7 @@
         :header="confirmation.header"
         :text="confirmation.text"
         :confirm-button-label="confirmation.button"
-        cancel-button-label="Cancel"
+        :cancel-button-label="$t('Cancel')"
         :loading="confirmation.loading"
         :color="confirmation.color"
         @close="closeConfirmation"
@@ -274,6 +274,7 @@
 </template>
 
 <script setup>
+import { trans, transChoice } from '@i18n';
 import { computed, onMounted, ref, watch } from "vue";
 import axios from "axios";
 import MainLayout from "../Layouts/MainLayout.vue";
@@ -315,7 +316,7 @@ const formMode = ref("create");
 const loadingForm = ref(false);
 const editingItemUuid = ref(null);
 const itemOptions = ref({ item: {}, domains: [], settings: [], permissions: {}, routes: {} });
-const confirmation = ref({ show: false, action: null, items: [], header: "", text: "", button: "Continue", color: "indigo", loading: false });
+const confirmation = ref({ show: false, action: null, items: [], header: "", text: "", button: trans('Continue'), color: "indigo", loading: false });
 
 const routes = computed(() => props.routes || {});
 const permissions = computed(() => props.permissions || {});
@@ -323,7 +324,7 @@ const hasSelectableActions = computed(() => permissions.value.update || permissi
 const hasRowActions = computed(() => permissions.value.update || permissions.value.create || permissions.value.destroy);
 const pageItems = computed(() => data.value.data.map((row) => row.sip_profile_uuid));
 const columnCount = computed(() => 6 + (hasRowActions.value ? 1 : 0));
-const formHeader = computed(() => (formMode.value === "create" ? "Create SIP Profile" : "Edit SIP Profile"));
+const formHeader = computed(() => (formMode.value === "create" ? trans('Create SIP Profile') : trans('Edit SIP Profile')));
 const selectPageItems = computed({
     get() {
         return pageItems.value.length > 0 && pageItems.value.every((uuid) => selectedItems.value.includes(uuid));
@@ -341,11 +342,11 @@ const bulkActions = computed(() => {
     const actions = [];
 
     if (permissions.value.update) {
-        actions.push({ id: "toggle", label: "Toggle", icon: "SyncIcon" });
+        actions.push({ id: "toggle", label: trans('Toggle'), icon: "SyncIcon" });
     }
 
     if (permissions.value.destroy) {
-        actions.push({ id: "delete", label: "Delete", icon: "TrashIcon" });
+        actions.push({ id: "delete", label: trans('Delete'), icon: "TrashIcon" });
     }
 
     return actions;
@@ -475,22 +476,22 @@ function handleBulkAction(action) {
 
 function confirmAction(action, items) {
     if (!items.length) {
-        showNotification("error", { request: ["No SIP profiles selected."] });
+        showNotification("error", { request: [trans('No SIP profiles selected.')] });
         return;
     }
 
     const count = items.length;
     const copy = {
         toggle: {
-            header: "Toggle SIP profiles?",
-            text: `Toggle enabled state for ${count} selected SIP profile${count === 1 ? "" : "s"}.`,
-            button: "Toggle",
+            header: trans('Toggle SIP profiles?'),
+            text: transChoice('Toggle enabled state for :count selected SIP profile.|Toggle enabled state for :count selected SIP profiles.', count),
+            button: trans('Toggle'),
             color: "indigo",
         },
         delete: {
-            header: "Delete SIP profiles?",
-            text: `Delete ${count} selected SIP profile${count === 1 ? "" : "s"} and its domains/settings.`,
-            button: "Delete",
+            header: trans('Delete SIP profiles?'),
+            text: transChoice('Delete :count selected SIP profile and its domains/settings.|Delete :count selected SIP profiles and their domains/settings.', count),
+            button: trans('Delete'),
             color: "red",
         },
     }[action];
@@ -540,7 +541,7 @@ function showNotification(type, messages = null) {
 
 function handleError(error) {
     if (error?.response?.status === 419) {
-        showNotification("error", { request: ["Session expired. Reload the page."] });
+        showNotification("error", { request: [trans('Session expired. Reload the page.')] });
         return;
     }
 
@@ -549,6 +550,6 @@ function handleError(error) {
         return;
     }
 
-    showNotification("error", { request: [error?.message || "Request failed."] });
+    showNotification("error", { request: [error?.message || trans('Request failed.')] });
 }
 </script>

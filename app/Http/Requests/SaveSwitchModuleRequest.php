@@ -33,6 +33,19 @@ class SaveSwitchModuleRequest extends FormRequest
         ];
     }
 
+    public function messages(): array
+    {
+        return [
+            'required' => __('The :attribute field is required.'),
+            'string' => __('The :attribute must be a string.'),
+            'max.string' => __('The :attribute must not be greater than :max characters.'),
+            'numeric' => __('The :attribute must be a number.'),
+            'in' => __('The selected :attribute is invalid.'),
+            'unique' => __('The :attribute has already been taken.'),
+            'regex' => __('The :attribute format is invalid.'),
+        ];
+    }
+
     public function attributes(): array
     {
         return [

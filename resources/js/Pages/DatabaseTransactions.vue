@@ -3,10 +3,10 @@
 
     <div class="m-3">
         <DataTable @search-action="fetchData(1)" @reset-filters="resetFilters">
-            <template #title>Database Transactions</template>
+            <template #title>{{ $t('Database Transactions') }}</template>
 
             <template #subtitle>
-                Track database changes by user, source address, transaction type, and time.
+                {{ $t('Track database changes by user, source address, transaction type, and time.') }}
             </template>
 
             <template #filters>
@@ -18,7 +18,7 @@
                         v-model="filterData.search"
                         type="text"
                         class="block w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600"
-                        placeholder="Search"
+                        :placeholder="$t('Search')"
                         @keydown.enter="fetchData(1)"
                     />
                 </div>
@@ -29,7 +29,7 @@
                         class="block w-full rounded-md border-0 py-1.5 pl-3 pr-8 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600"
                         @change="fetchData(1)"
                     >
-                        <option value="">All users</option>
+                        <option value="">{{ $t('All users') }}</option>
                         <option v-for="user in users" :key="user.value" :value="user.value">
                             {{ user.label }}
                         </option>
@@ -54,49 +54,49 @@
             <template #table-header>
                 <TableColumnHeader class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <button class="flex items-center" @click="setSort('domain_name')">
-                        <span class="mr-2">Domain</span>
+                        <span class="mr-2">{{ $t('Domain') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'domain_name' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'domain_name' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
                     </button>
                 </TableColumnHeader>
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <button class="flex items-center" @click="setSort('username')">
-                        <span class="mr-2">User</span>
+                        <span class="mr-2">{{ $t('User') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'username' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'username' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
                     </button>
                 </TableColumnHeader>
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <button class="flex items-center" @click="setSort('app_name')">
-                        <span class="mr-2">App</span>
+                        <span class="mr-2">{{ $t('App') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'app_name' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'app_name' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
                     </button>
                 </TableColumnHeader>
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <button class="flex items-center" @click="setSort('transaction_code')">
-                        <span class="mr-2">Code</span>
+                        <span class="mr-2">{{ $t('Code') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'transaction_code' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'transaction_code' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
                     </button>
                 </TableColumnHeader>
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <button class="flex items-center" @click="setSort('transaction_address')">
-                        <span class="mr-2">Address</span>
+                        <span class="mr-2">{{ $t('Address') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'transaction_address' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'transaction_address' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
                     </button>
                 </TableColumnHeader>
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <button class="flex items-center" @click="setSort('transaction_type')">
-                        <span class="mr-2">Type</span>
+                        <span class="mr-2">{{ $t('Type') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'transaction_type' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'transaction_type' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
                     </button>
                 </TableColumnHeader>
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <button class="flex items-center" @click="setSort('transaction_date')">
-                        <span class="mr-2">Date</span>
+                        <span class="mr-2">{{ $t('Date') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'transaction_date' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'transaction_date' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
                     </button>
@@ -107,10 +107,10 @@
             <template #table-body>
                 <tr v-for="row in data.data" :key="row.database_transaction_uuid">
                     <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500">
-                        {{ row.domain_name || "No domain" }}
+                        {{ row.domain_name || $t('No domain') }}
                     </TableField>
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
-                        {{ row.username || "No user" }}
+                        {{ row.username || $t('No user') }}
                     </TableField>
                     <TableField class="px-2 py-2 text-sm text-gray-500">
                         <button
@@ -118,17 +118,17 @@
                             class="max-w-56 truncate text-left font-medium text-gray-900 hover:text-indigo-600"
                             @click="openDetails(row.database_transaction_uuid)"
                         >
-                            {{ row.app_name || "No app" }}
+                            {{ row.app_name || $t('No app') }}
                         </button>
                     </TableField>
                     <TableField class="max-w-52 px-2 py-2 text-sm text-gray-500">
-                        <span class="line-clamp-2">{{ row.transaction_code || "No code" }}</span>
+                        <span class="line-clamp-2">{{ row.transaction_code || $t('No code') }}</span>
                     </TableField>
                     <TableField class="whitespace-nowrap px-2 py-2 font-mono text-xs text-gray-500">
-                        {{ row.transaction_address || "No address" }}
+                        {{ row.transaction_address || $t('No address') }}
                     </TableField>
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
-                        <Badge :text="row.transaction_type || 'unknown'" v-bind="typeBadge(row.transaction_type)" />
+                        <Badge :text="transactionTypeLabel(row.transaction_type)" v-bind="typeBadge(row.transaction_type)" />
                     </TableField>
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
                         {{ formatDate(row.transaction_date) }}
@@ -139,7 +139,7 @@
                                 <button
                                     type="button"
                                     class="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
-                                    title="View"
+                                    :title="$t('View')"
                                     @click="openDetails(row.database_transaction_uuid)"
                                 >
                                     <EyeIcon class="h-5 w-5" />
@@ -152,7 +152,7 @@
 
             <template #empty>
                 <div v-if="!loading && data.data.length === 0" class="px-6 py-8 text-center text-sm text-gray-500">
-                    No database transactions found.
+                    {{ $t('No database transactions found.') }}
                 </div>
             </template>
 
@@ -188,7 +188,7 @@
             <div v-if="details.item" class="space-y-6">
                 <div class="flex flex-wrap items-center justify-between gap-3">
                     <div class="flex flex-wrap items-center gap-2">
-                        <Badge :text="details.item.transaction_type" v-bind="typeBadge(details.item.transaction_type)" />
+                        <Badge :text="transactionTypeLabel(details.item.transaction_type)" v-bind="typeBadge(details.item.transaction_type)" />
                         <span class="text-sm text-gray-500">{{ formatDate(details.item.transaction_date) }}</span>
                     </div>
 
@@ -199,33 +199,33 @@
                         @click="confirmUndo"
                     >
                         <ArrowUturnLeftIcon class="h-4 w-4" />
-                        Undo
+                        {{ $t('Undo') }}
                     </button>
                 </div>
 
                 <dl class="grid gap-x-6 gap-y-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
                     <div>
-                        <dt class="font-medium text-gray-900">Domain</dt>
-                        <dd class="mt-1 text-gray-600">{{ details.item.domain_description || details.item.domain_name || "No domain" }}</dd>
+                        <dt class="font-medium text-gray-900">{{ $t('Domain') }}</dt>
+                        <dd class="mt-1 text-gray-600">{{ details.item.domain_description || details.item.domain_name || $t('No domain') }}</dd>
                     </div>
                     <div>
-                        <dt class="font-medium text-gray-900">User</dt>
-                        <dd class="mt-1 text-gray-600">{{ details.item.username || "No user" }}</dd>
+                        <dt class="font-medium text-gray-900">{{ $t('User') }}</dt>
+                        <dd class="mt-1 text-gray-600">{{ details.item.username || $t('No user') }}</dd>
                     </div>
                     <div>
-                        <dt class="font-medium text-gray-900">Address</dt>
-                        <dd class="mt-1 font-mono text-xs text-gray-600">{{ details.item.transaction_address || "No address" }}</dd>
+                        <dt class="font-medium text-gray-900">{{ $t('Address') }}</dt>
+                        <dd class="mt-1 font-mono text-xs text-gray-600">{{ details.item.transaction_address || $t('No address') }}</dd>
                     </div>
                     <div>
-                        <dt class="font-medium text-gray-900">App UUID</dt>
-                        <dd class="mt-1 break-all font-mono text-xs text-gray-600">{{ details.item.app_uuid || "No app UUID" }}</dd>
+                        <dt class="font-medium text-gray-900">{{ $t('App UUID') }}</dt>
+                        <dd class="mt-1 break-all font-mono text-xs text-gray-600">{{ details.item.app_uuid || $t('No app UUID') }}</dd>
                     </div>
                 </dl>
 
                 <div>
-                    <h4 class="text-sm font-semibold text-gray-900">Transaction Code</h4>
+                    <h4 class="text-sm font-semibold text-gray-900">{{ $t('Transaction Code') }}</h4>
                     <p class="mt-2 whitespace-pre-wrap rounded-md bg-gray-50 p-3 font-mono text-xs text-gray-700 ring-1 ring-inset ring-gray-200">
-                        {{ details.item.transaction_code || "No code" }}
+                        {{ details.item.transaction_code || $t('No code') }}
                     </p>
                 </div>
 
@@ -238,9 +238,9 @@
                             <table class="min-w-full divide-y divide-gray-200">
                                 <thead class="bg-white">
                                     <tr>
-                                        <th class="px-4 py-2 text-left text-xs font-semibold uppercase text-gray-500">Field</th>
-                                        <th class="px-4 py-2 text-left text-xs font-semibold uppercase text-gray-500">Old</th>
-                                        <th class="px-4 py-2 text-left text-xs font-semibold uppercase text-gray-500">New</th>
+                                        <th class="px-4 py-2 text-left text-xs font-semibold uppercase text-gray-500">{{ $t('Field') }}</th>
+                                        <th class="px-4 py-2 text-left text-xs font-semibold uppercase text-gray-500">{{ $t('Old') }}</th>
+                                        <th class="px-4 py-2 text-left text-xs font-semibold uppercase text-gray-500">{{ $t('New') }}</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-100 bg-white">
@@ -260,22 +260,22 @@
                 </div>
 
                 <div v-else class="rounded-md bg-gray-50 px-4 py-6 text-center text-sm text-gray-500 ring-1 ring-inset ring-gray-200">
-                    No transaction details found.
+                    {{ $t('No transaction details found.') }}
                 </div>
 
                 <details class="rounded-md bg-gray-50 p-4 ring-1 ring-inset ring-gray-200">
-                    <summary class="cursor-pointer text-sm font-semibold text-gray-900">Raw payloads</summary>
+                    <summary class="cursor-pointer text-sm font-semibold text-gray-900">{{ $t('Raw payloads') }}</summary>
                     <div class="mt-4 grid gap-4 lg:grid-cols-3">
                         <div>
-                            <h5 class="text-xs font-semibold uppercase text-gray-500">Old</h5>
+                            <h5 class="text-xs font-semibold uppercase text-gray-500">{{ $t('Old') }}</h5>
                             <pre class="mt-2 max-h-72 overflow-auto whitespace-pre-wrap rounded bg-white p-3 text-xs text-gray-700 ring-1 ring-inset ring-gray-200">{{ details.item.raw.old || "" }}</pre>
                         </div>
                         <div>
-                            <h5 class="text-xs font-semibold uppercase text-gray-500">New</h5>
+                            <h5 class="text-xs font-semibold uppercase text-gray-500">{{ $t('New') }}</h5>
                             <pre class="mt-2 max-h-72 overflow-auto whitespace-pre-wrap rounded bg-white p-3 text-xs text-gray-700 ring-1 ring-inset ring-gray-200">{{ details.item.raw.new || "" }}</pre>
                         </div>
                         <div>
-                            <h5 class="text-xs font-semibold uppercase text-gray-500">Result</h5>
+                            <h5 class="text-xs font-semibold uppercase text-gray-500">{{ $t('Result') }}</h5>
                             <pre class="mt-2 max-h-72 overflow-auto whitespace-pre-wrap rounded bg-white p-3 text-xs text-gray-700 ring-1 ring-inset ring-gray-200">{{ details.item.raw.result || "" }}</pre>
                         </div>
                     </div>
@@ -286,10 +286,10 @@
 
     <ConfirmationModal
         :show="undoConfirmation.show"
-        header="Undo Transaction"
-        text="Restore the old values saved with this transaction?"
-        confirm-button-label="Undo"
-        cancel-button-label="Cancel"
+        :header="$t('Undo Transaction')"
+        :text="$t('Restore the old values saved with this transaction?')"
+        :confirm-button-label="$t('Undo')"
+        :cancel-button-label="$t('Cancel')"
         :loading="undoConfirmation.loading"
         color="indigo"
         @close="closeUndoConfirmation"
@@ -300,6 +300,7 @@
 </template>
 
 <script setup>
+import { trans } from '@i18n';
 import { computed, onMounted, ref } from "vue";
 import axios from "axios";
 import moment from "moment-timezone";
@@ -376,10 +377,10 @@ const undoConfirmation = ref({
 
 const detailsHeader = computed(() => {
     if (!details.value.item) {
-        return "Database Transaction";
+        return trans('Database Transaction');
     }
 
-    return `Database Transaction - ${details.value.item.app_name || "Unknown App"}`;
+    return trans('Database Transaction - :application', { application: details.value.item.app_name || trans('Unknown App') });
 });
 
 onMounted(() => {
@@ -517,11 +518,17 @@ const transactionRoute = (template, uuid) => template.replace("__TRANSACTION__",
 
 const formatDate = (value) => {
     if (!value) {
-        return "No date";
+        return trans('No date');
     }
 
     return moment.utc(value).tz(props.timezone || moment.tz.guess()).format("YYYY-MM-DD HH:mm:ss");
 };
+
+const transactionTypeLabel = (type) => ({
+    insert: trans('Insert'),
+    update: trans('Update'),
+    delete: trans('Delete'),
+})[String(type).toLowerCase()] ?? type ?? trans('Unknown');
 
 const typeBadge = (type) => {
     const normalized = String(type || "unknown").toLowerCase();

@@ -66,4 +66,38 @@ class StoreSipProfileRequest extends FormRequest
             'settings.*.sip_profile_setting_description' => ['nullable', 'string', 'max:255'],
         ];
     }
+
+    public function attributes(): array
+    {
+        return [
+            'sip_profile_name' => __('Name'),
+            'sip_profile_hostname' => __('Hostname'),
+            'sip_profile_enabled' => __('Enabled'),
+            'sip_profile_description' => __('Description'),
+            'domains' => __('Domains'),
+            'domains.*.sip_profile_domain_uuid' => __('Domain'),
+            'domains.*.sip_profile_domain_name' => __('Domain name'),
+            'domains.*.sip_profile_domain_alias' => __('Alias'),
+            'domains.*.sip_profile_domain_parse' => __('Parse'),
+            'settings' => __('Settings'),
+            'settings.*.sip_profile_setting_uuid' => __('Setting'),
+            'settings.*.sip_profile_setting_name' => __('Parameter name'),
+            'settings.*.sip_profile_setting_value' => __('Value'),
+            'settings.*.sip_profile_setting_enabled' => __('Enabled'),
+            'settings.*.sip_profile_setting_description' => __('Description'),
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'required' => __('The :attribute field is required.'),
+            'string' => __('The :attribute must be a string.'),
+            'max.string' => __('The :attribute must not be greater than :max characters.'),
+            'in' => __('The selected :attribute is invalid.'),
+            'uuid' => __('The :attribute must be a valid UUID.'),
+            'array' => __('The :attribute must be an array.'),
+            'unique' => __('The :attribute has already been taken.'),
+        ];
+    }
 }

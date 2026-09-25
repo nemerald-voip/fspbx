@@ -109,11 +109,11 @@ class GroupsController extends Controller
     public function permissionsData(Groups $group): JsonResponse
     {
         if (!userCheckPermission('group_permission_view')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         if (!$this->canAccessGroup($group)) {
-            return response()->json(['messages' => ['error' => ['Group not found.']]], 404);
+            return response()->json(['messages' => ['error' => [__('Group not found.')]]], 404);
         }
 
         $rows = DB::table('v_permissions as permissions')
@@ -139,7 +139,7 @@ class GroupsController extends Controller
 
                 return [
                     'permission_uuid' => $row->permission_uuid,
-                    'application_name' => $row->application_name ?: 'Uncategorized',
+                    'application_name' => $row->application_name ?: __('Uncategorized'),
                     'permission_name' => $row->permission_name,
                     'group_permission_uuid' => $assignedRow?->group_permission_uuid ?? $row->group_permission_uuid,
                     'assigned' => $assignedRow !== null,
@@ -153,17 +153,17 @@ class GroupsController extends Controller
     public function togglePermissionAssignments(Request $request, Groups $group): JsonResponse
     {
         if (!$this->canAccessGroup($group)) {
-            return response()->json(['messages' => ['error' => ['Group not found.']]], 404);
+            return response()->json(['messages' => ['error' => [__('Group not found.')]]], 404);
         }
 
         $assigned = $request->boolean('assigned');
 
         if ($assigned && !userCheckPermission('group_permission_add') && !userCheckPermission('group_permission_edit')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         if (!$assigned && !userCheckPermission('group_permission_delete') && !userCheckPermission('group_permission_edit')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $permissionNames = collect($request->input('items', []))
@@ -172,7 +172,7 @@ class GroupsController extends Controller
             ->values();
 
         if ($permissionNames->isEmpty()) {
-            return response()->json(['messages' => ['error' => ['Select at least one permission.']]], 422);
+            return response()->json(['messages' => ['error' => [__('Select at least one permission.')]]], 422);
         }
 
         $validPermissionNames = DB::table('v_permissions')
@@ -180,7 +180,7 @@ class GroupsController extends Controller
             ->pluck('permission_name');
 
         if ($validPermissionNames->count() !== $permissionNames->count()) {
-            return response()->json(['messages' => ['error' => ['One or more permissions are invalid.']]], 422);
+            return response()->json(['messages' => ['error' => [__('One or more permissions are invalid.')]]], 422);
         }
 
         $affectedUserUuids = UserGroup::query()
@@ -237,20 +237,22 @@ class GroupsController extends Controller
 
         app(UserSessionInvalidationService::class)->invalidateByUserUuids($affectedUserUuids);
 
-        $action = $assigned ? 'assigned' : 'removed';
         $count = $validPermissionNames->count();
+        $message = $assigned
+            ? trans_choice(':count permission assigned.|:count permissions assigned.', $count)
+            : trans_choice(':count permission removed.|:count permissions removed.', $count);
 
-        return response()->json(['messages' => ['success' => ["{$count} permission(s) {$action}."]]]);
+        return response()->json(['messages' => ['success' => [$message]]]);
     }
 
     public function reloadPermissionSession(Groups $group): JsonResponse
     {
         if (!userCheckPermission('group_permission_view')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         if (!$this->canAccessGroup($group)) {
-            return response()->json(['messages' => ['error' => ['Group not found.']]], 404);
+            return response()->json(['messages' => ['error' => [__('Group not found.')]]], 404);
         }
 
         $userGroups = collect(session('user.groups', []));
@@ -260,7 +262,7 @@ class GroupsController extends Controller
             session()->forget('permissions');
             unset($_SESSION['permissions'], $_SESSION['user']['permissions']);
 
-            return response()->json(['messages' => ['success' => ['Permissions reloaded.']]]);
+            return response()->json(['messages' => ['success' => [__('Permissions reloaded.')]]]);
         }
 
         $permissions = DB::table('v_permissions')
@@ -285,17 +287,17 @@ class GroupsController extends Controller
             $_SESSION['user']['permissions'][$permission->permission_name] = true;
         }
 
-        return response()->json(['messages' => ['success' => ['Permissions reloaded.']]]);
+        return response()->json(['messages' => ['success' => [__('Permissions reloaded.')]]]);
     }
 
     public function membersData(Groups $group): JsonResponse
     {
         if (!userCheckPermission('group_member_view')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         if (!$this->canAccessGroup($group)) {
-            return response()->json(['messages' => ['error' => ['Group not found.']]], 404);
+            return response()->json(['messages' => ['error' => [__('Group not found.')]]], 404);
         }
 
         $members = $this->groupMembersQuery($group)
@@ -329,11 +331,11 @@ class GroupsController extends Controller
     public function addMember(Request $request, Groups $group): JsonResponse
     {
         if (!userCheckPermission('group_member_add')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         if (!$this->canAccessGroup($group)) {
-            return response()->json(['messages' => ['error' => ['Group not found.']]], 404);
+            return response()->json(['messages' => ['error' => [__('Group not found.')]]], 404);
         }
 
         $validated = $request->validate([
@@ -347,7 +349,7 @@ class GroupsController extends Controller
             ->first(['user_uuid']);
 
         if (!$user) {
-            return response()->json(['messages' => ['error' => ['User not found.']]], 404);
+            return response()->json(['messages' => ['error' => [__('User not found.')]]], 404);
         }
 
         $exists = UserGroup::query()
@@ -357,7 +359,7 @@ class GroupsController extends Controller
             ->exists();
 
         if ($exists) {
-            return response()->json(['messages' => ['error' => ['User is already a member.']]], 422);
+            return response()->json(['messages' => ['error' => [__('User is already a member.')]]], 422);
         }
 
         UserGroup::create([
@@ -371,7 +373,7 @@ class GroupsController extends Controller
         app(UserSessionInvalidationService::class)->invalidateByUserUuids([$validated['user_uuid']]);
 
         return response()->json([
-            'messages' => ['success' => ['Member added.']],
+            'messages' => ['success' => [__('Member added.')]],
             'member_count' => $this->groupMemberCount($group),
         ], 201);
     }
@@ -379,11 +381,11 @@ class GroupsController extends Controller
     public function deleteMembers(Request $request, Groups $group): JsonResponse
     {
         if (!userCheckPermission('group_member_delete')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         if (!$this->canAccessGroup($group)) {
-            return response()->json(['messages' => ['error' => ['Group not found.']]], 404);
+            return response()->json(['messages' => ['error' => [__('Group not found.')]]], 404);
         }
 
         $validated = $request->validate([
@@ -405,7 +407,7 @@ class GroupsController extends Controller
         }
 
         return response()->json([
-            'messages' => ['success' => ["{$deleted} member(s) removed."]],
+            'messages' => ['success' => [trans_choice(':count member removed.|:count members removed.', $deleted)]],
             'member_count' => $this->groupMemberCount($group),
         ]);
     }
@@ -485,7 +487,7 @@ class GroupsController extends Controller
 
                 // If a model exists, use it; otherwise, create a new one
                 if (!$item) {
-                    throw new \Exception("Failed to fetch item details. Item not found");
+                    throw new \Exception(__("Failed to fetch item details. Item not found"));
                 }
 
 
@@ -512,7 +514,7 @@ class GroupsController extends Controller
                 })
                 ->prepend([
                     'value' => '',
-                    'label' => 'Global',
+                    'label' => __('Global'),
                 ])
                 ->toArray();
 
@@ -549,7 +551,7 @@ class GroupsController extends Controller
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to fetch item details']]
+                'errors' => ['server' => [__('Failed to fetch item details')]]
             ], 500);  // 500 Internal Server Error for any other errors
         }
     }
@@ -576,7 +578,7 @@ class GroupsController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages'   => ['success' => ['Group created']],
+                'messages'   => ['success' => [__('Group created')]],
                 'group_uuid' => $groupManager->group_uuid,
             ]);
         } catch (\Throwable $e) {
@@ -588,7 +590,7 @@ class GroupsController extends Controller
             );
 
             return response()->json([
-                'messages' => ['error' => ['Something went wrong while creating the group.']]
+                'messages' => ['error' => [__('Something went wrong while creating the group.')]]
             ], 500);
         }
     }
@@ -613,7 +615,7 @@ class GroupsController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages'      => ['success' => ['Group updated']],
+                'messages'      => ['success' => [__('Group updated')]],
                 'group_uuid'    => $group->group_uuid,
             ]);
         } catch (\Throwable $e) {
@@ -626,7 +628,7 @@ class GroupsController extends Controller
             );
 
             return response()->json([
-                'messages' => ['error' => ['Something went wrong while updating the group.']]
+                'messages' => ['error' => [__('Something went wrong while updating the group.')]]
             ], 500);
         }
     }
@@ -642,7 +644,7 @@ class GroupsController extends Controller
     {
         if (!userCheckPermission('group_delete')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']]
+                'messages' => ['error' => [__('Access denied.')]]
             ], 403);
         }
 
@@ -666,14 +668,14 @@ class GroupsController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages' => ['success' => ['Selected group(s) were deleted successfully.']]
+                'messages' => ['success' => [__('Selected group(s) were deleted successfully.')]]
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
             logger('RingGroups bulkDelete error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['An error occurred while deleting the selected group(s).']]
+                'messages' => ['error' => [__('An error occurred while deleting the selected group(s).')]]
             ], 500);
         }
     }
@@ -682,7 +684,7 @@ class GroupsController extends Controller
     {
         if (!userCheckPermission('group_add')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']]
+                'messages' => ['error' => [__('Access denied.')]]
             ], 403);
         }
 
@@ -690,7 +692,7 @@ class GroupsController extends Controller
             'items' => ['required', 'array', 'size:1'],
             'items.*' => ['required', 'uuid'],
         ], [
-            'items.size' => 'Select exactly one group to clone.',
+            'items.size' => __('Select exactly one group to clone.'),
         ]);
 
         $source = Groups::query()
@@ -699,7 +701,7 @@ class GroupsController extends Controller
 
         if (!$source || !$this->canAccessGroup($source)) {
             return response()->json([
-                'messages' => ['error' => ['Group not found.']]
+                'messages' => ['error' => [__('Group not found.')]]
             ], 404);
         }
 
@@ -750,7 +752,7 @@ class GroupsController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages' => ['success' => ["Group cloned as {$cloneName}."]],
+                'messages' => ['success' => [__('Group cloned as :name.', ['name' => $cloneName])]],
                 'group_uuid' => $clone->group_uuid,
             ], 201);
         } catch (\Throwable $e) {
@@ -758,7 +760,7 @@ class GroupsController extends Controller
             logger('GroupManager clone error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Something went wrong while cloning the group.']]
+                'messages' => ['error' => [__('Something went wrong while cloning the group.')]]
             ], 500);
         }
     }
@@ -773,7 +775,7 @@ class GroupsController extends Controller
 
             // Return a JSON response indicating success
             return response()->json([
-                'messages' => ['success' => ['All items selected']],
+                'messages' => ['success' => [__('All items selected')]],
                 'items' => $uuids,
             ], 200);
         } catch (\Exception $e) {
@@ -781,7 +783,7 @@ class GroupsController extends Controller
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to select all items']]
+                'errors' => ['server' => [__('Failed to select all items')]]
             ], 500); // 500 Internal Server Error for any other errors
         }
     }

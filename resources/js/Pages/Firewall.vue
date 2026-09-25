@@ -3,7 +3,7 @@
 
     <div class="m-3">
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-            <template #title>Firewall</template>
+            <template #title>{{ $t('Firewall') }}</template>
 
             <template #filters>
                 <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
@@ -13,18 +13,18 @@
                     <input type="text" v-model="filterData.search" name="mobile-search-candidate"
                         id="mobile-search-candidate"
                         class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick"/>
+                        :placeholder="$t('Search')" @keydown.enter="handleSearchButtonClick"/>
                     <input type="text" v-model="filterData.search" name="desktop-search-candidate"
                         id="desktop-search-candidate"
                         class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick"/>
+                        :placeholder="$t('Search')" @keydown.enter="handleSearchButtonClick"/>
                 </div>
             </template>
 
             <template #action>
                 <button type="button" @click.prevent="handleCreateButtonClick()"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                    Block IP
+                    {{ $t('Block IP') }}
                 </button>
 
             </template>
@@ -41,7 +41,7 @@
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                     <div class="pl-4 flex items-center cursor-pointer select-none" @click="handleSortRequest('hostname')">
-                        <span class="mr-2">Hostname</span>
+                        <span class="mr-2">{{ $t('Hostname') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'hostname' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'hostname' && sortData.order === 'desc'"
@@ -52,7 +52,7 @@
 
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('ip')">
-                        <span class="mr-2">IP Address</span>
+                        <span class="mr-2">{{ $t('IP Address') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'ip' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'ip' && sortData.order === 'desc'"
@@ -61,7 +61,7 @@
                 </TableColumnHeader>
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('filter')">
-                        <span class="mr-2">Filter</span>
+                        <span class="mr-2">{{ $t('Filter') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'filter' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'filter' && sortData.order === 'desc'"
@@ -70,7 +70,7 @@
                 </TableColumnHeader>
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('extension')">
-                        <span class="mr-2">Extension</span>
+                        <span class="mr-2">{{ $t('Extension') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'extension' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'extension' && sortData.order === 'desc'"
@@ -79,7 +79,7 @@
                 </TableColumnHeader>
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('user_agent')">
-                        <span class="mr-2">User Agent</span>
+                        <span class="mr-2">{{ $t('User Agent') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'user_agent' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'user_agent' && sortData.order === 'desc'"
@@ -88,7 +88,7 @@
                 </TableColumnHeader>
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('date')">
-                        <span class="mr-2">Date</span>
+                        <span class="mr-2">{{ $t('Date') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'date' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'date' && sortData.order === 'desc'"
@@ -97,29 +97,29 @@
                 </TableColumnHeader>
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('status')">
-                        <span class="mr-2">Status</span>
+                        <span class="mr-2">{{ $t('Status') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'status' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'status' && sortData.order === 'desc'"
                             class="h-4 w-4 text-gray-500" />
                     </div>
                 </TableColumnHeader>
-                <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t('Action')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
             </template>
 
             <template v-if="selectPageItems" v-slot:current-selection>
                 <td colspan="8">
                     <div class="text-sm text-center m-2">
-                        <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
+                        <span class="font-semibold ">{{ $t(':count selected', { count: selectedItems.length }) }}</span>
                         <button v-if="!selectAll && selectedItems.length != data.total"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleSelectAll">
-                            Select all {{ data.total }} items
+                            {{ $t('Select all :count', { count: data.total }) }}
                         </button>
                         <button v-if="selectAll"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleClearSelection">
-                            Clear selection
+                            {{ $t('Clear selection') }}
                         </button>
                     </div>
                 </td>
@@ -148,7 +148,7 @@
                     <TableField class="truncate max-w-64 px-2 py-2 text-sm text-gray-500" :text="row.user_agent" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.date" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.status">
-                        <Badge :text="row.status" :backgroundColor="determineColor(row.status).backgroundColor"
+                        <Badge :text="row.status === 'blocked' ? $t('Blocked') : row.status" :backgroundColor="determineColor(row.status).backgroundColor"
                             :textColor="determineColor(row.status).textColor"
                             :ringColor="determineColor(row.status).ringColor" />
 
@@ -164,7 +164,7 @@
 
                                     <div class="flex items-center  font-medium text-blue-600 hover:text-blue-500 hover:cursor-pointer"
                                         @click="handleSingleItemDeleteRequest(row.ip)">
-                                        Unblock
+                                        {{ $t('Unblock') }}
                                     </div>
 
 
@@ -177,9 +177,9 @@
                 <!-- Conditional rendering for 'no records' message -->
                 <div v-if="data.data.length === 0" class="text-center my-5 ">
                     <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
+                    <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ $t('No results found') }}</h3>
                     <p class="mt-1 text-sm text-gray-500">
-                        Adjust your search and try again.
+                        {{ $t('Adjust your search and try again.') }}
                     </p>
                 </div>
             </template>
@@ -198,7 +198,7 @@
     </div>
 
 
-    <AddEditItemModal :show="createModalTrigger" :header="'Block new IP address'" :loading="loadingModal" @close="handleModalClose">
+    <AddEditItemModal :show="createModalTrigger" :header="$t('Block new IP address')" :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
             <CreateNewIpBlockForm :errors="formErrors" :is-submitting="createFormSubmiting"
                 @submit="handleCreateRequest" @cancel="handleModalClose" />
@@ -206,14 +206,15 @@
     </AddEditItemModal>
 
     <ConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
-        @confirm="confirmDeleteAction" :header="'Are you sure?'" :text="'Confirm unblocking selected IP addreses.'"
-        :confirm-button-label="'Unblock'" cancel-button-label="Cancel" :loading="confirmationModalLoading"/>
+        @confirm="confirmDeleteAction" :header="$t('Are you sure?')" :text="$t('Confirm unblocking selected IP addresses.')"
+        :confirm-button-label="$t('Unblock')" :cancel-button-label="$t('Cancel')" :loading="confirmationModalLoading"/>
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
 </template>
 
 <script setup>
+import { trans } from '@i18n';
 import { computed, onMounted, ref } from "vue";
 import axios from 'axios';
 import DataTable from "./components/general/DataTable.vue";
@@ -276,7 +277,7 @@ const bulkActions = computed(() => {
     const actions = [
         {
             id: 'bulk_unblock',
-            label: 'Unblock',
+            label: trans('Unblock'),
             icon: 'LinkOffIcon'
         },
 
@@ -445,7 +446,7 @@ const renderRequestedPage = (url) => {
 
 const handleFormErrorResponse = (error) => {
     if (error.request?.status == 419) {
-        showNotification('error', { request: ["Session expired. Reload the page"] });
+        showNotification('error', { request: [trans('Session expired. Reload the page')] });
     } else if (error.response) {
         // The request was made and the server responded with a status code
         // that falls out of the range of 2xx

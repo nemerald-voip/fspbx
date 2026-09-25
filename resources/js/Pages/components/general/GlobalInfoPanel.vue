@@ -93,13 +93,13 @@ const props = defineProps({
     counts: { type: Object, default: () => ({}) },
 });
 
-const horizonStatusLabels = {
+const horizonStatusLabels = computed(() => ({
     running: trans('running'),
     paused: trans('paused'),
     inactive: trans('inactive'),
-};
+}));
 
-const horizonStatusLabel = computed(() => horizonStatusLabels[props.data.horizonStatus] ?? props.data.horizonStatus);
+const horizonStatusLabel = computed(() => horizonStatusLabels.value[props.data.horizonStatus] ?? props.data.horizonStatus);
 
 const round = (value) => Math.round((Number(value) || 0) * 10) / 10;
 
