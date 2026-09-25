@@ -99,9 +99,29 @@ class SwitchModuleService
         }
 
         $existing = SwitchModule::query()
-            ->pluck('module_name')
-            ->filter()
-            ->flip();
+            ->get()
+            ->keyBy('module_name');
+
+        // Older discovery created generic Auto entries even for known modules.
+        // Replace only that generated metadata, preserving administrator choices.
+        foreach ($existing as $module) {
+            $name = (string) $module->module_name;
+            $generatedLabel = Str::of($name)->after('mod_')->replace('_', ' ')->title()->toString();
+            if ($module->module_category !== 'Auto'
+                || $module->module_label !== $generatedLabel
+                || (string) $module->module_description !== '') {
+                continue;
+            }
+
+            $defaults = $this->defaultModuleInfo($name);
+            if ($defaults['module_category'] !== 'Auto') {
+                $module->update([
+                    'module_label' => $defaults['module_label'],
+                    'module_category' => $defaults['module_category'],
+                    'module_description' => $defaults['module_description'],
+                ]);
+            }
+        }
 
         $rows = collect(File::files($modDir))
             ->map(fn ($file) => $file->getFilename())
@@ -419,18 +439,16 @@ class SwitchModuleService
     {
         $row = [
             'module_uuid' => (string) Str::uuid(),
-            'module_label' => Str::of($name)->after('mod_')->replace('_', ' ')->title()->toString(),
-            'module_name' => $name,
-            'module_description' => '',
-            'module_category' => 'Auto',
-            'module_order' => 800,
-            'module_enabled' => 'false',
-            'module_default_enabled' => 'false',
+            ...$this->defaultModuleInfo($name),
             'insert_date' => now(),
             'insert_user' => session('user_uuid'),
         ];
 
-        return $useInstallDefaults ? array_replace($row, $this->defaultModuleInfo($name)) : $row;
+        if (! $useInstallDefaults) {
+            $row['module_enabled'] = 'false';
+        }
+
+        return $row;
     }
 
     private function defaultModuleInfo(string $name): array
@@ -444,7 +462,6 @@ class SwitchModuleService
             'module_name' => $name,
             'module_order' => 800,
             'module_enabled' => 'false',
-            'module_default_enabled' => 'false',
             'module_description' => '',
             'module_category' => 'Auto',
         ];

@@ -52,14 +52,13 @@ class SwitchModuleController extends Controller
         return response()->json([
             'item' => $uuid ? SwitchModule::query()->findOrFail($uuid)->only([
                 'module_uuid', 'module_label', 'module_name', 'module_category', 'module_order',
-                'module_enabled', 'module_default_enabled', 'module_description',
+                'module_enabled', 'module_description',
             ]) : [
                 'module_label' => '',
                 'module_name' => '',
                 'module_category' => '',
                 'module_order' => null,
                 'module_enabled' => 'true',
-                'module_default_enabled' => 'true',
                 'module_description' => '',
             ],
             'categories' => SwitchModule::query()->whereNotNull('module_category')
@@ -195,7 +194,6 @@ class SwitchModuleController extends Controller
                 'module_category',
                 'module_order',
                 'module_enabled',
-                'module_default_enabled',
                 'module_description',
             ])
             ->allowedFilters([
@@ -261,7 +259,6 @@ class SwitchModuleController extends Controller
             'module_category' => $module->module_category ?: __('Uncategorized'),
             'module_order' => $module->module_order,
             'module_enabled' => $module->module_enabled,
-            'module_default_enabled' => $module->module_default_enabled,
             'module_description' => $module->module_description,
             'status' => $eventSocketAvailable ? ($running ? 'running' : 'stopped') : 'unknown',
             'can_control_runtime' => $eventSocketAvailable,

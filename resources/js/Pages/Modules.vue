@@ -433,8 +433,8 @@ watch(categoriesWithCounts, (categories) => {
 
 onMounted(() => fetchData());
 
-function fetchData(force = false) {
-    loading.value = true;
+function fetchData({ force = false, silent = false } = {}) {
+    if (!silent) loading.value = true;
 
     const params = { page: 1, per_page: 5000 };
     if (force) {
@@ -445,16 +445,19 @@ function fetchData(force = false) {
         .get(routes.value.data_route, { params })
         .then((response) => {
             allRows.value = response.data?.data || [];
-            selectedItems.value = [];
+            const remainingIds = new Set(allRows.value.map((row) => row.module_uuid));
+            selectedItems.value = silent
+                ? selectedItems.value.filter((uuid) => remainingIds.has(uuid))
+                : [];
         })
         .catch(handleError)
         .finally(() => {
-            loading.value = false;
+            if (!silent) loading.value = false;
         });
 }
 
 function refreshData() {
-    fetchData(true);
+    fetchData({ force: true });
 }
 
 async function openEditor(row = null) {
@@ -484,7 +487,7 @@ function closeEditor() {
 
 function handleModuleSaved(result) {
     showNotification(result.success ? 'success' : 'error', result.messages);
-    fetchData(true);
+    fetchData({ force: true, silent: true });
 }
 
 function resetFilters() {
@@ -565,12 +568,12 @@ function executeConfirmedAction() {
         .then((response) => {
             showNotification("success", response.data.messages);
             closeConfirmation();
-            fetchData(true);
+            fetchData({ force: true, silent: true });
         })
         .catch((error) => {
             handleError(error);
             closeConfirmation();
-            fetchData(true);
+            fetchData({ force: true, silent: true });
         })
         .finally(() => {
             confirmation.value.loading = false;

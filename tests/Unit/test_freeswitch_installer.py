@@ -141,9 +141,29 @@ fs_restore_configuration
             for line in (REPO / 'install/freeswitch-modules.conf').read_text().splitlines()
             if line.strip() and not line.lstrip().startswith('#')
         }
-        selected = (baseline | config.loaded_modules(REPO / 'resources')) - config.EXCLUDED_MODULES
+        autoload = config.loaded_modules(REPO / 'resources')
+        self.assertEqual({'mod_say_en'}, {name for name in autoload if name.startswith('mod_say_')})
+        selected = (baseline | autoload) - config.EXCLUDED_MODULES
         defaults = json.loads((REPO / 'resources/freeswitch_modules.json').read_text())
         self.assertEqual(set(defaults), selected)
+
+    def test_english_only_upgrades_still_build_available_target_speech_modules(self):
+        source = self.root / 'source'
+        baseline = REPO / 'install/freeswitch-modules.conf'
+        entries = [line.strip() for line in baseline.read_text().splitlines() if line.strip()]
+        self.assertEqual(len(entries), len(set(entries)))
+        for module in entries:
+            directory = source / 'src/mod' / module
+            directory.mkdir(parents=True)
+            (directory / 'Makefile.am').touch()
+        self.modules.write_text('<modules><load module="mod_say_en"/></modules>')
+        output = self.root / 'modules.conf'
+        config.select_modules(source, self.conf, baseline, output)
+        expected = {'de', 'en', 'es', 'fr', 'he', 'hu', 'it', 'ja', 'nl', 'pl', 'pt', 'ru', 'sv', 'zh'}
+        # Retain the previously shipped Thai module even though it no longer autoloads.
+        expected.add('th')
+        selected = {line.removeprefix('say/mod_say_') for line in output.read_text().splitlines() if line.startswith('say/mod_say_')}
+        self.assertEqual(expected, selected)
 
     def test_removal_is_silent_preserves_comments_and_other_xml_bytes(self):
         before = self.modules.read_bytes() + b'<!-- <load module="mod_h26x"/> -->\r\n'

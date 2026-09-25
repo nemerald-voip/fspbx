@@ -19,8 +19,6 @@
                         <ToggleElement name="module_enabled" :text="$t('Autoload enabled')"
                             true-value="true" false-value="false"
                             :description="$t('Load this module when FreeSWITCH starts. Use Start or Stop on the modules page to change its current runtime status.')" />
-                        <ToggleElement name="module_default_enabled" :text="$t('Default autoload enabled')"
-                            true-value="true" false-value="false" />
                         <TextareaElement name="module_description" :label="$t('Description')" :rows="2" :floating="false" />
                         <ButtonElement name="submit" :button-label="$t('Save')" :submits="true" align="right" />
                     </FormElements>

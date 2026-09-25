@@ -4,7 +4,6 @@
         "module_name": "mod_amr",
         "module_order": 800,
         "module_enabled": "true",
-        "module_default_enabled": "true",
         "module_description": "AMR codec.",
         "module_category": "Codecs"
     },
@@ -13,7 +12,6 @@
         "module_name": "mod_av",
         "module_order": 800,
         "module_enabled": "false",
-        "module_default_enabled": "false",
         "module_description": "",
         "module_category": "Auto"
     },
@@ -22,7 +20,6 @@
         "module_name": "mod_b64",
         "module_order": 800,
         "module_enabled": "false",
-        "module_default_enabled": "false",
         "module_description": "",
         "module_category": "Auto"
     },
@@ -31,7 +28,6 @@
         "module_name": "mod_callcenter",
         "module_order": 800,
         "module_enabled": "true",
-        "module_default_enabled": "true",
         "module_description": "Call queuing with agents and tiers for call centers.",
         "module_category": "Applications"
     },
@@ -40,7 +36,6 @@
         "module_name": "mod_cdr_csv",
         "module_order": 800,
         "module_enabled": "false",
-        "module_default_enabled": "false",
         "module_description": "CSV call detail record handler.",
         "module_category": "Event Handlers"
     },
@@ -49,7 +44,6 @@
         "module_name": "mod_cdr_sqlite",
         "module_order": 800,
         "module_enabled": "false",
-        "module_default_enabled": "false",
         "module_description": "SQLite call detail record handler.",
         "module_category": "Event Handlers"
     },
@@ -58,7 +52,6 @@
         "module_name": "mod_cidlookup",
         "module_order": 800,
         "module_enabled": "false",
-        "module_default_enabled": "false",
         "module_description": "Lookup caller id info.",
         "module_category": "Applications"
     },
@@ -67,7 +60,6 @@
         "module_name": "mod_commands",
         "module_order": 100,
         "module_enabled": "true",
-        "module_default_enabled": "true",
         "module_description": "API interface commands.",
         "module_category": "Applications"
     },
@@ -76,7 +68,6 @@
         "module_name": "mod_conference",
         "module_order": 800,
         "module_enabled": "true",
-        "module_default_enabled": "true",
         "module_description": "Conference room module.",
         "module_category": "Applications"
     },
@@ -85,7 +76,6 @@
         "module_name": "mod_console",
         "module_order": 50,
         "module_enabled": "true",
-        "module_default_enabled": "true",
         "module_description": "Send logs to the console.",
         "module_category": "Loggers"
     },
@@ -94,7 +84,6 @@
         "module_name": "mod_curl",
         "module_order": 800,
         "module_enabled": "true",
-        "module_default_enabled": "true",
         "module_description": "Allows scripts to make HTTP requests and return responses in plain text or JSON.",
         "module_category": "Applications"
     },
@@ -103,7 +92,6 @@
         "module_name": "mod_db",
         "module_order": 800,
         "module_enabled": "true",
-        "module_default_enabled": "true",
         "module_description": "Database key / value storage functionality, dialing and limit backend.",
         "module_category": "Applications"
     },
@@ -112,7 +100,6 @@
         "module_name": "mod_dialplan_asterisk",
         "module_order": 800,
         "module_enabled": "false",
-        "module_default_enabled": "false",
         "module_description": "Allows Asterisk dialplans.",
         "module_category": "Dialplan Interfaces"
     },
@@ -121,7 +108,6 @@
         "module_name": "mod_dialplan_xml",
         "module_order": 800,
         "module_enabled": "true",
-        "module_default_enabled": "true",
         "module_description": "Provides dialplan functionality in XML.",
         "module_category": "Dialplan Interfaces"
     },
@@ -130,7 +116,6 @@
         "module_name": "mod_dptools",
         "module_order": 800,
         "module_enabled": "true",
-        "module_default_enabled": "true",
         "module_description": "Provides a number of apps and utilities for the dialplan.",
         "module_category": "Applications"
     },
@@ -139,7 +124,6 @@
         "module_name": "mod_enum",
         "module_order": 800,
         "module_enabled": "true",
-        "module_default_enabled": "true",
         "module_description": "Route PSTN numbers over internet according to ENUM servers, such as e164.org.",
         "module_category": "Applications"
     },
@@ -148,7 +132,6 @@
         "module_name": "mod_esf",
         "module_order": 800,
         "module_enabled": "true",
-        "module_default_enabled": "true",
         "module_description": "Holds the multi cast paging application for SIP.",
         "module_category": "Applications"
     },
@@ -157,7 +140,6 @@
         "module_name": "mod_event_socket",
         "module_order": 800,
         "module_enabled": "true",
-        "module_default_enabled": "true",
         "module_description": "Sends events via a single socket.",
         "module_category": "Event Handlers"
     },
@@ -166,7 +148,6 @@
         "module_name": "mod_expr",
         "module_order": 800,
         "module_enabled": "true",
-        "module_default_enabled": "true",
         "module_description": "Expression evaluation library.",
         "module_category": "Applications"
     },
@@ -175,7 +156,6 @@
         "module_name": "mod_fifo",
         "module_order": 800,
         "module_enabled": "true",
-        "module_default_enabled": "true",
         "module_description": "FIFO provides custom call queues including call park.",
         "module_category": "Applications"
     },
@@ -184,7 +164,6 @@
         "module_name": "mod_flite",
         "module_order": 800,
         "module_enabled": "true",
-        "module_default_enabled": "true",
         "module_description": "Text to Speech engine.",
         "module_category": "Speech Recognition / Text to Speech"
     },
@@ -193,7 +172,6 @@
         "module_name": "mod_fsv",
         "module_order": 800,
         "module_enabled": "true",
-        "module_default_enabled": "true",
         "module_description": "Video application (Recording and playback).",
         "module_category": "Applications"
     },
@@ -202,7 +180,6 @@
         "module_name": "mod_g723_1",
         "module_order": 800,
         "module_enabled": "true",
-        "module_default_enabled": "true",
         "module_description": "G.723.1 codec.",
         "module_category": "Codecs"
     },
@@ -211,7 +188,6 @@
         "module_name": "mod_g729",
         "module_order": 800,
         "module_enabled": "true",
-        "module_default_enabled": "true",
         "module_description": "G729 codec supports passthrough mode",
         "module_category": "Codecs"
     },
@@ -220,7 +196,6 @@
         "module_name": "mod_hash",
         "module_order": 800,
         "module_enabled": "true",
-        "module_default_enabled": "true",
         "module_description": "Resource limitation.",
         "module_category": "Applications"
     },
@@ -229,7 +204,6 @@
         "module_name": "mod_hiredis",
         "module_order": 151,
         "module_enabled": "true",
-        "module_default_enabled": "true",
         "module_description": "Redis API integration for FreeSWITCH.",
         "module_category": "Applications"
     },
@@ -238,7 +212,6 @@
         "module_name": "mod_httapi",
         "module_order": 800,
         "module_enabled": "false",
-        "module_default_enabled": "false",
         "module_description": "HT-TAPI Hypertext Telephony API",
         "module_category": "Applications"
     },
@@ -247,7 +220,6 @@
         "module_name": "mod_local_stream",
         "module_order": 800,
         "module_enabled": "true",
-        "module_default_enabled": "true",
         "module_description": "For local streams (play all the files in a directory).",
         "module_category": "Streams / Files"
     },
@@ -256,7 +228,6 @@
         "module_name": "mod_logfile",
         "module_order": 50,
         "module_enabled": "true",
-        "module_default_enabled": "true",
         "module_description": "Send logs to the local file system.",
         "module_category": "Loggers"
     },
@@ -265,7 +236,6 @@
         "module_name": "mod_loopback",
         "module_order": 800,
         "module_enabled": "true",
-        "module_default_enabled": "true",
         "module_description": "A loopback channel driver to make an outbound call as an inbound call.",
         "module_category": "Endpoints"
     },
@@ -274,7 +244,6 @@
         "module_name": "mod_lua",
         "module_order": 200,
         "module_enabled": "true",
-        "module_default_enabled": "true",
         "module_description": "Lua script.",
         "module_category": "Languages"
     },
@@ -283,7 +252,6 @@
         "module_name": "mod_memcache",
         "module_order": 150,
         "module_enabled": "true",
-        "module_default_enabled": "true",
         "module_description": "API for memcached.",
         "module_category": "Applications"
     },
@@ -292,7 +260,6 @@
         "module_name": "mod_native_file",
         "module_order": 800,
         "module_enabled": "true",
-        "module_default_enabled": "true",
         "module_description": "File interface for codec specific file formats.",
         "module_category": "File Format Interfaces"
     },
@@ -301,7 +268,6 @@
         "module_name": "mod_opus",
         "module_order": 800,
         "module_enabled": "false",
-        "module_default_enabled": "false",
         "module_description": "OPUS ultra-low delay audio codec",
         "module_category": "Codecs"
     },
@@ -310,7 +276,6 @@
         "module_name": "mod_pgsql",
         "module_order": 800,
         "module_enabled": "false",
-        "module_default_enabled": "false",
         "module_description": "",
         "module_category": "Auto"
     },
@@ -319,7 +284,6 @@
         "module_name": "mod_png",
         "module_order": 800,
         "module_enabled": "false",
-        "module_default_enabled": "false",
         "module_description": "",
         "module_category": "Auto"
     },
@@ -328,7 +292,6 @@
         "module_name": "mod_rtc",
         "module_order": 800,
         "module_enabled": "false",
-        "module_default_enabled": "false",
         "module_description": "",
         "module_category": "Auto"
     },
@@ -336,8 +299,7 @@
         "module_label": "German",
         "module_name": "mod_say_de",
         "module_order": 800,
-        "module_enabled": "true",
-        "module_default_enabled": "true",
+        "module_enabled": "false",
         "module_description": "",
         "module_category": "Say"
     },
@@ -346,7 +308,6 @@
         "module_name": "mod_say_en",
         "module_order": 800,
         "module_enabled": "true",
-        "module_default_enabled": "true",
         "module_description": "",
         "module_category": "Say"
     },
@@ -354,8 +315,7 @@
         "module_label": "Spanish",
         "module_name": "mod_say_es",
         "module_order": 800,
-        "module_enabled": "true",
-        "module_default_enabled": "true",
+        "module_enabled": "false",
         "module_description": "",
         "module_category": "Say"
     },
@@ -363,8 +323,7 @@
         "module_label": "French",
         "module_name": "mod_say_fr",
         "module_order": 800,
-        "module_enabled": "true",
-        "module_default_enabled": "true",
+        "module_enabled": "false",
         "module_description": "",
         "module_category": "Say"
     },
@@ -372,8 +331,7 @@
         "module_label": "Hebrew",
         "module_name": "mod_say_he",
         "module_order": 800,
-        "module_enabled": "true",
-        "module_default_enabled": "true",
+        "module_enabled": "false",
         "module_description": "",
         "module_category": "Say"
     },
@@ -381,8 +339,7 @@
         "module_label": "Hungarian",
         "module_name": "mod_say_hu",
         "module_order": 800,
-        "module_enabled": "true",
-        "module_default_enabled": "true",
+        "module_enabled": "false",
         "module_description": "",
         "module_category": "Say"
     },
@@ -390,8 +347,15 @@
         "module_label": "Italian",
         "module_name": "mod_say_it",
         "module_order": 800,
-        "module_enabled": "true",
-        "module_default_enabled": "true",
+        "module_enabled": "false",
+        "module_description": "",
+        "module_category": "Say"
+    },
+    "mod_say_ja": {
+        "module_label": "Japanese",
+        "module_name": "mod_say_ja",
+        "module_order": 800,
+        "module_enabled": "false",
         "module_description": "",
         "module_category": "Say"
     },
@@ -399,8 +363,15 @@
         "module_label": "Dutch",
         "module_name": "mod_say_nl",
         "module_order": 800,
-        "module_enabled": "true",
-        "module_default_enabled": "true",
+        "module_enabled": "false",
+        "module_description": "",
+        "module_category": "Say"
+    },
+    "mod_say_pl": {
+        "module_label": "Polish",
+        "module_name": "mod_say_pl",
+        "module_order": 800,
+        "module_enabled": "false",
         "module_description": "",
         "module_category": "Say"
     },
@@ -408,8 +379,7 @@
         "module_label": "Portuguese",
         "module_name": "mod_say_pt",
         "module_order": 800,
-        "module_enabled": "true",
-        "module_default_enabled": "true",
+        "module_enabled": "false",
         "module_description": "",
         "module_category": "Say"
     },
@@ -417,8 +387,15 @@
         "module_label": "Russian",
         "module_name": "mod_say_ru",
         "module_order": 800,
-        "module_enabled": "true",
-        "module_default_enabled": "true",
+        "module_enabled": "false",
+        "module_description": "",
+        "module_category": "Say"
+    },
+    "mod_say_sv": {
+        "module_label": "Swedish",
+        "module_name": "mod_say_sv",
+        "module_order": 800,
+        "module_enabled": "false",
         "module_description": "",
         "module_category": "Say"
     },
@@ -426,8 +403,7 @@
         "module_label": "Thai",
         "module_name": "mod_say_th",
         "module_order": 800,
-        "module_enabled": "true",
-        "module_default_enabled": "true",
+        "module_enabled": "false",
         "module_description": "",
         "module_category": "Say"
     },
@@ -435,8 +411,7 @@
         "module_label": "Chinese",
         "module_name": "mod_say_zh",
         "module_order": 800,
-        "module_enabled": "true",
-        "module_default_enabled": "true",
+        "module_enabled": "false",
         "module_description": "",
         "module_category": "Say"
     },
@@ -445,7 +420,6 @@
         "module_name": "mod_shout",
         "module_order": 800,
         "module_enabled": "true",
-        "module_default_enabled": "true",
         "module_description": "MP3 files and shoutcast streams.",
         "module_category": "Streams / Files"
     },
@@ -454,7 +428,6 @@
         "module_name": "mod_sms",
         "module_order": 800,
         "module_enabled": "true",
-        "module_default_enabled": "true",
         "module_description": "Chat messages",
         "module_category": "Applications"
     },
@@ -463,7 +436,6 @@
         "module_name": "mod_sndfile",
         "module_order": 800,
         "module_enabled": "true",
-        "module_default_enabled": "true",
         "module_description": "Multi-format file format transcoder (WAV, etc).",
         "module_category": "File Format Interfaces"
     },
@@ -472,7 +444,6 @@
         "module_name": "mod_sofia",
         "module_order": 300,
         "module_enabled": "true",
-        "module_default_enabled": "true",
         "module_description": "SIP module.",
         "module_category": "Endpoints"
     },
@@ -481,7 +452,6 @@
         "module_name": "mod_spandsp",
         "module_order": 800,
         "module_enabled": "true",
-        "module_default_enabled": "true",
         "module_description": "FAX provides fax send and receive.",
         "module_category": "Applications"
     },
@@ -490,7 +460,6 @@
         "module_name": "mod_syslog",
         "module_order": 50,
         "module_enabled": "true",
-        "module_default_enabled": "true",
         "module_description": "Send logs to a remote syslog server.",
         "module_category": "Loggers"
     },
@@ -499,7 +468,6 @@
         "module_name": "mod_tone_stream",
         "module_order": 800,
         "module_enabled": "true",
-        "module_default_enabled": "true",
         "module_description": "Generate tone streams.",
         "module_category": "Streams / Files"
     },
@@ -508,7 +476,6 @@
         "module_name": "mod_translate",
         "module_order": 800,
         "module_enabled": "false",
-        "module_default_enabled": "false",
         "module_description": "format numbers into a specified format.",
         "module_category": "Applications"
     },
@@ -517,7 +484,6 @@
         "module_name": "mod_tts_commandline",
         "module_order": 800,
         "module_enabled": "true",
-        "module_default_enabled": "true",
         "module_description": "Commandline text to speech engine.",
         "module_category": "Speech Recognition / Text to Speech"
     },
@@ -526,7 +492,6 @@
         "module_name": "mod_valet_parking",
         "module_order": 800,
         "module_enabled": "true",
-        "module_default_enabled": "true",
         "module_description": "Call parking",
         "module_category": "Applications"
     },
@@ -535,7 +500,6 @@
         "module_name": "mod_voicemail",
         "module_order": 800,
         "module_enabled": "false",
-        "module_default_enabled": "false",
         "module_description": "Full featured voicemail module.",
         "module_category": "Applications"
     },
@@ -544,7 +508,6 @@
         "module_name": "mod_xml_cdr",
         "module_order": 800,
         "module_enabled": "true",
-        "module_default_enabled": "true",
         "module_description": "XML based call detail record handler.",
         "module_category": "XML Interfaces"
     },
@@ -553,7 +516,6 @@
         "module_name": "mod_xml_scgi",
         "module_order": 800,
         "module_enabled": "false",
-        "module_default_enabled": "false",
         "module_description": "",
         "module_category": "Auto"
     }

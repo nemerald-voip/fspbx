@@ -28,7 +28,6 @@ class SaveSwitchModuleRequest extends FormRequest
             'module_category' => ['required', 'string', 'max:255'],
             'module_order' => ['nullable', 'numeric'],
             'module_enabled' => ['required', Rule::in(['true', 'false'])],
-            'module_default_enabled' => ['required', Rule::in(['true', 'false'])],
             'module_description' => ['nullable', 'string'],
         ];
     }
@@ -54,7 +53,6 @@ class SaveSwitchModuleRequest extends FormRequest
             'module_category' => __('Category'),
             'module_order' => __('Order'),
             'module_enabled' => __('Autoload enabled'),
-            'module_default_enabled' => __('Default autoload enabled'),
             'module_description' => __('Description'),
         ];
     }

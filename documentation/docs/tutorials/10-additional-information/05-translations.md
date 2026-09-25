@@ -8,8 +8,9 @@ sidebar_position: 5
 # Translations
 
 FS PBX's interface is translated by its community, directly through GitHub.
-This page is for two audiences: people who'd like to help translate, and
-administrators who want to set the language a tenant sees.
+This page explains how to contribute translations. To change the language
+used by your system, see [Language Settings and Sounds](/docs/getting-started/language-settings/)
+in the Getting Started Guide.
 
 ## Helping with translation
 
@@ -58,31 +59,6 @@ another was more confusing than helpful.
 
 ## For administrators: switching the language
 
-Language is set per account, not per user -- everyone signed into the same
-account sees the same language. There are two levels:
-
-### System-wide default (all accounts)
-
-**System Settings → General → Language** sets the default language for the
-whole system. Every account that hasn't chosen its own language inherits it.
-This is the setting to change if you want to switch the language of the
-system as a whole. (Changing it needs the default-settings edit permission.)
-
-### Per-account (one account)
-
-**Account Settings → General → Language** overrides the system default for
-that one account. Leave it empty to inherit the system-wide default; pick a
-language to override it just for this account. Time Zone works the same way,
-right next to it.
-
-### Things worth knowing
-
-- A language only appears in these dropdowns once it's translated enough to
-  be usable. Partially-translated languages still exist and are being worked
-  on, but aren't offered until they clear that bar -- so you won't
-  accidentally switch into a half-finished interface.
-- A language change takes effect the next time affected users log in, or
-  after a "Reload Settings" action -- the same as other settings, not
-  mid-session.
-- Anything not yet translated for the chosen language falls back to English
-  until the community finishes it.
+The administrator instructions are now in [Language Settings and Sounds](/docs/getting-started/language-settings/).
+That guide covers system and account interface languages, installing call audio
+packs, voicemail configuration, and troubleshooting.

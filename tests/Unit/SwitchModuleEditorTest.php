@@ -75,7 +75,7 @@ class SwitchModuleEditorTest extends TestCase
     {
         return array_replace([
             'module_label' => 'Shout', 'module_name' => 'mod_shout', 'module_category' => 'Formats',
-            'module_order' => null, 'module_enabled' => 'true', 'module_default_enabled' => 'false',
+            'module_order' => null, 'module_enabled' => 'true',
             'module_description' => 'Streaming audio',
         ], $overrides);
     }
@@ -96,6 +96,7 @@ class SwitchModuleEditorTest extends TestCase
         $draft = $controller->itemOptions(Request::create('/', 'POST'))->getData(true)['item'];
         $this->assertArrayNotHasKey('module_uuid', $draft);
         $this->assertNull($draft['module_order']);
+        $this->assertArrayNotHasKey('module_default_enabled', $draft);
         $this->assertSame(0, SwitchModule::count());
 
         $module = SwitchModule::create($this->values(['module_uuid' => (string) Str::uuid(), 'module_category' => null]));
@@ -103,6 +104,7 @@ class SwitchModuleEditorTest extends TestCase
         $this->assertNull($loaded['module_category']);
         $this->assertNull($loaded['module_order']);
         $this->assertSame($module->module_uuid, $loaded['module_uuid']);
+        $this->assertArrayNotHasKey('module_default_enabled', $loaded);
     }
 
     public function test_add_and_edit_permissions_are_separate_for_requests_and_editor(): void
@@ -135,6 +137,7 @@ class SwitchModuleEditorTest extends TestCase
         $this->assertSame('false', $row['module_enabled']);
         $this->assertSame($status, $row['status']);
         $this->assertSame($available, $row['can_control_runtime']);
+        $this->assertArrayNotHasKey('module_default_enabled', $row);
     }
 
     public static function runtimeStates(): array
@@ -167,7 +170,7 @@ class SwitchModuleEditorTest extends TestCase
         $module = $result['item']->fresh();
         $this->assertTrue($result['success']);
         $this->assertTrue(Str::isUuid($module->module_uuid));
-        $this->assertSame('false', $module->module_default_enabled);
+        $this->assertNull($module->module_default_enabled);
         $this->assertNull($module->module_order);
         $this->assertSame(session('user_uuid'), $module->insert_user);
         $xml = simplexml_load_file($this->confDir.'/autoload_configs/modules.conf.xml');
@@ -176,14 +179,48 @@ class SwitchModuleEditorTest extends TestCase
 
     public function test_update_disables_autoload_without_starting_or_stopping_the_running_module(): void
     {
-        $module = SwitchModule::create($this->values(['module_uuid' => (string) Str::uuid(), 'insert_user' => session('user_uuid')]));
+        $module = SwitchModule::create($this->values([
+            'module_uuid' => (string) Str::uuid(),
+            'insert_user' => session('user_uuid'),
+            'module_default_enabled' => 'true',
+        ]));
         $this->esl(true);
         $result = (new SwitchModuleService())->save($this->values(['module_enabled' => 'false', 'module_label' => 'Updated']), $module);
         $this->assertTrue($result['success']);
         $this->assertSame(1, SwitchModule::count());
         $this->assertSame('Updated', $module->fresh()->module_label);
         $this->assertSame(session('user_uuid'), $module->fresh()->update_user);
+        $this->assertSame('true', $module->fresh()->module_default_enabled);
+        $this->assertArrayNotHasKey('module_default_enabled', $result['item']->toArray());
         $this->assertStringNotContainsString('<load ', File::get($this->confDir.'/autoload_configs/modules.conf.xml'));
+    }
+
+    /** @dataProvider legacyAutoloadPayloads */
+    public function test_create_does_not_require_or_accept_the_legacy_autoload_field(array $legacyFields): void
+    {
+        $request = SaveSwitchModuleRequest::create('/', 'POST', $this->values($legacyFields));
+        $validator = Validator::make($request->all(), $request->rules());
+        $this->assertTrue($validator->passes());
+        $this->assertArrayNotHasKey('module_default_enabled', $validator->validated());
+        $request->setValidator($validator);
+        $this->esl(true);
+
+        $response = (new SwitchModuleController())->store($request, new SwitchModuleService());
+
+        $this->assertSame(201, $response->getStatusCode());
+        $this->assertTrue($response->getData(true)['success']);
+        $this->assertArrayNotHasKey('module_default_enabled', $response->getData(true)['item']);
+        $this->assertNull(SwitchModule::firstOrFail()->module_default_enabled);
+        $xml = simplexml_load_file($this->confDir.'/autoload_configs/modules.conf.xml');
+        $this->assertSame('mod_shout', (string) $xml->modules->load['module']);
+    }
+
+    public static function legacyAutoloadPayloads(): array
+    {
+        return [
+            'current editor' => [[]],
+            'older editor' => [['module_default_enabled' => 'true']],
+        ];
     }
 
     /** @dataProvider reloadFailures */
