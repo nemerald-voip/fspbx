@@ -256,7 +256,7 @@
 
 <script setup>
 import { computed, ref } from "vue";
-import { trans } from "@i18n";
+import { trans, transChoice } from "@i18n";
 import { AdjustmentsHorizontalIcon, PlusIcon, TrashIcon } from "@heroicons/vue/24/solid";
 
 const props = defineProps({
@@ -297,31 +297,31 @@ const errorClass = "mt-1 text-xs text-red-600";
 
 const lineOptions = Array.from({ length: 13 }, (_, index) => index);
 
-const baseAreas = [
+const baseAreas = computed(() => [
     { value: "line", label: trans("Line") },
     { value: "memory", label: trans("Memory") },
     { value: "programmable", label: trans("Programmable") },
-];
+]);
 
-const expansionAreas = [
+const expansionAreas = computed(() => [
     { value: "expansion", label: trans("Expansion") },
     ...Array.from({ length: 6 }, (_, index) => ({
         value: `expansion-${index + 1}`,
-        label: `${trans("Expansion")} ${index + 1}`,
+        label: trans("Expansion :number", { number: index + 1 }),
     })),
-];
+]);
 
-const polycomAreas = [
+const polycomAreas = computed(() => [
     { value: "line", label: trans("Line") },
-    { value: "any", label: "Any" },
-    { value: "unassigned", label: "Unassigned" },
+    { value: "any", label: trans("Any") },
+    { value: "unassigned", label: trans("Unassigned") },
     { value: "blf", label: "BLF" },
     { value: "efk", label: "EFK" },
-    { value: "speeddial", label: "Speed dial" },
-    { value: "presense", label: "Presence" },
-    { value: "presence", label: `${trans("Presence")} (legacy)` },
+    { value: "speeddial", label: trans("Speed dial") },
+    { value: "presense", label: trans("Presence") },
+    { value: "presence", label: trans("Presence (legacy)") },
     { value: "programmable", label: trans("Programmable") },
-];
+]);
 
 const hasExtraColumns = computed(() =>
     Boolean(props.fieldPermissions.extension || props.fieldPermissions.icon)
@@ -362,13 +362,13 @@ const visibleRows = computed(() =>
 
 const summary = computed(() => {
     if (vendorFilter.value) {
-        return trans(":shown of :total keys", {
+        return transChoice(":shown of :total key|:shown of :total keys", props.rows.length, {
             shown: String(visibleRows.value.length),
             total: String(props.rows.length),
         });
     }
 
-    return props.rows.length === 1 ? trans("1 key") : trans(":count keys", { count: String(props.rows.length) });
+    return transChoice(":count key|:count keys", props.rows.length);
 });
 
 function controlClass(hasError, isSelect = false) {
@@ -415,13 +415,13 @@ function areaOptions(vendor, currentValue) {
     let options;
 
     if (name === "polycom") {
-        options = polycomAreas;
+        options = polycomAreas.value;
     } else if (name === "grandstream") {
-        options = [...baseAreas, { value: "expansion", label: trans("Expansion") }];
+        options = [...baseAreas.value, { value: "expansion", label: trans("Expansion") }];
     } else if (name === "cisco" || name === "yealink") {
-        options = [...baseAreas, ...expansionAreas.slice(1)];
+        options = [...baseAreas.value, ...expansionAreas.value.slice(1)];
     } else {
-        options = [...baseAreas, ...expansionAreas];
+        options = [...baseAreas.value, ...expansionAreas.value];
     }
 
     if (currentValue && !options.some((option) => option.value === currentValue)) {

@@ -60,38 +60,51 @@ The table below describes the shipped configuration and FreeSWITCH build list. *
 | Spanish (`es-es`) | `mod_say_es` | Included (`es`) |
 | Spanish, Latin America (`es-419`) | `mod_say_es` | Shared (`es`) |
 | Spanish, Mexico (`es-mx`) | `mod_say_es` | Shared (`es`) |
-| Afrikaans (`af`) | Not available in the bundled source | Missing |
-| Arabic (`ar`) | Not available in the bundled source | Included (`ar`) |
-| Catalan (`ca`) | Not available in the bundled source | Missing |
+| Afrikaans (`af`) | Additional language support required\* | Missing |
+| Arabic (`ar`) | Additional language support required\* | Included (`ar`) |
+| Catalan (`ca`) | Additional language support required\* | Missing |
 | Chinese, Simplified (`zh-cn`) | `mod_say_zh` | Missing |
 | Chinese, Traditional (`zh-tw`) | `mod_say_zh` | Missing |
-| Czech (`cs`) | Not available in the bundled source | Missing |
-| Danish (`da`) | Not available in the bundled source | Missing |
+| Czech (`cs`) | Additional language support required\* | Missing |
+| Danish (`da`) | Additional language support required\* | Missing |
 | Dutch (`nl`) | `mod_say_nl` | Included (`nl`) |
-| Finnish (`fi`) | Not available in the bundled source | Missing |
+| Finnish (`fi`) | Additional language support required\* | Missing |
 | French (`fr`) | `mod_say_fr` | Included (`fr`) |
 | German (`de`) | `mod_say_de` | Included (`de`) |
-| Greek (`el`) | Not available in the bundled source | Missing |
+| Greek (`el`) | Additional language support required\* | Missing |
 | Hebrew (`he`) | `mod_say_he` | Included (`he`) |
 | Hungarian (`hu`) | `mod_say_hu` | Missing |
 | Italian (`it`) | `mod_say_it` | Included (`it`) |
 | Japanese (`ja`) | `mod_say_ja` | Missing |
-| Korean (`ko`) | Not available in the bundled source | Missing |
-| Norwegian (`no`) | Not available in the bundled source | Missing |
+| Korean (`ko`) | Additional language support required\* | Missing |
+| Norwegian (`no`) | Additional language support required\* | Missing |
 | Polish (`pl`) | `mod_say_pl` | Missing |
 | Portuguese (`pt-pt`) | `mod_say_pt` | Included (`pt`) |
 | Portuguese, Brazil (`pt-br`) | `mod_say_pt` | Shared (`pt`) |
-| Romanian (`ro`) | Not available in the bundled source | Included (`ro`) |
+| Romanian (`ro`) | Additional language support required\* | Included (`ro`) |
 | Russian (`ru`) | `mod_say_ru` | Included (`ru`) |
-| Serbian, Cyrillic (`sr`) | Not available in the bundled source | Missing |
+| Serbian, Cyrillic (`sr`) | Additional language support required\* | Missing |
 | Swedish (`sv-se`) | `mod_say_sv` | Included (`sv`) |
-| Turkish (`tr`) | Not available in the bundled source | Included (`tr`) |
-| Ukrainian (`uk`) | Not available in the bundled source | Included (`uk`) |
-| Vietnamese (`vi`) | Not available in the bundled source | Missing |
+| Turkish (`tr`) | Additional language support required\* | Included (`tr`) |
+| Ukrainian (`uk`) | Additional language support required\* | Included (`uk`) |
+| Vietnamese (`vi`) | Additional language support required\* | Missing |
+
+\* **Additional language support required:** FS PBX does not include the speech module needed to announce numbers and dates in these languages. You can still use an available interface translation and record, upload, or generate greetings with AI. Complete system audio requires a compatible community module or custom language support, together with the matching recordings and phrase definitions. Downloading a sound pack or reinstalling FreeSWITCH alone does not add this support. See [community language options](#community-language-options) below.
 
 Regional interface codes are not FreeSWITCH language names. For example, Spanish uses `default_language=es`, while its dialect and voice must match the installed pack. Shared phrase XML does not guarantee correct regional wording or pronunciation; test your chosen pack and variant. Directory names are case-sensitive.
 
 Where phrase XML or a speech module is missing, recordings alone cannot provide complete voicemail menus, spoken numbers, or dates. Those languages need additional FreeSWITCH language support. Recorded business greetings can still be used independently.
+
+### Community language options
+
+These projects require manual integration and have not been tested with FS PBX. They are not installed by the standard FS PBX installer.
+
+| Language or approach | Community resource | What it provides |
+| --- | --- | --- |
+| Norwegian, Bokmål | [`mod_say_nb` source and build notes](https://github.com/omnicate/freeswitch-mod) | Norwegian numbers and dates, using the speech code `nb` rather than the interface code `no`. The project targets FreeSWITCH 1.10.8 and needs compatibility testing with your installed version. Matching recordings and phrase files are not included. |
+| Turkish | [`mod_say_tr` source](https://github.com/mehmet-yildirim/freeswitch/tree/master/src/mod/say/mod_say_tr) and [FreeSWITCH contribution](https://github.com/signalwire/freeswitch/pull/2974) | A speech module for Turkish numbers, dates, and currency. The contribution is awaiting inclusion in FreeSWITCH. It requires a custom build and recordings matching the filenames listed by the project. |
+| Vietnamese | [Historical `mod_say_vi` source](https://github.com/emnvn/freeswitchvn/tree/master/src/mod/say/mod_say_vi) | An implementation from 2014 that requires code fixes and compatibility testing before use with current FS PBX. Treat it as a starting point for a developer. Matching recordings and phrase files are not included. |
+| Custom text-to-speech for additional languages | [Piper TTS module](https://github.com/aks-tel/mod_piper_tts) | Speaks supplied text using a configured Piper voice. This requires adapting the relevant call flows and prompts; it does not automatically replace missing speech modules or translate voicemail menus. |
 
 ## Find a sound pack
 

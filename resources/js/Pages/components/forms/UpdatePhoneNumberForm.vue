@@ -47,7 +47,7 @@
                             </div>
 
 
-                            <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
+                            <Vueform :locale="formLocale" @mounted="form => form.disableValidation()" v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
                                 @error="handleError" @response="handleResponse" :display-errors="false" :default="{
                                     destination_enabled: options.item?.destination_enabled ?? false,
                                     destination_prefix: options.item?.destination_prefix ?? null,
@@ -107,7 +107,7 @@
 
                                                 <StaticElement name="uuid_clean" :conditions="[() => options.permissions.is_superadmin]">
                                                     <div class="mb-1">
-                                                        <div class="text-sm font-medium text-gray-600 mb-1">                                                            Unique ID
+                                                        <div class="text-sm font-medium text-gray-600 mb-1">                                                            {{ $t("Unique ID") }}
                                                         </div>
                                                         <div class="flex items-center group">
                                                             <span class="text-sm text-gray-900 select-all font-normal">
@@ -116,7 +116,7 @@
                                                             <button type="button"
                                                                 @click="handleCopyToClipboard(options.item.destination_uuid)"
                                                                 class="ml-2 p-1 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
-                                                                title="Copy to clipboard">
+                                                                :title="$t('Copy to clipboard')">
                                                                 <ClipboardDocumentIcon class="h-4 w-4 text-gray-500 hover:text-gray-900  cursor-pointer" />
                                                             </button>
                                                         </div>
@@ -298,11 +298,16 @@
 </template>
 
 <script setup>
+import { useVueformLocale } from "../../../composables/useVueformLocale.js";
+import { clearServerFormErrors } from "../../../composables/serverFormErrors.js";
+import { trans } from "@i18n";
 import { ref } from "vue";
 
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { XMarkIcon } from "@heroicons/vue/24/solid";
 import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
+
+const formLocale = useVueformLocale();
 
 const props = defineProps({
     show: Boolean,
@@ -317,9 +322,9 @@ const emit = defineEmits(['close', 'error', 'success', 'refresh-data'])
 
 const handleCopyToClipboard = (text) => {
     navigator.clipboard.writeText(text).then(() => {
-        emit('success', 'success', { message: ['Copied to clipboard.'] });
+        emit('success', 'success', { message: [trans("Copied to clipboard.")] });
     }).catch((error) => {
-        emit('error', { response: { data: { errors: { request: ['Failed to copy to clipboard.'] } } } });
+        emit('error', { response: { data: { errors: { request: [trans("Failed to copy to clipboard.")] } } } });
     });
 }
 
@@ -336,6 +341,7 @@ const handleTabSelected = (activeTab, previousTab) => {
 
 
 const submitForm = async (FormData, form$) => {
+    clearServerFormErrors(form$);
     // Using form$.requestData will EXCLUDE conditional elements and it 
     // will submit the form as Content-Type: application/json . 
     const requestData = form$.requestData
@@ -395,7 +401,7 @@ const handleError = (error, details, form$) => {
         case 'prepare':
             console.log(error) // Error object
 
-            form$.messageBag.append('Could not prepare form')
+            form$.messageBag.append(trans("Could not prepare form"))
             break
 
         // Error occured because response status is outside of 2xx
@@ -415,14 +421,14 @@ const handleError = (error, details, form$) => {
         case 'cancel':
             console.log(error) // Error object
 
-            form$.messageBag.append('Request cancelled')
+            form$.messageBag.append(trans("Request cancelled"))
             break
 
         // Some other errors happened (no response object)
         case 'other':
             console.log(error) // Error object
 
-            form$.messageBag.append('Couldn\'t submit form')
+            form$.messageBag.append(trans("Couldn't submit form"))
             break
     }
 }

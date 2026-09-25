@@ -225,19 +225,19 @@ class CallRoutingOptionsService
         return [
             [
                 'value' => sprintf(self::TRANSFER_FORMAT, 'transfer', '*98', $this->domainName),
-                'name' => 'Check Voicemail'
+                'name' => __('Check Voicemail')
             ],
             [
                 'value' => sprintf(self::TRANSFER_FORMAT, 'transfer', '*411', $this->domainName),
-                'name' => 'Company Directory'
+                'name' => __('Company Directory')
             ],
             [
                 'value' => 'hangup:',
-                'name' => 'Hangup'
+                'name' => __('Hangup')
             ],
             [
                 'value' => sprintf(self::TRANSFER_FORMAT, 'transfer', '*732', $this->domainName),
-                'name' => 'Record'
+                'name' => __('Record')
             ]
         ];
     }
@@ -763,28 +763,28 @@ class CallRoutingOptionsService
     public function getFriendlyTypeName(string $type): string
     {
         $typeMapping = [
-            'extensions' => 'Extension',
-            'voicemails' => 'Voicemail',
-            'ring_groups' => 'Ring Group',
-            'ivrs' => 'Virtual Receptionist',
-            'contact_centers' => 'Contact Center',
-            'faxes' => "Fax",
-            'business_hours' => 'Business Hours',
-            'time_conditions' => 'Schedules',
-            'bridges' => 'Bridge',
-            'call_flows' => 'Call Flow',
-            'dynamic_routes' => 'Dynamic Route',
-            'conferences' => 'Conference',
-            'conference_centers' => 'Conference Center',
-            'ai_agents' => 'AI Agent',
-            'recordings' => 'Play recording',
-            'company_directory' => 'Company Directory',
-            'check_voicemail' => 'Check Voicemail',
-            'hangup' => 'Hang up',
-            'external' => "External Number"
+            'extensions' => __('Extension'),
+            'voicemails' => __('Voicemail'),
+            'ring_groups' => __('Ring Group'),
+            'ivrs' => __('Virtual Receptionist'),
+            'contact_centers' => __('Contact Center'),
+            'faxes' => __("Fax"),
+            'business_hours' => __('Business Hours'),
+            'time_conditions' => __('Schedules'),
+            'bridges' => __('Bridge'),
+            'call_flows' => __('Call Flow'),
+            'dynamic_routes' => __('Dynamic Route'),
+            'conferences' => __('Conference'),
+            'conference_centers' => __('Conference Center'),
+            'ai_agents' => __('AI Agent'),
+            'recordings' => __('Play recording'),
+            'company_directory' => __('Company Directory'),
+            'check_voicemail' => __('Check Voicemail'),
+            'hangup' => __('Hang up'),
+            'external' => __("External Number")
         ];
 
-        return $typeMapping[$type] ?? 'Unknown';
+        return $typeMapping[$type] ?? __('Unknown');
     }
 
     /**

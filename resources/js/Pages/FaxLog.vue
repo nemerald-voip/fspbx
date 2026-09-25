@@ -5,12 +5,12 @@
         <template #title>
           <h1 class="text-xl font-bold text-gray-900 flex items-center">
             <a :href="props.routes.faxes_index" class="hover:text-indigo-600">
-              Fax Dashboard
+              {{ $t("Fax Dashboard") }}
             </a>
             <svg class="mx-3 h-5 w-5 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
             </svg>
-            <span class="font-medium text-gray-500">{{ props.fax_label ? `${props.fax_label} Logs` : 'Fax Logs' }}</span>
+            <span class="font-medium text-gray-500">{{ props.fax_label ? $t(':name Logs', { name: props.fax_label }) : $t("Fax Logs") }}</span>
           </h1>
         </template>
 
@@ -23,14 +23,14 @@
               type="search"
               v-model="filterData.search"
               class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
-              placeholder="Search"
+              :placeholder="$t('Search')"
               @keydown.enter="handleSearchButtonClick"
             />
             <input
               type="search"
               v-model="filterData.search"
               class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
-              placeholder="Search"
+              :placeholder="$t('Search')"
               @keydown.enter="handleSearchButtonClick"
             />
           </div>
@@ -45,9 +45,9 @@
               v-model="filterData.status"
               class="block w-full rounded-md border-0 py-2 pl-3 pr-10 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600"
             >
-              <option value="all">All</option>
-              <option value="success">Success</option>
-              <option value="failed">Failed</option>
+              <option value="all">{{ $t("All") }}</option>
+              <option value="success">{{ $t("Success") }}</option>
+              <option value="failed">{{ $t("Failed") }}</option>
             </select>
           </div>
         </template>
@@ -89,20 +89,20 @@
             :sortable="false"
           />
 
-          <TableColumnHeader header="Date" class="whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-gray-900" />
+          <TableColumnHeader :header="$t('Date')" class="whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
-          <TableColumnHeader header="From" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-          <TableColumnHeader header="To" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-          <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-          <TableColumnHeader header="Code" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-          <TableColumnHeader header="Result" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+          <TableColumnHeader :header="$t('From')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+          <TableColumnHeader :header="$t('To')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+          <TableColumnHeader :header="$t('Status')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+          <TableColumnHeader :header="$t('Code')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+          <TableColumnHeader :header="$t('Result')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
           <!-- <TableColumnHeader header="File" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" /> -->
-          <TableColumnHeader header="ECM" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+          <TableColumnHeader :header="$t('ECM')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
           <!-- <TableColumnHeader header="Local Station ID" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" /> -->
-          <TableColumnHeader header="Bad Rows" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-          <TableColumnHeader header="Transfer Rate" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-          <TableColumnHeader header="Transferred Pages" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-          <TableColumnHeader header="Total Pages" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+          <TableColumnHeader :header="$t('Bad Rows')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+          <TableColumnHeader :header="$t('Transfer Rate')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+          <TableColumnHeader :header="$t('Transferred Pages')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+          <TableColumnHeader :header="$t('Total Pages')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
           <!-- <TableColumnHeader header="Destination" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" /> -->
           <TableColumnHeader v-if="permissions.delete || permissions.retry" header="" class="px-2 py-3.5 text-center text-sm font-semibold text-gray-900" />
         </template>
@@ -110,20 +110,20 @@
         <template v-if="permissions.delete && (selectPageItems || selectAll)" v-slot:current-selection>
           <td colspan="14">
             <div class="text-sm text-center m-2">
-              <span class="font-semibold">{{ selectedItems.length }}</span> items are selected.
+              {{ $t(':count selected', { count: selectedItems.length }) }}
               <button
                 v-if="!selectAll && selectedItems.length != data.total"
                 class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                 @click="handleSelectAll"
               >
-                Select all {{ data.total }} items
+                {{ $t('Select all :count', { count: data.total }) }}
               </button>
               <button
                 v-if="selectAll"
                 class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                 @click="handleClearSelection"
               >
-                Clear selection
+                {{ $t("Clear selection") }}
               </button>
             </div>
           </td>
@@ -191,7 +191,7 @@
             <TableField v-if="permissions.delete || permissions.retry" class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
               <template #action-buttons>
                 <div class="flex items-center whitespace-nowrap justify-end">
-                  <ejs-tooltip v-if="canRetry(row)" :content="'Retry outbound fax'" position="TopCenter" target="#retry_tooltip_target">
+                  <ejs-tooltip v-if="canRetry(row)" :content="$t('Retry outbound fax')" position="TopCenter" target="#retry_tooltip_target">
                     <div id="retry_tooltip_target">
                       <ArrowPathIcon
                         @click="handleRetryButtonClick(row)"
@@ -199,7 +199,7 @@
                       />
                     </div>
                   </ejs-tooltip>
-                  <ejs-tooltip v-if="permissions.delete" :content="'Delete'" position="TopCenter" target="#delete_tooltip_target">
+                  <ejs-tooltip v-if="permissions.delete" :content="$t('Delete')" position="TopCenter" target="#delete_tooltip_target">
                     <div id="delete_tooltip_target">
                       <TrashIcon
                         @click="handleDeleteButtonClick(row.fax_log_uuid)"
@@ -216,8 +216,8 @@
         <template #empty>
           <div v-if="data.data.length === 0" class="text-center my-5">
             <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-            <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
-            <p class="mt-1 text-sm text-gray-500">Adjust your search and try again.</p>
+            <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ $t("No results found") }}</h3>
+            <p class="mt-1 text-sm text-gray-500">{{ $t("Adjust your search and try again.") }}</p>
           </div>
         </template>
 
@@ -248,14 +248,15 @@
     :show="showDeleteConfirmationModal"
     @close="showDeleteConfirmationModal = false"
     @confirm="confirmDeleteAction"
-    :header="'Are you sure?'"
-    :text="'Are you sure you want to permanently delete selected fax logs? This action can not be undone.'"
-    :confirm-button-label="'Delete'"
-    cancel-button-label="Cancel"
+    :header="$t('Are you sure?')"
+    :text="$t('Are you sure you want to permanently delete selected fax logs? This action can not be undone.')"
+    :confirm-button-label="$t('Delete')"
+    :cancel-button-label="$t('Cancel')"
   />
 </template>
 
 <script setup>
+import { trans } from "@i18n";
 import { ref, computed, onMounted } from "vue";
 import axios from "axios";
 import moment from "moment-timezone";
@@ -328,7 +329,7 @@ const filterData = ref({
 
 const bulkActions = computed(() => {
   if (!props.permissions?.delete) return [];
-  return [{ id: "bulk_delete", label: "Delete", icon: "TrashIcon" }];
+  return [{ id: "bulk_delete", label: trans("Delete"), icon: "TrashIcon" }];
 });
 
 const getData = (page = 1) => {
@@ -485,7 +486,9 @@ const directionText = (row) => {
 };
 
 const directionTooltip = (row) => {
-  return row.direction ? `${row.direction} fax` : "Unknown direction";
+  return row.direction === "outbound" ? trans("Outbound fax")
+    : row.direction === "inbound" ? trans("Inbound fax")
+    : trans("Unknown direction");
 };
 
 const faxDestination = (row) => {
@@ -523,7 +526,7 @@ const isRetryRequestedFromRow = (row) => {
 const statusBadge = (row) => {
   if (String(row?.fax_success ?? "0") === "1") {
     return {
-      text: "Success",
+      text: trans("Success"),
       classes: "bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20",
     };
   }
@@ -532,30 +535,30 @@ const statusBadge = (row) => {
     switch (row?.outbound_fax?.status) {
       case "waiting":
         return {
-          text: "Retry queued",
+          text: trans("Retry queued"),
           classes: "bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-600/20",
         };
       case "sending":
         return {
-          text: "Sending",
+          text: trans("Sending"),
           classes: "bg-indigo-50 text-indigo-700 ring-1 ring-inset ring-indigo-600/20",
         };
       case "trying":
       case "busy":
         return {
-          text: "Retrying",
+          text: trans("Retrying"),
           classes: "bg-yellow-50 text-yellow-800 ring-1 ring-inset ring-yellow-600/20",
         };
       case "sent":
         return {
-          text: "Retried",
+          text: trans("Retried"),
           classes: "bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20",
         };
     }
   }
 
   return {
-    text: "Failed",
+    text: trans("Failed"),
     classes: "bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20",
   };
 };

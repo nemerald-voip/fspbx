@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Support\Localization\ValidationMessages;
+
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -66,11 +68,11 @@ class StoreZtpOrganizationRequest extends FormRequest
 
     public function messages(): array
     {
-        return [
-            'address.required' => 'Address is required.',
-            'prov_un.required' => 'Username is required.',
-            'prov_pw.required' => 'Password is required.',
-        ];
+        return array_merge(ValidationMessages::common(), [
+            'address.required' => __('Address is required.'),
+            'prov_un.required' => __('Username is required.'),
+            'prov_pw.required' => __('Password is required.'),
+        ]);
     }
 
 
@@ -110,5 +112,26 @@ class StoreZtpOrganizationRequest extends FormRequest
                 'password' => $this->input('prov_pw'),
             ]);
         }
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'provider' => __('Provider'),
+            'enabled' => __('Enabled'),
+            'name' => __('Name'),
+            'software' => __('Software'),
+            'bootServerOption' => __('Boot Server Option'),
+            'option60Type' => __('Option 60 Type'),
+            'localization' => __('Language'),
+            'address' => __('Address'),
+            'prov_un' => __('Username'),
+            'prov_pw' => __('Password'),
+            'username' => __('Username'),
+            'password' => __('Password'),
+            'quickSetup' => __('Quick Setup'),
+            'polling' => __('Polling'),
+            'ucs' => __('UCS'),
+        ];
     }
 }

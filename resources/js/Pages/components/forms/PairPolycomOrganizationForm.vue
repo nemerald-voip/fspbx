@@ -17,14 +17,14 @@
                         <DialogPanel
                             class="relative transform rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-xl sm:p-6">
                             <DialogTitle as="h3" class="mb-4 pr-8 text-base font-semibold leading-6 text-gray-900">
-                                {{ header ?? 'Connect to existing ZTP Organization' }}
+                                {{ header ?? $t("Connect to existing ZTP Organization") }}
                             </DialogTitle>
 
                             <div class="absolute right-0 top-0 pr-4 pt-4 sm:block">
                                 <button type="button"
                                     class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                     @click="emit('close')">
-                                    <span class="sr-only">Close</span>
+                                    <span class="sr-only">{{ $t("Close") }}</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
@@ -38,33 +38,32 @@
                                         <path class="opacity-75" fill="currentColor"
                                             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                     </svg>
-                                    <div class="m-auto text-lg text-blue-600">Loading...</div>
+                                    <div class="m-auto text-lg text-blue-600">{{ $t("Loading...") }}</div>
                                 </div>
                             </div>
 
-                            <Vueform v-else ref="form$" :endpoint="submitForm" @success="handleSuccess"
+                            <Vueform :locale="formLocale" @mounted="form => form.disableValidation()" v-else ref="form$" :endpoint="submitForm" @success="handleSuccess"
                                 @error="handleError" @response="handleResponse" :display-errors="false" :default="{
                                     provider: selectedProvider,
                                 }">
                                 <StaticElement name="intro">
                                     <p class="text-sm text-gray-500">
-                                        {{ description ?? 'Select the organization you want to connect to from the dropdown below.' }}
+                                        {{ description ?? $t("Select the organization you want to connect to from the dropdown below.") }}
                                     </p>
                                 </StaticElement>
 
                                 <HiddenElement name="provider" :meta="true" />
 
-                                <SelectElement name="org_id" :label="itemLabel ?? 'Organization'" :items="organizationOptions"
+                                <SelectElement name="org_id" :label="itemLabel ?? $t('Organization')" :items="organizationOptions"
                                     label-prop="name" value-prop="value" :search="true" :native="false"
-                                    input-type="search" autocomplete="off" placeholder="Select an organization"
-                                    :rules="['required']" />
+                                    input-type="search" autocomplete="off" :placeholder="$t('Select an organization')" />
 
                                 <GroupElement name="buttons" />
 
-                                <ButtonElement name="cancel" button-label="Cancel" :secondary="true"
+                                <ButtonElement name="cancel" :button-label="$t('Cancel')" :secondary="true"
                                     @click="emit('close')" :columns="{ container: 6 }" />
 
-                                <ButtonElement name="submit" button-label="Submit" :submits="true" align="right"
+                                <ButtonElement name="submit" :button-label="$t('Submit')" :submits="true" align="right"
                                     :columns="{ container: 6 }" />
                             </Vueform>
                         </DialogPanel>
@@ -76,9 +75,14 @@
 </template>
 
 <script setup>
+import { useVueformLocale } from "../../../composables/useVueformLocale.js";
+import { clearServerFormErrors } from "../../../composables/serverFormErrors.js";
+import { trans } from "@i18n";
 import { computed, ref } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { XMarkIcon } from "@heroicons/vue/24/solid";
+
+const formLocale = useVueformLocale();
 
 const props = defineProps({
     orgs: [Array, Object, null],
@@ -104,6 +108,7 @@ const organizationOptions = computed(() => {
 })
 
 const submitForm = async (FormData, form$) => {
+    clearServerFormErrors(form$);
     return await form$.$vueform.services.axios.post(props.route, form$.requestData)
 };
 
@@ -142,16 +147,16 @@ const handleError = (error, details, form$) => {
 
     switch (details.type) {
         case 'prepare':
-            form$.messageBag.append('Could not prepare form')
+            form$.messageBag.append(trans("Could not prepare form"))
             break
         case 'submit':
             emit('error', error);
             break
         case 'cancel':
-            form$.messageBag.append('Request cancelled')
+            form$.messageBag.append(trans("Request cancelled"))
             break
         case 'other':
-            form$.messageBag.append('Couldn\'t submit form')
+            form$.messageBag.append(trans("Couldn't submit form"))
             break
     }
 }

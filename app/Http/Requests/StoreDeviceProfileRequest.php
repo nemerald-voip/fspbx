@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Support\Localization\ValidationMessages;
+
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -72,5 +74,39 @@ class StoreDeviceProfileRequest extends FormRequest
             'domain_uuid' => in_array($domainUuid, ['', '__global__'], true) ? null : $domainUuid,
             'device_profile_enabled' => $this->input('device_profile_enabled', 'true'),
         ]);
+    }
+
+    public function messages(): array
+    {
+        return ValidationMessages::common();
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'domain_uuid' => __('Account'),
+            'device_profile_name' => __('Name'),
+            'device_profile_enabled' => __('Enabled'),
+            'device_profile_description' => __('Description'),
+            'keys' => __('Keys'),
+            'keys.*.device_profile_key_uuid' => __('Unique ID'),
+            'keys.*.profile_key_category' => __('Area'),
+            'keys.*.profile_key_id' => __('Key'),
+            'keys.*.profile_key_vendor' => __('Vendor'),
+            'keys.*.profile_key_type' => __('Type'),
+            'keys.*.profile_key_subtype' => __('Subtype'),
+            'keys.*.profile_key_line' => __('Line'),
+            'keys.*.profile_key_value' => __('Value'),
+            'keys.*.profile_key_extension' => __('Extension'),
+            'keys.*.profile_key_protected' => __('Protected'),
+            'keys.*.profile_key_label' => __('Label'),
+            'keys.*.profile_key_icon' => __('Icon'),
+            'settings' => __('Settings'),
+            'settings.*.device_profile_setting_uuid' => __('Unique ID'),
+            'settings.*.profile_setting_name' => __('Name'),
+            'settings.*.profile_setting_value' => __('Value'),
+            'settings.*.profile_setting_enabled' => __('Enabled'),
+            'settings.*.profile_setting_description' => __('Description'),
+        ];
     }
 }
