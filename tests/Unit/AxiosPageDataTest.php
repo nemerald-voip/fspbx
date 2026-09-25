@@ -3,7 +3,7 @@
 namespace Tests\Unit;
 
 use App\Http\Controllers\BusinessHoursController;
-use App\Http\Controllers\UsersController;
+use App\Http\Controllers\UserController;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -36,7 +36,7 @@ class AxiosPageDataTest extends TestCase
     public function test_page_shells_do_not_query_records_and_expose_api_routes(): void
     {
         DB::enableQueryLog();
-        foreach ([new UsersController(), new BusinessHoursController()] as $controller) {
+        foreach ([new UserController(), new BusinessHoursController()] as $controller) {
             $request = Request::create('/page');
             $request->headers->set('X-Inertia', 'true');
             $response = $controller->index($request)->toResponse($request)->getData(true);
@@ -50,7 +50,7 @@ class AxiosPageDataTest extends TestCase
     public function test_data_and_business_hours_selection_require_view_permission(): void
     {
         $this->permissions();
-        foreach ([[new UsersController(), 'getData'], [new BusinessHoursController(), 'getData'], [new BusinessHoursController(), 'selectAll']] as [$controller, $method]) {
+        foreach ([[new UserController(), 'getData'], [new BusinessHoursController(), 'getData'], [new BusinessHoursController(), 'selectAll']] as [$controller, $method]) {
             try {
                 $controller->$method(Request::create('/api/data'));
                 $this->fail('Expected a forbidden response before querying records.');
@@ -63,7 +63,7 @@ class AxiosPageDataTest extends TestCase
     public function test_users_json_retains_directory_metadata_and_management_restrictions(): void
     {
         $this->createUsers();
-        $controller = new UsersController();
+        $controller = new UserController();
         $request = $this->request('/api/users/data');
 
         $data = $controller->getData($request)->getData(true);
@@ -72,6 +72,10 @@ class AxiosPageDataTest extends TestCase
         $this->assertTrue($data['has_directories']);
         $this->assertSame(1, $data['selectable_total']);
         $rows = collect($data['data'])->keyBy('user_uuid');
+        foreach ($rows as $row) {
+            $this->assertArrayHasKey('language', $row);
+            $this->assertArrayNotHasKey('username', $row);
+        }
         $this->assertSame('Directory A', $rows['ldap']['ldap_directory_name']);
         $this->assertFalse($rows['ldap']['can_delete_target']);
         $this->assertFalse($rows['admin']['can_manage_target']);
@@ -84,13 +88,37 @@ class AxiosPageDataTest extends TestCase
         $this->assertSame(0, $data['selectable_total']);
     }
 
+    public function test_users_directory_metadata_and_selection_keep_priority_and_domain_boundaries(): void
+    {
+        $this->createUsers();
+        DB::table('v_groups')->where('group_uuid', 'superadmin')->update(['group_name' => 'SuPeRaDmIn', 'group_level' => 20]);
+        foreach ([['beta', 'Beta', 'account-a', 0], ['alpha', 'Alpha', 'account-a', 0], ['foreign-directory', 'Foreign', 'account-b', -1]] as [$uuid, $name, $domain, $priority]) {
+            DB::table('ldap_directories')->insert(['directory_uuid' => $uuid, 'domain_uuid' => $domain, 'name' => $name, 'priority' => $priority]);
+            DB::table('ldap_directory_users')->insert(['directory_uuid' => $uuid, 'domain_uuid' => $domain, 'user_uuid' => 'ldap']);
+        }
+
+        $controller = new UserController();
+        $data = $controller->getData($this->request('/api/users/data'))->getData(true);
+        $rows = collect($data['data'])->keyBy('user_uuid');
+        $this->assertSame('Alpha', $rows['ldap']['ldap_directory_name']);
+        $this->assertNull($rows['local']['ldap_directory_name']);
+        $this->assertFalse($rows['admin']['can_manage_target']);
+        $this->assertFalse($rows['admin']['can_delete_target']);
+        $this->assertSame(1, $data['selectable_total']);
+        $this->assertSame(['local'], $controller->selectAll($this->request('/api/users/select-all'))->getData(true)['items']);
+
+        $filtered = $controller->getData($this->request('/api/users/data', ['filter' => ['search' => 'LDAP@TEST']]))->getData(true);
+        $this->assertSame(['ldap'], array_column($filtered['data'], 'user_uuid'));
+        $this->assertSame(0, $filtered['selectable_total']);
+    }
+
     public function test_users_without_directories_keep_the_plain_list(): void
     {
         $this->createUsers();
         DB::table('ldap_directories')->delete();
         $this->permissions('user_view');
 
-        $data = (new UsersController())->getData($this->request('/api/users/data'))->getData(true);
+        $data = (new UserController())->getData($this->request('/api/users/data'))->getData(true);
 
         $this->assertFalse($data['has_directories']);
         $this->assertSame(0, $data['selectable_total']);
@@ -151,7 +179,7 @@ class AxiosPageDataTest extends TestCase
             'v_users' => ['user_uuid', 'domain_uuid', 'username', 'user_email', 'user_enabled', 'extension_uuid'],
             'users_adv_fields' => ['user_uuid', 'first_name', 'last_name'],
             'v_user_settings' => ['user_uuid', 'user_setting_category', 'user_setting_subcategory', 'user_setting_value'],
-            'v_user_groups' => ['user_group_uuid', 'user_uuid', 'group_uuid', 'group_name'],
+            'v_user_groups' => ['user_group_uuid', 'user_uuid', 'domain_uuid', 'group_uuid', 'group_name'],
             'v_groups' => ['group_uuid', 'group_name', 'group_level'],
             'ldap_directories' => ['directory_uuid', 'domain_uuid', 'name', 'priority'],
             'ldap_directory_users' => ['directory_uuid', 'domain_uuid', 'user_uuid'],
@@ -167,6 +195,9 @@ class AxiosPageDataTest extends TestCase
             ]);
         }
         DB::table('v_groups')->insert(['group_uuid' => 'superadmin', 'group_name' => 'superadmin', 'group_level' => 80]);
+        $this->actingAs((new \App\Models\User())->forceFill(['user_uuid' => 'actor', 'domain_uuid' => 'account-a']));
+        DB::table('v_groups')->insert(['group_uuid' => 'actor-role', 'group_name' => 'admin', 'group_level' => 40]);
+        DB::table('v_user_groups')->insert(['user_uuid' => 'actor', 'domain_uuid' => 'account-a', 'group_uuid' => 'actor-role']);
         DB::table('v_user_groups')->insert(['user_group_uuid' => 'membership', 'user_uuid' => 'admin', 'group_uuid' => 'superadmin', 'group_name' => 'superadmin']);
         DB::table('ldap_directories')->insert(['directory_uuid' => 'directory', 'domain_uuid' => 'account-a', 'name' => 'Directory A', 'priority' => 1]);
         DB::table('ldap_directory_users')->insert(['directory_uuid' => 'directory', 'domain_uuid' => 'account-a', 'user_uuid' => 'ldap']);

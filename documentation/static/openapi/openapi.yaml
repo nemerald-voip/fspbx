@@ -1749,13 +1749,13 @@ paths:
                   type: array
                   description: ''
                   example:
-                    - quisquam
+                    - tempore
                   items:
                     type: integer
                 phonebook_mode:
                   type: string
                   description: ''
-                  example: default
+                  example: custom
                   enum:
                     - default
                     - custom
@@ -1763,7 +1763,7 @@ paths:
                   type: array
                   description: 'Must be a valid UUID.'
                   example:
-                    - 47a7712d-f566-3f8d-9756-d0c08fafc02b
+                    - 53881632-acf5-3437-9d11-3845270b4ef8
                   items:
                     type: string
                 device_description:
@@ -9982,6 +9982,1293 @@ paths:
         required: true
         schema:
           type: string
+  '/api/v1/domains/{domain_uuid}/users':
+    get:
+      summary: 'List users'
+      operationId: listUsers
+      description: "Lists FS PBX users in the specified account. Use this endpoint to browse user\nprofiles or find a user to retrieve, update, or delete. Each result includes\nthe user's UUID, name, email, enabled status, assigned extension, roles,\nand whether the user is directory-managed. Use Retrieve a user for the\ntime zone, managed accounts, account groups, and locations.\n\nSearch by name or email, or filter by enabled status. Results are paginated;\nwhen `has_more` is true, pass the last result's `user_uuid` as `starting_after`\nto fetch the next page.\n\nRequires access to the domain in the URL and `user_view`. Passwords, API tokens,\nand two-factor secrets are never returned."
+      parameters:
+        -
+          in: query
+          name: limit
+          description: 'Results per page (1-100). Defaults to 25.'
+          example: 25
+          required: false
+          schema:
+            type: integer
+            description: 'Results per page (1-100). Defaults to 25.'
+            example: 25
+        -
+          in: query
+          name: starting_after
+          description: 'Return users after this user UUID.'
+          example: null
+          required: false
+          schema:
+            type: string
+            description: 'Return users after this user UUID.'
+            example: null
+        -
+          in: query
+          name: search
+          description: 'Search email, first name, or last name.'
+          example: Jane
+          required: false
+          schema:
+            type: string
+            description: 'Search email, first name, or last name.'
+            example: Jane
+        -
+          in: query
+          name: user_enabled
+          description: 'Filter by enabled status.'
+          example: true
+          required: false
+          schema:
+            type: boolean
+            description: 'Filter by enabled status.'
+            example: true
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  object: list
+                  url: /api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/users
+                  has_more: false
+                  data:
+                    -
+                      user_uuid: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5
+                      object: user
+                      domain_uuid: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                      user_email: jane.smith@example.com
+                      first_name: Jane
+                      last_name: Smith
+                      user_enabled: true
+                      extension_uuid: null
+                      groups: []
+                      directory_managed: false
+                properties:
+                  object:
+                    type: string
+                    example: list
+                  url:
+                    type: string
+                    example: /api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/users
+                  has_more:
+                    type: boolean
+                    example: false
+                  data:
+                    type: array
+                    example:
+                      -
+                        user_uuid: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5
+                        object: user
+                        domain_uuid: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                        user_email: jane.smith@example.com
+                        first_name: Jane
+                        last_name: Smith
+                        user_enabled: true
+                        extension_uuid: null
+                        groups: []
+                        directory_managed: false
+                    items:
+                      type: object
+                      properties:
+                        user_uuid:
+                          type: string
+                          example: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5
+                        object:
+                          type: string
+                          example: user
+                        domain_uuid:
+                          type: string
+                          example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                        user_email:
+                          type: string
+                          example: jane.smith@example.com
+                        first_name:
+                          type: string
+                          example: Jane
+                        last_name:
+                          type: string
+                          example: Smith
+                        user_enabled:
+                          type: boolean
+                          example: true
+                        extension_uuid:
+                          type: string
+                          example: null
+                        groups:
+                          type: array
+                          example: []
+                        directory_managed:
+                          type: boolean
+                          example: false
+        400:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Invalid domain UUID.'
+                    code: invalid_request
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Invalid domain UUID.'
+                      code:
+                        type: string
+                        example: invalid_request
+                      param:
+                        type: string
+                        example: domain_uuid
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        403:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'You do not have access to this domain.'
+                    code: forbidden_domain
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'You do not have access to this domain.'
+                      code:
+                        type: string
+                        example: forbidden_domain
+                      param:
+                        type: string
+                        example: domain_uuid
+        404:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Domain not found.'
+                    code: resource_missing
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Domain not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: domain_uuid
+      tags:
+        - Users
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                limit:
+                  type: integer
+                  description: 'Must be at least 1. Must not be greater than 100.'
+                  example: 10
+                starting_after:
+                  type: string
+                  description: 'Must be a valid UUID.'
+                  example: 5598cd04-2106-3f6a-af05-840b46bde7a6
+                search:
+                  type: string
+                  description: 'Must not be greater than 255 characters.'
+                  example: 'n'
+                user_enabled:
+                  type: boolean
+                  description: ''
+                  example: true
+    post:
+      summary: 'Create a user'
+      operationId: createAUser
+      description: "Creates a local FS PBX user in the specified account. Use this endpoint to\nadd a staff member or administrator who will sign in to the FS PBX web\ninterface. Returns the created user's profile and `user_uuid`, which can\nbe used to retrieve, update, or delete the user.\n\nOnly `first_name` and `user_email` are required. You can also assign an\nexisting extension and roles to configure the user's access. No role is\nassigned automatically. If `groups` is supplied, it must contain at least\none existing role UUID. The domain in the URL owns the new user. Password\nsetup is a separate step: call Send a password reset email for the new\n`user_uuid` to let the user choose their password. Creating the user does\nnot send an email or set or return a password.\n\nRequires domain access and `user_add`. Role assignments require\n`user_group_edit` and cannot exceed the caller's role level. Only superadmins\nmay assign the superadmin role. Disabled creation requires `user_status`.\nAccount assignments require their corresponding management permissions.\nThe domain's user limit is enforced."
+      parameters: []
+      responses:
+        201:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  user_uuid: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5
+                  object: user
+                  domain_uuid: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                  user_email: jane.smith@example.com
+                  first_name: Jane
+                  last_name: Smith
+                  user_enabled: true
+                  extension_uuid: null
+                  time_zone: null
+                  groups: []
+                  accounts: []
+                  account_groups: []
+                  locations: []
+                  directory_managed: false
+                properties:
+                  user_uuid:
+                    type: string
+                    example: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5
+                  object:
+                    type: string
+                    example: user
+                  domain_uuid:
+                    type: string
+                    example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                  user_email:
+                    type: string
+                    example: jane.smith@example.com
+                  first_name:
+                    type: string
+                    example: Jane
+                  last_name:
+                    type: string
+                    example: Smith
+                  user_enabled:
+                    type: boolean
+                    example: true
+                  extension_uuid:
+                    type: string
+                    example: null
+                  time_zone:
+                    type: string
+                    example: null
+                  groups:
+                    type: array
+                    example: []
+                  accounts:
+                    type: array
+                    example: []
+                  account_groups:
+                    type: array
+                    example: []
+                  locations:
+                    type: array
+                    example: []
+                  directory_managed:
+                    type: boolean
+                    example: false
+        400:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'The first name field is required.'
+                    code: invalid_parameter
+                    param: first_name
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'The first name field is required.'
+                      code:
+                        type: string
+                        example: invalid_parameter
+                      param:
+                        type: string
+                        example: first_name
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        403:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'One or more selected groups are not allowed.'
+                    code: forbidden
+                    param: null
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'One or more selected groups are not allowed.'
+                      code:
+                        type: string
+                        example: forbidden
+                      param:
+                        type: string
+                        example: null
+        404:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Domain not found.'
+                    code: resource_missing
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Domain not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: domain_uuid
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                first_name:
+                  type: string
+                  description: 'First name. Required when creating a user. Must not be greater than 255 characters.'
+                  example: Jane
+                last_name:
+                  type: string
+                  description: 'Optional last name. May be null. Must not be greater than 255 characters.'
+                  example: Smith
+                user_email:
+                  type: string
+                  description: 'Email address, unique across all accounts. Stored in lowercase. Must be a valid email address. Must not be greater than 255 characters.'
+                  example: jane.smith@example.com
+                user_enabled:
+                  type: boolean
+                  description: 'Whether the user is enabled. Defaults to true on creation. Changing status requires user_status.'
+                  example: false
+                extension_uuid:
+                  type: string
+                  description: 'Optional assigned extension from this domain. Omit on update to preserve it; send null to clear it. Must be a valid UUID.'
+                  example: d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b
+                groups:
+                  type: array
+                  description: 'Role UUIDs. May be omitted; when supplied, must contain at least one existing role UUID. Assigning roles requires user_group_edit.'
+                  example:
+                    - 6fdb722a-3f2f-430d-ab05-46a75de8c587
+                  items:
+                    type: string
+                time_zone:
+                  type: string
+                  description: 'Optional user timezone setting. Must be a valid time zone, such as <code>Africa/Accra</code>.'
+                  example: America/New_York
+                accounts:
+                  type: array
+                  description: 'Optional managed account UUIDs. Requires user_update_managed_accounts and access to each account.'
+                  example: []
+                  items:
+                    type: string
+                account_groups:
+                  type: array
+                  description: 'Optional managed account-group UUIDs. Requires user_update_managed_account_groups and authority over each group.'
+                  example: []
+                  items:
+                    type: string
+                locations:
+                  type: array
+                  description: 'Optional location UUIDs from this domain.'
+                  example: []
+                  items:
+                    type: string
+              required:
+                - first_name
+                - user_email
+    parameters:
+      -
+        in: path
+        name: domain_uuid
+        description: 'The domain UUID.'
+        example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+        required: true
+        schema:
+          type: string
+  '/api/v1/domains/{domain_uuid}/users/{user_uuid}':
+    get:
+      summary: 'Retrieve a user'
+      operationId: retrieveAUser
+      description: "Returns one FS PBX user's profile and access assignments in the specified\naccount. Use this endpoint to inspect the user's current details before\nmaking changes, including their name, email, enabled status, time zone,\nassigned extension, roles, managed accounts, and locations.\n\n`groups` contains role UUIDs; `accounts` and `account_groups` identify the\naccounts and account groups the user is assigned to manage. `locations`\ncontains assigned location UUIDs, and `directory_managed` indicates whether\nthe user is linked to a connected directory.\n\nRequires domain access and `user_view`. The user must belong to the domain\nin the URL. Passwords, API tokens, and two-factor secrets are never returned."
+      parameters: []
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  user_uuid: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5
+                  object: user
+                  domain_uuid: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                  user_email: jane.smith@example.com
+                  first_name: Jane
+                  last_name: Smith
+                  user_enabled: true
+                  extension_uuid: null
+                  time_zone: null
+                  groups: []
+                  accounts: []
+                  account_groups: []
+                  locations: []
+                  directory_managed: false
+                properties:
+                  user_uuid:
+                    type: string
+                    example: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5
+                  object:
+                    type: string
+                    example: user
+                  domain_uuid:
+                    type: string
+                    example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                  user_email:
+                    type: string
+                    example: jane.smith@example.com
+                  first_name:
+                    type: string
+                    example: Jane
+                  last_name:
+                    type: string
+                    example: Smith
+                  user_enabled:
+                    type: boolean
+                    example: true
+                  extension_uuid:
+                    type: string
+                    example: null
+                  time_zone:
+                    type: string
+                    example: null
+                  groups:
+                    type: array
+                    example: []
+                  accounts:
+                    type: array
+                    example: []
+                  account_groups:
+                    type: array
+                    example: []
+                  locations:
+                    type: array
+                    example: []
+                  directory_managed:
+                    type: boolean
+                    example: false
+        400:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Invalid user UUID.'
+                    code: invalid_request
+                    param: user_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Invalid user UUID.'
+                      code:
+                        type: string
+                        example: invalid_request
+                      param:
+                        type: string
+                        example: user_uuid
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        403:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'You do not have access to this domain.'
+                    code: forbidden_domain
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'You do not have access to this domain.'
+                      code:
+                        type: string
+                        example: forbidden_domain
+                      param:
+                        type: string
+                        example: domain_uuid
+        404:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'User not found.'
+                    code: resource_missing
+                    param: user_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'User not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: user_uuid
+      tags:
+        - Users
+    patch:
+      summary: 'Update a user'
+      operationId: updateAUser
+      description: "Updates an existing FS PBX user in the specified account. Use this endpoint\nto change profile details, enable or disable the user, or revise their\nextension, roles, managed accounts, and location assignments. Returns the\nupdated user profile.\n\nThis is a partial update: all fields are optional, and omitted fields and\nassignments are preserved. Send `extension_uuid: null` to unassign the\nextension. If `groups` is supplied, it must contain at least one existing\nrole UUID; an empty array is rejected.\n\nDirectory-managed identity and status cannot be changed here. Directory-managed\nemail and extension assignments are protected, and directory-managed roles\nare preserved. Local roles may still be changed with the appropriate permission.\n\nRequires domain access and `user_edit`. Changes to roles, status, and managed\naccounts require the same additional permissions as creation. Non-superadmins\ncannot modify superadmins or users above their role level."
+      parameters: []
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  user_uuid: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5
+                  object: user
+                  domain_uuid: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                  user_email: jane.smith@example.com
+                  first_name: Jane
+                  last_name: Smith
+                  user_enabled: true
+                  extension_uuid: null
+                  time_zone: null
+                  groups: []
+                  accounts: []
+                  account_groups: []
+                  locations: []
+                  directory_managed: false
+                properties:
+                  user_uuid:
+                    type: string
+                    example: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5
+                  object:
+                    type: string
+                    example: user
+                  domain_uuid:
+                    type: string
+                    example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                  user_email:
+                    type: string
+                    example: jane.smith@example.com
+                  first_name:
+                    type: string
+                    example: Jane
+                  last_name:
+                    type: string
+                    example: Smith
+                  user_enabled:
+                    type: boolean
+                    example: true
+                  extension_uuid:
+                    type: string
+                    example: null
+                  time_zone:
+                    type: string
+                    example: null
+                  groups:
+                    type: array
+                    example: []
+                  accounts:
+                    type: array
+                    example: []
+                  account_groups:
+                    type: array
+                    example: []
+                  locations:
+                    type: array
+                    example: []
+                  directory_managed:
+                    type: boolean
+                    example: false
+        400:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'This field is managed by the connected directory.'
+                    code: invalid_parameter
+                    param: first_name
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'This field is managed by the connected directory.'
+                      code:
+                        type: string
+                        example: invalid_parameter
+                      param:
+                        type: string
+                        example: first_name
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        403:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'You are not allowed to manage this user.'
+                    code: forbidden
+                    param: null
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'You are not allowed to manage this user.'
+                      code:
+                        type: string
+                        example: forbidden
+                      param:
+                        type: string
+                        example: null
+        404:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'User not found.'
+                    code: resource_missing
+                    param: user_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'User not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: user_uuid
+      tags:
+        - Users
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                first_name:
+                  type: string
+                  description: 'Optional first name. Cannot be empty when supplied.'
+                  example: Jane
+                last_name:
+                  type: string
+                  description: 'Optional last name. May be null. Must not be greater than 255 characters.'
+                  example: Smith
+                user_email:
+                  type: string
+                  description: 'Optional email address, unique across all accounts. Cannot be empty when supplied.'
+                  example: jane.smith@example.com
+                user_enabled:
+                  type: boolean
+                  description: 'Whether the user is enabled. Defaults to true on creation. Changing status requires user_status.'
+                  example: false
+                extension_uuid:
+                  type: string
+                  description: 'Optional assigned extension from this domain. Omit on update to preserve it; send null to clear it. Must be a valid UUID.'
+                  example: d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b
+                groups:
+                  type: array
+                  description: 'Role UUIDs. Omit to preserve; when supplied, must contain at least one existing role UUID. Changes require user_group_edit. Directory-managed roles are preserved.'
+                  example:
+                    - 6fdb722a-3f2f-430d-ab05-46a75de8c587
+                  items:
+                    type: string
+                time_zone:
+                  type: string
+                  description: 'Optional user timezone setting. Must be a valid time zone, such as <code>Africa/Accra</code>.'
+                  example: America/New_York
+                accounts:
+                  type: array
+                  description: 'Optional managed account UUIDs. Omit to preserve; send [] to clear. Changes require user_update_managed_accounts and access to each account.'
+                  example: []
+                  items:
+                    type: string
+                account_groups:
+                  type: array
+                  description: 'Optional managed account-group UUIDs. Omit to preserve; send [] to clear. Changes require user_update_managed_account_groups and authority over each group.'
+                  example: []
+                  items:
+                    type: string
+                locations:
+                  type: array
+                  description: 'Optional location UUIDs from this domain. Omit to preserve; send [] to clear.'
+                  example: []
+                  items:
+                    type: string
+    delete:
+      summary: 'Delete a user'
+      operationId: deleteAUser
+      description: "Permanently removes a local FS PBX user from the specified account to revoke\ntheir application access. Deletes the user's profile, settings, assignments,\nAPI tokens, and sessions. Returns the deleted user's UUID and a `deleted: true`\nconfirmation.\n\nRequires domain access and `user_delete`. Non-superadmins cannot delete\nsuperadmins or users above their role level. Directory-managed users must\nbe disabled or removed in their connected directory instead."
+      parameters: []
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  uuid: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5
+                  object: user
+                  deleted: true
+                properties:
+                  uuid:
+                    type: string
+                    example: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5
+                  object:
+                    type: string
+                    example: user
+                  deleted:
+                    type: boolean
+                    example: true
+        400:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Directory-managed users cannot be deleted here. Disable or remove them in the connected directory.'
+                    code: invalid_parameter
+                    param: user_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Directory-managed users cannot be deleted here. Disable or remove them in the connected directory.'
+                      code:
+                        type: string
+                        example: invalid_parameter
+                      param:
+                        type: string
+                        example: user_uuid
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        403:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'You are not allowed to manage this user.'
+                    code: forbidden
+                    param: null
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'You are not allowed to manage this user.'
+                      code:
+                        type: string
+                        example: forbidden
+                      param:
+                        type: string
+                        example: null
+        404:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'User not found.'
+                    code: resource_missing
+                    param: user_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'User not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: user_uuid
+      tags:
+        - Users
+    parameters:
+      -
+        in: path
+        name: domain_uuid
+        description: 'The domain UUID.'
+        example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+        required: true
+        schema:
+          type: string
+      -
+        in: path
+        name: user_uuid
+        description: 'The user UUID.'
+        example: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5
+        required: true
+        schema:
+          type: string
+  '/api/v1/domains/{domain_uuid}/users/{user_uuid}/password-reset':
+    post:
+      summary: 'Send a password reset email'
+      operationId: sendAPasswordResetEmail
+      description: "Emails a link that lets an existing local FS PBX user choose a new password.\nUse this after creating a user to set up their first password, or to help\nan existing user regain access. Returns confirmation that the email was sent.\n\nNo request body is needed. The email goes to the user's saved `user_email`\nand uses the existing password-reset email template. Passwords, reset tokens,\nand reset URLs are never returned. The current password stays valid until\nthe user completes the reset; sending the email does not enable a disabled user.\n\nLinks are single-use and expire according to the password-reset configuration\n(60 minutes by default). Repeat requests for the same recipient are throttled\naccording to that configuration (60 seconds by default), returning HTTP 429.\n\nRequires domain access and `user_edit`. The user must belong to the domain\nin the URL. Non-superadmins cannot request resets for superadmins or users\nabove their role level. Directory-managed users must reset their passwords\nthrough the connected directory."
+      parameters: []
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  object: password_reset
+                  user_uuid: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5
+                  sent: true
+                properties:
+                  object:
+                    type: string
+                    example: password_reset
+                  user_uuid:
+                    type: string
+                    example: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5
+                  sent:
+                    type: boolean
+                    example: true
+        400:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'This user is managed by an external directory. Reset the password in the connected directory.'
+                    code: invalid_parameter
+                    param: user_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'This user is managed by an external directory. Reset the password in the connected directory.'
+                      code:
+                        type: string
+                        example: invalid_parameter
+                      param:
+                        type: string
+                        example: user_uuid
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        403:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'You are not allowed to manage this user.'
+                    code: forbidden
+                    param: null
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'You are not allowed to manage this user.'
+                      code:
+                        type: string
+                        example: forbidden
+                      param:
+                        type: string
+                        example: null
+        404:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'User not found.'
+                    code: resource_missing
+                    param: user_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'User not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: user_uuid
+        429:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: rate_limit_error
+                    message: 'Please wait before requesting another password reset email.'
+                    code: password_reset_throttled
+                    param: null
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: rate_limit_error
+                      message:
+                        type: string
+                        example: 'Please wait before requesting another password reset email.'
+                      code:
+                        type: string
+                        example: password_reset_throttled
+                      param:
+                        type: string
+                        example: null
+        503:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: api_error
+                    message: 'Unable to send the password reset email. Please try again later.'
+                    code: mail_delivery_failed
+                    param: null
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: api_error
+                      message:
+                        type: string
+                        example: 'Unable to send the password reset email. Please try again later.'
+                      code:
+                        type: string
+                        example: mail_delivery_failed
+                      param:
+                        type: string
+                        example: null
+      tags:
+        - Users
+    parameters:
+      -
+        in: path
+        name: domain_uuid
+        description: 'The domain UUID.'
+        example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+        required: true
+        schema:
+          type: string
+      -
+        in: path
+        name: user_uuid
+        description: 'The user UUID.'
+        example: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5
+        required: true
+        schema:
+          type: string
   '/api/v1/domains/{domain_uuid}/voicemails':
     get:
       summary: 'List voicemails'
@@ -10822,6 +12109,9 @@ tags:
     description: ''
   -
     name: 'Ring Groups'
+    description: ''
+  -
+    name: Users
     description: ''
   -
     name: Voicemails

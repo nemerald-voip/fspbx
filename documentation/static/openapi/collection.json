@@ -10,7 +10,7 @@
     ],
     "info": {
         "name": "FS PBX",
-        "_postman_id": "e3a2331c-0bc3-46eb-a04f-5e1668db0ebf",
+        "_postman_id": "ad464a68-e599-4a4a-a24d-c078cbaf1ab2",
         "description": "",
         "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
     },
@@ -780,7 +780,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"device_address\":\"0004f23a5bc7\",\"serial_number\":\"8603123456789\",\"device_profile_uuid\":\"51759db8-c8bf-4b2f-b48a-6577d7ad6a1a\",\"device_template\":\"Yealink T46U\",\"device_template_uuid\":\"a6cf59ba-4b2b-4bdd-b870-35cc55bca146\",\"device_keys\":[\"quisquam\"],\"phonebook_mode\":\"default\",\"phonebook_uuids\":[\"47a7712d-f566-3f8d-9756-d0c08fafc02b\"],\"device_description\":\"Reception desk device\",\"device_lines\":[[]]}"
+                            "raw": "{\"device_address\":\"0004f23a5bc7\",\"serial_number\":\"8603123456789\",\"device_profile_uuid\":\"51759db8-c8bf-4b2f-b48a-6577d7ad6a1a\",\"device_template\":\"Yealink T46U\",\"device_template_uuid\":\"a6cf59ba-4b2b-4bdd-b870-35cc55bca146\",\"device_keys\":[\"tempore\"],\"phonebook_mode\":\"custom\",\"phonebook_uuids\":[\"53881632-acf5-3437-9d11-3845270b4ef8\"],\"device_description\":\"Reception desk device\",\"device_lines\":[[]]}"
                         },
                         "description": "Creates a new device in the specified domain.\n\nNotes:\n- `device_template` is deprecated and retained for backward compatibility.\n- Use `device_template_uuid` as its successor."
                     },
@@ -3889,6 +3889,466 @@
                             "code": 200,
                             "body": "{\"object\":\"ring_group\",\"uuid\":\"c0ec8113-aa15-40ac-8437-47185dd9dcf4\",\"deleted\":true}",
                             "name": "Success"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Users",
+            "description": "",
+            "item": [
+                {
+                    "name": "List users",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/users",
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "25",
+                                    "description": "Results per page (1-100). Defaults to 25.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "starting_after",
+                                    "value": "",
+                                    "description": "Return users after this user UUID.",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "search",
+                                    "value": "Jane",
+                                    "description": "Search email, first name, or last name.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "user_enabled",
+                                    "value": "1",
+                                    "description": "Filter by enabled status.",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/users?limit=25&starting_after=&search=Jane&user_enabled=1",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The domain UUID."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"limit\":10,\"starting_after\":\"5598cd04-2106-3f6a-af05-840b46bde7a6\",\"search\":\"n\",\"user_enabled\":true}"
+                        },
+                        "description": "Lists FS PBX users in the specified account. Use this endpoint to browse user\nprofiles or find a user to retrieve, update, or delete. Each result includes\nthe user's UUID, name, email, enabled status, assigned extension, roles,\nand whether the user is directory-managed. Use Retrieve a user for the\ntime zone, managed accounts, account groups, and locations.\n\nSearch by name or email, or filter by enabled status. Results are paginated;\nwhen `has_more` is true, pass the last result's `user_uuid` as `starting_after`\nto fetch the next page.\n\nRequires access to the domain in the URL and `user_view`. Passwords, API tokens,\nand two-factor secrets are never returned."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"object\":\"list\",\"url\":\"\/api\/v1\/domains\/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\/users\",\"has_more\":false,\"data\":[{\"user_uuid\":\"c9a76140-0ca4-4ea3-95af-7e12c2ff0df5\",\"object\":\"user\",\"domain_uuid\":\"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\"user_email\":\"jane.smith@example.com\",\"first_name\":\"Jane\",\"last_name\":\"Smith\",\"user_enabled\":true,\"extension_uuid\":null,\"groups\":[],\"directory_managed\":false}]}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid domain UUID.\",\"code\":\"invalid_request\",\"param\":\"domain_uuid\"}}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\"}}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"You do not have access to this domain.\",\"code\":\"forbidden_domain\",\"param\":\"domain_uuid\"}}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Domain not found.\",\"code\":\"resource_missing\",\"param\":\"domain_uuid\"}}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Retrieve a user",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/users\/:user_uuid",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/users\/:user_uuid",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The domain UUID."
+                                },
+                                {
+                                    "id": "user_uuid",
+                                    "key": "user_uuid",
+                                    "value": "c9a76140-0ca4-4ea3-95af-7e12c2ff0df5",
+                                    "description": "The user UUID."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Returns one FS PBX user's profile and access assignments in the specified\naccount. Use this endpoint to inspect the user's current details before\nmaking changes, including their name, email, enabled status, time zone,\nassigned extension, roles, managed accounts, and locations.\n\n`groups` contains role UUIDs; `accounts` and `account_groups` identify the\naccounts and account groups the user is assigned to manage. `locations`\ncontains assigned location UUIDs, and `directory_managed` indicates whether\nthe user is linked to a connected directory.\n\nRequires domain access and `user_view`. The user must belong to the domain\nin the URL. Passwords, API tokens, and two-factor secrets are never returned."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"user_uuid\":\"c9a76140-0ca4-4ea3-95af-7e12c2ff0df5\",\"object\":\"user\",\"domain_uuid\":\"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\"user_email\":\"jane.smith@example.com\",\"first_name\":\"Jane\",\"last_name\":\"Smith\",\"user_enabled\":true,\"extension_uuid\":null,\"time_zone\":null,\"groups\":[],\"accounts\":[],\"account_groups\":[],\"locations\":[],\"directory_managed\":false}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid user UUID.\",\"code\":\"invalid_request\",\"param\":\"user_uuid\"}}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\"}}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"You do not have access to this domain.\",\"code\":\"forbidden_domain\",\"param\":\"domain_uuid\"}}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"User not found.\",\"code\":\"resource_missing\",\"param\":\"user_uuid\"}}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Create a user",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/users",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/users",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The domain UUID."
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"first_name\":\"Jane\",\"last_name\":\"Smith\",\"user_email\":\"jane.smith@example.com\",\"user_enabled\":false,\"extension_uuid\":\"d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b\",\"groups\":[\"6fdb722a-3f2f-430d-ab05-46a75de8c587\"],\"time_zone\":\"America\\\/New_York\",\"accounts\":[],\"account_groups\":[],\"locations\":[]}"
+                        },
+                        "description": "Creates a local FS PBX user in the specified account. Use this endpoint to\nadd a staff member or administrator who will sign in to the FS PBX web\ninterface. Returns the created user's profile and `user_uuid`, which can\nbe used to retrieve, update, or delete the user.\n\nOnly `first_name` and `user_email` are required. You can also assign an\nexisting extension and roles to configure the user's access. No role is\nassigned automatically. If `groups` is supplied, it must contain at least\none existing role UUID. The domain in the URL owns the new user. Password\nsetup is a separate step: call Send a password reset email for the new\n`user_uuid` to let the user choose their password. Creating the user does\nnot send an email or set or return a password.\n\nRequires domain access and `user_add`. Role assignments require\n`user_group_edit` and cannot exceed the caller's role level. Only superadmins\nmay assign the superadmin role. Disabled creation requires `user_status`.\nAccount assignments require their corresponding management permissions.\nThe domain's user limit is enforced."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 201,
+                            "body": "{\"user_uuid\":\"c9a76140-0ca4-4ea3-95af-7e12c2ff0df5\",\"object\":\"user\",\"domain_uuid\":\"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\"user_email\":\"jane.smith@example.com\",\"first_name\":\"Jane\",\"last_name\":\"Smith\",\"user_enabled\":true,\"extension_uuid\":null,\"time_zone\":null,\"groups\":[],\"accounts\":[],\"account_groups\":[],\"locations\":[],\"directory_managed\":false}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"The first name field is required.\",\"code\":\"invalid_parameter\",\"param\":\"first_name\"}}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\"}}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"One or more selected groups are not allowed.\",\"code\":\"forbidden\",\"param\":null}}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Domain not found.\",\"code\":\"resource_missing\",\"param\":\"domain_uuid\"}}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Update a user",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/users\/:user_uuid",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/users\/:user_uuid",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The domain UUID."
+                                },
+                                {
+                                    "id": "user_uuid",
+                                    "key": "user_uuid",
+                                    "value": "c9a76140-0ca4-4ea3-95af-7e12c2ff0df5",
+                                    "description": "The user UUID."
+                                }
+                            ]
+                        },
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"first_name\":\"Jane\",\"last_name\":\"Smith\",\"user_email\":\"jane.smith@example.com\",\"user_enabled\":false,\"extension_uuid\":\"d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b\",\"groups\":[\"6fdb722a-3f2f-430d-ab05-46a75de8c587\"],\"time_zone\":\"America\\\/New_York\",\"accounts\":[],\"account_groups\":[],\"locations\":[]}"
+                        },
+                        "description": "Updates an existing FS PBX user in the specified account. Use this endpoint\nto change profile details, enable or disable the user, or revise their\nextension, roles, managed accounts, and location assignments. Returns the\nupdated user profile.\n\nThis is a partial update: all fields are optional, and omitted fields and\nassignments are preserved. Send `extension_uuid: null` to unassign the\nextension. If `groups` is supplied, it must contain at least one existing\nrole UUID; an empty array is rejected.\n\nDirectory-managed identity and status cannot be changed here. Directory-managed\nemail and extension assignments are protected, and directory-managed roles\nare preserved. Local roles may still be changed with the appropriate permission.\n\nRequires domain access and `user_edit`. Changes to roles, status, and managed\naccounts require the same additional permissions as creation. Non-superadmins\ncannot modify superadmins or users above their role level."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"user_uuid\":\"c9a76140-0ca4-4ea3-95af-7e12c2ff0df5\",\"object\":\"user\",\"domain_uuid\":\"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\"user_email\":\"jane.smith@example.com\",\"first_name\":\"Jane\",\"last_name\":\"Smith\",\"user_enabled\":true,\"extension_uuid\":null,\"time_zone\":null,\"groups\":[],\"accounts\":[],\"account_groups\":[],\"locations\":[],\"directory_managed\":false}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"This field is managed by the connected directory.\",\"code\":\"invalid_parameter\",\"param\":\"first_name\"}}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\"}}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"You are not allowed to manage this user.\",\"code\":\"forbidden\",\"param\":null}}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"User not found.\",\"code\":\"resource_missing\",\"param\":\"user_uuid\"}}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Send a password reset email",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/users\/:user_uuid\/password-reset",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/users\/:user_uuid\/password-reset",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The domain UUID."
+                                },
+                                {
+                                    "id": "user_uuid",
+                                    "key": "user_uuid",
+                                    "value": "c9a76140-0ca4-4ea3-95af-7e12c2ff0df5",
+                                    "description": "The user UUID."
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Emails a link that lets an existing local FS PBX user choose a new password.\nUse this after creating a user to set up their first password, or to help\nan existing user regain access. Returns confirmation that the email was sent.\n\nNo request body is needed. The email goes to the user's saved `user_email`\nand uses the existing password-reset email template. Passwords, reset tokens,\nand reset URLs are never returned. The current password stays valid until\nthe user completes the reset; sending the email does not enable a disabled user.\n\nLinks are single-use and expire according to the password-reset configuration\n(60 minutes by default). Repeat requests for the same recipient are throttled\naccording to that configuration (60 seconds by default), returning HTTP 429.\n\nRequires domain access and `user_edit`. The user must belong to the domain\nin the URL. Non-superadmins cannot request resets for superadmins or users\nabove their role level. Directory-managed users must reset their passwords\nthrough the connected directory."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"object\":\"password_reset\",\"user_uuid\":\"c9a76140-0ca4-4ea3-95af-7e12c2ff0df5\",\"sent\":true}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"This user is managed by an external directory. Reset the password in the connected directory.\",\"code\":\"invalid_parameter\",\"param\":\"user_uuid\"}}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\"}}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"You are not allowed to manage this user.\",\"code\":\"forbidden\",\"param\":null}}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"User not found.\",\"code\":\"resource_missing\",\"param\":\"user_uuid\"}}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 429,
+                            "body": "{\"error\":{\"type\":\"rate_limit_error\",\"message\":\"Please wait before requesting another password reset email.\",\"code\":\"password_reset_throttled\",\"param\":null}}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 503,
+                            "body": "{\"error\":{\"type\":\"api_error\",\"message\":\"Unable to send the password reset email. Please try again later.\",\"code\":\"mail_delivery_failed\",\"param\":null}}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Delete a user",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/users\/:user_uuid",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/users\/:user_uuid",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The domain UUID."
+                                },
+                                {
+                                    "id": "user_uuid",
+                                    "key": "user_uuid",
+                                    "value": "c9a76140-0ca4-4ea3-95af-7e12c2ff0df5",
+                                    "description": "The user UUID."
+                                }
+                            ]
+                        },
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Permanently removes a local FS PBX user from the specified account to revoke\ntheir application access. Deletes the user's profile, settings, assignments,\nAPI tokens, and sessions. Returns the deleted user's UUID and a `deleted: true`\nconfirmation.\n\nRequires domain access and `user_delete`. Non-superadmins cannot delete\nsuperadmins or users above their role level. Directory-managed users must\nbe disabled or removed in their connected directory instead."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"uuid\":\"c9a76140-0ca4-4ea3-95af-7e12c2ff0df5\",\"object\":\"user\",\"deleted\":true}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Directory-managed users cannot be deleted here. Disable or remove them in the connected directory.\",\"code\":\"invalid_parameter\",\"param\":\"user_uuid\"}}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\"}}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"You are not allowed to manage this user.\",\"code\":\"forbidden\",\"param\":null}}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"User not found.\",\"code\":\"resource_missing\",\"param\":\"user_uuid\"}}",
+                            "name": ""
                         }
                     ]
                 }

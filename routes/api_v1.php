@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\V1\CdrController;
 use App\Http\Controllers\Api\V1\ClickToDialController;
 use App\Http\Controllers\Api\V1\PhoneControlController;
 use App\Http\Controllers\Api\V1\RecordingController;
+use App\Http\Controllers\Api\V1\UserController;
 
 /*
 |--------------------------------------------------------------------------
@@ -45,6 +46,24 @@ Route::middleware(['auth:sanctum', 'api.token.auth', 'throttle:api'])->group(fun
 
     Route::delete('/domains/{domain_uuid}', [DomainController::class, 'destroy'])
         ->middleware('user.authorize:domain_delete');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Users (domain-scoped)
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/domains/{domain_uuid}/users', [UserController::class, 'index'])
+        ->middleware('user.authorize:user_view');
+    Route::get('/domains/{domain_uuid}/users/{user_uuid}', [UserController::class, 'show'])
+        ->middleware('user.authorize:user_view');
+    Route::post('/domains/{domain_uuid}/users', [UserController::class, 'store'])
+        ->middleware('user.authorize:user_add');
+    Route::patch('/domains/{domain_uuid}/users/{user_uuid}', [UserController::class, 'update'])
+        ->middleware('user.authorize:user_edit');
+    Route::post('/domains/{domain_uuid}/users/{user_uuid}/password-reset', [UserController::class, 'sendPasswordReset'])
+        ->middleware('user.authorize:user_edit');
+    Route::delete('/domains/{domain_uuid}/users/{user_uuid}', [UserController::class, 'destroy'])
+        ->middleware('user.authorize:user_delete');
 
     /*
     |--------------------------------------------------------------------------

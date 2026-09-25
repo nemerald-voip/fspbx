@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class Handler extends ExceptionHandler
 {
@@ -40,7 +41,7 @@ class Handler extends ExceptionHandler
         });
 
         // 2) Authorization (policies/gates OR FormRequest->authorize() = false)
-        $this->renderable(function (AuthorizationException $e, Request $request) {
+        $this->renderable(function (AuthorizationException | AccessDeniedHttpException $e, Request $request) {
             if (! $request->is('api/v1/*')) return null;
 
             $payload = ErrorResponseData::from([

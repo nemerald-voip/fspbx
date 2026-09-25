@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 
 class Groups extends Model
 {
@@ -40,5 +41,18 @@ class Groups extends Model
     public function user_groups()
     {
         return $this->hasMany(UserGroup::class, 'group_uuid', 'group_uuid');
+    }
+
+    public function scopeSuperadmins(Builder $query): Builder
+    {
+        $operator = $query->getConnection()->getDriverName() === 'pgsql' ? 'ilike' : 'like';
+
+        return $query->where($query->qualifyColumn('group_name'), $operator, 'superadmin');
+    }
+
+    public function scopeProtectedFrom(Builder $query, int $actorLevel): Builder
+    {
+        return $query->where(fn (Builder $groups) => $groups
+            ->superadmins()->orWhere($groups->qualifyColumn('group_level'), '>', $actorLevel));
     }
 }

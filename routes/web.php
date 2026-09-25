@@ -77,7 +77,7 @@ use App\Http\Controllers\SwitchModuleController;
 use App\Http\Controllers\SystemController;
 use App\Http\Controllers\SystemSettingsController;
 use App\Http\Controllers\UserLogsController;
-use App\Http\Controllers\UsersController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\VirtualReceptionistController;
 use App\Http\Controllers\VoicemailController;
 use App\Http\Controllers\VoicemailMessagesController;
@@ -216,7 +216,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('/domains/filter/', [DomainController::class, 'filterDomainsFusionPBX'])->name('filterDomainsFusionPBX');
 
     //Users
-    Route::get('users', [UsersController::class, 'index'])->name('users.index');
+    Route::get('users', [UserController::class, 'index'])->name('users.index');
     // Route::post('user/{user}/settings', [UserSettingsController::class, 'store'])->name('users.settings.store');
     // Route::delete('user/settings/{setting}', [UserSettingsController::class, 'destroy'])->name('users.settings.destroy');
     Route::post('user/password/email', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('users.password.email');
@@ -381,13 +381,11 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     //Users
-    // Route::get('/users', [UsersController::class, 'index']) ->name('usersList');
-    //Route::get('/users/create', [UsersController::class, 'createUser']) ->name('usersCreateUser');
-    //Route::get('/users/edit/{id}', [UsersController::class, 'editUser']) ->name('editUser');
-    // Route::post('/saveUser', [UsersController::class, 'saveUser']) ->name('saveUser');
-    // Route::post('/updateUser', [UsersController::class, 'updateUser']) ->name('updateUser');
-    Route::post('/deleteUser', [UsersController::class, 'deleteUser'])->name('deleteUser');
-    Route::post('/addSetting', [UsersController::class, 'addSetting'])->name('addSetting');
+    // Route::get('/users', [UserController::class, 'index']) ->name('usersList');
+    //Route::get('/users/create', [UserController::class, 'createUser']) ->name('usersCreateUser');
+    //Route::get('/users/edit/{id}', [UserController::class, 'editUser']) ->name('editUser');
+    // Route::post('/saveUser', [UserController::class, 'saveUser']) ->name('saveUser');
+    // Route::post('/updateUser', [UserController::class, 'updateUser']) ->name('updateUser');
 
 
     //Voicemails

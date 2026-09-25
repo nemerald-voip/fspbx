@@ -362,6 +362,48 @@ const sidebar: SidebarsConfig = {
     },
     {
       type: "category",
+      label: "Users",
+      items: [
+        {
+          type: "doc",
+          id: "api/v1/list-users",
+          label: "List users",
+          className: "api-method get",
+        },
+        {
+          type: "doc",
+          id: "api/v1/create-a-user",
+          label: "Create a user",
+          className: "api-method post",
+        },
+        {
+          type: "doc",
+          id: "api/v1/retrieve-a-user",
+          label: "Retrieve a user",
+          className: "api-method get",
+        },
+        {
+          type: "doc",
+          id: "api/v1/update-a-user",
+          label: "Update a user",
+          className: "api-method patch",
+        },
+        {
+          type: "doc",
+          id: "api/v1/delete-a-user",
+          label: "Delete a user",
+          className: "api-method delete",
+        },
+        {
+          type: "doc",
+          id: "api/v1/send-a-password-reset-email",
+          label: "Send a password reset email",
+          className: "api-method post",
+        },
+      ],
+    },
+    {
+      type: "category",
       label: "Voicemails",
       items: [
         {

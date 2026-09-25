@@ -48,6 +48,7 @@
 
 
                             <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
+                                @mounted="(form) => form.disableValidation()"
                                 @error="handleError" @response="handleResponse" :display-errors="false" :default="{
                                     time_zone: options?.item?.time_zone ?? null,
                                     user_email: options?.item?.user_email ?? null,
@@ -467,9 +468,19 @@ const handleCopyToClipboard = (text) => {
 }
 
 const submitForm = async (FormData, form$) => {
+    form$.messageBag.clear()
+    Object.values(form$.elements$).forEach(clearErrorsRecursive)
+
     // Using form$.requestData will EXCLUDE conditional elements and it 
     // will submit the form as Content-Type: application/json . 
-    const requestData = form$.requestData
+    const requestData = { ...form$.requestData }
+    if (Array.isArray(requestData.groups)) {
+        // Managed roles count toward the required selection; the server preserves them.
+        requestData.groups = [...new Set([
+            ...requestData.groups,
+            ...directoryManagement.value.managed_roles.map(role => role.value),
+        ])]
+    }
     // console.log(requestData);
 
     return await form$.$vueform.services.axios.put(props.options.routes.update_route, requestData)

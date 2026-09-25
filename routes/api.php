@@ -97,7 +97,7 @@ use App\Http\Controllers\TigerTmsLogsController;
 use App\Http\Controllers\TigerTmsWebhookController;
 use App\Http\Controllers\TokenController;
 use App\Http\Controllers\UserLogsController;
-use App\Http\Controllers\UsersController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\VirtualReceptionistController;
 use App\Http\Controllers\VoicemailController;
 use App\Http\Controllers\VoicemailMessagesController;
@@ -392,12 +392,12 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('domain-groups/select-all', [DomainGroupsController::class, 'selectAll'])->name('domain-groups.select.all');
 
     // Users
-    Route::get('users/data', [UsersController::class, 'getData'])->name('users.data');
-    Route::post('users', [UsersController::class, 'store'])->name('users.store');
-    Route::put('users/{user}', [UsersController::class, 'update'])->name('users.update');
-    Route::post('users/item-options', [UsersController::class, 'getItemOptions'])->name('users.item.options');
-    Route::post('users/bulk-delete', [UsersController::class, 'bulkDelete'])->name('users.bulk.delete');
-    Route::post('users/select-all', [UsersController::class, 'selectAll'])->name('users.select.all');
+    Route::get('users/data', [UserController::class, 'getData'])->name('users.data');
+    Route::post('users', [UserController::class, 'store'])->name('users.store');
+    Route::put('users/{user}', [UserController::class, 'update'])->name('users.update');
+    Route::post('users/item-options', [UserController::class, 'getItemOptions'])->name('users.item.options');
+    Route::post('users/bulk-delete', [UserController::class, 'bulkDelete'])->name('users.bulk.delete');
+    Route::post('users/select-all', [UserController::class, 'selectAll'])->name('users.select.all');
     Route::get('ldap-directories', [LdapDirectoryController::class, 'index'])->name('ldap-directories.index');
     Route::get('scheduled-jobs/active-node', [ScheduledJobCoordinationController::class, 'show'])->name('scheduled-jobs.active-node.show');
     Route::post('scheduled-jobs/nodes/discover', [ScheduledJobCoordinationController::class, 'discover'])->name('scheduled-jobs.nodes.discover');

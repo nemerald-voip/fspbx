@@ -285,6 +285,31 @@
                             </li>
                                                                         </ul>
                             </ul>
+                    <ul id="tocify-header-users" class="tocify-header">
+                <li class="tocify-item level-1" data-unique="users">
+                    <a href="#users">Users</a>
+                </li>
+                                    <ul id="tocify-subheader-users" class="tocify-subheader">
+                                                    <li class="tocify-item level-2" data-unique="users-GETapi-v1-domains--domain_uuid--users">
+                                <a href="#users-GETapi-v1-domains--domain_uuid--users">List users</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="users-GETapi-v1-domains--domain_uuid--users--user_uuid-">
+                                <a href="#users-GETapi-v1-domains--domain_uuid--users--user_uuid-">Retrieve a user</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="users-POSTapi-v1-domains--domain_uuid--users">
+                                <a href="#users-POSTapi-v1-domains--domain_uuid--users">Create a user</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="users-PATCHapi-v1-domains--domain_uuid--users--user_uuid-">
+                                <a href="#users-PATCHapi-v1-domains--domain_uuid--users--user_uuid-">Update a user</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="users-POSTapi-v1-domains--domain_uuid--users--user_uuid--password-reset">
+                                <a href="#users-POSTapi-v1-domains--domain_uuid--users--user_uuid--password-reset">Send a password reset email</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="users-DELETEapi-v1-domains--domain_uuid--users--user_uuid-">
+                                <a href="#users-DELETEapi-v1-domains--domain_uuid--users--user_uuid-">Delete a user</a>
+                            </li>
+                                                                        </ul>
+                            </ul>
                     <ul id="tocify-header-voicemails" class="tocify-header">
                 <li class="tocify-item level-1" data-unique="voicemails">
                     <a href="#voicemails">Voicemails</a>
@@ -316,7 +341,7 @@
     </ul>
 
     <ul class="toc-footer" id="last-updated">
-        <li>Last updated: September 24, 2026</li>
+        <li>Last updated: September 25, 2026</li>
     </ul>
 </div>
 
@@ -2504,11 +2529,11 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"device_template\": \"Yealink T46U\",
     \"device_template_uuid\": \"a6cf59ba-4b2b-4bdd-b870-35cc55bca146\",
     \"device_keys\": [
-        \"quisquam\"
+        \"tempore\"
     ],
-    \"phonebook_mode\": \"default\",
+    \"phonebook_mode\": \"custom\",
     \"phonebook_uuids\": [
-        \"47a7712d-f566-3f8d-9756-d0c08fafc02b\"
+        \"53881632-acf5-3437-9d11-3845270b4ef8\"
     ],
     \"device_description\": \"Reception desk device\",
     \"device_lines\": [
@@ -2536,11 +2561,11 @@ let body = {
     "device_template": "Yealink T46U",
     "device_template_uuid": "a6cf59ba-4b2b-4bdd-b870-35cc55bca146",
     "device_keys": [
-        "quisquam"
+        "tempore"
     ],
-    "phonebook_mode": "default",
+    "phonebook_mode": "custom",
     "phonebook_uuids": [
-        "47a7712d-f566-3f8d-9756-d0c08fafc02b"
+        "53881632-acf5-3437-9d11-3845270b4ef8"
     ],
     "device_description": "Reception desk device",
     "device_lines": [
@@ -2789,10 +2814,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="device_keys.0.key_index"                data-endpoint="POSTapi-v1-domains--domain_uuid--devices"
-               value="15"
+               value="5"
                data-component="body">
     <br>
-<p>Example: <code>15</code></p>
+<p>Example: <code>5</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>key_area</code></b>&nbsp;&nbsp;
@@ -2813,10 +2838,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="device_keys.0.key_type"                data-endpoint="POSTapi-v1-domains--domain_uuid--devices"
-               value="ewiiryzgmkmqusfpfvhnl"
+               value="jvvqdprchicxzcwszbvzudfkw"
                data-component="body">
     <br>
-<p>Must not be greater than 50 characters. Example: <code>ewiiryzgmkmqusfpfvhnl</code></p>
+<p>Must not be greater than 50 characters. Example: <code>jvvqdprchicxzcwszbvzudfkw</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>key_value</code></b>&nbsp;&nbsp;
@@ -2824,10 +2849,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="device_keys.0.key_value"                data-endpoint="POSTapi-v1-domains--domain_uuid--devices"
-               value="aqijlfvlqdyorpi"
+               value="hfourtbofkvlezdyv"
                data-component="body">
     <br>
-<p>Must not be greater than 64 characters. Example: <code>aqijlfvlqdyorpi</code></p>
+<p>Must not be greater than 64 characters. Example: <code>hfourtbofkvlezdyv</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>key_label</code></b>&nbsp;&nbsp;
@@ -2835,10 +2860,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="device_keys.0.key_label"                data-endpoint="POSTapi-v1-domains--domain_uuid--devices"
-               value="wtkspzqtiuqbgp"
+               value="ruwlvnavmzloqklxuexkjvj"
                data-component="body">
     <br>
-<p>Must not be greater than 80 characters. Example: <code>wtkspzqtiuqbgp</code></p>
+<p>Must not be greater than 80 characters. Example: <code>ruwlvnavmzloqklxuexkjvj</code></p>
                     </div>
                                     </details>
         </div>
@@ -2848,10 +2873,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="phonebook_mode"                data-endpoint="POSTapi-v1-domains--domain_uuid--devices"
-               value="default"
+               value="custom"
                data-component="body">
     <br>
-<p>Example: <code>default</code></p>
+<p>Example: <code>custom</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>default</code></li> <li><code>custom</code></li></ul>
         </div>
@@ -10674,7 +10699,7 @@ to mono, 16 kHz, 16-bit PCM WAV for FreeSWITCH playback.</p>
     --header "Accept: application/json" \
     --form "recording_name=Main Menu Greeting"\
     --form "recording_description=Primary virtual receptionist greeting"\
-    --form "file=@/tmp/phpu4rq5l60o8kucs78IEt" </code></pre></div>
+    --form "file=@/tmp/phpo6ct10cfm3ho4R0ZLfq" </code></pre></div>
 
 
 <div class="javascript-example">
@@ -10924,7 +10949,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value=""
                data-component="body">
     <br>
-<p>WAV, MP3, or M4A audio file. Maximum size: 50 MB. Example: <code>/tmp/phpu4rq5l60o8kucs78IEt</code></p>
+<p>WAV, MP3, or M4A audio file. Maximum size: 50 MB. Example: <code>/tmp/phpo6ct10cfm3ho4R0ZLfq</code></p>
         </div>
         </form>
 
@@ -11194,7 +11219,7 @@ At least one update field is required.</p>
     --form "recording_name=Updated Main Menu Greeting"\
     --form "recording_description=Updated automatically"\
     --form "_method=PATCH"\
-    --form "file=@/tmp/phpr0sngomb0iug9ROwh6z" </code></pre></div>
+    --form "file=@/tmp/phpnpq5cmssscnq9IleyVj" </code></pre></div>
 
 
 <div class="javascript-example">
@@ -11501,7 +11526,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value=""
                data-component="body">
     <br>
-<p>Optional WAV, MP3, or M4A audio file. Maximum size: 50 MB. Example: <code>/tmp/phpr0sngomb0iug9ROwh6z</code></p>
+<p>Optional WAV, MP3, or M4A audio file. Maximum size: 50 MB. Example: <code>/tmp/phpnpq5cmssscnq9IleyVj</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>_method</code></b>&nbsp;&nbsp;
@@ -14142,10 +14167,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="members.0.destination_number"                data-endpoint="POSTapi-v1-domains--domain_uuid--ring-groups"
-               value="+04"
+               value="7688"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present.  Must match the regex /^+?\d+$/. Example: <code>+04</code></p>
+<p>This field is required when <code>members</code> is present.  Must match the regex /^+?\d+$/. Example: <code>7688</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_delay</code></b>&nbsp;&nbsp;
@@ -14153,10 +14178,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="members.0.destination_delay"                data-endpoint="POSTapi-v1-domains--domain_uuid--ring-groups"
-               value="67"
+               value="11"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>67</code></p>
+<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>11</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_timeout</code></b>&nbsp;&nbsp;
@@ -14164,10 +14189,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="members.0.destination_timeout"                data-endpoint="POSTapi-v1-domains--domain_uuid--ring-groups"
-               value="68"
+               value="8"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>68</code></p>
+<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>8</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_prompt</code></b>&nbsp;&nbsp;
@@ -14209,7 +14234,7 @@ Must be one of:
             <code>false</code>
         </label>
     <br>
-<p>This field is required when <code>members</code> is present. Example: <code>true</code></p>
+<p>This field is required when <code>members</code> is present. Example: <code>false</code></p>
                     </div>
                                     </details>
         </div>
@@ -14803,10 +14828,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="members.0.destination_number"                data-endpoint="PATCHapi-v1-domains--domain_uuid--ring-groups--ring_group_uuid-"
-               value="4230"
+               value="566"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present.  Must match the regex /^+?\d+$/. Example: <code>4230</code></p>
+<p>This field is required when <code>members</code> is present.  Must match the regex /^+?\d+$/. Example: <code>566</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_delay</code></b>&nbsp;&nbsp;
@@ -14814,10 +14839,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="members.0.destination_delay"                data-endpoint="PATCHapi-v1-domains--domain_uuid--ring-groups--ring_group_uuid-"
-               value="88"
+               value="16"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>88</code></p>
+<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>16</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_timeout</code></b>&nbsp;&nbsp;
@@ -14825,10 +14850,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="members.0.destination_timeout"                data-endpoint="PATCHapi-v1-domains--domain_uuid--ring-groups--ring_group_uuid-"
-               value="29"
+               value="38"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>29</code></p>
+<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>38</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_prompt</code></b>&nbsp;&nbsp;
@@ -14849,7 +14874,7 @@ Must be one of:
             <code>false</code>
         </label>
     <br>
-<p>This field is required when <code>members</code> is present. Example: <code>true</code></p>
+<p>This field is required when <code>members</code> is present. Example: <code>false</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_enabled</code></b>&nbsp;&nbsp;
@@ -14870,7 +14895,7 @@ Must be one of:
             <code>false</code>
         </label>
     <br>
-<p>This field is required when <code>members</code> is present. Example: <code>false</code></p>
+<p>This field is required when <code>members</code> is present. Example: <code>true</code></p>
                     </div>
                                     </details>
         </div>
@@ -15012,6 +15037,1745 @@ You can check the Dev Tools console for debugging information.</code></pre>
                data-component="url">
     <br>
 <p>The ring group UUID. Example: <code>c0ec8113-aa15-40ac-8437-47185dd9dcf4</code></p>
+            </div>
+                    </form>
+
+                <h1 id="users">Users</h1>
+
+    
+
+                                <h2 id="users-GETapi-v1-domains--domain_uuid--users">List users</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Lists FS PBX users in the specified account. Use this endpoint to browse user
+profiles or find a user to retrieve, update, or delete. Each result includes
+the user's UUID, name, email, enabled status, assigned extension, roles,
+and whether the user is directory-managed. Use Retrieve a user for the
+time zone, managed accounts, account groups, and locations.</p>
+<p>Search by name or email, or filter by enabled status. Results are paginated;
+when <code>has_more</code> is true, pass the last result's <code>user_uuid</code> as <code>starting_after</code>
+to fetch the next page.</p>
+<p>Requires access to the domain in the URL and <code>user_view</code>. Passwords, API tokens,
+and two-factor secrets are never returned.</p>
+
+<span id="example-requests-GETapi-v1-domains--domain_uuid--users">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/users?limit=25&amp;search=Jane&amp;user_enabled=1" \
+    --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json" \
+    --data "{
+    \"limit\": 10,
+    \"starting_after\": \"5598cd04-2106-3f6a-af05-840b46bde7a6\",
+    \"search\": \"n\",
+    \"user_enabled\": true
+}"
+</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/users"
+);
+
+const params = {
+    "limit": "25",
+    "search": "Jane",
+    "user_enabled": "1",
+};
+Object.keys(params)
+    .forEach(key =&gt; url.searchParams.append(key, params[key]));
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+let body = {
+    "limit": 10,
+    "starting_after": "5598cd04-2106-3f6a-af05-840b46bde7a6",
+    "search": "n",
+    "user_enabled": true
+};
+
+fetch(url, {
+    method: "GET",
+    headers,
+    body: JSON.stringify(body),
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-v1-domains--domain_uuid--users">
+            <blockquote>
+            <p>Example response (200):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;object&quot;: &quot;list&quot;,
+    &quot;url&quot;: &quot;/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/users&quot;,
+    &quot;has_more&quot;: false,
+    &quot;data&quot;: [
+        {
+            &quot;user_uuid&quot;: &quot;c9a76140-0ca4-4ea3-95af-7e12c2ff0df5&quot;,
+            &quot;object&quot;: &quot;user&quot;,
+            &quot;domain_uuid&quot;: &quot;4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b&quot;,
+            &quot;user_email&quot;: &quot;jane.smith@example.com&quot;,
+            &quot;first_name&quot;: &quot;Jane&quot;,
+            &quot;last_name&quot;: &quot;Smith&quot;,
+            &quot;user_enabled&quot;: true,
+            &quot;extension_uuid&quot;: null,
+            &quot;groups&quot;: [],
+            &quot;directory_managed&quot;: false
+        }
+    ]
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Invalid domain UUID.&quot;,
+        &quot;code&quot;: &quot;invalid_request&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;You do not have access to this domain.&quot;,
+        &quot;code&quot;: &quot;forbidden_domain&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Domain not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-v1-domains--domain_uuid--users" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-v1-domains--domain_uuid--users"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-v1-domains--domain_uuid--users"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-v1-domains--domain_uuid--users" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-v1-domains--domain_uuid--users">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-v1-domains--domain_uuid--users" data-method="GET"
+      data-path="api/v1/domains/{domain_uuid}/users"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-v1-domains--domain_uuid--users', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/v1/domains/{domain_uuid}/users</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-domains--domain_uuid--users"
+               value="Bearer {YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-v1-domains--domain_uuid--users"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-v1-domains--domain_uuid--users"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>domain_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_uuid"                data-endpoint="GETapi-v1-domains--domain_uuid--users"
+               value="4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
+               data-component="url">
+    <br>
+<p>The domain UUID. Example: <code>4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>Query Parameters</b></h4>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>limit</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="limit"                data-endpoint="GETapi-v1-domains--domain_uuid--users"
+               value="25"
+               data-component="query">
+    <br>
+<p>Results per page (1-100). Defaults to 25. Example: <code>25</code></p>
+            </div>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>starting_after</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="starting_after"                data-endpoint="GETapi-v1-domains--domain_uuid--users"
+               value=""
+               data-component="query">
+    <br>
+<p>Return users after this user UUID.</p>
+            </div>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>search</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="search"                data-endpoint="GETapi-v1-domains--domain_uuid--users"
+               value="Jane"
+               data-component="query">
+    <br>
+<p>Search email, first name, or last name. Example: <code>Jane</code></p>
+            </div>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>user_enabled</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="GETapi-v1-domains--domain_uuid--users" style="display: none">
+            <input type="radio" name="user_enabled"
+                   value="1"
+                   data-endpoint="GETapi-v1-domains--domain_uuid--users"
+                   data-component="query"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="GETapi-v1-domains--domain_uuid--users" style="display: none">
+            <input type="radio" name="user_enabled"
+                   value="0"
+                   data-endpoint="GETapi-v1-domains--domain_uuid--users"
+                   data-component="query"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Filter by enabled status. Example: <code>true</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
+        <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>limit</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="limit"                data-endpoint="GETapi-v1-domains--domain_uuid--users"
+               value="10"
+               data-component="body">
+    <br>
+<p>Must be at least 1. Must not be greater than 100. Example: <code>10</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>starting_after</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="starting_after"                data-endpoint="GETapi-v1-domains--domain_uuid--users"
+               value="5598cd04-2106-3f6a-af05-840b46bde7a6"
+               data-component="body">
+    <br>
+<p>Must be a valid UUID. Example: <code>5598cd04-2106-3f6a-af05-840b46bde7a6</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>search</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="search"                data-endpoint="GETapi-v1-domains--domain_uuid--users"
+               value="n"
+               data-component="body">
+    <br>
+<p>Must not be greater than 255 characters. Example: <code>n</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>user_enabled</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="GETapi-v1-domains--domain_uuid--users" style="display: none">
+            <input type="radio" name="user_enabled"
+                   value="true"
+                   data-endpoint="GETapi-v1-domains--domain_uuid--users"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="GETapi-v1-domains--domain_uuid--users" style="display: none">
+            <input type="radio" name="user_enabled"
+                   value="false"
+                   data-endpoint="GETapi-v1-domains--domain_uuid--users"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Example: <code>true</code></p>
+        </div>
+        </form>
+
+                    <h2 id="users-GETapi-v1-domains--domain_uuid--users--user_uuid-">Retrieve a user</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Returns one FS PBX user's profile and access assignments in the specified
+account. Use this endpoint to inspect the user's current details before
+making changes, including their name, email, enabled status, time zone,
+assigned extension, roles, managed accounts, and locations.</p>
+<p><code>groups</code> contains role UUIDs; <code>accounts</code> and <code>account_groups</code> identify the
+accounts and account groups the user is assigned to manage. <code>locations</code>
+contains assigned location UUIDs, and <code>directory_managed</code> indicates whether
+the user is linked to a connected directory.</p>
+<p>Requires domain access and <code>user_view</code>. The user must belong to the domain
+in the URL. Passwords, API tokens, and two-factor secrets are never returned.</p>
+
+<span id="example-requests-GETapi-v1-domains--domain_uuid--users--user_uuid-">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/users/c9a76140-0ca4-4ea3-95af-7e12c2ff0df5" \
+    --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/users/c9a76140-0ca4-4ea3-95af-7e12c2ff0df5"
+);
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-v1-domains--domain_uuid--users--user_uuid-">
+            <blockquote>
+            <p>Example response (200):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;user_uuid&quot;: &quot;c9a76140-0ca4-4ea3-95af-7e12c2ff0df5&quot;,
+    &quot;object&quot;: &quot;user&quot;,
+    &quot;domain_uuid&quot;: &quot;4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b&quot;,
+    &quot;user_email&quot;: &quot;jane.smith@example.com&quot;,
+    &quot;first_name&quot;: &quot;Jane&quot;,
+    &quot;last_name&quot;: &quot;Smith&quot;,
+    &quot;user_enabled&quot;: true,
+    &quot;extension_uuid&quot;: null,
+    &quot;time_zone&quot;: null,
+    &quot;groups&quot;: [],
+    &quot;accounts&quot;: [],
+    &quot;account_groups&quot;: [],
+    &quot;locations&quot;: [],
+    &quot;directory_managed&quot;: false
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Invalid user UUID.&quot;,
+        &quot;code&quot;: &quot;invalid_request&quot;,
+        &quot;param&quot;: &quot;user_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;You do not have access to this domain.&quot;,
+        &quot;code&quot;: &quot;forbidden_domain&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;User not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;user_uuid&quot;
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-v1-domains--domain_uuid--users--user_uuid-" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-v1-domains--domain_uuid--users--user_uuid-"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-v1-domains--domain_uuid--users--user_uuid-"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-v1-domains--domain_uuid--users--user_uuid-" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-v1-domains--domain_uuid--users--user_uuid-">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-v1-domains--domain_uuid--users--user_uuid-" data-method="GET"
+      data-path="api/v1/domains/{domain_uuid}/users/{user_uuid}"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-v1-domains--domain_uuid--users--user_uuid-', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/v1/domains/{domain_uuid}/users/{user_uuid}</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-domains--domain_uuid--users--user_uuid-"
+               value="Bearer {YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-v1-domains--domain_uuid--users--user_uuid-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-v1-domains--domain_uuid--users--user_uuid-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>domain_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_uuid"                data-endpoint="GETapi-v1-domains--domain_uuid--users--user_uuid-"
+               value="4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
+               data-component="url">
+    <br>
+<p>The domain UUID. Example: <code>4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b</code></p>
+            </div>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>user_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="user_uuid"                data-endpoint="GETapi-v1-domains--domain_uuid--users--user_uuid-"
+               value="c9a76140-0ca4-4ea3-95af-7e12c2ff0df5"
+               data-component="url">
+    <br>
+<p>The user UUID. Example: <code>c9a76140-0ca4-4ea3-95af-7e12c2ff0df5</code></p>
+            </div>
+                    </form>
+
+                    <h2 id="users-POSTapi-v1-domains--domain_uuid--users">Create a user</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Creates a local FS PBX user in the specified account. Use this endpoint to
+add a staff member or administrator who will sign in to the FS PBX web
+interface. Returns the created user's profile and <code>user_uuid</code>, which can
+be used to retrieve, update, or delete the user.</p>
+<p>Only <code>first_name</code> and <code>user_email</code> are required. You can also assign an
+existing extension and roles to configure the user's access. No role is
+assigned automatically. If <code>groups</code> is supplied, it must contain at least
+one existing role UUID. The domain in the URL owns the new user. Password
+setup is a separate step: call Send a password reset email for the new
+<code>user_uuid</code> to let the user choose their password. Creating the user does
+not send an email or set or return a password.</p>
+<p>Requires domain access and <code>user_add</code>. Role assignments require
+<code>user_group_edit</code> and cannot exceed the caller's role level. Only superadmins
+may assign the superadmin role. Disabled creation requires <code>user_status</code>.
+Account assignments require their corresponding management permissions.
+The domain's user limit is enforced.</p>
+
+<span id="example-requests-POSTapi-v1-domains--domain_uuid--users">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request POST \
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/users" \
+    --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json" \
+    --data "{
+    \"first_name\": \"Jane\",
+    \"last_name\": \"Smith\",
+    \"user_email\": \"jane.smith@example.com\",
+    \"user_enabled\": false,
+    \"extension_uuid\": \"d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b\",
+    \"groups\": [
+        \"6fdb722a-3f2f-430d-ab05-46a75de8c587\"
+    ],
+    \"time_zone\": \"America\\/New_York\",
+    \"accounts\": [],
+    \"account_groups\": [],
+    \"locations\": []
+}"
+</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/users"
+);
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+let body = {
+    "first_name": "Jane",
+    "last_name": "Smith",
+    "user_email": "jane.smith@example.com",
+    "user_enabled": false,
+    "extension_uuid": "d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b",
+    "groups": [
+        "6fdb722a-3f2f-430d-ab05-46a75de8c587"
+    ],
+    "time_zone": "America\/New_York",
+    "accounts": [],
+    "account_groups": [],
+    "locations": []
+};
+
+fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-POSTapi-v1-domains--domain_uuid--users">
+            <blockquote>
+            <p>Example response (201):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;user_uuid&quot;: &quot;c9a76140-0ca4-4ea3-95af-7e12c2ff0df5&quot;,
+    &quot;object&quot;: &quot;user&quot;,
+    &quot;domain_uuid&quot;: &quot;4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b&quot;,
+    &quot;user_email&quot;: &quot;jane.smith@example.com&quot;,
+    &quot;first_name&quot;: &quot;Jane&quot;,
+    &quot;last_name&quot;: &quot;Smith&quot;,
+    &quot;user_enabled&quot;: true,
+    &quot;extension_uuid&quot;: null,
+    &quot;time_zone&quot;: null,
+    &quot;groups&quot;: [],
+    &quot;accounts&quot;: [],
+    &quot;account_groups&quot;: [],
+    &quot;locations&quot;: [],
+    &quot;directory_managed&quot;: false
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;The first name field is required.&quot;,
+        &quot;code&quot;: &quot;invalid_parameter&quot;,
+        &quot;param&quot;: &quot;first_name&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;One or more selected groups are not allowed.&quot;,
+        &quot;code&quot;: &quot;forbidden&quot;,
+        &quot;param&quot;: null
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Domain not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-POSTapi-v1-domains--domain_uuid--users" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-POSTapi-v1-domains--domain_uuid--users"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-POSTapi-v1-domains--domain_uuid--users"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-POSTapi-v1-domains--domain_uuid--users" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-POSTapi-v1-domains--domain_uuid--users">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-POSTapi-v1-domains--domain_uuid--users" data-method="POST"
+      data-path="api/v1/domains/{domain_uuid}/users"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('POSTapi-v1-domains--domain_uuid--users', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+            </h3>
+            <p>
+            <small class="badge badge-black">POST</small>
+            <b><code>api/v1/domains/{domain_uuid}/users</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="POSTapi-v1-domains--domain_uuid--users"
+               value="Bearer {YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="POSTapi-v1-domains--domain_uuid--users"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="POSTapi-v1-domains--domain_uuid--users"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>domain_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_uuid"                data-endpoint="POSTapi-v1-domains--domain_uuid--users"
+               value="4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
+               data-component="url">
+    <br>
+<p>The domain UUID. Example: <code>4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b</code></p>
+            </div>
+                            <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
+        <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>first_name</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="first_name"                data-endpoint="POSTapi-v1-domains--domain_uuid--users"
+               value="Jane"
+               data-component="body">
+    <br>
+<p>First name. Required when creating a user. Must not be greater than 255 characters. Example: <code>Jane</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>last_name</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="last_name"                data-endpoint="POSTapi-v1-domains--domain_uuid--users"
+               value="Smith"
+               data-component="body">
+    <br>
+<p>Optional last name. May be null. Must not be greater than 255 characters. Example: <code>Smith</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>user_email</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="user_email"                data-endpoint="POSTapi-v1-domains--domain_uuid--users"
+               value="jane.smith@example.com"
+               data-component="body">
+    <br>
+<p>Email address, unique across all accounts. Stored in lowercase. Must be a valid email address. Must not be greater than 255 characters. Example: <code>jane.smith@example.com</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>user_enabled</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="POSTapi-v1-domains--domain_uuid--users" style="display: none">
+            <input type="radio" name="user_enabled"
+                   value="true"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--users"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="POSTapi-v1-domains--domain_uuid--users" style="display: none">
+            <input type="radio" name="user_enabled"
+                   value="false"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--users"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Whether the user is enabled. Defaults to true on creation. Changing status requires user_status. Example: <code>false</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>extension_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="extension_uuid"                data-endpoint="POSTapi-v1-domains--domain_uuid--users"
+               value="d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b"
+               data-component="body">
+    <br>
+<p>Optional assigned extension from this domain. Omit on update to preserve it; send null to clear it. Must be a valid UUID. Example: <code>d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>groups</code></b>&nbsp;&nbsp;
+<small>string[]</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="groups[0]"                data-endpoint="POSTapi-v1-domains--domain_uuid--users"
+               data-component="body">
+        <input type="text" style="display: none"
+               name="groups[1]"                data-endpoint="POSTapi-v1-domains--domain_uuid--users"
+               data-component="body">
+    <br>
+<p>Role UUIDs. May be omitted; when supplied, must contain at least one existing role UUID. Assigning roles requires user_group_edit.</p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>time_zone</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="time_zone"                data-endpoint="POSTapi-v1-domains--domain_uuid--users"
+               value="America/New_York"
+               data-component="body">
+    <br>
+<p>Optional user timezone setting. Must be a valid time zone, such as <code>Africa/Accra</code>. Example: <code>America/New_York</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>accounts</code></b>&nbsp;&nbsp;
+<small>string[]</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="accounts[0]"                data-endpoint="POSTapi-v1-domains--domain_uuid--users"
+               data-component="body">
+        <input type="text" style="display: none"
+               name="accounts[1]"                data-endpoint="POSTapi-v1-domains--domain_uuid--users"
+               data-component="body">
+    <br>
+<p>Optional managed account UUIDs. Requires user_update_managed_accounts and access to each account.</p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>account_groups</code></b>&nbsp;&nbsp;
+<small>string[]</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="account_groups[0]"                data-endpoint="POSTapi-v1-domains--domain_uuid--users"
+               data-component="body">
+        <input type="text" style="display: none"
+               name="account_groups[1]"                data-endpoint="POSTapi-v1-domains--domain_uuid--users"
+               data-component="body">
+    <br>
+<p>Optional managed account-group UUIDs. Requires user_update_managed_account_groups and authority over each group.</p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>locations</code></b>&nbsp;&nbsp;
+<small>string[]</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="locations[0]"                data-endpoint="POSTapi-v1-domains--domain_uuid--users"
+               data-component="body">
+        <input type="text" style="display: none"
+               name="locations[1]"                data-endpoint="POSTapi-v1-domains--domain_uuid--users"
+               data-component="body">
+    <br>
+<p>Optional location UUIDs from this domain.</p>
+        </div>
+        </form>
+
+                    <h2 id="users-PATCHapi-v1-domains--domain_uuid--users--user_uuid-">Update a user</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Updates an existing FS PBX user in the specified account. Use this endpoint
+to change profile details, enable or disable the user, or revise their
+extension, roles, managed accounts, and location assignments. Returns the
+updated user profile.</p>
+<p>This is a partial update: all fields are optional, and omitted fields and
+assignments are preserved. Send <code>extension_uuid: null</code> to unassign the
+extension. If <code>groups</code> is supplied, it must contain at least one existing
+role UUID; an empty array is rejected.</p>
+<p>Directory-managed identity and status cannot be changed here. Directory-managed
+email and extension assignments are protected, and directory-managed roles
+are preserved. Local roles may still be changed with the appropriate permission.</p>
+<p>Requires domain access and <code>user_edit</code>. Changes to roles, status, and managed
+accounts require the same additional permissions as creation. Non-superadmins
+cannot modify superadmins or users above their role level.</p>
+
+<span id="example-requests-PATCHapi-v1-domains--domain_uuid--users--user_uuid-">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request PATCH \
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/users/c9a76140-0ca4-4ea3-95af-7e12c2ff0df5" \
+    --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json" \
+    --data "{
+    \"first_name\": \"Jane\",
+    \"last_name\": \"Smith\",
+    \"user_email\": \"jane.smith@example.com\",
+    \"user_enabled\": false,
+    \"extension_uuid\": \"d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b\",
+    \"groups\": [
+        \"6fdb722a-3f2f-430d-ab05-46a75de8c587\"
+    ],
+    \"time_zone\": \"America\\/New_York\",
+    \"accounts\": [],
+    \"account_groups\": [],
+    \"locations\": []
+}"
+</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/users/c9a76140-0ca4-4ea3-95af-7e12c2ff0df5"
+);
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+let body = {
+    "first_name": "Jane",
+    "last_name": "Smith",
+    "user_email": "jane.smith@example.com",
+    "user_enabled": false,
+    "extension_uuid": "d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b",
+    "groups": [
+        "6fdb722a-3f2f-430d-ab05-46a75de8c587"
+    ],
+    "time_zone": "America\/New_York",
+    "accounts": [],
+    "account_groups": [],
+    "locations": []
+};
+
+fetch(url, {
+    method: "PATCH",
+    headers,
+    body: JSON.stringify(body),
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-PATCHapi-v1-domains--domain_uuid--users--user_uuid-">
+            <blockquote>
+            <p>Example response (200):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;user_uuid&quot;: &quot;c9a76140-0ca4-4ea3-95af-7e12c2ff0df5&quot;,
+    &quot;object&quot;: &quot;user&quot;,
+    &quot;domain_uuid&quot;: &quot;4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b&quot;,
+    &quot;user_email&quot;: &quot;jane.smith@example.com&quot;,
+    &quot;first_name&quot;: &quot;Jane&quot;,
+    &quot;last_name&quot;: &quot;Smith&quot;,
+    &quot;user_enabled&quot;: true,
+    &quot;extension_uuid&quot;: null,
+    &quot;time_zone&quot;: null,
+    &quot;groups&quot;: [],
+    &quot;accounts&quot;: [],
+    &quot;account_groups&quot;: [],
+    &quot;locations&quot;: [],
+    &quot;directory_managed&quot;: false
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;This field is managed by the connected directory.&quot;,
+        &quot;code&quot;: &quot;invalid_parameter&quot;,
+        &quot;param&quot;: &quot;first_name&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;You are not allowed to manage this user.&quot;,
+        &quot;code&quot;: &quot;forbidden&quot;,
+        &quot;param&quot;: null
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;User not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;user_uuid&quot;
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-PATCHapi-v1-domains--domain_uuid--users--user_uuid-" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-PATCHapi-v1-domains--domain_uuid--users--user_uuid-"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-PATCHapi-v1-domains--domain_uuid--users--user_uuid-"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-PATCHapi-v1-domains--domain_uuid--users--user_uuid-" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-PATCHapi-v1-domains--domain_uuid--users--user_uuid-">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-PATCHapi-v1-domains--domain_uuid--users--user_uuid-" data-method="PATCH"
+      data-path="api/v1/domains/{domain_uuid}/users/{user_uuid}"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('PATCHapi-v1-domains--domain_uuid--users--user_uuid-', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+            </h3>
+            <p>
+            <small class="badge badge-purple">PATCH</small>
+            <b><code>api/v1/domains/{domain_uuid}/users/{user_uuid}</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="PATCHapi-v1-domains--domain_uuid--users--user_uuid-"
+               value="Bearer {YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="PATCHapi-v1-domains--domain_uuid--users--user_uuid-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="PATCHapi-v1-domains--domain_uuid--users--user_uuid-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>domain_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_uuid"                data-endpoint="PATCHapi-v1-domains--domain_uuid--users--user_uuid-"
+               value="4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
+               data-component="url">
+    <br>
+<p>The domain UUID. Example: <code>4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b</code></p>
+            </div>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>user_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="user_uuid"                data-endpoint="PATCHapi-v1-domains--domain_uuid--users--user_uuid-"
+               value="c9a76140-0ca4-4ea3-95af-7e12c2ff0df5"
+               data-component="url">
+    <br>
+<p>The user UUID. Example: <code>c9a76140-0ca4-4ea3-95af-7e12c2ff0df5</code></p>
+            </div>
+                            <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
+        <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>first_name</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="first_name"                data-endpoint="PATCHapi-v1-domains--domain_uuid--users--user_uuid-"
+               value="Jane"
+               data-component="body">
+    <br>
+<p>Optional first name. Cannot be empty when supplied. Example: <code>Jane</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>last_name</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="last_name"                data-endpoint="PATCHapi-v1-domains--domain_uuid--users--user_uuid-"
+               value="Smith"
+               data-component="body">
+    <br>
+<p>Optional last name. May be null. Must not be greater than 255 characters. Example: <code>Smith</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>user_email</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="user_email"                data-endpoint="PATCHapi-v1-domains--domain_uuid--users--user_uuid-"
+               value="jane.smith@example.com"
+               data-component="body">
+    <br>
+<p>Optional email address, unique across all accounts. Cannot be empty when supplied. Example: <code>jane.smith@example.com</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>user_enabled</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="PATCHapi-v1-domains--domain_uuid--users--user_uuid-" style="display: none">
+            <input type="radio" name="user_enabled"
+                   value="true"
+                   data-endpoint="PATCHapi-v1-domains--domain_uuid--users--user_uuid-"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="PATCHapi-v1-domains--domain_uuid--users--user_uuid-" style="display: none">
+            <input type="radio" name="user_enabled"
+                   value="false"
+                   data-endpoint="PATCHapi-v1-domains--domain_uuid--users--user_uuid-"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Whether the user is enabled. Defaults to true on creation. Changing status requires user_status. Example: <code>false</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>extension_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="extension_uuid"                data-endpoint="PATCHapi-v1-domains--domain_uuid--users--user_uuid-"
+               value="d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b"
+               data-component="body">
+    <br>
+<p>Optional assigned extension from this domain. Omit on update to preserve it; send null to clear it. Must be a valid UUID. Example: <code>d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>groups</code></b>&nbsp;&nbsp;
+<small>string[]</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="groups[0]"                data-endpoint="PATCHapi-v1-domains--domain_uuid--users--user_uuid-"
+               data-component="body">
+        <input type="text" style="display: none"
+               name="groups[1]"                data-endpoint="PATCHapi-v1-domains--domain_uuid--users--user_uuid-"
+               data-component="body">
+    <br>
+<p>Role UUIDs. Omit to preserve; when supplied, must contain at least one existing role UUID. Changes require user_group_edit. Directory-managed roles are preserved.</p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>time_zone</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="time_zone"                data-endpoint="PATCHapi-v1-domains--domain_uuid--users--user_uuid-"
+               value="America/New_York"
+               data-component="body">
+    <br>
+<p>Optional user timezone setting. Must be a valid time zone, such as <code>Africa/Accra</code>. Example: <code>America/New_York</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>accounts</code></b>&nbsp;&nbsp;
+<small>string[]</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="accounts[0]"                data-endpoint="PATCHapi-v1-domains--domain_uuid--users--user_uuid-"
+               data-component="body">
+        <input type="text" style="display: none"
+               name="accounts[1]"                data-endpoint="PATCHapi-v1-domains--domain_uuid--users--user_uuid-"
+               data-component="body">
+    <br>
+<p>Optional managed account UUIDs. Omit to preserve; send [] to clear. Changes require user_update_managed_accounts and access to each account.</p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>account_groups</code></b>&nbsp;&nbsp;
+<small>string[]</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="account_groups[0]"                data-endpoint="PATCHapi-v1-domains--domain_uuid--users--user_uuid-"
+               data-component="body">
+        <input type="text" style="display: none"
+               name="account_groups[1]"                data-endpoint="PATCHapi-v1-domains--domain_uuid--users--user_uuid-"
+               data-component="body">
+    <br>
+<p>Optional managed account-group UUIDs. Omit to preserve; send [] to clear. Changes require user_update_managed_account_groups and authority over each group.</p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>locations</code></b>&nbsp;&nbsp;
+<small>string[]</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="locations[0]"                data-endpoint="PATCHapi-v1-domains--domain_uuid--users--user_uuid-"
+               data-component="body">
+        <input type="text" style="display: none"
+               name="locations[1]"                data-endpoint="PATCHapi-v1-domains--domain_uuid--users--user_uuid-"
+               data-component="body">
+    <br>
+<p>Optional location UUIDs from this domain. Omit to preserve; send [] to clear.</p>
+        </div>
+        </form>
+
+                    <h2 id="users-POSTapi-v1-domains--domain_uuid--users--user_uuid--password-reset">Send a password reset email</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Emails a link that lets an existing local FS PBX user choose a new password.
+Use this after creating a user to set up their first password, or to help
+an existing user regain access. Returns confirmation that the email was sent.</p>
+<p>No request body is needed. The email goes to the user's saved <code>user_email</code>
+and uses the existing password-reset email template. Passwords, reset tokens,
+and reset URLs are never returned. The current password stays valid until
+the user completes the reset; sending the email does not enable a disabled user.</p>
+<p>Links are single-use and expire according to the password-reset configuration
+(60 minutes by default). Repeat requests for the same recipient are throttled
+according to that configuration (60 seconds by default), returning HTTP 429.</p>
+<p>Requires domain access and <code>user_edit</code>. The user must belong to the domain
+in the URL. Non-superadmins cannot request resets for superadmins or users
+above their role level. Directory-managed users must reset their passwords
+through the connected directory.</p>
+
+<span id="example-requests-POSTapi-v1-domains--domain_uuid--users--user_uuid--password-reset">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request POST \
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/users/c9a76140-0ca4-4ea3-95af-7e12c2ff0df5/password-reset" \
+    --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/users/c9a76140-0ca4-4ea3-95af-7e12c2ff0df5/password-reset"
+);
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "POST",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-POSTapi-v1-domains--domain_uuid--users--user_uuid--password-reset">
+            <blockquote>
+            <p>Example response (200):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;object&quot;: &quot;password_reset&quot;,
+    &quot;user_uuid&quot;: &quot;c9a76140-0ca4-4ea3-95af-7e12c2ff0df5&quot;,
+    &quot;sent&quot;: true
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;This user is managed by an external directory. Reset the password in the connected directory.&quot;,
+        &quot;code&quot;: &quot;invalid_parameter&quot;,
+        &quot;param&quot;: &quot;user_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;You are not allowed to manage this user.&quot;,
+        &quot;code&quot;: &quot;forbidden&quot;,
+        &quot;param&quot;: null
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;User not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;user_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (429):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;rate_limit_error&quot;,
+        &quot;message&quot;: &quot;Please wait before requesting another password reset email.&quot;,
+        &quot;code&quot;: &quot;password_reset_throttled&quot;,
+        &quot;param&quot;: null
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (503):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;api_error&quot;,
+        &quot;message&quot;: &quot;Unable to send the password reset email. Please try again later.&quot;,
+        &quot;code&quot;: &quot;mail_delivery_failed&quot;,
+        &quot;param&quot;: null
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-POSTapi-v1-domains--domain_uuid--users--user_uuid--password-reset" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-POSTapi-v1-domains--domain_uuid--users--user_uuid--password-reset"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-POSTapi-v1-domains--domain_uuid--users--user_uuid--password-reset"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-POSTapi-v1-domains--domain_uuid--users--user_uuid--password-reset" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-POSTapi-v1-domains--domain_uuid--users--user_uuid--password-reset">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-POSTapi-v1-domains--domain_uuid--users--user_uuid--password-reset" data-method="POST"
+      data-path="api/v1/domains/{domain_uuid}/users/{user_uuid}/password-reset"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('POSTapi-v1-domains--domain_uuid--users--user_uuid--password-reset', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+            </h3>
+            <p>
+            <small class="badge badge-black">POST</small>
+            <b><code>api/v1/domains/{domain_uuid}/users/{user_uuid}/password-reset</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="POSTapi-v1-domains--domain_uuid--users--user_uuid--password-reset"
+               value="Bearer {YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="POSTapi-v1-domains--domain_uuid--users--user_uuid--password-reset"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="POSTapi-v1-domains--domain_uuid--users--user_uuid--password-reset"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>domain_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_uuid"                data-endpoint="POSTapi-v1-domains--domain_uuid--users--user_uuid--password-reset"
+               value="4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
+               data-component="url">
+    <br>
+<p>The domain UUID. Example: <code>4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b</code></p>
+            </div>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>user_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="user_uuid"                data-endpoint="POSTapi-v1-domains--domain_uuid--users--user_uuid--password-reset"
+               value="c9a76140-0ca4-4ea3-95af-7e12c2ff0df5"
+               data-component="url">
+    <br>
+<p>The user UUID. Example: <code>c9a76140-0ca4-4ea3-95af-7e12c2ff0df5</code></p>
+            </div>
+                    </form>
+
+                    <h2 id="users-DELETEapi-v1-domains--domain_uuid--users--user_uuid-">Delete a user</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Permanently removes a local FS PBX user from the specified account to revoke
+their application access. Deletes the user's profile, settings, assignments,
+API tokens, and sessions. Returns the deleted user's UUID and a <code>deleted: true</code>
+confirmation.</p>
+<p>Requires domain access and <code>user_delete</code>. Non-superadmins cannot delete
+superadmins or users above their role level. Directory-managed users must
+be disabled or removed in their connected directory instead.</p>
+
+<span id="example-requests-DELETEapi-v1-domains--domain_uuid--users--user_uuid-">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request DELETE \
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/users/c9a76140-0ca4-4ea3-95af-7e12c2ff0df5" \
+    --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/users/c9a76140-0ca4-4ea3-95af-7e12c2ff0df5"
+);
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "DELETE",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-DELETEapi-v1-domains--domain_uuid--users--user_uuid-">
+            <blockquote>
+            <p>Example response (200):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;uuid&quot;: &quot;c9a76140-0ca4-4ea3-95af-7e12c2ff0df5&quot;,
+    &quot;object&quot;: &quot;user&quot;,
+    &quot;deleted&quot;: true
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Directory-managed users cannot be deleted here. Disable or remove them in the connected directory.&quot;,
+        &quot;code&quot;: &quot;invalid_parameter&quot;,
+        &quot;param&quot;: &quot;user_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;You are not allowed to manage this user.&quot;,
+        &quot;code&quot;: &quot;forbidden&quot;,
+        &quot;param&quot;: null
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;User not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;user_uuid&quot;
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-DELETEapi-v1-domains--domain_uuid--users--user_uuid-" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-DELETEapi-v1-domains--domain_uuid--users--user_uuid-"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-DELETEapi-v1-domains--domain_uuid--users--user_uuid-"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-DELETEapi-v1-domains--domain_uuid--users--user_uuid-" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-DELETEapi-v1-domains--domain_uuid--users--user_uuid-">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-DELETEapi-v1-domains--domain_uuid--users--user_uuid-" data-method="DELETE"
+      data-path="api/v1/domains/{domain_uuid}/users/{user_uuid}"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('DELETEapi-v1-domains--domain_uuid--users--user_uuid-', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+            </h3>
+            <p>
+            <small class="badge badge-red">DELETE</small>
+            <b><code>api/v1/domains/{domain_uuid}/users/{user_uuid}</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="DELETEapi-v1-domains--domain_uuid--users--user_uuid-"
+               value="Bearer {YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="DELETEapi-v1-domains--domain_uuid--users--user_uuid-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="DELETEapi-v1-domains--domain_uuid--users--user_uuid-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>domain_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_uuid"                data-endpoint="DELETEapi-v1-domains--domain_uuid--users--user_uuid-"
+               value="4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
+               data-component="url">
+    <br>
+<p>The domain UUID. Example: <code>4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b</code></p>
+            </div>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>user_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="user_uuid"                data-endpoint="DELETEapi-v1-domains--domain_uuid--users--user_uuid-"
+               value="c9a76140-0ca4-4ea3-95af-7e12c2ff0df5"
+               data-component="url">
+    <br>
+<p>The user UUID. Example: <code>c9a76140-0ca4-4ea3-95af-7e12c2ff0df5</code></p>
             </div>
                     </form>
 

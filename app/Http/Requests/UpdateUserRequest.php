@@ -3,7 +3,6 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 class UpdateUserRequest extends FormRequest
@@ -21,9 +20,8 @@ class UpdateUserRequest extends FormRequest
         $directoryLink = null;
 
         if ($user && Schema::hasTable('ldap_directory_users')) {
-            $directoryLink = DB::table('ldap_directory_users')
+            $directoryLink = $user->ldapDirectoryUsers()
                 ->where('domain_uuid', $user->domain_uuid)
-                ->where('user_uuid', $user->user_uuid)
                 ->first(['email', 'extension']);
         }
 
@@ -38,8 +36,8 @@ class UpdateUserRequest extends FormRequest
                     ? ['prohibited']
                     : ['nullable', 'email', "unique:v_users,user_email,{$user->user_uuid},user_uuid"])
                 : ['required', 'email', "unique:v_users,user_email,{$user->user_uuid},user_uuid"],
-            'groups'       => $directoryManaged ? ['sometimes', 'array'] : ['sometimes', 'required', 'array'],
-            'groups.*'     => 'uuid|exists:v_groups,group_uuid',
+            'groups'       => ['sometimes', 'required', 'array', 'min:1'],
+            'groups.*'     => 'required|uuid|exists:v_groups,group_uuid',
             'accounts'       => 'sometimes|array',
             'accounts.*'     => 'uuid|exists:v_domains,domain_uuid',
             'account_groups'       => 'sometimes|array',
@@ -58,7 +56,7 @@ class UpdateUserRequest extends FormRequest
     {
         return [
             'groups.required' => 'You need to select at least one role.',
-            'groups.min'      => 'You need to select at least one role.',
+            'groups.min' => 'You need to select at least one role.',
         ];
     }
 
