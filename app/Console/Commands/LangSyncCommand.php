@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Support\Localization\LocaleFileLoader;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Symfony\Component\Finder\Finder;
@@ -42,9 +43,12 @@ class LangSyncCommand extends Command
             ? (json_decode(File::get($path), true) ?: [])
             : [];
 
+        /** @var LocaleFileLoader $loader */
+        $loader = app('translation.loader');
         $found = array_unique(array_merge(
             $this->extract(self::PHP_DIRECTORIES, ['php'], $this->phpPatterns()),
             $this->extract(self::JS_DIRECTORIES, ['js', 'mjs', 'ts', 'vue'], $this->jsPatterns()),
+            $loader->jsonGroupSourceStrings(),
         ));
 
         $added = array_values(array_diff($found, array_keys($existing)));
@@ -269,8 +273,8 @@ class LangSyncCommand extends Command
 
     /**
      * __('pagination.next') and friends address a resources/lang/{locale}/*.php
-     * group.item pair, not a literal source string -- Laravel resolves those
-     * through the ordinary PHP-array loader, so they must not be captured
+     * group.item pair, not a literal source string. Framework source messages
+     * are collected separately through LocaleFileLoader, so dotted keys must not be captured
      * into the flat JSON catalog (a literal "pagination.next" key there would
      * shadow the real translation for the active locale). Genuine UI copy
      * almost never looks like a bare, spaceless, dotted lowercase path, so

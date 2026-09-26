@@ -1,8 +1,9 @@
 <template>
+    <Head :title="$t('Reset Password')" />
     <div class="flex min-h-full flex-1 flex-col justify-center py-12 sm:px-6 lg:px-8">
         <div class="sm:mx-auto sm:w-full sm:max-w-md">
-            <img class="mx-auto h-10 w-auto" :src="logoUrl" />
-            <h2 class="mt-6 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">Reset Password
+            <img class="mx-auto h-10 w-auto" :src="logoUrl" :alt="$t('Logo')" />
+            <h2 class="mt-6 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">{{ $t('Reset Password') }}
             </h2>
         </div>
 
@@ -11,8 +12,7 @@
 
                 <form class="space-y-6" action="#" method="POST">
                     <div>
-                        <label for="user_email" class="block text-sm font-medium leading-6 text-gray-900">Email
-                            address</label>
+                        <label for="user_email" class="block text-sm font-medium leading-6 text-gray-900">{{ $t('Email address') }}</label>
                         <div class="mt-2">
                             <input v-model="form.user_email" id="user_email" name="user_email" type="email"
                                 autocomplete="email" required
@@ -29,7 +29,7 @@
                     </div>
 
                     <div>
-                        <label for="password" class="block text-sm font-medium leading-6 text-gray-900">Password</label>
+                        <label for="password" class="block text-sm font-medium leading-6 text-gray-900">{{ $t('Password') }}</label>
                         <div class="mt-2">
                             <input v-model="form.password" id="password" name="password" type="password"
                                 autocomplete="current-password" required
@@ -43,8 +43,7 @@
 
                     <div>
                         <label for="password_confirmation"
-                            class="block text-sm font-medium leading-6 text-gray-900">Confirm
-                            Password</label>
+                            class="block text-sm font-medium leading-6 text-gray-900">{{ $t('Confirm Password') }}</label>
                         <div class="mt-2">
                             <input v-model="form.password_confirmation" id="password_confirmation"
                                 name="password_confirmation" type="password" autocomplete="current-password" required
@@ -56,12 +55,12 @@
                         </div>
 
                         <ul class="list-disc ml-5 mt-3 space-y-0.5 text-xs">
-                            <li>At least <strong>10 characters</strong></li>
-                            <li>Includes <strong>letters</strong></li>
-                            <li>Has <strong>both uppercase and lowercase</strong> letters</li>
-                            <li>Has <strong>at least one number</strong> (0–9)</li>
-                            <li>Has <strong>at least one symbol</strong> (e.g., ! @ # $ % ^ & * ( ) _ +)</li>
-                            <li><strong>Not a known compromised password</strong> (checked automatically)</li>
+                            <li>{{ $t('At least 10 characters') }}</li>
+                            <li>{{ $t('Includes letters') }}</li>
+                            <li>{{ $t('Has both uppercase and lowercase letters') }}</li>
+                            <li>{{ $t('Has at least one number (0–9)') }}</li>
+                            <li>{{ $t('Has at least one symbol (e.g., ! @ # $ % ^ & * ( ) _ +)') }}</li>
+                            <li>{{ $t('Not a known compromised password (checked automatically)') }}</li>
                         </ul>
 
                     </div>
@@ -79,7 +78,7 @@
                                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
                                 </path>
                             </svg>
-                            Reset Password
+                            {{ $t('Reset Password') }}
                         </button>
                     </div>
                 </form>
@@ -87,7 +86,7 @@
                 <div class="mt-5 flex justify-center">
                     <div class="text-sm leading-6">
                         <Link :href="links['login']" class=" font-semibold text-indigo-600 hover:text-indigo-500">
-                        Back to Log In
+                        {{ $t('Back to Log In') }}
                         </Link>
                     </div>
                 </div>

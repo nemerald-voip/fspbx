@@ -3,6 +3,7 @@
 namespace App\Exceptions;
 
 use Throwable;
+use App\Http\Middleware\SetApplicationLocale;
 use Illuminate\Http\Request;
 use App\Data\Api\V1\ErrorData;
 use App\Data\Api\V1\ErrorResponseData;
@@ -15,11 +16,22 @@ use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 class Handler extends ExceptionHandler
 {
     public function register(): void
     {
+        // CSRF and throttling can stop a web request before locale middleware runs.
+        // Keep Laravel's response/status/headers; only resolve its display language.
+        $this->renderable(function (HttpExceptionInterface $e, Request $request) {
+            if (in_array($e->getStatusCode(), [419, 429], true) && ! $request->is('api/*')) {
+                app(SetApplicationLocale::class)->handle($request, fn () => null);
+            }
+
+            return null;
+        });
+
         // 1) Validation (FormRequest / validator)
         $this->renderable(function (ValidationException $e, Request $request) {
             if (! $request->is('api/v1/*')) return null;

@@ -1,8 +1,9 @@
 <template>
+    <Head :title="$t('Reset Password')" />
     <div class="flex min-h-full flex-1 flex-col justify-center py-12 sm:px-6 lg:px-8">
         <div class="sm:mx-auto sm:w-full sm:max-w-md">
-            <img class="mx-auto h-10 w-auto" :src="logoUrl" />
-            <h2 class="mt-6 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">Reset Password
+            <img class="mx-auto h-10 w-auto" :src="logoUrl" :alt="$t('Logo')" />
+            <h2 class="mt-6 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">{{ $t('Reset Password') }}
             </h2>
         </div>
 
@@ -10,26 +11,28 @@
             <div class="bg-white px-6 py-12 shadow sm:rounded-lg sm:px-12">
 
                 <div class="mb-4 text-sm text-gray-600">
-                    Forgot your password? No problem. Just let us know your email address and we will email you a
-                    password reset link that will allow you to choose a new one.
+                    {{ $t('Forgot your password? No problem. Just let us know your email address and we will email you a password reset link that will allow you to choose a new one.') }}
                 </div>
 
                 <div v-if="status" class="mb-4 font-medium text-sm text-green-600 dark:text-green-400">
                     {{ status }}
                 </div>
 
+                <div v-if="errorMessage" class="mb-4 font-medium text-sm text-red-600 dark:text-red-400">
+                    {{ errorMessage }}
+                </div>
+
                 <form class="space-y-6" action="#" method="POST">
                     <div>
-                        <label for="user_email" class="block text-sm font-medium leading-6 text-gray-900">Email
-                            address</label>
+                        <label for="user_email" class="block text-sm font-medium leading-6 text-gray-900">{{ $t('Email address') }}</label>
                         <div class="mt-2">
                             <input v-model="form.user_email" id="user_email" name="user_email" type="email"
                                 autocomplete="email" required
-                                :class="['block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6', { 'ring-1 ring-inset ring-red-600': errors.email, 'ring-1 ring-inset ring-gray-300': !errors.email }]" />
+                                :class="['block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6', { 'ring-1 ring-inset ring-red-600': errors.user_email || errors.email, 'ring-1 ring-inset ring-gray-300': !(errors.user_email || errors.email) }]" />
                         </div>
                         <!-- Error message for user_email -->
-                        <div v-if="errors.email" class="mt-2 text-sm text-red-600">
-                            {{ errors.email }}
+                        <div v-if="errors.user_email || errors.email" class="mt-2 text-sm text-red-600">
+                            {{ errors.user_email || errors.email }}
                         </div>
                     </div>
 
@@ -44,7 +47,7 @@
                                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
                                 </path>
                             </svg>
-                            Email Password Reset Link
+                            {{ $t('Email Password Reset Link') }}
                         </button>
                     </div>
                 </form>
@@ -52,7 +55,7 @@
                 <div class="mt-5 flex justify-center">
                     <div class="text-sm leading-6">
                         <Link :href="links['login']" class=" font-semibold text-indigo-600 hover:text-indigo-500">
-                        Back to Log In
+                        {{ $t('Back to Log In') }}
                         </Link>
                     </div>
                 </div>
@@ -67,6 +70,7 @@
 import { ref, computed } from 'vue';
 import { router } from "@inertiajs/vue3";
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import { trans } from '@i18n';
 
 const props = defineProps({
     status: String,
@@ -81,12 +85,14 @@ const form = useForm({
 
 const logoUrl = ref('/storage/logo.png');
 const isLoading = ref(false);
+const errorMessage = ref(null);
 
 
 
 // Function to handle form submission
 const submitForm = () => {
 
+    errorMessage.value = null;
     isLoading.value = true;
 
     // form.post(props.links['password-email'],{
@@ -114,7 +120,7 @@ const submitForm = () => {
                 },
             });
         }).catch((error) => {
-            errorMessage.value = "Invalid token. Refresh the page."
+            errorMessage.value = trans('Invalid token. Refresh the page.');
             isLoading.value = false; // Reset loading state on error
         });
 

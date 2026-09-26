@@ -3,6 +3,8 @@
 namespace Tests\Unit;
 
 use App\Console\Commands\LangSyncCommand;
+use App\Support\Localization\LocaleFileLoader;
+use App\Support\Localization\LocaleRegistry;
 use Illuminate\Config\Repository;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Foundation\Application;
@@ -28,6 +30,9 @@ class LangSyncCommandTest extends TestCase
         ]]));
         Facade::clearResolvedInstances();
         Facade::setFacadeApplication($this->app);
+        $this->app->instance('translation.loader', new LocaleFileLoader(
+            $this->files, $this->app->langPath(), new LocaleRegistry()
+        ));
         $this->write('resources/lang/en-us.json', '{"Save":"Save","Old key":"Old key"}');
         $this->write('resources/lang/es-es.json', '{"Save":"Guardar","Old key":"Anterior"}');
     }
@@ -111,5 +116,28 @@ VUE);
         $this->sync();
         $this->assertArrayHasKey('Core PHP', $this->catalog());
         $this->assertArrayHasKey('Core JavaScript', $this->catalog());
+    }
+
+    public function test_framework_source_messages_are_synced_and_survive_pruning_without_php_translations(): void
+    {
+        $this->write('resources/lang/en-us/auth.php', "<?php return ['failed' => 'Credentials rejected.'];");
+        $this->write('resources/lang/en-us/passwords.php', "<?php return ['sent' => 'Reset link sent.'];");
+        $this->write('resources/lang/en-us/validation.php', <<<'PHP'
+<?php return [
+    'min' => ['string' => 'At least :min characters.'],
+    'password.letters' => 'Include a letter.',
+    'attributes' => ['user_email' => 'email address'],
+];
+PHP);
+        $this->write('resources/lang/en-us.json', '{"Credentials rejected.":"Credentials rejected."}');
+        $this->write('resources/lang/es-es.json', '{"Credentials rejected.":"Credenciales rechazadas."}');
+        $this->sync(['--prune' => true]);
+        foreach (['Credentials rejected.', 'Reset link sent.', 'At least :min characters.', 'Include a letter.', 'email address'] as $key) {
+            $this->assertSame($key, $this->catalog()[$key]);
+            $this->assertArrayHasKey($key, $this->catalog('es-es'));
+        }
+        $this->assertSame('Credenciales rechazadas.', $this->catalog('es-es')['Credentials rejected.']);
+        $this->assertArrayNotHasKey('auth.failed', $this->catalog());
+        $this->assertDirectoryDoesNotExist($this->app->langPath('es-es'));
     }
 }
