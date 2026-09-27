@@ -26,8 +26,8 @@ class MissedCallNotification extends BaseMailable
     public function content(): Content
     {
         return $this->databaseTemplateContent(new Content(
-            view: 'emails.missed.ring-group',
-            text: 'emails.missed.ring-group-text',
+            view: 'emails.en-us.missed.ring-group',
+            text: 'emails.en-us.missed.ring-group-text',
         ));
     }
 

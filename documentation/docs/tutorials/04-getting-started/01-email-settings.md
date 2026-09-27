@@ -9,6 +9,8 @@ sidebar_position: 1
 
 FS PBX uses Laravel's built-in mailer to send notifications such as voicemail alerts, password resets, license updates, and system messages. Correctly configuring email settings ensures all automated messages are delivered reliably.
 
+This guide covers email delivery. To translate email subjects and bodies, create a separate template for each language in **Email Templates**; see [Email template languages](/docs/getting-started/language-settings/#email-template-languages). FS PBX selects a saved language version when sending mail and falls back to English if none is available. It does not translate email content automatically.
+
 * * * * *
 
 🧩 Overview

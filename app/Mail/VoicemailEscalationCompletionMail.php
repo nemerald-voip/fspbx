@@ -55,8 +55,8 @@ class VoicemailEscalationCompletionMail extends BaseMailable
     public function content(): Content
     {
         return $this->databaseTemplateContent(new Content(
-            view: 'emails.voicemail.escalation-completion',
-            text: 'emails.voicemail.escalation-completion-text',
+            view: 'emails.en-us.voicemail.escalation-completion',
+            text: 'emails.en-us.voicemail.escalation-completion-text',
         ));
     }
 }

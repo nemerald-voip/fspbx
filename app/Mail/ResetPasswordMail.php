@@ -20,8 +20,8 @@ class ResetPasswordMail extends BaseMailable
     public function content(): Content
     {
         return $this->databaseTemplateContent(new Content(
-            view: 'emails.authentication.reset-password',
-            text: 'emails.authentication.reset-password-text',
+            view: 'emails.en-us.authentication.reset-password',
+            text: 'emails.en-us.authentication.reset-password-text',
         ));
     }
 }

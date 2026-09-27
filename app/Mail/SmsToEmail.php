@@ -50,8 +50,8 @@ class SmsToEmail extends BaseMailable
     public function content(): Content
     {
         return $this->databaseTemplateContent(new Content(
-            view: 'emails.messages.inbound',
-            text: 'emails.messages.inbound-text',
+            view: 'emails.en-us.messages.inbound',
+            text: 'emails.en-us.messages.inbound-text',
         ));
     }
 

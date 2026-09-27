@@ -7,12 +7,13 @@ sidebar_position: 9
 
 # Language Settings and Sounds
 
-FS PBX has separate language settings for the web interface and the audio callers hear. This guide explains how to select an interface language, install call audio, and configure the system to use it.
+FS PBX has separate language settings for the web interface, email templates, and the audio callers hear. This guide explains how to select an interface language, create email templates in another language, and configure call audio.
 
 | What you want to change | Where to configure it |
 | --- | --- |
 | Buttons, forms, and messages in the web interface | **System Settings** or **Account Settings → General → Language**. |
 | Navigation menu labels | Edit labels in **Menu Manager**. Assign the menu under **System Settings → General → Navigation** or **Account Settings → General → Navigation**. |
+| Email subjects and bodies | **Email Templates**. Create a separate template for each language and email purpose; see [Email template languages](#email-template-languages). |
 | System voice prompts, such as voicemail menus, spoken numbers, and dates | Install a FreeSWITCH sound pack, check speech-module and phrase support, and update **Advanced → Variables**. |
 | Your business greeting, IVR welcome message, or personal voicemail greeting | Record, upload, or generate a greeting with AI in the desired language, then select it in the relevant feature. |
 | Additional FS PBX feature prompts | See [FS PBX's additional sounds](#fs-pbxs-additional-sounds) below; some features still use fixed English recordings. |
@@ -66,6 +67,41 @@ Assign a saved menu in either location. Both lists show each menu's name and lan
 After changing an assignment, affected users need to sign out and back in to load the selected menu. Account overrides take precedence over the system default; user-level menu overrides are not used.
 
 Creating or copying a menu does not assign it automatically. Later catalog updates do not overwrite saved labels, and changing an existing menu's language field does not translate its items.
+
+## Email template languages
+
+Email templates are written and saved separately for each language. FS PBX does **not** translate their subjects or bodies when sending an email. It selects an existing template and fills in its variables, such as the recipient's name and a password-reset link.
+
+The interface translation files (`resources/lang/{locale}.json`) translate the Email Templates editor's buttons and labels. They do not translate email content. Changing the account or system language does not rewrite an existing template, and selecting a different **Language** in the editor does not translate the text for you.
+
+### Create a template in another language
+
+Shipped defaults include English (`en-us`), Russian (`ru`), French (`fr`), Latin
+American Spanish (`es-419`), and Brazilian Portuguese (`pt-br`). These are imported
+automatically during application updates. Create a custom template when you
+need different wording or a language that is not shipped.
+
+1. Switch to the account you want to configure and open **Email Templates**.
+2. Open the **Custom** tab and click **Create**.
+3. Select **Template to override**, such as the password-reset email. This copies its subject and both bodies into the editor.
+4. Set **Language** to the language you are adding. Select the base template first, because changing it also resets the language and content.
+5. Translate **Subject**, the **HTML** body, and the **Plain text** body. Preserve variables, links, and Blade conditions from the original. A subject that contains only an `email_subject` variable uses the sender's supplied subject; replace it with your translated wording and any needed variables if you want a translated subject.
+6. Leave **Share across accounts** off for an account-specific template. Enable it for a global custom template if your permissions allow it.
+7. Keep **Status** enabled, check both formats using **Preview**, then save. Preview renders sample data without sending an email.
+
+Repeat this for each email purpose and language you need. Shipped **Default** templates are read-only; use a custom template for local changes. Application updates can update shipped defaults but do not overwrite your custom templates.
+
+### How a template is selected
+
+For the language requested by the sending workflow, FS PBX looks for an enabled template in this order:
+
+1. A custom template for the email's account.
+2. A global custom template shared across accounts.
+3. A shipped default template.
+
+If no template matches that language, FS PBX repeats the search in **English (`en-us`)**. Language matching uses the exact code: for example, `es-419` does not borrow a template from `es-es`. An English fallback stays in English; FS PBX does not automatically translate it.
+
+For mail-server configuration, see [Configure Email Settings](/docs/getting-started/email-settings). To contribute translated templates for future FS PBX releases, see [Translations](/docs/additional-information/translations/#translating-shipped-email-templates).
 
 ## Audio support for the interface languages
 

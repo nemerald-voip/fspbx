@@ -102,7 +102,7 @@ class SafeEmailTemplateRenderer
 
     private function withStandardLayout(string $template): string
     {
-        if (preg_match('/@extends\([\'"]emails\.email_layout[\'"]\)/', $template) === 1) {
+        if (preg_match('/@extends\([\'"]emails(?:\.[a-z][a-z0-9-]*)?\.email_layout[\'"]\)/', $template) === 1) {
             return $template;
         }
 

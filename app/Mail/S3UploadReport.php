@@ -17,8 +17,8 @@ class S3UploadReport extends BaseMailable
     public function content(): Content
     {
         return $this->databaseTemplateContent(new Content(
-            view: 'emails.archive.storage-report',
-            text: 'emails.archive.storage-report-text',
+            view: 'emails.en-us.archive.storage-report',
+            text: 'emails.en-us.archive.storage-report-text',
         ));
     }
 }

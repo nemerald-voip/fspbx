@@ -16,8 +16,8 @@ class FaxNotAuthorized extends BaseMailable
     public function content(): Content
     {
         return $this->databaseTemplateContent(new Content(
-            view: 'emails.fax.not-authorized',
-            text: 'emails.fax.not-authorized-text',
+            view: 'emails.en-us.fax.not-authorized',
+            text: 'emails.en-us.fax.not-authorized-text',
         ));
     }
 }

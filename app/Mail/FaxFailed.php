@@ -16,8 +16,8 @@ class FaxFailed extends BaseMailable
     public function content(): Content
     {
         return $this->databaseTemplateContent(new Content(
-            view: 'emails.fax.failed',
-            text: 'emails.fax.failed-text',
+            view: 'emails.en-us.fax.failed',
+            text: 'emails.en-us.fax.failed-text',
         ));
     }
 }

@@ -39,8 +39,8 @@ class CallTranscriptionReady extends BaseMailable
     public function content(): Content
     {
         return $this->databaseTemplateContent(new Content(
-            view: 'emails.transcription.call-ready',
-            text: 'emails.transcription.call-ready-text',
+            view: 'emails.en-us.transcription.call-ready',
+            text: 'emails.en-us.transcription.call-ready-text',
         ));
     }
 }

@@ -27,7 +27,8 @@ This repo is a Laravel, Vue/Inertia, VueForm, and FreeSWITCH application. Before
 ## Email Templates
 
 - Native email templates live in the `email_templates` table. Do not restore the legacy `v_email_templates` schema, legacy template-population blocks, install-time cleanup scripts, or `LegacyEmailTemplateCleaner`.
-- Default email template sources use `resources/views/emails/{category}/{subcategory}.blade.php` and a required `{subcategory}-text.blade.php` companion.
+- Default email template sources use `resources/views/emails/{locale}/{category}/{subcategory}.blade.php` and a required `{subcategory}-text.blade.php` companion. Folder names match registered locale codes, including `en-us`. Each locale owns its static `email_layout.blade.php`; `emails.email_layout` remains an English compatibility view for saved templates and optional modules. Email content is not translated through JSON at send time.
+- `email:templates:seed` imports every language folder and prints a summary by default; use `-v` for per-template details. Duplicate cleanup must stay within the same template key and language.
 - The HTML file owns shared `email-template` metadata, including `version`, language, category, subcategory, subject, and description. Its plain-text companion carries only `format: text` and `layout: none`; bump the version once in the HTML file when either body changes.
 - Bump the template version whenever seeded subject, HTML, text, or layout content changes. Updates overwrite versioned defaults but never custom overrides.
 - The email template create-table migration runs `email:templates:seed` immediately after creating the table, so manually running migrations after `app:update` populates defaults even when the earlier update-time seed skipped a missing table.

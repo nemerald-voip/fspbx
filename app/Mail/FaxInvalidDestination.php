@@ -16,8 +16,8 @@ class FaxInvalidDestination extends BaseMailable
     public function content(): Content
     {
         return $this->databaseTemplateContent(new Content(
-            view: 'emails.fax.invalid-destination',
-            text: 'emails.fax.invalid-destination-text',
+            view: 'emails.en-us.fax.invalid-destination',
+            text: 'emails.en-us.fax.invalid-destination-text',
         ));
     }
 }

@@ -17,8 +17,8 @@ class AiAgentToolEmail extends BaseMailable
     public function content(): Content
     {
         return $this->databaseTemplateContent(new Content(
-            view: 'emails.ai-agent.send-email',
-            text: 'emails.ai-agent.send-email-text',
+            view: 'emails.en-us.ai-agent.send-email',
+            text: 'emails.en-us.ai-agent.send-email-text',
         ));
     }
 
