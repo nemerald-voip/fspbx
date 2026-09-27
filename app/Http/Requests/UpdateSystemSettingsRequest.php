@@ -73,6 +73,7 @@ class UpdateSystemSettingsRequest extends FormRequest
             'settings.*' => __('Setting'),
             'settings.time_zone' => __('Time Zone'),
             'settings.language' => __('Language'),
+            'settings.menu' => __('Default Menu'),
         ];
     }
 }

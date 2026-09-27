@@ -18,7 +18,9 @@ class UpdateAccountSettingsRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return Auth::check();
+        return Auth::check()
+            && userCheckPermission('account_settings_list_view')
+            && $this->input('domain_uuid') === session('domain_uuid');
     }
 
     public function rules(): array
@@ -132,6 +134,7 @@ class UpdateAccountSettingsRequest extends FormRequest
             'settings.*' => __('Setting'),
             'settings.time_zone' => __('Time Zone'),
             'settings.language' => __('Language'),
+            'settings.menu' => __('Account Menu'),
         ];
     }
 }

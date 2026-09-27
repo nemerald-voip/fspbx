@@ -354,6 +354,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     // Menu Manager
     Route::get('menus/{menu}/data', [MenuManagerController::class, 'data'])->name('menus.data');
     Route::post('menus', [MenuManagerController::class, 'store'])->name('menus.store');
+    Route::post('menus/{menu}/copy', [MenuManagerController::class, 'copy'])->name('menus.copy');
     Route::put('menus/{menu}', [MenuManagerController::class, 'update'])->name('menus.update');
     Route::delete('menus/{menu}', [MenuManagerController::class, 'destroy'])->name('menus.destroy');
     Route::post('menus/{menu}/items', [MenuManagerController::class, 'storeItem'])->name('menus.items.store');

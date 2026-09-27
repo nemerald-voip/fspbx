@@ -233,8 +233,7 @@ class AccountSettingsController extends Controller
         $existing = DomainSettings::query()
             ->where('domain_uuid', $domain->domain_uuid)
             ->whereIn('domain_setting_subcategory', $fields->pluck('subcategory')->all())
-            ->get()
-            ->keyBy('domain_setting_subcategory');
+            ->get();
 
         foreach ($submitted as $key => $value) {
             $field = $fields->get($key);
@@ -243,7 +242,11 @@ class AccountSettingsController extends Controller
             }
 
             $value = is_string($value) ? trim($value) : $value;
-            $row = $existing->get($field['subcategory']);
+            $row = $existing->first(fn (DomainSettings $row) =>
+                $row->domain_setting_category === $field['category']
+                && $row->domain_setting_subcategory === $field['subcategory']
+                && $row->domain_setting_name === $field['name']
+            );
 
             if ($value === null || $value === '') {
                 if ($row) {
@@ -252,7 +255,8 @@ class AccountSettingsController extends Controller
                 continue;
             }
 
-            if ($row && (string) $row->domain_setting_value === (string) $value) {
+            if ($row && filter_var($row->domain_setting_enabled, FILTER_VALIDATE_BOOLEAN)
+                && (string) $row->domain_setting_value === (string) $value) {
                 continue; // unchanged
             }
 

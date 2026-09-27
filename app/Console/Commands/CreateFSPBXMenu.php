@@ -10,6 +10,7 @@ use App\Models\MenuItemGroup;
 use App\Models\Groups;
 use App\Models\DefaultSettings;
 use App\Models\MenuLanguage;
+use App\Support\DefaultMenu;
 
 class CreateFSPBXMenu extends Command
 {
@@ -74,100 +75,7 @@ class CreateFSPBXMenu extends Command
             $this->updateDefaultMenuSetting($menu->menu_uuid);
         }
 
-        // Define hierarchical menu items
-        $categories = [
-            // NOTE: The legacy "Home" menu (Dashboard + Logout) has been removed.
-            // The dashboard is reachable via the logo, and Logout now lives in the
-            // top-right user menu (see resources/js/Pages/components/Menu.vue).
-            [
-                'title' => 'Accounts',
-                'link' => null,
-                'groups' => ['superadmin', 'admin'],
-                'subcategories' => [
-                    ['title' => 'Devices', 'link' => '/devices','groups' => ['superadmin', 'admin']],
-                    ['title' => 'Extensions', 'link' => '/extensions', 'groups' => ['superadmin', 'admin']],
-                    ['title' => 'Gateways', 'link' => '/gateways', 'groups' => ['superadmin']],
-                    ['title' => 'Users', 'link' => '/users', 'groups' => ['superadmin', 'admin']],
-                ],
-            ],
-            [
-                'title' => 'Dialplan',
-                'link' => null,
-                'groups' => ['superadmin', 'admin'],
-                'subcategories' => [
-                    ['title' => 'Dialplan Manager', 'link' => '/dialplans', 'groups' => ['superadmin', 'admin']],
-                    ['title' => 'Phone Numbers', 'link' => '/phone-numbers','groups' => ['superadmin', 'admin']],
-                    ['title' => 'Inbound Routes', 'link' => '/dialplans?category=inbound', 'groups' => ['superadmin']],
-                    ['title' => 'Outbound Routes', 'link' => '/dialplans?category=outbound', 'groups' => ['superadmin']],
-                ],
-            ],
-            [
-                'title' => 'Applications',
-                'link' => null,
-                'groups' => ['superadmin', 'admin', 'user', 'fax', 'agent'],
-                'subcategories' => [
-                    ['title' => 'Basic Dialer', 'link' => '/basic-dialer', 'groups' => ['superadmin', 'admin']],
-                    ['title' => 'Basic Queues', 'link' => '/basic-queues', 'groups' => ['superadmin', 'admin']],
-                    ['title' => 'Bridges', 'link' => '/bridges', 'groups' => ['superadmin']],
-                    ['title' => 'Call Block', 'link' => '/call-blocks', 'groups' => ['superadmin', 'admin', 'user']],
-                    ['title' => 'Call History', 'link' => '/call-detail-records', 'groups' => ['superadmin', 'admin', 'user']],
-                    ['title' => 'Call Flows', 'link' => '/call-flows', 'groups' => ['superadmin', 'admin']],
-                    ['title' => 'Dynamic Routes', 'link' => '/dynamic-routes', 'groups' => ['superadmin', 'admin']],
-                    ['title' => 'Conference Centers', 'link' => '/conference-centers', 'groups' => ['superadmin', 'admin']],
-                    ['title' => 'Conferences', 'link' => '/conferences', 'groups' => ['superadmin', 'admin']],
-                    ['title' => 'Faxes', 'link' => '/faxes', 'groups' => ['superadmin', 'admin', 'fax', 'user']],
-                    ['title' => 'Virtual Receptionists', 'link' => '/virtual-receptionists', 'groups' => ['superadmin', 'admin']],
-                    ['title' => 'Messages', 'link' => '/messages', 'groups' => ['superadmin']],
-                    ['title' => 'Music on Hold', 'link' => '/music-on-hold','groups' => ['superadmin']],
-                    ['title' => 'Recordings Manager', 'link' => '/recordings-manager', 'groups' => ['superadmin', 'admin']],
-                    ['title' => 'Ring Groups', 'link' => '/ring-groups', 'groups' => ['superadmin', 'admin']],
-                    ['title' => 'Streams', 'link' => '/streams', 'groups' => ['superadmin']],
-                    ['title' => 'Business Hours', 'link' => '/business-hours', 'groups' => ['superadmin', 'admin']],
-                    ['title' => 'Voicemails', 'link' => '/voicemails', 'groups' => ['superadmin', 'admin']],
-                    ['title' => 'Wakeup Calls', 'link' => '/wakeup-calls', 'groups' => ['superadmin', 'admin']],
-                    ['title' => 'Scheduled Announcements', 'link' => '/scheduled-announcements', 'groups' => ['superadmin', 'admin']],
-                ],
-            ],
-            [
-                'title' => 'Status',
-                'link' => null,
-                'groups' => ['superadmin', 'admin'],
-                'subcategories' => [
-                    ['title' => 'Active Calls', 'link' => '/active-calls', 'groups' => ['superadmin', 'admin']],
-                    ['title' => 'Active Basic Queues', 'link' => '/active-basic-queues', 'groups' => ['superadmin', 'admin']],
-                    ['title' => 'Active Conferences', 'link' => '/active-conferences', 'groups' => ['superadmin', 'admin']],
-                    ['title' => 'Extension Statistics', 'link' => '/extension-statistics', 'groups' => ['superadmin', 'admin']],
-                    ['title' => 'Firewall', 'link' => '/firewall', 'groups' => ['superadmin']],
-                    ['title' => 'Logs', 'link' => '/logs', 'groups' => ['superadmin']],
-                    ['title' => 'Registrations', 'link' => '/registrations', 'groups' => ['superadmin', 'admin']],
-                    ['title' => 'SIP Status', 'link' => '/sip-status', 'groups' => ['superadmin']],
-                    ['title' => 'System Status', 'link' => '/system', 'groups' => ['superadmin']],
-                    ['title' => 'User Logs', 'link' => '/user-logs', 'groups' => ['superadmin']],
-                ],
-            ],
-            [
-                'title' => 'Advanced',
-                'link' => null,
-                'groups' => ['superadmin'],
-                'subcategories' => [
-                    ['title' => 'Access Control', 'link' => '/access-controls', 'groups' => ['superadmin']],
-                    ['title' => 'Default Settings', 'link' => '/default-settings', 'groups' => ['superadmin']],
-                    ['title' => 'Domains', 'link' => '/domains', 'groups' => ['superadmin']],
-                    ['title' => 'Email templates', 'link' => '/email-templates', 'groups' => ['superadmin']],
-                    ['title' => 'Group Manager', 'link' => '/groups', 'groups' => ['superadmin']],
-                    ['title' => 'Legacy Provision Templates', 'link' => '/legacy-provision-templates', 'groups' => ['superadmin']],
-                    ['title' => 'Menu Manager', 'link' => '/menus', 'groups' => ['superadmin']],
-                    ['title' => 'Message Settings', 'link' => '/message-settings', 'groups' => ['superadmin']],
-                    ['title' => 'Modules', 'link' => '/modules', 'groups' => ['superadmin']],
-                    ['title' => 'Pro Features', 'link' => '/pro-features', 'groups' => ['superadmin']],
-                    ['title' => 'Ringotel App Settings', 'link' => '/apps', 'groups' => ['superadmin', 'admin']],
-                    ['title' => 'SIP Profiles', 'link' => '/sip-profiles', 'groups' => ['superadmin']],
-                    ['title' => 'System Settings', 'link' => '/system-settings', 'groups' => ['superadmin']],
-                    ['title' => 'Transactions', 'link' => '/database-transactions', 'groups' => ['superadmin']],
-                    ['title' => 'Variables', 'link' => '/vars', 'groups' => ['superadmin']],
-                ],
-            ],
-        ];
+        $categories = DefaultMenu::categories();
 
         $this->info('Adding menu items...');
         $categoryOrder = 5; // Start category order at 5

@@ -6,6 +6,7 @@ use App\Models\Menu;
 use App\Models\MenuItem;
 use App\Models\MenuItemGroup;
 use App\Models\MenuLanguage;
+use App\Support\DefaultMenu;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -95,10 +96,105 @@ class MenuManagerService
 
     public function createMenu(array $data): Menu
     {
+        return DB::transaction(function () use ($data) {
+            $menu = $this->newMenu($data);
+            $groups = $this->accessibleGroups()->whereNull('domain_uuid');
+
+            foreach (DefaultMenu::categories($menu->menu_language) as $index => $category) {
+                $parent = $this->createDefaultItem($menu, $category, ($index + 1) * 5, null, $groups);
+                foreach ($category['subcategories'] as $childIndex => $child) {
+                    $this->createDefaultItem($menu, $child, $childIndex + 1, $parent->menu_item_uuid, $groups);
+                }
+            }
+
+            return $menu;
+        });
+    }
+
+    public function copyMenu(Menu $source, array $data): Menu
+    {
+        return DB::transaction(function () use ($source, $data) {
+            $items = $source->items()->with('groups')->get();
+            $assignedGroups = $items->flatMap(fn (MenuItem $item) => $item->groups->pluck('group_uuid'))->unique();
+            if ($assignedGroups->diff($this->accessibleGroups()->pluck('group_uuid'))->isNotEmpty()) {
+                throw ValidationException::withMessages([
+                    'menu_name' => __('This menu contains groups you do not have permission to assign.'),
+                ]);
+            }
+
+            $menu = $this->newMenu([...$data, 'menu_language' => $source->menu_language]);
+            $itemUuids = $items->mapWithKeys(fn (MenuItem $item) => [$item->menu_item_uuid => (string) Str::uuid()]);
+
+            foreach ($items as $item) {
+                $copy = $item->replicate([
+                    'insert_date', 'insert_user', 'update_date', 'update_user',
+                    'menu_item_add_user', 'menu_item_add_date', 'menu_item_mod_user', 'menu_item_mod_date',
+                ]);
+                $copy->forceFill([
+                    'menu_uuid' => $menu->menu_uuid,
+                    'menu_item_uuid' => $itemUuids[$item->menu_item_uuid],
+                    'menu_item_parent_uuid' => $itemUuids->get($item->menu_item_parent_uuid),
+                    'menu_item_add_user' => (string) session('username'),
+                    'menu_item_add_date' => now()->toDateTimeString(),
+                ])->save();
+
+                foreach ($item->groups as $assignment) {
+                    MenuItemGroup::query()->create([
+                        'menu_uuid' => $menu->menu_uuid,
+                        'menu_item_uuid' => $copy->menu_item_uuid,
+                        'group_uuid' => $assignment->group_uuid,
+                        'group_name' => $assignment->group_name,
+                    ]);
+                }
+                $this->createItemLanguage($menu, $copy);
+            }
+
+            return $menu;
+        });
+    }
+
+    private function newMenu(array $data): Menu
+    {
         return Menu::query()->create([
             'menu_name' => trim($data['menu_name']),
-            'menu_language' => strtolower(trim($data['menu_language'])),
-            'menu_description' => $data['menu_description'] ?: null,
+            'menu_language' => $data['menu_language'],
+            'menu_description' => ($data['menu_description'] ?? null) ?: null,
+        ]);
+    }
+
+    private function createDefaultItem(Menu $menu, array $definition, int $order, ?string $parentUuid, Collection $groups): MenuItem
+    {
+        $item = MenuItem::query()->create([
+            'menu_uuid' => $menu->menu_uuid,
+            'menu_item_title' => $definition['title'],
+            'menu_item_link' => $definition['link'],
+            'menu_item_order' => $order,
+            'menu_item_parent_uuid' => $parentUuid,
+            'menu_item_category' => 'internal',
+            'menu_item_protected' => 'false',
+            'menu_item_add_user' => (string) session('username'),
+            'menu_item_add_date' => now()->toDateTimeString(),
+        ]);
+        foreach ($groups->whereIn('group_name', $definition['groups']) as $group) {
+            MenuItemGroup::query()->create([
+                'menu_uuid' => $menu->menu_uuid,
+                'menu_item_uuid' => $item->menu_item_uuid,
+                'group_uuid' => $group->group_uuid,
+                'group_name' => $group->group_name,
+            ]);
+        }
+        $this->createItemLanguage($menu, $item);
+
+        return $item;
+    }
+
+    private function createItemLanguage(Menu $menu, MenuItem $item): void
+    {
+        MenuLanguage::query()->create([
+            'menu_uuid' => $menu->menu_uuid,
+            'menu_item_uuid' => $item->menu_item_uuid,
+            'menu_language' => $menu->menu_language,
+            'menu_item_title' => $item->menu_item_title,
         ]);
     }
 
@@ -126,15 +222,11 @@ class MenuManagerService
                 ->where('domain_setting_subcategory', 'menu')
                 ->where('domain_setting_value', $menu->menu_uuid)
                 ->count(),
-            DB::table('v_user_settings')
-                ->where('user_setting_subcategory', 'menu')
-                ->where('user_setting_value', $menu->menu_uuid)
-                ->count(),
         ])->sum();
 
         if ($references > 0) {
             throw ValidationException::withMessages([
-                'menu' => __('This menu is assigned to one or more accounts or users and cannot be deleted.'),
+                'menu' => __('This menu is assigned as a system or account default and cannot be deleted.'),
             ]);
         }
 

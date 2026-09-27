@@ -61,8 +61,7 @@ class SystemSettingsController extends Controller
                     'assemblyai_route' => route('call-transcription.assemblyai'),
                     'assemblyai_store_route' => route('call-transcription.assemblyai.store'),
                 ],
-                // Schema-driven General tab. Same declarative fields as the
-                // account surface, but these are the global default_settings
+                // Schema-driven General tab. These are the global default_settings
                 // values every account inherits unless it sets its own.
                 'settings_schema' => $this->schema->fields(),
                 'settings_options' => function () {
@@ -166,11 +165,6 @@ class SystemSettingsController extends Controller
     {
         $fields = collect($this->schema->fields())->keyBy('key');
 
-        $existing = DefaultSettings::query()
-            ->whereIn('default_setting_subcategory', $fields->pluck('subcategory')->all())
-            ->get()
-            ->keyBy('default_setting_subcategory');
-
         foreach ($submitted as $key => $value) {
             $field = $fields->get($key);
             if (! $field) {
@@ -182,7 +176,11 @@ class SystemSettingsController extends Controller
                 continue; // never blank a global default
             }
 
-            $row = $existing->get($field['subcategory']);
+            $row = DefaultSettings::query()
+                ->where('default_setting_category', $field['category'])
+                ->where('default_setting_subcategory', $field['subcategory'])
+                ->where('default_setting_name', $field['name'])
+                ->first();
             if ($row && (string) $row->default_setting_value === (string) $value) {
                 continue; // unchanged
             }

@@ -2,6 +2,7 @@
 
 namespace App\Services\Auth;
 
+use App\Services\MenuSelectionService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -38,7 +39,6 @@ class UserSessionInvalidationService
         }
 
         $this->refreshCurrentUserMenu(
-            (string) $user->user_uuid,
             (string) $user->domain_uuid,
             $groupUuids
         );
@@ -124,7 +124,7 @@ class UserSessionInvalidationService
         $groupUuids = $groups->pluck('group_uuid')->filter()->unique()->values();
         $permissions = collect();
 
-        $this->refreshCurrentUserMenu($userUuid, $userDomainUuid, $groupUuids);
+        $this->refreshCurrentUserMenu($userDomainUuid, $groupUuids);
 
         if ($groupUuids->isNotEmpty()) {
             $permissions = DB::table('v_permissions')
@@ -151,38 +151,9 @@ class UserSessionInvalidationService
         }
     }
 
-    private function refreshCurrentUserMenu(string $userUuid, string $userDomainUuid, $groupUuids): void
+    private function refreshCurrentUserMenu(string $userDomainUuid, $groupUuids): void
     {
-        $menuUuid = DB::table('v_user_settings')
-            ->where('user_uuid', $userUuid)
-            ->where('user_setting_subcategory', 'menu')
-            ->value('user_setting_value');
-
-        if (!$menuUuid) {
-            $menuUuid = DB::table('v_domain_settings')
-                ->where('domain_uuid', $userDomainUuid)
-                ->where('domain_setting_category', 'domain')
-                ->where('domain_setting_subcategory', 'menu')
-                ->where('domain_setting_enabled', true)
-                ->value('domain_setting_value');
-        }
-
-        if (!$menuUuid) {
-            $menuUuid = DB::table('v_default_settings')
-                ->where('default_setting_category', 'domain')
-                ->where('default_setting_subcategory', 'menu')
-                ->value('default_setting_value');
-        }
-
-        $activeMenu = $menuUuid
-            ? DB::table('v_menus')
-                ->where('menu_uuid', $menuUuid)
-                ->first(['menu_uuid', 'menu_name', 'menu_language'])
-            : null;
-
-        $activeMenu ??= DB::table('v_menus')
-            ->where('menu_name', 'fspbx')
-            ->first(['menu_uuid', 'menu_name', 'menu_language']);
+        $activeMenu = app(MenuSelectionService::class)->forAccount($userDomainUuid);
 
         if (!$activeMenu) {
             session()->put('menu', collect());
@@ -190,7 +161,6 @@ class UserSessionInvalidationService
                 'user.menu_uuid',
                 'user.menu_name',
                 'user.menu_language',
-                'user.menu_uses_catalog_translations',
             ]);
             unset($_SESSION['domain']['menu']['uuid']);
             return;
@@ -201,10 +171,6 @@ class UserSessionInvalidationService
         session()->put('user.menu_uuid', $menuUuid);
         session()->put('user.menu_name', $activeMenu->menu_name);
         session()->put('user.menu_language', $activeMenu->menu_language);
-        session()->put(
-            'user.menu_uses_catalog_translations',
-            $activeMenu->menu_name === 'fspbx'
-        );
         $_SESSION['domain']['menu']['uuid'] = $menuUuid;
 
         if ($groupUuids->isEmpty()) {

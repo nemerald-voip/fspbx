@@ -3,11 +3,12 @@
 namespace App\Services\Settings;
 
 use App\Models\DefaultSettings;
+use App\Services\MenuSelectionService;
 use App\Support\Localization\LocaleRegistry;
 
 /**
  * Declarative source of truth for the settings shown on the System Settings
- * "General" tab. Same fields as the account surface, but these are the global
+ * "General" tab. These are the global
  * default_settings values -- the base every account inherits unless it sets
  * its own override. A default is the root of the chain, so there is no
  * "empty = inherit": the System tab edits the value in place
@@ -46,6 +47,21 @@ class SystemSettingsSchema extends SettingsSchema
                 'searchable' => true,
                 'info' => __('The default display language for accounts that have not set their own. Only languages that are translated enough to use are listed.'),
             ],
+            [
+                'key' => 'menu',
+                'category' => 'domain',
+                'subcategory' => 'menu',
+                'name' => 'uuid',
+                'type' => 'select',
+                'label' => __('Default Menu'),
+                'group' => __('Navigation'),
+                'placeholder' => __('Select a menu'),
+                'options' => 'menus',
+                'grouped' => false,
+                'searchable' => true,
+                'info' => __('Used by accounts without their own menu override.'),
+                'description' => __('Sign out and back in to apply menu changes.'),
+            ],
         ];
     }
 
@@ -72,8 +88,9 @@ class SystemSettingsSchema extends SettingsSchema
 
         $values = [];
         foreach ($this->fields() as $field) {
-            $values[$field['key']] = $rows->get($field['subcategory'])?->default_setting_value;
+            $values[$field['key']] = $rows->get($field['key'])?->default_setting_value;
         }
+        $values['menu'] = app(MenuSelectionService::class)->systemDefault()?->menu_uuid;
 
         return $values;
     }
@@ -83,9 +100,12 @@ class SystemSettingsSchema extends SettingsSchema
      */
     private function defaultRows()
     {
-        return DefaultSettings::query()
-            ->whereIn('default_setting_subcategory', collect($this->fields())->pluck('subcategory')->all())
-            ->get()
-            ->keyBy('default_setting_subcategory');
+        return collect($this->fields())->mapWithKeys(fn (array $field) => [
+            $field['key'] => DefaultSettings::query()
+                ->where('default_setting_category', $field['category'])
+                ->where('default_setting_subcategory', $field['subcategory'])
+                ->where('default_setting_name', $field['name'])
+                ->first(),
+        ]);
     }
 }

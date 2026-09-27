@@ -4,6 +4,7 @@ namespace App\Services\Settings;
 
 use App\Models\Domain;
 use App\Models\DomainSettings;
+use App\Models\Menu;
 use App\Support\Localization\LocaleRegistry;
 
 /**
@@ -49,6 +50,21 @@ class AccountSettingsSchema extends SettingsSchema
                 'searchable' => true,
                 'info' => __('Sets the display language for everyone in this account. Only languages that are translated enough to use are listed. Leave empty to inherit the system default.'),
             ],
+            [
+                'key' => 'menu',
+                'category' => 'domain',
+                'subcategory' => 'menu',
+                'name' => 'uuid',
+                'type' => 'select',
+                'label' => __('Account Menu'),
+                'group' => __('Navigation'),
+                'placeholder' => __('Use system default'),
+                'options' => 'menus',
+                'grouped' => false,
+                'searchable' => true,
+                'info' => __('Leave empty to inherit the system default.'),
+                'description' => __('Sign out and back in to apply menu changes.'),
+            ],
         ];
     }
 
@@ -73,13 +89,20 @@ class AccountSettingsSchema extends SettingsSchema
     {
         $rows = DomainSettings::query()
             ->where('domain_uuid', $domain->domain_uuid)
+            ->where('domain_setting_enabled', true)
             ->whereIn('domain_setting_subcategory', collect($this->fields())->pluck('subcategory')->all())
-            ->get()
-            ->keyBy('domain_setting_subcategory');
+            ->get();
 
         $values = [];
         foreach ($this->fields() as $field) {
-            $values[$field['key']] = $rows->get($field['subcategory'])?->domain_setting_value;
+            $values[$field['key']] = $rows->first(fn (DomainSettings $row) =>
+                $row->domain_setting_category === $field['category']
+                && $row->domain_setting_subcategory === $field['subcategory']
+                && $row->domain_setting_name === $field['name']
+            )?->domain_setting_value;
+        }
+        if ($values['menu'] && ! Menu::query()->whereKey($values['menu'])->exists()) {
+            $values['menu'] = null;
         }
 
         return $values;

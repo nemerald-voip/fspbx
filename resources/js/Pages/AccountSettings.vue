@@ -41,6 +41,7 @@
                                                 :groups="!!field.grouped" :search="!!field.searchable" :native="false"
                                                 input-type="search" autocomplete="off" :placeholder="field.placeholder"
                                                 :floating="false" :strict="false" :info="field.info || undefined"
+                                                :description="field.description || undefined"
                                                 :columns="{ sm: { container: 6 } }" />
                                             <TextElement v-else-if="field.type === 'text'" :name="field.key"
                                                 :label="field.label" :placeholder="field.placeholder" :floating="false"

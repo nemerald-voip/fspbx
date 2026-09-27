@@ -11,7 +11,8 @@ FS PBX has separate language settings for the web interface and the audio caller
 
 | What you want to change | Where to configure it |
 | --- | --- |
-| Menus, buttons, and messages in the web interface | **System Settings** or **Account Settings → General → Language**. |
+| Buttons, forms, and messages in the web interface | **System Settings** or **Account Settings → General → Language**. |
+| Navigation menu labels | Edit labels in **Menu Manager**. Assign the menu under **System Settings → General → Navigation** or **Account Settings → General → Navigation**. |
 | System voice prompts, such as voicemail menus, spoken numbers, and dates | Install a FreeSWITCH sound pack, check speech-module and phrase support, and update **Advanced → Variables**. |
 | Your business greeting, IVR welcome message, or personal voicemail greeting | Record, upload, or generate a greeting with AI in the desired language, then select it in the relevant feature. |
 | Additional FS PBX feature prompts | See [FS PBX's additional sounds](#fs-pbxs-additional-sounds) below; some features still use fixed English recordings. |
@@ -47,6 +48,24 @@ The language picker normally offers translations that meet the project's minimum
 Untranslated interface text falls back to English. Regional variants have independent translations, so the completeness of one Spanish variant, for example, does not determine another's. Available choices can change as translations are added in updates.
 
 To contribute missing translations, see [Translations](/docs/additional-information/translations/).
+
+### Navigation menus
+
+Navigation labels are saved in each menu and displayed exactly as entered. Changing the account or system language does not translate them or select a different menu.
+
+In **Menu Manager**, click **New Menu**, enter a name, and select a language. FS PBX adds the shipped default items using available translations; missing translations stay in English. You can then edit each label. All registered languages are available here, including those with incomplete interface translations.
+
+To create an account-specific menu, select an existing menu and click **Copy Menu**. Give the copy a name. It keeps the source language, labels, links, hierarchy, and group visibility, and subsequent edits affect only the copy.
+
+Assign a saved menu in either location. Both lists show each menu's name and language:
+
+- **System default:** Open **System Settings → General → Navigation**, choose **Default Menu**, and click **Save**. Accounts without an override inherit this menu. This requires the `default_setting_edit` permission.
+- **Account override:** Switch to the account you want to configure, open **Account Settings → General → Navigation**, choose **Account Menu**, and click **Save**. This account keeps its selected menu even if the system default changes.
+- **Return to the system default:** Clear **Account Menu** using the × beside the selection, then click **Save**. The empty field displays **Use system default**.
+
+After changing an assignment, affected users need to sign out and back in to load the selected menu. Account overrides take precedence over the system default; user-level menu overrides are not used.
+
+Creating or copying a menu does not assign it automatically. Later catalog updates do not overwrite saved labels, and changing an existing menu's language field does not translate its items.
 
 ## Audio support for the interface languages
 
