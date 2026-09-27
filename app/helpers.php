@@ -1628,29 +1628,36 @@ if (!function_exists('getGroupedTimezones')) {
 if (!function_exists('buildDestinationAction')) {
     function buildDestinationAction($option, $domain_name = null)
     {
-        $domain_name = $domain_name ?? session('domain_name');
-        switch ($option['type']) {
-            case 'extensions':
-            case 'ring_groups':
-            case 'ivrs':
-            case 'business_hours':
-            case 'time_conditions':
-            case 'contact_centers':
-            case 'conferences':
-            case 'conference_centers':
-            case 'ai_agents':
-            case 'faxes':
-            case 'call_flows':
-            case 'dynamic_routes':
+        $handler = \App\Services\CallRoutingOptionsService::destinationHandler($option['type']);
+        if (! $handler) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['target' => __('Unsupported routing action.')]);
+        }
+        if (\App\Services\CallRoutingOptionsService::requiresTarget($option['type'])) {
+            $value = $option['type'] === 'bridges'
+                ? ($option['bridge_uuid'] ?? $option['option'] ?? $option['extension'] ?? null)
+                : ($option['extension'] ?? null);
+            if (! is_scalar($value) || blank($value)) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['target' => __('A target must be provided when action is selected.')]);
+            }
+        }
+        if (in_array($handler, ['transfer', 'voicemail', 'check_voicemail', 'company_directory'], true)) {
+            $domain_name = $domain_name ?? session('domain_name');
+        }
+
+        switch ($handler) {
+            case 'transfer':
                 return [
                     'destination_app' => 'transfer',
                     'destination_data' => $option['extension'] . ' XML ' . $domain_name,
                 ];
 
-            case 'bridges':
+            case 'bridge':
                 $bridgeUuid = $option['bridge_uuid'] ?? $option['option'] ?? null;
                 if (blank($bridgeUuid) && \Illuminate\Support\Str::isUuid($option['extension'] ?? null)) {
                     $bridgeUuid = $option['extension'];
+                }
+                if (! is_string($bridgeUuid) || ! \Illuminate\Support\Str::isUuid($bridgeUuid)) {
+                    throw \Illuminate\Validation\ValidationException::withMessages(['target' => __('Select a valid routing target in this account.')]);
                 }
 
                 return [
@@ -1659,7 +1666,7 @@ if (!function_exists('buildDestinationAction')) {
                     'bridge_uuid' => $bridgeUuid,
                 ];
 
-            case 'voicemails':
+            case 'voicemail':
                 return [
                     'destination_app' => 'transfer',
                     'destination_data' => '*99' . $option['extension'] . ' XML ' . $domain_name,
@@ -1677,7 +1684,7 @@ if (!function_exists('buildDestinationAction')) {
                     'destination_data' => '*411 XML ' . $domain_name,
                 ];
 
-            case 'recordings':
+            case 'recording':
                 // Handle recordings with 'lua' destination app
                 return [
                     'destination_app' => 'lua',

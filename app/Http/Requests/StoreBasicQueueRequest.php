@@ -31,7 +31,7 @@ class StoreBasicQueueRequest extends FormRequest
             'queue_tier_rules_apply' => ['required', 'in:true,false'],
             'queue_cid_prefix' => ['nullable', 'string', 'max:255'],
             'queue_timeout_action' => ['nullable', 'string', 'max:1024'],
-            'timeout_action' => ['nullable', 'string', 'max:255'],
+            'timeout_action' => ['nullable', 'string', Rule::in(\App\Services\CallRoutingOptionsService::destinationTypes())],
             'timeout_target' => [
                 'nullable',
                 'string',
@@ -41,11 +41,7 @@ class StoreBasicQueueRequest extends FormRequest
 
                     if (
                         $action
-                        && ! in_array($action, [
-                            'company_directory',
-                            'check_voicemail',
-                            'hangup',
-                        ], true)
+                        && \App\Services\CallRoutingOptionsService::requiresTarget((string) $action)
                         && blank($value)
                     ) {
                         $fail(__('A target must be provided when action is selected.'));

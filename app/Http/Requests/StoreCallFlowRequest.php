@@ -23,12 +23,12 @@ class StoreCallFlowRequest extends FormRequest
             'call_flow_pin_number' => ['nullable', 'string', 'max:255'],
             'call_flow_label' => ['nullable', 'string', 'max:255'],
             'call_flow_sound' => ['nullable', 'string', 'max:255'],
-            'call_flow_action' => ['nullable', 'string', 'max:255'],
+            'call_flow_action' => ['nullable', 'string', \Illuminate\Validation\Rule::in(\App\Services\CallRoutingOptionsService::destinationTypes())],
             'call_flow_target' => ['nullable'],
             'call_flow_destination' => ['nullable', 'string', 'max:1024'],
             'call_flow_alternate_label' => ['nullable', 'string', 'max:255'],
             'call_flow_alternate_sound' => ['nullable', 'string', 'max:255'],
-            'call_flow_alternate_action' => ['nullable', 'string', 'max:255'],
+            'call_flow_alternate_action' => ['nullable', 'string', \Illuminate\Validation\Rule::in(\App\Services\CallRoutingOptionsService::destinationTypes())],
             'call_flow_alternate_target' => ['nullable'],
             'call_flow_alternate_destination' => ['nullable', 'string', 'max:1024'],
             'call_flow_enabled' => ['required', 'in:true,false'],
@@ -100,11 +100,7 @@ class StoreCallFlowRequest extends FormRequest
 
     protected function requiresTarget(string $action): bool
     {
-        return !in_array($action, [
-            'check_voicemail',
-            'company_directory',
-            'hangup',
-        ], true);
+        return \App\Services\CallRoutingOptionsService::requiresTarget($action);
     }
 
     protected function hasRoutingTarget(mixed $target): bool

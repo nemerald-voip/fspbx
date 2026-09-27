@@ -94,7 +94,7 @@ class DynamicRouteController extends Controller
         }
 
         $routingTypes = collect(app(CallRoutingOptionsService::class)->routingTypes)
-            ->whereIn('value', DynamicRouteService::DESTINATION_TYPES)
+            ->whereIn('value', DynamicRouteService::destinationTypes())
             ->values();
 
         return response()->json([

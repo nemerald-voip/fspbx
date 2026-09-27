@@ -468,15 +468,16 @@ class BasicDialerService
 
     private function answeredApplication(BasicDialerCampaign $campaign, string $domainName): string
     {
-        if ($campaign->destination_type === 'bridges') {
-            return sprintf('&lua(bridge.lua %s)', $campaign->destination_target);
+        $destination = buildDestinationAction([
+            'type' => $campaign->destination_type,
+            'extension' => $campaign->destination_target,
+        ], $domainName);
+
+        if ($destination['destination_app'] === 'transfer') {
+            return $destination['destination_data'];
         }
 
-        if ($campaign->destination_type === 'hangup') {
-            return '&hangup()';
-        }
-
-        return sprintf('%s XML %s', $campaign->destination_target, $domainName);
+        return sprintf('&%s(%s)', $destination['destination_app'], $destination['destination_data']);
     }
 
     private function defaultDestinationTarget(?string $destinationType, ?string $target): ?string

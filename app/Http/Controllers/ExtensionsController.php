@@ -2247,34 +2247,12 @@ public function store(StoreExtensionRequest $request)
      */
     protected function buildForwardDestinationTarget(array $inputs, string $prefix)
     {
-        $actionKey = "{$prefix}_action";
-        $targetKey = "{$prefix}_target";
-        $externalKey = "{$prefix}_external_target";
-
-        switch ($inputs[$actionKey] ?? null) {
-            case 'extensions':
-            case 'ring_groups':
-            case 'ivrs':
-            case 'business_hours':
-            case 'time_conditions':
-            case 'contact_centers':
-            case 'ai_agents':
-            case 'faxes':
-            case 'call_flows':
-            case 'dynamic_routes':
-                return $inputs[$targetKey] ?? null;
-
-            case 'voicemails':
-                return isset($inputs[$targetKey]) ? ('*99' . $inputs[$targetKey]) : null;
-
-            case 'external':
-                return $inputs[$externalKey] ?? null;
-
-            default:
-                return null;
-        }
+        return \App\Services\CallRoutingOptionsService::forwardingTarget(
+            $inputs["{$prefix}_action"] ?? null,
+            $inputs["{$prefix}_target"] ?? null,
+            $inputs["{$prefix}_external_target"] ?? null
+        );
     }
-
 
     public function clearCallforwardDestination(Extensions $extension, Request $request)
     {

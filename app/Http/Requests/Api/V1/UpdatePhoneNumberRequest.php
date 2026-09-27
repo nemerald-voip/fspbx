@@ -45,37 +45,21 @@ class UpdatePhoneNumberRequest extends FormRequest
             'routing_options' => ['sometimes', 'nullable', 'array'],
             'routing_options.*.type' => [
                 'required_with:routing_options',
-                Rule::in([
-                    'extensions',
-                    'ring_groups',
-                    'ivrs',
-                    'business_hours',
-                    'contact_centers',
-                    'ai_agents',
-                    'bridges',
-                    'faxes',
-                    'conferences',
-                    'call_flows',
-                    'dynamic_routes',
-                    'voicemails',
-                    'company_directory',
-                    'check_voicemail',
-                    'hangup',
-                ]),
+                Rule::in(\App\Services\CallRoutingOptionsService::destinationTypes()),
             ],
             'routing_options.*.extension' => [
                 'present',
                 function ($attribute, $value, $fail) {
                     $type = data_get($this->input(), str_replace('.extension', '.type', $attribute));
 
-                    if (in_array($type, ['hangup'], true)) return;
+                    if (! \App\Services\CallRoutingOptionsService::requiresTarget((string) $type)) return;
 
                     if ($value === null || $value === '') {
                         $fail('The extension is required for this routing option.');
                         return;
                     }
 
-                    if ($type === 'bridges') {
+                    if (in_array(\App\Services\CallRoutingOptionsService::destinationHandler((string) $type), ['bridge', 'recording'], true)) {
                         return;
                     }
 

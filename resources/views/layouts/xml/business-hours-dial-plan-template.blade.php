@@ -9,24 +9,7 @@
     // 2) Domain for transfer strings
     $domain = session('domain_name');
 
-    // 3) Map each action type to the correct extension field on the morph target
-    $fieldMap = [
-        'extensions' => 'extension',
-        'ring_groups' => 'ring_group_extension',
-        'ivrs' => 'ivr_menu_extension',
-        'time_conditions' => 'dialplan_number',
-        'business_hours' => 'extension',
-        'dynamic_routes' => 'extension',
-        'ai_agents' => 'extension',
-        'conferences' => 'conference_extension',
-        'conference_centers' => 'conference_center_extension',
-        'contact_centers' => 'queue_extension',
-        'bridges' => 'bridge_uuid',
-        'faxes' => 'fax_extension',
-        'call_flows' => 'call_flow_extension',
-        'recordings' => 'recording_filename',
-        'voicemails' => 'voicemail_id',
-    ];
+    $routingService = new \App\Services\CallRoutingOptionsService($businessHour->domain_uuid);
 
 /**
  * Build regexes for any time range (e.g., 2215–0110).
@@ -107,15 +90,7 @@ $makeTimeRangeRegex = function ($start, $end) {
         {{-- 1) Holiday exceptions --}}
         @foreach ($businessHour->holidays as $h)
             @php
-                // prepare destination
-                $extField = $fieldMap[$h->action] ?? null;
-                $extValue = $extField
-                    ? ($h->target?->{$extField} ?? $businessHour->extension)
-                    : $businessHour->extension;                
-                $dest = buildDestinationAction([
-                    'type' => $h->action,
-                    'extension' => $extValue,
-                ]);
+                $dest = $routingService->actionForTarget($h->action, $h->target, $domain);
 
                 // time-of-day attr from cast Carbon instances
                 $timeAttr = '';
@@ -297,15 +272,7 @@ $makeTimeRangeRegex = function ($start, $end) {
                 $start = Carbon::createFromFormat('H:i:s', $first->start_time, $tz);
                 $end = Carbon::createFromFormat('H:i:s', $first->end_time, $tz);
 
-                // pick the correct extension off the morph target
-                $extField = $fieldMap[$first->action] ?? null;
-                $extValue = $extField ? $first->target->{$extField} : null;
-
-                // build the FS action via your helper
-                $dest = buildDestinationAction([
-                    'type' => $first->action,
-                    'extension' => $extValue,
-                ]);
+                $dest = $routingService->actionForTarget($first->action, $first->target, $domain);
                 $destApp = $dest['destination_app'];
                 $destData = $dest['destination_data'];
             @endphp
@@ -329,20 +296,9 @@ $makeTimeRangeRegex = function ($start, $end) {
                 $afterTarget = $businessHour->after_hours_target;
             @endphp
 
-            @if ($afterAction === 'hangup')
-                <action application="hangup" data="" />
-            @elseif ($afterAction === 'check_voicemail')
-                <action application="transfer" data="*98 XML {{ $domain }}" />
-            @elseif ($afterAction === 'company_directory')
-                <action application="transfer" data="*411 XML {{ $domain }}" />
-            @elseif ($afterAction && $afterTarget)
+            @if ($afterAction)
                 @php
-                    $field = $fieldMap[$afterAction] ?? null;
-                    $ext = $field ? $afterTarget->{$field} : $businessHour->extension;
-                    $dest = buildDestinationAction([
-                        'type' => $afterAction,
-                        'extension' => $ext,
-                    ]);
+                    $dest = $routingService->actionForTarget($afterAction, $afterTarget, $domain);
                 @endphp
                 <action application="{{ $dest['destination_app'] }}" data="{{ $dest['destination_data'] }}" />
             @endif

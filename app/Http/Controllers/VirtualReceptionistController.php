@@ -675,70 +675,27 @@ class VirtualReceptionistController extends Controller
 
     protected function buildKeyDestinationAction($key)
     {
-        switch ($key['action']) {
-            case 'extensions':
-            case 'ring_groups':
-            case 'ivrs':
-            case 'business_hours':
-            case 'time_conditions':
-            case 'contact_centers':
-            case 'conferences':
-            case 'conference_centers':
-            case 'faxes':
-            case 'call_flows':
-            case 'dynamic_routes':
-            case 'ai_agents':
-                return 'transfer ' . $key['extension'] . ' XML ' . session('domain_name');
-            case 'bridges':
-                return 'lua bridge.lua ' . ($key['target'] ?? '');
-            case 'voicemails':
-                return 'transfer *99' . $key['extension'] . ' XML ' . session('domain_name');
-            case 'recordings':
-                return 'lua streamfile.lua ' . $key['extension'];
-            case 'check_voicemail':
-                return 'transfer *98 XML ' . session('domain_name');
-            case 'company_directory':
-                return 'transfer *411 XML ' . session('domain_name');
-            case 'hangup':
-                return 'hangup';
-            default:
-                return [];
-        }
+        $destination = buildDestinationAction([
+            'type' => $key['action'],
+            'extension' => $key['extension'] ?? null,
+            'bridge_uuid' => $key['action'] === 'bridges' ? ($key['target'] ?? null) : null,
+        ]);
+
+        return trim($destination['destination_app'] . ' ' . $destination['destination_data']);
     }
 
     protected function buildExitDestinationAction($inputs)
     {
-        $target = $inputs['exit_target'] ?? null;
-
-        switch ($inputs['exit_action']) {
-            case 'extensions':
-            case 'ring_groups':
-            case 'ivrs':
-            case 'business_hours':
-            case 'time_conditions':
-            case 'contact_centers':
-            case 'conferences':
-            case 'conference_centers':
-            case 'faxes':
-            case 'call_flows':
-            case 'dynamic_routes':
-            case 'ai_agents':
-                return ['action' => 'transfer', 'data' => $target . ' XML ' . session('domain_name')];
-            case 'bridges':
-                return ['action' => 'lua', 'data' => 'bridge.lua ' . $target];
-            case 'voicemails':
-                return ['action' => 'transfer', 'data' => '*99' . $target . ' XML ' . session('domain_name')];
-            case 'recordings':
-                return ['action' => 'lua', 'data' => 'streamfile.lua ' . $target];
-            case 'check_voicemail':
-                return ['action' => 'transfer', 'data' => '*98 XML ' . session('domain_name')];
-            case 'company_directory':
-                return ['action' => 'transfer', 'data' => '*411 XML ' . session('domain_name')];
-            case 'hangup':
-                return ['action' => 'hangup', 'data' => ''];
-            default:
-                return ['action' => null, 'data' => null];
+        if (blank($inputs['exit_action'] ?? null)) {
+            return ['action' => null, 'data' => null];
         }
+
+        $destination = buildDestinationAction([
+            'type' => $inputs['exit_action'],
+            'extension' => $inputs['exit_target'] ?? null,
+        ]);
+
+        return ['action' => $destination['destination_app'], 'data' => $destination['destination_data']];
     }
 
     public function selectAll()

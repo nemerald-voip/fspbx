@@ -62,55 +62,19 @@ class CallFlowService
 
     private function buildRoutingDestinationAction(string $action, mixed $target, string $targetErrorKey, string $domainName): array
     {
-        return match ($action) {
-            'check_voicemail' => [
-                'app' => 'transfer',
-                'data' => "*98 XML {$domainName}",
-            ],
-            'company_directory' => [
-                'app' => 'transfer',
-                'data' => "*411 XML {$domainName}",
-            ],
-            'hangup' => [
-                'app' => 'hangup',
-                'data' => 'NORMAL_CLEARING',
-            ],
-            default => $this->buildRoutingDestinationWithTarget($action, $target, $targetErrorKey, $domainName),
-        };
-    }
-
-    private function buildRoutingDestinationWithTarget(
-        string $action,
-        mixed $target,
-        string $targetErrorKey,
-        string $domainName
-    ): array {
         $target = $this->routingTargetValue($target);
-
-        if (!filled($target)) {
+        if (CallRoutingOptionsService::requiresTarget($action) && blank($target)) {
             throw ValidationException::withMessages([
                 $targetErrorKey => ['Choose a destination.'],
             ]);
         }
 
-        return match ($action) {
-            'bridges' => [
-                'app' => 'lua',
-                'data' => 'bridge.lua ' . $target,
-            ],
-            'recordings' => [
-                'app' => 'lua',
-                'data' => 'streamfile.lua ' . $target,
-            ],
-            'voicemails' => [
-                'app' => 'transfer',
-                'data' => "*99{$target} XML {$domainName}",
-            ],
-            default => [
-                'app' => 'transfer',
-                'data' => "{$target} XML {$domainName}",
-            ],
-        };
+        $destination = buildDestinationAction(['type' => $action, 'extension' => $target], $domainName);
+
+        return [
+            'app' => $destination['destination_app'],
+            'data' => $action === 'hangup' ? 'NORMAL_CLEARING' : $destination['destination_data'],
+        ];
     }
 
     private function splitDestination(?string $destination, bool $requireData): ?array

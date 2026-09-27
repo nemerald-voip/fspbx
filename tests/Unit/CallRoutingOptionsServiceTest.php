@@ -192,6 +192,83 @@ class CallRoutingOptionsServiceTest extends TestCase
         return $uuid;
     }
 
+    public function test_ai_selector_still_requires_enabled_synced_agents_in_the_current_account(): void
+    {
+        Schema::create('ai_agents', function (Blueprint $table) {
+            $table->uuid('ai_agent_uuid')->primary();
+            $table->uuid('domain_uuid');
+            $table->string('extension');
+            $table->string('name');
+            $table->boolean('enabled');
+            $table->string('provisioning_status');
+        });
+        foreach ([
+            ['domain' => RoutingDestinations::DOMAIN, 'enabled' => true, 'status' => 'synced'],
+            ['domain' => RoutingDestinations::DOMAIN, 'enabled' => false, 'status' => 'synced'],
+            ['domain' => RoutingDestinations::DOMAIN, 'enabled' => true, 'status' => 'pending'],
+            ['domain' => RoutingDestinations::TARGET, 'enabled' => true, 'status' => 'synced'],
+        ] as $index => $row) {
+            DB::table('ai_agents')->insert([
+                'ai_agent_uuid' => (string) Str::uuid(), 'domain_uuid' => $row['domain'],
+                'extension' => '600'.$index, 'name' => 'Agent', 'enabled' => $row['enabled'], 'provisioning_status' => $row['status'],
+            ]);
+        }
+        request()->merge(['category' => 'ai_agents']);
+        $options = (new CallRoutingOptionsService(RoutingDestinations::DOMAIN))->getOptions();
+        $this->assertCount(1, $options);
+        $this->assertSame('6000', $options[0]['extension']);
+        $this->assertSame('6000 - Agent', $options[0]['name']);
+    }
+
+    public function test_bridge_selector_preserves_uuid_values_labels_and_availability(): void
+    {
+        Schema::create('v_bridges', function (Blueprint $table) {
+            $table->uuid('bridge_uuid')->primary();
+            $table->uuid('domain_uuid');
+            $table->string('bridge_name')->nullable();
+            $table->string('bridge_destination')->nullable();
+            $table->string('bridge_enabled');
+        });
+        foreach ([
+            ['domain' => RoutingDestinations::DOMAIN, 'enabled' => 'true', 'destination' => 'sofia/gateway/test/100'],
+            ['domain' => RoutingDestinations::DOMAIN, 'enabled' => 'false', 'destination' => 'disabled'],
+            ['domain' => RoutingDestinations::DOMAIN, 'enabled' => 'true', 'destination' => ''],
+            ['domain' => RoutingDestinations::TARGET, 'enabled' => 'true', 'destination' => 'foreign'],
+        ] as $index => $row) {
+            DB::table('v_bridges')->insert([
+                'bridge_uuid' => $index === 0 ? RoutingDestinations::TARGET : (string) Str::uuid(),
+                'domain_uuid' => $row['domain'], 'bridge_name' => null,
+                'bridge_enabled' => $row['enabled'], 'bridge_destination' => $row['destination'],
+            ]);
+        }
+        request()->merge(['category' => 'bridges']);
+        $this->assertSame([[
+            'value' => RoutingDestinations::TARGET, 'extension' => RoutingDestinations::TARGET,
+            'name' => 'sofia/gateway/test/100', 'bridge_uuid' => RoutingDestinations::TARGET,
+        ]], (new CallRoutingOptionsService(RoutingDestinations::DOMAIN))->getOptions());
+    }
+
+    public function test_dynamic_route_selector_excludes_disabled_and_foreign_routes(): void
+    {
+        Schema::create('dynamic_routes', function (Blueprint $table) {
+            $table->uuid('dynamic_route_uuid')->primary();
+            $table->uuid('domain_uuid');
+            $table->string('extension');
+            $table->string('name');
+            $table->boolean('enabled');
+        });
+        foreach ([[RoutingDestinations::DOMAIN, true], [RoutingDestinations::DOMAIN, false], [RoutingDestinations::TARGET, true]] as $index => [$domain, $enabled]) {
+            DB::table('dynamic_routes')->insert([
+                'dynamic_route_uuid' => (string) Str::uuid(), 'domain_uuid' => $domain,
+                'extension' => '950'.$index, 'name' => 'DID routing', 'enabled' => $enabled,
+            ]);
+        }
+        request()->merge(['category' => 'dynamic_routes']);
+        $options = (new CallRoutingOptionsService(RoutingDestinations::DOMAIN))->getOptions();
+        $this->assertCount(1, $options);
+        $this->assertSame('9500', $options[0]['extension']);
+    }
+
     private function createSchema(): void
     {
         Schema::create('v_dialplans', function (Blueprint $table) {

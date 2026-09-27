@@ -782,7 +782,7 @@ class BasicDialerController extends Controller
             'enabled' => ['nullable', 'boolean'],
             'caller_id_name' => ['nullable', 'string', 'max:255'],
             'caller_id_number' => ['required', 'string', 'max:64', Rule::in($phoneNumberValues)],
-            'destination_type' => ['required', 'string', 'max:64'],
+            'destination_type' => ['required', 'string', Rule::in(CallRoutingOptionsService::destinationTypes())],
             'destination_target' => ['nullable'],
             'max_concurrent_calls' => ['required', 'integer', 'min:1', 'max:100'],
             'seconds_between_calls' => ['required', 'integer', 'min:0', 'max:3600'],
@@ -821,7 +821,7 @@ class BasicDialerController extends Controller
             : $destinationTarget;
 
         if (
-            ! in_array($destinationType, ['check_voicemail', 'company_directory', 'hangup'], true)
+            CallRoutingOptionsService::requiresTarget($destinationType)
             && blank($destinationValue)
         ) {
             return response()->json([

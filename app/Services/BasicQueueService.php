@@ -248,53 +248,12 @@ class BasicQueueService
             return null;
         }
 
-        $timeout = match ($validated['timeout_action']) {
-            'extensions',
-            'ring_groups',
-            'ivrs',
-            'business_hours',
-            'time_conditions',
-            'contact_centers',
-            'faxes',
-            'conferences',
-            'call_flows',
-            'dynamic_routes',
-            'conference_centers' => [
-                'action' => 'transfer',
-                'data' => ($validated['timeout_target'] ?? '') . ' XML ' . $domainName,
-            ],
-            'bridges' => [
-                'action' => 'lua',
-                'data' => 'bridge.lua ' . ($validated['timeout_target'] ?? ''),
-            ],
-            'voicemails' => [
-                'action' => 'transfer',
-                'data' => '*99' . ($validated['timeout_target'] ?? '') . ' XML ' . $domainName,
-            ],
-            'recordings' => [
-                'action' => 'lua',
-                'data' => 'streamfile.lua ' . ($validated['timeout_target'] ?? ''),
-            ],
-            'check_voicemail' => [
-                'action' => 'transfer',
-                'data' => '*98 XML ' . $domainName,
-            ],
-            'company_directory' => [
-                'action' => 'transfer',
-                'data' => '*411 XML ' . $domainName,
-            ],
-            'hangup' => [
-                'action' => 'hangup',
-                'data' => '',
-            ],
-            default => [],
-        };
+        $destination = buildDestinationAction([
+            'type' => $validated['timeout_action'],
+            'extension' => $validated['timeout_target'] ?? null,
+        ], $domainName);
 
-        if (blank($timeout['action'] ?? null)) {
-            return null;
-        }
-
-        return $timeout['action'] . ':' . ($timeout['data'] ?? '');
+        return $destination['destination_app'] . ':' . $destination['destination_data'];
     }
 
     private function saveDialplan(CallCenterQueues $queue, bool $isNew): void

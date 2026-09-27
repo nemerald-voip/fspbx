@@ -8,33 +8,6 @@ use Illuminate\Validation\Rule;
 
 class CreateVirtualReceptionistKeyRequest extends FormRequest
 {
-    protected const ACTIONS_WITHOUT_TARGET = [
-        'company_directory',
-        'check_voicemail',
-        'hangup',
-    ];
-
-    protected const ACTIONS = [
-        'extensions',
-        'voicemails',
-        'ring_groups',
-        'ivrs',
-        'business_hours',
-        'time_conditions',
-        'contact_centers',
-        'bridges',
-        'faxes',
-        'call_flows',
-        'dynamic_routes',
-        'recordings',
-        'conferences',
-        'conference_centers',
-        'ai_agents',
-        'check_voicemail',
-        'company_directory',
-        'hangup',
-    ];
-
     /**
      * Determine if the user is authorized to make this request.
      *
@@ -52,24 +25,16 @@ class CreateVirtualReceptionistKeyRequest extends FormRequest
             'domain_uuid' => 'required|uuid',
             'key' => 'required|string|max:11',
             'status' => 'required|boolean',
-            'action' => ['required', 'string', Rule::in(self::ACTIONS)],
+            'action' => ['required', 'string', Rule::in(\App\Services\CallRoutingOptionsService::destinationTypes())],
             'target' => [
                 'nullable',
-                Rule::requiredIf(fn () => !in_array(
-                    $this->input('action'),
-                    self::ACTIONS_WITHOUT_TARGET,
-                    true
-                )),
+                Rule::requiredIf(fn () => \App\Services\CallRoutingOptionsService::requiresTarget((string) $this->input('action'))),
                 'string',
                 'max:255',
             ],
             'extension' => [
                 'nullable',
-                Rule::requiredIf(fn () => !in_array(
-                    $this->input('action'),
-                    [...self::ACTIONS_WITHOUT_TARGET, 'bridges'],
-                    true
-                )),
+                Rule::requiredIf(fn () => \App\Services\CallRoutingOptionsService::requiresTarget((string) $this->input('action')) && $this->input('action') !== 'bridges'),
                 'string',
                 'max:255',
             ],

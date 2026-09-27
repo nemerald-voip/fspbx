@@ -379,6 +379,9 @@ class BusinessHoursController extends Controller
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
+            if ($e instanceof \Illuminate\Validation\ValidationException) {
+                throw $e;
+            }
             logger(
                 'BusinessHours store error: '
                     . $e->getMessage()
@@ -410,7 +413,17 @@ class BusinessHoursController extends Controller
         ];
 
         // Render the Blade template and get the XML content as a string
-        $xml = view('layouts.xml.business-hours-dial-plan-template', $data)->render();
+        try {
+            $xml = view('layouts.xml.business-hours-dial-plan-template', $data)->render();
+        } catch (\Illuminate\View\ViewException $e) {
+            // Blade wraps validation errors; preserve them for the form response.
+            for ($cause = $e; $cause; $cause = $cause->getPrevious()) {
+                if ($cause instanceof \Illuminate\Validation\ValidationException) {
+                    throw $cause;
+                }
+            }
+            throw $e;
+        }
 
         $dom = new \DOMDocument();
         $dom->preserveWhiteSpace = false;  // Removes extra spaces
@@ -549,6 +562,9 @@ class BusinessHoursController extends Controller
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
+            if ($e instanceof \Illuminate\Validation\ValidationException) {
+                throw $e;
+            }
             logger('Business Hours update error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
@@ -635,44 +651,13 @@ class BusinessHoursController extends Controller
      */
     protected function buildExitDestinationAction($inputs)
     {
-        switch ($inputs['failback_action']) {
-            case 'extensions':
-            case 'ring_groups':
-            case 'ivrs':
-            case 'business_hours':
-            case 'time_conditions':
-            case 'contact_centers':
-            case 'faxes':
-            case 'call_flows':
-            case 'dynamic_routes':
-                return  ['action' => 'transfer', 'data' => $inputs['failback_target'] . ' XML ' . session('domain_name')];
-            case 'bridges':
-                return [
-                    'action' => 'lua',
-                    'data' => 'bridge.lua ' . ($inputs['failback_target'] ?? ''),
-                ];
-            case 'voicemails':
-                return ['action' => 'transfer', 'data' => '*99' . $inputs['failback_target'] . ' XML ' . session('domain_name')];
+        $destination = buildDestinationAction([
+            'type' => $inputs['failback_action'],
+            'extension' => $inputs['failback_target'] ?? null,
+        ]);
 
-            case 'recordings':
-                // Handle recordings with 'lua' destination app
-                return ['action' => 'lua', 'data' => 'streamfile.lua ' . $inputs['failback_target']];
-
-            case 'check_voicemail':
-                return ['action' => 'transfer', 'data' => '*98 XML ' . session('domain_name')];
-
-            case 'company_directory':
-                return ['action' => 'transfer', 'data' => '*411 XML ' . session('domain_name')];
-
-            case 'hangup':
-                return ['action' => 'hangup', 'data' => ''];
-
-                // Add other cases as necessary for different types
-            default:
-                return [];
-        }
+        return ['action' => $destination['destination_app'], 'data' => $destination['destination_data']];
     }
-
 
     public function selectAll(Request $request)
     {
