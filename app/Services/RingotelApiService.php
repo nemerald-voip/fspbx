@@ -381,8 +381,8 @@ class RingotelApiService
                         'spref' => ''
                     ],
                     'dnd' => [
-                        'off' => $params['dnd_on_code'] ?? '',
-                        'on' => $params['dnd_off_code'] ?? ''
+                        'on' => $params['dnd_on_code'] ?? '',
+                        'off' => $params['dnd_off_code'] ?? ''
                     ],
                     'forwarding' => [
                         'cfuon' => '',
@@ -578,8 +578,8 @@ class RingotelApiService
                         'spref' => ''
                     ],
                     'dnd' => [
-                        'off' => $params['dnd_on_code'] ?? '',
-                        'on' => $params['dnd_off_code'] ?? ''
+                        'on' => $params['dnd_on_code'] ?? '',
+                        'off' => $params['dnd_off_code'] ?? ''
                     ],
                     'forwarding' => [
                         'cfuon' => '',
