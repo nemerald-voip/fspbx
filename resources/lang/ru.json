@@ -4198,7 +4198,7 @@
     "Status": "Статус",
     "Status Summary:": "Сводка статуса:",
     "Status code": "Код статуса",
-    "Status saved. Other servers update through webhooks and hourly reconciliation.": "Статус сохранён. Другие серверы обновятся через вебхуки и ежечасную сверку.",
+    "Status saved.": "Статус сохранён.",
     "Status updated successfully.": "Статус обновлён.",
     "Status:": "Статус:",
     "Step 1: Enable Mobile App for Extension": "Шаг 1: включите мобильное приложение для внутреннего номера",

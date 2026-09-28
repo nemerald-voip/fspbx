@@ -4198,7 +4198,7 @@
     "Status": "Status",
     "Status Summary:": "Resumo do status:",
     "Status code": "Código de status",
-    "Status saved. Other servers update through webhooks and hourly reconciliation.": "Status salvo. Os outros servidores são atualizados por webhooks e reconciliação a cada hora.",
+    "Status saved.": "Status salvo.",
     "Status updated successfully.": "Status atualizado com sucesso.",
     "Status:": "Status:",
     "Step 1: Enable Mobile App for Extension": "Etapa 1: Ativar o Aplicativo Móvel para o Ramal",

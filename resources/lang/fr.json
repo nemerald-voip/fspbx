@@ -4198,7 +4198,7 @@
     "Status": "Statut",
     "Status Summary:": "Résumé du statut :",
     "Status code": "Code d'état",
-    "Status saved. Other servers update through webhooks and hourly reconciliation.": "Statut enregistré. Les autres serveurs sont mis à jour par webhooks et réconciliation horaire.",
+    "Status saved.": "Statut enregistré.",
     "Status updated successfully.": "Statut mis à jour avec succès.",
     "Status:": "Statut :",
     "Step 1: Enable Mobile App for Extension": "Étape 1 : Activer l'application mobile pour l'extension",
