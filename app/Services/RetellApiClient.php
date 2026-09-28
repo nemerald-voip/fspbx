@@ -204,20 +204,68 @@ class RetellApiClient implements AiProviderClient
 
     private function latestPublishedAgent(AiProviderIntegration $integration, string $providerAgentId): array
     {
-        $versions = $this->json($this->request($integration)->get(
-            self::BASE_URL . '/get-agent-versions/' . rawurlencode($providerAgentId)
-        ));
+        $publishedVersion = null;
+        $paginationKey = null;
+        $seenPaginationKeys = [];
 
-        $published = collect(array_is_list($versions) ? $versions : ($versions['agents'] ?? []))
-            ->filter(fn ($version) => is_array($version) && ($version['is_published'] ?? false) === true)
-            ->sortByDesc(fn (array $version) => (int) ($version['version'] ?? -1))
-            ->first();
+        do {
+            $query = ['limit' => 1000, 'sort_order' => 'descending'];
 
-        if (! is_array($published)) {
+            if ($paginationKey !== null) {
+                $query['pagination_key'] = $paginationKey;
+            }
+
+            $payload = $this->json($this->request($integration)->get(
+                self::BASE_URL . '/list-agent-versions/' . rawurlencode($providerAgentId),
+                $query
+            ));
+            $items = $payload['items'] ?? null;
+
+            if (! is_array($items) || ! array_is_list($items) || ! is_bool($payload['has_more'] ?? null)) {
+                throw new RetellApiException('Retell returned an invalid agent version list response.');
+            }
+
+            foreach ($items as $version) {
+                if (! is_array($version)
+                    || ! is_int($version['version'] ?? null)
+                    || $version['version'] < 0
+                    || ! is_bool($version['is_published'] ?? null)) {
+                    throw new RetellApiException('Retell returned an invalid agent version list response.');
+                }
+
+                if ($version['is_published'] && ($publishedVersion === null || $version['version'] > $publishedVersion)) {
+                    $publishedVersion = $version['version'];
+                }
+            }
+
+            $hasMore = $payload['has_more'];
+            $nextPaginationKey = $payload['pagination_key'] ?? null;
+
+            if ($hasMore) {
+                if (! is_string($nextPaginationKey)
+                    || trim($nextPaginationKey) === ''
+                    || in_array($nextPaginationKey, $seenPaginationKeys, true)) {
+                    throw new RetellApiException('Retell did not return a valid agent version pagination key.');
+                }
+
+                $seenPaginationKeys[] = $nextPaginationKey;
+            }
+
+            $paginationKey = $hasMore ? $nextPaginationKey : null;
+        } while ($hasMore);
+
+        if ($publishedVersion === null) {
             throw new RetellApiException('The selected Retell agent has no published version.');
         }
 
-        return $published;
+        // Version listings contain summaries, so fetch the full agent configuration separately.
+        $agent = $this->getAgent($integration, $providerAgentId, $publishedVersion);
+
+        if (($agent['version'] ?? null) !== $publishedVersion || ($agent['is_published'] ?? false) !== true) {
+            throw new RetellApiException('Retell returned an invalid published agent response.');
+        }
+
+        return $agent;
     }
 
     private function getAgent(AiProviderIntegration $integration, string $providerAgentId, int $version): array
