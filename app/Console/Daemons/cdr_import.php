@@ -355,6 +355,25 @@ if (!class_exists('cdr_import')) {
 			return ['cc_callback_attempt_uuid' => $attempt, 'cc_callback_role' => $role];
 		}
 
+		/** Preserve the native parent, or recover it from a loopback B leg. */
+		public static function originating_leg_uuid(SimpleXMLElement $variables): string {
+			$parent = urldecode((string) $variables->originating_leg_uuid);
+			if ($parent !== ''
+				|| (string) $variables->loopback_leg !== 'B'
+				|| !str_starts_with(urldecode((string) $variables->channel_name), 'loopback/')) {
+				return $parent;
+			}
+
+			// Loopback B legs can lack originating_leg_uuid even when the bridge fails.
+			$parent = urldecode((string) $variables->other_loopback_from_uuid);
+			if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\z/i', $parent)
+				|| strcasecmp($parent, urldecode((string) $variables->uuid)) === 0) {
+				return '';
+			}
+
+			return $parent;
+		}
+
 		/**
 		 * process method converts the xml cdr and adds it to the database
 		 */
@@ -762,7 +781,7 @@ if (!class_exists('cdr_import')) {
 							&& urldecode($xml->variables->call_direction) === 'outbound') {
 							$this->array[$key]['originating_leg_uuid'] = null;
 						} else {
-							$this->array[$key]['originating_leg_uuid'] = urldecode($xml->variables->originating_leg_uuid);
+							$this->array[$key]['originating_leg_uuid'] = self::originating_leg_uuid($xml->variables);
 						}
 
 					//store post dial delay, in milliseconds
