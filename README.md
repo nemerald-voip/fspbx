@@ -26,7 +26,6 @@ FS PBX combines FreeSWITCH with a modern application stack designed to make day-
 - **Vue.js frontend**
 - **Tailwind CSS**
 - **PostgreSQL**
-- **FusionPBX interoperability** for functionality that has not yet been replaced
 - **Modular architecture** designed for continued development and extension
 
 ### PBX and communications features
