@@ -48,9 +48,9 @@ The project continues to evolve as more FusionPBX-era functionality is redesigne
 
 ## Screenshots
 
-<img width="1780" height="940" alt="FS PBX dashboard" src="https://github.com/user-attachments/assets/55df5cfd-8884-4eab-82a5-e37ed08482c8" />
+<img width="1780" height="940" alt="FS PBX dashboard" src="https://github.com/user-attachments/assets/06780b44-3965-4176-b43c-b7d099b7e8d6" />
 
-<img width="1743" height="788" alt="FS PBX interface" src="https://github.com/user-attachments/assets/58fccf2e-fa37-48cd-8fba-95638cdce509" />
+<img width="1743" height="788" alt="FS PBX interface" src="https://github.com/user-attachments/assets/9739363a-e761-48f3-af08-f38154e04abf" />
 
 <img width="1799" height="949" alt="FS PBX interface" src="https://github.com/user-attachments/assets/6b386d8a-8d03-49ea-bb13-13aa7ed70bba" />
 
@@ -64,7 +64,8 @@ The project continues to evolve as more FusionPBX-era functionality is redesigne
 
 ![FS PBX interface](https://github.com/user-attachments/assets/c1dcb6da-1a17-44b5-8bc3-cde49faeca07)
 
-<img width="2417" alt="FS PBX interface" src="https://github.com/user-attachments/assets/5c885878-053c-4e4d-800f-7ad4d919894d">
+<img width="2417" alt="FS PBX interface" src="https://github.com/user-attachments/assets/4e91cf4b-8733-4ce8-b522-97769c88eba2">
+
 
 ## Installation
 
