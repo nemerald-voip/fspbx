@@ -1232,6 +1232,22 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'grandstream_firmware_upgrade_confirmation',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => 'Yes',
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => 'Require confirmation before a Grandstream firmware upgrade. Use Yes or No. Default: Yes.',
+            ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'grandstream_default_ringtone',
+                'default_setting_name'          => 'numeric',
+                'default_setting_value'         => '0',
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => 'Default Grandstream ringtone: 0 = System Ringtone, 1 = Custom Ringtone 1, 2 = Custom Ringtone 2, 3 = Custom Ringtone 3, 4 = Silent. Default: 0.',
+            ],
+            [
+                'default_setting_category'      => 'provision',
                 'default_setting_subcategory'   => 'drop_self_extension_keys',
                 'default_setting_name'          => 'boolean',
                 'default_setting_value'         => "true",

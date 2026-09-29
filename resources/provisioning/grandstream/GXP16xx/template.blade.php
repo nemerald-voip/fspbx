@@ -1,4 +1,4 @@
-{{-- version: 1.0.11 --}}
+{{-- version: 1.0.13 --}}
 
 @switch($flavor)
 
@@ -961,7 +961,7 @@
 
 
 		<!-- # Firmware Upgrade Confirmation. No or Yes -->
-		<item name="provisioning.firmware.confirm.enable">Yes</item>
+		<item name="provisioning.firmware.confirm.enable">{{ $settings['grandstream_firmware_upgrade_confirmation'] ?? 'Yes' }}</item>
 
 		<!-- Config Upgrade Via -->
 		<!-- TFTP, HTTP, HTTPS -->
@@ -1628,7 +1628,7 @@
 		<!-- # System Ringtone -->
 		<!-- # String -->
 		<!-- # Mandatory -->
-		<item name="audio.tone.systemRing">f1=540,f2=516,c=70/16-55/16-70/300;</item>
+		<item name="audio.tone.systemRing">{{ $settings['grandstream_system_ring'] ?? 'f1=540,f2=516,c=70/16-55/16-70/300;' }}</item>
 
 		<!-- # Dial Tone -->
 		<!-- # String -->
@@ -1688,7 +1688,7 @@
 		<item name="audio.volume.lock">No</item>
 
 		<!-- # Default Ringtone. -->
-		<item name="audio.ring.defaultRingtone">0</item>
+		<item name="audio.ring.defaultRingtone">{{ $settings['grandstream_default_ringtone'] ?? '0' }}</item>
 
 		<!-- # Total Number of Custom Ringtone Update -->
 		<!-- # Number: 0-10. Default is 3. -->
