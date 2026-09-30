@@ -77,6 +77,9 @@ class HolidayHoursController extends Controller
             ], 201);
         } catch (\Throwable $e) {
             DB::rollBack();
+            if ($e instanceof \Illuminate\Validation\ValidationException) {
+                throw $e;
+            }
 
             logger('BusinessHourHoliday store error: ' . $e->getMessage(), [
                 'line' => $e->getLine(),
@@ -130,6 +133,9 @@ class HolidayHoursController extends Controller
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
+            if ($e instanceof \Illuminate\Validation\ValidationException) {
+                throw $e;
+            }
             logger('Holiday update error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([

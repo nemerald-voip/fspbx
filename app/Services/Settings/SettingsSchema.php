@@ -2,6 +2,7 @@
 
 namespace App\Services\Settings;
 
+use App\Models\Menu;
 use App\Support\Localization\LocaleRegistry;
 
 /**
@@ -38,6 +39,7 @@ abstract class SettingsSchema
     {
         return [
             'language' => array_keys(app(LocaleRegistry::class)->locales()),
+            'menu' => Menu::query()->pluck('menu_uuid')->all(),
         ];
     }
 
@@ -53,7 +55,30 @@ abstract class SettingsSchema
         return [
             'timezones' => getGroupedTimezones(),
             'locales' => $this->localeOptions($currentLanguage),
+            'menus' => $this->menuOptions(),
         ];
+    }
+
+    /**
+     * Saved menus, labeled consistently on both settings surfaces.
+     *
+     * @return array<int, array{value: string, label: string}>
+     */
+    protected function menuOptions(): array
+    {
+        $locales = app(LocaleRegistry::class)->locales();
+
+        return Menu::query()->orderBy('menu_name')->orderBy('menu_language')->get()
+            ->map(function (Menu $menu) use ($locales) {
+                $code = strtolower((string) $menu->menu_language);
+                $language = $locales[$code]['native'] ?? $code;
+
+                return [
+                    'value' => $menu->menu_uuid,
+                    'label' => ($menu->menu_name ?: $menu->menu_uuid)
+                        .($code ? " · {$language} ({$code})" : ''),
+                ];
+            })->all();
     }
 
     /**

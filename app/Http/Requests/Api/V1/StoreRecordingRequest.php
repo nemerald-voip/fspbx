@@ -23,7 +23,24 @@ class StoreRecordingRequest extends FormRequest
         return [
             'recording_name' => ['required', 'string', 'max:255'],
             'recording_description' => ['nullable', 'string'],
-            'file' => ['required', 'file', 'max:51200', 'mimetypes:audio/wav,audio/x-wav,audio/mpeg,audio/mp4,audio/x-m4a,audio/ogg,audio/flac,audio/x-flac,video/mp4'],
+            'file' => ['required', 'file', 'max:51200', 'mimes:wav,mp3,m4a'],
+        ];
+    }
+
+    public function bodyParameters(): array
+    {
+        return [
+            'recording_name' => [
+                'description' => 'The recording display name.',
+                'example' => 'Main Menu Greeting',
+            ],
+            'recording_description' => [
+                'description' => 'Optional description.',
+                'example' => 'Primary virtual receptionist greeting',
+            ],
+            'file' => [
+                'description' => 'WAV, MP3, or M4A audio file. Maximum size: 50 MB.',
+            ],
         ];
     }
 }

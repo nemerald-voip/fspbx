@@ -16,14 +16,14 @@
                         <DialogPanel
                             class="relative transform rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-6xl sm:p-6">
                             <DialogTitle as="h3" class="mb-4 pr-8 text-base font-semibold leading-6 text-gray-900">
-                                {{ header }}
+                                {{ header || $t('Gateway') }}
                             </DialogTitle>
 
                             <div class="absolute right-0 top-0 pr-4 pt-4 sm:block">
                                 <button type="button"
                                     class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                     @click="emit('close')">
-                                    <span class="sr-only">Close</span>
+                                    <span class="sr-only">{{ $t('Close') }}</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
@@ -37,18 +37,18 @@
                                         <path class="opacity-75" fill="currentColor"
                                             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                     </svg>
-                                    <div class="text-lg text-blue-600 m-auto">Loading...</div>
+                                    <div class="text-lg text-blue-600 m-auto">{{ $t('Loading...') }}</div>
                                 </div>
                             </div>
 
                             <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
-                                @error="handleError" @response="handleResponse" :display-errors="false"
-                                :default="defaultValues">
+                                @error="handleError" @response="handleResponse" :display-errors="false" validate-on=""
+                                :default="defaultValues" :locale="formLocale">
                                 <template #empty>
                                     <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
                                         <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
                                             <FormTabs view="vertical">
-                                                <FormTab name="settings" label="Settings" :elements="[
+                                                <FormTab name="settings" :label="$t('Settings')" :elements="[
                                                     'gateway_uuid',
                                                     'gateway_uuid_clean',
                                                     'settings_header',
@@ -67,7 +67,7 @@
                                                     'button_container',
                                                     'settings_submit',
                                                 ]" />
-                                                <FormTab name="advanced" label="Advanced" :elements="[
+                                                <FormTab name="advanced" :label="$t('Advanced')" :elements="[
                                                     'advanced_header',
                                                     'domain_uuid',
                                                     'from_user',
@@ -94,7 +94,7 @@
                                                     'advanced_button_container',
                                                     'advanced_submit',
                                                 ]" />
-                                                <FormTab name="provider_ips" label="Provider IPs" :elements="[
+                                                <FormTab name="provider_ips" :label="$t('Provider IPs')" :elements="[
                                                     'acl_header',
                                                     'gateway_acl_cidrs',
                                                     'acl_button_container',
@@ -108,13 +108,13 @@
                                             <FormElements>
                                                 <HiddenElement name="gateway_uuid" :meta="true" />
 
-                                                <StaticElement name="settings_header" tag="h4" content="Gateway Settings"
-                                                    description="Configure the SIP provider connection and registration behavior." />
+                                                <StaticElement name="settings_header" tag="h4" :content="$t('Gateway Settings')"
+                                                    :description="$t('Configure the SIP provider connection and registration behavior.')" />
 
                                                 <StaticElement name="gateway_uuid_clean"
                                                     :conditions="[() => props.options?.item?.gateway_uuid]">
                                                     <div class="mb-1">
-                                                        <div class="text-sm font-medium text-gray-600 mb-1">Unique ID</div>
+                                                        <div class="text-sm font-medium text-gray-600 mb-1">{{ $t('Unique ID') }}</div>
                                                         <div class="flex items-center group">
                                                             <span class="text-sm text-gray-900 select-all font-normal">
                                                                 {{ props.options?.item?.gateway_uuid }}
@@ -122,7 +122,7 @@
                                                             <button type="button"
                                                                 @click="handleCopyToClipboard(props.options?.item?.gateway_uuid)"
                                                                 class="ml-2 p-1 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
-                                                                title="Copy to clipboard">
+                                                                :title="$t('Copy to clipboard')">
                                                                 <ClipboardDocumentIcon
                                                                     class="h-4 w-4 text-gray-500 hover:text-gray-900 cursor-pointer" />
                                                             </button>
@@ -130,120 +130,120 @@
                                                     </div>
                                                 </StaticElement>
 
-                                                <TextElement name="gateway" label="Gateway" placeholder="Provider or gateway name"
+                                                <TextElement name="gateway" :label="$t('Gateway')" :placeholder="$t('Provider or gateway name')"
                                                     :floating="false" :columns="{ sm: { container: 6 } }" />
 
-                                                <ToggleElement name="enabled" text="Gateway Enabled" true-value="true"
-                                                    false-value="false" :labels="{ on: 'On', off: 'Off' }"
+                                                <ToggleElement name="enabled" :text="$t('Gateway Enabled')" true-value="true"
+                                                    false-value="false" :labels="{ on: $t('On'), off: $t('Off') }"
                                                     :columns="{ sm: { container: 6 } }" label="&nbsp;" />
 
-                                                <TextElement name="proxy" label="Proxy" placeholder="sip.provider.example"
+                                                <TextElement name="proxy" :label="$t('Proxy')" placeholder="sip.provider.example"
                                                     :floating="false" :columns="{ sm: { container: 6 } }" />
 
                                                 <SelectElement name="profile" :items="profileOptions" :search="true"
-                                                    :native="false" label="SIP Profile" input-type="search"
-                                                    autocomplete="off" placeholder="Select profile" :floating="false"
+                                                    :native="false" :label="$t('SIP Profile')" input-type="search"
+                                                    autocomplete="off" :placeholder="$t('Select profile')" :floating="false"
                                                     :strict="true" :columns="{ sm: { container: 6 } }" />
 
-                                                <TextElement name="context" label="Context" placeholder="public"
+                                                <TextElement name="context" :label="$t('Context')" placeholder="public"
                                                     :floating="false" :columns="{ sm: { container: 6 } }" />
 
                                                 <SelectElement name="register" :items="booleanOptions" :native="false"
-                                                    label="Register" placeholder="Select registration state"
+                                                    :label="$t('Register')" :placeholder="$t('Select registration state')"
                                                     :floating="false" :strict="true"
                                                     :columns="{ sm: { container: 6 } }" />
 
-                                                <TextElement name="username" label="Username" autocomplete="off"
-                                                    placeholder="SIP username" :floating="false"
+                                                <TextElement name="username" :label="$t('Username')" autocomplete="off"
+                                                    :placeholder="$t('SIP username')" :floating="false"
                                                     :columns="{ sm: { container: 6 } }" />
 
-                                                <TextElement name="password" label="Password" input-type="password"
-                                                    autocomplete="new-password" placeholder="SIP password"
+                                                <TextElement name="password" :label="$t('Password')" input-type="password"
+                                                    autocomplete="new-password" :placeholder="$t('SIP password')"
                                                     :floating="false" :columns="{ sm: { container: 6 } }" />
 
                                                 <TextElement name="expire_seconds" input-type="number"
-                                                    label="Expire Seconds" :floating="false"
+                                                    :label="$t('Expire Seconds')" :floating="false"
                                                     :columns="{ sm: { container: 6 } }" />
 
                                                 <TextElement name="retry_seconds" input-type="number"
-                                                    label="Retry Seconds" :floating="false"
+                                                    :label="$t('Retry Seconds')" :floating="false"
                                                     :columns="{ sm: { container: 6 } }" />
 
                                                 <GroupElement name="settings_container" />
 
-                                                <TextareaElement name="description" label="Description" :rows="2" />
+                                                <TextareaElement name="description" :label="$t('Description')" :rows="2" />
 
                                                 <GroupElement name="button_container" />
 
-                                                <ButtonElement name="settings_submit" button-label="Save" :submits="true"
+                                                <ButtonElement name="settings_submit" :button-label="$t('Save')" :submits="true"
                                                     align="right" />
 
-                                                <StaticElement name="advanced_header" tag="h4" content="Advanced Settings"
-                                                    description="Fine tune SIP identity, transport, ping, caller ID, and domain options." />
+                                                <StaticElement name="advanced_header" tag="h4" :content="$t('Advanced Settings')"
+                                                    :description="$t('Fine tune SIP identity, transport, ping, caller ID, and domain options.')" />
 
                                                 <SelectElement name="domain_uuid" :items="domainOptions" :search="true"
-                                                    :native="false" label="Domain" input-type="search"
-                                                    autocomplete="off" placeholder="Select domain" :floating="false"
+                                                    :native="false" :label="$t('Domain')" input-type="search"
+                                                    autocomplete="off" :placeholder="$t('Select domain')" :floating="false"
                                                     :strict="false" :columns="{ sm: { container: 6 } }"
                                                     :conditions="[() => domainOptions.length > 0]" />
 
-                                                <TextElement name="from_user" label="From User" :floating="false"
+                                                <TextElement name="from_user" :label="$t('From User')" :floating="false"
                                                     :columns="{ sm: { container: 6 } }" />
-                                                <TextElement name="from_domain" label="From Domain" :floating="false"
+                                                <TextElement name="from_domain" :label="$t('From Domain')" :floating="false"
                                                     :columns="{ sm: { container: 6 } }" />
-                                                <TextElement name="auth_username" label="Auth Username" :floating="false"
+                                                <TextElement name="auth_username" :label="$t('Auth Username')" :floating="false"
                                                     :columns="{ sm: { container: 6 } }" />
-                                                <TextElement name="realm" label="Realm" :floating="false"
+                                                <TextElement name="realm" :label="$t('Realm')" :floating="false"
                                                     :columns="{ sm: { container: 6 } }" />
 
                                                 <SelectElement name="distinct_to" :items="emptyBooleanOptions"
-                                                    :native="false" label="Distinct To" :floating="false"
+                                                    :native="false" :label="$t('Distinct To')" :floating="false"
                                                     :strict="false" :columns="{ sm: { container: 6 } }" />
 
                                                 <SelectElement name="register_transport" :items="transportOptions"
-                                                    :native="false" label="Register Transport" :floating="false"
+                                                    :native="false" :label="$t('Register Transport')" :floating="false"
                                                     :strict="false" :columns="{ sm: { container: 6 } }" />
 
-                                                <TextElement name="register_proxy" label="Register Proxy" :floating="false"
+                                                <TextElement name="register_proxy" :label="$t('Register Proxy')" :floating="false"
                                                     :columns="{ sm: { container: 6 } }" />
-                                                <TextElement name="outbound_proxy" label="Outbound Proxy" :floating="false"
+                                                <TextElement name="outbound_proxy" :label="$t('Outbound Proxy')" :floating="false"
                                                     :columns="{ sm: { container: 6 } }" />
-                                                <TextElement name="contact_params" label="Contact Params" :floating="false"
+                                                <TextElement name="contact_params" :label="$t('Contact Params')" :floating="false"
                                                     :columns="{ sm: { container: 6 } }" />
-                                                <TextElement name="extension" label="Extension" :floating="false"
+                                                <TextElement name="extension" :label="$t('Extension')" :floating="false"
                                                     :columns="{ sm: { container: 6 } }" />
-                                                <TextElement name="ping" input-type="number" label="Ping" :floating="false"
+                                                <TextElement name="ping" input-type="number" :label="$t('Ping')" :floating="false"
                                                     :columns="{ sm: { container: 6 } }" />
-                                                <TextElement name="ping_min" input-type="number" label="Ping Min"
+                                                <TextElement name="ping_min" input-type="number" :label="$t('Ping Min')"
                                                     :floating="false" :columns="{ sm: { container: 6 } }" />
-                                                <TextElement name="ping_max" input-type="number" label="Ping Max"
+                                                <TextElement name="ping_max" input-type="number" :label="$t('Ping Max')"
                                                     :floating="false" :columns="{ sm: { container: 6 } }" />
 
                                                 <SelectElement name="contact_in_ping" :items="emptyBooleanOptions"
-                                                    :native="false" label="Contact In Ping" :floating="false"
+                                                    :native="false" :label="$t('Contact In Ping')" :floating="false"
                                                     :strict="false" :columns="{ sm: { container: 6 } }" />
 
-                                                <TextElement name="channels" input-type="number" label="Channels"
+                                                <TextElement name="channels" input-type="number" :label="$t('Channels')"
                                                     :floating="false" :columns="{ sm: { container: 6 } }"
                                                     :conditions="[() => props.permissions?.channels]" />
 
                                                 <SelectElement name="caller_id_in_from" :items="emptyBooleanOptions"
-                                                    :native="false" label="Caller ID In From" :floating="false"
+                                                    :native="false" :label="$t('Caller ID In From')" :floating="false"
                                                     :strict="false" :columns="{ sm: { container: 6 } }" />
 
                                                 <SelectElement name="supress_cng" :items="emptyBooleanOptions"
-                                                    :native="false" label="Suppress CNG" :floating="false"
+                                                    :native="false" :label="$t('Suppress CNG')" :floating="false"
                                                     :strict="false" :columns="{ sm: { container: 6 } }" />
 
                                                 <SelectElement name="sip_cid_type" :items="sipCidOptions" :native="false"
-                                                    label="SIP CID Type" :floating="false" :strict="false"
+                                                    :label="$t('SIP CID Type')" :floating="false" :strict="false"
                                                     :columns="{ sm: { container: 6 } }" />
 
-                                                <TextElement name="codec_prefs" label="Codec Preferences" :floating="false"
+                                                <TextElement name="codec_prefs" :label="$t('Codec Preferences')" :floating="false"
                                                     :columns="{ sm: { container: 6 } }" />
 
                                                 <SelectElement name="extension_in_contact" :items="emptyBooleanOptions"
-                                                    :native="false" label="Extension In Contact" :floating="false"
+                                                    :native="false" :label="$t('Extension In Contact')" :floating="false"
                                                     :strict="false" :columns="{ sm: { container: 6 } }" />
 
                                                 <TextElement name="hostname" :label="$t('FreeSWITCH Hostname')"
@@ -252,21 +252,21 @@
 
                                                 <GroupElement name="advanced_button_container" />
 
-                                                <ButtonElement name="advanced_submit" button-label="Save" :submits="true"
+                                                <ButtonElement name="advanced_submit" :button-label="$t('Save')" :submits="true"
                                                     align="right" />
 
-                                                <StaticElement name="acl_header" tag="h4" content="Provider IPs"
-                                                    description="Enter the IP addresses or CIDR ranges this provider sends traffic from." />
+                                                <StaticElement name="acl_header" tag="h4" :content="$t('Provider IPs')"
+                                                    :description="$t('Enter the IP addresses or CIDR ranges this provider sends traffic from.')" />
 
-                                                <ListElement name="gateway_acl_cidrs" :sort="true" size="sm"
+                                                <ListElement name="gateway_acl_cidrs" :sort="true" size="sm" :add-text="$t('Add Item')"
                                                     :initial="0"
                                                     :controls="{ add: true, remove: true, sort: true }"
                                                     :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }">
                                                     <template #default="{ index }">
                                                         <ObjectElement :name="index">
-                                                            <TextElement name="node_cidr" label="IP / CIDR"
+                                                            <TextElement name="node_cidr" :label="$t('IP / CIDR')"
                                                                 autocomplete="off"
-                                                                placeholder="203.0.113.10 or 198.51.100.0/24"
+                                                                :placeholder="$t('203.0.113.10 or 198.51.100.0/24')"
                                                                 :floating="false"
                                                                 :columns="{ sm: { container: 12 } }" />
                                                         </ObjectElement>
@@ -275,7 +275,7 @@
 
                                                 <GroupElement name="acl_button_container" />
 
-                                                <ButtonElement name="acl_submit" button-label="Save" :submits="true"
+                                                <ButtonElement name="acl_submit" :button-label="$t('Save')" :submits="true"
                                                     align="right" />
                                             </FormElements>
                                         </div>
@@ -291,6 +291,7 @@
 </template>
 
 <script setup>
+import { currentLocale, trans } from "@i18n";
 import { computed, ref } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from "@headlessui/vue";
 import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
@@ -306,7 +307,7 @@ const props = defineProps({
     loading: Boolean,
     header: {
         type: String,
-        default: "Gateway",
+        default: "",
     },
     mode: {
         type: String,
@@ -317,6 +318,14 @@ const props = defineProps({
 const emit = defineEmits(["close", "error", "success", "refresh-data"]);
 
 const form$ = ref(null);
+
+const formLocale = computed(() => {
+    const locale = currentLocale.value;
+    if (locale.startsWith('es')) return 'es-419';
+    if (locale.startsWith('fr')) return 'fr';
+    if (locale === 'pt-br') return 'pt-br';
+    return 'en';
+});
 
 const gatewayFields = [
     "gateway_uuid",
@@ -395,15 +404,15 @@ const normalizeAclCidrs = (value) => {
 const profileOptions = computed(() => props.options?.profile_options ?? []);
 const domainOptions = computed(() => props.options?.domain_options ?? []);
 
-const booleanOptions = [
-    { value: "true", label: "True" },
-    { value: "false", label: "False" },
-];
+const booleanOptions = computed(() => [
+    { value: "true", label: trans('True') },
+    { value: "false", label: trans('False') },
+]);
 
-const emptyBooleanOptions = [
+const emptyBooleanOptions = computed(() => [
     { value: null, label: "" },
-    ...booleanOptions,
-];
+    ...booleanOptions.value,
+]);
 
 const transportOptions = [
     { value: null, label: "" },
@@ -412,22 +421,24 @@ const transportOptions = [
     { value: "tls", label: "TLS" },
 ];
 
-const sipCidOptions = [
+const sipCidOptions = computed(() => [
     { value: null, label: "" },
-    { value: "none", label: "None" },
+    { value: "none", label: trans('None') },
     { value: "pid", label: "PID" },
     { value: "rpid", label: "RPID" },
-];
+]);
 
 const handleCopyToClipboard = (text) => {
     navigator.clipboard.writeText(text).then(() => {
-        emit("success", "success", { message: ["Copied to clipboard."] });
+        emit("success", "success", { message: [trans('Copied to clipboard.')] });
     }).catch(() => {
-        emit("error", { response: { data: { errors: { request: ["Failed to copy to clipboard."] } } } });
+        emit("error", { response: { data: { errors: { request: [trans('Failed to copy to clipboard.')] } } } });
     });
 };
 
 const submitForm = async (FormData, form$) => {
+    form$.messageBag.clear();
+    Object.values(form$.elements$).forEach(clearErrorsRecursive);
     const requestData = form$.requestData;
     const route = props.mode === "create"
         ? props.options.routes.store_route
@@ -478,6 +489,6 @@ const handleError = (error, details, form$) => {
         return;
     }
 
-    form$.messageBag.append("Could not submit form");
+    form$.messageBag.append(trans('Could not submit form'));
 };
 </script>

@@ -4,14 +4,14 @@
     <div class="m-3">
         <div v-if="data.runtime_available === false"
             class="mb-3 rounded-md bg-amber-50 p-3 text-sm font-medium text-amber-800 ring-1 ring-inset ring-amber-600/20">
-            FreeSWITCH event socket is not available. Queue calls cannot be loaded right now.
+            {{ $t("FreeSWITCH event socket is not available. Queue calls cannot be loaded right now.") }}
         </div>
 
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-            <template #title>Active Basic Queues</template>
+            <template #title>{{ $t("Active Basic Queues") }}</template>
 
             <template #subtitle>
-                View live caller activity across basic queues.
+                {{ $t("View live caller activity across basic queues.") }}
             </template>
 
             <template #filters>
@@ -21,7 +21,7 @@
                     </div>
                     <input type="text" v-model="filterData.search" name="active-basic-queues-search"
                         class="block w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                        :placeholder="$t(&quot;Search&quot;)" @keydown.enter="handleSearchButtonClick" />
                 </div>
             </template>
 
@@ -30,18 +30,18 @@
                     isRefreshing
                         ? 'rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600'
                         : 'rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50'
-                ]" title="Auto refresh" @click="toggleRefreshing">
+                ]" :title="$t(&quot;Auto refresh&quot;)" @click="toggleRefreshing">
                     <Refresh class="h-5 w-5" :class="{ 'animate-spin': isRefreshing }" />
                 </button>
 
                 <button type="button" @click.prevent="handleRefreshButtonClick"
                     class="ml-2 rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                    Refresh
+                    {{ $t("Refresh") }}
                 </button>
 
                 <a :href="routes.basic_queues"
                     class="ml-2 sm:ml-4 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                    Basic Queues
+                    {{ $t("Basic Queues") }}
                 </a>
             </template>
 
@@ -54,7 +54,7 @@
             <template #table-header>
                 <TableColumnHeader class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('queue_name')">
-                        <span class="mr-2">Name</span>
+                        <span class="mr-2">{{ $t("Name") }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'queue_name' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'queue_name' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
                     </div>
@@ -62,7 +62,7 @@
 
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('queue_extension')">
-                        <span class="mr-2">Extension</span>
+                        <span class="mr-2">{{ $t("Extension") }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'queue_extension' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'queue_extension' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
                     </div>
@@ -70,18 +70,18 @@
 
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('queue_strategy')">
-                        <span class="mr-2">Strategy</span>
+                        <span class="mr-2">{{ $t("Strategy") }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'queue_strategy' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'queue_strategy' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
                     </div>
                 </TableColumnHeader>
 
-                <TableColumnHeader header="Agents" class="w-24 px-2 py-3.5 text-center text-sm font-semibold text-gray-900 [&>div]:justify-center" />
-                <TableColumnHeader header="Waiting" class="w-24 px-2 py-3.5 text-center text-sm font-semibold text-gray-900 [&>div]:justify-center" />
-                <TableColumnHeader header="Trying" class="w-24 px-2 py-3.5 text-center text-sm font-semibold text-gray-900 [&>div]:justify-center" />
-                <TableColumnHeader header="Answered" class="w-24 px-2 py-3.5 text-center text-sm font-semibold text-gray-900 [&>div]:justify-center" />
-                <TableColumnHeader header="Active Calls" class="w-28 px-2 py-3.5 text-center text-sm font-semibold text-gray-900 [&>div]:justify-center" />
-                <TableColumnHeader header="Description" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t(&quot;Agents&quot;)" class="w-24 px-2 py-3.5 text-center text-sm font-semibold text-gray-900 [&>div]:justify-center" />
+                <TableColumnHeader :header="$t(&quot;Waiting&quot;)" class="w-24 px-2 py-3.5 text-center text-sm font-semibold text-gray-900 [&>div]:justify-center" />
+                <TableColumnHeader :header="$t(&quot;Trying&quot;)" class="w-24 px-2 py-3.5 text-center text-sm font-semibold text-gray-900 [&>div]:justify-center" />
+                <TableColumnHeader :header="$t(&quot;Answered&quot;)" class="w-24 px-2 py-3.5 text-center text-sm font-semibold text-gray-900 [&>div]:justify-center" />
+                <TableColumnHeader :header="$t(&quot;Active Calls&quot;)" class="w-28 px-2 py-3.5 text-center text-sm font-semibold text-gray-900 [&>div]:justify-center" />
+                <TableColumnHeader :header="$t(&quot;Description&quot;)" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
             </template>
 
             <template #table-body>
@@ -113,11 +113,11 @@
                             <table class="min-w-full divide-y divide-gray-200">
                                 <thead class="bg-white">
                                     <tr>
-                                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Time</th>
-                                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Caller</th>
-                                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Number</th>
-                                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Status</th>
-                                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Agent</th>
+                                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">{{ $t("Time") }}</th>
+                                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">{{ $t("Caller") }}</th>
+                                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">{{ $t("Number") }}</th>
+                                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">{{ $t("Status") }}</th>
+                                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">{{ $t("Agent") }}</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-200 bg-white">
@@ -125,7 +125,7 @@
                                         <td class="whitespace-nowrap px-3 py-2 text-sm text-gray-500">{{ call.wait_time || '-' }}</td>
                                         <td class="whitespace-nowrap px-3 py-2 text-sm font-medium text-gray-900">{{ call.caller_name || '-' }}</td>
                                         <td class="whitespace-nowrap px-3 py-2 text-sm text-gray-500">{{ call.caller_number || '-' }}</td>
-                                        <td class="whitespace-nowrap px-3 py-2 text-sm text-gray-500">{{ call.state || '-' }}</td>
+                                        <td class="whitespace-nowrap px-3 py-2 text-sm text-gray-500">{{ queueStatusLabel(call.state) }}</td>
                                         <td class="whitespace-nowrap px-3 py-2 text-sm text-gray-500">{{ call.serving_agent_name || '-' }}</td>
                                     </tr>
                                 </tbody>
@@ -139,9 +139,9 @@
             <template #empty>
                 <div v-if="!loading && data.data.length === 0" class="text-center my-5">
                     <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No basic queues found</h3>
+                    <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ $t("No basic queues found") }}</h3>
                     <p class="mt-1 text-sm text-gray-500">
-                        Refresh the list or adjust your search.
+                        {{ $t("Refresh the list or adjust your search.") }}
                     </p>
                 </div>
             </template>
@@ -163,6 +163,7 @@
 </template>
 
 <script setup>
+import { queueStatusLabel, queueStrategyLabel } from "./data/basicQueueLabels";
 import { onMounted, onUnmounted, ref } from "vue";
 import axios from "axios";
 import DataTable from "./components/general/DataTable.vue";
@@ -331,7 +332,5 @@ const handleErrorResponse = (error) => {
     }
 };
 
-const formatStrategy = (strategy) => String(strategy || "-")
-    .replaceAll("-", " ")
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+const formatStrategy = queueStrategyLabel;
 </script>

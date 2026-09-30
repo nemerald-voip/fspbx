@@ -15,8 +15,8 @@ class FaxQueueStatus extends BaseMailable
     public function content(): Content
     {
         return $this->databaseTemplateContent(new Content(
-            view: 'emails.fax.service-alert',
-            text: 'emails.fax.service-alert-text',
+            view: 'emails.en-us.fax.service-alert',
+            text: 'emails.en-us.fax.service-alert-text',
         ));
     }
 }

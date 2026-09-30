@@ -19,4 +19,24 @@ class StoreApiTokenRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
         ];
     }
+
+    public function attributes(): array
+    {
+        return [
+            'name' => __('Name'),
+            'user_uuid' => __('User'),
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'required' => __('The :attribute field is required.'),
+            'string' => __('The :attribute must be a string.'),
+            'max.string' => __('The :attribute must not be greater than :max characters.'),
+            'in' => __('The selected :attribute is invalid.'),
+            'exists' => __('The selected :attribute is invalid.'),
+            'uuid' => __('The :attribute must be a valid UUID.'),
+        ];
+    }
 }

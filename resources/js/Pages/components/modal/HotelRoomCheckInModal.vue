@@ -20,7 +20,7 @@
                                 <button type="button"
                                     class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                     @click="emit('close')">
-                                    <span class="sr-only">Close</span>
+                                    <span class="sr-only">{{ $t('Close') }}</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
@@ -38,7 +38,7 @@
                                             </path>
                                         </svg>
                                     </div>
-                                    <div class="text-lg text-blue-600 m-auto">Loading...</div>
+                                    <div class="text-lg text-blue-600 m-auto">{{ $t('Loading...') }}</div>
                                 </div>
                             </div>
 
@@ -52,38 +52,38 @@
                                     guest_last_name: options?.item?.guest_last_name ?? null,
                                     arrival_date: options?.item?.arrival_date ?? null,
                                     departure_date: options?.item?.departure_date ?? null,
-                                }">
-                                <StaticElement name="title" tag="h4" content="Guest Check In Form"
-                                    description="Please fill out the following information to complete the guest details." />
+                                }" @mounted="(form) => form.disableValidation()" @submit="clearServerFormErrors">
+                                <StaticElement name="title" tag="h4" :content="$t('Guest Check In Form')"
+                                    :description="$t('Please fill out the following information to complete the guest details.')" />
                                 <HiddenElement name="uuid" :meta="true" />
                                 <HiddenElement name="occupancy_status" :meta="true" />
 
-                                <TextElement name="room_name" label="Room" :floating="false" :disabled="true"/>
+                                <TextElement name="room_name" :label="$t('Room')" :floating="false" :disabled="true"/>
 
-                                <SelectElement name="housekeeping_status" :items="options.housekeeping_options" :search="true" :native="false" label="Room Status" input-type="search" autocomplete="off"
-                                    placeholder="Select room status" :floating="false"
-                                    description="Select the current status of the room." />
+                                <SelectElement name="housekeeping_status" :items="options.housekeeping_options" :search="true" :native="false" :label="$t('Room Status')" input-type="search" autocomplete="off"
+                                    :placeholder="$t('Select room status')" :floating="false"
+                                    :description="$t('Select the current status of the room.')" />
 
-                                <TextElement name="guest_first_name" label="First Name"
-                                    description="Enter your first name." placeholder="Enter guest's first name"
+                                <TextElement name="guest_first_name" :label="$t('First Name')"
+                                    :description="$t('Enter your first name.')" :placeholder="$t('Enter guest\'s first name')"
                                     :floating="false" />
 
-                                <TextElement name="guest_last_name" label="Last Name"
-                                    description="Enter your last name." placeholder="Enter guest's last name"
+                                <TextElement name="guest_last_name" :label="$t('Last Name')"
+                                    :description="$t('Enter your last name.')" :placeholder="$t('Enter guest\'s last name')"
                                     :floating="false" />
 
-                                <DateElement name="arrival_date" label="Arrival Date" :time="true"
-                                    description="Select arrival date and time."  />
+                                <DateElement name="arrival_date" :label="$t('Arrival Date')" :time="true"
+                                    :description="$t('Select arrival date and time.')"  />
 
-                                <DateElement name="departure_date" label="Expected Departure Date" :time="true"
-                                    description="Select expected departure date and time." />
+                                <DateElement name="departure_date" :label="$t('Expected Departure Date')" :time="true"
+                                    :description="$t('Select expected departure date and time.')" />
 
                                 <GroupElement name="container_3" />
-                                <ButtonElement name="reset" button-label="Cancel" :secondary="true" :resets="true"
+                                <ButtonElement name="reset" :button-label="$t('Cancel')" :secondary="true" :resets="true"
                                     @click="emit('close')" :columns="{
                                         container: 6,
                                     }" />
-                                <ButtonElement name="submit" button-label="Save" :submits="true" align="right" :columns="{
+                                <ButtonElement name="submit" :button-label="$t('Save')" :submits="true" align="right" :columns="{
                                     container: 6,
                                 }" />
                             </Vueform>
@@ -98,6 +98,8 @@
 </template>
 
 <script setup>
+import { clearServerFormErrors } from '../../../composables/serverFormErrors.js';
+import { trans } from '@i18n';
 import { ref } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { XMarkIcon } from "@heroicons/vue/24/solid";
@@ -167,7 +169,7 @@ const handleError = (error, details, form$) => {
         case 'prepare':
             console.log(error) // Error object
 
-            form$.messageBag.append('Could not prepare form')
+            form$.messageBag.append(trans('Could not prepare form'))
             break
 
         // Error occured because response status is outside of 2xx
@@ -187,14 +189,14 @@ const handleError = (error, details, form$) => {
         case 'cancel':
             console.log(error) // Error object
 
-            form$.messageBag.append('Request cancelled')
+            form$.messageBag.append(trans('Request cancelled'))
             break
 
         // Some other errors happened (no response object)
         case 'other':
             console.log(error) // Error object
 
-            form$.messageBag.append('Couldn\'t submit form')
+            form$.messageBag.append(trans('Couldn\'t submit form'))
             break
     }
 }

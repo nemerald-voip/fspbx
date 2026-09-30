@@ -20,7 +20,7 @@
                                 <button type="button"
                                     class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                     @click="emit('close')">
-                                    <span class="sr-only">Close</span>
+                                    <span class="sr-only">{{ $t('Close') }}</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
@@ -38,27 +38,27 @@
                                             </path>
                                         </svg>
                                     </div>
-                                    <div class="text-lg text-blue-600 m-auto">Loading...</div>
+                                    <div class="text-lg text-blue-600 m-auto">{{ $t('Loading...') }}</div>
                                 </div>
                             </div>
 
                             <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
                                 @error="handleError" @response="handleResponse" :display-errors="false" :default="{
                                     // user_uuid: options.item.user_uuid,
-                                }">
+                                }" @mounted="(form) => form.disableValidation()" @submit="clearServerFormErrors">
                                 <!-- <HiddenElement name="user_uuid" :meta="true" /> -->
-                                <StaticElement name="h4" tag="h4" content="Create Multiple Hotel Rooms" />
+                                <StaticElement name="h4" tag="h4" :content="$t('Create Multiple Hotel Rooms')" />
 
 
                                 <TagsElement name="extensions" :close-on-select="false" :search="true" :items="options.extensions" 
-                                label="Choose Extensions to Assign to Rooms" input-type="search" autocomplete="off" />
+                                :label="$t('Choose Extensions to Assign to Rooms')" input-type="search" autocomplete="off" />
 
                                 <GroupElement name="container_3" />
-                                <ButtonElement name="reset" button-label="Cancel" :secondary="true" :resets="true"
+                                <ButtonElement name="reset" :button-label="$t('Cancel')" :secondary="true" :resets="true"
                                     @click="emit('close')" :columns="{
                                         container: 6,
                                     }" />
-                                <ButtonElement name="submit" button-label="Add Rooms" :submits="true" align="right"
+                                <ButtonElement name="submit" :button-label="$t('Add Rooms')" :submits="true" align="right"
                                     :columns="{
                                         container: 6,
                                     }" />
@@ -74,6 +74,8 @@
 </template>
 
 <script setup>
+import { clearServerFormErrors } from '../../../composables/serverFormErrors.js';
+import { trans } from '@i18n';
 import { ref } from "vue";
 import { Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { XMarkIcon } from "@heroicons/vue/24/solid";
@@ -144,7 +146,7 @@ const handleError = (error, details, form$) => {
         case 'prepare':
             console.log(error) // Error object
 
-            form$.messageBag.append('Could not prepare form')
+            form$.messageBag.append(trans('Could not prepare form'))
             break
 
         // Error occured because response status is outside of 2xx
@@ -164,14 +166,14 @@ const handleError = (error, details, form$) => {
         case 'cancel':
             console.log(error) // Error object
 
-            form$.messageBag.append('Request cancelled')
+            form$.messageBag.append(trans('Request cancelled'))
             break
 
         // Some other errors happened (no response object)
         case 'other':
             console.log(error) // Error object
 
-            form$.messageBag.append('Couldn\'t submit form')
+            form$.messageBag.append(trans('Couldn\'t submit form'))
             break
     }
 }

@@ -5,29 +5,29 @@
         <!-- Header -->
         <header class="flex flex-wrap items-end justify-between gap-3">
             <div>
-                <p class="text-xs font-medium uppercase tracking-wider text-indigo-600">Global configuration</p>
-                <h1 class="mt-1 text-2xl font-semibold text-gray-900">Default Settings</h1>
-                <p class="mt-1 text-sm text-gray-500">Manage system-wide defaults. Each setting may be overridden per domain.</p>
+                <p class="text-xs font-medium uppercase tracking-wider text-indigo-600">{{ $t('Global configuration') }}</p>
+                <h1 class="mt-1 text-2xl font-semibold text-gray-900">{{ $t('Default Settings') }}</h1>
+                <p class="mt-1 text-sm text-gray-500">{{ $t('Manage system-wide defaults. Each setting may be overridden per domain.') }}</p>
             </div>
             <div class="flex flex-wrap gap-2">
                 <a v-if="permissions.domain_settings && routes.current_domain_settings" :href="routes.current_domain_settings" class="inline-flex items-center gap-1.5 rounded-md bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                    <BuildingOffice2Icon class="h-4 w-4" /> Domain Settings
+                    <BuildingOffice2Icon class="h-4 w-4" /> {{ $t('Domain Settings') }}
                 </a>
                 <button type="button" class="inline-flex items-center gap-1.5 rounded-md bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50" @click="reloadSettings">
-                    <ArrowPathIcon class="h-4 w-4" /> Reload
+                    <ArrowPathIcon class="h-4 w-4" /> {{ $t('Reload') }}
                 </button>
                 <button v-if="permissions.create" type="button" class="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500" @click="openEditor()">
-                    <PlusIcon class="h-4 w-4" /> New default
+                    <PlusIcon class="h-4 w-4" /> {{ $t('New default') }}
                 </button>
             </div>
         </header>
 
         <!-- Stats -->
         <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <StatTile label="Total defaults" :value="stats.total" tone="gray" />
-            <StatTile label="With overrides" :value="stats.withOverrides" tone="amber" />
-            <StatTile label="Enabled" :value="stats.enabled" tone="green" />
-            <StatTile label="Disabled" :value="stats.disabled" tone="rose" />
+            <StatTile :label="$t('Total defaults')" :value="stats.total" tone="gray" />
+            <StatTile :label="$t('With overrides')" :value="stats.withOverrides" tone="amber" />
+            <StatTile :label="$t('Enabled')" :value="stats.enabled" tone="green" />
+            <StatTile :label="$t('Disabled')" :value="stats.disabled" tone="rose" />
         </div>
 
         <!-- Two-column layout -->
@@ -37,39 +37,39 @@
                 <div class="rounded-lg bg-white p-3 shadow-sm ring-1 ring-gray-200">
                     <div class="relative mb-3">
                         <MagnifyingGlassIcon class="pointer-events-none absolute inset-y-0 left-3 h-4 w-4 my-auto text-gray-400" />
-                        <input v-model="filterData.search" type="text" placeholder="Search settings..." class="block w-full rounded-md border-0 py-1.5 pl-9 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600" />
+                        <input v-model="filterData.search" type="text" :placeholder="$t('Search settings...')" class="block w-full rounded-md border-0 py-1.5 pl-9 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600" />
                     </div>
 
                     <div class="mb-3 space-y-2">
                         <div>
-                            <label class="block text-xs font-medium text-gray-500">Status</label>
+                            <label class="block text-xs font-medium text-gray-500">{{ $t('Status') }}</label>
                             <select v-model="filterData.enabled" class="mt-1 block w-full rounded-md border-0 py-1.5 pl-2 pr-8 text-sm text-gray-900 ring-1 ring-inset ring-gray-300">
-                                <option value="all">Any status</option>
-                                <option value="true">Enabled</option>
-                                <option value="false">Disabled</option>
+                                <option value="all">{{ $t('Any status') }}</option>
+                                <option value="true">{{ $t('Enabled') }}</option>
+                                <option value="false">{{ $t('Disabled') }}</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-gray-500">Overrides</label>
+                            <label class="block text-xs font-medium text-gray-500">{{ $t('Overrides') }}</label>
                             <select v-model="filterData.overrides" class="mt-1 block w-full rounded-md border-0 py-1.5 pl-2 pr-8 text-sm text-gray-900 ring-1 ring-inset ring-gray-300">
-                                <option value="all">Any</option>
-                                <option value="with">Has overrides</option>
-                                <option value="without">No overrides</option>
+                                <option value="all">{{ $t('Any') }}</option>
+                                <option value="with">{{ $t('Has overrides') }}</option>
+                                <option value="without">{{ $t('No overrides') }}</option>
                             </select>
                         </div>
                     </div>
 
-                    <p class="px-1 pb-1 text-xs font-medium uppercase tracking-wider text-gray-400">Categories</p>
+                    <p class="px-1 pb-1 text-xs font-medium uppercase tracking-wider text-gray-400">{{ $t('Categories') }}</p>
                     <nav class="max-h-[60vh] space-y-0.5 overflow-y-auto">
                         <button type="button" :class="categoryButtonClass('')" @click="selectedCategory = ''">
-                            <span class="min-w-0 flex-1 truncate">All</span>
+                            <span class="min-w-0 flex-1 truncate">{{ $t('All') }}</span>
                             <span :class="categoryBadgeClass('')">{{ filteredRows.length }}</span>
                         </button>
                         <button v-for="cat in categoriesWithCounts" :key="cat.value" type="button" :class="categoryButtonClass(cat.value)" @click="selectedCategory = cat.value">
                             <span class="min-w-0 flex-1 truncate">{{ cat.label }}</span>
                             <span :class="categoryBadgeClass(cat.value)">{{ cat.count }}</span>
                         </button>
-                        <p v-if="!categoriesWithCounts.length" class="px-3 py-2 text-xs text-gray-400">No matching categories</p>
+                        <p v-if="!categoriesWithCounts.length" class="px-3 py-2 text-xs text-gray-400">{{ $t('No matching categories') }}</p>
                     </nav>
                 </div>
             </aside>
@@ -80,17 +80,17 @@
                     <header class="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 px-4 py-3">
                         <div>
                             <h2 class="text-base font-semibold text-gray-900">{{ selectedCategoryLabel }}</h2>
-                            <p class="text-xs text-gray-500">{{ displayedRows.length }} setting{{ displayedRows.length === 1 ? '' : 's' }} shown</p>
+                            <p class="text-xs text-gray-500">{{ $tChoice('{1} :count setting shown|[0,*] :count settings shown', displayedRows.length) }}</p>
                         </div>
                         <div class="flex items-center gap-2">
                             <button v-if="displayedRows.length" type="button" class="text-xs text-gray-500 hover:text-gray-900" @click="toggleSelectAllVisible">
-                                {{ allVisibleSelected ? 'Clear selection' : 'Select visible' }}
+                                {{ allVisibleSelected ? $t('Clear selection') : $t('Select visible') }}
                             </button>
                             <div v-if="selectedItems.length" class="flex items-center gap-1 rounded-md bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700">
-                                <span>{{ selectedItems.length }} selected</span>
-                                <button v-if="permissions.update" type="button" class="rounded px-1.5 py-0.5 hover:bg-indigo-100" @click="handleBulkActionRequest('bulk_toggle')">Toggle</button>
-                                <button v-if="permissions.destroy" type="button" class="rounded px-1.5 py-0.5 hover:bg-indigo-100" @click="handleBulkActionRequest('bulk_delete')">Delete</button>
-                                <button v-if="permissions.copy_to_domain" type="button" class="rounded px-1.5 py-0.5 hover:bg-indigo-100" @click="handleBulkActionRequest('bulk_copy')">Copy to domain</button>
+                                <span>{{ $t(':count selected', { count: selectedItems.length }) }}</span>
+                                <button v-if="permissions.update" type="button" class="rounded px-1.5 py-0.5 hover:bg-indigo-100" @click="handleBulkActionRequest('bulk_toggle')">{{ $t('Toggle') }}</button>
+                                <button v-if="permissions.destroy" type="button" class="rounded px-1.5 py-0.5 hover:bg-indigo-100" @click="handleBulkActionRequest('bulk_delete')">{{ $t('Delete') }}</button>
+                                <button v-if="permissions.copy_to_domain" type="button" class="rounded px-1.5 py-0.5 hover:bg-indigo-100" @click="handleBulkActionRequest('bulk_copy')">{{ $t('Copy to domain') }}</button>
                             </div>
                         </div>
                     </header>
@@ -106,7 +106,7 @@
                             <div class="min-w-0 flex-1">
                                 <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
                                     <h3 class="text-sm font-semibold text-gray-900">{{ formatLabel(row.subcategory) }}</h3>
-                                    <button type="button" class="inline-flex items-center rounded-md bg-indigo-50 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-indigo-700 ring-1 ring-inset ring-indigo-600/20 hover:bg-indigo-100" :title="`Filter by ${row.category_label}`" @click="selectedCategory = row.category">{{ row.category_label }}</button>
+                                    <button type="button" class="inline-flex items-center rounded-md bg-indigo-50 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-indigo-700 ring-1 ring-inset ring-indigo-600/20 hover:bg-indigo-100" :title="$t('Filter by :category', { category: row.category_label })" @click="selectedCategory = row.category">{{ row.category_label }}</button>
                                     <span class="font-mono text-xs text-gray-400">{{ row.subcategory }}</span>
                                     <span class="text-xs text-gray-300">·</span>
                                     <span class="text-xs text-gray-500">{{ row.type_label }}</span>
@@ -115,38 +115,38 @@
 
                                 <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
                                     <div class="grid min-w-0 max-w-full grid-cols-[auto,minmax(0,1fr)] items-center gap-1.5">
-                                        <span class="shrink-0 text-xs text-gray-400">Value</span>
-                                        <button v-if="hasCopyableValue(row.value)" type="button" class="min-w-0 max-w-full text-left" :title="valueTitle(row.value, row.is_secret)" aria-label="Copy value" @click.stop="copyValue(row.value)">
+                                        <span class="shrink-0 text-xs text-gray-400">{{ $t('Value') }}</span>
+                                        <button v-if="hasCopyableValue(row.value)" type="button" class="min-w-0 max-w-full text-left" :title="valueTitle(row.value, row.is_secret)" :aria-label="$t('Copy value')" @click.stop="copyValue(row.value)">
                                             <code class="block max-w-full truncate rounded bg-gray-100 px-2 py-0.5 font-mono text-xs text-gray-800 ring-1 ring-transparent transition hover:bg-gray-200 hover:ring-gray-300">{{ truncatedValue(row.value, row.is_secret) }}</code>
                                         </button>
                                         <code v-else class="block max-w-full truncate rounded bg-gray-100 px-2 py-0.5 font-mono text-xs text-gray-400">{{ truncatedValue(row.value, row.is_secret) }}</code>
                                     </div>
                                     <button v-if="row.override_count > 0" type="button" class="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20 hover:bg-amber-100" @click="showAffectedDomains(row)">
                                         <UsersIcon class="h-3 w-3" />
-                                        {{ row.override_count }} override{{ row.override_count === 1 ? '' : 's' }}
+                                        {{ $tChoice('{1} :count override|[0,*] :count overrides', row.override_count) }}
                                     </button>
                                 </div>
                             </div>
 
                             <div class="flex shrink-0 items-center gap-2">
-                                <button v-if="permissions.update" type="button" :class="statusClass(row)" :title="row.enabled ? 'Disable setting' : 'Enable setting'" @click="toggleStatus(row)">
+                                <button v-if="permissions.update" type="button" :class="statusClass(row)" :title="row.enabled ? $t('Disable setting') : $t('Enable setting')" @click="toggleStatus(row)">
                                     <span :class="['mr-1 inline-block h-1.5 w-1.5 rounded-full', row.enabled ? 'bg-green-500' : 'bg-rose-500']" />
-                                    {{ row.enabled ? 'Enabled' : 'Disabled' }}
+                                    {{ row.enabled ? $t('Enabled') : $t('Disabled') }}
                                 </button>
                                 <span v-else :class="statusClass(row)">
                                     <span :class="['mr-1 inline-block h-1.5 w-1.5 rounded-full', row.enabled ? 'bg-green-500' : 'bg-rose-500']" />
-                                    {{ row.enabled ? 'Enabled' : 'Disabled' }}
+                                    {{ row.enabled ? $t('Enabled') : $t('Disabled') }}
                                 </span>
-                                <button v-if="permissions.update" type="button" class="rounded-md px-2 py-1 text-xs font-medium text-indigo-600 hover:bg-indigo-50" @click="openEditor(row)">Edit</button>
-                                <button v-if="permissions.destroy" type="button" class="rounded-md px-2 py-1 text-xs font-medium text-rose-600 hover:bg-rose-50" @click="confirmDelete([row.default_setting_uuid])">Delete</button>
+                                <button v-if="permissions.update" type="button" class="rounded-md px-2 py-1 text-xs font-medium text-indigo-600 hover:bg-indigo-50" @click="openEditor(row)">{{ $t('Edit') }}</button>
+                                <button v-if="permissions.destroy" type="button" class="rounded-md px-2 py-1 text-xs font-medium text-rose-600 hover:bg-rose-50" @click="confirmDelete([row.default_setting_uuid])">{{ $t('Delete') }}</button>
                             </div>
                         </li>
                     </ul>
 
                     <div v-else class="px-4 py-12 text-center">
-                        <p class="text-sm font-medium text-gray-900">No settings match your filters</p>
-                        <p class="mt-1 text-xs text-gray-500">Try clearing search or status filters.</p>
-                        <button type="button" class="mt-3 rounded-md bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50" @click="handleFiltersReset">Reset filters</button>
+                        <p class="text-sm font-medium text-gray-900">{{ $t('No settings match your filters') }}</p>
+                        <p class="mt-1 text-xs text-gray-500">{{ $t('Try clearing search or status filters.') }}</p>
+                        <button type="button" class="mt-3 rounded-md bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50" @click="handleFiltersReset">{{ $t('Reset filters') }}</button>
                     </div>
                 </div>
             </section>
@@ -156,45 +156,47 @@
     <SettingsEditModal :show="showEditor" mode="default" :item="editorItem" :types="options.types" :categories="options.categories" :route="editorRoute"
         :loading="editorLoading" @close="showEditor = false" @success="handleModalSuccess" @error="handleErrorResponse" />
 
-    <AddEditItemModal :show="showCopyModal" header="Copy Defaults To Domain" @close="showCopyModal = false">
+    <AddEditItemModal :show="showCopyModal" :header="$t('Copy Defaults To Domain')" @close="showCopyModal = false">
         <template #modal-body>
-            <Vueform :endpoint="submitCopyForm" @success="handleCopySuccess" @error="handleErrorResponse" :display-errors="false">
+            <Vueform :endpoint="submitCopyForm" @success="handleCopySuccess" @error="handleErrorResponse" :display-errors="false" @mounted="(form) => form.disableValidation()" @submit="clearServerFormErrors" @response="showServerFormErrors">
                 <template #empty>
                     <FormElements>
-                        <SelectElement name="target_domain_uuid" label="Target domain" :items="options.domains"
-                            :native="false" :search="true" input-type="search" autocomplete="off" placeholder="Select domain"
+                        <SelectElement name="target_domain_uuid" :label="$t('Target domain')" :items="options.domains"
+                            :native="false" :search="true" input-type="search" autocomplete="off" :placeholder="$t('Select domain')"
                             :strict="false" :floating="false" />
-                        <ButtonElement name="submit" button-label="Copy" :submits="true" align="right" />
+                        <ButtonElement name="submit" :button-label="$t('Copy')" :submits="true" align="right" />
                     </FormElements>
                 </template>
             </Vueform>
         </template>
     </AddEditItemModal>
 
-    <AddEditItemModal :show="showAffectedModal" header="Affected Domains" @close="showAffectedModal = false">
+    <AddEditItemModal :show="showAffectedModal" :header="$t('Affected Domains')" @close="showAffectedModal = false">
         <template #modal-body>
             <div v-if="affectedDomains.length" class="divide-y divide-gray-200">
                 <div v-for="domain in affectedDomains" :key="domain.domain_setting_uuid" class="flex items-center justify-between py-3 text-sm">
                     <div>
                         <div class="font-medium text-gray-900">{{ domain.domain_description || domain.domain_name }}</div>
-                        <button v-if="hasCopyableValue(domain.value)" type="button" class="min-w-0 max-w-full text-left" :title="valueTitle(domain.value, affectedDomainsSecret)" aria-label="Copy value" @click.stop="copyValue(domain.value)">
+                        <button v-if="hasCopyableValue(domain.value)" type="button" class="min-w-0 max-w-full text-left" :title="valueTitle(domain.value, affectedDomainsSecret)" :aria-label="$t('Copy value')" @click.stop="copyValue(domain.value)">
                             <code class="block max-w-full truncate rounded bg-gray-50 px-1.5 py-0.5 font-mono text-xs text-gray-500 ring-1 ring-transparent transition hover:bg-gray-100 hover:ring-gray-300">{{ displayValue(domain.value, affectedDomainsSecret) }}</code>
                         </button>
                         <code v-else class="block max-w-full truncate rounded bg-gray-50 px-1.5 py-0.5 font-mono text-xs text-gray-400">{{ displayValue(domain.value, affectedDomainsSecret) }}</code>
                     </div>
-                    <a :href="routes.domain_settings.replace('__DOMAIN__', domain.domain_uuid)" class="rounded-md px-2 py-1 text-indigo-600 hover:bg-indigo-50">Open</a>
+                    <a :href="routes.domain_settings.replace('__DOMAIN__', domain.domain_uuid)" class="rounded-md px-2 py-1 text-indigo-600 hover:bg-indigo-50">{{ $t('Open') }}</a>
                 </div>
             </div>
-            <div v-else class="py-4 text-sm text-gray-500">No affected domains.</div>
+            <div v-else class="py-4 text-sm text-gray-500">{{ $t('No affected domains.') }}</div>
         </template>
     </AddEditItemModal>
 
-    <ConfirmationModal :show="showConfirmModal" header="Confirm Deletion" text="Selected default settings will be permanently deleted." confirm-button-label="Delete" cancel-button-label="Cancel" @close="showConfirmModal = false" @confirm="executeConfirmedAction" />
+    <ConfirmationModal :show="showConfirmModal" :header="$t('Confirm Deletion')" :text="$t('Selected default settings will be permanently deleted.')" :confirm-button-label="$t('Delete')" :cancel-button-label="$t('Cancel')" @close="showConfirmModal = false" @confirm="executeConfirmedAction" />
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages" @update:show="notificationShow = false" />
 </template>
 
 <script setup>
+import { clearServerFormErrors, showServerFormErrors } from '../composables/serverFormErrors.js';
+import { trans } from '@i18n';
 import { computed, h, onMounted, ref, watch } from 'vue'
 import axios from 'axios'
 import MainLayout from '../Layouts/MainLayout.vue'
@@ -289,7 +291,7 @@ const categoriesWithCounts = computed(() => {
         counts.set(key, (counts.get(key) || 0) + 1)
     }
     return Array.from(counts.entries())
-        .map(([value, count]) => ({ value, label: categoryLabelMap.value[value] || value || 'Uncategorized', count }))
+        .map(([value, count]) => ({ value, label: categoryLabelMap.value[value] || value || trans('Uncategorized'), count }))
         .sort((a, b) => a.label.localeCompare(b.label))
 })
 
@@ -308,7 +310,7 @@ const displayedRows = computed(() => {
 })
 
 const selectedCategoryLabel = computed(() => {
-    if (!selectedCategory.value) return 'All settings'
+    if (!selectedCategory.value) return trans('All settings')
     return categoryLabelMap.value[selectedCategory.value] || selectedCategory.value
 })
 
@@ -452,7 +454,7 @@ const showNotification = (type, messages) => {
 }
 
 const handleErrorResponse = (error) => {
-    showNotification('error', error?.response?.data?.messages || error?.response?.data?.errors || { error: ['Request failed.'] })
+    showNotification('error', error?.response?.data?.messages || error?.response?.data?.errors || { error: [trans('Request failed.')] })
 }
 
 const copyValue = async (value) => {
@@ -460,9 +462,9 @@ const copyValue = async (value) => {
 
     try {
         await writeClipboardText(value === null || value === undefined ? '' : String(value))
-        showNotification('success', { success: ['Value copied.'] })
+        showNotification('success', { success: [trans('Value copied.')] })
     } catch (error) {
-        showNotification('error', { error: ['Unable to copy value.'] })
+        showNotification('error', { error: [trans('Unable to copy value.')] })
     }
 }
 
@@ -510,8 +512,8 @@ const truncatedValue = (value, secret = false) => {
 }
 
 const valueTitle = (value, secret = false) => {
-    if (secret) return 'Copy value'
-    return fullValue(value, secret) || 'Copy value'
+    if (secret) return trans('Copy value')
+    return fullValue(value, secret) || trans('Copy value')
 }
 
 const formatLabel = (value) => {

@@ -15,8 +15,8 @@ class EmergencyCallNotificationEmail extends BaseMailable
     public function content(): Content
     {
         return $this->databaseTemplateContent(new Content(
-            view: 'emails.emergency.call',
-            text: 'emails.emergency.call-text',
+            view: 'emails.en-us.emergency.call',
+            text: 'emails.en-us.emergency.call-text',
         ));
     }
 }

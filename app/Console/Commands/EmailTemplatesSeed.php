@@ -5,15 +5,17 @@ namespace App\Console\Commands;
 use App\Models\EmailTemplate;
 use App\Services\EmailTemplateSourceService;
 use Illuminate\Console\Command;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use Symfony\Component\Console\Output\OutputInterface;
 
 class EmailTemplatesSeed extends Command
 {
     protected $signature = 'email:templates:seed
         {--dry-run : Show changes without writing them}
-        {--dedupe-only : Skip seeding and only run checksum-based dedupe}';
+        {--dedupe-only : Skip seeding and only remove identical defaults for the same purpose and language}';
 
     protected $description = 'Seed locked default email templates from existing Laravel email views';
 
@@ -34,7 +36,11 @@ class EmailTemplatesSeed extends Command
                     $counts[$this->seedTemplate($definition, $dryRun)]++;
                 } catch (\Throwable $exception) {
                     $counts['failed']++;
-                    $this->error('['.$definition['template_key'].'] '.$exception->getMessage());
+                    // QueryException appends every SQL binding, including entire email bodies.
+                    $message = $exception instanceof QueryException
+                        ? Str::limit(Str::before($exception->getPrevious()?->getMessage() ?? 'Database query failed.', "\n"), 500)
+                        : $exception->getMessage();
+                    $this->error('['.$definition['template_key'].' | '.$definition['template_language'].'] '.$message);
                 }
             }
 
@@ -42,7 +48,9 @@ class EmailTemplatesSeed extends Command
         }
 
         [$removed, $repointed] = $this->runDedupe($dryRun);
-        $this->info("Dedupe complete. Removed duplicates: {$removed}, Re-pointed custom templates: {$repointed}.");
+        if ($removed > 0 || $this->option('dedupe-only')) {
+            $this->info("Dedupe complete. Removed duplicates: {$removed}, Re-pointed custom templates: {$repointed}.");
+        }
 
         return $counts['failed'] === 0 ? self::SUCCESS : self::FAILURE;
     }
@@ -65,7 +73,7 @@ class EmailTemplatesSeed extends Command
             ->first();
 
         if (! $existing) {
-            $this->line(($dryRun ? '[dry]' : '[seed]')." {$templateKey} @ {$definition['version']}");
+            $this->line(($dryRun ? '[dry]' : '[seed]')." {$templateKey} [{$language}] @ {$definition['version']}", null, OutputInterface::VERBOSITY_VERBOSE);
             if (! $dryRun) {
                 EmailTemplate::query()->create([
                     'email_template_uuid' => (string) Str::uuid(),
@@ -94,7 +102,7 @@ class EmailTemplatesSeed extends Command
         }
 
         if (hash_equals((string) $existing->checksum, $checksum)) {
-            $this->line("[skip] {$templateKey} @ {$definition['version']}");
+            $this->line("[skip] {$templateKey} [{$language}] @ {$definition['version']}", null, OutputInterface::VERBOSITY_VERBOSE);
 
             return 'skipped';
         }
@@ -105,7 +113,7 @@ class EmailTemplatesSeed extends Command
             );
         }
 
-        $this->line(($dryRun ? '[dry]' : '[update]')." {$templateKey} {$existing->version} -> {$definition['version']}");
+        $this->line(($dryRun ? '[dry]' : '[update]')." {$templateKey} [{$language}] {$existing->version} -> {$definition['version']}", null, OutputInterface::VERBOSITY_VERBOSE);
         if (! $dryRun) {
             $existing->forceFill([
                 'domain_uuid' => null,
@@ -133,20 +141,24 @@ class EmailTemplatesSeed extends Command
     private function runDedupe(bool $dryRun): array
     {
         $duplicateChecksums = DB::table('email_templates')
-            ->select('checksum')
+            ->select('template_key', 'template_language', 'checksum')
             ->where('template_type', 'default')
-            ->groupBy('checksum')
+            ->whereNotNull('checksum')
+            ->groupBy('template_key', 'template_language', 'checksum')
             ->havingRaw('COUNT(*) > 1')
-            ->pluck('checksum');
+            ->get();
 
         $removed = 0;
         $repointed = 0;
 
-        foreach ($duplicateChecksums as $checksum) {
+        foreach ($duplicateChecksums as $duplicate) {
             $templates = EmailTemplate::query()
                 ->where('template_type', 'default')
-                ->where('checksum', $checksum)
+                ->where('template_key', $duplicate->template_key)
+                ->where('template_language', $duplicate->template_language)
+                ->where('checksum', $duplicate->checksum)
                 ->orderBy('created_at')
+                ->orderBy('email_template_uuid')
                 ->get();
 
             if ($templates->count() < 2) {
@@ -161,10 +173,10 @@ class EmailTemplatesSeed extends Command
 
             $this->line(sprintf(
                 '[dedupe] checksum=%s keep=%s delete=%s',
-                substr((string) $checksum, 0, 12).'…',
+                substr((string) $duplicate->checksum, 0, 12).'…',
                 $keep->email_template_uuid,
                 implode(',', $duplicateUuids)
-            ));
+            ), null, OutputInterface::VERBOSITY_VERBOSE);
 
             if (! $dryRun) {
                 DB::transaction(function () use ($duplicateUuids, $keep, &$repointed, &$removed) {

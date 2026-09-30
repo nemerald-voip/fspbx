@@ -54,7 +54,7 @@ class DefaultSettingsController extends Controller
             ],
             'options' => [
                 'categories' => $this->settings->categories(),
-                'types' => SettingsManagementService::TYPE_OPTIONS,
+                'types' => SettingsManagementService::typeLabels(),
                 'domains' => $this->domainOptions(),
             ],
         ]);
@@ -63,7 +63,7 @@ class DefaultSettingsController extends Controller
     public function data(Request $request): JsonResponse
     {
         if (! userCheckPermission('default_setting_view')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $perPage = min(max((int) $request->input('per_page', 50), 1), 5000);
@@ -83,56 +83,56 @@ class DefaultSettingsController extends Controller
         $uuid = $request->input('itemUuid');
 
         if ($uuid && ! userCheckPermission('default_setting_edit')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         if (! $uuid && ! userCheckPermission('default_setting_add')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         return response()->json([
             'item' => $this->settings->defaultItem($uuid),
-            'types' => SettingsManagementService::TYPE_OPTIONS,
+            'types' => SettingsManagementService::typeLabels(),
         ]);
     }
 
     public function store(SaveDefaultSettingRequest $request): JsonResponse
     {
         if (! userCheckPermission('default_setting_add')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $this->settings->saveDefault($request->validated());
 
-        return response()->json(['messages' => ['success' => ['Default setting created.']]], 201);
+        return response()->json(['messages' => ['success' => [__('Default setting created.')]]], 201);
     }
 
     public function update(SaveDefaultSettingRequest $request, DefaultSettings $defaultSetting): JsonResponse
     {
         if (! userCheckPermission('default_setting_edit')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $this->settings->saveDefault($request->validated(), $defaultSetting);
 
-        return response()->json(['messages' => ['success' => ['Default setting updated.']]]);
+        return response()->json(['messages' => ['success' => [__('Default setting updated.')]]]);
     }
 
     public function destroy(DefaultSettings $defaultSetting): JsonResponse
     {
         if (! userCheckPermission('default_setting_delete')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $this->settings->deleteDefaults([$defaultSetting->default_setting_uuid]);
 
-        return response()->json(['messages' => ['success' => ['Default setting deleted.']]]);
+        return response()->json(['messages' => ['success' => [__('Default setting deleted.')]]]);
     }
 
     public function selectAll(Request $request): JsonResponse
     {
         if (! userCheckPermission('default_setting_view')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $items = collect($this->settings->defaultSettings($request->input('filter', []), $request->input('sort'), 1, 100000)->items())
@@ -141,54 +141,54 @@ class DefaultSettingsController extends Controller
 
         return response()->json([
             'items' => $items,
-            'messages' => ['success' => ['All matching default settings selected.']],
+            'messages' => ['success' => [__('All matching default settings selected.')]],
         ]);
     }
 
     public function bulkToggle(BulkSettingsActionRequest $request): JsonResponse
     {
         if (! userCheckPermission('default_setting_edit')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $count = $this->settings->toggleDefault($request->validated('items'));
 
-        return response()->json(['messages' => ['success' => ["Toggled {$count} default setting(s)."]]]);
+        return response()->json(['messages' => ['success' => [trans_choice('{1} Toggled :count default setting.|[0,*] Toggled :count default settings.', $count)]]]);
     }
 
     public function bulkDelete(BulkSettingsActionRequest $request): JsonResponse
     {
         if (! userCheckPermission('default_setting_delete')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $count = $this->settings->deleteDefaults($request->validated('items'));
 
-        return response()->json(['messages' => ['success' => ["Deleted {$count} default setting(s)."]]]);
+        return response()->json(['messages' => ['success' => [trans_choice('{1} Deleted :count default setting.|[0,*] Deleted :count default settings.', $count)]]]);
     }
 
     public function copyToDomain(BulkSettingsActionRequest $request): JsonResponse
     {
         if (! userCheckPermission('domain_select') || ! userCheckPermission('domain_setting_add')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $targetDomainUuid = (string) $request->input('target_domain_uuid');
         if (! $this->canAccessDomain($targetDomainUuid)) {
-            return response()->json(['messages' => ['error' => ['Domain access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Domain access denied.')]]], 403);
         }
 
         $targetDomain = Domain::query()->findOrFail($targetDomainUuid);
         $count = $this->settings->copyDefaultsToDomain($request->validated('items'), $targetDomain);
         $targetDomainLabel = $targetDomain->domain_description ?: $targetDomain->domain_name;
 
-        return response()->json(['messages' => ['success' => ["Copied {$count} setting(s) to {$targetDomainLabel}."]]]);
+        return response()->json(['messages' => ['success' => [trans_choice('{1} Copied :count setting to :domain.|[0,*] Copied :count settings to :domain.', $count, ['domain' => $targetDomainLabel])]]]);
     }
 
     public function affectedDomains(DefaultSettings $defaultSetting): JsonResponse
     {
         if (! userCheckPermission('default_setting_view')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         return response()->json(['domains' => $this->settings->affectedDomains($defaultSetting)]);
@@ -197,18 +197,18 @@ class DefaultSettingsController extends Controller
     public function reload(): JsonResponse
     {
         if (! userCheckPermission('default_setting_view')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         try {
             $this->settings->reloadSessionSettings();
 
-            return response()->json(['messages' => ['success' => ['Settings reloaded.']]]);
+            return response()->json(['messages' => ['success' => [__('Settings reloaded.')]]]);
         } catch (\Throwable $exception) {
             logger('DefaultSettingsController@reload error: ' . $exception->getMessage() . ' at ' . $exception->getFile() . ':' . $exception->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Unable to reload settings.']],
+                'messages' => ['error' => [__('Unable to reload settings.')]],
             ], 500);
         }
     }

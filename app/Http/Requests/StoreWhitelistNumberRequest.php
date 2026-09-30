@@ -36,7 +36,7 @@ class StoreWhitelistNumberRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'number.regex' => 'The number field must contain only digits.',
+            'number.regex' => __('The number field must contain only digits.'),
         ];
     }
 

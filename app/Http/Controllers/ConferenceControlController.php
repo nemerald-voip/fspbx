@@ -51,13 +51,13 @@ class ConferenceControlController extends Controller
 
         if ($itemUuid && ! userCheckPermission('conference_control_edit')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
         if (! $itemUuid && ! userCheckPermission('conference_control_add')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -107,7 +107,7 @@ class ConferenceControlController extends Controller
     {
         if (! userCheckPermission('conference_control_view')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -143,7 +143,7 @@ class ConferenceControlController extends Controller
     {
         if (! userCheckPermission('conference_control_view')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -154,7 +154,7 @@ class ConferenceControlController extends Controller
 
         return response()->json([
             'items' => $items,
-            'messages' => ['success' => ['All matching conference controls selected.']],
+            'messages' => ['success' => [__('All matching conference controls selected.')]],
         ]);
     }
 
@@ -162,7 +162,7 @@ class ConferenceControlController extends Controller
     {
         if (! userCheckPermission('conference_control_add')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -178,14 +178,14 @@ class ConferenceControlController extends Controller
             $control->save();
 
             return response()->json([
-                'messages' => ['success' => ['Conference control created successfully.']],
+                'messages' => ['success' => [__('Conference control created successfully.')]],
                 'conference_control_uuid' => $control->conference_control_uuid,
             ], 201);
         } catch (\Throwable $e) {
             logger('ConferenceControlController@store error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Failed to create conference control.']],
+                'messages' => ['error' => [__('Failed to create conference control.')]],
             ], 500);
         }
     }
@@ -194,7 +194,7 @@ class ConferenceControlController extends Controller
     {
         if (! userCheckPermission('conference_control_edit')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -207,13 +207,13 @@ class ConferenceControlController extends Controller
             $conference_control->save();
 
             return response()->json([
-                'messages' => ['success' => ['Conference control updated successfully.']],
+                'messages' => ['success' => [__('Conference control updated successfully.')]],
             ]);
         } catch (\Throwable $e) {
             logger('ConferenceControlController@update error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Failed to update conference control.']],
+                'messages' => ['error' => [__('Failed to update conference control.')]],
             ], 500);
         }
     }
@@ -222,7 +222,7 @@ class ConferenceControlController extends Controller
     {
         if (! userCheckPermission('conference_control_delete')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -236,13 +236,13 @@ class ConferenceControlController extends Controller
             });
 
             return response()->json([
-                'messages' => ['success' => ['Conference control deleted successfully.']],
+                'messages' => ['success' => [__('Conference control deleted successfully.')]],
             ]);
         } catch (\Throwable $e) {
             logger('ConferenceControlController@destroy error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Failed to delete conference control.']],
+                'messages' => ['error' => [__('Failed to delete conference control.')]],
             ], 500);
         }
     }
@@ -251,14 +251,14 @@ class ConferenceControlController extends Controller
     {
         if (! userCheckPermission('conference_control_delete')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
         $uuids = $this->validatedUuids($request);
         if (empty($uuids)) {
             return response()->json([
-                'messages' => ['error' => ['No conference controls selected.']],
+                'messages' => ['error' => [__('No conference controls selected.')]],
             ], 422);
         }
 
@@ -277,7 +277,7 @@ class ConferenceControlController extends Controller
         });
 
         return response()->json([
-            'messages' => ['success' => ["Deleted {$controls->count()} conference control(s)."]],
+            'messages' => ['success' => [trans_choice('{1} Deleted :count conference control.|[0,*] Deleted :count conference controls.', $controls->count())]],
         ]);
     }
 
@@ -285,14 +285,14 @@ class ConferenceControlController extends Controller
     {
         if (! userCheckPermission('conference_control_edit')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
         $uuids = $this->validatedUuids($request);
         if (empty($uuids)) {
             return response()->json([
-                'messages' => ['error' => ['No conference controls selected.']],
+                'messages' => ['error' => [__('No conference controls selected.')]],
             ], 422);
         }
 
@@ -308,7 +308,7 @@ class ConferenceControlController extends Controller
         }
 
         return response()->json([
-            'messages' => ['success' => ['Conference control status toggled.']],
+            'messages' => ['success' => [__('Conference control status toggled.')]],
         ]);
     }
 
@@ -316,14 +316,14 @@ class ConferenceControlController extends Controller
     {
         if (! userCheckPermission('conference_control_add')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
         $uuids = $this->validatedUuids($request);
         if (empty($uuids)) {
             return response()->json([
-                'messages' => ['error' => ['No conference controls selected.']],
+                'messages' => ['error' => [__('No conference controls selected.')]],
             ], 422);
         }
 
@@ -360,7 +360,7 @@ class ConferenceControlController extends Controller
         });
 
         return response()->json([
-            'messages' => ['success' => ["Copied {$controls->count()} conference control(s)."]],
+            'messages' => ['success' => [trans_choice('{1} Copied :count conference control.|[0,*] Copied :count conference controls.', $controls->count())]],
         ]);
     }
 
@@ -368,7 +368,7 @@ class ConferenceControlController extends Controller
     {
         if (! userCheckPermission('conference_control_detail_add')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -385,14 +385,14 @@ class ConferenceControlController extends Controller
             $detail->save();
 
             return response()->json([
-                'messages' => ['success' => ['Conference control detail created successfully.']],
+                'messages' => ['success' => [__('Conference control detail created successfully.')]],
                 'detail' => $this->serializeDetail($detail),
             ], 201);
         } catch (\Throwable $e) {
             logger('ConferenceControlController@storeDetail error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Failed to create conference control detail.']],
+                'messages' => ['error' => [__('Failed to create conference control detail.')]],
             ], 500);
         }
     }
@@ -401,7 +401,7 @@ class ConferenceControlController extends Controller
     {
         if (! userCheckPermission('conference_control_detail_edit')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -414,14 +414,14 @@ class ConferenceControlController extends Controller
             $conference_control_detail->save();
 
             return response()->json([
-                'messages' => ['success' => ['Conference control detail updated successfully.']],
+                'messages' => ['success' => [__('Conference control detail updated successfully.')]],
                 'detail' => $this->serializeDetail($conference_control_detail),
             ]);
         } catch (\Throwable $e) {
             logger('ConferenceControlController@updateDetail error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Failed to update conference control detail.']],
+                'messages' => ['error' => [__('Failed to update conference control detail.')]],
             ], 500);
         }
     }
@@ -430,7 +430,7 @@ class ConferenceControlController extends Controller
     {
         if (! userCheckPermission('conference_control_detail_delete')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -438,13 +438,13 @@ class ConferenceControlController extends Controller
             $conference_control_detail->delete();
 
             return response()->json([
-                'messages' => ['success' => ['Conference control detail deleted successfully.']],
+                'messages' => ['success' => [__('Conference control detail deleted successfully.')]],
             ]);
         } catch (\Throwable $e) {
             logger('ConferenceControlController@destroyDetail error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Failed to delete conference control detail.']],
+                'messages' => ['error' => [__('Failed to delete conference control detail.')]],
             ], 500);
         }
     }
@@ -453,14 +453,14 @@ class ConferenceControlController extends Controller
     {
         if (! userCheckPermission('conference_control_detail_delete')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
         $uuids = $this->validatedUuids($request);
         if (empty($uuids)) {
             return response()->json([
-                'messages' => ['error' => ['No conference control details selected.']],
+                'messages' => ['error' => [__('No conference control details selected.')]],
             ], 422);
         }
 
@@ -469,7 +469,7 @@ class ConferenceControlController extends Controller
             ->delete();
 
         return response()->json([
-            'messages' => ['success' => ["Deleted {$deleted} conference control detail(s)."]],
+            'messages' => ['success' => [trans_choice('{1} Deleted :count conference control detail.|[0,*] Deleted :count conference control details.', $deleted)]],
         ]);
     }
 
@@ -477,14 +477,14 @@ class ConferenceControlController extends Controller
     {
         if (! userCheckPermission('conference_control_detail_edit')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
         $uuids = $this->validatedUuids($request);
         if (empty($uuids)) {
             return response()->json([
-                'messages' => ['error' => ['No conference control details selected.']],
+                'messages' => ['error' => [__('No conference control details selected.')]],
             ], 422);
         }
 
@@ -500,7 +500,7 @@ class ConferenceControlController extends Controller
         }
 
         return response()->json([
-            'messages' => ['success' => ['Conference control detail status toggled.']],
+            'messages' => ['success' => [__('Conference control detail status toggled.')]],
         ]);
     }
 
@@ -510,6 +510,10 @@ class ConferenceControlController extends Controller
             'control_name' => ['required', 'string', 'max:255'],
             'control_enabled' => ['required', 'string', 'in:true,false'],
             'control_description' => ['nullable', 'string'],
+        ], \App\Support\Localization\ValidationMessages::common(), [
+            'control_name' => __('Name'),
+            'control_enabled' => __('Enabled'),
+            'control_description' => __('Description'),
         ]);
     }
 
@@ -535,6 +539,11 @@ class ConferenceControlController extends Controller
             'control_action' => ['required', 'string', 'max:255'],
             'control_data' => ['nullable', 'string', 'max:255'],
             'control_enabled' => ['required', 'string', 'in:true,false'],
+        ], \App\Support\Localization\ValidationMessages::common(), [
+            'control_digits' => __('Digits'),
+            'control_action' => __('Action'),
+            'control_data' => __('Data'),
+            'control_enabled' => __('Enabled'),
         ]);
     }
 

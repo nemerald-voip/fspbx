@@ -89,7 +89,15 @@
                                 {{ selectedMenu.menu_description }}
                             </p>
                         </div>
-                        <div class="flex items-center gap-2">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button
+                                v-if="permissions.menu_create"
+                                type="button"
+                                class="rounded-md bg-white px-2.5 py-1.5 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                                @click="openMenuEditor(selectedMenu, true)"
+                            >
+                                {{ $t('Copy Menu') }}
+                            </button>
                             <button
                                 v-if="permissions.menu_update"
                                 type="button"
@@ -291,6 +299,7 @@
     <MenuManagerMenuForm
         :show="showMenuEditor"
         :item="menuEditorItem"
+        :mode="menuEditorMode"
         :route="menuEditorRoute"
         :language-options="languageOptions"
         @close="showMenuEditor = false"
@@ -389,6 +398,7 @@ const itemSearch = ref('')
 const selectedItems = ref([])
 const showMenuEditor = ref(false)
 const menuEditorItem = ref({})
+const menuEditorMode = ref('create')
 const showItemEditor = ref(false)
 const itemEditorItem = ref({})
 const initialParentUuid = ref('')
@@ -513,11 +523,11 @@ const bulkGroupOperationOptions = computed(() => {
     return options
 })
 
-const menuEditorRoute = computed(() =>
-    menuEditorItem.value?.menu_uuid
-        ? routeFor(props.routes.update, { __MENU__: menuEditorItem.value.menu_uuid })
-        : props.routes.store
-)
+const menuEditorRoute = computed(() => {
+    if (menuEditorMode.value === 'create') return props.routes.store
+    const template = menuEditorMode.value === 'copy' ? props.routes.copy : props.routes.update
+    return routeFor(template, { __MENU__: menuEditorItem.value.menu_uuid })
+})
 
 const itemEditorRoute = computed(() => {
     const menuUuid = selectedMenu.value?.menu_uuid
@@ -580,7 +590,8 @@ async function fetchMenu(menuUuid) {
     }
 }
 
-function openMenuEditor(menu = null) {
+function openMenuEditor(menu = null, copy = false) {
+    menuEditorMode.value = copy ? 'copy' : (menu ? 'edit' : 'create')
     menuEditorItem.value = menu ? { ...menu } : {}
     showMenuEditor.value = true
 }
@@ -593,9 +604,14 @@ function openItemEditor(item = null, parentUuid = '') {
 
 async function handleMenuSaved(payload) {
     menuRows.value = payload.menus ?? menuRows.value
-    selectedMenuUuid.value = payload.menu?.menu_uuid ?? selectedMenuUuid.value
     showNotification('success', payload.messages)
-    if (selectedMenuUuid.value) await fetchMenu(selectedMenuUuid.value)
+    const menuUuid = payload.menu?.menu_uuid ?? selectedMenuUuid.value
+    if (menuUuid && menuUuid !== selectedMenuUuid.value) {
+        menuSearch.value = ''
+        await selectMenu(menuUuid)
+    } else if (menuUuid) {
+        await fetchMenu(menuUuid)
+    }
 }
 
 async function handleItemSaved(payload) {

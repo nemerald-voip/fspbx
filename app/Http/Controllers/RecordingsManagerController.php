@@ -47,11 +47,11 @@ class RecordingsManagerController extends Controller
                 'default_voice' => $openAiService->getDefaultVoice(),
                 'speeds' => $openAiService->getSpeeds(),
                 'phone_call_instructions' => [
-                    'Dial <strong>*732</strong> from your phone.',
-                    'Follow the prompts to record a new message.',
-                    'Refresh the list after saving if you do not see it immediately.',
+                    __('Dial <strong>*732</strong> from your phone.'),
+                    __('Follow the prompts to record a new message.'),
+                    __('Refresh the list after saving if you do not see it immediately.'),
                 ],
-                'sample_message' => 'Thank you for calling. Please listen carefully to the following message.',
+                'sample_message' => __('Thank you for calling. Please listen carefully to the following message.'),
             ],
         ]);
     }
@@ -60,7 +60,7 @@ class RecordingsManagerController extends Controller
     {
         if (! userCheckPermission('recording_view')) {
             return response()->json([
-                'errors' => ['auth' => ['Access denied.']],
+                'errors' => ['auth' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -82,7 +82,7 @@ class RecordingsManagerController extends Controller
     {
         if (! userCheckPermission('recording_view')) {
             return response()->json([
-                'errors' => ['auth' => ['Access denied.']],
+                'errors' => ['auth' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -98,7 +98,7 @@ class RecordingsManagerController extends Controller
     {
         if (! userCheckPermission('recording_delete')) {
             return response()->json([
-                'errors' => ['auth' => ['Access denied.']],
+                'errors' => ['auth' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -108,7 +108,7 @@ class RecordingsManagerController extends Controller
 
         if ($items->isEmpty()) {
             return response()->json([
-                'messages' => ['success' => ['No recordings were selected.']],
+                'messages' => ['success' => [__('No recordings were selected.')]],
             ]);
         }
 
@@ -124,7 +124,7 @@ class RecordingsManagerController extends Controller
         }
 
         return response()->json([
-            'messages' => ['success' => ['Selected recording(s) were deleted successfully.']],
+            'messages' => ['success' => [__('Selected recording(s) were deleted successfully.')]],
         ]);
     }
 

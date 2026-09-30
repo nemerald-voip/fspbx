@@ -144,12 +144,12 @@ class SwitchVariableService
     {
         try {
             if (! $this->syncVarsXml()) {
-                throw new \RuntimeException('Unable to write vars.xml. Check the switch conf directory setting.');
+                throw new \RuntimeException(__('Unable to write vars.xml. Check the switch conf directory setting.'));
             }
 
             $esl = app(FreeswitchEslService::class);
             if (! $esl->isConnected()) {
-                throw new \RuntimeException('FreeSWITCH event socket is unavailable.');
+                throw new \RuntimeException(__('FreeSWITCH event socket is unavailable.'));
             }
 
             $response = $esl->executeCommand('reloadxml');
@@ -157,7 +157,7 @@ class SwitchVariableService
                 throw new \RuntimeException(
                     is_string($response) && trim($response) !== ''
                         ? 'FreeSWITCH reloadxml: ' . trim($response)
-                        : 'FreeSWITCH XML reload was not confirmed.'
+                        : __('FreeSWITCH XML reload was not confirmed.')
                 );
             }
         } catch (\Throwable $exception) {
@@ -242,7 +242,11 @@ class SwitchVariableService
             'name' => $variable->var_name,
             'value' => $variable->var_value,
             'command' => $variable->var_command ?: 'set',
-            'command_label' => self::COMMAND_OPTIONS[$variable->var_command ?: 'set'] ?? ucfirst((string) $variable->var_command),
+            'command_label' => match ($variable->var_command ?: 'set') {
+                'set' => __('Set'),
+                'exec-set' => __('Exec Set'),
+                default => ucfirst((string) $variable->var_command),
+            },
             'hostname' => $variable->var_hostname,
             'enabled' => $this->boolValue($variable->var_enabled),
             'description' => $variable->var_description,
@@ -343,7 +347,7 @@ class SwitchVariableService
     private function formatCategory(string $category): string
     {
         if ($category === '') {
-            return 'Uncategorized';
+            return __('Uncategorized');
         }
 
         return Str::of($category)->replace(['_', '-'], ' ')->title()->toString();

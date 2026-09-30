@@ -143,7 +143,7 @@ class RecordingService
         $directory = dirname($targetPath);
 
         if (! is_dir($directory) && ! mkdir($directory, 0775, true) && ! is_dir($directory)) {
-            throw new RuntimeException('Unable to create the recording directory.');
+            throw new RuntimeException(__('Unable to create the recording directory.'));
         }
 
         $temporaryPath = $directory.'/.'.basename($targetPath).'.'.bin2hex(random_bytes(8)).'.tmp.wav';
@@ -156,11 +156,11 @@ class RecordingService
             ]);
 
             if (! $result->successful() || ! is_file($temporaryPath) || filesize($temporaryPath) === 0) {
-                throw new RuntimeException('The uploaded audio could not be converted to a valid recording.');
+                throw new RuntimeException(__('The uploaded audio could not be converted to a valid recording.'));
             }
 
             if (! rename($temporaryPath, $targetPath)) {
-                throw new RuntimeException('The recording could not be updated.');
+                throw new RuntimeException(__('The recording could not be updated.'));
             }
 
             clearstatcache(true, $targetPath);

@@ -23,7 +23,7 @@
                                 <button type="button"
                                     class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                     @click="emit('close')">
-                                    <span class="sr-only">Close</span>
+                                    <span class="sr-only">{{ $t('Close') }}</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
@@ -37,18 +37,18 @@
                                         <path class="opacity-75" fill="currentColor"
                                             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                     </svg>
-                                    <div class="text-lg text-blue-600 m-auto">Loading...</div>
+                                    <div class="text-lg text-blue-600 m-auto">{{ $t('Loading...') }}</div>
                                 </div>
                             </div>
 
-                            <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
+                            <Vueform @mounted="(form) => form.disableValidation()" @submit="clearServerFormErrors" v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
                                 @error="handleError" @response="handleResponse" :display-errors="false"
                                 :default="defaultValues">
                                 <template #empty>
                                     <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
                                         <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
                                             <FormTabs view="vertical">
-                                                <FormTab name="settings" label="Settings" :elements="[
+                                                <FormTab name="settings" :label="$t('Settings')" :elements="[
                                                     'conference_uuid',
                                                     'conference_uuid_clean',
                                                     'settings_header',
@@ -61,7 +61,7 @@
                                                     'button_container',
                                                     'settings_submit',
                                                 ]" />
-                                                <FormTab name="advanced" label="Advanced" :elements="[
+                                                <FormTab name="advanced" :label="$t('Advanced')" :elements="[
                                                     'advanced_header',
                                                     'conference_order',
                                                     'conference_flags',
@@ -78,14 +78,14 @@
                                             <FormElements>
                                                 <HiddenElement name="conference_uuid" :meta="true" />
 
-                                                <StaticElement name="settings_header" tag="h4" content="Conference Settings"
-                                                    description="Configure the dialed extension, profile, PIN, and dialplan state." />
+                                                <StaticElement name="settings_header" tag="h4" :content="$t('Conference Settings')"
+                                                    :description="$t('Configure the dialed extension, profile, PIN, and dialplan state.')" />
 
                                                 <StaticElement name="conference_uuid_clean"
                                                     :conditions="[() => props.options?.item?.conference_uuid]">
                                                     <div class="mb-1">
                                                         <div class="text-sm font-medium text-gray-600 mb-1">
-                                                            Unique ID
+                                                            {{ $t('Unique ID') }}
                                                         </div>
 
                                                         <div class="flex items-center group">
@@ -96,7 +96,7 @@
                                                             <button type="button"
                                                                 @click="handleCopyToClipboard(props.options?.item?.conference_uuid)"
                                                                 class="ml-2 p-1 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
-                                                                title="Copy to clipboard">
+                                                                :title="$t('Copy to clipboard')">
                                                                 <ClipboardDocumentIcon
                                                                     class="h-4 w-4 text-gray-500 hover:text-gray-900 cursor-pointer" />
                                                             </button>
@@ -104,58 +104,58 @@
                                                     </div>
                                                 </StaticElement>
 
-                                                <TextElement name="conference_name" label="Name"
-                                                    placeholder="Conference name" :floating="false"
+                                                <TextElement name="conference_name" :label="$t('Name')"
+                                                    :placeholder="$t('Conference name')" :floating="false"
                                                     :columns="{ sm: { container: 6 } }" />
 
-                                                <ToggleElement name="conference_enabled" text="Conference Enabled"
+                                                <ToggleElement name="conference_enabled" :text="$t('Conference Enabled')"
                                                     true-value="true" false-value="false" :labels="{ on: 'On', off: 'Off' }"
                                                     :columns="{ sm: { container: 6 } }" label="&nbsp;" />
 
-                                                <TextElement name="conference_extension" label="Extension"
-                                                    placeholder="Extension callers dial" :floating="false"
+                                                <TextElement name="conference_extension" :label="$t('Extension')"
+                                                    :placeholder="$t('Extension callers dial')" :floating="false"
                                                     :columns="{ sm: { container: 6 } }" />
 
-                                                <SelectElement name="conference_profile" label="Profile" :items="profiles"
+                                                <SelectElement name="conference_profile" :label="$t('Profile')" :items="profiles"
                                                     :search="true" :native="false" input-type="search"
-                                                    placeholder="Conference profile" :floating="false"
+                                                    :placeholder="$t('Conference profile')" :floating="false"
                                                     :columns="{ sm: { container: 6 } }" />
 
-                                                <TextElement name="conference_pin_number" label="PIN Number"
-                                                    placeholder="Optional PIN" :floating="false"
+                                                <TextElement name="conference_pin_number" :label="$t('PIN Number')"
+                                                    :placeholder="$t('Optional PIN')" :floating="false"
                                                     :columns="{ sm: { container: 6 } }" />
 
-                                                <TextareaElement name="conference_description" label="Description"
+                                                <TextareaElement name="conference_description" :label="$t('Description')"
                                                     :rows="2" />
 
                                                 <GroupElement name="button_container" />
 
-                                                <ButtonElement name="settings_submit" button-label="Save"
+                                                <ButtonElement name="settings_submit" :button-label="$t('Save')"
                                                     :submits="true" align="right" />
 
-                                                <StaticElement name="advanced_header" tag="h4" content="Advanced Settings"
-                                                    description="Optional conference order, conference flags, and billing fields." />
+                                                <StaticElement name="advanced_header" tag="h4" :content="$t('Advanced Settings')"
+                                                    :description="$t('Optional conference order, conference flags, and billing fields.')" />
 
-                                                <SelectElement name="conference_order" label="Order" :items="orderOptions"
+                                                <SelectElement name="conference_order" :label="$t('Order')" :items="orderOptions"
                                                     :search="true" :native="false" input-type="search"
                                                     :floating="false" :columns="{ sm: { container: 6 } }" />
 
-                                                <TextElement name="conference_flags" label="Flags"
+                                                <TextElement name="conference_flags" :label="$t('Flags')"
                                                     placeholder="mute|deaf|waste|moderator" :floating="false"
                                                     :columns="{ sm: { container: 6 } }" />
 
-                                                <TextElement name="conference_email_address" label="Email Address"
+                                                <TextElement name="conference_email_address" :label="$t('Email Address')"
                                                     input-type="email" :floating="false"
                                                     :conditions="[() => permissions.email_address]"
                                                     :columns="{ sm: { container: 6 } }" />
 
-                                                <TextElement name="conference_account_code" label="Account Code"
+                                                <TextElement name="conference_account_code" :label="$t('Account Code')"
                                                     :floating="false" :conditions="[() => permissions.account_code]"
                                                     :columns="{ sm: { container: 6 } }" />
 
                                                 <GroupElement name="advanced_button_container" />
 
-                                                <ButtonElement name="advanced_submit" button-label="Save"
+                                                <ButtonElement name="advanced_submit" :button-label="$t('Save')"
                                                     :submits="true" align="right" />
                                             </FormElements>
                                         </div>
@@ -171,6 +171,8 @@
 </template>
 
 <script setup>
+import { clearServerFormErrors } from '../../../composables/serverFormErrors.js';
+import { trans } from '@i18n';
 import { computed, ref } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from "@headlessui/vue";
 import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
@@ -182,7 +184,7 @@ const props = defineProps({
     loading: Boolean,
     header: {
         type: String,
-        default: "Conference",
+        default: () => trans('Conference'),
     },
     mode: {
         type: String,
@@ -218,9 +220,9 @@ const orderOptions = Array.from({ length: 1000 }, (_, index) => ({
 
 const handleCopyToClipboard = (text) => {
     navigator.clipboard.writeText(text).then(() => {
-        emit("success", "success", { message: ["Copied to clipboard."] });
+        emit("success", "success", { message: [trans('Copied to clipboard.')] });
     }).catch(() => {
-        emit("error", { response: { data: { errors: { request: ["Failed to copy to clipboard."] } } } });
+        emit("error", { response: { data: { errors: { request: [trans('Failed to copy to clipboard.')] } } } });
     });
 };
 
@@ -275,6 +277,6 @@ const handleError = (error, details, form$) => {
         return;
     }
 
-    form$.messageBag.append("Could not submit form");
+    form$.messageBag.append(trans('Could not submit form'));
 };
 </script>

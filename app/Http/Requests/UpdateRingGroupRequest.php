@@ -2,10 +2,13 @@
 
 namespace App\Http\Requests;
 
+use App\Models\RingGroups;
 use App\Rules\UniqueExtension;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Http\FormRequest;
+use App\Rules\RoutingTarget;
+use App\Services\CallRoutingOptionsService;
 
 class UpdateRingGroupRequest extends FormRequest
 {
@@ -16,13 +19,16 @@ class UpdateRingGroupRequest extends FormRequest
      */
     public function authorize()
     {
-        return Auth::check();
+        if (!Auth::check() || !userCheckPermission('ring_group_edit')) {
+            return false;
+        }
+        return true;
     }
 
     public function rules(): array
     {
         return [
-            'ring_group_uuid'   => ['sometimes', 'required', 'uuid', 'exists:v_ring_groups,ring_group_uuid'],
+            'ring_group_uuid'   => ['sometimes', 'required', 'uuid', Rule::in([$this->route('ring_group')->getKey()])],
             'ring_group_name'              => ['sometimes', 'required', 'string', 'max:75'],
 
             'ring_group_extension' => [
@@ -62,28 +68,11 @@ class UpdateRingGroupRequest extends FormRequest
             'timeout_action' => [
                 'sometimes',
                 'required',
+                'string',
+                Rule::in(array_column((new CallRoutingOptionsService)->routingTypes, 'value')),
             ],
 
-            'timeout_target' => [
-                'sometimes',
-                function ($attribute, $value, $fail) {
-                    $action = $this->input('timeout_action');
-
-                    // if an action *needs* a target (i.e. it is NOT one of these),
-                    // then timeout_target cannot be empty
-                    if (
-                        $action
-                        && ! in_array($action, [
-                            'company_directory',
-                            'check_voicemail',
-                            'hangup',
-                        ], true)
-                        && empty($value)
-                    ) {
-                        $fail('A target must be provided when action is selected.');
-                    }
-                },
-            ],
+            'timeout_target' => [new RoutingTarget('timeout_action', byDestination: true)],
             // Optional prefixes & description
             'ring_group_cid_name_prefix'   => ['nullable', 'string', 'max:20'],
             'ring_group_cid_number_prefix' => ['nullable', 'string', 'max:20'],

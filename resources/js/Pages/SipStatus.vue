@@ -3,11 +3,11 @@
 
     <div class="m-3 space-y-6">
         <DataTable @search-action="handleSearch" @reset-filters="resetFilters">
-            <template #title>SIP Status</template>
+            <template #title>{{ $t('SIP Status') }}</template>
             <template #subtitle>
-                Current Sofia profiles, gateways, aliases, profile details, and switch status.
+                {{ $t('Current Sofia profiles, gateways, aliases, profile details, and switch status.') }}
                 <span v-if="statusData.generated_at" class="ml-2 text-gray-500">
-                    Updated {{ formatDate(statusData.generated_at) }}
+                    {{ $t('Updated') }} {{ formatDate(statusData.generated_at) }}
                 </span>
             </template>
 
@@ -20,7 +20,7 @@
                         v-model="filterData.search"
                         type="text"
                         class="block w-full rounded-md border-0 py-1.5 pl-10 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600"
-                        placeholder="Search"
+                        :placeholder="$t('Search')"
                         @keydown.enter="handleSearch"
                     />
                 </div>
@@ -36,7 +36,7 @@
                         @click="submitAction('cache-flush')"
                     >
                         <ArchiveBoxXMarkIcon class="h-4 w-4 text-gray-500" />
-                        Flush Cache
+                        {{ $t('Flush Cache') }}
                     </button>
                     <button
                         v-if="permissions.can_run_commands"
@@ -46,7 +46,7 @@
                         @click="submitAction('reloadacl')"
                     >
                         <ShieldCheckIcon class="h-4 w-4 text-gray-500" />
-                        Reload ACL
+                        {{ $t('Reload ACL') }}
                     </button>
                     <button
                         v-if="permissions.can_run_commands"
@@ -56,7 +56,7 @@
                         @click="submitAction('reloadxml')"
                     >
                         <CodeBracketIcon class="h-4 w-4 text-gray-500" />
-                        Reload XML
+                        {{ $t('Reload XML') }}
                     </button>
                     <button
                         type="button"
@@ -65,18 +65,18 @@
                         @click="fetchData"
                     >
                         <ArrowPathIcon class="h-4 w-4" :class="{ 'animate-spin': loading }" />
-                        Refresh
+                        {{ $t('Refresh') }}
                     </button>
                 </div>
             </template>
 
             <template #table-header>
                 <TableColumnHeader class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">
-                    Name
+                    {{ $t('Name') }}
                 </TableColumnHeader>
-                <TableColumnHeader header="Type" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Data" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="State" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t('Type')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t('Data')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t('State')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
             </template>
 
@@ -92,7 +92,7 @@
                         </a>
                         <span v-else class="font-medium text-gray-900">{{ row.name }}</span>
                     </TableField>
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.type" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="sipTypeLabel(row.type)" />
                     <TableField class="px-2 py-2 text-sm text-gray-500">
                         <span class="break-all">{{ row.data || '-' }}</span>
                     </TableField>
@@ -123,8 +123,8 @@
             <template #empty>
                 <div v-if="!loading && filteredSummary.length === 0" class="my-5 text-center">
                     <ServerStackIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No SIP status rows found</h3>
-                    <p class="mt-1 text-sm text-gray-500">Refresh the page or adjust your search.</p>
+                    <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ $t('No SIP status rows found') }}</h3>
+                    <p class="mt-1 text-sm text-gray-500">{{ $t('Refresh the page or adjust your search.') }}</p>
                 </div>
             </template>
 
@@ -136,7 +136,7 @@
         <section v-if="permissions.system_status_sofia_status_profile" class="px-4 sm:px-6 lg:px-8">
             <div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h2 class="text-lg font-semibold leading-6 text-gray-600">Sofia Status Profiles</h2>
+                    <h2 class="text-lg font-semibold leading-6 text-gray-600">{{ $t('Sofia Status Profiles') }}</h2>
                 </div>
                 <div class="flex gap-2">
                     <button
@@ -144,14 +144,14 @@
                         class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
                         @click="expandAllProfiles"
                     >
-                        Expand
+                        {{ $t('Expand') }}
                     </button>
                     <button
                         type="button"
                         class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
                         @click="collapseAllProfiles"
                     >
-                        Collapse
+                        {{ $t('Collapse') }}
                     </button>
                 </div>
             </div>
@@ -172,7 +172,7 @@
                             <ChevronRightIcon v-else class="h-5 w-5 flex-none text-gray-500" />
                             <span class="truncate">{{ profile.sip_profile_name }}</span>
                             <Badge
-                                :text="profile.state"
+                                :text="profile.state === 'running' ? $t('Running') : $t('Stopped')"
                                 :backgroundColor="statusColor(profile.state).backgroundColor"
                                 :textColor="statusColor(profile.state).textColor"
                                 :ringColor="statusColor(profile.state).ringColor"
@@ -187,13 +187,13 @@
                                 :disabled="actionLoading"
                                 @click="submitAction('flush_inbound_reg', { profile: profile.sip_profile_name })"
                             >
-                                Flush Registrations
+                                {{ $t('Flush Registrations') }}
                             </button>
                             <a
                                 :href="profile.registrations_url"
                                 class="rounded-md bg-white px-2 py-1 text-xs font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
                             >
-                                Registrations ({{ profile.registration_count }})
+                                {{ $t('Registrations (:count)', { count: profile.registration_count }) }}
                             </a>
                             <button
                                 v-if="permissions.can_run_commands && profile.state === 'stopped'"
@@ -202,7 +202,7 @@
                                 :disabled="actionLoading"
                                 @click="submitAction('start', { profile: profile.sip_profile_name })"
                             >
-                                Start
+                                {{ $t('Start') }}
                             </button>
                             <button
                                 v-if="permissions.can_run_commands && profile.state === 'running'"
@@ -211,7 +211,7 @@
                                 :disabled="actionLoading"
                                 @click="submitAction('stop', { profile: profile.sip_profile_name })"
                             >
-                                Stop
+                                {{ $t('Stop') }}
                             </button>
                             <button
                                 v-if="permissions.can_run_commands"
@@ -220,7 +220,7 @@
                                 :disabled="actionLoading"
                                 @click="submitAction('restart', { profile: profile.sip_profile_name })"
                             >
-                                Restart
+                                {{ $t('Restart') }}
                             </button>
                             <button
                                 v-if="permissions.can_run_commands"
@@ -229,7 +229,7 @@
                                 :disabled="actionLoading"
                                 @click="submitAction('rescan', { profile: profile.sip_profile_name })"
                             >
-                                Rescan
+                                {{ $t('Rescan') }}
                             </button>
                         </div>
                     </div>
@@ -261,7 +261,7 @@
                     class="flex w-full items-center justify-between px-4 py-3 text-left text-lg font-semibold leading-6 text-gray-600"
                     @click="showSwitchStatus = !showSwitchStatus"
                 >
-                    <span>Status</span>
+                    <span>{{ $t('Status') }}</span>
                     <ChevronDownIcon v-if="showSwitchStatus" class="h-5 w-5 text-gray-500" />
                     <ChevronRightIcon v-else class="h-5 w-5 text-gray-500" />
                 </button>
@@ -274,17 +274,15 @@
         <section v-if="permissions.can_manage_tls" class="px-4 sm:px-6 lg:px-8">
             <div class="overflow-hidden rounded-lg bg-white shadow ring-1 ring-black ring-opacity-5">
                 <div class="border-b border-gray-200 px-4 py-3">
-                    <h2 class="text-lg font-semibold leading-6 text-gray-600">TLS Certificate (Let's Encrypt)</h2>
+                    <h2 class="text-lg font-semibold leading-6 text-gray-600">{{ $t('TLS Certificate (Let\'s Encrypt)') }}</h2>
                     <p class="mt-1 text-sm text-gray-500">
-                        Issues a free Let's Encrypt certificate for FreeSWITCH (SIP-TLS / WSS), installs it to
-                        <code class="rounded bg-gray-100 px-1">/etc/freeswitch/tls/all.pem</code>, and hot-reloads it with
-                        <code class="rounded bg-gray-100 px-1">reloadcert</code> — no FreeSWITCH restart.
+                        {{ $t('Issues a free Let\'s Encrypt certificate for FreeSWITCH (SIP-TLS / WSS), installs it to :path, and reloads it with :command without restarting FreeSWITCH.', { path: '/etc/freeswitch/tls/all.pem', command: 'reloadcert' }) }}
                     </p>
                     <ul class="mt-2 list-disc space-y-0.5 pl-5 text-xs text-gray-500">
-                        <li><strong>Validation:</strong> HTTP-01 — a token is served on port 80 from the webroot below. Multiple hostnames (SANs) are supported for failover / dual-registration setups.</li>
-                        <li><strong>Phone trust:</strong> the issuing root CA is auto-pushed to Polycom phones (<code class="rounded bg-gray-100 px-1">customCaCert2</code>) so they trust the new cert after re-provisioning.</li>
-                        <li><strong>Renewal:</strong> auto-renews when under 30 days remain and emails the ACME account address on success and failure.</li>
-                        <li><strong>Multi-node:</strong> list the failover hostname first, then each node's direct hostname. The node the failover currently points to renews and replicates the cert to the other nodes (peers are auto-detected from the hostnames; each node skips itself). A failed replication fails the renewal so it retries — nodes never diverge.</li>
+                        <li><strong>{{ $t('Validation:') }}</strong> {{ $t('HTTP-01 — a token is served on port 80 from the webroot below. Multiple hostnames (SANs) are supported for failover / dual-registration setups.') }}</li>
+                        <li><strong>{{ $t('Phone trust:') }}</strong> {{ $t('The issuing root CA is automatically pushed to Polycom phones (:setting) so they trust the new certificate after provisioning.', { setting: 'customCaCert2' }) }}</li>
+                        <li><strong>{{ $t('Renewal:') }}</strong> {{ $t('auto-renews when under 30 days remain and emails the ACME account address on success and failure.') }}</li>
+                        <li><strong>{{ $t('Multi-node:') }}</strong> {{ $t('list the failover hostname first, then each node\'s direct hostname. The node the failover currently points to renews and replicates the cert to the other nodes (peers are auto-detected from the hostnames; each node skips itself). A failed replication fails the renewal so it retries — nodes never diverge.') }}</li>
                     </ul>
                 </div>
 
@@ -293,7 +291,7 @@
                     <div class="rounded-md bg-gray-50 p-3">
                         <div class="flex flex-wrap items-center gap-x-6 gap-y-1 text-sm">
                             <div class="flex items-center gap-2">
-                                <span class="font-medium text-gray-700">Status:</span>
+                                <span class="font-medium text-gray-700">{{ $t('Status:') }}</span>
                                 <Badge
                                     :text="tlsBadge.text"
                                     :backgroundColor="tlsBadge.backgroundColor"
@@ -302,108 +300,108 @@
                                 />
                             </div>
                             <div v-if="tlsCert.installed">
-                                <span class="font-medium text-gray-700">Issuer:</span>
+                                <span class="font-medium text-gray-700">{{ $t('Issuer:') }}</span>
                                 <span class="text-gray-600">{{ tlsCert.issuer || '-' }}</span>
                             </div>
                             <div v-if="tlsCert.installed">
-                                <span class="font-medium text-gray-700">Expires:</span>
+                                <span class="font-medium text-gray-700">{{ $t('Expires:') }}</span>
                                 <span class="text-gray-600">{{ formatDate(tlsCert.valid_to) }}</span>
                                 <span v-if="tlsCert.days_remaining !== null" class="text-gray-500">
-                                    ({{ tlsCert.days_remaining }} days)
+                                    ({{ $tChoice(':count day remaining|:count days remaining', tlsCert.days_remaining) }})
                                 </span>
                             </div>
                             <div v-if="tlsCert.domains && tlsCert.domains.length">
-                                <span class="font-medium text-gray-700">Domains:</span>
+                                <span class="font-medium text-gray-700">{{ $t('Domains:') }}</span>
                                 <span class="text-gray-600">{{ tlsCert.domains.join(', ') }}</span>
                             </div>
                             <div v-if="tlsCert.installed && tlsCert.serial">
-                                <span class="font-medium text-gray-700">Serial:</span>
+                                <span class="font-medium text-gray-700">{{ $t('Serial:') }}</span>
                                 <span class="break-all font-mono text-xs text-gray-600">{{ tlsCert.serial }}</span>
                             </div>
                         </div>
 
                         <!-- On-disk install integrity (all.pem + FreeSWITCH symlinks) -->
                         <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
-                            <span class="font-medium text-gray-700">Files:</span>
+                            <span class="font-medium text-gray-700">{{ $t('Files:') }}</span>
                             <span :class="tlsFiles.all_pem ? 'text-emerald-700' : 'text-red-600'">
-                                all.pem {{ tlsFiles.all_pem ? '✓' : '✗ missing' }}
+                                all.pem {{ tlsFiles.all_pem ? '✓' : $t('✗ missing') }}
                             </span>
                             <span :class="tlsFiles.links_ok ? 'text-emerald-700' : 'text-red-600'">
-                                symlinks {{ tlsFiles.links_ok ? '✓' : '✗' }}
+                                {{ $t('symlinks') }} {{ tlsFiles.links_ok ? '✓' : '✗' }}
                             </span>
                             <span v-if="!tlsFiles.links_ok" class="text-gray-500">
-                                ({{ brokenLinks.join(', ') || 'check /etc/freeswitch/tls' }})
+                                ({{ brokenLinks.join(', ') || $t('check /etc/freeswitch/tls') }})
                             </span>
-                            <span class="text-gray-500">Verify: <code class="rounded bg-gray-100 px-1">openssl x509 -in /etc/freeswitch/tls/all.pem -noout -issuer -serial -dates</code></span>
+                            <span class="text-gray-500">{{ $t('Verify:') }} <code class="rounded bg-gray-100 px-1">openssl x509 -in /etc/freeswitch/tls/all.pem -noout -issuer -serial -dates</code></span>
                         </div>
 
                         <p v-if="tlsConfig.last_issued" class="mt-2 text-xs text-gray-500">
-                            Last issued by FS PBX: {{ formatDate(tlsConfig.last_issued) }}
+                            {{ $t('Last issued by FS PBX:') }} {{ formatDate(tlsConfig.last_issued) }}
                         </p>
                         <p v-if="tlsConfig.last_revoked" class="mt-1 text-xs text-gray-500">
-                            Last revoked: {{ formatDate(tlsConfig.last_revoked) }}
+                            {{ $t('Last revoked:') }} {{ formatDate(tlsConfig.last_revoked) }}
                         </p>
                         <p v-if="tlsConfig.last_error" class="mt-2 text-xs text-red-600">
-                            Last error: {{ tlsConfig.last_error }}
+                            {{ $t('Last error:') }} {{ tlsConfig.last_error }}
                         </p>
                     </div>
 
                     <!-- Configuration -->
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div>
-                            <LabelInputRequired target="tls_domain" label="Hostnames (SANs)" />
+                            <LabelInputRequired target="tls_domain" :label="$t('Hostnames (SANs)')" />
                             <div class="mt-1">
                                 <InputField v-model="tlsConfig.domain" type="text" name="tls_domain"
                                     placeholder="pbx.example.com pbx01.example.com"
                                     autocomplete="off" :error="!!tlsErrors.domain" />
                             </div>
                             <p v-if="tlsErrors.domain" class="mt-1 text-xs text-red-600">{{ tlsErrors.domain[0] }}</p>
-                            <p v-else class="mt-1 text-xs text-gray-500">Space/comma separated. For a cluster, list the failover/proxy hostname <strong>first</strong> (used to pick the active node), then each node's direct hostname. Defaults to this server's app URL host.</p>
+                            <p v-else class="mt-1 text-xs text-gray-500">{{ $t('Separate hostnames with spaces or commas. For a cluster, list the failover/proxy hostname first to select the active node, then each node\'s direct hostname. Defaults to this server\'s app URL host.') }}</p>
                         </div>
                         <div>
-                            <LabelInputRequired target="tls_email" label="ACME account email" />
+                            <LabelInputRequired target="tls_email" :label="$t('ACME account email')" />
                             <div class="mt-1">
                                 <InputField v-model="tlsConfig.account_email" type="email" name="tls_email"
                                     placeholder="admin@example.com" autocomplete="off" :error="!!tlsErrors.account_email" />
                             </div>
                             <p v-if="tlsErrors.account_email" class="mt-1 text-xs text-red-600">{{ tlsErrors.account_email[0] }}</p>
-                            <p v-else class="mt-1 text-xs text-gray-500">Let's Encrypt account — also where renewal alert emails are sent.</p>
+                            <p v-else class="mt-1 text-xs text-gray-500">{{ $t('Let\'s Encrypt account — also where renewal alert emails are sent.') }}</p>
                         </div>
                         <div>
-                            <LabelInputRequired target="tls_webroot" label="ACME challenge webroot" />
+                            <LabelInputRequired target="tls_webroot" :label="$t('ACME challenge webroot')" />
                             <div class="mt-1">
                                 <InputField v-model="tlsConfig.webroot" type="text" name="tls_webroot"
                                     placeholder="/var/www/fspbx/public" autocomplete="off" :error="!!tlsErrors.webroot" />
                             </div>
                             <p v-if="tlsErrors.webroot" class="mt-1 text-xs text-red-600">{{ tlsErrors.webroot[0] }}</p>
-                            <p v-else class="mt-1 text-xs text-gray-500">Document root served on port 80; tokens are written under <code class="rounded bg-gray-100 px-1">/.well-known/acme-challenge/</code>. Defaults to the app's public dir.</p>
+                            <p v-else class="mt-1 text-xs text-gray-500">{{ $t('Document root served on port 80. Challenge tokens are written under :path. Defaults to the app\'s public directory.', { path: '/.well-known/acme-challenge/' }) }}</p>
                         </div>
                         <div class="flex flex-col justify-center gap-3">
-                            <Toggle v-model="tlsStaging" label="Use staging (test) directory" description="Avoid Let's Encrypt rate limits while testing. Staging certs are not trusted by clients." />
-                            <Toggle v-model="tlsAutoRenew" label="Auto-renew" description="Renew daily when under 30 days remain." />
+                            <Toggle v-model="tlsStaging" :label="$t('Use staging (test) directory')" :description="$t('Avoid Let\'s Encrypt rate limits while testing. Staging certs are not trusted by clients.')" />
+                            <Toggle v-model="tlsAutoRenew" :label="$t('Auto-renew')" :description="$t('Renew daily when under 30 days remain.')" />
                         </div>
                         <div>
-                            <LabelInputOptional target="tls_secret" label="Peer push secret" />
+                            <LabelInputOptional target="tls_secret" :label="$t('Peer push secret')" />
                             <div class="mt-1 flex items-stretch gap-2">
                                 <div class="flex-1">
                                     <InputField v-model="tlsConfig.push_secret" :type="showSecret ? 'text' : 'password'" name="tls_secret"
-                                        placeholder="shared key for node-to-node cert push" autocomplete="new-password" :error="!!tlsErrors.push_secret" />
+                                        :placeholder="$t('shared key for node-to-node cert push')" autocomplete="new-password" :error="!!tlsErrors.push_secret" />
                                 </div>
                                 <button type="button" @click="showSecret = !showSecret"
                                     class="inline-flex items-center rounded-md bg-white px-2 text-gray-500 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-                                    :title="showSecret ? 'Hide' : 'Reveal'">
+                                    :title="showSecret ? $t('Hide') : $t('Reveal')">
                                     <EyeSlashIcon v-if="showSecret" class="h-4 w-4" />
                                     <EyeIcon v-else class="h-4 w-4" />
                                 </button>
                                 <button type="button" @click="rotateSecret" :disabled="tlsLoading"
                                     class="inline-flex items-center gap-1 rounded-md bg-white px-2.5 text-xs font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50"
-                                    title="Generate a new secret">
+                                    :title="$t('Generate a new secret')">
                                     <ArrowPathIcon class="h-4 w-4" />
-                                    Rotate
+                                    {{ $t('Rotate') }}
                                 </button>
                             </div>
                             <p v-if="tlsErrors.push_secret" class="mt-1 text-xs text-red-600">{{ tlsErrors.push_secret[0] }}</p>
-                            <p v-else class="mt-1 text-xs text-gray-500">Required for multi-node — authorizes cert replication between nodes. Click Rotate to generate one.</p>
+                            <p v-else class="mt-1 text-xs text-gray-500">{{ $t('Required for multi-node — authorizes cert replication between nodes. Click Rotate to generate one.') }}</p>
                         </div>
                     </div>
 
@@ -418,11 +416,11 @@
                                     @click="confirmingRevoke = true"
                                 >
                                     <ShieldExclamationIcon class="h-4 w-4" />
-                                    Revoke
+                                    {{ $t('Revoke') }}
                                 </button>
                             </template>
                             <template v-else>
-                                <span class="text-sm text-gray-600">Revoke &amp; replace with self-signed?</span>
+                                <span class="text-sm text-gray-600">{{ $t('Revoke & replace with self-signed?') }}</span>
                                 <button
                                     type="button"
                                     class="inline-flex items-center gap-1.5 rounded-md bg-red-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-red-500 disabled:opacity-50"
@@ -430,7 +428,7 @@
                                     @click="revokeTls"
                                 >
                                     <ArrowPathIcon v-if="tlsLoading" class="h-4 w-4 animate-spin" />
-                                    Yes, revoke
+                                    {{ $t('Yes, revoke') }}
                                 </button>
                                 <button
                                     type="button"
@@ -438,7 +436,7 @@
                                     :disabled="tlsLoading"
                                     @click="confirmingRevoke = false"
                                 >
-                                    Cancel
+                                    {{ $t('Cancel') }}
                                 </button>
                             </template>
                         </div>
@@ -451,7 +449,7 @@
                                 :disabled="tlsLoading"
                                 @click="saveTlsConfig"
                             >
-                                Save settings
+                                {{ $t('Save settings') }}
                             </button>
                             <button
                                 type="button"
@@ -460,7 +458,7 @@
                                 @click="issueTls"
                             >
                                 <ArrowPathIcon class="h-4 w-4" :class="{ 'animate-spin': tlsLoading }" />
-                                {{ tlsCert.installed && tlsCert.is_lets_encrypt ? 'Renew now' : 'Issue certificate' }}
+                                {{ tlsCert.installed && tlsCert.is_lets_encrypt ? $t('Renew now') : $t('Issue certificate') }}
                             </button>
                         </div>
                     </div>
@@ -473,6 +471,7 @@
 </template>
 
 <script setup>
+import { trans, transChoice } from '@i18n';
 import { computed, onMounted, ref } from "vue";
 import axios from "axios";
 import MainLayout from "../Layouts/MainLayout.vue";
@@ -551,32 +550,38 @@ const tlsLoading = ref(false);
 
 const permissions = computed(() => props.permissions ?? {});
 
+const sipTypeLabel = (type) => ({
+    profile: trans('Profile'),
+    gateway: trans('Gateway'),
+    alias: trans('Alias'),
+})[String(type).toLowerCase()] ?? type;
+
 const tlsBadge = computed(() => {
     if (!tlsCert.value.installed) {
-        return { text: "No certificate", ...statusColor("stopped") };
+        return { text: trans('No certificate'), ...statusColor("stopped") };
     }
 
     const days = tlsCert.value.days_remaining;
 
     if (days !== null && days <= 0) {
-        return { text: "Expired", ...statusColor("fail") };
+        return { text: trans('Expired'), ...statusColor("fail") };
     }
 
     if (days !== null && days <= 14) {
-        return { text: `Expiring (${days}d)`, ...statusColor("warn") };
+        return { text: transChoice('Expiring (:count day)|Expiring (:count days)', days), ...statusColor("warn") };
     }
 
     if (tlsCert.value.is_lets_encrypt) {
         return tlsCert.value.is_staging
-            ? { text: "Active (Let's Encrypt staging)", ...statusColor("warn") }
-            : { text: "Active (Let's Encrypt)", ...statusColor("up") };
+            ? { text: trans('Active (Let\'s Encrypt staging)'), ...statusColor("warn") }
+            : { text: trans('Active (Let\'s Encrypt)'), ...statusColor("up") };
     }
 
     if (tlsCert.value.is_self_signed) {
-        return { text: "Self-signed", ...statusColor("warn") };
+        return { text: trans('Self-signed'), ...statusColor("warn") };
     }
 
-    return { text: "Active", ...statusColor("up") };
+    return { text: trans('Active'), ...statusColor("up") };
 });
 
 const filteredSummary = computed(() => {
@@ -660,7 +665,7 @@ const saveTlsConfig = () => {
             if (response.data.status) {
                 applyTlsStatus(response.data.status);
             }
-            showNotification("success", response.data.messages || { success: ["Settings saved."] });
+            showNotification("success", response.data.messages || { success: [trans('Settings saved.')] });
         })
         .catch((error) => {
             if (error?.response?.status === 422 && error.response.data?.errors) {
@@ -681,7 +686,7 @@ const rotateSecret = () => {
         .then((response) => {
             tlsConfig.value.push_secret = response.data.secret;
             showSecret.value = true;
-            showNotification("success", response.data.messages || { success: ["Peer push secret rotated and saved."] });
+            showNotification("success", response.data.messages || { success: [trans('Peer push secret rotated and saved.')] });
         })
         .catch(handleError)
         .finally(() => {
@@ -698,7 +703,7 @@ const issueTls = () => {
             if (response.data.status) {
                 applyTlsStatus(response.data.status);
             }
-            showNotification("success", response.data.messages || { success: ["Certificate issued."] });
+            showNotification("success", response.data.messages || { success: [trans('Certificate issued.')] });
         })
         .catch((error) => {
             if (error?.response?.status === 422 && error.response.data?.errors) {
@@ -721,7 +726,7 @@ const revokeTls = () => {
             if (response.data.status) {
                 applyTlsStatus(response.data.status);
             }
-            showNotification("success", response.data.messages || { success: ["Certificate revoked."] });
+            showNotification("success", response.data.messages || { success: [trans('Certificate revoked.')] });
         })
         .catch(handleError)
         .finally(() => {
@@ -753,7 +758,7 @@ const submitAction = (action, payload = {}) => {
 
     axios.post(props.routes.action, { action, ...payload })
         .then((response) => {
-            showNotification("success", response.data.messages || { success: ["Request successfully processed."] });
+            showNotification("success", response.data.messages || { success: [trans('Request successfully processed.')] });
             fetchData();
         })
         .catch(handleError)
@@ -861,7 +866,7 @@ const normalizeMessages = (error) => {
         return { request: [error.message] };
     }
 
-    return { request: ["An unexpected error occurred."] };
+    return { request: [trans('An unexpected error occurred.')] };
 };
 
 const formatDate = (value) => {

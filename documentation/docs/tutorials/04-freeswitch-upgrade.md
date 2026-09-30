@@ -1,20 +1,23 @@
 ---
 id: freeswitch-upgrade
-title: Upgrade or reinstall FreeSWITCH
+title: Upgrade FreeSWITCH
 slug: /freeswitch-upgrade/
 sidebar_position: 4
 ---
 
-# Upgrade or reinstall FreeSWITCH
+# Upgrade FreeSWITCH
 
-FS PBX application updates do not automatically upgrade FreeSWITCH. Follow this procedure when an FS PBX feature requires a newer FreeSWITCH version or when you need to reinstall the supported build.
+**This update installs FreeSWITCH 1.11.3.**
+
+FreeSWITCH is updated separately from FS PBX. You can upgrade directly from FreeSWITCH 1.10.12 or 1.11.1 using the steps below.
 
 ## Before you begin
 
-- Plan a maintenance window. Restarting FreeSWITCH interrupts active calls.
-- Make sure the server has internet access to download packages and source code.
-- Make sure FS PBX is on the version whose FreeSWITCH build you want to install. See [How to update FS PBX](03-updates.md).
-- Back up any manual changes under `/etc/freeswitch`.
+- [Update FS PBX](03-updates.md) first.
+- Use Debian 12 or 13, with internet access and sufficient free disk space for the update and backups.
+- Schedule the final restart for a maintenance window. It interrupts active calls.
+- Keep a full server backup or snapshot in case you need to restore the previous version.
+- Avoid changing FreeSWITCH settings while the update runs.
 
 ## 1. Check the running version
 
@@ -22,77 +25,40 @@ FS PBX application updates do not automatically upgrade FreeSWITCH. Follow this 
 sudo fs_cli -x version
 ```
 
-If you are upgrading for a feature that requires a minimum FreeSWITCH version, compare that requirement with the reported version. Stop here when the requirement is already met. Continue if an upgrade is required or if you need to reinstall the current supported build.
-
-## 2. Build and install FreeSWITCH
+## 2. Run the update script
 
 ```bash
 cd /var/www/fspbx
 sudo bash install/install_freeswitch.sh
 ```
 
-The script builds and installs the FreeSWITCH version supported by the current FS PBX checkout. It replaces `/etc/freeswitch` with the configuration included with FS PBX and saves the previous directory as `/etc/freeswitch.orig`. An older `/etc/freeswitch.orig` backup is replaced.
+The script automatically backs up and preserves the **entire `/etc/freeswitch` directory**, including custom settings and certificates stored there. It prints the backup location under `/var/backups/fspbx-freeswitch/`.
 
-The running FreeSWITCH process is not restarted automatically. It continues using the old binary until you restart the service in step 5.
+Your existing database settings and Variables are preserved. No manual reconfiguration is needed.
 
-## 3. Restore SQLite-in-RAM configuration when used
+FreeSWITCH keeps running until you restart it manually. Avoid loading or reloading modules before that restart.
 
-:::warning Most installations should run this step
+Wait for `FreeSWITCH installation complete.` before proceeding. If the script fails or is interrupted, resolve the error before restarting. A failed installation may require rerunning the script or restoring your server snapshot.
 
-SQLite in RAM is the default FS PBX configuration, so most installations should run the command below. Skip this step only if FreeSWITCH was intentionally reconfigured to use PostgreSQL for its runtime databases. This does not refer to the PostgreSQL database used by the FS PBX application.
-
-:::
-
-The installer replaces the FreeSWITCH XML configuration with the version shipped by FS PBX. If this server uses SQLite databases in RAM, reapply that configuration before restarting:
+## 3. Restart when ready
 
 ```bash
-sudo -u www-data php artisan fs:migrate-sqlite-to-ram
-```
-
-This command restores the `/dev/shm` database paths, rebuilds `vars.xml`, and flushes the generated FreeSWITCH XML cache.
-
-## 4. Confirm restart preparation
-
-Before it finishes, the script rebuilds `/etc/freeswitch/vars.xml` from the FS PBX database and flushes the generated FreeSWITCH XML cache. Confirm that the output includes:
-
-```text
-Rebuilt vars.xml from the FS PBX database.
-Flushed the FreeSWITCH XML cache.
-FreeSWITCH variables and XML cache prepared successfully.
-```
-
-:::warning Preparation warning
-
-If the script reports that automatic restart preparation was incomplete, do not restart FreeSWITCH yet:
-
-1. Open **Advanced > Variables** and click **Sync XML**.
-2. Open **Status > SIP Status** and click **Flush Cache**.
-
-After these two actions succeed, continue with the service restart below.
-
-:::
-
-## 5. Restart FreeSWITCH
-
-```bash
-sudo systemctl daemon-reload
 sudo systemctl restart freeswitch
 ```
 
-This restart activates the newly installed binary and interrupts active calls.
+This activates the update and interrupts active calls. No additional configuration reload is required.
 
-## 6. Verify the installation
+## 4. Verify
 
 ```bash
 sudo systemctl status freeswitch --no-pager
 sudo fs_cli -x version
+sudo fs_cli -x 'sofia status'
 ```
 
-Confirm that the service is running and that `fs_cli` reports the expected version. Also confirm that the expected SIP profiles are running under **Status > SIP Status**.
+Confirm that FreeSWITCH reports **1.11.3** and the expected SIP profiles are running. Test phone registration, inbound and outbound calls, audio, and any TLS, fax, or queue features used on this server.
 
-When restart preparation completed successfully, you do not need to reload XML, rescan the SIP profiles, or restart each profile separately.
-
-If FreeSWITCH does not start, review the service log:
+If startup fails:
 
 ```bash
 sudo journalctl -u freeswitch -n 100 --no-pager

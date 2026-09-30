@@ -132,6 +132,7 @@ class AppServiceProvider extends ServiceProvider
         User::observe(UserObserver::class);
         UserDomainGroupPermissions::observe(UserDomainGroupPermissionsObserver::class);
         Extensions::observe(ExtensionObserver::class);
+        \App\Models\CallCenterAgents::observe(\App\Observers\CallCenterAgentObserver::class);
         EmergencyCall::observe(EmergencyCallObserver::class);
         EmergencyCallMember::observe(EmergencyCallMemberObserver::class);
         EmergencyCallEmail::observe(EmergencyCallEmailObserver::class);

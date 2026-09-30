@@ -20,7 +20,7 @@ class StoreUserRequest extends FormRequest
             'last_name'    => 'nullable|string|max:255',
             'user_email'   => 'required|email|unique:v_users,user_email',
             'groups'       => 'sometimes|required|array|min:1',
-            'groups.*'     => 'uuid|exists:v_groups,group_uuid',
+            'groups.*'     => 'required|uuid|exists:v_groups,group_uuid',
             'accounts'       => 'sometimes|array',
             'accounts.*'     => 'uuid|exists:v_domains,domain_uuid',
             'account_groups'       => 'sometimes|array',
@@ -38,7 +38,7 @@ class StoreUserRequest extends FormRequest
     {
         return [
             'groups.required' => 'You need to select at least one role.',
-            'groups.min'      => 'You need to select at least one role.',
+            'groups.min' => 'You need to select at least one role.',
         ];
     }
 

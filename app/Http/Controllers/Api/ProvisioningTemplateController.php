@@ -80,7 +80,7 @@ class ProvisioningTemplateController extends Controller
                         'provisioning_template' => $ProvisioningTemplate->template_uuid,
                     ]),
                 ],
-                'messages' => ['success' => ['New provisioning template created']]
+                'messages' => ['success' => [__('New provisioning template created')]]
             ], 201);
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -88,7 +88,7 @@ class ProvisioningTemplateController extends Controller
             logger('ProvisioningTemplate store error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Something went wrong while saving.']]
+                'messages' => ['error' => [__('Something went wrong while saving.')]]
             ], 500);
         }
     }
@@ -103,7 +103,7 @@ class ProvisioningTemplateController extends Controller
             $ProvisioningTemplate = ProvisioningTemplate::find($ProvisioningTemplate_uuid);
             if (!$ProvisioningTemplate) {
                 return response()->json([
-                    'messages' => ['error' => ['Provisioning template not found.']]
+                    'messages' => ['error' => [__('Provisioning template not found.')]]
                 ], 404);
             }
 
@@ -112,14 +112,14 @@ class ProvisioningTemplateController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages' => ['success' => ['Provisioning template updated']]
+                'messages' => ['success' => [__('Provisioning template updated')]]
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
             logger('ProvisioningTemplate update error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Something went wrong while updating.']]
+                'messages' => ['error' => [__('Something went wrong while updating.')]]
             ], 500);
         }
     }
@@ -198,7 +198,7 @@ class ProvisioningTemplateController extends Controller
 
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to fetch item details']]
+                'errors' => ['server' => [__('Failed to fetch item details')]]
             ], 500);
         }
     }
@@ -217,7 +217,7 @@ class ProvisioningTemplateController extends Controller
 
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to fetch template content']]
+                'errors' => ['server' => [__('Failed to fetch template content')]]
             ], 500);
         }
     }
@@ -240,7 +240,7 @@ class ProvisioningTemplateController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages' => ['success' => ['Selected provisioning template(s) were deleted successfully.']]
+                'messages' => ['success' => [__('Selected provisioning template(s) were deleted successfully.')]]
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -248,7 +248,7 @@ class ProvisioningTemplateController extends Controller
             logger('ProvisioningTemplate bulkDelete error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['An error occurred while deleting the selected provisioning template(s).']]
+                'messages' => ['error' => [__('An error occurred while deleting the selected provisioning template(s).')]]
             ], 500);
         }
     }

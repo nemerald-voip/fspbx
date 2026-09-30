@@ -82,7 +82,7 @@ class PaymentGatewayController extends Controller
             return response()->json([
                 'messages' => [
                     'server' => [
-                        'Settings updated successfully.'
+                        __('Settings updated successfully.')
                     ],
                 ],
             ], 200);
@@ -96,7 +96,7 @@ class PaymentGatewayController extends Controller
                 'success' => false,
                 'errors'  => [
                     'server' => [
-                        'Server returned an error while processing your request.'
+                        __('Server returned an error while processing your request.')
                     ],
                 ],
             ], 500);
@@ -116,6 +116,10 @@ class PaymentGatewayController extends Controller
             'uuid'       => ['nullable', 'uuid', 'exists:payment_gateways,uuid'],
             'mode'       => ['required', 'in:test,live'],
             'secret_key' => ['nullable', 'string'],
+        ], \App\Support\Localization\ValidationMessages::common(), [
+            'uuid' => __('Payment Gateway'),
+            'mode' => __('Mode'),
+            'secret_key' => __('Secret key'),
         ]);
 
         $key = $data['secret_key'] ?? null;
@@ -128,7 +132,7 @@ class PaymentGatewayController extends Controller
         }
 
         if (empty($key)) {
-            return response()->json(['ok' => false, 'message' => 'Enter a secret key to test.']);
+            return response()->json(['ok' => false, 'message' => __('Enter a secret key to test.')]);
         }
 
         try {
@@ -139,14 +143,15 @@ class PaymentGatewayController extends Controller
             if ($live !== ($data['mode'] === 'live')) {
                 return response()->json([
                     'ok'      => false,
-                    'message' => 'Key is valid, but it is a ' . ($live ? 'LIVE' : 'TEST')
-                        . ' key while ' . strtoupper($data['mode']) . ' mode is selected.',
+                    'message' => ($live
+                        ? __('The key is valid for live mode, but test mode is selected.')
+                        : __('The key is valid for test mode, but live mode is selected.')),
                 ]);
             }
 
             return response()->json([
                 'ok'      => true,
-                'message' => 'Connected to Stripe in ' . ($live ? 'live' : 'test') . ' mode.',
+                'message' => ($live ? __('Connected to Stripe in live mode.') : __('Connected to Stripe in test mode.')),
             ]);
         } catch (\Throwable $e) {
             return response()->json(['ok' => false, 'message' => $e->getMessage()]);
@@ -157,7 +162,7 @@ class PaymentGatewayController extends Controller
     {
         $validated = request()->validate([
             'uuid' => ['required', 'uuid', 'exists:payment_gateways,uuid'],
-        ]);
+        ], \App\Support\Localization\ValidationMessages::common(), ['uuid' => __('Payment Gateway')]);
 
         try {
             $gateway = PaymentGateway::findOrFail($validated['uuid']);
@@ -171,7 +176,7 @@ class PaymentGatewayController extends Controller
 
             return response()->json([
                 'messages' => [
-                    'server' => ['Gateway deactivated successfully.'],
+                    'server' => [__('Gateway deactivated successfully.')],
                 ],
             ], 200);
         } catch (\Throwable $e) {
@@ -180,7 +185,7 @@ class PaymentGatewayController extends Controller
             return response()->json([
                 'success' => false,
                 'errors'  => [
-                    'server' => ['Server returned an error while processing your request.'],
+                    'server' => [__('Server returned an error while processing your request.')],
                 ],
             ], 500);
         }

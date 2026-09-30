@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\V1\DomainController;
 use App\Http\Controllers\Api\V1\ActiveCallController;
+use App\Http\Controllers\Api\V1\ActiveExtensionReportController;
 use App\Http\Controllers\Api\V1\DeviceController;
 use App\Http\Controllers\Api\V1\ExtensionController;
 use App\Http\Controllers\Api\V1\ExtensionStatisticController;
@@ -14,6 +15,7 @@ use App\Http\Controllers\Api\V1\CdrController;
 use App\Http\Controllers\Api\V1\ClickToDialController;
 use App\Http\Controllers\Api\V1\PhoneControlController;
 use App\Http\Controllers\Api\V1\RecordingController;
+use App\Http\Controllers\Api\V1\UserController;
 
 /*
 |--------------------------------------------------------------------------
@@ -47,6 +49,24 @@ Route::middleware(['auth:sanctum', 'api.token.auth', 'throttle:api'])->group(fun
 
     /*
     |--------------------------------------------------------------------------
+    | Users (domain-scoped)
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/domains/{domain_uuid}/users', [UserController::class, 'index'])
+        ->middleware('user.authorize:user_view');
+    Route::get('/domains/{domain_uuid}/users/{user_uuid}', [UserController::class, 'show'])
+        ->middleware('user.authorize:user_view');
+    Route::post('/domains/{domain_uuid}/users', [UserController::class, 'store'])
+        ->middleware('user.authorize:user_add');
+    Route::patch('/domains/{domain_uuid}/users/{user_uuid}', [UserController::class, 'update'])
+        ->middleware('user.authorize:user_edit');
+    Route::post('/domains/{domain_uuid}/users/{user_uuid}/password-reset', [UserController::class, 'sendPasswordReset'])
+        ->middleware('user.authorize:user_edit');
+    Route::delete('/domains/{domain_uuid}/users/{user_uuid}', [UserController::class, 'destroy'])
+        ->middleware('user.authorize:user_delete');
+
+    /*
+    |--------------------------------------------------------------------------
     | Extensions (domain-scoped)
     |--------------------------------------------------------------------------
     */
@@ -67,6 +87,14 @@ Route::middleware(['auth:sanctum', 'api.token.auth', 'throttle:api'])->group(fun
 
     Route::delete('/domains/{domain_uuid}/extensions/{extension_uuid}', [ExtensionController::class, 'destroy'])
         ->middleware('user.authorize:extension_delete');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Reports (domain-scoped)
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/domains/{domain_uuid}/reports/active-extensions', [ActiveExtensionReportController::class, 'show'])
+        ->middleware('user.authorize:extension_view');
 
     /*
     |--------------------------------------------------------------------------
@@ -94,7 +122,7 @@ Route::middleware(['auth:sanctum', 'api.token.auth', 'throttle:api'])->group(fun
     |--------------------------------------------------------------------------
     */
     Route::get('/domains/{domain_uuid}/ring-groups', [RingGroupController::class, 'index'])
-        ->middleware('user.authorize:ring_group_domain');
+        ->middleware('user.authorize:ring_group_view');
 
     Route::get('/domains/{domain_uuid}/ring-groups/{ring_group_uuid}', [RingGroupController::class, 'show'])
         ->middleware('user.authorize:ring_group_view');
@@ -188,19 +216,19 @@ Route::middleware(['auth:sanctum', 'api.token.auth', 'throttle:api'])->group(fun
     |--------------------------------------------------------------------------
     */
     Route::get('/domains/{domain_uuid}/phone-numbers', [PhoneNumberController::class, 'index'])
-        ->middleware('user.authorize:ring_group_domain');
+        ->middleware('user.authorize:destination_view');
 
     Route::get('/domains/{domain_uuid}/phone-numbers/{destination_uuid}', [PhoneNumberController::class, 'show'])
-        ->middleware('user.authorize:ring_group_view');
+        ->middleware('user.authorize:destination_view');
 
     Route::post('/domains/{domain_uuid}/phone-numbers', [PhoneNumberController::class, 'store'])
-        ->middleware('user.authorize:ring_group_add');
+        ->middleware('user.authorize:destination_add');
 
     Route::patch('/domains/{domain_uuid}/phone-numbers/{destination_uuid}', [PhoneNumberController::class, 'update'])
-        ->middleware('user.authorize:ring_group_edit');
+        ->middleware('user.authorize:destination_edit');
 
     Route::delete('/domains/{domain_uuid}/phone-numbers/{destination_uuid}', [PhoneNumberController::class, 'destroy'])
-        ->middleware('user.authorize:ring_group_delete');
+        ->middleware('user.authorize:destination_delete');
 
     /*
     |--------------------------------------------------------------------------

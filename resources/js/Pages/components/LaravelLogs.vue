@@ -9,7 +9,7 @@
                     v-model="filterData.search"
                     type="search"
                     class="block w-full rounded-md border-0 py-2 pl-10 pr-3 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600"
-                    placeholder="Search Laravel logs"
+                    :placeholder="$t('Search Laravel logs')"
                     @keydown.enter="handleSearchButtonClick"
                 />
             </div>
@@ -30,14 +30,14 @@
                     v-model="filterData.level"
                     class="block w-full rounded-md border-0 py-2 pl-3 pr-10 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600"
                 >
-                    <option value="all">All levels</option>
-                    <option value="debug">Debug</option>
-                    <option value="info">Info</option>
-                    <option value="notice">Notice</option>
-                    <option value="warning">Warning</option>
-                    <option value="err">Error</option>
-                    <option value="crit">Critical</option>
-                    <option value="alert">Alert</option>
+                    <option value="all">{{ $t('All levels') }}</option>
+                    <option value="debug">{{ $t('Debug') }}</option>
+                    <option value="info">{{ $t('Info') }}</option>
+                    <option value="notice">{{ $t('Notice') }}</option>
+                    <option value="warning">{{ $t('Warning') }}</option>
+                    <option value="err">{{ $t('Error') }}</option>
+                    <option value="crit">{{ $t('Critical') }}</option>
+                    <option value="alert">{{ $t('Alert') }}</option>
                 </select>
             </div>
 
@@ -49,7 +49,7 @@
                     :disabled="isDataLoading"
                 >
                     <MagnifyingGlassIcon class="h-4 w-4" aria-hidden="true" />
-                    Search
+                    {{ $t('Search') }}
                 </button>
 
                 <button
@@ -59,7 +59,7 @@
                     :disabled="isDataLoading"
                 >
                     <ArrowPathIcon class="h-4 w-4" :class="{ 'animate-spin': isDataLoading }" aria-hidden="true" />
-                    Refresh
+                    {{ $t('Refresh') }}
                 </button>
 
                 <button
@@ -68,7 +68,7 @@
                     class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
                     :disabled="isDataLoading"
                 >
-                    Reset
+                    {{ $t('Reset') }}
                 </button>
             </div>
         </div>
@@ -80,12 +80,12 @@
                     type="checkbox"
                     class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
                 />
-                <span>Live tail</span>
+                <span>{{ $t('Live tail') }}</span>
                 <span v-if="isLiveTailEnabled" class="text-xs text-gray-500">3s</span>
             </label>
 
             <label class="inline-flex items-center gap-2 text-sm text-gray-700">
-                <span>Read</span>
+                <span>{{ $t('Read') }}</span>
                 <input
                     v-model.number="filterData.size_kb"
                     type="number"
@@ -97,7 +97,7 @@
             </label>
 
             <label class="inline-flex items-center gap-2 text-sm text-gray-700">
-                <span>Rows</span>
+                <span>{{ $t('Rows') }}</span>
                 <input
                     v-model.number="filterData.max_lines"
                     type="number"
@@ -111,8 +111,8 @@
                 v-model="filterData.sort"
                 class="block rounded-md border-0 py-1.5 pl-3 pr-10 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600"
             >
-                <option value="asc">Oldest first</option>
-                <option value="desc">Newest first</option>
+                <option value="asc">{{ $t('Oldest first') }}</option>
+                <option value="desc">{{ $t('Newest first') }}</option>
             </select>
         </div>
 
@@ -124,30 +124,29 @@
             <div class="flex flex-col gap-3 border-b border-gray-200 px-4 py-3 text-sm text-gray-500 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <template v-if="isLiveTailEnabled">
-                        <span class="font-medium text-gray-900">{{ lines.length }}</span>
-                        shown line{{ lines.length === 1 ? '' : 's' }}
-                        <span v-if="meta.matched_lines">, latest read matched {{ meta.matched_lines }}</span>
+                        {{ $tChoice('{1} :count shown line|[0,*] :count shown lines', lines.length) }}
+                        <span v-if="meta.matched_lines">{{ $t(', latest read matched :count', { count: meta.matched_lines }) }}</span>
                     </template>
                     <template v-else>
-                        <span class="font-medium text-gray-900">{{ meta.matched_lines || 0 }}</span>
-                        matched line{{ (meta.matched_lines || 0) === 1 ? '' : 's' }}
-                        <span v-if="meta.truncated_matches">, showing latest {{ filterData.max_lines }}</span>
+                        {{ $tChoice('{1} :count matched line|[0,*] :count matched lines', meta.matched_lines || 0) }}
+                        <span v-if="meta.truncated_matches">{{ $t(', showing latest :count', { count: filterData.max_lines }) }}</span>
                     </template>
                 </div>
                 <div class="flex flex-wrap items-center gap-3">
                     <div>
-                        {{ formatBytes(meta.bytes_read || 0) }} read
-                        <span v-if="meta.log_dir"> from {{ meta.log_dir }}</span>
+                        {{ meta.log_dir
+                            ? $t(':size read from :path', { size: formatBytes(meta.bytes_read || 0), path: meta.log_dir })
+                            : $t(':size read', { size: formatBytes(meta.bytes_read || 0) }) }}
                     </div>
                     <button
                         type="button"
                         :disabled="isDataLoading || lines.length === 0"
-                        title="Copy shown log"
+                        :title="$t('Copy shown log')"
                         @click="copyVisibleLog"
                         class="inline-flex items-center gap-1.5 rounded-md bg-white px-2.5 py-1.5 text-xs font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         <ClipboardDocumentIcon class="h-4 w-4" aria-hidden="true" />
-                        {{ copiedLog ? 'Copied' : 'Copy shown log' }}
+                        {{ copiedLog ? $t('Copied') : $t('Copy shown log') }}
                     </button>
                 </div>
             </div>
@@ -163,7 +162,7 @@
 
             <div v-else-if="lines.length === 0" class="p-8 text-center">
                 <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
+                <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ $t('No results found') }}</h3>
             </div>
 
             <div v-else ref="logContainer" class="h-[68vh] overflow-auto bg-gray-950">

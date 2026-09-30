@@ -5,6 +5,8 @@ namespace App\Http\Requests;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Http\FormRequest;
+use App\Rules\RoutingTarget;
+use App\Services\CallRoutingOptionsService;
 
 class StoreHolidayHourRequest extends FormRequest
 {
@@ -54,28 +56,11 @@ class StoreHolidayHourRequest extends FormRequest
             // routing action + target
             'action' => [
                 'required',
+                'string',
+                Rule::in(array_column((new CallRoutingOptionsService)->routingTypes, 'value')),
             ],
 
-            'target' => [
-                'sometimes',
-                function ($attribute, $value, $fail) {
-                    $action = $this->input('action');
-
-                    // if an action *needs* a target (i.e. it is NOT one of these),
-                    // then failback_target cannot be empty
-                    if (
-                        $action
-                        && ! in_array($action, [
-                            'company_directory',
-                            'check_voicemail',
-                            'hangup',
-                        ], true)
-                        && empty($value)
-                    ) {
-                        $fail(__('A target must be provided when action is selected.'));
-                    }
-                },
-            ],
+            'target' => [new RoutingTarget('action')],
 
             // free‐form note
             'note'             => ['nullable', 'string'],

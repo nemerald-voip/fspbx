@@ -25,11 +25,11 @@ class StoreDynamicRouteRequest extends FormRequest
             'source' => ['required', Rule::in([DynamicRoute::SOURCE_CALLER_DESTINATION])],
             'enabled' => ['required', 'boolean'],
             'description' => ['nullable', 'string', 'max:1000'],
-            'default_destination_type' => ['required', Rule::in(DynamicRouteService::DESTINATION_TYPES)],
+            'default_destination_type' => ['required', Rule::in(DynamicRouteService::destinationTypes())],
             'default_destination_target' => ['nullable'],
             'rules' => ['required', 'array', 'min:1'],
             'rules.*.match_value' => ['required', 'string', 'max:255'],
-            'rules.*.destination_type' => ['required', Rule::in(DynamicRouteService::DESTINATION_TYPES)],
+            'rules.*.destination_type' => ['required', Rule::in(DynamicRouteService::destinationTypes())],
             'rules.*.destination_target' => ['nullable'],
         ];
     }
@@ -97,7 +97,7 @@ class StoreDynamicRouteRequest extends FormRequest
 
     private function validateDestination(Validator $validator, string $type, mixed $target, string $key): void
     {
-        if (in_array($type, DynamicRouteService::DESTINATION_TYPES_WITHOUT_TARGET, true)) {
+        if (! \App\Services\CallRoutingOptionsService::requiresTarget($type)) {
             return;
         }
 

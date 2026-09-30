@@ -24,7 +24,7 @@
                                 <button type="button"
                                     class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                     @click="emit('close')">
-                                    <span class="sr-only">Close</span>
+                                    <span class="sr-only">{{ $t("Close") }}</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
@@ -42,12 +42,12 @@
                                             </path>
                                         </svg>
                                     </div>
-                                    <div class="text-lg text-blue-600 m-auto">Loading...</div>
+                                    <div class="text-lg text-blue-600 m-auto">{{ $t("Loading...") }}</div>
                                 </div>
                             </div>
 
 
-                            <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
+                            <Vueform :locale="formLocale" @mounted="form => form.disableValidation()" v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
                                 @error="handleError" @response="handleResponse" :display-errors="false" :default="{
                                     provider: options?.provider_settings?.provider,
                                     organization_id: options?.organization?.id,
@@ -71,7 +71,7 @@
                                     <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
                                         <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
                                             <FormTabs view="vertical" @select="handleTabSelected">
-                                                <FormTab name="page0" label="Settings" :elements="[
+                                                <FormTab name="page0" :label="$t('Settings')" :elements="[
                                                     'general_title',
                                                     'enabled',
                                                     'name',
@@ -110,77 +110,77 @@
 
                                                 <HiddenElement name="provider" :meta="true" />
 
-                                                <StaticElement name="general_title" tag="h4" content="General"
-                                                    description="Basic information about this profile." />
+                                                <StaticElement name="general_title" tag="h4" :content="$t('General')"
+                                                    :description="$t('Basic information about this profile.')" />
 
-                                                <ToggleElement name="enabled" text="Status" />
+                                                <ToggleElement name="enabled" :text="$t('Status')" />
 
-                                                <TextElement name="name" label="Organization Name" />
+                                                <TextElement name="name" :label="$t('Organization Name')" />
 
                                                 <StaticElement name="divider" tag="hr" />
 
-                                                <StaticElement name="provisioning_title" tag="h4" content="Provisioning"
-                                                    description="Specify provisioning parameters to be applied by this profile for your devices." />
+                                                <StaticElement name="provisioning_title" tag="h4" :content="$t('Provisioning')"
+                                                    :description="$t('Specify provisioning parameters to be applied by this profile for your devices.')" />
 
-                                                <TextElement name="address" label="Address" />
+                                                <TextElement name="address" :label="$t('Address')" />
 
-                                                <TextElement name="prov_un" label="Username" />
+                                                <TextElement name="prov_un" :label="$t('Username')" />
 
-                                                <TextElement name="prov_pw" label="Password"
+                                                <TextElement name="prov_pw" :label="$t('Password')"
                                                     :attrs="{ type: 'password' }" />
 
     
 
 
-                                                <ToggleElement name="polling" text="Polling"
-                                                    description="Enable provisioning server polling." />
+                                                <ToggleElement name="polling" :text="$t('Polling')"
+                                                    :description="$t('Enable provisioning server polling.')" />
 
-                                                <ToggleElement name="quickSetup" text="Quick Setup"
-                                                    description="Enable the quick setup option for phones." />
+                                                <ToggleElement name="quickSetup" :text="$t('Quick Setup')"
+                                                    :description="$t('Enable the quick setup option for phones.')" />
 
                                                 <StaticElement name="divider_1" tag="hr" />
 
-                                                <StaticElement name="dhcp_title" tag="h4" content="DHCP"
-                                                    description="Configure DHCP options to determine boot behavior." />
+                                                <StaticElement name="dhcp_title" tag="h4" :content="$t('DHCP')"
+                                                    :description="$t('Configure DHCP options to determine boot behavior.')" />
 
                                                 <SelectElement name="bootServerOption"
                                                     :items="options.provider_settings?.dhcp_boot_server_option_list"
-                                                    :search="true" :native="false" label="Boot Server Option"
+                                                    :search="true" :native="false" :label="$t('Boot Server Option')"
                                                     input-type="search" autocomplete="off" />
 
                                                 <SelectElement name="option60Type"
                                                     :items="options.provider_settings?.dhcp_option_60_type_list"
-                                                    :search="true" :native="false" label="Option 60 Type"
+                                                    :search="true" :native="false" :label="$t('Option 60 Type')"
                                                     input-type="search" autocomplete="off" />
 
                                                 <StaticElement name="divider_2" tag="hr" />
 
-                                                <StaticElement name="software_title" tag="h4" content="Software"
-                                                    description="Configure the software that will be loaded during provisioning." />
+                                                <StaticElement name="software_title" tag="h4" :content="$t('Software')"
+                                                    :description="$t('Configure the software that will be loaded during provisioning.')" />
 
-                                                <TextElement name="software" label="Software" />
+                                                <TextElement name="software" :label="$t('Software')" />
 
                                                 <StaticElement name="divider_3" tag="hr" />
 
-                                                <StaticElement name="localization_title" tag="h4" content="Localization"
-                                                    description="Specify the operating locale for this profile." />
+                                                <StaticElement name="localization_title" tag="h4" :content="$t('Localization')"
+                                                    :description="$t('Specify the operating locale for this profile.')" />
 
                                                 <SelectElement name="localization"
                                                     :items="options.provider_settings?.locales" :search="true"
-                                                    :native="false" label="Localization" input-type="search"
+                                                    :native="false" :label="$t('Localization')" input-type="search"
                                                     autocomplete="off" />
 
                                                 <StaticElement name="divider_4" tag="hr" />
 
                                                 <StaticElement name="custom_configuration" tag="h4"
-                                                    content="Custom Configuration"
-                                                    description="You may upload a custom configuration that conforms to the Poly Unified Configuration (UC) Software file format." />
+                                                    :content="$t('Custom Configuration')"
+                                                    :description="$t('You may upload a custom configuration that conforms to the Poly Unified Configuration (UC) Software file format.')" />
 
-                                                <TextareaElement name="ucs" label="Configuration" :autogrow="false" />
+                                                <TextareaElement name="ucs" :label="$t('Configuration')" :autogrow="false" />
 
                                                 <GroupElement name="submit_container" />
 
-                                                <ButtonElement name="submit" button-label="Save" :submits="true"
+                                                <ButtonElement name="submit" :button-label="$t('Save')" :submits="true"
                                                     align="right" />
 
                                             </FormElements>
@@ -201,9 +201,14 @@
 
 
 <script setup>
+import { useVueformLocale } from "../../../composables/useVueformLocale.js";
+import { clearServerFormErrors } from "../../../composables/serverFormErrors.js";
+import { trans } from "@i18n";
 import { ref } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { XMarkIcon } from "@heroicons/vue/24/solid";
+
+const formLocale = useVueformLocale();
 
 const props = defineProps({
     show: Boolean,
@@ -226,6 +231,7 @@ const handleTabSelected = (activeTab, previousTab) => {
 
 
 const submitForm = async (FormData, form$) => {
+    clearServerFormErrors(form$);
     // Using form$.requestData will EXCLUDE conditional elements and it 
     // will submit the form as Content-Type: application/json . 
     const requestData = form$.requestData
@@ -285,7 +291,7 @@ const handleError = (error, details, form$) => {
         case 'prepare':
             console.log(error) // Error object
 
-            form$.messageBag.append('Could not prepare form')
+            form$.messageBag.append(trans("Could not prepare form"))
             break
 
         // Error occured because response status is outside of 2xx
@@ -305,14 +311,14 @@ const handleError = (error, details, form$) => {
         case 'cancel':
             console.log(error) // Error object
 
-            form$.messageBag.append('Request cancelled')
+            form$.messageBag.append(trans("Request cancelled"))
             break
 
         // Some other errors happened (no response object)
         case 'other':
             console.log(error) // Error object
 
-            form$.messageBag.append('Couldn\'t submit form')
+            form$.messageBag.append(trans("Couldn't submit form"))
             break
     }
 }

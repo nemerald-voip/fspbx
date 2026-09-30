@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Services\DialplanService;
 use Illuminate\Foundation\Http\FormRequest;
+use App\Support\Localization\ValidationMessages;
 use Illuminate\Validation\Validator;
 
 class StoreDialplanRequest extends FormRequest
@@ -57,7 +58,7 @@ class StoreDialplanRequest extends FormRequest
             $details = $service->normalizedDetails($this->input('dialplan_details', []));
 
             if (empty($details)) {
-                $validator->errors()->add('dialplan_details', 'Add at least one dialplan condition or action.');
+                $validator->errors()->add('dialplan_details', __('Add at least one dialplan condition or action.'));
                 return;
             }
 
@@ -68,17 +69,17 @@ class StoreDialplanRequest extends FormRequest
                     && blank($detail['dialplan_detail_data']);
 
                 if (!$isBlankCondition && blank($detail['dialplan_detail_type'])) {
-                    $validator->errors()->add("dialplan_details.{$index}.dialplan_detail_type", 'Type is required.');
+                    $validator->errors()->add("dialplan_details.{$index}.dialplan_detail_type", __('Type is required.'));
                 }
 
                 if (!$isBlankCondition && blank($detail['dialplan_detail_data']) && $tag !== 'action' && $tag !== 'anti-action') {
-                    $validator->errors()->add("dialplan_details.{$index}.dialplan_detail_data", 'Data is required.');
+                    $validator->errors()->add("dialplan_details.{$index}.dialplan_detail_data", __('Data is required.'));
                 }
 
                 if (in_array($tag, ['action', 'anti-action'], true)
                     && ($service->containsDangerousApplication($detail['dialplan_detail_type'])
                         || $service->containsDangerousApplication($detail['dialplan_detail_data']))) {
-                    $validator->errors()->add("dialplan_details.{$index}.dialplan_detail_type", 'This FreeSWITCH application is not allowed.');
+                    $validator->errors()->add("dialplan_details.{$index}.dialplan_detail_type", __('This FreeSWITCH application is not allowed.'));
                 }
             }
         });
@@ -93,5 +94,38 @@ class StoreDialplanRequest extends FormRequest
             'dialplan_enabled' => $this->input('dialplan_enabled', 'true') ?: 'true',
             'editor_mode' => $this->input('editor_mode', 'builder') ?: 'builder',
         ]);
+    }
+
+    public function messages(): array
+    {
+        return ValidationMessages::common();
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'domain_uuid' => __('Domain'),
+            'hostname' => __('Hostname'),
+            'dialplan_name' => __('Name'),
+            'dialplan_number' => __('Number'),
+            'dialplan_destination' => __('Destination'),
+            'dialplan_context' => __('Context'),
+            'dialplan_continue' => __('Continue'),
+            'dialplan_order' => __('Order'),
+            'dialplan_enabled' => __('Enabled'),
+            'dialplan_description' => __('Description'),
+            'editor_mode' => __('Editor'),
+            'dialplan_xml' => __('XML'),
+            'dialplan_details' => __('Details'),
+            'dialplan_details.*.dialplan_detail_uuid' => __('Detail'),
+            'dialplan_details.*.dialplan_detail_tag' => __('Tag'),
+            'dialplan_details.*.dialplan_detail_type' => __('Type'),
+            'dialplan_details.*.dialplan_detail_data' => __('Data'),
+            'dialplan_details.*.dialplan_detail_break' => __('Break'),
+            'dialplan_details.*.dialplan_detail_inline' => __('Inline'),
+            'dialplan_details.*.dialplan_detail_group' => __('Group'),
+            'dialplan_details.*.dialplan_detail_order' => __('Order'),
+            'dialplan_details.*.dialplan_detail_enabled' => __('Enabled'),
+        ];
     }
 }

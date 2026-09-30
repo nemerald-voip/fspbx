@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Support\Localization\ValidationMessages;
 use Illuminate\Validation\Rule;
 
 class UpdateSipCaptureSettingsRequest extends FormRequest
@@ -21,12 +22,32 @@ class UpdateSipCaptureSettingsRequest extends FormRequest
             'transport' => [$requiredWhenEnabled, 'nullable', Rule::in(['udp', 'tcp'])],
             'collector_host' => [$requiredWhenEnabled, 'nullable', 'string', 'max:253', function ($attribute, $value, $fail) {
                 if (! $this->validHost((string) $value)) {
-                    $fail('Enter a valid IP address or hostname.');
+                    $fail(__('Enter a valid IP address or hostname.'));
                 }
             }],
             'collector_port' => [$requiredWhenEnabled, 'nullable', 'integer', 'between:1,65535'],
             'profile_uuids' => [$requiredWhenEnabled, 'array', 'min:1'],
             'profile_uuids.*' => ['uuid', 'distinct', 'exists:v_sip_profiles,sip_profile_uuid'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            ...ValidationMessages::common(),
+            'distinct' => __('The :attribute field has a duplicate value.'),
+        ];
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'enabled' => __('Enable SIP capture'),
+            'transport' => __('Transport'),
+            'collector_host' => __('Collector host'),
+            'collector_port' => __('Collector port'),
+            'profile_uuids' => __('SIP profiles'),
+            'profile_uuids.*' => __('SIP profiles'),
         ];
     }
 

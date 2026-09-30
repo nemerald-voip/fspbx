@@ -123,13 +123,13 @@ class CdrsController extends Controller
                     'caller_id_name',
                     'caller_id_number',
                     'caller_destination',
+                    'destination_number',
                     'start_epoch',
                     'answer_epoch',
                     'end_epoch',
                     'duration',
                     'billsec',
                     'waitsec',
-                    'call_flow',
                     'voicemail_message',
                     'missed_call',
                     'hangup_cause',
@@ -137,8 +137,11 @@ class CdrsController extends Controller
                     'call_center_queue_uuid',
                     'cc_cancel_reason',
                     'cc_cause',
+                    'cc_side',
+                    'cc_agent_bridged',
                     'sip_hangup_disposition',
                     'status',
+                    ...$this->cdrDataService->timelineSelectColumns(),
 
                 ])
                 ->first();
@@ -152,6 +155,7 @@ class CdrsController extends Controller
 
             $this->item_domain_uuid = $item->domain_uuid;
 
+            $item->callback_timeline = $this->cdrDataService->isCallbackCdr($item);
             $item->call_flow = $this->cdrDataService->buildCallFlowSummary($item);
 
             // logger($callFlowSummary->all());

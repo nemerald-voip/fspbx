@@ -8,7 +8,7 @@
                         <DisclosureButton
                             class="relative inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500">
                             <span class="absolute -inset-0.5" />
-                            <span class="sr-only">Open main menu</span>
+                            <span class="sr-only">{{ $t('Open main menu') }}</span>
                             <Bars3Icon v-if="!open" class="block h-6 w-6" aria-hidden="true" />
                             <XMarkIcon v-else class="block h-6 w-6" aria-hidden="true" />
                         </DisclosureButton>
@@ -24,7 +24,7 @@
                                 <MenuButton
                                     class="inline-flex  border-none text-sm font-medium text-gray-500 hover:text-gray-700 cursor-pointer">
 
-                                    <div class="font-nunito text-sm">{{ menuTitle(item.menu_item_title) }}</div>
+                                    <div class="font-nunito text-sm">{{ item.menu_item_title }}</div>
                                     <ChevronDownIcon class="h-5 w-5" />
                                 </MenuButton>
 
@@ -40,7 +40,7 @@
                                             <MenuItem v-slot="{ active }">
                                                 <a :href="child.menu_item_link"
                                                     :class="[active ? 'bg-gray-100' : '', 'block px-5 py-2 text-sm text-gray-600 whitespace-nowrap cursor-pointer no-underline']">
-                                                    {{ menuTitle(child.menu_item_title) }}
+                                                    {{ child.menu_item_title }}
                                                     <span v-if="child.menu_item_link === '/messages' && messageUnreadCount" class="ml-2 rounded-full bg-blue-100 px-2 text-blue-700">{{ messageUnreadCount }}</span>
                                                 </a>
                                             </MenuItem>
@@ -70,14 +70,14 @@
                             <MenuItems
                                 class="absolute right-0 mt-1 w-56 origin-top-right shadow-xl bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-20">
                                 <div class="px-4 py-3 border-b border-gray-100">
-                                    <p class="text-xs text-gray-400">Signed in as</p>
+                                    <p class="text-xs text-gray-400">{{ $t('Signed in as') }}</p>
                                     <p class="text-sm font-medium text-gray-700 truncate">{{ userEmail }}</p>
                                 </div>
                                 <MenuItem v-slot="{ active }">
                                     <a href="/logout"
                                         :class="[active ? 'bg-gray-100' : '', 'flex items-center gap-x-2 px-4 py-2 text-sm text-gray-600 whitespace-nowrap cursor-pointer no-underline']">
                                         <ArrowRightOnRectangleIcon class="h-5 w-5 text-gray-400" />
-                                        Logout
+                                        {{ $t('Logout') }}
                                     </a>
                                 </MenuItem>
                             </MenuItems>
@@ -114,20 +114,20 @@
                             <li v-for="item in visibleMenus" :key="item.menu_item_uuid">
                                 <a v-if="!item.child_menu" :href="item.href"
                                     :class="[item.current ? 'bg-gray-50' : 'hover:bg-gray-50', 'block rounded-md py-2 pr-2 pl-10 text-sm leading-6 font-semibold text-gray-700']">{{
-                                    menuTitle(item.menu_item_title) }}</a>
+                                    item.menu_item_title }}</a>
                                 <Disclosure as="div" v-else v-slot="{ open }">
                                     <DisclosureButton
                                         :class="'hover:bg-gray-50 flex items-center w-full text-left rounded-md p-2 gap-x-3 text-sm leading-6 font-semibold text-gray-700'">
                                         <ChevronRightIcon
                                             :class="[open ? 'rotate-90 text-gray-500' : 'text-gray-400', 'h-5 w-5 shrink-0']"
                                             aria-hidden="true" />
-                                        {{ menuTitle(item.menu_item_title) }}
+                                        {{ item.menu_item_title }}
                                     </DisclosureButton>
                                     <DisclosurePanel as="ul" class="mt-1 px-2">
                             <li v-for="child in item.child_menu" :key="child.menu_item_uuid">
                                 <DisclosureButton as="a" :href="child.menu_item_link"
                                     :class="'hover:bg-gray-50 block rounded-md py-2 pr-2 pl-9 text-sm leading-6 text-gray-700'">
-                                    {{ menuTitle(child.menu_item_title) }}
+                                    {{ child.menu_item_title }}
                                     <span v-if="child.menu_item_link === '/messages' && messageUnreadCount" class="ml-2 rounded-full bg-blue-100 px-2 text-blue-700">{{ messageUnreadCount }}</span>
                                 </DisclosureButton>
                             </li>
@@ -158,15 +158,14 @@
                                 <div class="flex h-full flex-col overflow-y-scroll bg-white py-6 shadow-xl">
                                     <div class="px-4 sm:px-6">
                                         <div class="flex items-start justify-between">
-                                            <DialogTitle class="text-base font-semibold leading-6 text-gray-900">Select
-                                                account
+                                            <DialogTitle class="text-base font-semibold leading-6 text-gray-900">{{ $t('Select account') }}
                                             </DialogTitle>
                                             <div class="ml-3 flex h-7 items-center">
                                                 <button type="button"
                                                     class="relative rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                                     @click="isDomainPanelVisible = false">
                                                     <span class="absolute -inset-2.5" />
-                                                    <span class="sr-only">Close panel</span>
+                                                    <span class="sr-only">{{ $t('Close panel') }}</span>
                                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                                 </button>
                                             </div>
@@ -174,7 +173,7 @@
                                     </div>
                                     <!-- SEARCH BUTTON -->
                                     <div class="relative mt-6 px-4 sm:px-6">
-                                        <input type="text" v-model="searchQuery" placeholder="Search ..."
+                                        <input type="text" v-model="searchQuery" :placeholder="$t('Search...')"
                                             ref="searchFieldRef"
                                             class="mt-2 mb-4 w-full rounded-md border-gray-300 shadow-sm" />
                                     </div>
@@ -210,7 +209,6 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { usePage } from '@inertiajs/vue3'
-import { trans } from '@i18n'
 
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import { Bars3Icon, XMarkIcon, UserCircleIcon, ArrowRightOnRectangleIcon } from '@heroicons/vue/24/outline'
@@ -219,78 +217,6 @@ import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot, } fr
 
 const page = usePage()
 defineProps({ messageUnreadCount: { type: Number, default: 0 } });
-
-// Shipped FS PBX menu labels are literal calls so lang:sync can keep them in
-// the shared catalog. Titles from custom menus are always rendered as stored.
-const defaultMenuTitles = {
-    'Accounts': () => trans('Accounts'),
-    'Devices': () => trans('Devices'),
-    'Extensions': () => trans('Extensions'),
-    'Gateways': () => trans('Gateways'),
-    'Users': () => trans('Users'),
-    'Dialplan': () => trans('Dialplan'),
-    'Dialplan Manager': () => trans('Dialplan Manager'),
-    'Phone Numbers': () => trans('Phone Numbers'),
-    'Inbound Routes': () => trans('Inbound Routes'),
-    'Outbound Routes': () => trans('Outbound Routes'),
-    'Applications': () => trans('Applications'),
-    'Basic Dialer': () => trans('Basic Dialer'),
-    'Basic Queues': () => trans('Basic Queues'),
-    'Bridges': () => trans('Bridges'),
-    'Call Block': () => trans('Call Block'),
-    'Call History': () => trans('Call History'),
-    'Call Flows': () => trans('Call Flows'),
-    'Dynamic Routes': () => trans('Dynamic Routes'),
-    'Conference Centers': () => trans('Conference Centers'),
-    'Conferences': () => trans('Conferences'),
-    'Faxes': () => trans('Faxes'),
-    'Virtual Receptionists': () => trans('Virtual Receptionists'),
-    'Messages': () => trans('Messages'),
-    'Music on Hold': () => trans('Music on Hold'),
-    'Recordings Manager': () => trans('Recordings Manager'),
-    'Ring Groups': () => trans('Ring Groups'),
-    'Streams': () => trans('Streams'),
-    'Business Hours': () => trans('Business Hours'),
-    'Voicemails': () => trans('Voicemails'),
-    'Wakeup Calls': () => trans('Wakeup Calls'),
-    'Scheduled Announcements': () => trans('Scheduled Announcements'),
-    'Status': () => trans('Status'),
-    'Active Calls': () => trans('Active Calls'),
-    'Active Basic Queues': () => trans('Active Basic Queues'),
-    'Active Conferences': () => trans('Active Conferences'),
-    'Extension Statistics': () => trans('Extension Statistics'),
-    'Firewall': () => trans('Firewall'),
-    'Logs': () => trans('Logs'),
-    'Registrations': () => trans('Registrations'),
-    'SIP Status': () => trans('SIP Status'),
-    'System Status': () => trans('System Status'),
-    'User Logs': () => trans('User Logs'),
-    'Advanced': () => trans('Advanced'),
-    'Access Control': () => trans('Access Control'),
-    'Default Settings': () => trans('Default Settings'),
-    'Domains': () => trans('Domains'),
-    'Email templates': () => trans('Email templates'),
-    'Group Manager': () => trans('Group Manager'),
-    'Menu Manager': () => trans('Menu Manager'),
-    'Message Settings': () => trans('Message Settings'),
-    'Modules': () => trans('Modules'),
-    'Pro Features': () => trans('Pro Features'),
-    'Provision Templates': () => trans('Provision Templates'),
-    'Legacy Provision Templates': () => trans('Legacy Provision Templates'),
-    'Ringotel App Settings': () => trans('Ringotel App Settings'),
-    'SIP Profiles': () => trans('SIP Profiles'),
-    'System Settings': () => trans('System Settings'),
-    'Transactions': () => trans('Transactions'),
-    'Variables': () => trans('Variables'),
-}
-
-const menuTitle = (title) => {
-    if (!page.props.menuUsesCatalogTranslations) {
-        return title
-    }
-
-    return defaultMenuTitles[title]?.() ?? title
-}
 
 // Logged-in user info (shown in the top-right user menu)
 const userName = computed(() => page.props.auth?.user?.name ?? '')

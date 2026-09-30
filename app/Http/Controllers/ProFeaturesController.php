@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Inertia\Inertia;
+use Illuminate\Http\Request;
 use App\Models\ProFeatures;
 use App\Services\KeygenAPIService;
 use Nwidart\Modules\Facades\Module;
@@ -15,9 +16,6 @@ class ProFeaturesController extends Controller
 {
     private $model;
 
-    public $filters = [];
-    public $sortField;
-    public $sortOrder;
     protected $viewName = 'ProFeatures';
     protected $searchable = ['name'];
 
@@ -31,25 +29,20 @@ class ProFeaturesController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(KeygenAPIService $keygenApiService)
+    public function index(Request $request)
     {
 
         return Inertia::render(
             $this->viewName,
             [
-                'data' => function () use ($keygenApiService) {
-                    return $this->getData($keygenApiService);
-                },
-                'showGlobal' => function () {
-                    return request('filterData.showGlobal') === 'true';
-                },
+                'pagination' => [
+                    'per_page' => fspbx_pagination_per_page($request),
+                    'per_page_options' => fspbx_pagination_options(),
+                ],
 
                 'routes' => [
-                    'current_page' => route('pro-features.index'),
-                    // 'select_all' => route('active-calls.select.all'),
-                    // 'bulk_delete' => route('messages.bulk.delete'),
-                    // 'bulk_update' => route('messages.bulk.update'),
-                    // 'action' => route('active-calls.action'),
+                    'data_route' => route('pro-features.data'),
+                    'select_all' => route('pro-features.select.all'),
                     'item_options' => route('pro-features.item.options')
                 ],
                 'permissions' => [
@@ -63,25 +56,12 @@ class ProFeaturesController extends Controller
     /**
      *  Get data
      */
-    public function getData(KeygenAPIService $keygenApiService, $paginate = 50)
+    public function getData(Request $request, KeygenAPIService $keygenApiService)
     {
-        // Check if search parameter is present and not empty
-        if (!empty(request('filterData.search'))) {
-            $this->filters['search'] = request('filterData.search');
-        }
-
-        // Add sorting criteria
-        $this->sortField = request()->get('sortField', 'created_at'); // Default to 'created_at'
-        $this->sortOrder = request()->get('sortOrder', 'asc'); // Default to descending
-
-        $data = $this->builder($this->filters);
-
-        // Apply pagination if requested
-        if ($paginate) {
-            $data = $data->paginate($paginate);
-        } else {
-            $data = $data->get(); // This will return a collection
-        }
+        $data = $this->builder(
+            ['search' => $request->input('filter.search')],
+            (string) $request->input('sort', 'created_at')
+        )->paginate(fspbx_pagination_per_page($request));
 
         // Check license validity
         $data->transform(function ($item) use ($keygenApiService) {
@@ -100,16 +80,10 @@ class ProFeaturesController extends Controller
         });
 
 
-        // logger($data);
-
         return $data;
     }
 
-    /**
-     * @param  array  $filters
-     * @return Builder
-     */
-    public function builder(array $filters = [])
+    public function builder(array $filters = [], string $sort = 'created_at')
     {
         $data =  $this->model::query();
 
@@ -121,12 +95,21 @@ class ProFeaturesController extends Controller
         );
 
         // Apply sorting
-        $data->orderBy($this->sortField, $this->sortOrder);
+        $sortField = ltrim($sort, '-');
+        $sortOrder = str_starts_with($sort, '-') ? 'desc' : 'asc';
+        if (! in_array($sortField, ['created_at', 'name'], true)) {
+            $sortField = 'created_at';
+            $sortOrder = 'asc';
+        }
+        $data->orderBy($sortField, $sortOrder)->orderBy('uuid');
 
 
         // Apply additional filters, if any
         if (is_array($filters)) {
             foreach ($filters as $field => $value) {
+                if ($value === null || $value === '') {
+                    continue;
+                }
                 if (method_exists($this, $method = "filter" . ucfirst($field))) {
                     $this->$method($data, $value);
                 }
@@ -174,7 +157,7 @@ class ProFeaturesController extends Controller
         }
 
         return response()->json([
-            'messages' => ['success' => ['Request has been successfully processed']]
+            'messages' => ['success' => [__('Request has been successfully processed')]]
         ], 201);
     }
 
@@ -196,7 +179,7 @@ class ProFeaturesController extends Controller
         }
 
         return response()->json([
-            'messages' => ['success' => ['Request has been successfully processed']],
+            'messages' => ['success' => [__('Request has been successfully processed')]],
             'details' => $result,
         ], 201);
     }
@@ -214,7 +197,7 @@ class ProFeaturesController extends Controller
         }
 
         return response()->json([
-            'messages' => ['success' => ['All modules have been deleted']],
+            'messages' => ['success' => [__('All modules have been deleted')]],
             'details' => $result,
         ], 201);
     }
@@ -229,12 +212,12 @@ class ProFeaturesController extends Controller
             // Base navigation array without Greetings
             $navigation = [
                 [
-                    'name' => 'License',
+                    'name' => __('License'),
                     'icon' => 'Cog6ToothIcon',
                     'slug' => 'license',
                 ],
                 [
-                    'name' => 'Modules',
+                    'name' => __('Modules'),
                     'icon' => 'CloudArrowDownIcon',
                     'slug' => 'modules',
                 ],
@@ -276,7 +259,6 @@ class ProFeaturesController extends Controller
             $routes = array_merge($routes, [
                 'update_route' => route('pro-features.update', $item),
                 'deactivate_route' => route('pro-features.destroy', $item),
-                'activate_route' => route('pro-features.activate', $item),
                 'install_route' => route('pro-features.install', $item),
                 'uninstall_route' => route('pro-features.uninstall', $item),
             ]);
@@ -300,7 +282,7 @@ class ProFeaturesController extends Controller
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to fetch item details']]
+                'errors' => ['server' => [__('Failed to fetch item details')]]
             ], 500);  // 500 Internal Server Error for any other errors
         }
     }
@@ -319,7 +301,7 @@ class ProFeaturesController extends Controller
             $licenseResponse = $keygenApiService->validateLicenseKey($licenseKey);
 
             if (!$licenseResponse || $licenseResponse['meta']['valid'] === false) {
-                return response()->json(['errors' => ['license' => ['Invalid license or failed validation']]], 400);
+                return response()->json(['errors' => ['license' => [__('Invalid license or failed validation')]]], 400);
             }
 
             // Step 2: Get machine link and fetch registered machines
@@ -341,17 +323,17 @@ class ProFeaturesController extends Controller
                 // Step 4: Deactivate the matched machine
                 $response = $keygenApiService->deactivateMachine($licenseKey, $machineId);
                 if ($response) {
-                    return response()->json(['messages' => ['success' => ['License deactivated successfully']]], 200);
+                    return response()->json(['messages' => ['success' => [__('License deactivated successfully')]]], 200);
                 } else {
-                    return response()->json(['errors' => ['machine' => ['Failed to deactivate license']]], 500);
+                    return response()->json(['errors' => ['machine' => [__('Failed to deactivate license')]]], 500);
                 }
             } else {
-                return response()->json(['errors' => ['machine' => ['No matching machine found for this license']]], 400);
+                return response()->json(['errors' => ['machine' => [__('No matching machine found for this license')]]], 400);
             }
         } catch (\Exception $e) {
             // Log the error message
             logger($e);
-            return redirect()->back()->with('error', ['server' => ['Server returned an error while deleting this item']]);
+            return response()->json(['errors' => ['server' => [__('Server returned an error while deleting this item')]]], 500);
         }
     }
 
@@ -360,26 +342,13 @@ class ProFeaturesController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function selectAll()
+    public function selectAll(Request $request)
     {
-        try {
-            // Fetch all active calls without pagination
-            $allCalls = $this->builder($this->filters);
+        $uuids = $this->builder(['search' => $request->input('filter.search')])->pluck('uuid');
 
-            // Extract only the UUIDs from the collection
-            $uuids = $allCalls->pluck('uuid');
-
-            return response()->json([
-                'messages' => ['success' => ['All items selected']],
-                'items' => $uuids,  // Returning only the UUIDs
-            ], 200);
-        } catch (\Exception $e) {
-            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
-
-            return response()->json([
-                'success' => false,
-                'errors' => ['server' => ['Failed to select all items']]
-            ], 500); // 500 Internal Server Error for any other errors
-        }
+        return response()->json([
+            'messages' => ['success' => [__('All items selected')]],
+            'items' => $uuids,
+        ]);
     }
 }

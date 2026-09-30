@@ -4,29 +4,29 @@
     <div class="m-3 space-y-4">
         <header class="flex flex-wrap items-end justify-between gap-3">
             <div>
-                <p class="text-xs font-medium uppercase text-indigo-600">Group access</p>
-                <h1 class="mt-1 text-2xl font-semibold text-gray-900">Permissions: {{ group.group_name }}</h1>
+                <p class="text-xs font-medium uppercase text-indigo-600">{{ $t('Group access') }}</p>
+                <h1 class="mt-1 text-2xl font-semibold text-gray-900">{{ $t('Permissions: :group', { group: group.group_name }) }}</h1>
                 <p v-if="group.group_description" class="mt-1 text-sm text-gray-500">{{ group.group_description }}</p>
-                <p v-else class="mt-1 text-sm text-gray-500">Manage assigned permissions for this group.</p>
+                <p v-else class="mt-1 text-sm text-gray-500">{{ $t('Manage assigned permissions for this group.') }}</p>
             </div>
             <div class="flex flex-wrap gap-2">
                 <a :href="routes.groups" class="inline-flex items-center gap-1.5 rounded-md bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                    <ArrowUturnLeftIcon class="h-4 w-4" /> Groups
+                    <ArrowUturnLeftIcon class="h-4 w-4" /> {{ $t('Groups') }}
                 </a>
                 <button v-if="permissions.members" type="button" class="inline-flex items-center gap-1.5 rounded-md bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50" @click="showMembersModal = true">
-                    <UsersIcon class="h-4 w-4" /> Members
+                    <UsersIcon class="h-4 w-4" /> {{ $t('Members') }}
                 </button>
                 <button v-if="permissions.reload" type="button" class="inline-flex items-center gap-1.5 rounded-md bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50" @click="reloadPermissions">
-                    <ArrowPathIcon class="h-4 w-4" /> Reload
+                    <ArrowPathIcon class="h-4 w-4" /> {{ $t('Reload') }}
                 </button>
             </div>
         </header>
 
         <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <StatTile label="Total permissions" :value="stats.total" tone="gray" />
-            <StatTile label="Assigned" :value="stats.assigned" tone="green" />
-            <StatTile label="Unassigned" :value="stats.unassigned" tone="rose" />
-            <StatTile label="Applications" :value="stats.applications" tone="indigo" />
+            <StatTile :label="$t('Total permissions')" :value="stats.total" tone="gray" />
+            <StatTile :label="$t('Assigned')" :value="stats.assigned" tone="green" />
+            <StatTile :label="$t('Unassigned')" :value="stats.unassigned" tone="rose" />
+            <StatTile :label="$t('Applications')" :value="stats.applications" tone="indigo" />
         </div>
 
         <div class="flex flex-col gap-4 lg:flex-row">
@@ -34,29 +34,29 @@
                 <div class="rounded-lg bg-white p-3 shadow-sm ring-1 ring-gray-200">
                     <div class="relative mb-3">
                         <MagnifyingGlassIcon class="pointer-events-none absolute inset-y-0 left-3 my-auto h-4 w-4 text-gray-400" />
-                        <input v-model="filterData.search" type="text" placeholder="Search permissions..." class="block w-full rounded-md border-0 py-1.5 pl-9 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600" />
+                        <input v-model="filterData.search" type="text" :placeholder="$t('Search permissions...')" class="block w-full rounded-md border-0 py-1.5 pl-9 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600" />
                     </div>
 
                     <div class="mb-3">
-                        <label class="block text-xs font-medium text-gray-500">Assignment</label>
+                        <label class="block text-xs font-medium text-gray-500">{{ $t('Assignment') }}</label>
                         <select v-model="filterData.assignment" class="mt-1 block w-full rounded-md border-0 py-1.5 pl-2 pr-8 text-sm text-gray-900 ring-1 ring-inset ring-gray-300">
-                            <option value="all">Any assignment</option>
-                            <option value="assigned">Assigned</option>
-                            <option value="unassigned">Unassigned</option>
+                            <option value="all">{{ $t('Any assignment') }}</option>
+                            <option value="assigned">{{ $t('Assigned') }}</option>
+                            <option value="unassigned">{{ $t('Unassigned') }}</option>
                         </select>
                     </div>
 
-                    <p class="px-1 pb-1 text-xs font-medium uppercase text-gray-400">Applications</p>
+                    <p class="px-1 pb-1 text-xs font-medium uppercase text-gray-400">{{ $t('Applications') }}</p>
                     <nav class="max-h-[60vh] space-y-0.5 overflow-y-auto">
                         <button type="button" :class="applicationButtonClass('')" @click="selectedApplication = ''">
-                            <span class="min-w-0 flex-1 truncate">All</span>
+                            <span class="min-w-0 flex-1 truncate">{{ $t('All') }}</span>
                             <span :class="applicationBadgeClass('')">{{ filteredRows.length }}</span>
                         </button>
                         <button v-for="application in applicationsWithCounts" :key="application.value" type="button" :class="applicationButtonClass(application.value)" @click="selectedApplication = application.value">
                             <span class="min-w-0 flex-1 truncate">{{ application.label }}</span>
                             <span :class="applicationBadgeClass(application.value)">{{ application.count }}</span>
                         </button>
-                        <p v-if="!applicationsWithCounts.length" class="px-3 py-2 text-xs text-gray-400">No matching applications</p>
+                        <p v-if="!applicationsWithCounts.length" class="px-3 py-2 text-xs text-gray-400">{{ $t('No matching applications') }}</p>
                     </nav>
                 </div>
             </aside>
@@ -66,16 +66,16 @@
                     <header class="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 px-4 py-3">
                         <div>
                             <h2 class="text-base font-semibold text-gray-900">{{ selectedApplicationLabel }}</h2>
-                            <p class="text-xs text-gray-500">{{ displayedRows.length }} permission{{ displayedRows.length === 1 ? '' : 's' }} shown</p>
+                            <p class="text-xs text-gray-500">{{ $tChoice(':count permission shown|:count permissions shown', displayedRows.length) }}</p>
                         </div>
                         <div class="flex flex-wrap items-center gap-2">
                             <button v-if="displayedRows.length" type="button" class="text-xs text-gray-500 hover:text-gray-900" @click="toggleSelectAllVisible">
-                                {{ allVisibleSelected ? 'Clear selection' : 'Select visible' }}
+                                {{ allVisibleSelected ? $t('Clear selection') : $t('Select visible') }}
                             </button>
                             <div v-if="selectedItems.length" class="flex flex-wrap items-center gap-1 rounded-md bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700">
-                                <span>{{ selectedItems.length }} selected</span>
-                                <button v-if="permissions.assign" type="button" class="rounded px-1.5 py-0.5 hover:bg-indigo-100" @click="setAssignments(selectedItems, true)">Assign</button>
-                                <button v-if="permissions.remove" type="button" class="rounded px-1.5 py-0.5 hover:bg-indigo-100" @click="setAssignments(selectedItems, false)">Unassign</button>
+                                <span>{{ $t(':count selected', { count: selectedItems.length }) }}</span>
+                                <button v-if="permissions.assign" type="button" class="rounded px-1.5 py-0.5 hover:bg-indigo-100" @click="setAssignments(selectedItems, true)">{{ $t('Assign') }}</button>
+                                <button v-if="permissions.remove" type="button" class="rounded px-1.5 py-0.5 hover:bg-indigo-100" @click="setAssignments(selectedItems, false)">{{ $t('Unassign') }}</button>
                             </div>
                         </div>
                     </header>
@@ -88,9 +88,9 @@
                         <section v-for="section in sectionedRows" :key="section.application" class="divide-y divide-gray-100">
                             <header class="bg-gray-50 px-4 py-2">
                                 <div class="flex items-center justify-between gap-3">
-                                    <h3 class="text-sm font-semibold text-gray-900">{{ section.application }}</h3>
+                                    <h3 class="text-sm font-semibold text-gray-900">{{ applicationLabel(section.application) }}</h3>
                                     <div class="flex items-center gap-3">
-                                        <span class="text-xs text-gray-500">{{ section.assigned }} of {{ section.rows.length }}</span>
+                                        <span class="text-xs text-gray-500">{{ $t(':assigned of :total', { assigned: section.assigned, total: section.rows.length }) }}</span>
                                         <button
                                             v-if="canToggleSection"
                                             type="button"
@@ -124,7 +124,7 @@
                                         type="button"
                                         role="switch"
                                         :aria-checked="row.assigned"
-                                        :title="row.assigned ? 'Unassign permission' : 'Assign permission'"
+                                        :title="row.assigned ? $t('Unassign permission') : $t('Assign permission')"
                                         :class="['relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1', row.assigned ? 'bg-indigo-600' : 'bg-gray-200']"
                                         @click="setAssignments([row.permission_name], !row.assigned)"
                                     >
@@ -132,7 +132,7 @@
                                     </button>
                                     <span
                                         v-else
-                                        :title="row.assigned ? 'Assigned' : 'Unassigned'"
+                                        :title="row.assigned ? $t('Assigned') : $t('Unassigned')"
                                         :class="['relative inline-flex h-5 w-9 shrink-0 items-center rounded-full opacity-60', row.assigned ? 'bg-indigo-600' : 'bg-gray-200']"
                                     >
                                         <span :class="['inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow', row.assigned ? 'translate-x-[18px]' : 'translate-x-0.5']" />
@@ -143,9 +143,9 @@
                     </div>
 
                     <div v-else class="px-4 py-12 text-center">
-                        <p class="text-sm font-medium text-gray-900">No permissions match your filters</p>
-                        <p class="mt-1 text-xs text-gray-500">Try clearing search or assignment filters.</p>
-                        <button type="button" class="mt-3 rounded-md bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50" @click="handleFiltersReset">Reset filters</button>
+                        <p class="text-sm font-medium text-gray-900">{{ $t('No permissions match your filters') }}</p>
+                        <p class="mt-1 text-xs text-gray-500">{{ $t('Try clearing search or assignment filters.') }}</p>
+                        <button type="button" class="mt-3 rounded-md bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50" @click="handleFiltersReset">{{ $t('Reset filters') }}</button>
                     </div>
                 </div>
             </section>
@@ -159,6 +159,7 @@
 </template>
 
 <script setup>
+import { trans } from '@i18n';
 import { computed, h, onMounted, ref, watch } from 'vue'
 import axios from 'axios'
 import MainLayout from '../Layouts/MainLayout.vue'
@@ -240,7 +241,7 @@ const applicationsWithCounts = computed(() => {
     }
 
     return Array.from(counts.entries())
-        .map(([value, count]) => ({ value, label: value, count }))
+        .map(([value, count]) => ({ value, label: applicationLabel(value), count }))
         .sort((a, b) => a.label.localeCompare(b.label))
 })
 
@@ -283,7 +284,8 @@ const sectionedRows = computed(() => {
 
 const canToggleSection = computed(() => Boolean(props.permissions?.assign && props.permissions?.remove))
 
-const selectedApplicationLabel = computed(() => selectedApplication.value || 'All permissions')
+const applicationLabel = (application) => application === 'Uncategorized' ? trans('Uncategorized') : application
+const selectedApplicationLabel = computed(() => selectedApplication.value ? applicationLabel(selectedApplication.value) : trans('All permissions'))
 
 const allVisibleSelected = computed(() => {
     if (!displayedRows.value.length) return false
@@ -391,9 +393,9 @@ const toggleSection = (section) => {
 }
 
 const sectionToggleTitle = (section) => {
-    if (section.state === 'all') return `Unassign all in ${section.application}`
-    if (section.state === 'some') return `Unassign all in ${section.application} (partially assigned)`
-    return `Assign all in ${section.application}`
+    if (section.state === 'all') return trans('Unassign all in :application', { application: applicationLabel(section.application) })
+    if (section.state === 'some') return trans('Unassign all in :application (partially assigned)', { application: applicationLabel(section.application) })
+    return trans('Assign all in :application', { application: applicationLabel(section.application) })
 }
 
 const sectionTrackClass = (section) => {
@@ -415,6 +417,6 @@ const showNotification = (type, messages) => {
 }
 
 const handleErrorResponse = (error) => {
-    showNotification('error', error?.response?.data?.messages || error?.response?.data?.errors || { error: ['Request failed.'] })
+    showNotification('error', error?.response?.data?.messages || error?.response?.data?.errors || { error: [trans('Request failed.')] })
 }
 </script>

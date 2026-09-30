@@ -39,7 +39,7 @@
                                 </div>
                             </div>
 
-                            <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" :default="defaults" :display-errors="false"
+                            <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" :default="defaults" :display-errors="false" :validate-on="''"
                             autocomplete="off" data-lpignore="true" data-1p-ignore data-bwignore="true"
                             @success="handleSuccess" @error="handleError" @response="handleResponse">
                                 <template #empty>
@@ -48,7 +48,7 @@
                                             <FormTabs view="vertical">
                                                 <FormTab name="settings" :label="$t('Settings')" :elements="[
                                                     'settings_header', 'uuid', 'name', 'extension',
-                                                    'provider', 'enabled', 'description', 'settings_button_container',
+                                                    'provider', 'enabled', 'email_from_address', 'description', 'settings_button_container',
                                                     'settings_submit',
                                                 ]" />
                                                 <FormTab name="call_handling" :label="$t('Call Handling')" :elements="[
@@ -102,6 +102,10 @@
                                                 <ToggleElement name="enabled" :text="$t('Enabled')"
                                                     :labels="{ on: $t('On'), off: $t('Off') }"
                                                     :columns="{ sm: { container: canManageProvider ? 4 : 3 } }" label="&nbsp;" />
+                                                <TextElement name="email_from_address" :label="$t('Email From Address')" :floating="false"
+                                                    autocomplete="off" :attrs="nonCredentialFieldAttrs"
+                                                    :placeholder="$t('Optional')"
+                                                    :description="$t('Sender address for emails sent by this agent. Leave blank to use the account or system email address.')" />
                                                 <TextareaElement name="description" :label="$t('Description')" :rows="2"
                                                     autocomplete="off" :attrs="nonCredentialFieldAttrs" />
 
@@ -156,7 +160,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from "@headlessui/vue";
 import { XMarkIcon } from "@heroicons/vue/24/solid";
 import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
@@ -172,6 +176,7 @@ const props = defineProps({
 });
 const emit = defineEmits(["close", "error", "success", "refresh-data", "provider-change"]);
 const form$ = ref(null);
+watch(form$, (form) => form?.disableValidation());
 const nonCredentialFieldAttrs = {
     autocomplete: "off",
     "data-lpignore": "true",
@@ -194,6 +199,7 @@ const defaults = computed(() => ({
     inbound_agent_id: props.options.item?.inbound_agent_id ?? null,
     outbound_agent_id: props.options.item?.outbound_agent_id ?? null,
     recording_policy: props.options.item?.recording_policy === "always" ? "always" : "inherit",
+    email_from_address: props.options.item?.email_from_address ?? null,
     description: props.options.item?.description ?? null,
 }));
 
@@ -206,6 +212,8 @@ const handleCopyToClipboard = (text) => {
 };
 
 const submitForm = async (FormData, form$) => {
+    form$.messageBag.clear();
+    Object.values(form$.elements$).forEach((element) => clearErrorsRecursive(element));
     const data = { ...form$.requestData };
     if (!canManageDomain.value) delete data.domain_uuid;
     if (!canManageProvider.value) delete data.provider;

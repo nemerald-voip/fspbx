@@ -15,7 +15,7 @@ class EmailProviderDetailsService
         if ($provider === '') {
             return [
                 'available' => false,
-                'message' => 'No email provider was recorded for this email. Send a new email after the latest update, then check again.',
+                'message' => __('No email provider was recorded for this email. Send a new email after the latest update, then check again.'),
             ];
         }
 
@@ -23,7 +23,7 @@ class EmailProviderDetailsService
             'postmark' => $this->getPostmarkDetails($log),
             default => [
                 'available' => false,
-                'message' => 'Delivery details are not available for this email provider.',
+                'message' => __('Delivery details are not available for this email provider.'),
             ],
         };
     }
@@ -35,7 +35,7 @@ class EmailProviderDetailsService
         if (blank($token)) {
             return [
                 'available' => false,
-                'message' => 'Postmark API token is not configured.',
+                'message' => __('Postmark API token is not configured.'),
             ];
         }
 
@@ -47,7 +47,7 @@ class EmailProviderDetailsService
             if ($messageId === '') {
                 return [
                     'available' => false,
-                    'message' => 'Postmark did not return a matching message for this email log. It may not have received the metadata yet, or the message may be outside retention.',
+                    'message' => __('Postmark did not return a matching message for this email log. It may not have received the metadata yet, or the message may be outside retention.'),
                 ];
             }
 
@@ -66,21 +66,21 @@ class EmailProviderDetailsService
 
             return [
                 'available' => false,
-                'message' => 'Unable to connect to Postmark for delivery details.',
+                'message' => __('Unable to connect to Postmark for delivery details.'),
             ];
         }
 
         if ($response->status() === 404) {
             return [
                 'available' => false,
-                'message' => 'Postmark no longer has details for this message.',
+                'message' => __('Postmark no longer has details for this message.'),
             ];
         }
 
         if (! $response->successful()) {
             return [
                 'available' => false,
-                'message' => 'Postmark returned an error while fetching delivery details.',
+                'message' => __('Postmark returned an error while fetching delivery details.'),
                 'status' => $response->status(),
                 'details' => $response->json(),
             ];

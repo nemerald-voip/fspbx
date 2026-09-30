@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Rules\UniqueExtension;
 use Illuminate\Foundation\Http\FormRequest;
+use App\Support\Localization\ValidationMessages;
 use Illuminate\Validation\Rule;
 
 class StoreBasicQueueRequest extends FormRequest
@@ -30,7 +31,7 @@ class StoreBasicQueueRequest extends FormRequest
             'queue_tier_rules_apply' => ['required', 'in:true,false'],
             'queue_cid_prefix' => ['nullable', 'string', 'max:255'],
             'queue_timeout_action' => ['nullable', 'string', 'max:1024'],
-            'timeout_action' => ['nullable', 'string', 'max:255'],
+            'timeout_action' => ['nullable', 'string', Rule::in(\App\Services\CallRoutingOptionsService::destinationTypes())],
             'timeout_target' => [
                 'nullable',
                 'string',
@@ -40,14 +41,10 @@ class StoreBasicQueueRequest extends FormRequest
 
                     if (
                         $action
-                        && ! in_array($action, [
-                            'company_directory',
-                            'check_voicemail',
-                            'hangup',
-                        ], true)
+                        && \App\Services\CallRoutingOptionsService::requiresTarget((string) $action)
                         && blank($value)
                     ) {
-                        $fail('A target must be provided when action is selected.');
+                        $fail(__('A target must be provided when action is selected.'));
                     }
                 },
             ],
@@ -55,8 +52,8 @@ class StoreBasicQueueRequest extends FormRequest
             'tiers' => ['nullable', 'array'],
             'tiers.*.call_center_tier_uuid' => ['nullable', 'uuid'],
             'tiers.*.call_center_agent_uuid' => ['nullable', 'uuid'],
-            'tiers.*.tier_level' => ['nullable', 'integer', 'min:1'],
-            'tiers.*.tier_position' => ['nullable', 'integer', 'min:1'],
+            'tiers.*.tier_level' => ['nullable', 'integer', 'min:1', 'max:10'],
+            'tiers.*.tier_position' => ['nullable', 'integer', 'min:1', 'max:10'],
         ];
     }
 
@@ -75,5 +72,34 @@ class StoreBasicQueueRequest extends FormRequest
     protected function queueUuid(): ?string
     {
         return null;
+    }
+
+    public function messages(): array
+    {
+        return ValidationMessages::common();
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'queue_name' => __('Name'),
+            'queue_extension' => __('Extension'),
+            'queue_strategy' => __('Strategy'),
+            'queue_greeting' => __('Greeting'),
+            'queue_moh_sound' => __('Music on Hold'),
+            'queue_max_wait_time' => __('Max Wait Time'),
+            'queue_max_wait_time_with_no_agent' => __('Max Wait Time with No Agent'),
+            'queue_tier_rules_apply' => __('Tier Rules Apply'),
+            'queue_cid_prefix' => __('Caller ID Prefix'),
+            'queue_timeout_action' => __('Timeout Action'),
+            'timeout_action' => __('Timeout Action'),
+            'timeout_target' => __('Target'),
+            'queue_description' => __('Description'),
+            'tiers' => __('Agents'),
+            'tiers.*.call_center_tier_uuid' => __('Tier'),
+            'tiers.*.call_center_agent_uuid' => __('Agent'),
+            'tiers.*.tier_level' => __('Level'),
+            'tiers.*.tier_position' => __('Position'),
+        ];
     }
 }

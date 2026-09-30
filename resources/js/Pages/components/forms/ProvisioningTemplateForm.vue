@@ -2,23 +2,23 @@
     <div class="flex h-full min-h-0 flex-col bg-white">
         <!-- Metadata fields -->
         <Vueform ref="form$" :endpoint="submitForm" @success="handleSuccess" @error="handleError"
-            @response="handleResponse" :display-errors="false" :default="defaultValues" class="flex-none">
+            @response="handleResponse" :display-errors="false" :default="defaultValues" class="flex-none" @mounted="(form) => form.disableValidation()" @submit="clearServerFormErrors">
             <template #empty>
                 <FormElements>
-                    <TextElement name="name" label="Template Name" placeholder="Enter template name" :floating="false"
-                        :columns="settingsFieldColumns" :disabled="readOnly" rules="required" />
+                    <TextElement name="name" :label="$t('Template Name')" :placeholder="$t('Enter template name')" :floating="false"
+                        :columns="settingsFieldColumns" :disabled="readOnly" />
 
-                    <SelectElement name="base_template_uuid" label="Base Template" :items="baseTemplateItems"
-                        :native="false" :search="true" :strict="false" placeholder="Choose Base Template"
+                    <SelectElement name="base_template_uuid" :label="$t('Base Template')" :items="baseTemplateItems"
+                        :native="false" :search="true" :strict="false" :placeholder="$t('Choose Base Template')"
                         input-type="search" autocomplete="off" :floating="false"
                         :columns="settingsFieldColumns" :disabled="readOnly" :groups="true"
                         @change="handleBaseTemplateChange" />
 
-                    <SelectElement name="vendor" label="Vendor" :items="vendorItems" :native="false" :search="true"
-                        :strict="false" placeholder="Choose Vendor" input-type="search" autocomplete="off"
+                    <SelectElement name="vendor" :label="$t('Vendor')" :items="vendorItems" :native="false" :search="true"
+                        :strict="false" :placeholder="$t('Choose Vendor')" input-type="search" autocomplete="off"
                         :floating="false" :columns="settingsFieldColumns" :disabled="readOnly" />
 
-                    <ToggleElement name="global" text="Share across accounts" label="&nbsp;"
+                    <ToggleElement name="global" :text="$t('Share across accounts')" label="&nbsp;"
                         :columns="settingsFieldColumns" :disabled="readOnly" />
                 </FormElements>
             </template>
@@ -36,8 +36,8 @@
             </select>
             <select v-model="editorTheme"
                 class="rounded-md border-gray-300 py-1 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                <option value="chrome">Light</option>
-                <option value="one_dark">Dark</option>
+                <option value="chrome">{{ $t('Light') }}</option>
+                <option value="one_dark">{{ $t('Dark') }}</option>
             </select>
         </div>
 
@@ -47,7 +47,7 @@
             <div v-if="isLoadingTemplate"
                 class="absolute inset-0 z-10 flex items-center justify-center bg-white/60 backdrop-blur-[1px]">
                 <Spinner :show="true" />
-                <span class="ml-2 text-sm text-gray-600">Loading template…</span>
+                <span class="ml-2 text-sm text-gray-600">{{ $t('Loading template…') }}</span>
             </div>
             <AceEditor v-model="contentValue" :lang="editorLang" :theme="editorTheme"
                 :options="{ fontSize: 16, tabSize: 4, readOnly: isLoadingTemplate || readOnly }" height="100%"
@@ -60,12 +60,12 @@
                 <button type="button"
                     class="inline-flex justify-center rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:min-w-24"
                     @click="emit('cancel')">
-                    Cancel
+                    {{ $t('Cancel') }}
                 </button>
                 <button v-if="!readOnly" type="button" @click="triggerSubmit" :disabled="isSubmitting"
                     class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:opacity-60 sm:min-w-24">
                     <Spinner :show="isSubmitting" />
-                    Save
+                    {{ $t('Save') }}
                 </button>
             </div>
         </div>
@@ -73,6 +73,8 @@
 </template>
 
 <script setup>
+import { clearServerFormErrors } from '../../../composables/serverFormErrors.js';
+import { trans } from '@i18n';
 import { computed, ref, watch } from 'vue'
 import AceEditor from '@generalComponents/AceEditor.vue'
 import Spinner from '../general/Spinner.vue'
@@ -220,6 +222,6 @@ const handleError = (error, details, formRef) => {
         return
     }
 
-    formRef.messageBag.append('Could not submit form')
+    formRef.messageBag.append(trans('Could not submit form'))
 }
 </script>

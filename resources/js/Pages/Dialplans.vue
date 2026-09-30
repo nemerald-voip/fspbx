@@ -17,30 +17,30 @@
                     <input type="text" v-model="filterData.search" name="mobile-search-dialplans"
                         id="mobile-search-dialplans"
                         class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                        :placeholder="$t(&quot;Search&quot;)" @keydown.enter="handleSearchButtonClick" />
                     <input type="text" v-model="filterData.search" name="desktop-search-dialplans"
                         id="desktop-search-dialplans"
                         class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                        :placeholder="$t(&quot;Search&quot;)" @keydown.enter="handleSearchButtonClick" />
                 </div>
             </template>
 
             <template #action>
                 <button v-if="createButtonVisible" type="button" @click.prevent="handleCreateButtonClick"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                    Create
+                    {{ $t("Create") }}
                 </button>
 
                 <button v-if="!isCategoryView && !filterData.showGlobal && permissions.view_global" type="button"
                     @click.prevent="handleShowGlobal"
                     class="ml-2 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:ml-4">
-                    Show global
+                    {{ $t("Show global") }}
                 </button>
 
                 <button v-if="!isCategoryView && filterData.showGlobal && permissions.view_global" type="button"
                     @click.prevent="handleShowLocal"
                     class="ml-2 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:ml-4">
-                    Show local
+                    {{ $t("Show local") }}
                 </button>
             </template>
 
@@ -57,7 +57,7 @@
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                     <div class="pl-4 flex items-center cursor-pointer select-none" @click="handleSortRequest('dialplan_name')">
-                        <span class="mr-2">Name</span>
+                        <span class="mr-2">{{ $t("Name") }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'dialplan_name' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'dialplan_name' && sortData.order === 'desc'"
@@ -65,11 +65,11 @@
                     </div>
                 </TableColumnHeader>
 
-                <TableColumnHeader v-if="filterData.showGlobal" header="Domain"
+                <TableColumnHeader v-if="filterData.showGlobal" :header="$t(&quot;Domain&quot;)"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('dialplan_number')">
-                        <span class="mr-2">Number</span>
+                        <span class="mr-2">{{ $t("Number") }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'dialplan_number' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'dialplan_number' && sortData.order === 'desc'"
@@ -78,7 +78,7 @@
                 </TableColumnHeader>
                 <TableColumnHeader v-if="permissions.context" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('dialplan_context')">
-                        <span class="mr-2">Context</span>
+                        <span class="mr-2">{{ $t("Context") }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'dialplan_context' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'dialplan_context' && sortData.order === 'desc'"
@@ -87,7 +87,7 @@
                 </TableColumnHeader>
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('dialplan_order')">
-                        <span class="mr-2">Order</span>
+                        <span class="mr-2">{{ $t("Order") }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'dialplan_order' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'dialplan_order' && sortData.order === 'desc'"
@@ -96,7 +96,7 @@
                 </TableColumnHeader>
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('dialplan_enabled')">
-                        <span class="mr-2">Enabled</span>
+                        <span class="mr-2">{{ $t("Enabled") }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'dialplan_enabled' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'dialplan_enabled' && sortData.order === 'desc'"
@@ -105,7 +105,7 @@
                 </TableColumnHeader>
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('dialplan_description')">
-                        <span class="mr-2">Description</span>
+                        <span class="mr-2">{{ $t("Description") }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'dialplan_description' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'dialplan_description' && sortData.order === 'desc'"
@@ -118,16 +118,16 @@
             <template v-if="selectPageItems" v-slot:current-selection>
                 <td :colspan="selectionColspan">
                     <div class="text-sm text-center m-2">
-                        <span class="font-semibold">{{ selectedItems.length }}</span> items are selected.
+                        {{ $t(":count selected", { count: selectedItems.length }) }}
                         <button v-if="!selectAll && selectedItems.length !== data.total"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleSelectAll">
-                            Select all {{ data.total }} items
+                            {{ $t("Select all :count", { count: data.total }) }}
                         </button>
                         <button v-if="selectAll"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleClearSelection">
-                            Clear selection
+                            {{ $t("Clear selection") }}
                         </button>
                     </div>
                 </td>
@@ -164,12 +164,12 @@
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap justify-end">
-                                <button v-if="permissions.update" type="button" title="Edit" aria-label="Edit dialplan"
+                                <button v-if="permissions.update" type="button" :title="$t(&quot;Edit&quot;)" :aria-label="$t(&quot;Edit dialplan&quot;)"
                                     class="rounded-full" @click="handleEditButtonClick(row.dialplan_uuid)">
                                     <PencilSquareIcon
                                         class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                 </button>
-                                <button v-if="permissions.destroy" type="button" title="Delete" aria-label="Delete dialplan"
+                                <button v-if="permissions.destroy" type="button" :title="$t(&quot;Delete&quot;)" :aria-label="$t(&quot;Delete dialplan&quot;)"
                                     class="rounded-full" @click="handleSingleItemDeleteRequest(row.dialplan_uuid)">
                                     <TrashIcon
                                         class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
@@ -183,8 +183,8 @@
             <template #empty>
                 <div v-if="data.data.length === 0" class="text-center my-5">
                     <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
-                    <p class="mt-1 text-sm text-gray-500">Adjust your search and try again.</p>
+                    <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ $t("No results found") }}</h3>
+                    <p class="mt-1 text-sm text-gray-500">{{ $t("Adjust your search and try again.") }}</p>
                 </div>
             </template>
 
@@ -204,7 +204,7 @@
 
     <ConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
         @confirm="confirmAction" :header="confirmationHeader" :text="confirmationText"
-        :confirm-button-label="confirmationButtonLabel" cancel-button-label="Cancel" />
+        :confirm-button-label="confirmationButtonLabel" :cancel-button-label="$t(&quot;Cancel&quot;)" />
 
     <DialplanForm :show="showForm" :options="itemOptions" :mode="formMode" :loading="loadingForm"
         :header="formHeader" @close="handleFormClose" @error="handleErrorResponse" @success="showNotification"
@@ -219,6 +219,7 @@
 </template>
 
 <script setup>
+import { trans } from "@i18n";
 import { computed, onMounted, ref } from "vue";
 import axios from "axios";
 import DataTable from "./components/general/DataTable.vue";
@@ -260,9 +261,9 @@ const selectedItems = ref([]);
 const selectPageItems = ref(false);
 const confirmationModalTrigger = ref(false);
 const confirmAction = ref(null);
-const confirmationHeader = ref("Are you sure?");
+const confirmationHeader = ref(trans("Are you sure?"));
 const confirmationText = ref("");
-const confirmationButtonLabel = ref("Continue");
+const confirmationButtonLabel = ref(trans("Continue"));
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(false);
@@ -316,15 +317,15 @@ const bulkActions = computed(() => {
     const actions = [];
 
     if (permissions.update) {
-        actions.push({ id: "bulk_toggle_enabled", label: "Toggle Enabled", icon: "PencilSquareIcon" });
+        actions.push({ id: "bulk_toggle_enabled", label: trans("Toggle Enabled"), icon: "PencilSquareIcon" });
     }
 
     if (permissions.create) {
-        actions.push({ id: "bulk_copy", label: "Copy", icon: "PencilSquareIcon" });
+        actions.push({ id: "bulk_copy", label: trans("Copy"), icon: "PencilSquareIcon" });
     }
 
     if (permissions.destroy) {
-        actions.push({ id: "bulk_delete", label: "Delete", icon: "TrashIcon" });
+        actions.push({ id: "bulk_delete", label: trans("Delete"), icon: "TrashIcon" });
     }
 
     return actions;
@@ -346,26 +347,26 @@ const createButtonVisible = computed(() => {
 
 const pageTitle = computed(() => {
     if (filterData.value.category === "inbound") {
-        return "Inbound Routes";
+        return trans("Inbound Routes");
     }
 
     if (filterData.value.category === "outbound") {
-        return "Outbound Routes";
+        return trans("Outbound Routes");
     }
 
-    return "Dialplans";
+    return trans("Dialplans");
 });
 
 const pageSubtitle = computed(() => {
     if (filterData.value.category === "inbound") {
-        return "Manage public-context routes that receive calls from carriers and external sources.";
+        return trans("Manage public-context routes that receive calls from carriers and external sources.");
     }
 
     if (filterData.value.category === "outbound") {
-        return "Manage outbound route dialplans used to send calls to gateways.";
+        return trans("Manage outbound route dialplans used to send calls to gateways.");
     }
 
-    return "Manage custom FreeSWITCH dialplans and advanced routing rules.";
+    return trans("Manage custom FreeSWITCH dialplans and advanced routing rules.");
 });
 
 const selectionColspan = computed(() => {
@@ -377,13 +378,13 @@ const selectionColspan = computed(() => {
 
 const formHeader = computed(() => {
     if (formMode.value === "create") {
-        return "Create Dialplan";
+        return trans("Create Dialplan");
     }
 
-    return `Update Dialplan - ${itemOptions.value?.item?.dialplan_name || "Loading..."}`;
+    return trans("Update Dialplan - :name", { name: itemOptions.value?.item?.dialplan_name || trans("Loading...") });
 });
 
-const domainLabel = (row) => row.domain?.domain_description || row.domain?.domain_name || "Global";
+const domainLabel = (row) => row.domain?.domain_description || row.domain?.domain_name || trans("Global");
 
 onMounted(() => {
     getData();
@@ -581,9 +582,9 @@ const handleClearSelection = () => {
 
 const handleSingleItemDeleteRequest = (uuid) => {
     showConfirmation({
-        header: "Confirm Deletion",
-        text: "This action will permanently delete the selected dialplan.",
-        button: "Delete",
+        header: trans("Confirm Deletion"),
+        text: trans("This action will permanently delete the selected dialplan."),
+        button: trans("Delete"),
         action: () => executeBulkDelete([uuid]),
     });
 };
@@ -591,27 +592,27 @@ const handleSingleItemDeleteRequest = (uuid) => {
 const handleBulkActionRequest = (action) => {
     if (action === "bulk_delete") {
         showConfirmation({
-            header: "Confirm Deletion",
-            text: "This action will permanently delete the selected dialplan(s).",
-            button: "Delete",
+            header: trans("Confirm Deletion"),
+            text: trans("This action will permanently delete the selected dialplan(s)."),
+            button: trans("Delete"),
             action: () => executeBulkDelete(),
         });
     }
 
     if (action === "bulk_copy") {
         showConfirmation({
-            header: "Confirm Copy",
-            text: "Copy the selected dialplan(s)?",
-            button: "Copy",
+            header: trans("Confirm Copy"),
+            text: trans("Copy the selected dialplan(s)?"),
+            button: trans("Copy"),
             action: () => executeBulkCopy(),
         });
     }
 
     if (action === "bulk_toggle_enabled") {
         showConfirmation({
-            header: "Confirm Toggle",
-            text: "Toggle enabled for the selected dialplan(s)?",
-            button: "Toggle",
+            header: trans("Confirm Toggle"),
+            text: trans("Toggle enabled for the selected dialplan(s)?"),
+            button: trans("Toggle"),
             action: () => executeToggle(selectedItems.value),
         });
     }
@@ -691,7 +692,7 @@ const handleErrorResponse = (error) => {
     notificationType.value = "error";
     notificationMessages.value = error?.response?.data?.messages
         || error?.response?.data?.errors
-        || { error: ["Something went wrong."] };
+        || { error: [trans("Something went wrong.")] };
     notificationShow.value = true;
 };
 

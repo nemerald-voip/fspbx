@@ -10,6 +10,7 @@ use App\Http\Requests\UpdatePhonebookRequest;
 use App\Services\Provisioning\Phonebook\PhonebookBuilder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Support\Localization\ValidationMessages;
 use Inertia\Inertia;
 use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\QueryBuilder;
@@ -52,7 +53,7 @@ class PhonebookManagerController extends Controller
     public function getData(Request $request)
     {
         if (! userCheckPermission('phonebook_view')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         return $this->scoped($request)
@@ -68,11 +69,11 @@ class PhonebookManagerController extends Controller
         $itemUuid = $request->input('itemUuid', $request->input('item_uuid'));
 
         if ($itemUuid && ! userCheckPermission('phonebook_update')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         if (! $itemUuid && ! userCheckPermission('phonebook_create')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         if ($itemUuid) {
@@ -110,37 +111,37 @@ class PhonebookManagerController extends Controller
             $phonebook = $service->save($request->validated());
 
             return response()->json([
-                'messages' => ['success' => ['Phonebook created successfully.']],
+                'messages' => ['success' => [__('Phonebook created successfully.')]],
                 'phonebook_uuid' => $phonebook->phonebook_uuid,
             ], 201);
         } catch (\Throwable $e) {
             logger('PhonebookManagerController@store error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
 
-            return response()->json(['messages' => ['error' => ['Failed to create phonebook.']]], 500);
+            return response()->json(['messages' => ['error' => [__('Failed to create phonebook.')]]], 500);
         }
     }
 
     public function update(UpdatePhonebookRequest $request, Phonebook $phonebook, PhonebookService $service): JsonResponse
     {
         if ($phonebook->domain_uuid !== session('domain_uuid')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         try {
             $service->save($request->validated(), $phonebook);
 
-            return response()->json(['messages' => ['success' => ['Phonebook updated successfully.']]]);
+            return response()->json(['messages' => ['success' => [__('Phonebook updated successfully.')]]]);
         } catch (\Throwable $e) {
             logger('PhonebookManagerController@update error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
 
-            return response()->json(['messages' => ['error' => ['Failed to update phonebook.']]], 500);
+            return response()->json(['messages' => ['error' => [__('Failed to update phonebook.')]]], 500);
         }
     }
 
     public function selectAll(Request $request): JsonResponse
     {
         if (! userCheckPermission('phonebook_view')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $items = $this->scoped($request)
@@ -150,19 +151,24 @@ class PhonebookManagerController extends Controller
 
         return response()->json([
             'items' => $items,
-            'messages' => ['success' => ['All matching phonebooks selected.']],
+            'messages' => ['success' => [__('All matching phonebooks selected.')]],
         ]);
     }
 
     public function bulkDelete(Request $request, PhonebookService $service): JsonResponse
     {
         if (! userCheckPermission('phonebook_delete')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $uuids = $request->validate([
             'items' => ['required', 'array'],
             'items.*' => ['uuid'],
+        ], ValidationMessages::common(), [
+            'items' => __('Phonebooks'),
+            'items.*' => __('Phonebook'),
+            'uuid' => __('Phonebook'),
+            'target_domain_uuid' => __('Target account'),
         ])['items'];
 
         $items = Phonebook::query()
@@ -173,27 +179,32 @@ class PhonebookManagerController extends Controller
         $deleted = $service->delete($items);
 
         return response()->json([
-            'messages' => ['success' => ["Deleted {$deleted} phonebook(s)."]],
+            'messages' => ['success' => [__('Deleted :count phonebook(s).', ['count' => $deleted])]],
         ]);
     }
 
     public function copyToDomain(Request $request, PhonebookService $service): JsonResponse
     {
         if (! userCheckPermission('phonebook_create') || ! userCheckPermission('domain_select')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $data = $request->validate([
             'uuid' => ['required', 'uuid', 'exists:phonebooks,phonebook_uuid'],
             'target_domain_uuid' => ['required', 'uuid', 'exists:v_domains,domain_uuid'],
+        ], ValidationMessages::common(), [
+            'items' => __('Phonebooks'),
+            'items.*' => __('Phonebook'),
+            'uuid' => __('Phonebook'),
+            'target_domain_uuid' => __('Target account'),
         ]);
 
         if ($data['target_domain_uuid'] === session('domain_uuid')) {
-            return response()->json(['messages' => ['error' => ['Choose a different target account.']]], 422);
+            return response()->json(['messages' => ['error' => [__('Choose a different target account.')]]], 422);
         }
 
         if (! $this->canAccessDomain($data['target_domain_uuid'])) {
-            return response()->json(['messages' => ['error' => ['Account access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Account access denied.')]]], 403);
         }
 
         try {
@@ -204,7 +215,7 @@ class PhonebookManagerController extends Controller
                 ->first();
 
             if (! $phonebook) {
-                return response()->json(['messages' => ['error' => ['Phonebook was not found.']]], 404);
+                return response()->json(['messages' => ['error' => [__('Phonebook was not found.')]]], 404);
             }
 
             $copy = $service->duplicate($phonebook, $data['target_domain_uuid']);
@@ -212,13 +223,13 @@ class PhonebookManagerController extends Controller
             $targetDomainLabel = $targetDomain->domain_description ?: $targetDomain->domain_name;
 
             return response()->json([
-                'messages' => ['success' => ["Phonebook copied to {$targetDomainLabel}."]],
+                'messages' => ['success' => [__('Phonebook copied to :account.', ['account' => $targetDomainLabel])]],
                 'phonebook_uuid' => $copy->phonebook_uuid,
             ], 201);
         } catch (\Throwable $e) {
             logger('PhonebookManagerController@copyToDomain error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
 
-            return response()->json(['messages' => ['error' => ['Failed to copy phonebook.']]], 500);
+            return response()->json(['messages' => ['error' => [__('Failed to copy phonebook.')]]], 500);
         }
     }
 
@@ -228,11 +239,11 @@ class PhonebookManagerController extends Controller
     public function preview(Phonebook $phonebook, PhonebookBuilder $builder): JsonResponse
     {
         if (! userCheckPermission('phonebook_view')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         if ($phonebook->domain_uuid !== session('domain_uuid')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $entries = $builder->build($phonebook, (string) $phonebook->domain_uuid);

@@ -61,8 +61,7 @@ class SystemSettingsController extends Controller
                     'assemblyai_route' => route('call-transcription.assemblyai'),
                     'assemblyai_store_route' => route('call-transcription.assemblyai.store'),
                 ],
-                // Schema-driven General tab. Same declarative fields as the
-                // account surface, but these are the global default_settings
+                // Schema-driven General tab. These are the global default_settings
                 // values every account inherits unless it sets its own.
                 'settings_schema' => $this->schema->fields(),
                 'settings_options' => function () {
@@ -74,6 +73,11 @@ class SystemSettingsController extends Controller
                 'sip_capture' => function () {
                     return $this->canViewSipCapture()
                         ? $this->sipCapture->settings()
+                        : null;
+                },
+                'scheduled_jobs' => function () {
+                    return userCheckPermission('scheduled_jobs_manage')
+                        ? app(ScheduledJobCoordinationController::class)->controlProps()
                         : null;
                 },
                 'permissions' => function () {
@@ -95,7 +99,7 @@ class SystemSettingsController extends Controller
 
             if (! $result['runtime_synchronized']) {
                 $messages['error'] = [__(
-                    'The settings were saved, but FreeSWITCH could not apply them live. Check the event socket and rescan the affected SIP profiles.'
+                    __('The settings were saved, but FreeSWITCH could not apply them live. Check the event socket and rescan the affected SIP profiles.')
                 )];
             }
 
@@ -123,7 +127,7 @@ class SystemSettingsController extends Controller
     public function update(UpdateSystemSettingsRequest $request): JsonResponse
     {
         if (!userCheckPermission('default_setting_edit')) {
-            return response()->json(['errors' => ['authorization' => ['Access denied.']]], 403);
+            return response()->json(['errors' => ['authorization' => [__('Access denied.')]]], 403);
         }
 
         try {
@@ -134,7 +138,7 @@ class SystemSettingsController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages' => ['server' => ['Settings updated successfully.']],
+                'messages' => ['server' => [__('Settings updated successfully.')]],
             ], 200);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -143,7 +147,7 @@ class SystemSettingsController extends Controller
 
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Server returned an error while processing your request.']]
+                'errors' => ['server' => [__('Server returned an error while processing your request.')]]
             ], 500);
         }
     }
@@ -161,11 +165,6 @@ class SystemSettingsController extends Controller
     {
         $fields = collect($this->schema->fields())->keyBy('key');
 
-        $existing = DefaultSettings::query()
-            ->whereIn('default_setting_subcategory', $fields->pluck('subcategory')->all())
-            ->get()
-            ->keyBy('default_setting_subcategory');
-
         foreach ($submitted as $key => $value) {
             $field = $fields->get($key);
             if (! $field) {
@@ -177,7 +176,11 @@ class SystemSettingsController extends Controller
                 continue; // never blank a global default
             }
 
-            $row = $existing->get($field['subcategory']);
+            $row = DefaultSettings::query()
+                ->where('default_setting_category', $field['category'])
+                ->where('default_setting_subcategory', $field['subcategory'])
+                ->where('default_setting_name', $field['name'])
+                ->first();
             if ($row && (string) $row->default_setting_value === (string) $value) {
                 continue; // unchanged
             }
@@ -218,7 +221,7 @@ class SystemSettingsController extends Controller
             );
 
             return response()->json([
-                'messages' => ['error' => ['Something went wrong while loading payment gateways.']],
+                'messages' => ['error' => [__('Something went wrong while loading payment gateways.')]],
             ], 500);
         }
     }
@@ -226,6 +229,7 @@ class SystemSettingsController extends Controller
     public function getUserPermissions()
     {
         $permissions = [];
+        $permissions['scheduled_jobs_manage'] = userCheckPermission('scheduled_jobs_manage');
         $permissions['payment_gateways_view'] = userCheckPermission('payment_gateways_view');
         $permissions['call_transcription_settings_view'] = userCheckPermission('call_transcription_settings_view');
         $permissions['default_setting_view'] = userCheckPermission('default_setting_view');

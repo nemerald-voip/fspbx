@@ -22,6 +22,11 @@ class HotelHousekeepingDefinitionController extends Controller
             'housekeeping_options.*.code'   => ['required', 'integer', 'between:0,99'],
             'housekeeping_options.*.label'  => ['required', 'string', 'max:64'],
             'housekeeping_options.*.enabled' => ['sometimes', 'boolean'],
+        ], \App\Support\Localization\ValidationMessages::common(), [
+            'housekeeping_options' => __('Housekeeping Codes'),
+            'housekeeping_options.*.code' => __('Status code'),
+            'housekeeping_options.*.label' => __('Label'),
+            'housekeeping_options.*.enabled' => __('Enabled'),
         ]);
 
         // Block duplicate codes within the same payload
@@ -29,7 +34,7 @@ class HotelHousekeepingDefinitionController extends Controller
         $dupCodes = array_values(array_unique(array_diff_assoc($codes, array_unique($codes))));
         if (!empty($dupCodes)) {
             return response()->json([
-                'messages' => ['error' => ['Duplicate housekeeping codes in payload: ' . implode(', ', $dupCodes)]],
+                'messages' => ['error' => [__('Duplicate housekeeping codes in payload: :codes', ['codes' => implode(', ', $dupCodes)])]],
             ], 422);
         }
 
@@ -74,7 +79,7 @@ class HotelHousekeepingDefinitionController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages' => ['success' => ['Housekeeping codes updated successfully']],
+                'messages' => ['success' => [__('Housekeeping codes updated successfully')]],
                 'items'    => $saved, // empty if you cleared all
             ], 201);
         } catch (\Throwable $e) {
@@ -82,7 +87,7 @@ class HotelHousekeepingDefinitionController extends Controller
             logger('HotelHousekeepingDefinitionController@store error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['An error occurred while saving housekeeping codes.']],
+                'messages' => ['error' => [__('An error occurred while saving housekeeping codes.')]],
             ], 500);
         }
     }
@@ -128,7 +133,7 @@ class HotelHousekeepingDefinitionController extends Controller
             logger('HotelRoomStatusController@getItemOptions ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to fetch item details']]
+                'errors' => ['server' => [__('Failed to fetch item details')]]
             ], 500);
         }
     }
@@ -147,7 +152,7 @@ class HotelHousekeepingDefinitionController extends Controller
             logger('HotelRoomStatusController@getItemOptions ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to fetch item details']]
+                'errors' => ['server' => [__('Failed to fetch item details')]]
             ], 500);
         }
     }

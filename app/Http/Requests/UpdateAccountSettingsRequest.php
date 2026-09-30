@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Services\Settings\AccountSettingsSchema;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use App\Support\Localization\ValidationMessages;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Auth;
 
@@ -17,7 +18,9 @@ class UpdateAccountSettingsRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return Auth::check();
+        return Auth::check()
+            && userCheckPermission('account_settings_list_view')
+            && $this->input('domain_uuid') === session('domain_uuid');
     }
 
     public function rules(): array
@@ -65,7 +68,7 @@ class UpdateAccountSettingsRequest extends FormRequest
 
             foreach ((array) $this->input('settings', []) as $key => $value) {
                 if (! in_array($key, $keys, true)) {
-                    $validator->errors()->add("settings.{$key}", 'Unknown setting.');
+                    $validator->errors()->add("settings.{$key}", __('Unknown setting.'));
                     continue;
                 }
 
@@ -74,7 +77,7 @@ class UpdateAccountSettingsRequest extends FormRequest
                 }
 
                 if (isset($allowed[$key]) && ! in_array($value, $allowed[$key], true)) {
-                    $validator->errors()->add("settings.{$key}", 'The selected value is invalid.');
+                    $validator->errors()->add("settings.{$key}", __('The selected value is invalid.'));
                 }
             }
         });
@@ -84,6 +87,7 @@ class UpdateAccountSettingsRequest extends FormRequest
     public function messages(): array
     {
         return [
+            ...ValidationMessages::common(),
         ];
     }
 
@@ -117,5 +121,20 @@ class UpdateAccountSettingsRequest extends FormRequest
         $input = preg_replace('/[^\x20-\x7E]/', '', $input);
 
         return $input;
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'domain_uuid' => __('Account'),
+            'domain_name' => __('Domain'),
+            'domain_description' => __('Account Name'),
+            'domain_enabled' => __('Account Status'),
+            'settings' => __('Settings'),
+            'settings.*' => __('Setting'),
+            'settings.time_zone' => __('Time Zone'),
+            'settings.language' => __('Language'),
+            'settings.menu' => __('Account Menu'),
+        ];
     }
 }

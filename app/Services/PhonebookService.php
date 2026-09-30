@@ -103,8 +103,10 @@ class PhonebookService
     private function copyName(?string $name): string
     {
         $base = trim((string) $name);
-        $name = $base === '' ? 'Phonebook' : $base;
+        $name = $base === '' ? __('Phonebook') : $base;
 
-        return substr($name, 0, 93) . ' (Copy)';
+        $suffix = ' (' . __('Copy') . ')';
+
+        return mb_substr($name, 0, max(0, 100 - mb_strlen($suffix))) . $suffix;
     }
 }

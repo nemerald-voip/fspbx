@@ -22,7 +22,7 @@
             </template>
 
             <template #action>
-                <button v-if="page.props.auth.can.ring_group_create" type="button"
+                <button v-if="props.permissions.business_hours_create" type="button"
                     @click.prevent="handleCreateButtonClick()"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     {{ $t('Create') }}
@@ -94,8 +94,8 @@
                             <input v-if="row.uuid" v-model="selectedItems" type="checkbox" name="action_box[]"
                                 :value="row.uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                             <div class="ml-4"
-                                :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.business_hours_update, }"
-                                @click="page.props.auth.can.business_hours_update && handleEditButtonClick(row.uuid)">
+                                :class="{ 'cursor-pointer hover:text-gray-900': props.permissions.business_hours_update, }"
+                                @click="props.permissions.business_hours_update && handleEditButtonClick(row.uuid)">
                                 <span class="flex items-center">
                                     {{ row.name }}
                                 </span>
@@ -111,7 +111,7 @@
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap justify-end">
-                                <ejs-tooltip v-if="page.props.auth.can.business_hours_update" :content="$t('Edit')"
+                                <ejs-tooltip v-if="props.permissions.business_hours_update" :content="$t('Edit')"
                                     position='TopCenter' target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
                                         <PencilSquareIcon @click="handleEditButtonClick(row.uuid)"
@@ -120,7 +120,7 @@
                                     </div>
                                 </ejs-tooltip>
 
-                                <ejs-tooltip v-if="page.props.auth.can.business_hours_destroy" :content="$t('Delete')"
+                                <ejs-tooltip v-if="props.permissions.business_hours_destroy" :content="$t('Delete')"
                                     position='TopCenter' target="#delete_tooltip_target">
                                     <div id="delete_tooltip_target">
                                         <TrashIcon @click="handleSingleItemDeleteRequest(row.uuid)"
@@ -153,7 +153,9 @@
             <template #footer>
                 <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
                     :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
-                    @pagination-change-page="renderRequestedPage" />
+                    :page-size="perPage" :page-size-options="props.pagination?.per_page_options ?? []"
+                    :show-page-size-selector="true"
+                    @pagination-change-page="renderRequestedPage" @page-size-change="handlePageSizeChange" />
             </template>
         </DataTable>
         <div class="px-4 sm:px-6 lg:px-8"></div>
@@ -163,7 +165,7 @@
         :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
             <CreateBusinessHoursForm :options="itemOptions" @close="handleModalClose" @error="handleErrorResponse"
-                @success="showNotification" @refresh-data="handleSearchButtonClick"
+                @success="showNotification" @refresh-data="refreshData"
                 @open-edit-form="handleEditButtonClick" />
         </template>
     </AddEditItemModal>
@@ -173,7 +175,7 @@
         @close="handleModalClose">
         <template #modal-body>
             <UpdateBusinessHoursForm :options="itemOptions" @close="handleModalClose" @error="handleErrorResponse"
-                @success="showNotification" @refresh-data="handleSearchButtonClick" />
+                @success="showNotification" @refresh-data="refreshData" />
         </template>
     </AddEditItemModal>
 
@@ -196,10 +198,8 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from "vue";
-import { usePage } from '@inertiajs/vue3'
+import { computed, onMounted, onUnmounted, ref } from "vue";
 import axios from 'axios';
-import { router } from "@inertiajs/vue3";
 import { trans } from "@i18n";
 import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
@@ -220,8 +220,7 @@ import AdvancedActionButton from "./components/general/AdvancedActionButton.vue"
 
 
 
-const page = usePage()
-const loading = ref(false)
+const loading = ref(true)
 const loadingModal = ref(false)
 const selectAll = ref(false);
 const selectedItems = ref([]);
@@ -238,11 +237,30 @@ const notificationShow = ref(null);
 const showDeleteConfirmationModal = ref(false);
 
 const props = defineProps({
-    data: Object,
     routes: Object,
-    itemData: Object,
+    pagination: Object,
+    permissions: Object,
 });
 
+
+const perPage = ref(props.pagination?.per_page ?? 50);
+
+
+const data = ref({
+    data: [],
+    prev_page_url: null,
+    next_page_url: null,
+    from: null,
+    to: null,
+    total: 0,
+    current_page: 1,
+    last_page: 1,
+    links: [],
+});
+const currentPage = ref(1);
+let activeRequest = null;
+let requestSequence = 0;
+let isUnmounted = false;
 
 const filterData = ref({
     search: null,
@@ -266,7 +284,7 @@ const bulkActions = computed(() => {
     ];
 
     // Conditionally add the delete action if permission is granted
-    if (page.props.auth.can.business_hours_destroy) {
+    if (props.permissions.business_hours_destroy) {
         actions.push({
             id: 'bulk_delete',
             label: trans('Delete'),
@@ -303,7 +321,7 @@ const executeBulkDelete = (items = selectedItems.value) => {
         .then((response) => {
             handleModalClose();
             showNotification('success', response.data.messages);
-            handleSearchButtonClick();
+            refreshData();
         })
         .catch((error) => {
             handleModalClose();
@@ -332,7 +350,7 @@ const handleBulkUpdateRequest = (form) => {
             bulkUpdateFormSubmiting.value = false;
             handleModalClose();
             showNotification('success', response.data.messages);
-            handleSearchButtonClick();
+            refreshData();
         })
         .catch((error) => {
             bulkUpdateFormSubmiting.value = false;
@@ -348,7 +366,7 @@ const handleCreateButtonClick = () => {
 }
 
 const handleSelectAll = () => {
-    axios.post(props.routes.select_all, filterData._rawValue)
+    axios.post(props.routes.select_all, { filter: { ...filterData.value } })
         .then((response) => {
             selectedItems.value = response.data.items;
             selectAll.value = true;
@@ -374,24 +392,57 @@ const handleSortRequest = (column) => {
 
 
 
-const handleSearchButtonClick = () => {
-    loading.value = true;
-    router.visit(props.routes.current_page, {
-        data: {
-            filterData: filterData._rawValue,
-            sortField: sortData.value.name,
-            sortOrder: sortData.value.order,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: [
-            "data",
-        ],
-        onSuccess: (page) => {
-            loading.value = false;
-            handleClearSelection();
+const getData = async (page = currentPage.value, { background = false } = {}) => {
+    if (isUnmounted) return;
+
+    activeRequest?.abort();
+    const controller = new AbortController();
+    activeRequest = controller;
+    const sequence = ++requestSequence;
+    loading.value = !background;
+    currentPage.value = Number(page) || 1;
+
+    const sort = sortData.value.order === 'desc' ? `-${sortData.value.name}` : sortData.value.name;
+
+    try {
+        const response = await axios.get(props.routes.data_route, {
+            params: {
+                filter: { ...filterData.value },
+                page: currentPage.value,
+                per_page: perPage.value,
+                sort,
+            },
+            signal: controller.signal,
+        });
+
+        if (isUnmounted || sequence !== requestSequence) return;
+
+        // A deletion may have removed the last row on this page.
+        if (response.data.last_page && currentPage.value > response.data.last_page) {
+            return await getData(response.data.last_page, { background });
         }
-    });
+
+        data.value = response.data;
+        currentPage.value = response.data.current_page ?? currentPage.value;
+        handleClearSelection();
+    } catch (error) {
+        if (!isUnmounted && sequence === requestSequence && !axios.isCancel(error)) {
+            handleErrorResponse(error);
+        }
+    } finally {
+        if (!isUnmounted && sequence === requestSequence) {
+            activeRequest = null;
+            loading.value = false;
+        }
+    }
+};
+
+const handleSearchButtonClick = () => {
+    getData(1);
+};
+
+const refreshData = () => {
+    getData(currentPage.value);
 };
 
 const handleFiltersReset = () => {
@@ -401,21 +452,16 @@ const handleFiltersReset = () => {
 }
 
 
+const handlePageSizeChange = (newPerPage) => {
+    perPage.value = newPerPage;
+    handleSearchButtonClick();
+};
+
 const renderRequestedPage = (url) => {
-    loading.value = true;
-    router.visit(url, {
-        data: {
-            filterData: filterData._rawValue,
-            sortField: sortData.value.name,
-            sortOrder: sortData.value.order,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: ["data"],
-        onSuccess: (page) => {
-            loading.value = false;
-        }
-    });
+    if (!url) return;
+
+    const urlObj = new URL(url, window.location.origin);
+    getData(urlObj.searchParams.get('page') ?? 1);
 };
 
 
@@ -464,7 +510,7 @@ const handleAdvancedActionRequest = async (action, uuid) => {
 
         showNotification('success', response.data.messages);
 
-        handleSearchButtonClick();
+        refreshData();
 
         // 5. Return data in case the caller needs it
         return response.data;
@@ -521,7 +567,7 @@ const handleErrorResponse = (error) => {
 
 const handleSelectPageItems = () => {
     if (selectPageItems.value) {
-        selectedItems.value = props.data.data.map(item => item.uuid);
+        selectedItems.value = data.value.data.map(item => item.uuid);
     } else {
         selectedItems.value = [];
     }
@@ -554,6 +600,13 @@ const showNotification = (type, messages = null) => {
     notificationShow.value = true;
 }
 
+
+onMounted(() => getData());
+
+onUnmounted(() => {
+    isUnmounted = true;
+    activeRequest?.abort();
+});
 
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');
 

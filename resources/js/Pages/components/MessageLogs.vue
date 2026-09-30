@@ -10,11 +10,11 @@
                 <!-- mobile -->
                 <input type="search" v-model="filterData.search" id="mobile-search-inbound-webhooks"
                     class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
-                    placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                    :placeholder="$t('Search')" @keydown.enter="handleSearchButtonClick" />
                 <!-- desktop -->
                 <input type="search" v-model="filterData.search" id="desktop-search-inbound-webhooks"
                     class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
-                    placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                    :placeholder="$t('Search')" @keydown.enter="handleSearchButtonClick" />
             </div>
 
             <!-- DATE RANGE -->
@@ -28,12 +28,12 @@
                     <button type="button" @click.prevent="handleSearchButtonClick"
                         class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500
                      focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                        Search
+                        {{ $t('Search') }}
                     </button>
 
                     <button type="button" @click.prevent="handleFiltersReset"
                         class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                        Reset
+                        {{ $t('Reset') }}
                     </button>
                 </div>
             </div>
@@ -50,14 +50,14 @@
                     <table class="min-w-full divide-y divide-gray-200 mb-4">
                         <thead class="bg-gray-100">
                             <tr>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Date</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">In/Out</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Source</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Destination</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Message</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Type</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Status</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Action</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">{{ $t('Date') }}</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">{{ $t('In/Out') }}</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">{{ $t('Source') }}</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">{{ $t('Destination') }}</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">{{ $t('Message') }}</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">{{ $t('Type') }}</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">{{ $t('Status') }}</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">{{ $t('Action') }}</th>
 
                             </tr>
                         </thead>
@@ -69,7 +69,7 @@
                                         {{ row.created_at_formatted ?? row.created_at }}
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
-                                        {{ row.direction }}
+                                        {{ directionLabel(row.direction) }}
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
                                         {{ row.source_formatted }}
@@ -111,7 +111,7 @@
                                                 <!-- TOOLTIP -->
                                                 <div
                                                     class="absolute bottom-full mb-1 hidden group-hover:block whitespace-nowrap bg-gray-800 text-white text-xs rounded py-1 px-2 z-10 shadow-lg">
-                                                    Retry Message
+                                                    {{ $t('Retry Message') }}
                                                     <!-- Little down arrow -->
                                                     <div
                                                         class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45">
@@ -129,35 +129,34 @@
                                     <td :colspan="8" class="bg-gray-50 px-6 py-4 shadow-inner">
                                         <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
                                             <div class="rounded-md border border-gray-200 bg-white p-4">
-                                                <div class="text-gray-900 font-semibold text-sm mb-2">Overview</div>
+                                                <div class="text-gray-900 font-semibold text-sm mb-2">{{ $t('Overview') }}</div>
 
                                                 <div class="space-y-2 text-sm">
-                                                    <div><span class="font-medium text-gray-700">Message ID:</span> {{
+                                                    <div><span class="font-medium text-gray-700">{{ $t('Message ID:') }}</span> {{
                                                         row.message_uuid }}</div>
-                                                    <div><span class="font-medium text-gray-700">Provider:</span> {{
+                                                    <div><span class="font-medium text-gray-700">{{ $t('Provider:') }}</span> {{
                                                         row.provider_name || '—' }}</div>
-                                                    <div><span class="font-medium text-gray-700">Reference ID:</span> {{
+                                                    <div><span class="font-medium text-gray-700">{{ $t('Reference ID:') }}</span> {{
                                                         row.reference_id || '—' }}</div>
-                                                    <div><span class="font-medium text-gray-700">Direction:</span> {{
-                                                        row.direction }}</div>
-                                                    <div><span class="font-medium text-gray-700">Type:</span> {{
+                                                    <div><span class="font-medium text-gray-700">{{ $t('Direction:') }}</span> {{ directionLabel(row.direction) }}</div>
+                                                    <div><span class="font-medium text-gray-700">{{ $t('Type:') }}</span> {{
                                                         row.type }}</div>
-                                                    <div><span class="font-medium text-gray-700">Status Summary:</span>
+                                                    <div><span class="font-medium text-gray-700">{{ $t('Status Summary:') }}</span>
                                                         {{ row.status_summary || row.status }}</div>
-                                                    <div><span class="font-medium text-gray-700">Read At:</span> {{
+                                                    <div><span class="font-medium text-gray-700">{{ $t('Read At:') }}</span> {{
                                                         row.read_at || '—' }}</div>
                                                 </div>
                                             </div>
 
                                             <div class="rounded-md border border-gray-200 bg-white p-4">
-                                                <div class="text-gray-900 font-semibold text-sm mb-2">Message</div>
+                                                <div class="text-gray-900 font-semibold text-sm mb-2">{{ $t('Message') }}</div>
                                                 <pre
                                                     class="text-gray-700 text-sm whitespace-pre-wrap break-words">{{ row.message || '—' }}</pre>
                                             </div>
 
                                             <div class="rounded-md border border-gray-200 bg-white p-4 lg:col-span-2"
                                                 v-if="hasMedia(row)">
-                                                <div class="text-gray-900 font-semibold text-sm mb-2">Attachments</div>
+                                                <div class="text-gray-900 font-semibold text-sm mb-2">{{ $t('Attachments') }}</div>
 
                                                 <div class="space-y-2">
                                                     <div v-for="(item, index) in row.media"
@@ -165,12 +164,11 @@
                                                         class="flex items-center justify-between rounded border border-gray-200 px-3 py-2 text-sm">
                                                         <div class="min-w-0">
                                                             <div class="truncate font-medium text-gray-800">
-                                                                {{ item.original_name || item.stored_name || `Attachment
-                                                                ${index + 1}` }}
+                                                                {{ item.original_name || item.stored_name || $t('Attachment :number', { number: index + 1 }) }}
                                                             </div>
                                                             <div class="text-xs text-gray-500">
-                                                                {{ item.mime_type || 'unknown' }}
-                                                                <span v-if="item.size"> • {{ item.size }} bytes</span>
+                                                                {{ item.mime_type || $t('Unknown') }}
+                                                                <span v-if="item.size"> • {{ $tChoice('{1} :count byte|[0,*] :count bytes', item.size) }}</span>
                                                             </div>
                                                         </div>
 
@@ -178,14 +176,14 @@
                                                             target="_blank"
                                                             class="ml-4 text-sm font-medium text-indigo-600 hover:text-indigo-500"
                                                             @click.stop>
-                                                            Open
+                                                            {{ $t('Open') }}
                                                         </a>
                                                     </div>
                                                 </div>
                                             </div>
 
                                             <div class="rounded-md border border-gray-200 bg-white p-4 lg:col-span-2">
-                                                <div class="text-gray-900 font-semibold text-sm mb-2">Delivery Meta
+                                                <div class="text-gray-900 font-semibold text-sm mb-2">{{ $t('Delivery Meta') }}
                                                 </div>
                                                 <pre
                                                     class="text-gray-700 text-sm whitespace-pre-wrap break-words">{{ prettyJson(row.delivery_meta) }}</pre>
@@ -200,7 +198,7 @@
                     <!-- EMPTY STATE -->
                     <div v-if="!isDataLoading && data.data?.length === 0" class="text-center my-5">
                         <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                        <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
+                        <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ $t('No results found') }}</h3>
                     </div>
 
                     <!-- LOADING -->
@@ -229,13 +227,14 @@
 
     <!-- CONFIRMATION MODAL -->
     <ConfirmationModal :show="showRetryConfirmationModal" @close="handleModalClose" @confirm="confirmRetryAction"
-        :header="'Are you sure?'"
-        :text="'Are you sure you want to retry sending the selected messages? This action will attempt to resend them immediately.'"
-        :confirm-button-label="'Retry'" cancel-button-label="Cancel" />
+        :header="$t('Are you sure?')"
+        :text="$t('Are you sure you want to retry sending the selected messages? This action will attempt to resend them immediately.')"
+        :confirm-button-label="$t('Retry')" :cancel-button-label="$t('Cancel')" />
 </template>
 
 
 <script setup>
+import { trans } from '@i18n';
 import { ref, watch } from "vue";
 import Paginator from "@generalComponents/Paginator.vue";
 import moment from 'moment-timezone';
@@ -265,6 +264,8 @@ const data = ref({
     last_page: 1,
     links: [],
 });
+const directionLabel = (direction) => ({ in: trans('Inbound'), out: trans('Outbound') }[direction] ?? direction);
+
 const selectedItems = ref([]);
 const selectPageItems = ref(false);
 const selectAll = ref(false);

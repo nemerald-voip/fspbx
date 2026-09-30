@@ -20,7 +20,7 @@
                                 <button type="button"
                                     class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                     @click="emit('close')">
-                                    <span class="sr-only">Close</span>
+                                    <span class="sr-only">{{ $t('Close') }}</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
@@ -38,13 +38,13 @@
                                             </path>
                                         </svg>
                                     </div>
-                                    <div class="text-lg text-blue-600 m-auto">Loading...</div>
+                                    <div class="text-lg text-blue-600 m-auto">{{ $t('Loading...') }}</div>
                                 </div>
                             </div>
 
 
                             <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
-                                @error="handleError" @response="handleResponse" :display-errors="false" :default="{
+                                @error="handleError" @response="handleResponse" :display-errors="false" validate-on="" :default="{
                                     domain_description: options.item.domain_description,
                                     domain_name: options.item.domain_name,
                                     domain_enabled: options.item.domain_enabled,
@@ -56,17 +56,17 @@
 
                                         <StaticElement name="h4" tag="h4" :content="header" />
 
-                                        <TextElement name="domain_description" label="Domain Label"
-                                            placeholder="Enter Domain Label" :floating="false" />
+                                        <TextElement name="domain_description" :label="$t('Domain Label')"
+                                            :placeholder="$t('Enter Domain Label')" :floating="false" />
 
-                                        <TextElement name="domain_name" label="Domain Name"
-                                            placeholder="Enter Domain Name" :floating="false" />
+                                        <TextElement name="domain_name" :label="$t('Domain Name')"
+                                            :placeholder="$t('Enter Domain Name')" :floating="false" />
 
-                                        <ToggleElement name="domain_enabled" text="Status" />
+                                        <ToggleElement name="domain_enabled" :text="$t('Status')" />
 
                                         <GroupElement name="container_3" />
 
-                                        <ButtonElement name="submit" button-label="Save" :submits="true"
+                                        <ButtonElement name="submit" :button-label="$t('Save')" :submits="true"
                                             align="right" />
 
                                     </FormElements>
@@ -84,6 +84,7 @@
 </template>
 
 <script setup>
+import { trans } from "@i18n";
 import { ref } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { XMarkIcon } from "@heroicons/vue/24/solid";
@@ -101,6 +102,8 @@ const props = defineProps({
 const form$ = ref(null)
 
 const submitForm = async (FormData, form$) => {
+    form$.messageBag.clear();
+    Object.values(form$.elements$).forEach(clearErrorsRecursive);
     // Using form$.requestData will EXCLUDE conditional elements and it 
     // will submit the form as Content-Type: application/json . 
     const requestData = form$.requestData
@@ -155,7 +158,7 @@ const handleError = (error, details, form$) => {
         case 'prepare':
             console.log(error) // Error object
 
-            form$.messageBag.append('Could not prepare form')
+            form$.messageBag.append(trans('Could not prepare form'))
             break
 
         // Error occured because response status is outside of 2xx
@@ -175,14 +178,14 @@ const handleError = (error, details, form$) => {
         case 'cancel':
             console.log(error) // Error object
 
-            form$.messageBag.append('Request cancelled')
+            form$.messageBag.append(trans('Request cancelled'))
             break
 
         // Some other errors happened (no response object)
         case 'other':
             console.log(error) // Error object
 
-            form$.messageBag.append('Couldn\'t submit form')
+            form$.messageBag.append(trans('Could not submit form'))
             break
     }
 }

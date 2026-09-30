@@ -4,11 +4,11 @@
     <div class="m-3 space-y-6 px-4 sm:px-6 lg:px-8">
         <div class="sm:flex sm:items-center sm:justify-between">
             <div>
-                <h1 class="text-base font-semibold leading-6 text-gray-900">System Status</h1>
+                <h1 class="text-base font-semibold leading-6 text-gray-900">{{ $t('System Status') }}</h1>
                 <p class="mt-1 text-sm text-gray-500">
-                    Server, application, database, and resource information.
+                    {{ $t('Server, application, database, and resource information.') }}
                     <span v-if="status.generated_at" class="ml-1">
-                        Updated {{ formatDate(status.generated_at) }}
+                        {{ $t('Updated') }} {{ formatDate(status.generated_at) }}
                     </span>
                 </p>
             </div>
@@ -20,7 +20,7 @@
                 @click="fetchData"
             >
                 <ArrowPathIcon class="h-4 w-4" :class="{ 'animate-spin': loading }" />
-                Refresh
+                {{ $t('Refresh') }}
             </button>
         </div>
 
@@ -32,13 +32,13 @@
 
         <div v-if="!loading" class="space-y-6">
             <section v-if="status.info" class="grid gap-6 xl:grid-cols-2">
-                <InfoPanel title="System Information" :rows="status.info.rows" />
-                <InfoPanel title="Operating System" :rows="status.info.os" />
+                <InfoPanel :title="$t('System Information')" :rows="status.info.rows" />
+                <InfoPanel :title="$t('Operating System')" :rows="status.info.os" />
             </section>
 
             <section class="grid gap-6 xl:grid-cols-2">
-                <OutputPanel v-if="status.memory" title="Memory" :output="status.memory.output" />
-                <OutputPanel v-if="status.disk" title="Drive Space" :output="status.disk.output" />
+                <OutputPanel v-if="status.memory" :title="$t('Memory')" :output="status.memory.output" />
+                <OutputPanel v-if="status.disk" :title="$t('Drive Space')" :output="status.disk.output" />
             </section>
 
             <section v-if="status.cpu">
@@ -47,7 +47,7 @@
 
             <section v-if="status.database" class="overflow-hidden rounded-lg bg-white shadow ring-1 ring-black ring-opacity-5">
                 <div class="border-b border-gray-200 px-4 py-3">
-                    <h2 class="text-sm font-semibold text-gray-900">Database</h2>
+                    <h2 class="text-sm font-semibold text-gray-900">{{ $t('Database') }}</h2>
                 </div>
 
                 <div class="overflow-x-auto">
@@ -71,10 +71,10 @@
                             <thead class="bg-gray-50">
                                 <tr>
                                     <th class="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                                        Database
+                                        {{ $t('Database') }}
                                     </th>
                                     <th class="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                                        Size
+                                        {{ $t('Size') }}
                                     </th>
                                 </tr>
                             </thead>
@@ -93,14 +93,15 @@
 
             <div v-if="isEmpty" class="rounded-lg bg-white p-8 text-center shadow ring-1 ring-black ring-opacity-5">
                 <ServerStackIcon class="mx-auto h-12 w-12 text-gray-400" />
-                <h3 class="mt-2 text-sm font-semibold text-gray-900">No system data available</h3>
-                <p class="mt-1 text-sm text-gray-500">Your account does not have access to any system status sections.</p>
+                <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ $t('No system data available') }}</h3>
+                <p class="mt-1 text-sm text-gray-500">{{ $t('Your account does not have access to any system status sections.') }}</p>
             </div>
         </div>
     </div>
 </template>
 
 <script setup>
+import { trans } from '@i18n';
 import { computed, defineComponent, h, onMounted, ref } from "vue";
 import axios from "axios";
 import MainLayout from "../Layouts/MainLayout.vue";
@@ -142,7 +143,7 @@ const fetchData = async () => {
         status.value = response.data;
     } catch (error) {
         errorMessage.value = error?.response?.data?.messages?.error?.[0]
-            ?? "Unable to load system status.";
+            ?? trans('Unable to load system status.');
     } finally {
         loading.value = false;
     }
@@ -197,7 +198,7 @@ const OutputPanel = defineComponent({
             h("div", { class: "border-b border-gray-200 px-4 py-3" }, [
                 h("h2", { class: "text-sm font-semibold text-gray-900" }, panelProps.title),
             ]),
-            h("pre", { class: "overflow-x-auto whitespace-pre p-4 text-xs leading-5 text-gray-700" }, panelProps.output || "Unavailable"),
+            h("pre", { class: "overflow-x-auto whitespace-pre p-4 text-xs leading-5 text-gray-700" }, panelProps.output || trans('Unavailable')),
         ]);
     },
 });

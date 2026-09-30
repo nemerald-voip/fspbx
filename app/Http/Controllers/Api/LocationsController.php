@@ -33,7 +33,7 @@ class LocationsController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages' => ['success' => ['New location created']]
+                'messages' => ['success' => [__('New location created')]]
             ], 201);
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -41,7 +41,7 @@ class LocationsController extends Controller
             logger('Location store error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Something went wrong while saving.']]
+                'messages' => ['error' => [__('Something went wrong while saving.')]]
             ], 500);
         }
     }
@@ -56,7 +56,7 @@ class LocationsController extends Controller
             $location = Location::find($location_uuid);
             if (!$location) {
                 return response()->json([
-                    'messages' => ['error' => ['Location not found.']]
+                    'messages' => ['error' => [__('Location not found.')]]
                 ], 404);
             }
 
@@ -65,14 +65,14 @@ class LocationsController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages' => ['success' => ['Location updated']]
+                'messages' => ['success' => [__('Location updated')]]
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
             logger('Location update error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Something went wrong while updating.']]
+                'messages' => ['error' => [__('Something went wrong while updating.')]]
             ], 500);
         }
     }
@@ -141,7 +141,7 @@ class LocationsController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages' => ['success' => ['Selected location(s) were deleted successfully.']]
+                'messages' => ['success' => [__('Selected location(s) were deleted successfully.')]]
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -149,7 +149,7 @@ class LocationsController extends Controller
             logger('Location bulkDelete error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['An error occurred while deleting the selected location(s).']]
+                'messages' => ['error' => [__('An error occurred while deleting the selected location(s).')]]
             ], 500);
         }
     }

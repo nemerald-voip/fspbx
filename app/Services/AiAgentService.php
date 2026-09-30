@@ -188,6 +188,7 @@ class AiAgentService
             'outbound_agent_id' => $this->nullable($validated['outbound_agent_id'] ?? null),
             'outbound_agent_name' => $this->nullable($validated['outbound_agent_name'] ?? null),
             'recording_policy' => $validated['recording_policy'],
+            'email_from_address' => $this->nullable($validated['email_from_address'] ?? null),
             'enabled' => (bool) $validated['enabled'],
             'description' => $this->nullable($validated['description'] ?? null),
         ];

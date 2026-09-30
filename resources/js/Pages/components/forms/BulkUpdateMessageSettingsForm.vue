@@ -1,5 +1,6 @@
 <template>
-    <Vueform ref="form$" :endpoint="false" @submit="submitForm" :display-errors="false">
+    <Vueform ref="form$" :endpoint="false" @submit="submitForm" :display-errors="false"
+        @mounted="(form) => form.disableValidation()">
         <SelectElement name="carrier" :items="options.carrier" :label="$t('Message Provider')"
             :search="true" :native="false" :floating="false" />
         <ToggleElement name="replace_extensions" :text="$t('Replace allowed extensions')" />
@@ -10,18 +11,22 @@
             :default="[]" />
         <TextElement name="email" :label="$t('Email')" :floating="false" />
         <TextareaElement name="description" :label="$t('Description')" :rows="2" />
-        <StaticElement name="errors" v-if="errors"><p class="text-red-600">{{ errorText }}</p></StaticElement>
+        <ButtonElement name="cancel" :button-label="$t('Cancel')" :secondary="true" @click="emits('cancel')" />
         <ButtonElement name="save" :button-label="$t('Save')" :submits="true" :disabled="isSubmitting" align="right" />
     </Vueform>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, watch } from 'vue';
+import { clearServerFormErrors, showServerFormErrors } from '../../../composables/serverFormErrors.js';
 const props = defineProps({ items: Array, options: Object, isSubmitting: Boolean, errors: Object });
 const emits = defineEmits(['submit', 'cancel']);
 const form$ = ref(null);
-const errorText = computed(() => Object.values(props.errors || {}).flat().join(' '));
+watch(() => props.errors, (errors) => {
+    if (form$.value) showServerFormErrors({ data: { errors } }, form$.value);
+});
 function submitForm() {
+    clearServerFormErrors(form$.value);
     const data = { ...form$.value.requestData, items: props.items };
     if (!data.replace_extensions) delete data.allowed_extension_uuids;
     delete data.replace_extensions;

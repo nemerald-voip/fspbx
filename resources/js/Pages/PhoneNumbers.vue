@@ -309,7 +309,8 @@ const notificationShow = ref(null);
 const uploadErrors = ref(null);
 const showUploadModal = ref(false);
 const isUploadingFile = ref(null);
-let tooltipCopyContent = ref(trans('Copy to Clipboard'));
+const clipboardCopied = ref(false);
+const tooltipCopyContent = computed(() => clipboardCopied.value ? trans('Copied') : trans('Copy to Clipboard'));
 
 const showImportPreviewModal = ref(false);
 const importPreviewData = ref([]);
@@ -637,9 +638,9 @@ const handleSelectAll = () => {
 
 const handleCopyToClipboard = (text) => {
     navigator.clipboard.writeText(text).then(() => {
-        tooltipCopyContent.value = trans('Copied')
+        clipboardCopied.value = true
         setTimeout(() => {
-            tooltipCopyContent.value = trans('Copy to Clipboard')
+            clipboardCopied.value = false
         }, 500);
     }).catch((error) => {
         // Handle the error case

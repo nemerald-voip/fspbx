@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Support\Localization\ValidationMessages;
 
 class HotelRoomCheckInRequest extends FormRequest
 {
@@ -36,5 +37,24 @@ class HotelRoomCheckInRequest extends FormRequest
         if (!$this->has('extension_name')) {
             $this->merge(['extension_name' => trim($this->input('guest_first_name') . ' ' . $this->input('guest_last_name')) ]);
         }
+    }
+
+    public function messages(): array
+    {
+        return ValidationMessages::common();
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'uuid' => __('Unique ID'),
+            'occupancy_status' => __('Occupancy'),
+            'housekeeping_status' => __('Room Status'),
+            'guest_first_name' => __('First Name'),
+            'guest_last_name' => __('Last Name'),
+            'extension_name' => __('Extension'),
+            'arrival_date' => __('Arrival Date'),
+            'departure_date' => __('Expected Departure Date'),
+        ];
     }
 }

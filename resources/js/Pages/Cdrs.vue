@@ -53,7 +53,7 @@
                     <div class="relative min-w-36 mb-2 shrink-0 sm:mr-4">
                         <multiselect v-model="filterData.direction" :options="callDirections" :searchable="false"
                             :close-on-select="true" track-by="value" label="name" :show-labels="false"
-                            :placeholder="$t('Direction')" aria-label="pick a value"></multiselect>
+                            :placeholder="$t('Direction')" :aria-label="$t('Filter by call direction')"></multiselect>
                     </div>
 
                     <div v-if="permissions.all_cdr_view" class="relative min-w-64 mb-2 shrink-0 sm:mr-4">
@@ -67,14 +67,14 @@
                     <div class="relative min-w-36 mb-2 shrink-0 sm:mr-4">
                         <multiselect v-model="filterData.status" :options="statusOptions" :searchable="false"
                             :close-on-select="true" track-by="value" label="name" :show-labels="false"
-                            :placeholder="$t('Status')" aria-label="pick a value">
+                            :placeholder="$t('Status')" :aria-label="$t('Filter by call status')">
                         </multiselect>
                     </div>
 
                     <div v-if="permissions.search_sentiment && permissions.transcription_summary" class="relative min-w-36 mb-2 shrink-0 sm:mr-4">
                         <multiselect v-model="filterData.sentiment" :options="sentimentOptions" :searchable="false"
                             :close-on-select="true" track-by="value" label="name" :show-labels="false"
-                            :placeholder="$t('Sentiment')" aria-label="pick a value">
+                            :placeholder="$t('Sentiment')" :aria-label="$t('Filter by call sentiment')">
                         </multiselect>
                     </div>
 
@@ -193,7 +193,8 @@
                             :text="row.caller_id_name" /> -->
 
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
-                            <div v-if="row.extension && row.direction == 'outbound'">{{ row.extension?.name_formatted }}
+                            <!-- A destination extension on an application-originated call is not its caller. -->
+                            <div v-if="row.extension && row.direction == 'outbound' && row.extension.extension !== row.destination_number">{{ row.extension?.name_formatted }}
                             </div>
                             <div v-else>{{ row.caller_id_name_formatted }}</div>
                         </TableField>
@@ -221,6 +222,8 @@
                                 :backgroundColor="statusBadgeConfig[row.status]?.backgroundColor || 'bg-blue-50'"
                                 :textColor="statusBadgeConfig[row.status]?.textColor || 'text-blue-700'"
                                 :ringColor="statusBadgeConfig[row.status]?.ringColor || 'ring-blue-600/20'" />
+                            <div v-if="row.voicemail_message === true || row.voicemail_message === 'true'"
+                                class="mt-1 text-xs text-gray-500">{{ $t('Voicemail message left') }}</div>
                         </TableField>
 
                         <TableField v-if="permissions.cdr_mos_view"
@@ -451,9 +454,13 @@ const statusOptions = [
     { name: trans('Answered'), value: 'answered' },
     { name: trans('No Answer'), value: 'no_answer' },
     { name: trans('Cancelled'), value: 'cancelled' },
-    { name: trans('Voicemail'), value: 'voicemail' },
+    { name: trans('Voicemail message left'), value: 'voicemail' },
     { name: trans('Missed Call'), value: 'missed call' },
     { name: trans('Abandoned'), value: 'abandoned' },
+    { name: trans('Exited queue'), value: 'queue_exited' },
+    { name: trans('Timed out'), value: 'queue_timeout' },
+    { name: trans('Other queue outcome'), value: 'queue_other' },
+    { name: trans('Callback requested'), value: 'callback_requested' },
 ];
 
 const sentimentOptions = [
@@ -489,6 +496,14 @@ const statusLabel = (status) => {
             return trans('Missed Call');
         case 'abandoned':
             return trans('Abandoned');
+        case 'queue_exited':
+            return trans('Exited queue');
+        case 'queue_timeout':
+            return trans('Timed out');
+        case 'queue_other':
+            return trans('Other queue outcome');
+        case 'callback_requested':
+            return trans('Callback requested');
         case 'failed':
             return trans('Failed');
         default:
@@ -751,7 +766,23 @@ const handleErrorResponse = (error) => {
     }
 }
 
+// Queue outcome badges match the Contact Center dashboard's outcome palette:
+// green answered, rose abandoned, sky exited, amber timed out, violet callback.
 const statusBadgeConfig = {
+    queue_exited: {
+        backgroundColor: 'bg-sky-50', textColor: 'text-sky-700', ringColor: 'ring-sky-600/20',
+    },
+    queue_timeout: {
+        backgroundColor: 'bg-amber-50', textColor: 'text-amber-700', ringColor: 'ring-amber-600/20',
+    },
+    queue_other: {
+        backgroundColor: 'bg-gray-50', textColor: 'text-gray-700', ringColor: 'ring-gray-600/20',
+    },
+    callback_requested: {
+        backgroundColor: "bg-violet-50",
+        textColor: "text-violet-700",
+        ringColor: "ring-violet-600/20",
+    },
     answered: {
         backgroundColor: "bg-green-50",
         textColor: "text-green-700",
@@ -778,9 +809,9 @@ const statusBadgeConfig = {
         ringColor: "ring-orange-600/20",
     },
     abandoned: {
-        backgroundColor: "bg-purple-50",
-        textColor: "text-purple-700",
-        ringColor: "ring-purple-600/20",
+        backgroundColor: "bg-rose-50",
+        textColor: "text-rose-700",
+        ringColor: "ring-rose-600/20",
     }
 };
 

@@ -16,17 +16,17 @@
                         <DialogPanel
                             class="relative w-full max-w-3xl transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:p-6">
                             <DialogTitle as="h3" class="mb-1 pr-10 text-base font-semibold leading-6 text-gray-900">
-                                {{ header }}
+                                {{ header || $t('Campaign') }}
                             </DialogTitle>
                             <p class="mb-5 pr-10 text-sm text-gray-500">
-                                Configure the outbound dial-out, how fast it runs, and what happens when a contact answers.
+                                {{ $t("Configure the outbound dial-out, how fast it runs, and what happens when a contact answers.") }}
                             </p>
 
                             <div class="absolute right-0 top-0 pr-4 pt-4 sm:block">
                                 <button type="button"
                                     class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                     @click="emit('close')">
-                                    <span class="sr-only">Close</span>
+                                    <span class="sr-only">{{ $t("Close") }}</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
@@ -40,47 +40,45 @@
                                         <path class="opacity-75" fill="currentColor"
                                             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                     </svg>
-                                    <div class="text-lg text-blue-600">Loading...</div>
+                                    <div class="text-lg text-blue-600">{{ $t("Loading...") }}</div>
                                 </div>
                             </div>
 
-                            <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
+                            <Vueform :locale="formLocale" @mounted="form => form.disableValidation()" v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
                                 @error="handleError" @response="handleResponse" :display-errors="false"
                                 :default="defaultValues">
                                 <template #empty>
                                     <FormElements>
                                         <HiddenElement name="basic_dialer_campaign_uuid" :meta="true" />
 
-                                        <StaticElement name="campaign_header" tag="h4" content="Campaign" />
+                                        <StaticElement name="campaign_header" tag="h4" :content="$t(&quot;Campaign&quot;)" />
 
-                                        <TextElement name="name" label="Name" :floating="false"
-                                            :rules="['required']" :columns="{ sm: { container: 9 } }" />
+                                        <TextElement name="name" :label="$t(&quot;Name&quot;)" :floating="false" :columns="{ sm: { container: 9 } }" />
 
-                                        <ToggleElement name="enabled" text="Enabled" :labels="{ on: 'On', off: 'Off' }"
+                                        <ToggleElement name="enabled" :text="$t(&quot;Enabled&quot;)" :labels="{ on: $t(&quot;On&quot;), off: $t(&quot;Off&quot;) }"
                                             :columns="{ sm: { container: 3 } }" label="&nbsp;" />
 
-                                        <SelectElement name="basic_dialer_contact_list_uuid" label="Contact List"
+                                        <SelectElement name="basic_dialer_contact_list_uuid" :label="$t(&quot;Contact List&quot;)"
                                             :items="contactLists" :search="true" :native="false" input-type="search"
                                             allow-absent :strict="false" :floating="false"
                                             :columns="{ sm: { container: 12 } }" />
 
-                                        <StaticElement name="caller_id_header" tag="h4" content="Caller ID" />
+                                        <StaticElement name="caller_id_header" tag="h4" :content="$t(&quot;Caller ID&quot;)" />
 
-                                        <TextElement name="caller_id_name" label="Caller ID Name" :floating="false"
+                                        <TextElement name="caller_id_name" :label="$t(&quot;Caller ID Name&quot;)" :floating="false"
                                             :columns="{ sm: { container: 6 } }" />
 
-                                        <SelectElement name="caller_id_number" label="Caller ID Number"
+                                        <SelectElement name="caller_id_number" :label="$t(&quot;Caller ID Number&quot;)"
                                             :items="phoneNumbers" :search="true" :native="false" input-type="search"
-                                            autocomplete="off" allow-absent :strict="false" :floating="false"
-                                            :rules="['required']" :columns="{ sm: { container: 6 } }" />
+                                            autocomplete="off" allow-absent :strict="false" :floating="false" :columns="{ sm: { container: 6 } }" />
 
-                                        <StaticElement name="destination_header" tag="h4" content="Destination"
-                                            description="Where to forward the call after the contact answers." />
+                                        <StaticElement name="destination_header" tag="h4" :content="$t(&quot;Destination&quot;)"
+                                            :description="$t(&quot;Where to forward the call after the contact answers.&quot;)" />
 
                                         <SelectElement name="destination_type" :items="routingTypes" label-prop="name"
-                                            label="Action" :search="true" :native="false"
-                                            input-type="search" autocomplete="off" placeholder="Choose Action"
-                                            :floating="false" :strict="false" :rules="['required']"
+                                            :label="$t(&quot;Action&quot;)" :search="true" :native="false"
+                                            input-type="search" autocomplete="off" :placeholder="$t(&quot;Choose Action&quot;)"
+                                            :floating="false" :strict="false"
                                             :columns="{ sm: { container: 6 } }"
                                             @change="(newValue, oldValue, el$) => {
                                                 const target = el$.form$.el$('destination_target');
@@ -106,40 +104,39 @@
                                                 emit('error', error);
                                                 return [];
                                             }
-                                        }" :search="true" label-prop="name" :native="false" label="Target"
+                                        }" :search="true" label-prop="name" :native="false" :label="$t(&quot;Target&quot;)"
                                             input-type="search" allow-absent :object="true" autocomplete="off"
-                                            placeholder="Choose Target" :floating="false" :strict="false"
-                                            :rules="['required']" :columns="{ sm: { container: 6 } }" :conditions="[
+                                            :placeholder="$t(&quot;Choose Target&quot;)" :floating="false" :strict="false" :columns="{ sm: { container: 6 } }" :conditions="[
                                                 ['destination_type', 'not_empty'],
                                                 ['destination_type', 'not_in', ['check_voicemail', 'company_directory', 'hangup']]
                                             ]" />
 
-                                        <StaticElement name="pacing_header" tag="h4" content="Pacing &amp; Retries"
-                                            description="How fast the dialer runs and what to do when a call doesn't connect." />
+                                        <StaticElement name="pacing_header" tag="h4" :content="$t(&quot;Pacing & Retries&quot;)"
+                                            :description="$t(&quot;How fast the dialer runs and what to do when a call doesn't connect.&quot;)" />
 
-                                        <TextElement name="max_concurrent_calls" label="Concurrent Calls"
+                                        <TextElement name="max_concurrent_calls" :label="$t(&quot;Concurrent Calls&quot;)"
                                             input-type="number" :floating="false"
                                             :columns="{ sm: { container: 4 } }" />
 
-                                        <TextElement name="seconds_between_calls" label="Seconds Between Calls"
+                                        <TextElement name="seconds_between_calls" :label="$t(&quot;Seconds Between Calls&quot;)"
                                             input-type="number" :floating="false"
                                             :columns="{ sm: { container: 4 } }" />
 
-                                        <TextElement name="originate_timeout" label="Originate Timeout (s)"
+                                        <TextElement name="originate_timeout" :label="$t(&quot;Originate Timeout (s)&quot;)"
                                             input-type="number" :floating="false"
                                             :columns="{ sm: { container: 4 } }" />
 
-                                        <TextElement name="retry_limit" label="Retry Limit" input-type="number"
+                                        <TextElement name="retry_limit" :label="$t(&quot;Retry Limit&quot;)" input-type="number"
                                             :floating="false" :columns="{ sm: { container: 6 } }" />
 
-                                        <TextElement name="retry_delay_minutes" label="Retry Delay (minutes)"
+                                        <TextElement name="retry_delay_minutes" :label="$t(&quot;Retry Delay (minutes)&quot;)"
                                             input-type="number" :floating="false"
                                             :columns="{ sm: { container: 6 } }" />
 
-                                        <TextareaElement name="description" label="Description" :rows="2"
+                                        <TextareaElement name="description" :label="$t(&quot;Description&quot;)" :rows="2"
                                             :floating="false" />
 
-                                        <ButtonElement name="submit" button-label="Save Campaign" :submits="true"
+                                        <ButtonElement name="submit" :button-label="$t(&quot;Save Campaign&quot;)" :submits="true"
                                             align="right" />
                                     </FormElements>
                                 </template>
@@ -153,9 +150,13 @@
 </template>
 
 <script setup>
+import { useVueformLocale } from "../../../composables/useVueformLocale.js";
+import { trans } from "@i18n";
 import { computed, ref } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from "@headlessui/vue";
 import { XMarkIcon } from "@heroicons/vue/24/solid";
+
+const formLocale = useVueformLocale();
 
 const props = defineProps({
     show: Boolean,
@@ -163,7 +164,7 @@ const props = defineProps({
     loading: Boolean,
     header: {
         type: String,
-        default: "Campaign",
+        default: "",
     },
     mode: {
         type: String,
@@ -197,6 +198,8 @@ const defaultValues = computed(() => ({
 }));
 
 const submitForm = async (FormData, form$) => {
+    form$.messageBag.clear();
+    Object.values(form$.elements$).forEach(clearErrorsRecursive);
     const requestData = form$.requestData;
     const route = props.mode === "create"
         ? props.options.routes.store_route
@@ -240,6 +243,6 @@ const handleError = (error, details, form$) => {
         return;
     }
 
-    form$.messageBag.append("Could not submit form");
+    form$.messageBag.append(trans("Could not submit form"));
 };
 </script>

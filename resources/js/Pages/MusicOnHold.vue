@@ -3,10 +3,10 @@
 
     <div class="m-3">
         <DataTable v-if="viewMode === 'list'" @search-action="fetchData(1)" @reset-filters="resetFilters">
-            <template #title>Music on Hold</template>
+            <template #title>{{ $t('Music on Hold') }}</template>
 
             <template #subtitle>
-                Manage hold music streams and audio files.
+                {{ $t('Manage hold music streams and audio files.') }}
             </template>
 
             <template #filters>
@@ -18,7 +18,7 @@
                         v-model="filterData.search"
                         type="text"
                         class="block w-full rounded-md border-0 py-1.5 pl-10 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600"
-                        placeholder="Search"
+                        :placeholder="$t('Search')"
                         @keydown.enter="fetchData(1)"
                     />
                 </div>
@@ -34,7 +34,7 @@
                     @click="confirmReload"
                 >
                     <ArrowPathIcon class="h-4 w-4 text-gray-500" />
-                    Reload
+                    {{ $t('Reload') }}
                 </button>
 
                 <button
@@ -44,7 +44,7 @@
                     @click="openTenantSettingsModal"
                 >
                     <Cog6ToothIcon class="h-4 w-4 text-gray-500" />
-                    Tenant settings
+                    {{ $t('Tenant settings') }}
                 </button>
 
                 <button
@@ -53,7 +53,7 @@
                     class="ml-2 sm:ml-4 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
                     @click="openUploadModal()"
                 >
-                    Upload
+                    {{ $t('Upload') }}
                 </button>
 
                 <button
@@ -62,7 +62,7 @@
                     class="ml-2 sm:ml-4 rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
                     @click="openCreateForm"
                 >
-                    Create stream
+                    {{ $t('Create stream') }}
                 </button>
 
                 <button
@@ -71,7 +71,7 @@
                     class="ml-2 sm:ml-4 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
                     @click="showLocal"
                 >
-                    Show local
+                    {{ $t('Show local') }}
                 </button>
 
                 <button
@@ -80,7 +80,7 @@
                     class="ml-2 sm:ml-4 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
                     @click="showAll"
                 >
-                    Show all
+                    {{ $t('Show all') }}
                 </button>
             </template>
 
@@ -111,36 +111,36 @@
                             class="h-4 w-4 rounded border-gray-300 text-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
                         />
                         <button class="ml-4 flex items-center" @click="setSort('music_on_hold_name')">
-                            <span class="mr-2">Name</span>
+                            <span class="mr-2">{{ $t('Name') }}</span>
                             <ChevronUpIcon v-if="sortData.name === 'music_on_hold_name' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
                             <ChevronDownIcon v-else-if="sortData.name === 'music_on_hold_name' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
                         </button>
                     </div>
                 </TableColumnHeader>
-                <TableColumnHeader v-if="filterData.showGlobal" header="Domain" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Rate" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Options" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Files" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader v-if="filterData.showGlobal" :header="$t('Domain')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t('Rate')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t('Options')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t('Files')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
             </template>
 
             <template v-if="selectPageItems" #current-selection>
                 <td :colspan="columnCount">
                     <div class="m-2 text-center text-sm">
-                        <span class="font-semibold">{{ selectedItems.length }}</span> streams are selected.
+                        {{ $tChoice('{1} :count stream is selected.|[0,*] :count streams are selected.', selectedItems.length) }}
                         <button
                             v-if="!selectAll && selectedItems.length !== data.total"
                             class="rounded px-2 py-2 text-blue-500 transition duration-500 ease-in-out hover:bg-blue-200 hover:text-blue-500 focus:bg-blue-200 focus:outline-none focus:ring-1 focus:ring-blue-300"
                             @click="handleSelectAll"
                         >
-                            Select all {{ data.total }} streams
+                            {{ $tChoice('{1} Select all :count stream|[0,*] Select all :count streams', data.total) }}
                         </button>
                         <button
                             v-if="selectAll"
                             class="rounded px-2 py-2 text-blue-500 transition duration-500 ease-in-out hover:bg-blue-200 hover:text-blue-500 focus:bg-blue-200 focus:outline-none focus:ring-1 focus:ring-blue-300"
                             @click="clearSelection"
                         >
-                            Clear selection
+                            {{ $t('Clear selection') }}
                         </button>
                     </div>
                 </td>
@@ -167,7 +167,7 @@
                                     >
                                         {{ row.music_on_hold_name }}
                                     </button>
-                                    <Badge v-if="row.is_tenant_default" text="TENANT DEFAULT" v-bind="tenantDefaultBadge" class="ml-2 align-middle" />
+                                    <Badge v-if="row.is_tenant_default" :text="$t('TENANT DEFAULT')" v-bind="tenantDefaultBadge" class="ml-2 align-middle" />
                                     <div v-if="permissions.view_path && row.music_on_hold_path" class="mt-1 max-w-md truncate text-xs text-gray-400">
                                         {{ row.music_on_hold_path }}
                                     </div>
@@ -179,12 +179,12 @@
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.rate_label" />
                         <TableField class="px-2 py-2 text-sm text-gray-500">
                             <div class="flex flex-wrap gap-1">
-                                <Badge :text="row.music_on_hold_shuffle === 'true' ? 'Shuffle' : 'Ordered'" v-bind="row.music_on_hold_shuffle === 'true' ? blueBadge : grayBadge" />
-                                <Badge :text="row.music_on_hold_channels === '2' ? 'Stereo' : 'Mono'" v-bind="grayBadge" />
-                                <Badge v-if="row.music_on_hold_chime_list" text="Chime" v-bind="amberBadge" />
+                                <Badge :text="row.music_on_hold_shuffle === 'true' ? $t('Shuffle') : $t('Ordered')" v-bind="row.music_on_hold_shuffle === 'true' ? blueBadge : grayBadge" />
+                                <Badge :text="row.music_on_hold_channels === '2' ? $t('Stereo') : $t('Mono')" v-bind="grayBadge" />
+                                <Badge v-if="row.music_on_hold_chime_list" :text="$t('Chime')" v-bind="amberBadge" />
                             </div>
                         </TableField>
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="`${row.files.length} file${row.files.length === 1 ? '' : 's'}`" />
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="$tChoice('{1} :count file|[0,*] :count files', row.files.length)" />
                         <TableField class="px-2 py-1 text-sm text-gray-500">
                             <template #action-buttons>
                                 <div class="flex items-center justify-end gap-1">
@@ -192,7 +192,7 @@
                                         v-if="permissions.update && row.can_modify"
                                         type="button"
                                         class="rounded-full p-2 text-gray-400 transition hover:bg-gray-200 hover:text-gray-600"
-                                        title="Edit"
+                                        :title="$t('Edit')"
                                         @click="openEditForm(row.music_on_hold_uuid)"
                                     >
                                         <PencilSquareIcon class="h-5 w-5" />
@@ -201,7 +201,7 @@
                                         v-if="permissions.destroy && row.can_modify"
                                         type="button"
                                         class="rounded-full p-2 text-gray-400 transition hover:bg-gray-200 hover:text-gray-600"
-                                        title="Delete"
+                                        :title="$t('Delete')"
                                         @click="confirmStreamDelete([row.music_on_hold_uuid])"
                                     >
                                         <TrashIcon class="h-5 w-5" />
@@ -227,17 +227,17 @@
                                                 {{ formatDate(file.modified_at) }}
                                             </td>
                                             <td class="whitespace-nowrap py-1 pl-4 text-right">
-                                                <button type="button" class="rounded-full p-2 text-blue-500 transition hover:bg-blue-100 hover:text-blue-700" title="Play" @click="openPlayer(row, file)">
+                                                <button type="button" class="rounded-full p-2 text-blue-500 transition hover:bg-blue-100 hover:text-blue-700" :title="$t('Play')" @click="openPlayer(row, file)">
                                                     <PlayCircleIcon class="h-5 w-5" />
                                                 </button>
-                                                <button type="button" class="rounded-full p-2 text-gray-400 transition hover:bg-gray-200 hover:text-gray-600" title="Download" @click="downloadFile(file.download_url)">
+                                                <button type="button" class="rounded-full p-2 text-gray-400 transition hover:bg-gray-200 hover:text-gray-600" :title="$t('Download')" @click="downloadFile(file.download_url)">
                                                     <ArrowDownTrayIcon class="h-5 w-5" />
                                                 </button>
                                                 <button
                                                     v-if="permissions.destroy && row.can_modify"
                                                     type="button"
                                                     class="rounded-full p-2 text-gray-400 transition hover:bg-gray-200 hover:text-gray-600"
-                                                    title="Delete"
+                                                    :title="$t('Delete')"
                                                     @click="confirmFileDelete(row, file)"
                                                 >
                                                     <TrashIcon class="h-5 w-5" />
@@ -247,7 +247,7 @@
                                     </tbody>
                                 </table>
                             </div>
-                            <div v-else class="text-sm text-gray-500">No audio files in this stream.</div>
+                            <div v-else class="text-sm text-gray-500">{{ $t('No audio files in this stream.') }}</div>
                         </td>
                     </tr>
                 </template>
@@ -256,8 +256,8 @@
             <template #empty>
                 <div v-if="!loading && data.data.length === 0" class="text-center my-5">
                     <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
-                    <p class="mt-1 text-sm text-gray-500">Adjust your search and try again.</p>
+                    <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ $t('No results found') }}</h3>
+                    <p class="mt-1 text-sm text-gray-500">{{ $t('Adjust your search and try again.') }}</p>
                 </div>
             </template>
 
@@ -287,8 +287,8 @@
         <div v-else class="px-4 sm:px-6 lg:px-8">
             <div class="sm:flex sm:items-center">
                 <div class="sm:flex-auto">
-                    <div class="mt-3 text-lg font-semibold leading-6 text-gray-600">Music on Hold</div>
-                    <p class="mt-2 text-sm text-gray-700">Manage hold music streams and audio files.</p>
+                    <div class="mt-3 text-lg font-semibold leading-6 text-gray-600">{{ $t('Music on Hold') }}</div>
+                    <p class="mt-2 text-sm text-gray-700">{{ $t('Manage hold music streams and audio files.') }}</p>
                 </div>
                 <div class="mt-4 flex flex-wrap items-center gap-2 sm:ml-16 sm:mt-0 sm:flex-none">
                     <ViewToggle :model-value="viewMode" @update:model-value="setViewMode" />
@@ -300,7 +300,7 @@
                         @click="confirmReload"
                     >
                         <ArrowPathIcon class="h-4 w-4 text-gray-500" />
-                        Reload
+                        {{ $t('Reload') }}
                     </button>
 
                     <button
@@ -310,7 +310,7 @@
                         @click="openTenantSettingsModal"
                     >
                         <Cog6ToothIcon class="h-4 w-4 text-gray-500" />
-                        Tenant settings
+                        {{ $t('Tenant settings') }}
                     </button>
 
                     <button
@@ -319,7 +319,7 @@
                         class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
                         @click="openUploadModal()"
                     >
-                        Upload
+                        {{ $t('Upload') }}
                     </button>
 
                     <button
@@ -328,7 +328,7 @@
                         class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
                         @click="openCreateForm"
                     >
-                        Create stream
+                        {{ $t('Create stream') }}
                     </button>
 
                     <button
@@ -337,7 +337,7 @@
                         class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
                         @click="showLocal"
                     >
-                        Show local
+                        {{ $t('Show local') }}
                     </button>
 
                     <button
@@ -346,7 +346,7 @@
                         class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
                         @click="showAll"
                     >
-                        Show all
+                        {{ $t('Show all') }}
                     </button>
                 </div>
             </div>
@@ -360,7 +360,7 @@
                         v-model="filterData.search"
                         type="text"
                         class="block w-full rounded-md border-0 py-1.5 pl-10 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600"
-                        placeholder="Search"
+                        :placeholder="$t('Search')"
                         @keydown.enter="fetchData(1)"
                     />
                 </div>
@@ -368,10 +368,10 @@
                 <button
                     type="button"
                     class="inline-flex items-center gap-1 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-                    title="Toggle sort order"
+                    :title="$t('Toggle sort order')"
                     @click="toggleNameSort"
                 >
-                    <span>Name</span>
+                    <span>{{ $t('Name') }}</span>
                     <ChevronUpIcon v-if="sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
                     <ChevronDownIcon v-else class="h-4 w-4 text-gray-500" />
                 </button>
@@ -381,7 +381,7 @@
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
                     @click.prevent="fetchData(1)"
                 >
-                    Search
+                    {{ $t('Search') }}
                 </button>
 
                 <button
@@ -389,26 +389,26 @@
                     class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
                     @click.prevent="resetFilters"
                 >
-                    Reset
+                    {{ $t('Reset') }}
                 </button>
             </div>
 
             <div v-if="selectedItems.length > 0" class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-md bg-indigo-50 px-4 py-2 text-sm">
                 <div class="text-indigo-900">
-                    <span class="font-semibold">{{ selectedItems.length }}</span> selected
+                    {{ $t(':count selected', { count: selectedItems.length }) }}
                     <button
                         v-if="!selectAll && selectedItems.length !== data.total"
                         class="ml-2 rounded px-2 py-1 text-blue-600 transition hover:bg-blue-100"
                         @click="handleSelectAll"
                     >
-                        Select all {{ data.total }}
+                        {{ $t('Select all :count', { count: data.total }) }}
                     </button>
                     <button
                         v-if="selectAll"
                         class="ml-2 rounded px-2 py-1 text-blue-600 transition hover:bg-blue-100"
                         @click="clearSelection"
                     >
-                        Clear selection
+                        {{ $t('Clear selection') }}
                     </button>
                 </div>
                 <div class="flex items-center gap-2">
@@ -419,14 +419,14 @@
                         @click="handleBulkAction('bulk_delete')"
                     >
                         <TrashIcon class="h-4 w-4" />
-                        Delete
+                        {{ $t('Delete') }}
                     </button>
                     <button
                         type="button"
                         class="rounded-md px-2 py-1 text-sm text-gray-600 hover:bg-white"
                         @click="clearSelection"
                     >
-                        Clear
+                        {{ $t('Clear') }}
                     </button>
                 </div>
             </div>
@@ -436,8 +436,8 @@
 
                 <div v-if="!loading && data.data.length === 0" class="text-center my-12">
                     <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
-                    <p class="mt-1 text-sm text-gray-500">Adjust your search and try again.</p>
+                    <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ $t('No results found') }}</h3>
+                    <p class="mt-1 text-sm text-gray-500">{{ $t('Adjust your search and try again.') }}</p>
                 </div>
 
                 <div
@@ -477,7 +477,7 @@
                             v-if="row.is_tenant_default"
                             class="absolute right-3 top-3 z-10 rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-semibold uppercase leading-none text-emerald-700 ring-1 ring-inset ring-emerald-600/20"
                         >
-                            TENANT DEFAULT
+                            {{ $t('TENANT DEFAULT') }}
                         </div>
 
                         <div
@@ -489,7 +489,7 @@
                                 v-if="permissions.update && row.can_modify"
                                 type="button"
                                 class="rounded-full bg-white/80 p-1.5 text-gray-500 shadow-sm hover:bg-white hover:text-indigo-600"
-                                title="Edit"
+                                :title="$t('Edit')"
                                 @click="openEditForm(row.music_on_hold_uuid)"
                             >
                                 <PencilSquareIcon class="h-4 w-4" />
@@ -498,7 +498,7 @@
                                 v-if="permissions.destroy && row.can_modify"
                                 type="button"
                                 class="rounded-full bg-white/80 p-1.5 text-gray-500 shadow-sm hover:bg-white hover:text-red-600"
-                                title="Delete"
+                                :title="$t('Delete')"
                                 @click="confirmStreamDelete([row.music_on_hold_uuid])"
                             >
                                 <TrashIcon class="h-4 w-4" />
@@ -512,7 +512,7 @@
                                     v-if="row.files.length"
                                     type="button"
                                     class="absolute -bottom-1 -right-1 flex h-9 w-9 items-center justify-center rounded-full bg-indigo-600 text-white shadow-sm transition hover:bg-indigo-500"
-                                    title="Play first track"
+                                    :title="$t('Play first track')"
                                     @click.stop="quickPlay(row)"
                                 >
                                     <PlayIcon class="h-4 w-4" />
@@ -535,17 +535,17 @@
 
                             <div class="mt-3 flex flex-wrap justify-center gap-1">
                                 <Badge v-if="row.rate_label" :text="row.rate_label" v-bind="grayBadge" />
-                                <Badge :text="row.music_on_hold_channels === '2' ? 'Stereo' : 'Mono'" v-bind="grayBadge" />
+                                <Badge :text="row.music_on_hold_channels === '2' ? $t('Stereo') : $t('Mono')" v-bind="grayBadge" />
                                 <Badge
-                                    :text="row.music_on_hold_shuffle === 'true' ? 'Shuffle' : 'Ordered'"
+                                    :text="row.music_on_hold_shuffle === 'true' ? $t('Shuffle') : $t('Ordered')"
                                     v-bind="row.music_on_hold_shuffle === 'true' ? blueBadge : grayBadge"
                                 />
-                                <Badge v-if="row.music_on_hold_chime_list" text="Chime" v-bind="amberBadge" />
+                                <Badge v-if="row.music_on_hold_chime_list" :text="$t('Chime')" v-bind="amberBadge" />
                             </div>
                         </div>
 
                         <div class="mt-auto border-t border-gray-100 px-6 py-3 text-center text-xs text-gray-500">
-                            {{ row.files.length }} file{{ row.files.length === 1 ? "" : "s" }}
+                            {{ $tChoice('{1} :count file|[0,*] :count files', row.files.length) }}
                         </div>
                     </div>
                 </div>
@@ -597,22 +597,22 @@
         @refresh-data="refreshCurrentPage"
     />
 
-    <AddEditItemModal :show="showUploadModal" :loading="loadingForm || formSubmitting" header="Upload Music on Hold" custom-class="sm:max-w-2xl" @close="closeUploadModal">
+    <AddEditItemModal :show="showUploadModal" :loading="loadingForm || formSubmitting" :header="$t('Upload Music on Hold')" custom-class="sm:max-w-2xl" @close="closeUploadModal">
         <template #modal-body>
-            <Vueform :key="uploadFormKey" ref="uploadForm$" :endpoint="false" :default="uploadDefaultValues">
-                <SelectElement name="music_on_hold_uuid" :items="uploadStreamOptions" label="Stream"
+            <Vueform @mounted="(form) => form.disableValidation()" @submit="clearServerFormErrors" :key="uploadFormKey" ref="uploadForm$" :endpoint="false" :default="uploadDefaultValues">
+                <SelectElement name="music_on_hold_uuid" :items="uploadStreamOptions" :label="$t('Stream')"
                     :native="false" :floating="false" :columns="{ container: 12, sm: 6 }" />
 
                 <SelectElement v-if="permissions.manage_domain" name="domain_uuid" :items="itemOptions.domains"
-                    label="Domain" :native="false" :floating="false" :columns="{ container: 12, sm: 6 }"
+                    :label="$t('Domain')" :native="false" :floating="false" :columns="{ container: 12, sm: 6 }"
                     :conditions="[() => !selectedUploadStreamUuid]" />
 
-                <TextElement name="music_on_hold_name" label="New Stream Name" :floating="false"
+                <TextElement name="music_on_hold_name" :label="$t('New Stream Name')" :floating="false"
                     :columns="{ container: 12, sm: 6 }" :error="formErrors.music_on_hold_name?.[0]"
                     :conditions="[() => !selectedUploadStreamUuid]" />
 
-                <FileElement name="file" label="Audio File" accept=".wav,.mp3,.ogg"
-                    description="The file will be converted to mono WAV at 8 and 16 kHz." :upload-temp-endpoint="false"
+                <FileElement name="file" :label="$t('Audio File')" accept=".wav,.mp3,.ogg"
+                    :description="$t('The file will be converted to mono WAV at 8 and 16 kHz.')" :upload-temp-endpoint="false"
                     :remove-temp-endpoint="false" :remove-endpoint="false" :drop="true"
                     :error="formErrors.file?.[0]" @change="handleVueformFileUpload"
                     :columns="{ container: 12 }" />
@@ -621,23 +621,23 @@
 
                 <ButtonElement name="cancel" :secondary="true" :submits="false" align="right"
                     :columns="{ container: 12, sm: 6 }" @click="closeUploadModal">
-                    Cancel
+                    {{ $t('Cancel') }}
                 </ButtonElement>
 
                 <ButtonElement name="upload" :loading="formSubmitting" :submits="false" align="right"
                     :columns="{ container: 12, sm: 6 }" @click="submitUpload">
-                    Upload
+                    {{ $t('Upload') }}
                 </ButtonElement>
             </Vueform>
         </template>
     </AddEditItemModal>
 
-    <AddEditItemModal :show="showTenantSettingsModal" :loading="loadingForm || formSubmitting" header="Tenant Music on Hold" custom-class="sm:max-w-2xl" @close="closeTenantSettingsModal">
+    <AddEditItemModal :show="showTenantSettingsModal" :loading="loadingForm || formSubmitting" :header="$t('Tenant Music on Hold')" custom-class="sm:max-w-2xl" @close="closeTenantSettingsModal">
         <template #modal-body>
-            <Vueform :key="tenantSettingsFormKey" ref="tenantSettingsForm$" :endpoint="false" :default="tenantSettingsDefaultValues">
+            <Vueform @mounted="(form) => form.disableValidation()" @submit="clearServerFormErrors" :key="tenantSettingsFormKey" ref="tenantSettingsForm$" :endpoint="false" :default="tenantSettingsDefaultValues">
                 <RadiogroupElement
                     name="mode"
-                    label="Music on Hold"
+                    :label="$t('Music on Hold')"
                     :items="tenantModeOptions"
                     :columns="{ container: 12 }"
                 />
@@ -645,7 +645,7 @@
                 <SelectElement
                     name="stream_uuid"
                     :items="tenantStreamOptions"
-                    label="Stream"
+                    :label="$t('Stream')"
                     :native="false"
                     :search="true"
                     :floating="false"
@@ -658,18 +658,18 @@
 
                 <ButtonElement name="tenant_cancel" :secondary="true" :submits="false" align="right"
                     :columns="{ container: 12, sm: 6 }" @click="closeTenantSettingsModal">
-                    Cancel
+                    {{ $t('Cancel') }}
                 </ButtonElement>
 
                 <ButtonElement name="tenant_save" :loading="formSubmitting" :submits="false" align="right"
                     :columns="{ container: 12, sm: 6 }" @click="submitTenantSettings">
-                    Save
+                    {{ $t('Save') }}
                 </ButtonElement>
             </Vueform>
         </template>
     </AddEditItemModal>
 
-    <AddEditItemModal :show="showPlayerModal" :loading="false" :header="selectedFile?.name || 'Music on Hold'" custom-class="sm:max-w-3xl" @close="showPlayerModal = false">
+    <AddEditItemModal :show="showPlayerModal" :loading="false" :header="selectedFile?.name || $t('Music on Hold')" custom-class="sm:max-w-3xl" @close="showPlayerModal = false">
         <template #modal-body>
             <AudioPlayer
                 v-if="selectedFile?.download_url"
@@ -686,7 +686,7 @@
         :header="confirmationHeader"
         :text="confirmationText"
         :confirm-button-label="confirmationButtonLabel"
-        cancel-button-label="Cancel"
+        :cancel-button-label="$t('Cancel')"
         @close="showConfirmationModal = false"
         @confirm="confirmAction"
     />
@@ -695,6 +695,8 @@
 </template>
 
 <script setup>
+import { clearServerFormErrors, showServerFormErrors } from '../composables/serverFormErrors.js';
+import { trans } from '@i18n';
 import { computed, h, onMounted, ref, watch } from "vue";
 import axios from "axios";
 import MainLayout from "../Layouts/MainLayout.vue";
@@ -739,7 +741,7 @@ const ViewToggle = {
                     "button",
                     {
                         type: "button",
-                        title: "Grid view",
+                        title: trans('Grid view'),
                         class: [
                             baseBtn,
                             props.modelValue === "grid" ? "bg-indigo-600 text-white" : "bg-white text-gray-700 hover:bg-gray-50",
@@ -752,7 +754,7 @@ const ViewToggle = {
                     "button",
                     {
                         type: "button",
-                        title: "List view",
+                        title: trans('List view'),
                         class: [
                             baseBtn,
                             "border-l border-gray-300",
@@ -815,9 +817,9 @@ const tenantSettingsFormKey = ref(0);
 const uploadFile = ref(null);
 const uploadInitialStreamUuid = ref("");
 const confirmAction = ref(() => {});
-const confirmationHeader = ref("Are you sure?");
+const confirmationHeader = ref(trans('Are you sure?'));
 const confirmationText = ref("");
-const confirmationButtonLabel = ref("Continue");
+const confirmationButtonLabel = ref(trans('Continue'));
 const filterData = ref({ search: null, showGlobal: false });
 const sortData = ref({ name: "music_on_hold_name", order: "asc" });
 const viewMode = ref(loadViewMode());
@@ -840,20 +842,20 @@ const tenantDefaultBadge = { backgroundColor: "bg-emerald-50", textColor: "text-
 
 const columnCount = computed(() => filterData.value.showGlobal ? 6 : 5);
 const formHeader = computed(() => formMode.value === "create"
-    ? "Create stream"
-    : `Update stream - ${itemOptions.value?.item?.music_on_hold_name || "Loading..."}`);
+    ? trans('Create stream')
+    : trans('Update stream - :name', { name: itemOptions.value?.item?.music_on_hold_name || trans('Loading...') }));
 
 const sortParam = computed(() => sortData.value.order === "desc" ? `-${sortData.value.name}` : sortData.value.name);
 const uploadStreamOptions = computed(() => [
-    { label: "New stream", value: "" },
+    { label: trans('New stream'), value: "" },
     ...(itemOptions.value.streams ?? []),
 ]);
 const tenantStreamOptions = computed(() => itemOptions.value.tenant_streams ?? []);
-const tenantModeOptions = [
-    { label: "Stream selection", value: "stream" },
-    { label: "Play beeps", value: "beeps" },
-    { label: "Silence", value: "silence" },
-];
+const tenantModeOptions = computed(() => [
+    { label: trans('Stream selection'), value: "stream" },
+    { label: trans('Play beeps'), value: "beeps" },
+    { label: trans('Silence'), value: "silence" },
+]);
 
 const uploadDefaultValues = computed(() => ({
     music_on_hold_uuid: uploadInitialStreamUuid.value || "",
@@ -877,7 +879,7 @@ const bulkActions = computed(() => {
         return [];
     }
 
-    return [{ id: "bulk_delete", label: "Delete", icon: "TrashIcon" }];
+    return [{ id: "bulk_delete", label: trans('Delete'), icon: "TrashIcon" }];
 });
 
 const selectPageItems = computed({
@@ -1091,6 +1093,7 @@ const getItemOptions = (itemUuid = null, purpose = null) => {
 
 const submitTenantSettings = () => {
     formErrors.value = {};
+    clearServerFormErrors(tenantSettingsForm$.value);
     formSubmitting.value = true;
     const requestData = tenantSettingsForm$.value?.data ?? {};
 
@@ -1111,6 +1114,7 @@ const submitTenantSettings = () => {
 
 const submitUpload = () => {
     formErrors.value = {};
+    clearServerFormErrors(uploadForm$.value);
     formSubmitting.value = true;
     const uploadData = uploadForm$.value?.data ?? {};
 
@@ -1146,26 +1150,26 @@ const handleBulkAction = (action) => {
 
 const confirmStreamDelete = (items) => {
     showConfirmationModal.value = true;
-    confirmationHeader.value = "Confirm Deletion";
-    confirmationText.value = "This action will permanently delete the selected music on hold stream(s).";
-    confirmationButtonLabel.value = "Delete";
+    confirmationHeader.value = trans('Confirm Deletion');
+    confirmationText.value = trans('This action will permanently delete the selected music on hold stream(s).');
+    confirmationButtonLabel.value = trans('Delete');
     confirmAction.value = () => deleteStreams(items);
 };
 
 const confirmFileDelete = (stream, file) => {
     if (!stream || !file) return;
     showConfirmationModal.value = true;
-    confirmationHeader.value = "Confirm File Deletion";
-    confirmationText.value = `Delete ${file.name}?`;
-    confirmationButtonLabel.value = "Delete";
+    confirmationHeader.value = trans('Confirm File Deletion');
+    confirmationText.value = trans('Delete :name?', { name: file.name });
+    confirmationButtonLabel.value = trans('Delete');
     confirmAction.value = () => deleteFile(stream, file);
 };
 
 const confirmReload = () => {
     showConfirmationModal.value = true;
-    confirmationHeader.value = "Reload Hold Music";
-    confirmationText.value = "Reload hold music after making changes so the latest updates take effect. Avoid reloading while callers are actively listening to hold music.";
-    confirmationButtonLabel.value = "Reload";
+    confirmationHeader.value = trans('Reload Hold Music');
+    confirmationText.value = trans('Reload hold music after making changes so the latest updates take effect. Avoid reloading while callers are actively listening to hold music.');
+    confirmationButtonLabel.value = trans('Reload');
     confirmAction.value = executeReload;
 };
 
@@ -1288,6 +1292,10 @@ const showNotification = (type, messages = null) => {
 };
 
 const handleError = (error, keepModalOpen = false) => {
+    if (keepModalOpen) {
+        const form = showUploadModal.value ? uploadForm$.value : tenantSettingsForm$.value;
+        if (form) showServerFormErrors(error?.response, form);
+    }
     if (error?.response?.data?.errors) {
         formErrors.value = error.response.data.errors;
     } else if (!keepModalOpen) {
@@ -1306,7 +1314,7 @@ const normalizeMessages = (error) => {
     if (payload?.message) return { request: [payload.message] };
     if (error?.message) return { request: [error.message] };
 
-    return { request: ["An unexpected error occurred."] };
+    return { request: [trans('An unexpected error occurred.')] };
 };
 
 const formatDate = (value) => {

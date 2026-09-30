@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Support\Localization\ValidationMessages;
 use Illuminate\Validation\Rule;
 
 class BulkStoreHotelRoomsRequest extends FormRequest
@@ -32,16 +33,18 @@ class BulkStoreHotelRoomsRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'extensions.required' => 'Please select at least one extension.',
-            'extensions.*.exists' => 'One or more selected extensions do not exist in this domain.',
+            ...ValidationMessages::common(),
+            'extensions.required' => __('Please select at least one extension.'),
+            'extensions.*.exists' => __('One or more selected extensions do not exist in this domain.'),
         ];
     }
 
     public function attributes(): array
     {
         return [
-            'extensions' => 'extensions',
-            'extensions.*' => 'extension',
+            'extensions' => __('Extensions'),
+            'extensions.*' => __('Extension'),
+            'domain_uuid' => __('Account'),
         ];
     }
 

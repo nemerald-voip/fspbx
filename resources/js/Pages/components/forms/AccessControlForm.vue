@@ -23,7 +23,7 @@
                                 <button type="button"
                                     class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                     @click="emit('close')">
-                                    <span class="sr-only">Close</span>
+                                    <span class="sr-only">{{ $t('Close') }}</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
@@ -37,42 +37,42 @@
                                         <path class="opacity-75" fill="currentColor"
                                             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                     </svg>
-                                    <div class="text-lg text-blue-600 m-auto">Loading...</div>
+                                    <div class="text-lg text-blue-600 m-auto">{{ $t('Loading...') }}</div>
                                 </div>
                             </div>
 
                             <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
-                                @error="handleError" @response="handleResponse" :display-errors="false"
+                                @error="handleError" @response="handleResponse" :display-errors="false" :validate-on="''" :validate="false"
                                 :default="defaultValues">
                                 <template #empty>
                                     <FormElements>
-                                        <StaticElement name="settings_header" tag="h4" content="Access Control List"
-                                            description="Allow or deny traffic by IP address or CIDR range." />
+                                        <StaticElement name="settings_header" tag="h4" :content="$t('Access Control List')"
+                                            :description="$t('Allow or deny traffic by IP address or CIDR range.')" />
 
-                                        <TextElement name="access_control_name" label="Name" :floating="false"
+                                        <TextElement name="access_control_name" :label="$t('Name')" :floating="false"
                                             placeholder="providers" :columns="{ sm: { container: 6 } }" />
 
-                                        <SelectElement name="access_control_default" label="Default Action"
+                                        <SelectElement name="access_control_default" :label="$t('Default Action')"
                                             :items="defaultOptions" :native="false" :strict="true" :floating="false"
                                             :columns="{ sm: { container: 6 } }" />
 
-                                        <TextareaElement name="access_control_description" label="Description"
+                                        <TextareaElement name="access_control_description" :label="$t('Description')"
                                             :rows="2" />
 
                                         <GroupElement name="nodes_container" />
 
-                                        <ListElement name="nodes" :initial="0" label="IP Rules"
+                                        <ListElement name="nodes" :initial="0" :label="$t('IP Rules')"
                                             :controls="{ add: true, remove: true, sort: true }"
                                             :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }">
                                             <template #default="{ index }">
                                                 <ObjectElement :name="index">
-                                                    <SelectElement name="node_type" label="Action"
+                                                    <SelectElement name="node_type" :label="$t('Action')"
                                                         :items="nodeTypeOptions" :native="false" :strict="true"
                                                         :floating="false" :columns="{ sm: { container: 3 } }" />
-                                                    <TextElement name="node_cidr" label="IP / CIDR" :floating="false"
-                                                        placeholder="203.0.113.10 or 198.51.100.0/24"
+                                                    <TextElement name="node_cidr" :label="$t('IP / CIDR')" :floating="false"
+                                                        :placeholder="$t('203.0.113.10 or 198.51.100.0/24')"
                                                         :columns="{ sm: { container: 5 } }" />
-                                                    <TextElement name="node_description" label="Description"
+                                                    <TextElement name="node_description" :label="$t('Description')"
                                                         :floating="false" :columns="{ sm: { container: 4 } }" />
                                                 </ObjectElement>
                                             </template>
@@ -80,10 +80,10 @@
 
                                         <GroupElement name="button_container" />
 
-                                        <ButtonElement name="cancel" button-label="Cancel" :secondary="true"
+                                        <ButtonElement name="cancel" :button-label="$t('Cancel')" :secondary="true"
                                             :resets="true" @click="emit('close')" :columns="{ container: 6 }" />
 
-                                        <ButtonElement name="submit" button-label="Save" :submits="true"
+                                        <ButtonElement name="submit" :button-label="$t('Save')" :submits="true"
                                             align="right" :columns="{ container: 6 }" />
                                     </FormElements>
                                 </template>
@@ -97,6 +97,7 @@
 </template>
 
 <script setup>
+import { trans } from "@i18n";
 import { computed, ref } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from "@headlessui/vue";
 import { XMarkIcon } from "@heroicons/vue/24/solid";
@@ -107,7 +108,7 @@ const props = defineProps({
     loading: Boolean,
     header: {
         type: String,
-        default: "Access Control",
+        default: () => trans("Access Control"),
     },
     mode: {
         type: String,
@@ -118,15 +119,15 @@ const props = defineProps({
 const emit = defineEmits(["close", "error", "success", "refresh-data"]);
 const form$ = ref(null);
 
-const defaultOptions = [
-    { value: "deny", label: "Deny" },
-    { value: "allow", label: "Allow" },
-];
+const defaultOptions = computed(() => [
+    { value: "deny", label: trans("Deny") },
+    { value: "allow", label: trans("Allow") },
+]);
 
-const nodeTypeOptions = [
-    { value: "allow", label: "Allow" },
-    { value: "deny", label: "Deny" },
-];
+const nodeTypeOptions = computed(() => [
+    { value: "allow", label: trans("Allow") },
+    { value: "deny", label: trans("Deny") },
+]);
 
 const defaultValues = computed(() => {
     const item = props.options?.item ?? {};
@@ -144,6 +145,8 @@ const defaultValues = computed(() => {
 });
 
 const submitForm = async (FormData, form$) => {
+    form$.messageBag.clear();
+    Object.values(form$.elements$).forEach(clearErrorsRecursive);
     const route = props.mode === "create"
         ? props.options.routes.store_route
         : props.options.routes.update_route;
@@ -193,6 +196,6 @@ const handleError = (error, details, form$) => {
         return;
     }
 
-    form$.messageBag.append("Could not submit form");
+    form$.messageBag.append(trans("Could not submit form"));
 };
 </script>

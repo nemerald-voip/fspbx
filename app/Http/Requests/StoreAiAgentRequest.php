@@ -28,6 +28,7 @@ class StoreAiAgentRequest extends FormRequest
             'outbound_agent_id' => ['nullable', 'string', 'max:255'],
             'outbound_agent_name' => ['nullable', 'string', 'max:255'],
             'recording_policy' => ['required', Rule::in(['inherit', 'always'])],
+            'email_from_address' => ['nullable', 'string', 'email:rfc', 'max:254'],
             'enabled' => ['required', 'boolean'],
             'description' => ['nullable', 'string', 'max:255'],
         ];

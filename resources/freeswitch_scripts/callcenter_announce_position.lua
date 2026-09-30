@@ -128,6 +128,10 @@ local function current_position()
 end
 
 local function broadcast(application)
+    if trim(api:executeString('uuid_getvar ' .. caller_uuid .. ' cc_callback_collecting')) == 'true'
+        or trim(api:executeString('uuid_getvar ' .. caller_uuid .. ' cc_callback_offering')) == 'true' then
+        return false
+    end
     if not queue_call_is_active() then
         return false
     end

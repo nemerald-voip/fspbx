@@ -1,3 +1,4 @@
+local function run_voicemail()
 --set default values
 min_digits = 1;
 max_digits = 8;
@@ -101,10 +102,10 @@ if (session ~= nil) then
         default_language = session:getVariable("default_language");
         default_dialect = session:getVariable("default_dialect");
         default_voice = session:getVariable("default_voice");
-        freeswitch.consoleLog("notice", "[voicemail] default_voice: " .. default_voice ..  "\n");
-        if (not default_language) then default_language = 'en'; end
-        if (not default_dialect) then default_dialect = 'us'; end
-        if (not default_voice) then default_voice = 'callie'; end
+        if (not sounds_dir or sounds_dir == '') then sounds_dir = '/usr/share/freeswitch/sounds'; end
+        if (not default_language or default_language == '') then default_language = 'en'; end
+        if (not default_dialect or default_dialect == '') then default_dialect = 'us'; end
+        if (not default_voice or default_voice == '') then default_voice = 'callie'; end
 
     --get the domain_uuid
         domain_uuid = session:getVariable("domain_uuid");
@@ -767,3 +768,9 @@ end
 --close the database connection
 dbh:release();
 
+end
+
+if session ~= nil then
+    return require('resources.functions.voicemail_sounds').with_voice(session, run_voicemail)
+end
+return run_voicemail()

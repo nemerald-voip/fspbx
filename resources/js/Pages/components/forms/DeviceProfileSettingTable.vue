@@ -118,7 +118,7 @@
 
 <script setup>
 import { computed } from "vue";
-import { trans } from "@i18n";
+import { transChoice } from "@i18n";
 import { PlusIcon, TrashIcon } from "@heroicons/vue/24/solid";
 import Toggle from "@generalComponents/Toggle.vue";
 
@@ -138,9 +138,7 @@ const props = defineProps({
 });
 
 const summary = computed(() =>
-    props.rows.length === 1
-        ? trans("1 setting")
-        : trans(":count settings", { count: String(props.rows.length) })
+    transChoice(":count setting|:count settings", props.rows.length)
 );
 
 function controlClass(hasError) {

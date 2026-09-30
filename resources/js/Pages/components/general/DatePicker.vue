@@ -1,5 +1,5 @@
 <template>
-    <VueDatePicker v-model="dateRange" :range="true" :multi-calendars="{ static: false }" :preset-dates="presetDates"
+    <VueDatePicker :locale="currentLocale" v-model="dateRange" :range="true" :multi-calendars="{ static: false }" :preset-dates="presetDates"
         :enable-time-picker="false" :week-start="0" auto-apply @update:model-value="handleDate" :timezone="timezone">
         <template #preset-date-range-button="{ label, value, presetDate }">
             <span role="button" :tabindex="0" @click="presetDate(value)" @keyup.enter.prevent="presetDate(value)"
@@ -11,7 +11,8 @@
 </template>
 
 <script setup>
-import { ref,watch,onMounted } from 'vue';
+import { trans, currentLocale } from "@i18n";
+import { ref, watch, computed } from 'vue';
 import VueDatePicker from '@vuepic/vue-datepicker';
 import moment from 'moment-timezone';
 
@@ -40,13 +41,13 @@ watch(() => props.dateRange, (newDateRange) => {
 
 const today = new Date();
 
-const presetDates = ref([
-    { label: 'Today', value: [startOfDay(today), endOfDay(today)] },
-    { label: 'This Week', value: [startOfWeek(startOfDay(today), { weekStartsOn: 0 }), endOfWeek(endOfDay(today), { weekStartsOn: 0 })] },
-    { label: 'Past 7 Days', value: [subDays(startOfDay(today), 6), endOfDay(today)] },
-    { label: 'Past 30 Days', value: [subDays(startOfDay(today), 29), endOfDay(today)] },
-    { label: 'This Month', value: [startOfMonth(startOfDay(today)), endOfMonth(endOfDay(today))] },
-    { label: 'Last Month', value: [startOfMonth(subMonths(startOfDay(today), 1)), endOfMonth(subMonths(endOfDay(today), 1))] }
+const presetDates = computed(() => [
+    { label: trans("Today"), value: [startOfDay(today), endOfDay(today)] },
+    { label: trans("This Week"), value: [startOfWeek(startOfDay(today), { weekStartsOn: 0 }), endOfWeek(endOfDay(today), { weekStartsOn: 0 })] },
+    { label: trans("Past 7 Days"), value: [subDays(startOfDay(today), 6), endOfDay(today)] },
+    { label: trans("Past 30 Days"), value: [subDays(startOfDay(today), 29), endOfDay(today)] },
+    { label: trans("This Month"), value: [startOfMonth(startOfDay(today)), endOfMonth(endOfDay(today))] },
+    { label: trans("Last Month"), value: [startOfMonth(subMonths(startOfDay(today), 1)), endOfMonth(subMonths(endOfDay(today), 1))] }
 ]);
 
 const emit = defineEmits(['update:dateRange']);

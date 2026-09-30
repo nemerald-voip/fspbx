@@ -70,4 +70,16 @@ class EmailTemplatePreviewServiceTest extends TestCase
             $this->assertNotSame('', $preview['text'], $key);
         }
     }
+
+    public function test_email_language_does_not_depend_on_the_interface_locale(): void
+    {
+        app()->setLocale('ru');
+        $definition = app(EmailTemplateSourceService::class)->find('authentication', 'reset-password', 'fr');
+        $preview = app(EmailTemplatePreviewService::class)->render($definition);
+        $this->assertStringContainsString('Réinitialisation du mot de passe', $preview['subject']);
+        $this->assertStringContainsString('Bonjour', $preview['html']);
+        $this->assertStringContainsString('Bonjour', $preview['text']);
+        $this->assertSame(1, substr_count($preview['html'], '<html'));
+        $this->assertStringContainsString('lang="fr"', $preview['html']);
+    }
 }

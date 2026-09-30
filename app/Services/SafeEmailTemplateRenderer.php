@@ -29,7 +29,7 @@ class SafeEmailTemplateRenderer
         $template = match ($layout) {
             'standard' => $this->withStandardLayout($body),
             'none' => $body,
-            default => throw new RuntimeException("Unsupported email template layout: {$layout}"),
+            default => throw new RuntimeException(__('Unsupported email template layout: :layout', ['layout' => $layout])),
         };
 
         return $this->renderString($this->renderBlade($template, $variables), $variables, true);
@@ -63,7 +63,7 @@ class SafeEmailTemplateRenderer
     public function assertSafe(?string $content): void
     {
         if ($this->containsExecutableSyntax($content)) {
-            throw new RuntimeException('Email templates may use Blade, but @php, raw PHP tags, and scripts are not allowed.');
+            throw new RuntimeException(__('Email templates may use Blade, but @php, raw PHP tags, and scripts are not allowed.'));
         }
     }
 
@@ -102,7 +102,7 @@ class SafeEmailTemplateRenderer
 
     private function withStandardLayout(string $template): string
     {
-        if (preg_match('/@extends\([\'"]emails\.email_layout[\'"]\)/', $template) === 1) {
+        if (preg_match('/@extends\([\'"]emails(?:\.[a-z][a-z0-9-]*)?\.email_layout[\'"]\)/', $template) === 1) {
             return $template;
         }
 

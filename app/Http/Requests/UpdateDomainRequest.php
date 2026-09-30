@@ -39,14 +39,24 @@ class UpdateDomainRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'domain_description.required' => 'Please enter a domain label.',
-            'domain_description.max'      => 'The domain label may not be greater than 255 characters.',
+            'string' => __('The :attribute must be a string.'),
+            'domain_description.required' => __('Please enter a domain label.'),
+            'domain_description.max'      => __('The domain label may not be greater than 255 characters.'),
 
-            'domain_name.required'        => 'Please enter a domain name.',
-            'domain_name.max'             => 'The domain name may not be greater than 255 characters.',
+            'domain_name.required'        => __('Please enter a domain name.'),
+            'domain_name.max'             => __('The domain name may not be greater than 255 characters.'),
 
-            'domain_enabled.required'     => 'Please specify whether the domain is enabled.',
-            'domain_enabled.boolean'      => 'Invalid value for the domain status.',
+            'domain_enabled.required'     => __('Please specify whether the domain is enabled.'),
+            'domain_enabled.boolean'      => __('Invalid value for the domain status.'),
+        ];
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'domain_description' => __('Domain Label'),
+            'domain_name' => __('Domain Name'),
+            'domain_enabled' => __('Status'),
         ];
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Support\Localization\LocaleRegistry;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -30,7 +31,7 @@ class EmailTemplateSourceService
                 continue;
             }
 
-            $metadata = $this->parseFrontMatter($source);
+            $metadata = $this->parseFrontMatter($source, $path);
             $format = Str::lower((string) ($metadata['format'] ?? ''));
             if ($format === 'text') {
                 continue;
@@ -83,7 +84,11 @@ class EmailTemplateSourceService
             str_replace('\\', '/', $htmlPath),
             str_replace('\\', '/', resource_path('views/emails')).'/'
         );
-        $expectedPath = "{$category}/{$subcategory}.blade.php";
+        if (! app(LocaleRegistry::class)->isSupported($language)) {
+            throw new RuntimeException("Unknown email template language: {$language} in {$htmlPath}");
+        }
+
+        $expectedPath = "{$language}/{$category}/{$subcategory}.blade.php";
         if ($relativePath !== $expectedPath) {
             throw new RuntimeException(
                 "Email template path must be {$expectedPath}; found {$relativePath}"
@@ -92,11 +97,21 @@ class EmailTemplateSourceService
 
         $html = $this->stripFrontMatter($source);
         if ($layout === 'standard') {
+            // Keep the historical English layout name valid for existing
+            // database templates and custom overrides.
+            $layoutNames = ['emails.'.$language.'.email_layout'];
+            if ($language === 'en-us') {
+                $layoutNames[] = 'emails.email_layout';
+            }
+            $layoutPattern = implode('|', array_map(fn ($name) => preg_quote($name, '/'), $layoutNames));
             if (! preg_match(
-                '/\A\s*@extends\([\'\"]emails\.email_layout[\'\"]\)\s*@section\([\'\"]content[\'\"]\)\s*.*?\s*@endsection\s*\z/s',
+                '/\A\s*@extends\([\'\"](?:'.$layoutPattern.')[\'\"]\)\s*@section\([\'\"]content[\'\"]\)\s*.*?\s*@endsection\s*\z/s',
                 $html
             )) {
-                throw new RuntimeException("Standard email template must extend emails.email_layout in {$htmlPath}");
+                throw new RuntimeException("Standard email template must extend emails.{$language}.email_layout in {$htmlPath}");
+            }
+            if (! File::isFile(resource_path("views/emails/{$language}/email_layout.blade.php"))) {
+                throw new RuntimeException("Missing email layout for {$language} in {$htmlPath}");
             }
         } elseif ($layout !== 'none') {
             throw new RuntimeException("Unsupported layout metadata in {$htmlPath}");
@@ -108,7 +123,7 @@ class EmailTemplateSourceService
         }
 
         $textSource = File::get($textPath);
-        $textMetadata = $this->parseFrontMatter($textSource);
+        $textMetadata = $this->parseFrontMatter($textSource, $textPath);
         foreach (['format', 'layout'] as $key) {
             if (! filled($textMetadata[$key] ?? null)) {
                 throw new RuntimeException("Missing {$key} metadata in {$textPath}");
@@ -156,14 +171,19 @@ class EmailTemplateSourceService
         return preg_match('/\A(?:\xEF\xBB\xBF)?\s*\{\{--\s*email-template\b/s', substr($source, 0, 8192)) === 1;
     }
 
-    private function parseFrontMatter(string $source): array
+    private function parseFrontMatter(string $source, string $path): array
     {
+        if (! mb_check_encoding($source, 'UTF-8')) {
+            throw new RuntimeException("Email template source must be valid UTF-8: {$path}");
+        }
+
         if (! preg_match('/\A(?:\xEF\xBB\xBF)?\s*\{\{--\s*(.*?)\s*--\}\}/s', substr($source, 0, 8192), $match)) {
             throw new RuntimeException('Missing email-template metadata.');
         }
 
         $metadata = [];
-        foreach (preg_split('/\R/', trim($match[1])) as $line) {
+        // In byte mode, \R also matches 0x85 inside UTF-8 characters such as х.
+        foreach (preg_split('/\R/u', trim($match[1])) as $line) {
             if (preg_match('/^\s*([A-Za-z0-9_-]+)\s*:\s*(.*?)\s*$/', $line, $parts)) {
                 $metadata[Str::lower($parts[1])] = trim($parts[2]);
             }

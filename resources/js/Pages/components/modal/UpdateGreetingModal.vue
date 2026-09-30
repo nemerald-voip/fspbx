@@ -18,14 +18,13 @@
                             <div>
 
                                 <div class="mt-3 text-center sm:mt-5">
-                                    <DialogTitle as="h3" class="text-base font-semibold leading-6 text-gray-900">Update
-                                        Greeting</DialogTitle>
+                                    <DialogTitle as="h3" class="text-base font-semibold leading-6 text-gray-900">{{ $t('Update Greeting') }}</DialogTitle>
 
                                 </div>
 
                                 <div class="mt-2">
                                         <div class="">
-                                            <LabelInputOptional target="ivr_menu_name" label="Name" class="truncate" />
+                                            <LabelInputOptional target="ivr_menu_name" :label="$t('Name')" class="truncate" />
                                             <InputField v-model="greeting_name" type="text" name="greeting_name"
                                                 id="greeting_name" class="mt-2 min-w-[15rem] sm:min-w-[20rem]" />
                                             
@@ -37,12 +36,12 @@
                                 <button type="button"
                                     class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
                                     @click="updateGreeting">
-                                    Save
+                                    {{ $t('Save') }}
                                     <Spinner class="ml-2" :color="'text-gray-700'" :show="loading" />
                                 </button>
                                 <button type="button"
                                     class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0"
-                                    @click="emit('close')">Cancel</button>
+                                    @click="emit('close')">{{ $t('Cancel') }}</button>
                             </div>
                         </DialogPanel>
 

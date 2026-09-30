@@ -24,7 +24,7 @@
                                 <button type="button"
                                     class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                     @click="closeModal">
-                                    <span class="sr-only">Close</span>
+                                    <span class="sr-only">{{ $t("Close") }}</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
@@ -42,11 +42,11 @@
                                             </path>
                                         </svg>
                                     </div>
-                                    <div class="text-lg text-blue-600 m-auto">Loading...</div>
+                                    <div class="text-lg text-blue-600 m-auto">{{ $t("Loading...") }}</div>
                                 </div>
                             </div>
 
-                            <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" :default="defaultValues"
+                            <Vueform :locale="formLocale" @mounted="form => form.disableValidation()" v-if="!loading" ref="form$" :endpoint="submitForm" :default="defaultValues"
                                 :display-errors="false" @success="handleSuccess" @error="handleError"
                                 @response="handleResponse">
 
@@ -103,7 +103,7 @@
                                                         sm: {
                                                             container: 6,
                                                         },
-                                                    }" :rules="['required', 'max:255']" />
+                                                    }" />
 
                                                 <SelectElement v-if="options?.permissions?.manage_domain"
                                                     name="domain_uuid" :label="$t('Account')" :items="options.domains"
@@ -118,7 +118,7 @@
                                                 <TextareaElement name="device_profile_description"
                                                     :label="$t('Description')"
                                                     :placeholder="$t('Describe when this profile should be used')"
-                                                    :rows="3" :floating="false" :rules="['max:255']" />
+                                                    :rows="3" :floating="false" />
 
                                                 <ToggleElement name="device_profile_enabled" :text="$t('Enabled')"
                                                     true-value="true" false-value="false"
@@ -205,12 +205,16 @@
 </template>
 
 <script setup>
+import { useVueformLocale } from "../../../composables/useVueformLocale.js";
+import { clearServerFormErrors } from "../../../composables/serverFormErrors.js";
 import { computed, ref, watch } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from "@headlessui/vue";
 import { XMarkIcon } from "@heroicons/vue/24/solid";
 import { trans } from "@i18n";
 import DeviceProfileKeyTable from "./DeviceProfileKeyTable.vue";
 import DeviceProfileSettingTable from "./DeviceProfileSettingTable.vue";
+
+const formLocale = useVueformLocale();
 
 const props = defineProps({
     show: Boolean,
@@ -323,6 +327,10 @@ function closeModal() {
 }
 
 async function submitForm(FormData, form) {
+    clearServerFormErrors(form);
+    keyErrors.value = {};
+    settingErrors.value = {};
+    formError.value = null;
     const data = { ...form.data };
 
     if (!props.options?.permissions?.manage_domain) {

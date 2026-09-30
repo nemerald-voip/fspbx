@@ -1,4 +1,4 @@
-{{-- version: 1.0.9 --}}
+{{-- version: 1.0.14 --}}
 
 @switch($flavor)
 
@@ -75,7 +75,19 @@
 
 		<!-- NAT Traversal -->
 		<!-- No, STUN, KeepAlive, UPnP, Auto, VPN -->
+		@if (trim((string) ($settings['grandstream_nat_traversal'] ?? '')) === '0')
+		<item name="account.{{ $n }}.network.natTraversal">No</item>
+		@elseif (trim((string) ($settings['grandstream_nat_traversal'] ?? '')) === '1')
+		<item name="account.{{ $n }}.network.natTraversal">STUN</item>
+		@elseif (trim((string) ($settings['grandstream_nat_traversal'] ?? '')) === '3')
+		<item name="account.{{ $n }}.network.natTraversal">UPnP</item>
+		@elseif (trim((string) ($settings['grandstream_nat_traversal'] ?? '')) === '4')
+		<item name="account.{{ $n }}.network.natTraversal">Auto</item>
+		@elseif (trim((string) ($settings['grandstream_nat_traversal'] ?? '')) === '5')
+		<item name="account.{{ $n }}.network.natTraversal">VPN</item>
+		@else
 		<item name="account.{{ $n }}.network.natTraversal">KeepAlive</item>
+		@endif
 
 		<!-- Support Rport (RFC 3581) -->
 		<!-- Yes, No -->
@@ -100,7 +112,7 @@
 
 		<!-- Unregister on Reboot -->
 		<!-- No, Yes, Instance -->
-		<item name="account.{{ $n }}.sip.unregisterOnReboot">No</item>
+		<item name="account.{{ $n }}.sip.unregisterOnReboot">Instance</item>
 
 		<!-- Register Expiration (m) -->
 		<!-- Number: 0 - 64800 -->
@@ -949,7 +961,7 @@
 
 
 		<!-- # Firmware Upgrade Confirmation. No or Yes -->
-		<item name="provisioning.firmware.confirm.enable">Yes</item>
+		<item name="provisioning.firmware.confirm.enable">{{ $settings['grandstream_firmware_upgrade_confirmation'] ?? 'Yes' }}</item>
 
 		<!-- Config Upgrade Via -->
 		<!-- TFTP, HTTP, HTTPS -->
@@ -1223,7 +1235,7 @@
 		<item name="sip.userNatIp"/>
 
 		<!-- STUN Server -->
-		<item name="network.stunServer"/>
+		<item name="network.stunServer">{{ $settings['grandstream_stun_server'] ?? '' }}</item>
 
 		<!-- # Delay Registration. Default is 0. -->
 		<!-- # Number: 0 - 90 -->
@@ -1616,7 +1628,7 @@
 		<!-- # System Ringtone -->
 		<!-- # String -->
 		<!-- # Mandatory -->
-		<item name="audio.tone.systemRing">f1=540,f2=516,c=70/16-55/16-70/300;</item>
+		<item name="audio.tone.systemRing">{{ $settings['grandstream_system_ring'] ?? 'f1=540,f2=516,c=70/16-55/16-70/300;' }}</item>
 
 		<!-- # Dial Tone -->
 		<!-- # String -->
@@ -1676,7 +1688,7 @@
 		<item name="audio.volume.lock">No</item>
 
 		<!-- # Default Ringtone. -->
-		<item name="audio.ring.defaultRingtone">0</item>
+		<item name="audio.ring.defaultRingtone">{{ $settings['grandstream_default_ringtone'] ?? '0' }}</item>
 
 		<!-- # Total Number of Custom Ringtone Update -->
 		<!-- # Number: 0-10. Default is 3. -->

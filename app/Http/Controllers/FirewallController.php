@@ -58,7 +58,7 @@ class FirewallController extends Controller
     {
         if (!userCheckPermission("firewall_list_view")) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -392,7 +392,7 @@ class FirewallController extends Controller
             EventGuardLogs::whereIn('ip_address', request('items', []))->delete();
 
             return response()->json([
-                'messages' => ['success' => ['Request to unblock IP addresses was successful']]
+                'messages' => ['success' => [__('Request to unblock IP addresses was successful')]]
             ], 200);
         } catch (\Exception $e) {
             logger($e->getMessage() . PHP_EOL);
@@ -443,14 +443,14 @@ class FirewallController extends Controller
             }
 
             return response()->json([
-                'messages' => ['success' => ['New item created']]
+                'messages' => ['success' => [__('New item created')]]
             ], 201);
         } catch (\Exception $e) {
             logger($e->getMessage());
 
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to create new item']]
+                'errors' => ['server' => [__('Failed to create new item')]]
             ], 500);
         }
     }
@@ -491,14 +491,14 @@ class FirewallController extends Controller
         try {
             if (!userCheckPermission("firewall_list_view")) {
                 return response()->json([
-                    'messages' => ['error' => ['Access denied.']],
+                    'messages' => ['error' => [__('Access denied.')]],
                 ], 403);
             }
 
             $ips = $this->getData(request(), false)->pluck('ip');
 
             return response()->json([
-                'messages' => ['success' => ['All items selected']],
+                'messages' => ['success' => [__('All items selected')]],
                 'items' => $ips->values(),
             ], 200);
         } catch (\Exception $e) {
@@ -506,7 +506,7 @@ class FirewallController extends Controller
 
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to select all items']]
+                'errors' => ['server' => [__('Failed to select all items')]]
             ], 500);
         }
     }

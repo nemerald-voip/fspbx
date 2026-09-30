@@ -23,7 +23,7 @@
             <div v-if="activeTab === 'license'">
                 <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
                     <div>
-                        <h3 class="text-base font-semibold leading-6 text-gray-900">License Status</h3>
+                        <h3 class="text-base font-semibold leading-6 text-gray-900">{{ $t('License Status') }}</h3>
                         <!-- <p class="mt-1 text-sm text-gray-500">Ensure calls are routed to the right team every time.
                             Select a routing option below to fit your business needs.</p> -->
                     </div>
@@ -32,21 +32,21 @@
                     <div v-if="props.options.item.license" class="mt-2 border-t border-gray-100">
                         <dl class="divide-y divide-gray-100">
                             <div class="px-4 py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
-                                <dt class="text-sm font-medium leading-6 text-gray-900">License Key</dt>
+                                <dt class="text-sm font-medium leading-6 text-gray-900">{{ $t('License Key') }}</dt>
                                 <dd class="mt-1 flex text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">
                                     <span class="flex-grow">{{ props.options.item.license }}</span>
                                     <span class="ml-4 flex-shrink-0">
                                         <button type="button" @click.prevent="handleShowEditLicenseModal"
-                                            class="rounded-md bg-gray-100 font-medium text-indigo-600 hover:text-indigo-500">Update</button>
+                                            class="rounded-md bg-gray-100 font-medium text-indigo-600 hover:text-indigo-500">{{ $t('Update') }}</button>
                                     </span>
                                 </dd>
                             </div>
                             <div class="px-4 py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
-                                <dt class="text-sm font-medium leading-6 text-gray-900">License Status</dt>
+                                <dt class="text-sm font-medium leading-6 text-gray-900">{{ $t('License Status') }}</dt>
                                 <dd class="mt-1 flex text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">
                                     <span v-if="props.options.item.license_details?.data?.id"
-                                        class="flex-grow text-green-600">License key is valid</span>
-                                    <span v-else class="flex-grow text-rose-600">License key is not valid</span>
+                                        class="flex-grow text-green-600">{{ $t('License key is valid') }}</span>
+                                    <span v-else class="flex-grow text-rose-600">{{ $t('License key is not valid') }}</span>
                                     <!-- <span class="ml-4 flex-shrink-0">
                                         <button type="button"
                                             class="rounded-md g-gray-100 font-medium text-indigo-600 hover:text-indigo-500">Update</button>
@@ -54,15 +54,15 @@
                                 </dd>
                             </div>
                             <div class="px-4 py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
-                                <dt class="text-sm font-medium leading-6 text-gray-900">License suspended</dt>
+                                <dt class="text-sm font-medium leading-6 text-gray-900">{{ $t('License suspended') }}</dt>
                                 <dd class="mt-1 flex text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">
                                     <span
                                         v-if="props.options.item.license_details?.data && !props.options.item.license_details?.data?.attributes?.suspended"
-                                        class="flex-grow text-green-600">No</span>
+                                        class="flex-grow text-green-600">{{ $t('No') }}</span>
                                     <!-- <span v-if="props.options.item.license_details?.data?.attributes?.suspended" class="flex-grow text-green-600">No</span> -->
                                     <span
                                         v-if="props.options.item.license_details?.data && props.options.item.license_details?.data?.attributes?.suspended"
-                                        class="flex-grow text-rose-600">Yes</span>
+                                        class="flex-grow text-rose-600">{{ $t('Yes') }}</span>
                                     <!-- <span class="ml-4 flex-shrink-0">
                                         <button type="button"
                                             class="rounded-md bg-white font-medium text-indigo-600 hover:text-indigo-500">Update</button>
@@ -70,14 +70,14 @@
                                 </dd>
                             </div>
                             <div class="px-4 py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
-                                <dt class="text-sm font-medium leading-6 text-gray-900">Expiration</dt>
+                                <dt class="text-sm font-medium leading-6 text-gray-900">{{ $t('Expiration') }}</dt>
                                 <dd class="mt-1 flex text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">
                                     <div>
                                         <span v-if="props.options.item.license_details?.data?.attributes?.expiry"
                                             class="flex-grow"> {{
                                                 props.options.item.license_details?.data?.attributes?.expiry }}</span>
                                         <span v-if="props.options.item.license_details?.meta?.code == 'EXPIRED'"
-                                            class="ml-3 flex-grow text-rose-600"> Expired</span>
+                                            class="ml-3 flex-grow text-rose-600"> {{ $t('Expired') }}</span>
                                     </div>
 
                                     <!-- <span class="ml-4 flex-shrink-0">
@@ -87,24 +87,23 @@
                                 </dd>
                             </div>
                             <div class="px-4 py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
-                                <dt class="text-sm font-medium leading-6 text-gray-900">Activation Status</dt>
+                                <dt class="text-sm font-medium leading-6 text-gray-900">{{ $t('Activation Status') }}</dt>
                                 <dd class="mt-1 flex text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">
                                     <span v-if="props.options.item.license_details?.meta?.code == 'NO_MACHINE'"
-                                        class="flex-grow text-rose-600">The license key has not been activated on this
-                                        machine</span>
+                                        class="flex-grow text-rose-600">{{ $t('The license key has not been activated on this machine') }}</span>
                                     <span v-if="props.options.item.license_details?.meta?.code == 'VALID'"
-                                        class="flex-grow text-green-600">The license key is activated</span>
+                                        class="flex-grow text-green-600">{{ $t('The license key is activated') }}</span>
                                     <span v-else class="flex-grow text-rose-600"></span>
 
                                     <span v-if="props.options.item.license_details?.meta?.code == 'NO_MACHINE'"
                                         class="ml-4 flex-shrink-0">
                                         <button type="button" @click.prevent="submitForm"
-                                            class="rounded-md bg-gray-100font-medium text-indigo-600 hover:text-indigo-500">Activate</button>
+                                            class="rounded-md bg-gray-100font-medium text-indigo-600 hover:text-indigo-500">{{ $t('Activate') }}</button>
                                     </span>
                                     <span v-if="props.options.item.license_details?.meta?.code == 'VALID'"
                                         class="ml-4 flex-shrink-0">
                                         <button type="button" @click.prevent="handleDeactivateRequest"
-                                            class="rounded-md bg-gray-100font-medium text-indigo-600 hover:text-indigo-500">Deactivate</button>
+                                            class="rounded-md bg-gray-100font-medium text-indigo-600 hover:text-indigo-500">{{ $t('Deactivate') }}</button>
                                     </span>
                                 </dd>
                             </div>
@@ -122,7 +121,7 @@
                                 ref="saveButtonRef" :disabled="isSubmitting">
                                 <PlusIcon class="h-6 w-6 text-black-500 hover:text-black-900 active:h-8 active:w-8 " />
                                 <span>
-                                    Add license
+                                    {{ $t('Add license') }}
                                 </span>
                             </button>
 
@@ -138,7 +137,7 @@
             <div v-if="activeTab === 'modules'">
                 <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
                     <div>
-                        <h3 class="text-base font-semibold leading-6 text-gray-900">Modules</h3>
+                        <h3 class="text-base font-semibold leading-6 text-gray-900">{{ $t('Modules') }}</h3>
                         <!-- <p class="mt-1 text-sm text-gray-500">Ensure calls are routed to the right team every time.
                             Select a routing option below to fit your business needs.</p> -->
                     </div>
@@ -153,11 +152,11 @@
                                             <tr>
                                                 <th
                                                     class="px-4 py-3 text-left text-sm font-semibold text-gray-900 sm:px-6">
-                                                    Module Name
+                                                    {{ $t('Module Name') }}
                                                 </th>
                                                 <th
                                                     class="px-4 py-3 text-left text-sm font-semibold text-gray-900 sm:px-6">
-                                                    Status
+                                                    {{ $t('Status') }}
                                                 </th>
                                             </tr>
                                         </thead>
@@ -169,14 +168,14 @@
                                                 </td>
                                                 <td class="px-4 py-4 text-sm sm:px-6">
                                                     <span :class="module.enabled ? 'text-green-600' : 'text-rose-600'">
-                                                        {{ module.enabled ? 'Enabled' : 'Disabled' }}
+                                                        {{ module.enabled ? $t('Enabled') : $t('Disabled') }}
                                                     </span>
                                                 </td>
                                             </tr>
                                         </tbody>
                                         <tbody v-else>
                                             <tr>
-                                                <td colspan="2" class="text-center py-8 text-gray-400">No modules found
+                                                <td colspan="2" class="text-center py-8 text-gray-400">{{ $t('No modules found') }}
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -195,7 +194,7 @@
                             <button v-if="!props.options.modules?.some(m => m.enabled)" @click.prevent="handleInstall"
                                 class="justify-center flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
                                 :disabled="isInstalling || isUninstalling">
-                                <span>Install</span>
+                                <span>{{ $t('Install') }}</span>
                                 <Spinner class="ml-1" :show="isInstalling" />
                             </button>
 
@@ -203,7 +202,7 @@
                             <button v-else @click.prevent="handleUninstall"
                                 class="justify-center flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
                                 :disabled="isUninstalling || isInstalling">
-                                <span>Uninstall</span>
+                                <span>{{ $t('Uninstall') }}</span>
                                 <Spinner class="ml-1" :show="isUninstalling" />
                             </button>
 
@@ -223,7 +222,7 @@
                     class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
                     :disabled="isSubmitting">
                     <Spinner :show="isSubmitting" />
-                    Close
+                    {{ $t('Close') }}
                 </button>
 
             </div>
@@ -231,21 +230,21 @@
         </form>
     </div>
 
-    <AddEditItemModal :show="showEditLicenseModal" :header="'Edit License Details'" @close="handleModalClose">
+    <AddEditItemModal :show="showEditLicenseModal" :header="$t('Edit License Details')" @close="handleModalClose">
         <template #modal-body>
             <div class="bg-white px-4 py-6 sm:px-6 lg:px-8">
                 <div class="grid grid-cols-1 gap-6 ">
                     <div>
-                        <LabelInputOptional :target="'license'" :label="'License'" />
+                        <LabelInputOptional :target="'license'" :label="$t('License')" />
                         <div class="mt-2">
                             <InputField v-model="form.license" type="text" name="license"
-                                placeholder="Enter license key" />
+                                :placeholder="$t('Enter license key')" />
                         </div>
                     </div>
 
                     <button @click.prevent="submitForm"
                         class="flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 ">
-                        Submit
+                        {{ $t('Submit') }}
                     </button>
                 </div>
 

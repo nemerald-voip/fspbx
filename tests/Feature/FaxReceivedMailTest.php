@@ -7,9 +7,12 @@ use App\Mail\FaxReceived;
 use App\Mail\VoicemailNotification;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use Illuminate\View\Compilers\Compiler;
 use ReflectionMethod;
+use ReflectionProperty;
 use Tests\TestCase;
 
 class FaxReceivedMailTest extends TestCase
@@ -19,6 +22,11 @@ class FaxReceivedMailTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        $compiledPath = sys_get_temp_dir().'/fspbx-fax-received-mail-views';
+        File::ensureDirectoryExists($compiledPath);
+        config(['view.compiled' => $compiledPath]);
+        (new ReflectionProperty(Compiler::class, 'cachePath'))->setValue(app('blade.compiler'), $compiledPath);
 
         $this->databasePath = sys_get_temp_dir() . '/fspbx-fax-received-mail-' . bin2hex(random_bytes(8)) . '.sqlite';
         touch($this->databasePath);
@@ -147,6 +155,19 @@ class FaxReceivedMailTest extends TestCase
         $this->assertSame('emails.rendered-text', $mail->content()->text);
         $mail->assertSeeInHtml('You have a new voice message');
         $mail->assertSeeInText('You have a new voice message');
+    }
+
+    public function test_requested_language_selects_a_translated_fax_template(): void
+    {
+        app()->setLocale('en-us');
+        $mail = new FaxReceived($this->attributes([
+            'language' => 'ru',
+            'fax_destination' => '1001',
+        ]));
+
+        $this->assertSame('Получен факс для 1001', $mail->envelope()->subject);
+        $mail->assertSeeInHtml('Получен факс');
+        $mail->assertSeeInText('Получен новый факс');
     }
 
     private function attributes(array $overrides = []): array

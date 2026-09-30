@@ -72,9 +72,55 @@
 }
 
 
+/*
+ * Vueform's Tailwind theme only zeroes the input border in its "enabled"
+ * state, so @tailwindcss/forms' base border and focus ring reappear whenever a
+ * field is focused, valid or in error -- drawing a second box inside the input
+ * container that already owns the border. The container is the control; the
+ * input inside it never draws its own. The [type] qualifier outranks the forms
+ * plugin's own [type='...']:focus rules without needing !important. Date
+ * elements nest their input a level deeper, so this matches at any depth and
+ * excludes the multiselect search, which the theme already styles correctly.
+ */
+.form-input-group input[type]:not(.multiselect-search) {
+    border-width: 0;
+    box-shadow: none;
+}
+
+/*
+ * Addons ship transparent, so a unit suffix such as "seconds in queue" floats
+ * loose beside the field instead of reading as part of one control. Give them a
+ * surface and a divider on whichever side faces the input.
+ */
+.form-input-group > .form-bg-addon {
+    border-color: inherit;
+    border-style: solid;
+    border-width: 0;
+}
+
+.form-input-group > .form-bg-addon.order-2 {
+    border-inline-start-width: 1px;
+}
+
+.form-input-group > .form-bg-addon:not(.order-2) {
+    border-inline-end-width: 1px;
+}
+
+
 :root, :before, :after, * {
     --vf-primary: #6366F1;
     --vf-primary-darker: #3730A3;
+    /* Stock Vueform ships a teal focus ring, which does not match the indigo
+       primary above -- every focused field haloed green against an indigo
+       border. Same alpha as the value it replaces. */
+    --vf-ring-color: #6366f166;
+    /* gray-100, not gray-50: at gray-50 the addon is indistinguishable from
+       the white input beside it. */
+    --vf-bg-addon: #f3f4f6;
+    --vf-color-addon: #6b7280;
+    /* Ships at 0, so addon text sits flush against the divider. Matched to
+       --vf-px-input so the label is evenly inset on both sides. */
+    --vf-space-addon: 0.75rem;
     /* --vf-danger: #ef4444;
     --vf-danger-lighter: #fee2e2;
     --vf-success: #10b981;

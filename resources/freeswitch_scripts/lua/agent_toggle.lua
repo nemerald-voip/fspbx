@@ -172,7 +172,18 @@ local function main()
 
 	-- Change the live status immediately. agent_blf.lua receives the resulting
 	-- mod_callcenter event and publishes both BLF lamps before audio completes.
-	local result = trim(api:executeString(
+	local cc_ha_loaded, cc_ha = pcall(require, 'contact_center_ha')
+	local mirrored = nil
+	if cc_ha_loaded then
+		local ok, result = pcall(cc_ha.status, session, agent_uuid, new_status)
+		mirrored = ok and result
+	end
+	if mirrored == false then
+		dbh:release()
+		fail('Unable to persist the agent availability', auth_failure_sound)
+		return
+	end
+	local result = mirrored and '+OK' or trim(api:executeString(
 		"callcenter_config agent set status "
 			.. agent_uuid
 			.. " '"

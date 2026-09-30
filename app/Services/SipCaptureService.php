@@ -88,7 +88,7 @@ class SipCaptureService
             $invalid = $selected->diff($enabledProfileIds);
             if ($selected->isEmpty() || $invalid->isNotEmpty()) {
                 throw ValidationException::withMessages([
-                    'profile_uuids' => ['Select one or more enabled SIP profiles.'],
+                    'profile_uuids' => [__('Select one or more enabled SIP profiles.')],
                 ]);
             }
         } else {
@@ -266,7 +266,7 @@ class SipCaptureService
         }
 
         throw ValidationException::withMessages([
-            'capture_id' => ['Unable to allocate a unique HEP capture ID. Try saving again.'],
+            'capture_id' => [__('Unable to allocate a unique HEP capture ID. Try saving again.')],
         ]);
     }
 

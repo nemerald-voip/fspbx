@@ -2,37 +2,37 @@
     <Skeleton v-if="loading && !loaded" />
 
     <div v-else-if="loadFailed" class="max-w-3xl rounded-md border border-red-200 bg-red-50 p-4">
-        <p class="text-sm font-medium text-red-900">Unable to load call webhook settings.</p>
+        <p class="text-sm font-medium text-red-900">{{ $t('Unable to load call webhook settings.') }}</p>
         <button type="button"
             class="mt-3 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
             @click="loadConfiguration">
-            Retry
+            {{ $t('Retry') }}
         </button>
     </div>
 
     <div v-else-if="loaded" class="max-w-3xl">
         <Vueform ref="form$" :endpoint="submitForm" :display-errors="false" @success="handleSuccess"
-            @error="handleError">
+            @error="handleError" @mounted="(form) => form.disableValidation()" @submit="clearServerFormErrors" @response="showServerFormErrors">
             <template #empty>
                 <div class="space-y-6 bg-gray-50 px-4 py-6 text-gray-600 sm:p-6">
                     <FormElements>
-                        <StaticElement name="header" tag="h4" content="Call Webhooks"
-                            description="Send real-time inbound call events to your CRM when an extension or queue agent rings, answers, or finishes a call." />
+                        <StaticElement name="header" tag="h4" :content="$t('Call Webhooks')"
+                            :description="$t('Send real-time inbound call events to your CRM when an extension or queue agent rings, answers, or finishes a call.')" />
 
-                        <ToggleElement name="enabled" text="Enabled" :true-value="true" :false-value="false" />
+                        <ToggleElement name="enabled" :text="$t('Enabled')" :true-value="true" :false-value="false" />
 
-                        <TextElement name="endpoint_url" label="Public HTTPS Endpoint URL"
+                        <TextElement name="endpoint_url" :label="$t('Public HTTPS Endpoint URL')"
                             placeholder="https://crm.example.com/webhooks/fs-pbx" :floating="false"
-                            description="The endpoint must use HTTPS and resolve only to a public network address."
-                            :rules="['required', 'url']" />
+                            :description="$t('The endpoint must use HTTPS and resolve only to a public network address.')"
+                            />
 
-                        <CheckboxgroupElement name="events" label="Events" :items="eventOptions"
-                            description="Choose which call lifecycle changes FS PBX sends." />
+                        <CheckboxgroupElement name="events" :label="$t('Events')" :items="eventOptions"
+                            :description="$t('Choose which call lifecycle changes FS PBX sends.')" />
 
                         <StaticElement v-if="maskedSecret" name="masked_secret" tag="div">
                             <template #default>
                                 <div>
-                                    <label class="mb-1 block text-sm font-medium text-gray-700">Signing Secret</label>
+                                    <label class="mb-1 block text-sm font-medium text-gray-700">{{ $t('Signing Secret') }}</label>
                                     <div class="rounded-md border border-gray-300 bg-white px-3 py-2 font-mono text-sm text-gray-700">
                                         {{ maskedSecret }}
                                     </div>
@@ -43,18 +43,18 @@
                         <StaticElement v-if="revealedSecret" name="revealed_secret" tag="div">
                             <template #default>
                                 <div class="rounded-md border border-amber-200 bg-amber-50 p-4">
-                                    <p class="text-sm font-medium text-amber-900">Copy this signing secret now. It will not be shown again.</p>
+                                    <p class="text-sm font-medium text-amber-900">{{ $t('Copy this signing secret now. It will not be shown again.') }}</p>
                                     <div class="mt-3 flex gap-2">
                                         <input :value="revealedSecret" readonly
                                             class="min-w-0 flex-1 rounded-md border border-amber-300 bg-white px-3 py-2 font-mono text-sm text-gray-900" />
                                         <button type="button" class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-                                            @click="copySecret">Copy</button>
+                                            @click="copySecret">{{ $t('Copy') }}</button>
                                     </div>
                                 </div>
                             </template>
                         </StaticElement>
 
-                        <ButtonElement v-if="canSave" name="save" button-label="Save" :submits="true" />
+                        <ButtonElement v-if="canSave" name="save" :button-label="$t('Save')" :submits="true" />
                     </FormElements>
                 </div>
             </template>
@@ -64,28 +64,30 @@
             <button v-if="permissions.call_webhook_test" type="button"
                 class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50"
                 :disabled="testLoading" @click="sendTest">
-                {{ testLoading ? 'Sending…' : 'Test Webhook' }}
+                {{ testLoading ? $t('Sending…') : $t('Test Webhook') }}
             </button>
             <button v-if="permissions.call_webhook_update" type="button"
                 class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50"
                 :disabled="rotateLoading" @click="rotateSecret">
-                {{ rotateLoading ? 'Rotating…' : 'Rotate Secret' }}
+                {{ rotateLoading ? $t('Rotating…') : $t('Rotate Secret') }}
             </button>
             <button v-if="permissions.call_webhook_delete" type="button"
                 class="rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500"
                 @click="deleteConfirmationOpen = true">
-                Delete Configuration
+                {{ $t('Delete Configuration') }}
             </button>
         </div>
 
-        <ConfirmationModal :show="deleteConfirmationOpen" header="Delete call webhook?"
-            text="This removes the endpoint and signing secret. Call events will stop immediately."
-            confirm-button-label="Delete" cancel-button-label="Cancel" :loading="deleteLoading"
+        <ConfirmationModal :show="deleteConfirmationOpen" :header="$t('Delete call webhook?')"
+            :text="$t('This removes the endpoint and signing secret. Call events will stop immediately.')"
+            :confirm-button-label="$t('Delete')" :cancel-button-label="$t('Cancel')" :loading="deleteLoading"
             @close="deleteConfirmationOpen = false" @confirm="deleteConfiguration" />
     </div>
 </template>
 
 <script setup>
+import { clearServerFormErrors, showServerFormErrors } from '../../../composables/serverFormErrors.js';
+import { trans } from '@i18n';
 import { computed, nextTick, ref, watch } from 'vue'
 import ConfirmationModal from '../modal/ConfirmationModal.vue'
 import Skeleton from '@generalComponents/Skeleton.vue'
@@ -119,9 +121,9 @@ const deleteLoading = ref(false)
 const deleteConfirmationOpen = ref(false)
 
 const eventOptions = [
-    { value: 'call.ringing', label: 'Ringing' },
-    { value: 'call.answered', label: 'Answered' },
-    { value: 'call.ended', label: 'Ended' },
+    { value: 'call.ringing', label: trans('Ringing') },
+    { value: 'call.answered', label: trans('Answered') },
+    { value: 'call.ended', label: trans('Ended') },
 ]
 
 const canSave = computed(() => exists.value
@@ -224,9 +226,9 @@ const deleteConfiguration = async () => {
 const copySecret = async () => {
     try {
         await navigator.clipboard.writeText(revealedSecret.value)
-        emit('success', { success: ['Signing secret copied.'] })
+        emit('success', { success: [trans('Signing secret copied.')] })
     } catch {
-        emit('error', new Error('Could not copy the signing secret.'))
+        emit('error', new Error(trans('Could not copy the signing secret.')))
     }
 }
 </script>

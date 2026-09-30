@@ -23,7 +23,7 @@
                                 <button type="button"
                                     class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                     @click="emit('close')">
-                                    <span class="sr-only">Close</span>
+                                    <span class="sr-only">{{ $t('Close') }}</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
@@ -37,18 +37,18 @@
                                         <path class="opacity-75" fill="currentColor"
                                             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                     </svg>
-                                    <div class="text-lg text-blue-600 m-auto">Loading...</div>
+                                    <div class="text-lg text-blue-600 m-auto">{{ $t('Loading...') }}</div>
                                 </div>
                             </div>
 
-                            <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
+                            <Vueform @mounted="(form) => form.disableValidation()" @submit="clearServerFormErrors" v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
                                 @error="handleError" @response="handleResponse" :display-errors="false"
                                 :default="defaultValues">
                                 <template #empty>
                                     <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
                                         <div class="px-2 py-6 sm:px-6 lg:col-span-2 lg:px-0 lg:py-0">
                                             <FormTabs view="vertical">
-                                                <FormTab name="settings" label="Settings" :elements="[
+                                                <FormTab name="settings" :label="$t('Settings')" :elements="[
                                                     'conference_control_uuid',
                                                     'settings_header',
                                                     'control_name',
@@ -57,7 +57,7 @@
                                                     'button_container',
                                                     'settings_submit',
                                                 ]" />
-                                                <FormTab v-if="mode === 'edit'" name="controls" label="Controls" :elements="[
+                                                <FormTab v-if="mode === 'edit'" name="controls" :label="$t('Controls')" :elements="[
                                                     'controls_header',
                                                     'controls_table',
                                                 ]" />
@@ -69,49 +69,49 @@
                                             <FormElements>
                                                 <HiddenElement name="conference_control_uuid" :meta="true" />
 
-                                                <StaticElement name="settings_header" tag="h4" content="Conference Control Settings"
-                                                    description="Configure the control set name and availability." />
+                                                <StaticElement name="settings_header" tag="h4" :content="$t('Conference Control Settings')"
+                                                    :description="$t('Configure the control set name and availability.')" />
 
-                                                <TextElement name="control_name" label="Name"
-                                                    placeholder="Conference control name" :floating="false"
+                                                <TextElement name="control_name" :label="$t('Name')"
+                                                    :placeholder="$t('Conference control name')" :floating="false"
                                                     :columns="{ sm: { container: 6 } }" />
 
-                                                <ToggleElement name="control_enabled" text="Conference Control Enabled"
+                                                <ToggleElement name="control_enabled" :text="$t('Conference Control Enabled')"
                                                     true-value="true" false-value="false" :labels="{ on: 'On', off: 'Off' }"
                                                     :columns="{ sm: { container: 6 } }" label="&nbsp;" />
 
-                                                <TextareaElement name="control_description" label="Description" :rows="2" />
+                                                <TextareaElement name="control_description" :label="$t('Description')" :rows="2" />
 
                                                 <GroupElement name="button_container" />
-                                                <ButtonElement name="settings_submit" button-label="Save"
+                                                <ButtonElement name="settings_submit" :button-label="$t('Save')"
                                                     :submits="true" align="right" />
 
-                                                <StaticElement name="controls_header" tag="h4" content="Controls"
-                                                    description="Manage the digits and actions available while a caller is inside the conference." />
+                                                <StaticElement name="controls_header" tag="h4" :content="$t('Controls')"
+                                                    :description="$t('Manage the digits and actions available while a caller is inside the conference.')" />
 
                                                 <StaticElement name="controls_table">
                                                     <div class="space-y-4">
                                                         <div class="flex flex-wrap items-center justify-between gap-2">
                                                             <div class="text-sm text-gray-500">
-                                                                {{ details.length }} controls
+                                                                {{ $tChoice('{1} :count control|[0,*] :count controls', details.length) }}
                                                             </div>
                                                             <div class="flex flex-wrap justify-end gap-2">
                                                                 <button v-if="detailPermissions.detail_create" type="button"
                                                                     @click="openDetailForm()"
                                                                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500">
-                                                                    Add
+                                                                    {{ $t('Add') }}
                                                                 </button>
                                                                 <button v-if="detailPermissions.detail_update" type="button"
                                                                     :disabled="selectedDetails.length === 0"
                                                                     @click="toggleSelectedDetails"
                                                                     class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50">
-                                                                    Toggle
+                                                                    {{ $t('Toggle') }}
                                                                 </button>
                                                                 <button v-if="detailPermissions.detail_destroy" type="button"
                                                                     :disabled="selectedDetails.length === 0"
                                                                     @click="confirmBulkDeleteDetails"
                                                                     class="rounded-md bg-red-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-50">
-                                                                    Delete
+                                                                    {{ $t('Delete') }}
                                                                 </button>
                                                             </div>
                                                         </div>
@@ -134,10 +134,10 @@
                                                                                 @change="toggleDetailPageSelection"
                                                                                 class="h-4 w-4 rounded border-gray-300 text-indigo-600" />
                                                                         </th>
-                                                                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-900">Digits</th>
-                                                                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-900">Action</th>
-                                                                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-900">Data</th>
-                                                                        <th class="px-4 py-3 text-center text-sm font-semibold text-gray-900">Enabled</th>
+                                                                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-900">{{ $t('Digits') }}</th>
+                                                                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-900">{{ $t('Action') }}</th>
+                                                                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-900">{{ $t('Data') }}</th>
+                                                                        <th class="px-4 py-3 text-center text-sm font-semibold text-gray-900">{{ $t('Enabled') }}</th>
                                                                         <th v-if="hasDetailActions" class="px-4 py-3 text-right text-sm font-semibold text-gray-900"></th>
                                                                     </tr>
                                                                 </thead>
@@ -159,23 +159,23 @@
                                                                             <button v-if="detailPermissions.detail_update" type="button"
                                                                                 @click="toggleDetail(detail)"
                                                                                 class="cursor-pointer">
-                                                                                <Badge :text="detail.control_enabled === 'true' ? 'True' : 'False'"
+                                                                                <Badge :text="detail.control_enabled === 'true' ? $t('True') : $t('False')"
                                                                                     v-bind="enabledBadgeProps(detail.control_enabled)" />
                                                                             </button>
-                                                                            <Badge v-else :text="detail.control_enabled === 'true' ? 'True' : 'False'"
+                                                                            <Badge v-else :text="detail.control_enabled === 'true' ? $t('True') : $t('False')"
                                                                                 v-bind="enabledBadgeProps(detail.control_enabled)" />
                                                                         </td>
                                                                         <td v-if="hasDetailActions" class="whitespace-nowrap px-3 py-1 text-right text-sm">
                                                                             <button v-if="detailPermissions.detail_update" type="button"
                                                                                 @click="openDetailForm(detail)"
                                                                                 class="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
-                                                                                title="Edit">
+                                                                                :title="$t('Edit')">
                                                                                 <PencilSquareIcon class="h-5 w-5" />
                                                                             </button>
                                                                             <button v-if="detailPermissions.detail_destroy" type="button"
                                                                                 @click="confirmDeleteDetail(detail)"
                                                                                 class="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-red-600"
-                                                                                title="Delete">
+                                                                                :title="$t('Delete')">
                                                                                 <TrashIcon class="h-5 w-5" />
                                                                             </button>
                                                                         </td>
@@ -183,7 +183,7 @@
                                                                     <tr v-if="details.length === 0">
                                                                         <td :colspan="hasDetailActions ? 6 : 4"
                                                                             class="px-4 py-6 text-center text-sm text-gray-500">
-                                                                            No controls found.
+                                                                            {{ $t('No controls found.') }}
                                                                         </td>
                                                                     </tr>
                                                                 </tbody>
@@ -205,25 +205,27 @@
 
     <AddEditItemModal :show="showDetailForm" :header="detailFormHeader" :loading="false" @close="closeDetailForm">
         <template #modal-body>
-            <Vueform ref="detailForm$" :endpoint="submitDetailForm" @success="handleDetailSuccess"
+            <Vueform @mounted="(form) => form.disableValidation()" @submit="clearServerFormErrors" ref="detailForm$" :endpoint="submitDetailForm" @success="handleDetailSuccess"
                 @error="handleDetailError" @response="handleDetailResponse" :display-errors="false"
                 :default="detailDefaultValues">
-                <TextElement name="control_digits" label="Digits" placeholder="1" :floating="false" />
-                <TextElement name="control_action" label="Action" placeholder="vol talk dn" :floating="false" />
-                <TextElement name="control_data" label="Data" placeholder="Optional data" :floating="false" />
-                <ToggleElement name="control_enabled" text="Control Enabled" true-value="true" false-value="false"
+                <TextElement name="control_digits" :label="$t('Digits')" placeholder="1" :floating="false" />
+                <TextElement name="control_action" :label="$t('Action')" placeholder="vol talk dn" :floating="false" />
+                <TextElement name="control_data" :label="$t('Data')" :placeholder="$t('Optional data')" :floating="false" />
+                <ToggleElement name="control_enabled" :text="$t('Control Enabled')" true-value="true" false-value="false"
                     :labels="{ on: 'On', off: 'Off' }" label="&nbsp;" />
-                <ButtonElement name="detail_submit" button-label="Save" :submits="true" align="right" />
+                <ButtonElement name="detail_submit" :button-label="$t('Save')" :submits="true" align="right" />
             </Vueform>
         </template>
     </AddEditItemModal>
 
     <ConfirmationModal :show="showDetailDeleteConfirmation" @close="showDetailDeleteConfirmation = false"
-        @confirm="executeDetailDelete" :header="'Are you sure?'" :text="detailDeleteText"
-        :confirm-button-label="'Delete'" cancel-button-label="Cancel" :loading="detailDeleteSubmitting" />
+        @confirm="executeDetailDelete" :header="$t('Are you sure?')" :text="detailDeleteText"
+        :confirm-button-label="$t('Delete')" :cancel-button-label="$t('Cancel')" :loading="detailDeleteSubmitting" />
 </template>
 
 <script setup>
+import { clearServerFormErrors } from '../../../composables/serverFormErrors.js';
+import { trans, transChoice } from '@i18n';
 import { computed, ref, watch } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from "@headlessui/vue";
 import { PencilSquareIcon, TrashIcon, XMarkIcon } from "@heroicons/vue/24/solid";
@@ -237,7 +239,7 @@ const props = defineProps({
     loading: Boolean,
     header: {
         type: String,
-        default: "Conference Control",
+        default: () => trans('Conference Control'),
     },
     mode: {
         type: String,
@@ -272,7 +274,7 @@ const allDetailsSelected = computed(() => (
     details.value.length > 0 && selectedDetails.value.length === details.value.length
 ));
 const detailFormHeader = computed(() => (
-    editingDetail.value ? "Edit Conference Control Detail" : "Create Conference Control Detail"
+    editingDetail.value ? trans('Edit Conference Control Detail') : trans('Create Conference Control Detail')
 ));
 const detailDefaultValues = computed(() => ({
     control_digits: editingDetail.value?.control_digits ?? null,
@@ -282,10 +284,10 @@ const detailDefaultValues = computed(() => ({
 }));
 const detailDeleteText = computed(() => {
     if (detailDeleteTarget.value === "bulk") {
-        return `Delete ${selectedDetails.value.length} selected control detail(s)?`;
+        return transChoice('{1} Delete :count selected control detail?|[0,*] Delete :count selected control details?', selectedDetails.value.length);
     }
 
-    return "Delete this conference control detail?";
+    return trans('Delete this conference control detail?');
 });
 
 watch(
@@ -380,7 +382,7 @@ const handleError = (error, details, form$) => {
         return;
     }
 
-    form$.messageBag.append("Could not submit form");
+    form$.messageBag.append(trans('Could not submit form'));
 };
 
 const handleDetailError = (error, detail, form$) => {
@@ -391,7 +393,7 @@ const handleDetailError = (error, detail, form$) => {
         return;
     }
 
-    form$.messageBag.append("Could not submit form");
+    form$.messageBag.append(trans('Could not submit form'));
 };
 
 const openDetailForm = (detail = null) => {

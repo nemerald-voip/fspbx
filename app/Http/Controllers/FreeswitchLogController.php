@@ -27,13 +27,13 @@ class FreeswitchLogController extends Controller
     {
         if (! userCheckPermission('log_view')) {
             return response()->json([
-                'messages' => ['error' => ['Permission denied.']],
+                'messages' => ['error' => [__('Permission denied.')]],
             ], 403);
         }
 
         if (! $openSearch->configured()) {
             return response()->json([
-                'messages' => ['error' => ['OpenSearch external log search is not configured.']],
+                'messages' => ['error' => [__('OpenSearch external log search is not configured.')]],
             ], 503);
         }
 
@@ -82,7 +82,7 @@ class FreeswitchLogController extends Controller
             report($e);
 
             return response()->json([
-                'messages' => ['error' => ['External FreeSWITCH logs are temporarily unavailable.']],
+                'messages' => ['error' => [__('External FreeSWITCH logs are temporarily unavailable.')]],
             ], 503);
         } catch (\Throwable $e) {
             report($e);
@@ -90,8 +90,8 @@ class FreeswitchLogController extends Controller
             return response()->json([
                 'messages' => ['error' => [
                     $openSearch->configured()
-                        ? 'External FreeSWITCH log search failed.'
-                        : 'OpenSearch external log search is not configured.',
+                        ? __('External FreeSWITCH log search failed.')
+                        : __('OpenSearch external log search is not configured.'),
                 ]],
             ], $openSearch->configured() ? 502 : 503);
         }
@@ -122,7 +122,7 @@ class FreeswitchLogController extends Controller
     {
         if (! userCheckPermission('log_view')) {
             return response()->json([
-                'messages' => ['error' => ['Permission denied.']],
+                'messages' => ['error' => [__('Permission denied.')]],
             ], 403);
         }
 
@@ -143,7 +143,7 @@ class FreeswitchLogController extends Controller
                 'lines' => [],
                 'correlation' => $this->emptyCorrelation(),
                 'meta' => [
-                    'errors' => ['No FreeSWITCH log files were found.'],
+                    'errors' => [__('No FreeSWITCH log files were found.')],
                     'log_dir' => $this->visibleLogDirectory($logDirectory),
                 ],
             ]);
@@ -170,7 +170,7 @@ class FreeswitchLogController extends Controller
                 'lines' => [],
                 'correlation' => $this->emptyCorrelation($validated['seed_uuid'] ?? null),
                 'meta' => [
-                    'errors' => ['The selected log file is not available.'],
+                    'errors' => [__('The selected log file is not available.')],
                     'log_dir' => $this->visibleLogDirectory($logDirectory),
                 ],
             ], 422);
@@ -227,7 +227,7 @@ class FreeswitchLogController extends Controller
     {
         if (! userCheckPermission('log_view')) {
             return response()->json([
-                'messages' => ['error' => ['Permission denied.']],
+                'messages' => ['error' => [__('Permission denied.')]],
             ], 403);
         }
 
@@ -237,7 +237,7 @@ class FreeswitchLogController extends Controller
 
         if (! $eslService->isConnected()) {
             return response()->json([
-                'messages' => ['error' => ['FreeSWITCH event socket is unavailable.']],
+                'messages' => ['error' => [__('FreeSWITCH event socket is unavailable.')]],
             ], 503);
         }
 
@@ -258,7 +258,7 @@ class FreeswitchLogController extends Controller
 
                     return response()->json([
                         'messages' => [
-                            'error' => ['FreeSWITCH returned an error.'],
+                            'error' => [__('FreeSWITCH returned an error.')],
                             'error_1' => [$this->cleanEslError((string) $response)],
                         ],
                     ], 500);
@@ -276,8 +276,8 @@ class FreeswitchLogController extends Controller
             'messages' => [
                 'success' => [
                     $enabled
-                        ? 'SIP packet logging enabled.'
-                        : 'SIP packet logging disabled.',
+                        ? __('SIP packet logging enabled.')
+                        : __('SIP packet logging disabled.'),
                 ],
             ],
             'enabled' => $enabled,
@@ -340,7 +340,7 @@ class FreeswitchLogController extends Controller
             ])
             ->prepend([
                 'value' => 'all',
-                'label' => 'All local logs',
+                'label' => __('All local logs'),
                 'size' => $files->sum('size'),
                 'modified_at' => null,
                 'readable' => $files->contains(fn ($file) => $file['readable']),
@@ -587,13 +587,13 @@ class FreeswitchLogController extends Controller
 
         foreach ($files as $file) {
             if (! $file['readable']) {
-                $errors[] = $file['basename'] . ' is not readable by the web server.';
+                $errors[] = __(':file is not readable by the web server.', ['file' => $file['basename']]);
                 continue;
             }
 
             $handle = @fopen($file['path'], 'rb');
             if (! $handle) {
-                $errors[] = 'Unable to open ' . $file['basename'] . '.';
+                $errors[] = __('Unable to open :file.', ['file' => $file['basename']]);
                 continue;
             }
 
@@ -741,7 +741,7 @@ class FreeswitchLogController extends Controller
 
     private function cleanEslError(string $message): string
     {
-        return trim(preg_replace('/^-ERR\s*/', '', $message)) ?: 'FreeSWITCH returned no response.';
+        return trim(preg_replace('/^-ERR\s*/', '', $message)) ?: __('FreeSWITCH returned no response.');
     }
 
     private function parseLine(string $line): array

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -35,6 +36,27 @@ class LdapDirectoryUser extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_uuid', 'user_uuid');
+    }
+
+    public function managedRoles(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Groups::class,
+            'ldap_directory_user_group_assignments',
+            'directory_user_uuid',
+            'group_uuid'
+        );
+    }
+
+    public function scopeOrderByDirectoryPriority(Builder $query): Builder
+    {
+        $directory = LdapDirectory::query()
+            ->whereColumn('ldap_directories.directory_uuid', $query->qualifyColumn('directory_uuid'));
+
+        // Scalar subqueries preserve links whose directory has been removed.
+        return $query
+            ->orderBy((clone $directory)->select('priority'))
+            ->orderBy((clone $directory)->select('name'));
     }
 
     public function directoryGroups(): BelongsToMany

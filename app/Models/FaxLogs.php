@@ -49,7 +49,8 @@ class FaxLogs extends Model
 
         return Carbon::createFromTimestamp($this->fax_epoch, 'UTC')
             ->setTimezone($timeZone)
-            ->format('g:i:s A M d, Y');
+            ->locale(app()->getLocale())
+            ->translatedFormat('g:i:s A M d, Y');
     }
 
     public function getSourceFormattedAttribute()
@@ -116,8 +117,8 @@ class FaxLogs extends Model
     public function getDirectionLabelAttribute(): ?string
     {
         return match ($this->direction) {
-            'outbound' => 'Outbound',
-            'inbound' => 'Inbound',
+            'outbound' => __('Outbound'),
+            'inbound' => __('Inbound'),
             default => null,
         };
     }

@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Settings;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Support\Localization\ValidationMessages;
 use Illuminate\Validation\Rule;
 
 class SaveDefaultSettingRequest extends FormRequest
@@ -22,6 +23,24 @@ class SaveDefaultSettingRequest extends FormRequest
             'default_setting_order' => ['nullable', 'numeric'],
             'default_setting_enabled' => ['required', 'boolean'],
             'default_setting_description' => ['nullable', 'string'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return ValidationMessages::common();
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'default_setting_category' => __('Category'),
+            'default_setting_subcategory' => __('Setting Name'),
+            'default_setting_name' => __('Type'),
+            'default_setting_value' => __('Value'),
+            'default_setting_order' => __('Order'),
+            'default_setting_enabled' => __('Enabled'),
+            'default_setting_description' => __('Description'),
         ];
     }
 }

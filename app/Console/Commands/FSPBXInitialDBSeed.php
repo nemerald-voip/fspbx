@@ -3,7 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Services\Install\InstallSchema;
-use App\Models\DefaultSettings;
+use Database\Seeders\FreeswitchSettingsSeeder;
+use Database\Seeders\FreeswitchModulesSeeder;
 use App\Models\User;
 use App\Models\UserSetting;
 use App\Models\Domain;
@@ -32,6 +33,18 @@ class FSPBXInitialDBSeed extends Command
         $this->info("Ensuring FS PBX install schemas...");
         $installSchema->ensureSchemas();
         $this->info("FS PBX install schemas are ready.");
+
+        // Directory settings belong to FS PBX and must exist before any legacy
+        // domain/default upgrades, without requiring a running FreeSWITCH.
+        $this->info('Initializing FreeSWITCH directory settings...');
+        if ($this->call('db:seed', ['--class' => FreeswitchSettingsSeeder::class, '--force' => true]) !== self::SUCCESS) {
+            return self::FAILURE;
+        }
+
+        $this->info('Initializing FreeSWITCH modules...');
+        if ($this->call('db:seed', ['--class' => FreeswitchModulesSeeder::class, '--force' => true]) !== self::SUCCESS) {
+            return self::FAILURE;
+        }
 
         // Step 2: Create the Admin Domain
         $domain = Domain::firstOrCreate(
@@ -146,23 +159,11 @@ class FSPBXInitialDBSeed extends Command
         // Step 14: Set Correct Permissions
         $this->updatePermissions();
 
-        // Step 15: Migrate SQLite to RAM
-        $this->info("Migrating SQLite to RAM...");
-        $this->call('fs:migrate-sqlite-to-ram');
-        $this->info("SQLite migration to RAM completed.");
-
         // Step 16: Set App version
         Artisan::call('version:set', ['version' => config('version.release'), '--force' => true]);
         Artisan::call('config:cache');
         $this->info("App version is " . config('version.release') . ".");
 
-        // Step 17: Restart FreeSWITCH
-        $this->restartFreeSwitch();
-
-        // Step 17a: Restart Supervisor
-        $this->restartSupervisorJobs();
-
-        DefaultSettings::where('default_setting_category', 'switch')->delete();
         $this->runUpgradeDefaults();
         $this->runUpgradeDomains();
 
@@ -175,6 +176,18 @@ class FSPBXInitialDBSeed extends Command
         $this->info("Seeding recommended settings...");
         Artisan::call('db:seed', ['--class' => 'DeviceVendorsSeeder', '--force' => true]);
         $this->info("Recommended settings seeded successfully.");
+
+        // Finalize storage and generated XML after all settings have been seeded.
+        // Fresh setup must also work before FreeSWITCH/ESL is running.
+        $this->info("Migrating SQLite to RAM...");
+        if ($this->call('fs:migrate-sqlite-to-ram', ['--no-restart-reminder' => true]) !== self::SUCCESS) {
+            $this->error('FreeSWITCH configuration preparation failed. FreeSWITCH was not restarted.');
+
+            return self::FAILURE;
+        }
+
+        $this->restartFreeSwitch();
+        $this->restartSupervisorJobs();
 
         // Step 20: Display Installation Summary
         $this->displayCompletionMessage($username, $password);

@@ -58,6 +58,104 @@ class ScheduledJobCoordinatorTest extends TestCase
         parent::tearDown();
     }
 
+    public function test_scheduled_jobs_permission_can_read_shared_server_selection(): void
+    {
+        session()->put('permissions', [(object) ['permission_name' => 'scheduled_jobs_manage']]);
+        $resolver = Mockery::mock(ActiveNodeResolver::class);
+        $resolver->shouldReceive('statusContext')->once()->andReturn(['selected_node' => '1001']);
+        $controller = new \App\Http\Controllers\ScheduledJobCoordinationController($resolver);
+        $this->assertSame(['active_node' => ['selected_node' => '1001']], $controller->show()->getData(true));
+    }
+
+    public function test_contact_center_settings_permission_does_not_authorize_global_owner_changes(): void
+    {
+        session()->put('permissions', [(object) ['permission_name' => 'contact_center_settings_edit']]);
+        $controller = new \App\Http\Controllers\ScheduledJobCoordinationController(Mockery::mock(ActiveNodeResolver::class));
+        try {
+            $controller->updateOwner(new \Illuminate\Http\Request());
+            $this->fail('Only superadmins may change global ownership.');
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $error) {
+            $this->assertSame(403, $error->getStatusCode());
+        }
+    }
+
+    public function test_shared_control_props_use_existing_routes_and_do_not_create_a_second_owner(): void
+    {
+        session()->put('permissions', [(object) ['permission_name' => 'scheduled_jobs_manage']]);
+        $resolver = Mockery::mock(ActiveNodeResolver::class);
+        $resolver->shouldReceive('statusContext')->once()->andReturn(['selected_node' => '1001']);
+        $controller = new \App\Http\Controllers\ScheduledJobCoordinationController($resolver);
+        $props = $controller->controlProps();
+        $this->assertSame(['selected_node' => '1001'], $props['active_node']);
+        $this->assertSame(route('scheduled-jobs.active-node.update'), $props['routes']['active_node']);
+        $this->assertSame(route('scheduled-jobs.nodes.approve', ['node' => '__NODE__']), $props['routes']['node_approve']);
+        $this->assertTrue($props['manage']);
+        $this->assertDatabaseCount('v_default_settings', 0);
+    }
+
+    public function test_directory_or_contact_center_permissions_do_not_expose_global_controls(): void
+    {
+        session()->put('permissions', [
+            (object) ['permission_name' => 'ldap_directory_view'],
+            (object) ['permission_name' => 'contact_center_settings_edit'],
+        ]);
+        $controller = new \App\Http\Controllers\ScheduledJobCoordinationController(Mockery::mock(ActiveNodeResolver::class));
+        foreach (['show', 'controlProps', 'rotateSecret'] as $action) {
+            try {
+                $controller->$action();
+                $this->fail('Expected the dedicated scheduled jobs permission to be required.');
+            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $error) {
+                $this->assertSame(403, $error->getStatusCode());
+            }
+        }
+        $ldap = new \App\Http\Controllers\LdapDirectoryController();
+        $this->assertSame([], (new ReflectionMethod($ldap, 'activeNodeContext'))->invoke($ldap));
+        $this->assertFalse((new ReflectionMethod($ldap, 'permissions'))->invoke($ldap)['manage_active_node']);
+    }
+
+    public function test_scheduled_jobs_permission_authorizes_management_through_existing_resolver(): void
+    {
+        session()->put('permissions', [(object) ['permission_name' => 'scheduled_jobs_manage']]);
+        $resolver = Mockery::mock(ActiveNodeResolver::class);
+        $resolver->shouldReceive('discover')->once()->with(null)->andReturn([]);
+        $controller = new \App\Http\Controllers\ScheduledJobCoordinationController($resolver);
+        $this->assertSame(['candidates' => []], $controller->discover(new \Illuminate\Http\Request())->getData(true));
+    }
+
+    public function test_main_seeder_assigns_scheduled_jobs_permission_only_to_superadmin_idempotently(): void
+    {
+        Schema::create('v_permissions', function (Blueprint $table) {
+            $table->uuid('permission_uuid')->primary();
+            $table->string('application_name');
+            $table->string('permission_name')->unique();
+            $table->timestamp('insert_date');
+        });
+        Schema::create('v_groups', function (Blueprint $table) {
+            $table->uuid('group_uuid')->primary();
+            $table->string('group_name');
+        });
+        Schema::create('v_group_permissions', function (Blueprint $table) {
+            $table->uuid('group_permission_uuid')->primary();
+            $table->uuid('group_uuid');
+            $table->string('group_name');
+            $table->string('permission_name');
+            $table->string('permission_protected');
+            $table->string('permission_assigned');
+            $table->timestamp('insert_date');
+        });
+        foreach (['superadmin', 'admin', 'user'] as $group) {
+            DB::table('v_groups')->insert(['group_uuid' => (string) Str::uuid(), 'group_name' => $group]);
+        }
+        $seeder = new \Database\Seeders\DatabaseSeeder();
+        for ($i = 0; $i < 2; $i++) {
+            (new ReflectionMethod($seeder, 'createPermissions'))->invoke($seeder);
+            (new ReflectionMethod($seeder, 'createGroupPermissions'))->invoke($seeder);
+        }
+        $this->assertSame(1, DB::table('v_permissions')->where('permission_name', 'scheduled_jobs_manage')->count());
+        $this->assertSame(['superadmin'], DB::table('v_group_permissions')
+            ->where('permission_name', 'scheduled_jobs_manage')->where('permission_assigned', 'true')->pluck('group_name')->all());
+    }
+
     public function test_standalone_node_runs_without_a_persisted_registry_heartbeat(): void
     {
         $resolver = $this->resolver('1001', []);
@@ -274,6 +372,34 @@ class ScheduledJobCoordinatorTest extends TestCase
             $this->assertSame(409, $exception->getCode());
         }
         $this->assertDatabaseCount('scheduled_job_handoffs', 0);
+    }
+
+    public function test_external_resources_block_handoff_without_a_long_lived_execution_claim(): void
+    {
+        $this->node('1001', 'pbx-a', 'https://pbx-a.example.test');
+        $this->node('2002', 'pbx-b', 'https://pbx-b.example.test');
+        $this->setting('active_node', '1001');
+        $this->setting('active_node_generation', '4', 'numeric');
+        $peer = Mockery::mock(ScheduledJobPeerClient::class);
+        $peer->shouldReceive('identify')->once()->andReturn([
+            'system_identifier' => '2002', 'hostname' => 'pbx-b', 'host_fingerprint' => hash('sha256', '2002'),
+        ]);
+        $resolver = $this->resolver('1001', ['https://pbx-b.example.test'], [], $peer);
+        $released = false;
+        \Illuminate\Support\Facades\Event::listen(\App\Events\ScheduledJobsDraining::class, function ($event) use (&$released, $resolver) {
+            $this->assertSame(0, DB::transactionLevel(), 'External cleanup must not hold the ownership lock');
+            $this->assertSame('1001', $event->nodeId);
+            $this->assertSame(4, $event->generation);
+            $this->assertNull($resolver->claimExecution('test', 'new-work', 60), 'Draining must reject new work');
+            if (! $released) { $event->ready = false; }
+        });
+        $result = $resolver->prepareHandoff(['target_node_id' => '2002', 'target_endpoint' => 'https://pbx-b.example.test',
+            'expected_generation' => 4, 'idempotency_key' => (string) Str::uuid()]);
+        $this->assertSame('draining', $result['status']);
+        $this->assertSame('1001', $resolver->configuredNode());
+        $released = true;
+        $this->assertSame('completed', $resolver->finalizePendingHandoff()->status);
+        $this->assertSame('2002', $resolver->configuredNode());
     }
 
     public function test_forced_takeover_records_fenced_endpoint_and_advances_generation(): void

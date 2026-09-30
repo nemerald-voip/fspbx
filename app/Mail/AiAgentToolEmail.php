@@ -17,8 +17,8 @@ class AiAgentToolEmail extends BaseMailable
     public function content(): Content
     {
         return $this->databaseTemplateContent(new Content(
-            view: 'emails.ai-agent.send-email',
-            text: 'emails.ai-agent.send-email-text',
+            view: 'emails.en-us.ai-agent.send-email',
+            text: 'emails.en-us.ai-agent.send-email-text',
         ));
     }
 
@@ -49,7 +49,8 @@ class AiAgentToolEmail extends BaseMailable
             ->filter(fn ($row) => filled($row->value))
             ->keyBy('subcategory');
 
-        if ($fromEmail = $domainRows->get('smtp_from')?->value ?? $defaultRows->get('smtp_from')?->value) {
+        if (blank($params['from_email'] ?? null)
+            && ($fromEmail = $domainRows->get('smtp_from')?->value ?? $defaultRows->get('smtp_from')?->value)) {
             $params['from_email'] = $fromEmail;
         }
 

@@ -83,8 +83,8 @@ class VoicemailNotification extends BaseMailable
         $subcategory = $this->attributes['template_subcategory'] ?? 'default';
 
         return $this->databaseTemplateContent(new Content(
-            view: "emails.voicemail.{$subcategory}",
-            text: "emails.voicemail.{$subcategory}-text",
+            view: "emails.en-us.voicemail.{$subcategory}",
+            text: "emails.en-us.voicemail.{$subcategory}-text",
         ));
     }
 

@@ -23,23 +23,23 @@
                 <div class="shadow sm:rounded-md">
                     <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
                         <div>
-                            <h3 class="text-base font-semibold leading-6 text-gray-900">Settings</h3>
-                            <p class="mt-1 text-sm text-gray-500">Update wakeup call settings.</p>
+                            <h3 class="text-base font-semibold leading-6 text-gray-900">{{ $t("Settings") }}</h3>
+                            <p class="mt-1 text-sm text-gray-500">{{ $t("Update wakeup call settings.") }}</p>
                         </div>
 
                         <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
                             <div class="sm:col-span-3 space-y-3">
-                                <LabelInputRequired label="Date" class="truncate" />
-                                <VueDatePicker v-model="date" :range="false" :enable-time-picker="false"
+                                <LabelInputRequired :label="$t(&quot;Date&quot;)" class="truncate" />
+                                <VueDatePicker :locale="currentLocale" v-model="date" :range="false" :enable-time-picker="false"
                                     :min-date="new Date()" auto-apply @update:model-value="handleDate"
-                                    :timezone="options.timezone" placeholder="Select Date">
+                                    :timezone="options.timezone" :placeholder="$t(&quot;Select Date&quot;)">
                                 </VueDatePicker>
                             </div>
 
                             <div class="sm:col-span-3 space-y-3">
-                                <LabelInputRequired label="Time" class="truncate" />
-                                <VueDatePicker v-model="time" time-picker auto-apply :is-24="false"
-                                    @update:model-value="handleTime" :timezone="options.timezone" placeholder="Select Time">
+                                <LabelInputRequired :label="$t(&quot;Time&quot;)" class="truncate" />
+                                <VueDatePicker :locale="currentLocale" v-model="time" time-picker auto-apply :is-24="false"
+                                    @update:model-value="handleTime" :timezone="options.timezone" :placeholder="$t(&quot;Select Time&quot;)">
                                 </VueDatePicker>
                             </div>
 
@@ -51,9 +51,9 @@
 
 
                             <div class="col-span-6 sm:col-span-3 space-y-3">
-                                <LabelInputRequired target="" label="Extension" />
+                                <LabelInputRequired target="" :label="$t(&quot;Extension&quot;)" />
                                 <ComboBox :options="options.extensions" :selectedItem="options.wakeup_call.extension_uuid"
-                                    :search="true" placeholder="Choose Extension"
+                                    :search="true" :placeholder="$t(&quot;Choose Extension&quot;)"
                                     @update:model-value="handleExtensionUpdate"
                                     :error="errors?.extension && errors.extension.length > 0" />
                                 <div v-if="errors?.extension" class="mt-2 text-xs text-red-600">
@@ -62,9 +62,9 @@
                             </div>
 
                             <div class="col-span-6 sm:col-span-3 space-y-3">
-                                <LabelInputRequired target="" label="Status" />
+                                <LabelInputRequired target="" :label="$t(&quot;Status&quot;)" />
                                 <ComboBox :options="options.status_options" :selectedItem="options.wakeup_call.status"
-                                    :search="true" placeholder="Choose Status" @update:model-value="handleStatusUpdate"
+                                    :search="true" :placeholder="$t(&quot;Choose Status&quot;)" @update:model-value="handleStatusUpdate"
                                     :error="errors?.status && errors.status.length > 0" />
                                 <div v-if="errors?.status" class="mt-2 text-xs text-red-600">
                                     {{ errors.status[0] }}
@@ -73,8 +73,8 @@
 
                             <div class="divide-y divide-gray-200 col-span-6">
 
-                                <Toggle label="Daily Repeat"
-                                    description="Enable this option to automatically repeat the wake-up call every day at the scheduled time. If unchecked, the call will only be made once. Snoozes and missed calls will be handled separately and do not affect the daily repeat setting."
+                                <Toggle :label="$t(&quot;Daily Repeat&quot;)"
+                                    :description="$t(&quot;Enable this option to automatically repeat the wake-up call every day at the scheduled time. If unchecked, the call will only be made once. Snoozes and missed calls will be handled separately and do not affect the daily repeat setting.&quot;)"
                                     v-model="form.recurring" customClass="py-4" />
 
                             </div>
@@ -84,7 +84,7 @@
                 </div>
                 <div class="bg-gray-100 px-4 py-3 text-right sm:px-6">
                     <button type="submit"
-                        class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Save</button>
+                        class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">{{ $t("Save") }}</button>
                 </div>
 
 
@@ -96,6 +96,7 @@
 </template>
 
 <script setup>
+import { currentLocale } from "@i18n";
 import { reactive, ref, computed } from 'vue'
 import LabelInputRequired from "../general/LabelInputRequired.vue";
 import LabelInputOptional from "../general/LabelInputOptional.vue";

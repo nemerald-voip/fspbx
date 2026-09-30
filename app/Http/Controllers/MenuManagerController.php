@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\BulkMenuItemRequest;
 use App\Http\Requests\BulkUpdateMenuItemGroupsRequest;
+use App\Http\Requests\CopyMenuRequest;
 use App\Http\Requests\SaveMenuItemRequest;
 use App\Http\Requests\SaveMenuRequest;
 use App\Models\Menu;
@@ -39,6 +40,7 @@ class MenuManagerController extends Controller
                 'current_page' => route('menus.index'),
                 'data' => route('menus.data', ['menu' => '__MENU__']),
                 'store' => route('menus.store'),
+                'copy' => route('menus.copy', ['menu' => '__MENU__']),
                 'update' => route('menus.update', ['menu' => '__MENU__']),
                 'destroy' => route('menus.destroy', ['menu' => '__MENU__']),
                 'items_store' => route('menus.items.store', ['menu' => '__MENU__']),
@@ -49,7 +51,9 @@ class MenuManagerController extends Controller
             ],
             'language_options' => $this->languageOptions(),
             'permissions' => [
-                'menu_create' => userCheckPermission('menu_add'),
+                'menu_create' => userCheckPermission('menu_add')
+                    && userCheckPermission('menu_item_add')
+                    && userCheckPermission('menu_item_group_add'),
                 'menu_update' => userCheckPermission('menu_edit'),
                 'menu_destroy' => userCheckPermission('menu_delete'),
                 'item_create' => userCheckPermission('menu_item_add'),
@@ -72,7 +76,10 @@ class MenuManagerController extends Controller
 
     public function store(SaveMenuRequest $request): JsonResponse
     {
+        $this->authorizeView();
         $this->authorizeAction('menu_add');
+        $this->authorizeAction('menu_item_add');
+        $this->authorizeAction('menu_item_group_add');
 
         $menu = $this->menus->createMenu($request->validated());
 
@@ -80,6 +87,22 @@ class MenuManagerController extends Controller
             'menu' => $this->menus->payload($menu)['menu'],
             'menus' => $this->menus->menus(),
             'messages' => ['success' => [__('Menu created.')]],
+        ], 201);
+    }
+
+    public function copy(CopyMenuRequest $request, Menu $menu): JsonResponse
+    {
+        $this->authorizeView();
+        $this->authorizeAction('menu_add');
+        $this->authorizeAction('menu_item_add');
+        $this->authorizeAction('menu_item_group_add');
+
+        $copy = $this->menus->copyMenu($menu, $request->validated());
+
+        return response()->json([
+            'menu' => $this->menus->payload($copy)['menu'],
+            'menus' => $this->menus->menus(),
+            'messages' => ['success' => [__('Menu copied.')]],
         ], 201);
     }
 
@@ -264,17 +287,10 @@ class MenuManagerController extends Controller
 
     private function languageOptions(): Collection
     {
-        $menuLanguages = Menu::query()
-            ->pluck('menu_language')
-            ->filter()
-            ->map(fn ($locale) => strtolower((string) $locale))
-            ->unique();
-
-        return collect(app(LocaleRegistry::class)->available())
-            ->filter(fn (array $locale) => $locale['ready'] || $menuLanguages->contains($locale['code']))
-            ->map(fn (array $locale) => [
-                'value' => $locale['code'],
-                'label' => "{$locale['native']} ({$locale['code']})",
+        return collect(app(LocaleRegistry::class)->locales())
+            ->map(fn (array $locale, string $code) => [
+                'value' => $code,
+                'label' => ($locale['native'] ?? $locale['name'] ?? $code)." ({$code})",
             ])
             ->values();
     }

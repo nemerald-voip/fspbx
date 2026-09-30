@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\SaveLetsEncryptSettingsRequest;
 use App\Services\LetsEncryptService;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -19,7 +20,7 @@ class LetsEncryptController extends Controller
     public function status(): JsonResponse
     {
         if (! $this->canManage()) {
-            return response()->json(['errors' => ['auth' => ['Access denied.']]], 403);
+            return response()->json(['errors' => ['auth' => [__('Access denied.')]]], 403);
         }
 
         return response()->json($this->service->status());
@@ -34,7 +35,7 @@ class LetsEncryptController extends Controller
         $this->persistSettings($validated);
 
         return response()->json([
-            'messages' => ['success' => ['Settings saved.']],
+            'messages' => ['success' => [__('Settings saved.')]],
             'status' => $this->service->status(),
         ]);
     }
@@ -57,12 +58,16 @@ class LetsEncryptController extends Controller
                 (bool) $validated['staging'],
             );
 
-            $validTo = $result['valid_to'] ? date('M j, Y', strtotime($result['valid_to'])) : 'unknown';
-            $env = $result['staging'] ? ' (staging)' : '';
+            $validTo = $result['valid_to']
+                ? Carbon::parse($result['valid_to'])->locale(app()->getLocale())->translatedFormat('M j, Y')
+                : __('Unknown');
+            $env = $result['staging'] ? __(' (staging)') : '';
 
             return response()->json([
                 'messages' => ['success' => [
-                    "Certificate issued for {$validated['domain']}{$env}; valid until {$validTo}. FreeSWITCH reloaded.",
+                    __('Certificate issued for :domain:environment; valid until :date. FreeSWITCH reloaded.', [
+                        'domain' => $validated['domain'], 'environment' => $env, 'date' => $validTo,
+                    ]),
                 ]],
                 'status' => $this->service->status(),
             ]);
@@ -73,7 +78,7 @@ class LetsEncryptController extends Controller
                 .' at '.$e->getFile().':'.$e->getLine());
 
             return response()->json([
-                'errors' => ['certificate' => [$e->getMessage() ?: 'Unable to issue certificate.']],
+                'errors' => ['certificate' => [$e->getMessage() ?: __('Unable to issue certificate.')]],
             ], 500);
         }
     }
@@ -85,16 +90,16 @@ class LetsEncryptController extends Controller
     public function revoke(): JsonResponse
     {
         if (! $this->canManage()) {
-            return response()->json(['errors' => ['auth' => ['Access denied.']]], 403);
+            return response()->json(['errors' => ['auth' => [__('Access denied.')]]], 403);
         }
 
         try {
             $result = $this->service->revoke();
-            $env = $result['staging'] ? ' (staging)' : '';
+            $env = $result['staging'] ? __(' (staging)') : '';
 
             return response()->json([
                 'messages' => ['success' => [
-                    "Certificate revoked{$env} and replaced with a self-signed certificate. FreeSWITCH reloaded.",
+                    __('Certificate revoked:environment and replaced with a self-signed certificate. FreeSWITCH reloaded.', ['environment' => $env]),
                 ]],
                 'status' => $this->service->status(),
             ]);
@@ -105,7 +110,7 @@ class LetsEncryptController extends Controller
                 .' at '.$e->getFile().':'.$e->getLine());
 
             return response()->json([
-                'errors' => ['certificate' => [$e->getMessage() ?: 'Unable to revoke certificate.']],
+                'errors' => ['certificate' => [$e->getMessage() ?: __('Unable to revoke certificate.')]],
             ], 500);
         }
     }
@@ -201,7 +206,7 @@ class LetsEncryptController extends Controller
     public function generateSecret(): JsonResponse
     {
         if (! $this->canManage()) {
-            return response()->json(['errors' => ['auth' => ['Access denied.']]], 403);
+            return response()->json(['errors' => ['auth' => [__('Access denied.')]]], 403);
         }
 
         $secret = Str::random(40);
@@ -209,7 +214,7 @@ class LetsEncryptController extends Controller
 
         return response()->json([
             'secret' => $secret,
-            'messages' => ['success' => ['Peer push secret rotated and saved.']],
+            'messages' => ['success' => [__('Peer push secret rotated and saved.')]],
         ]);
     }
 

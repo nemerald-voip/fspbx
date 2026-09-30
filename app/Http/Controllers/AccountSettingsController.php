@@ -190,7 +190,7 @@ class AccountSettingsController extends Controller
             $domain = Domain::where('domain_uuid', $data['domain_uuid'])->first();
 
             if (!$domain) {
-                throw new \Exception('Domain not found.');
+                throw new \Exception(__('Domain not found.'));
             }
 
             $domain->update([
@@ -205,7 +205,7 @@ class AccountSettingsController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages' => ['server' => ['Settings updated successfully.']],
+                'messages' => ['server' => [__('Settings updated successfully.')]],
             ], 200);
         } catch (\Exception $e) {
             // Rollback Transaction if any error occurs
@@ -216,7 +216,7 @@ class AccountSettingsController extends Controller
 
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Server returned an error while processing your request.']]
+                'errors' => ['server' => [__('Server returned an error while processing your request.')]]
             ], 500); // 500 Internal Server Error for any other errors
         }
     }
@@ -238,8 +238,7 @@ class AccountSettingsController extends Controller
         $existing = DomainSettings::query()
             ->where('domain_uuid', $domain->domain_uuid)
             ->whereIn('domain_setting_subcategory', $fields->pluck('subcategory')->all())
-            ->get()
-            ->keyBy('domain_setting_subcategory');
+            ->get();
 
         foreach ($submitted as $key => $value) {
             $field = $fields->get($key);
@@ -248,7 +247,11 @@ class AccountSettingsController extends Controller
             }
 
             $value = is_string($value) ? trim($value) : $value;
-            $row = $existing->get($field['subcategory']);
+            $row = $existing->first(fn (DomainSettings $row) =>
+                $row->domain_setting_category === $field['category']
+                && $row->domain_setting_subcategory === $field['subcategory']
+                && $row->domain_setting_name === $field['name']
+            );
 
             if ($value === null || $value === '') {
                 if ($row) {
@@ -257,7 +260,8 @@ class AccountSettingsController extends Controller
                 continue;
             }
 
-            if ($row && (string) $row->domain_setting_value === (string) $value) {
+            if ($row && filter_var($row->domain_setting_enabled, FILTER_VALIDATE_BOOLEAN)
+                && (string) $row->domain_setting_value === (string) $value) {
                 continue; // unchanged
             }
 
@@ -276,7 +280,7 @@ class AccountSettingsController extends Controller
     public function pmsProvider(PmsProviderSettings $settings): JsonResponse
     {
         if (!userCheckPermission("account_settings_list_view")) {
-            return response()->json(['errors' => ['authorization' => ['Access denied.']]], 403);
+            return response()->json(['errors' => ['authorization' => [__('Access denied.')]]], 403);
         }
 
         return response()->json([
@@ -288,18 +292,20 @@ class AccountSettingsController extends Controller
     public function updatePmsProvider(Request $request, PmsProviderSettings $settings): JsonResponse
     {
         if (!userCheckPermission("account_settings_list_view")) {
-            return response()->json(['errors' => ['authorization' => ['Access denied.']]], 403);
+            return response()->json(['errors' => ['authorization' => [__('Access denied.')]]], 403);
         }
 
         $validated = $request->validate([
             'pms_provider' => ['required', 'string', 'in:charpms,tigertms'],
+        ], \App\Support\Localization\ValidationMessages::common(), [
+            'pms_provider' => __('Provider'),
         ]);
 
         $settings->saveProvider((string) session('domain_uuid'), $validated['pms_provider']);
 
         return response()->json([
             'provider' => $validated['pms_provider'],
-            'messages' => ['server' => ['PMS provider updated.']],
+            'messages' => ['server' => [__('PMS provider updated.')]],
         ]);
     }
 

@@ -42,23 +42,7 @@ class StorePhoneNumberRequest extends FormRequest
             'routing_options' => ['nullable', 'array'],
             'routing_options.*.type' => [
                 'required_with:routing_options',
-                Rule::in([
-                    'extensions',
-                    'ring_groups',
-                    'ivrs',
-                    'business_hours',
-                    'contact_centers',
-                    'ai_agents',
-                    'bridges',
-                    'faxes',
-                    'conferences',
-                    'call_flows',
-                    'dynamic_routes',
-                    'voicemails',
-                    'company_directory',
-                    'check_voicemail',
-                    'hangup',
-                ]),
+                Rule::in(\App\Services\CallRoutingOptionsService::destinationTypes()),
             ],
             'routing_options.*.extension' => [
                 'present',
@@ -66,7 +50,7 @@ class StorePhoneNumberRequest extends FormRequest
                     $type = data_get($this->input(), str_replace('.extension', '.type', $attribute));
 
                     // These types don't require extension digits
-                    if (in_array($type, ['hangup'], true)) {
+                    if (! \App\Services\CallRoutingOptionsService::requiresTarget((string) $type)) {
                         return;
                     }
 
@@ -75,7 +59,7 @@ class StorePhoneNumberRequest extends FormRequest
                         return;
                     }
 
-                    if ($type === 'bridges') {
+                    if (in_array(\App\Services\CallRoutingOptionsService::destinationHandler((string) $type), ['bridge', 'recording'], true)) {
                         return;
                     }
 

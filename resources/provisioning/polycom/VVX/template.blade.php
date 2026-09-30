@@ -1,4 +1,4 @@
-{{-- version: 1.0.7 --}}
+{{-- version: 1.0.8 --}}
 
 @switch($flavor)
 
@@ -114,6 +114,8 @@
     msg.mwi.{{ $n }}.callBack="{{ $settings['voicemail_number'] ?? '' }}"
   @endforeach
 />
+
+<up up.Pagination.enabled="1" />
 
 <lineKey
     @if (!empty($polycom_line_key_slots))

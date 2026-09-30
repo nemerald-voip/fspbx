@@ -1,0 +1,21 @@
+name: Update website for release
+
+on:
+  release:
+    types: [published, edited, released, unpublished, deleted]
+
+permissions:
+  actions: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # Pages permits main, not release tags. An explicit dispatch also works
+      # with GITHUB_TOKEN, without relying on a bot commit to trigger a push.
+      - name: Request website deployment from main
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh workflow run deploy.yml --ref main

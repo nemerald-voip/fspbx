@@ -18,8 +18,8 @@ class ExtensionWelcome extends BaseMailable
     public function content(): Content
     {
         return $this->databaseTemplateContent(new Content(
-            view: 'emails.extension.welcome',
-            text: 'emails.extension.welcome-text',
+            view: 'emails.en-us.extension.welcome',
+            text: 'emails.en-us.extension.welcome-text',
         ));
     }
 }

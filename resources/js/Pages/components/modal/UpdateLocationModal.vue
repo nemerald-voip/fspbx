@@ -20,7 +20,7 @@
                                 <button type="button"
                                     class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                     @click="emit('close')">
-                                    <span class="sr-only">Close</span>
+                                    <span class="sr-only">{{ $t('Close') }}</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
@@ -30,21 +30,21 @@
                                     name: location?.name ?? null,
                                     description: location?.description ?? null
 
-                                }">
+                                }" @mounted="(form) => form.disableValidation()" @submit="clearServerFormErrors">
                                 <!-- <HiddenElement name="user_uuid" :meta="true" /> -->
-                                <StaticElement name="h4" tag="h4" content="Update Location" />
+                                <StaticElement name="h4" tag="h4" :content="$t('Update Location')" />
 
-                                <TextElement name="name" label="Name"
-                                    description="Enter a clear, descriptive name for this location." />
+                                <TextElement name="name" :label="$t('Name')"
+                                    :description="$t('Enter a clear, descriptive name for this location.')" />
 
-                                <TextElement name="description" label="Description" />
+                                <TextElement name="description" :label="$t('Description')" />
 
                                 <GroupElement name="container_3" />
-                                <ButtonElement name="reset" button-label="Cancel" :secondary="true" :resets="true"
+                                <ButtonElement name="reset" :button-label="$t('Cancel')" :secondary="true" :resets="true"
                                     @click="emit('close')" :columns="{
                                         container: 6,
                                     }" />
-                                <ButtonElement name="submit" button-label="Create" :submits="true" align="right"
+                                <ButtonElement name="submit" :button-label="$t('Save')" :submits="true" align="right"
                                     :columns="{
                                         container: 6,
                                     }" />
@@ -60,6 +60,8 @@
 </template>
 
 <script setup>
+import { clearServerFormErrors } from '../../../composables/serverFormErrors.js';
+import { trans } from '@i18n';
 import { ref } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { CheckCircleIcon, XMarkIcon } from "@heroicons/vue/24/solid";
@@ -131,7 +133,7 @@ const handleError = (error, details, form$) => {
         case 'prepare':
             console.log(error) // Error object
 
-            form$.messageBag.append('Could not prepare form')
+            form$.messageBag.append(trans('Could not prepare form'))
             break
 
         // Error occured because response status is outside of 2xx
@@ -151,14 +153,14 @@ const handleError = (error, details, form$) => {
         case 'cancel':
             console.log(error) // Error object
 
-            form$.messageBag.append('Request cancelled')
+            form$.messageBag.append(trans('Request cancelled'))
             break
 
         // Some other errors happened (no response object)
         case 'other':
             console.log(error) // Error object
 
-            form$.messageBag.append('Couldn\'t submit form')
+            form$.messageBag.append(trans('Couldn\'t submit form'))
             break
     }
 }

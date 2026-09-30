@@ -15,8 +15,8 @@ class ExportCompleted extends BaseMailable
     public function content(): Content
     {
         return $this->databaseTemplateContent(new Content(
-            view: 'emails.export.completed',
-            text: 'emails.export.completed-text',
+            view: 'emails.en-us.export.completed',
+            text: 'emails.en-us.export.completed-text',
         ));
     }
 }

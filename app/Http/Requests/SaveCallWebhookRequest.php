@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Models\CallWebhookSubscription;
 use App\Services\CallWebhooks\PublicWebhookUrlValidator;
 use Illuminate\Foundation\Http\FormRequest;
+use App\Support\Localization\ValidationMessages;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 use InvalidArgumentException;
@@ -52,5 +53,20 @@ class SaveCallWebhookRequest extends FormRequest
             'enabled' => filter_var($this->input('enabled', true), FILTER_VALIDATE_BOOL),
             'events' => array_values(array_unique($this->input('events', []))),
         ]);
+    }
+
+    public function messages(): array
+    {
+        return ValidationMessages::common();
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'endpoint_url' => __('Public HTTPS Endpoint URL'),
+            'enabled' => __('Enabled'),
+            'events' => __('Events'),
+            'events.*' => __('Event'),
+        ];
     }
 }

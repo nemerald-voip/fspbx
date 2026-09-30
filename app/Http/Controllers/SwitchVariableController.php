@@ -50,7 +50,7 @@ class SwitchVariableController extends Controller
     public function data(Request $request): JsonResponse
     {
         if (! userCheckPermission('var_view')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $perPage = min(max((int) $request->input('per_page', 50), 1), 5000);
@@ -68,11 +68,11 @@ class SwitchVariableController extends Controller
         $uuid = $request->input('itemUuid');
 
         if ($uuid && ! userCheckPermission('var_edit')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         if (! $uuid && ! userCheckPermission('var_add')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         return response()->json([
@@ -85,66 +85,66 @@ class SwitchVariableController extends Controller
     public function store(SaveSwitchVariableRequest $request): JsonResponse
     {
         if (! userCheckPermission('var_add')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $this->variables->saveVariable($request->validated());
 
-        return response()->json(['messages' => ['success' => ['Variable created.']]], 201);
+        return response()->json(['messages' => ['success' => [__('Variable created.')]]], 201);
     }
 
     public function update(SaveSwitchVariableRequest $request, SwitchVariable $switchVariable): JsonResponse
     {
         if (! userCheckPermission('var_edit')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $this->variables->saveVariable($request->validated(), $switchVariable);
 
-        return response()->json(['messages' => ['success' => ['Variable updated.']]]);
+        return response()->json(['messages' => ['success' => [__('Variable updated.')]]]);
     }
 
     public function bulkToggle(BulkSettingsActionRequest $request): JsonResponse
     {
         if (! userCheckPermission('var_edit')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $count = $this->variables->toggle($request->validated('items'));
 
-        return response()->json(['messages' => ['success' => ["Toggled {$count} variable(s)."]]]);
+        return response()->json(['messages' => ['success' => [__('Toggled :count variable(s).', ['count' => $count])]]]);
     }
 
     public function bulkCopy(BulkSettingsActionRequest $request): JsonResponse
     {
         if (! userCheckPermission('var_add')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $count = $this->variables->copy($request->validated('items'));
 
-        return response()->json(['messages' => ['success' => ["Copied {$count} variable(s)."]]]);
+        return response()->json(['messages' => ['success' => [__('Copied :count variable(s).', ['count' => $count])]]]);
     }
 
     public function bulkDelete(BulkSettingsActionRequest $request): JsonResponse
     {
         if (! userCheckPermission('var_delete')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $count = $this->variables->delete($request->validated('items'));
 
-        return response()->json(['messages' => ['success' => ["Deleted {$count} variable(s)."]]]);
+        return response()->json(['messages' => ['success' => [__('Deleted :count variable(s).', ['count' => $count])]]]);
     }
 
     public function sync(): JsonResponse
     {
         if (! userCheckPermission('var_edit')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $this->variables->syncAndReloadXml();
 
-        return response()->json(['messages' => ['success' => ['vars.xml updated.']]]);
+        return response()->json(['messages' => ['success' => [__('vars.xml updated.')]]]);
     }
 }

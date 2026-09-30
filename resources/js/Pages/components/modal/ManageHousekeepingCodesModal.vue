@@ -20,7 +20,7 @@
                                 <button type="button"
                                     class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                     @click="emit('close')">
-                                    <span class="sr-only">Close</span>
+                                    <span class="sr-only">{{ $t('Close') }}</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
@@ -38,7 +38,7 @@
                                             </path>
                                         </svg>
                                     </div>
-                                    <div class="text-lg text-blue-600 m-auto">Loading...</div>
+                                    <div class="text-lg text-blue-600 m-auto">{{ $t('Loading...') }}</div>
                                 </div>
                             </div>
 
@@ -46,14 +46,14 @@
                                 @error="handleError" @response="handleResponse" :display-errors="false" :default="{
                                     housekeeping_options: options?.housekeeping_options ?? null,
                                     codes_loaded: (Array.isArray(options?.housekeeping_options) && options.housekeeping_options.length > 0) ? 'true' : 'false'
-                                }">
+                                }" @mounted="(form) => form.disableValidation()" @submit="clearServerFormErrors">
                                 <HiddenElement name="codes_loaded" :default="'false'" />
-                                <StaticElement name="h4" tag="h4" content="Manage Housekeeping Codes" />
+                                <StaticElement name="h4" tag="h4" :content="$t('Manage Housekeeping Codes')" />
                                 <GroupElement name="container_1" />
 
-                                <ButtonElement name="load_defaults_button" button-label="Load Defaults"
+                                <ButtonElement name="load_defaults_button" :button-label="$t('Load Defaults')"
                                     :loading="isDefaultCodesLoading" :secondary="true"
-                                    label="No custom codes defined. Load defaults?" @click="loadDefaultCodes"
+                                    :label="$t('No custom codes defined. Load defaults?')" @click="loadDefaultCodes"
                                     :conditions="[
                                         ['codes_loaded', '==', 'false']
                                     ]" />
@@ -65,7 +65,7 @@
                                     ]">
                                     <template #default="{ index }">
                                         <ObjectElement :name="index">
-                                            <TextElement name="code" label="Status code" :columns="{
+                                            <TextElement name="code" :label="$t('Status code')" :columns="{
                                                 default: {
                                                     container: 5,
                                                     label: 6,
@@ -83,8 +83,8 @@
                                             </GroupElement>
 
                                             <SelectElement name="label" :items="options?.default_housekeeping_options"
-                                                :create="true" allow-absent :native="false" label="Label"
-                                                input-type="search" autocomplete="off" placeholder="Select Status"
+                                                :create="true" allow-absent :native="false" :label="$t('Label')"
+                                                input-type="search" autocomplete="off" :placeholder="$t('Select Status')"
                                                 :floating="false" :strict="false" :columns="{
                                                     container: 6,
                                                     label: 3,
@@ -98,11 +98,11 @@
                                 </ListElement>
 
                                 <GroupElement name="container_3" />
-                                <ButtonElement name="reset" button-label="Cancel" :secondary="true" :resets="true"
+                                <ButtonElement name="reset" :button-label="$t('Cancel')" :secondary="true" :resets="true"
                                     @click="emit('close')" :columns="{
                                         container: 6,
                                     }" />
-                                <ButtonElement name="submit" button-label="Save" :submits="true" align="right" :columns="{
+                                <ButtonElement name="submit" :button-label="$t('Save')" :submits="true" align="right" :columns="{
                                     container: 6,
                                 }" />
                             </Vueform>
@@ -117,6 +117,8 @@
 </template>
 
 <script setup>
+import { clearServerFormErrors } from '../../../composables/serverFormErrors.js';
+import { trans } from '@i18n';
 import { ref } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { XMarkIcon } from "@heroicons/vue/24/solid";
@@ -202,7 +204,7 @@ const handleError = (error, details, form$) => {
         case 'prepare':
             console.log(error) // Error object
 
-            form$.messageBag.append('Could not prepare form')
+            form$.messageBag.append(trans('Could not prepare form'))
             break
 
         // Error occured because response status is outside of 2xx
@@ -222,14 +224,14 @@ const handleError = (error, details, form$) => {
         case 'cancel':
             console.log(error) // Error object
 
-            form$.messageBag.append('Request cancelled')
+            form$.messageBag.append(trans('Request cancelled'))
             break
 
         // Some other errors happened (no response object)
         case 'other':
             console.log(error) // Error object
 
-            form$.messageBag.append('Couldn\'t submit form')
+            form$.messageBag.append(trans('Couldn\'t submit form'))
             break
     }
 }

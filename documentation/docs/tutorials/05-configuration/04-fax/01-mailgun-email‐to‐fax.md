@@ -128,8 +128,8 @@ You may attach any of the following file types:
 -   **Wrong Fax Number:**\
     Double-check that you have entered the number with no spaces/dashes.
 
--   **Check Fax Queue page to check the status of the fax:**\
-    Navigate to `Status->Fax Queue` and check the status
+-   **Check the fax status:**\
+    Open **Faxes**, then select **Sent** for the fax server to check the delivery status.
 
 * * * * *
 

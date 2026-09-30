@@ -21,7 +21,7 @@ class CsrfTokenController extends Controller
 
             // Return a JSON response indicating success
             return response()->json([
-                'messages' => ['success' => ['Token refreshed']],
+                'messages' => ['success' => [__('Token refreshed')]],
                 'token' => $request->session()->token(),
             ], 200);
         } catch (\Exception $e) {
@@ -29,13 +29,13 @@ class CsrfTokenController extends Controller
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to refresh token']]
+                'errors' => ['server' => [__('Failed to refresh token')]]
             ], 500); // 500 Internal Server Error for any other errors
         }
 
         return response()->json([
             'success' => false,
-            'errors' => ['server' => ['Failed to refresh token']]
+            'errors' => ['server' => [__('Failed to refresh token')]]
         ], 500); // 500 Internal Server Error for any other errors
 
         

@@ -35,7 +35,7 @@ class ExtensionWelcomeEmailController extends Controller
 
         if ($eligible->isEmpty()) {
             return response()->json([
-                'messages' => ['error' => ['No welcome emails are eligible to send.']],
+                'messages' => ['error' => [__('No welcome emails are eligible to send.')]],
                 ...$result,
             ], 422);
         }
@@ -54,10 +54,10 @@ class ExtensionWelcomeEmailController extends Controller
         return response()->json([
             'messages' => [
                 'success' => [
-                    $queued === 1
-                        ? 'Welcome email queued successfully.'
-                        : "{$queued} welcome emails queued successfully.",
-                    ...($skipped > 0 ? ["{$skipped} selected extension(s) were skipped."] : []),
+                    trans_choice('{1} :count welcome email queued successfully.|[0,*] :count welcome emails queued successfully.', $queued),
+                    ...($skipped > 0
+                        ? [trans_choice('{1} :count selected extension was skipped.|[0,*] :count selected extensions were skipped.', $skipped)]
+                        : []),
                 ],
             ],
             'summary' => [

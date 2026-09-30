@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\CustomerNote;
+use App\Support\Localization\ValidationMessages;
 use HTMLPurifier;
 use HTMLPurifier_Config;
 use Illuminate\Http\Request;
@@ -42,7 +43,7 @@ class CustomerNotesController extends Controller
         abort_if(
             ! userCheckPermission(self::EDIT_PERMISSION),
             403,
-            'You do not have permission to edit customer notes.'
+            __('You do not have permission to edit customer notes.')
         );
 
         $validated = $request->validate([
@@ -50,6 +51,11 @@ class CustomerNotesController extends Controller
             'notes.level_1' => ['nullable', 'string', 'max:20000'],
             'notes.level_2' => ['nullable', 'string', 'max:20000'],
             'notes.level_3' => ['nullable', 'string', 'max:20000'],
+        ], ValidationMessages::common(), [
+            'notes' => __('Customer notes'),
+            'notes.level_1' => __('Level 1 customer notes'),
+            'notes.level_2' => __('Level 2 customer notes'),
+            'notes.level_3' => __('Level 3 customer notes'),
         ]);
 
         $notes = $validated['notes'] ?? [];
@@ -61,7 +67,7 @@ class CustomerNotesController extends Controller
                 && array_key_exists("level_{$level}", $notes)
                 && trim(strip_tags((string) $notes["level_{$level}"])) !== ''
             ) {
-                abort(403, 'You do not have permission to update that customer notes level.');
+                abort(403, __('You do not have permission to update that customer notes level.'));
             }
         }
 
@@ -86,7 +92,7 @@ class CustomerNotesController extends Controller
         }
 
         return [
-            'messages' => ['success' => ['Customer notes updated.']],
+            'messages' => ['success' => [__('Customer notes updated.')]],
             'customer_notes' => $this->payload(),
         ];
     }
@@ -95,7 +101,7 @@ class CustomerNotesController extends Controller
     {
         $levels = $this->visibleLevels();
 
-        abort_if($levels === [], 403, 'You do not have permission to view customer notes.');
+        abort_if($levels === [], 403, __('You do not have permission to view customer notes.'));
 
         return $levels;
     }

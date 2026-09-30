@@ -240,18 +240,10 @@ class PhoneNumbersController extends Controller
 
     public function getData()
     {
+        abort_unless(userCheckPermission('destination_view'), 403);
+
         $perPage = fspbx_pagination_per_page();
         $currentDomain = session('domain_uuid');
-
-        // If the filter is not present, assign default value before QueryBuilder
-        if (!request()->has('filter.showGlobal')) {
-            request()->merge([
-                'filter' => array_merge(
-                    request()->input('filter', []),
-                    ['showGlobal' => false]
-                ),
-            ]);
-        }
 
         $data = QueryBuilder::for(Destinations::class)
             ->select([
@@ -299,12 +291,10 @@ class PhoneNumbersController extends Controller
                     $query->where('destination_number', 'ilike', $pattern);                        
                 }),
                 AllowedFilter::callback('showGlobal', function ($query, $value) use ($currentDomain) {
-                    // If showGlobal is falsey (0, '0', false, null), restrict to the current domain
-                    if (!$value || $value === '0' || $value === 0 || $value === false) {
+                    if (!filter_var($value, FILTER_VALIDATE_BOOLEAN) || !userCheckPermission('destination_all')) {
                         $query->where('domain_uuid', $currentDomain);
                     }
-                    // else, do nothing and show all domains
-                }),
+                })->default(false)->nullable(),
             ])
 
             ->with(['domain' => function ($query) {
@@ -884,25 +874,22 @@ public function importCommit(Request $request)
      */
     public function selectAll(): JsonResponse
     {
+        abort_unless(userCheckPermission('destination_view'), 403);
+
         try {
-            $params = request()->all();
-
             $domain_uuid = session('domain_uuid');
-            $params['domain_uuid'] = $domain_uuid;
 
-            $data = QueryBuilder::for(Destinations::class, request()->merge($params))
+            $data = QueryBuilder::for(Destinations::class)
                 ->select([
                     'destination_uuid',
                     'domain_uuid',
                 ])
                 ->allowedFilters([
                     AllowedFilter::callback('showGlobal', function ($query, $value) use ($domain_uuid) {
-                        // If showGlobal is falsey (0, '0', false, null), restrict to the current domain
-                        if (!$value || $value === '0' || $value === 0 || $value === 'false') {
+                        if (!filter_var($value, FILTER_VALIDATE_BOOLEAN) || !userCheckPermission('destination_all')) {
                             $query->where('domain_uuid', $domain_uuid);
                         }
-                        // else, do nothing and show all domains
-                    }),
+                    })->default(false)->nullable(),
                     AllowedFilter::callback('search', function ($query, $value) {
                         $s = trim((string) $value);
                         if ($s === '') {

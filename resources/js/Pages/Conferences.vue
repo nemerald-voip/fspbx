@@ -3,10 +3,10 @@
 
     <div class="m-3">
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-            <template #title>Conferences</template>
+            <template #title>{{ $t('Conferences') }}</template>
 
             <template #subtitle>
-                Manage legacy conference bridges and their generated dialplans.
+                {{ $t('Manage legacy conference bridges and their generated dialplans.') }}
             </template>
 
             <template #filters>
@@ -17,28 +17,28 @@
                     <input type="text" v-model="filterData.search" name="mobile-search-conferences"
                         id="mobile-search-conferences"
                         class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                        :placeholder="$t('Search')" @keydown.enter="handleSearchButtonClick" />
                     <input type="text" v-model="filterData.search" name="desktop-search-conferences"
                         id="desktop-search-conferences"
                         class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                        :placeholder="$t('Search')" @keydown.enter="handleSearchButtonClick" />
                 </div>
             </template>
 
             <template #action>
                 <a v-if="permissions.view_active" :href="routes.active_conferences"
                     class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                    Active Conferences
+                    {{ $t('Active Conferences') }}
                 </a>
 
                 <a v-if="permissions.profile_view" :href="routes.conference_profiles"
                     class="ml-2 sm:ml-4 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                    Profiles
+                    {{ $t('Profiles') }}
                 </a>
 
                 <button v-if="permissions.create" type="button" @click.prevent="handleCreateButtonClick"
                     class="ml-2 sm:ml-4 rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                    Create
+                    {{ $t('Create') }}
                 </button>
 
                 <!-- <button v-if="!filterData.showGlobal && permissions.view_global" type="button"
@@ -50,7 +50,7 @@
                 <button v-if="filterData.showGlobal && permissions.view_global" type="button"
                     @click.prevent="handleShowLocal"
                     class="ml-2 sm:ml-4 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                    Show local
+                    {{ $t('Show local') }}
                 </button>
             </template>
 
@@ -68,7 +68,7 @@
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                     <div class="pl-4 flex items-center cursor-pointer select-none"
                         @click="handleSortRequest('conference_name')">
-                        <span class="mr-2">Name</span>
+                        <span class="mr-2">{{ $t('Name') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'conference_name' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'conference_name' && sortData.order === 'desc'"
@@ -76,13 +76,13 @@
                     </div>
                 </TableColumnHeader>
 
-                <TableColumnHeader v-if="filterData.showGlobal" header="Domain"
+                <TableColumnHeader v-if="filterData.showGlobal" :header="$t('Domain')"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none"
                         @click="handleSortRequest('conference_extension')">
-                        <span class="mr-2">Extension</span>
+                        <span class="mr-2">{{ $t('Extension') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'conference_extension' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'conference_extension' && sortData.order === 'desc'"
@@ -93,7 +93,7 @@
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none"
                         @click="handleSortRequest('conference_profile')">
-                        <span class="mr-2">Profile</span>
+                        <span class="mr-2">{{ $t('Profile') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'conference_profile' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'conference_profile' && sortData.order === 'desc'"
@@ -103,18 +103,18 @@
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none"
                         @click="handleSortRequest('conference_order')">
-                        <span class="mr-2">Order</span>
+                        <span class="mr-2">{{ $t('Order') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'conference_order' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'conference_order' && sortData.order === 'desc'"
                             class="h-4 w-4 text-gray-500" />
                     </div>
                 </TableColumnHeader>
-                <TableColumnHeader header="Tools" class="px-2 py-3.5 text-center text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t('Tools')" class="px-2 py-3.5 text-center text-sm font-semibold text-gray-900" />
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none"
                         @click="handleSortRequest('conference_enabled')">
-                        <span class="mr-2">Enabled</span>
+                        <span class="mr-2">{{ $t('Enabled') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'conference_enabled' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'conference_enabled' && sortData.order === 'desc'"
@@ -124,7 +124,7 @@
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none"
                         @click="handleSortRequest('conference_description')">
-                        <span class="mr-2">Description</span>
+                        <span class="mr-2">{{ $t('Description') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'conference_description' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'conference_description' && sortData.order === 'desc'"
@@ -137,16 +137,16 @@
             <template v-if="selectPageItems" v-slot:current-selection>
                 <td :colspan="selectionColspan">
                     <div class="text-sm text-center m-2">
-                        <span class="font-semibold">{{ selectedItems.length }}</span> items are selected.
+                        {{ $tChoice('{1} :count item is selected.|[0,*] :count items are selected.', selectedItems.length) }}
                         <button v-if="!selectAll && selectedItems.length !== data.total"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleSelectAll">
-                            Select all {{ data.total }} items
+                            {{ $tChoice('{1} Select all :count item|[0,*] Select all :count items', data.total) }}
                         </button>
                         <button v-if="selectAll"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleClearSelection">
-                            Clear selection
+                            {{ $t('Clear selection') }}
                         </button>
                     </div>
                 </td>
@@ -167,7 +167,7 @@
                     </TableField>
 
                     <TableField v-if="filterData.showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.domain?.domain_description || row.domain?.domain_name || 'Global'" />
+                        :text="row.domain?.domain_description || row.domain?.domain_name || $t('Global')" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                         :text="row.conference_extension" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
@@ -179,11 +179,11 @@
                         <div class="flex items-center justify-center gap-3">
                             <a v-if="permissions.interactive_view" :href="toolUrl(routes.interactive, row.conference_extension)"
                                 class="text-indigo-600 hover:text-indigo-900">
-                                View
+                                {{ $t('View') }}
                             </a>
                             <a v-else-if="permissions.view_active" :href="routes.active_conferences"
                                 class="text-indigo-600 hover:text-indigo-900">
-                                View
+                                {{ $t('View') }}
                             </a>
                             <a v-if="permissions.cdr_view" :href="toolUrl(routes.cdr, row.conference_uuid)"
                                 class="text-indigo-600 hover:text-indigo-900">
@@ -195,10 +195,10 @@
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
                         <button v-if="permissions.update" type="button" class="cursor-pointer"
                             @click="executeToggle([row.conference_uuid])">
-                            <Badge :text="row.conference_enabled === 'true' ? 'True' : 'False'"
+                            <Badge :text="row.conference_enabled === 'true' ? $t('True') : $t('False')"
                                 v-bind="enabledBadgeProps(row.conference_enabled)" />
                         </button>
-                        <Badge v-else :text="row.conference_enabled === 'true' ? 'True' : 'False'"
+                        <Badge v-else :text="row.conference_enabled === 'true' ? $t('True') : $t('False')"
                             v-bind="enabledBadgeProps(row.conference_enabled)" />
                     </TableField>
 
@@ -209,11 +209,11 @@
                             <div class="flex items-center whitespace-nowrap justify-end">
                                 <PencilSquareIcon v-if="permissions.update" @click="handleEditButtonClick(row.conference_uuid)"
                                     class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
-                                    title="Edit" />
+                                    :title="$t('Edit')" />
 
                                 <TrashIcon v-if="permissions.destroy" @click="handleSingleItemDeleteRequest(row.conference_uuid)"
                                     class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
-                                    title="Delete" />
+                                    :title="$t('Delete')" />
                             </div>
                         </template>
                     </TableField>
@@ -223,8 +223,8 @@
             <template #empty>
                 <div v-if="data.data.length === 0" class="text-center my-5">
                     <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
-                    <p class="mt-1 text-sm text-gray-500">Adjust your search and try again.</p>
+                    <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ $t('No results found') }}</h3>
+                    <p class="mt-1 text-sm text-gray-500">{{ $t('Adjust your search and try again.') }}</p>
                 </div>
             </template>
 
@@ -242,7 +242,7 @@
 
     <ConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
         @confirm="confirmAction" :header="confirmationHeader" :text="confirmationText"
-        :confirm-button-label="confirmationButtonLabel" cancel-button-label="Cancel" />
+        :confirm-button-label="confirmationButtonLabel" :cancel-button-label="$t('Cancel')" />
 
     <ConferenceForm :show="showForm" :options="itemOptions" :mode="formMode" :loading="loadingForm"
         :header="formHeader" @close="handleFormClose" @error="handleErrorResponse" @success="showNotification"
@@ -253,6 +253,7 @@
 </template>
 
 <script setup>
+import { trans } from '@i18n';
 import { computed, onMounted, ref } from "vue";
 import axios from "axios";
 import DataTable from "./components/general/DataTable.vue";
@@ -279,9 +280,9 @@ const selectedItems = ref([]);
 const selectPageItems = ref(false);
 const confirmationModalTrigger = ref(false);
 const confirmAction = ref(null);
-const confirmationHeader = ref("Are you sure?");
+const confirmationHeader = ref(trans('Are you sure?'));
 const confirmationText = ref("");
-const confirmationButtonLabel = ref("Continue");
+const confirmationButtonLabel = ref(trans('Continue'));
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(false);
@@ -324,15 +325,15 @@ const bulkActions = computed(() => {
     const actions = [];
 
     if (permissions.copy) {
-        actions.push({ id: "bulk_copy", label: "Copy", icon: "DocumentDuplicateIcon" });
+        actions.push({ id: "bulk_copy", label: trans('Copy'), icon: "DocumentDuplicateIcon" });
     }
 
     if (permissions.update) {
-        actions.push({ id: "bulk_toggle", label: "Toggle Enabled", icon: "PencilSquareIcon" });
+        actions.push({ id: "bulk_toggle", label: trans('Toggle Enabled'), icon: "PencilSquareIcon" });
     }
 
     if (permissions.destroy) {
-        actions.push({ id: "bulk_delete", label: "Delete", icon: "TrashIcon" });
+        actions.push({ id: "bulk_delete", label: trans('Delete'), icon: "TrashIcon" });
     }
 
     return actions;
@@ -342,10 +343,10 @@ const selectionColspan = computed(() => filterData.value.showGlobal ? 9 : 8);
 
 const formHeader = computed(() => {
     if (formMode.value === "create") {
-        return "Create Conference";
+        return trans('Create Conference');
     }
 
-    return `Update Conference - ${itemOptions.value?.item?.conference_name || itemOptions.value?.item?.conference_extension || "Loading..."}`;
+    return trans('Update Conference - :name', { name: itemOptions.value?.item?.conference_name || itemOptions.value?.item?.conference_extension || trans('Loading...') });
 });
 
 onMounted(() => {
@@ -488,9 +489,9 @@ const handleClearSelection = () => {
 
 const handleSingleItemDeleteRequest = (uuid) => {
     showConfirmation({
-        header: "Confirm Deletion",
-        text: "This action will permanently delete the selected conference and its generated dialplan.",
-        button: "Delete",
+        header: trans('Confirm Deletion'),
+        text: trans('This action will permanently delete the selected conference and its generated dialplan.'),
+        button: trans('Delete'),
         action: () => executeBulkDelete([uuid]),
     });
 };
@@ -498,27 +499,27 @@ const handleSingleItemDeleteRequest = (uuid) => {
 const handleBulkActionRequest = (action) => {
     if (action === "bulk_copy") {
         showConfirmation({
-            header: "Confirm Copy",
-            text: "Copy the selected conference(s) and generated dialplan(s)?",
-            button: "Copy",
+            header: trans('Confirm Copy'),
+            text: trans('Copy the selected conference(s) and generated dialplan(s)?'),
+            button: trans('Copy'),
             action: () => executeBulkCopy(),
         });
     }
 
     if (action === "bulk_delete") {
         showConfirmation({
-            header: "Confirm Deletion",
-            text: "This action will permanently delete the selected conference(s) and generated dialplan(s).",
-            button: "Delete",
+            header: trans('Confirm Deletion'),
+            text: trans('This action will permanently delete the selected conference(s) and generated dialplan(s).'),
+            button: trans('Delete'),
             action: () => executeBulkDelete(),
         });
     }
 
     if (action === "bulk_toggle") {
         showConfirmation({
-            header: "Confirm Toggle",
-            text: "Toggle enabled for the selected conference(s)?",
-            button: "Toggle",
+            header: trans('Confirm Toggle'),
+            text: trans('Toggle enabled for the selected conference(s)?'),
+            button: trans('Toggle'),
             action: () => executeToggle(selectedItems.value),
         });
     }

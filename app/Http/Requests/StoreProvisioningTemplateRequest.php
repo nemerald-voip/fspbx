@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Support\Localization\ValidationMessages;
 use Illuminate\Validation\Rule;
 
 class StoreProvisioningTemplateRequest extends FormRequest
@@ -50,16 +51,17 @@ class StoreProvisioningTemplateRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'vendor.required'         => 'Choose a vendor.',
-            'name.required'           => 'Template name is required.',
-            'name.unique'             => 'A template with this name already exists for this vendor in this scope.',
-            'content.required'        => 'Template content is required.',
-            'type.required'           => 'Template type is required.',
-            'type.in'                 => 'Type must be either default or custom.',
-            'base_template.exists'    => 'Base template must be an existing default template for the selected vendor.',
-            'domain_uuid.required'    => 'Custom templates must be associated with a domain.',
-            'domain_uuid.uuid'        => 'Invalid domain UUID.',
-            'base_version.regex'      => 'Base version must be a valid version string (e.g., 1.0.0).',
+            ...ValidationMessages::common(),
+            'vendor.required'         => __('Choose a vendor.'),
+            'name.required'           => __('Template name is required.'),
+            'name.unique'             => __('A template with this name already exists for this vendor in this scope.'),
+            'content.required'        => __('Template content is required.'),
+            'type.required'           => __('Template type is required.'),
+            'type.in'                 => __('Type must be either default or custom.'),
+            'base_template.exists'    => __('Base template must be an existing default template for the selected vendor.'),
+            'domain_uuid.required'    => __('Custom templates must be associated with a domain.'),
+            'domain_uuid.uuid'        => __('Invalid domain UUID.'),
+            'base_version.regex'      => __('Base version must be a valid version string (e.g., 1.0.0).'),
         ];
     }
 
@@ -90,5 +92,18 @@ class StoreProvisioningTemplateRequest extends FormRequest
             'base_version'  => $this->input('base_version') ?: null,
             'domain_uuid'   => $domainUuid,
         ]);
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'vendor' => __('Vendor'),
+            'name' => __('Template Name'),
+            'content' => __('Template content'),
+            'type' => __('Type'),
+            'base_template' => __('Base Template'),
+            'base_version' => __('Base Version'),
+            'domain_uuid' => __('Account'),
+        ];
     }
 }

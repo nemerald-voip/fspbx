@@ -17,4 +17,7 @@ class SwitchModule extends Model
     public $timestamps = false;
 
     protected $guarded = [];
+
+    // Retained in the legacy schema, but not used by the module API.
+    protected $hidden = ['module_default_enabled'];
 }

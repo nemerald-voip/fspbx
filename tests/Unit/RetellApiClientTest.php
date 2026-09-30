@@ -2,6 +2,7 @@
 
 namespace Tests\Unit;
 
+use App\Exceptions\RetellApiException;
 use App\Models\AiAgent;
 use App\Models\AiProviderIntegration;
 use App\Services\AiProviderIntegrationService;
@@ -13,6 +14,13 @@ use Tests\TestCase;
 
 class RetellApiClientTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Http::preventStrayRequests();
+    }
+
     public function test_list_agents_uses_the_unified_voice_endpoint_and_follows_pagination(): void
     {
         Http::fake(function (Request $request) {
@@ -110,14 +118,209 @@ class RetellApiClientTest extends TestCase
             && $request->data()['outbound_agents'] === []);
     }
 
+    public function test_tool_sync_follows_version_pages_and_fetches_the_highest_published_configuration(): void
+    {
+        $tools = app(AiProviderToolCatalog::class)->definitions('retell');
+
+        Http::fake([
+            'api.retellai.com/list-agent-versions/inbound-agent*' => Http::sequence()
+                ->push([
+                    'items' => [
+                        ['version' => 12, 'is_published' => false],
+                        ['version' => 11, 'is_published' => false],
+                    ],
+                    'has_more' => true,
+                    'pagination_key' => 'second-page',
+                ])
+                ->push([
+                    'items' => [
+                        ['version' => 10, 'is_published' => true],
+                        ['version' => 9, 'is_published' => false],
+                    ],
+                    'has_more' => true,
+                    'pagination_key' => 'third-page',
+                ])
+                ->push([
+                    'items' => [['version' => 8, 'is_published' => true]],
+                    'has_more' => false,
+                ]),
+            'api.retellai.com/get-agent/inbound-agent?version=10' => Http::response($this->publishedAgent(10, 20)),
+            'api.retellai.com/get-conversation-flow/flow-id?version=20' => Http::response(['tools' => $tools]),
+        ]);
+
+        $result = (new RetellApiClient($this->integrationService()))->synchronizeTools(
+            'inbound-agent',
+            $tools,
+            null,
+            fn () => $this->fail('Current tools should not create a draft.'),
+        );
+
+        $this->assertSame(10, $result['published_agent_version']);
+        $this->assertSame(20, $result['response_engine_version']);
+        $this->assertFalse($result['changed']);
+
+        foreach ([null, 'second-page', 'third-page'] as $paginationKey) {
+            Http::assertSent(function (Request $request) use ($paginationKey) {
+                parse_str(parse_url($request->url(), PHP_URL_QUERY) ?? '', $query);
+
+                return $request->method() === 'GET'
+                    && parse_url($request->url(), PHP_URL_PATH) === '/list-agent-versions/inbound-agent'
+                    && ($query['limit'] ?? null) === '1000'
+                    && ($query['sort_order'] ?? null) === 'descending'
+                    && ($query['pagination_key'] ?? null) === $paginationKey;
+            });
+        }
+
+        Http::assertSentCount(5);
+    }
+
+    public function test_tool_sync_rejects_an_agent_with_no_published_version_after_all_pages(): void
+    {
+        Http::fake([
+            'api.retellai.com/list-agent-versions/inbound-agent*' => Http::sequence()
+                ->push([
+                    'items' => [['version' => 1, 'is_published' => false]],
+                    'has_more' => true,
+                    'pagination_key' => 'next-page',
+                ])
+                ->push([
+                    'items' => [['version' => 0, 'is_published' => false]],
+                    'has_more' => false,
+                ]),
+        ]);
+
+        $this->expectException(RetellApiException::class);
+        $this->expectExceptionMessage('The selected Retell agent has no published version.');
+
+        try {
+            (new RetellApiClient($this->integrationService()))->synchronizeTools(
+                'inbound-agent',
+                app(AiProviderToolCatalog::class)->definitions('retell'),
+                null,
+                fn () => $this->fail('An unpublished agent should not create a draft.'),
+            );
+        } finally {
+            Http::assertSentCount(2);
+            Http::assertNotSent(fn (Request $request) => $request->method() !== 'GET');
+        }
+    }
+
+    /** @dataProvider invalidVersionLists */
+    public function test_tool_sync_rejects_malformed_version_lists(array $payload): void
+    {
+        Http::fake(['api.retellai.com/list-agent-versions/inbound-agent*' => Http::response($payload)]);
+
+        $this->expectException(RetellApiException::class);
+        $this->expectExceptionMessage('Retell returned an invalid agent version list response.');
+
+        (new RetellApiClient($this->integrationService()))->synchronizeTools(
+            'inbound-agent',
+            app(AiProviderToolCatalog::class)->definitions('retell'),
+            null,
+            fn () => $this->fail('An invalid version list should not create a draft.'),
+        );
+    }
+
+    public static function invalidVersionLists(): array
+    {
+        return [
+            'missing items' => [['has_more' => false]],
+            'invalid items' => [['items' => 'invalid', 'has_more' => false]],
+            'missing pagination status' => [['items' => []]],
+            'invalid pagination status' => [['items' => [], 'has_more' => 'true']],
+            'missing version' => [['items' => [['is_published' => true]], 'has_more' => false]],
+            'invalid version' => [['items' => [['version' => 'invalid', 'is_published' => true]], 'has_more' => false]],
+            'negative version' => [['items' => [['version' => -1, 'is_published' => true]], 'has_more' => false]],
+            'missing publication status' => [['items' => [['version' => 3]], 'has_more' => false]],
+        ];
+    }
+
+    /** @dataProvider invalidVersionPaginationKeys */
+    public function test_tool_sync_rejects_missing_or_repeated_version_pagination_keys(array $paginationKeys): void
+    {
+        $sequence = Http::sequence();
+        foreach ($paginationKeys as $paginationKey) {
+            $sequence->push([
+                'items' => [['version' => 3, 'is_published' => true]],
+                'has_more' => true,
+                'pagination_key' => $paginationKey,
+            ]);
+        }
+        Http::fake(['api.retellai.com/list-agent-versions/inbound-agent*' => $sequence]);
+
+        $this->expectException(RetellApiException::class);
+        $this->expectExceptionMessage('Retell did not return a valid agent version pagination key.');
+
+        try {
+            (new RetellApiClient($this->integrationService()))->synchronizeTools(
+                'inbound-agent',
+                app(AiProviderToolCatalog::class)->definitions('retell'),
+                null,
+                fn () => $this->fail('Broken pagination should not create a draft.'),
+            );
+        } finally {
+            Http::assertSentCount(count($paginationKeys));
+        }
+    }
+
+    public static function invalidVersionPaginationKeys(): array
+    {
+        return [
+            'missing key' => [[null]],
+            'blank key' => [[' ']],
+            'invalid key' => [[123]],
+            'repeated key' => [['next-page', 'next-page']],
+            'pagination cycle' => [['second-page', 'third-page', 'second-page']],
+        ];
+    }
+
+    /** @dataProvider invalidPublishedAgents */
+    public function test_tool_sync_rejects_an_inconsistent_published_agent(array $overrides): void
+    {
+        Http::fake([
+            'api.retellai.com/list-agent-versions/inbound-agent*' => Http::response([
+                'items' => [['version' => 3, 'is_published' => true]],
+                'has_more' => false,
+            ]),
+            'api.retellai.com/get-agent/inbound-agent?version=3' => Http::response(
+                array_replace($this->publishedAgent(3, 7), $overrides)
+            ),
+        ]);
+
+        $this->expectException(RetellApiException::class);
+        $this->expectExceptionMessage('Retell returned an invalid published agent response.');
+
+        (new RetellApiClient($this->integrationService()))->synchronizeTools(
+            'inbound-agent',
+            app(AiProviderToolCatalog::class)->definitions('retell'),
+            null,
+            fn () => $this->fail('An inconsistent agent response should not create a draft.'),
+        );
+    }
+
+    public static function invalidPublishedAgents(): array
+    {
+        return [
+            'wrong version' => [['version' => 4]],
+            'unpublished version' => [['is_published' => false]],
+        ];
+    }
+
     public function test_tool_sync_treats_a_retell_configured_recipient_as_current(): void
     {
         $tool = app(AiProviderToolCatalog::class)->definitions('retell')[0];
         $tool['parameters']['properties']['recipient']['const'] = 'support@example.org';
 
         Http::fake(function (Request $request) use ($tool) {
-            if (str_contains($request->url(), '/get-agent-versions/')) {
-                return Http::response([$this->publishedAgent(3, 7)]);
+            if (str_contains($request->url(), '/list-agent-versions/')) {
+                return Http::response([
+                    'items' => [['version' => 3, 'is_published' => true]],
+                    'has_more' => false,
+                ]);
+            }
+
+            if ($request->url() === 'https://api.retellai.com/get-agent/inbound-agent?version=3') {
+                return Http::response($this->publishedAgent(3, 7));
             }
 
             if (str_contains($request->url(), '/get-conversation-flow/')) {
@@ -137,7 +340,7 @@ class RetellApiClientTest extends TestCase
         $this->assertFalse($result['changed']);
         $this->assertFalse($result['published']);
         $this->assertFalse($result['configuration_required']);
-        Http::assertSentCount(2);
+        Http::assertSentCount(3);
     }
 
     public function test_tool_sync_reports_the_recipient_placeholder_as_configuration_required(): void
@@ -145,8 +348,15 @@ class RetellApiClientTest extends TestCase
         $tool = app(AiProviderToolCatalog::class)->definitions('retell')[0];
 
         Http::fake(function (Request $request) use ($tool) {
-            if (str_contains($request->url(), '/get-agent-versions/')) {
-                return Http::response([$this->publishedAgent(3, 7)]);
+            if (str_contains($request->url(), '/list-agent-versions/')) {
+                return Http::response([
+                    'items' => [['version' => 0, 'is_published' => true]],
+                    'has_more' => false,
+                ]);
+            }
+
+            if ($request->url() === 'https://api.retellai.com/get-agent/inbound-agent?version=0') {
+                return Http::response($this->publishedAgent(0, 7));
             }
 
             if (str_contains($request->url(), '/get-conversation-flow/')) {
@@ -166,7 +376,8 @@ class RetellApiClientTest extends TestCase
         $this->assertFalse($result['changed']);
         $this->assertFalse($result['published']);
         $this->assertTrue($result['configuration_required']);
-        Http::assertSentCount(2);
+        $this->assertSame(0, $result['published_agent_version']);
+        Http::assertSentCount(3);
     }
 
     public function test_tool_sync_updates_and_publishes_one_draft_while_preserving_the_retell_recipient(): void
@@ -176,8 +387,15 @@ class RetellApiClientTest extends TestCase
         $tool['parameters']['properties']['recipient']['const'] = 'team@example.org';
 
         Http::fake(function (Request $request) use ($tool) {
-            if (str_contains($request->url(), '/get-agent-versions/')) {
-                return Http::response([$this->publishedAgent(3, 7)]);
+            if (str_contains($request->url(), '/list-agent-versions/')) {
+                return Http::response([
+                    'items' => [['version' => 3, 'is_published' => true]],
+                    'has_more' => false,
+                ]);
+            }
+
+            if ($request->url() === 'https://api.retellai.com/get-agent/inbound-agent?version=3') {
+                return Http::response($this->publishedAgent(3, 7));
             }
 
             if (str_contains($request->url(), '/create-agent-version/')) {
@@ -211,6 +429,10 @@ class RetellApiClientTest extends TestCase
         $this->assertTrue($result['published']);
         $this->assertFalse($result['configuration_required']);
         $this->assertSame(4, $result['published_agent_version']);
+
+        Http::assertSent(fn (Request $request) => $request->method() === 'POST'
+            && $request->url() === 'https://api.retellai.com/create-agent-version/inbound-agent'
+            && $request->data()['base_version'] === 3);
 
         Http::assertSent(function (Request $request) {
             if ($request->method() !== 'PATCH') {

@@ -55,7 +55,7 @@ class AccessControlController extends Controller
 
             return response()->json([
                 'messages' => ['success' => array_filter([
-                    'Access control list created successfully.',
+                    __('Access control list created successfully.'),
                     $reloadResponse ? "FreeSWITCH: {$reloadResponse}" : null,
                 ])],
                 'access_control_uuid' => $accessControl->access_control_uuid,
@@ -65,7 +65,7 @@ class AccessControlController extends Controller
             logger('AccessControlController@store error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Failed to create access control list.']],
+                'messages' => ['error' => [__('Failed to create access control list.')]],
             ], 500);
         }
     }
@@ -83,7 +83,7 @@ class AccessControlController extends Controller
 
             return response()->json([
                 'messages' => ['success' => array_filter([
-                    'Access control list updated successfully.',
+                    __('Access control list updated successfully.'),
                     $reloadResponse ? "FreeSWITCH: {$reloadResponse}" : null,
                 ])],
             ]);
@@ -92,7 +92,7 @@ class AccessControlController extends Controller
             logger('AccessControlController@update error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Failed to update access control list.']],
+                'messages' => ['error' => [__('Failed to update access control list.')]],
             ], 500);
         }
     }
@@ -101,7 +101,7 @@ class AccessControlController extends Controller
     {
         if (!userCheckPermission('access_control_view')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -140,13 +140,13 @@ class AccessControlController extends Controller
 
         if ($itemUuid && !userCheckPermission('access_control_edit')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
         if (!$itemUuid && !userCheckPermission('access_control_add')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -175,7 +175,7 @@ class AccessControlController extends Controller
     {
         if (!userCheckPermission('access_control_view')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -196,7 +196,7 @@ class AccessControlController extends Controller
             ->pluck('access_control_uuid');
 
         return response()->json([
-            'messages' => ['success' => ['All matching access control lists selected.']],
+            'messages' => ['success' => [__('All matching access control lists selected.')]],
             'items' => $items,
         ]);
     }
@@ -205,7 +205,7 @@ class AccessControlController extends Controller
     {
         if (!userCheckPermission('access_control_delete')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -213,7 +213,7 @@ class AccessControlController extends Controller
 
         if ($accessControls->isEmpty()) {
             return response()->json([
-                'messages' => ['error' => ['No access control lists selected.']],
+                'messages' => ['error' => [__('No access control lists selected.')]],
             ], 422);
         }
 
@@ -231,14 +231,14 @@ class AccessControlController extends Controller
             $service->sync();
 
             return response()->json([
-                'messages' => ['success' => ["Deleted {$accessControls->count()} access control list(s)."]],
+                'messages' => ['success' => [__('Deleted :count access control list(s).', ['count' => $accessControls->count()])]],
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
             logger('AccessControlController@bulkDelete error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Failed to delete selected access control lists.']],
+                'messages' => ['error' => [__('Failed to delete selected access control lists.')]],
             ], 500);
         }
     }
@@ -247,7 +247,7 @@ class AccessControlController extends Controller
     {
         if (!userCheckPermission('access_control_add')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -255,7 +255,7 @@ class AccessControlController extends Controller
 
         if ($accessControls->isEmpty()) {
             return response()->json([
-                'messages' => ['error' => ['No access control lists selected.']],
+                'messages' => ['error' => [__('No access control lists selected.')]],
             ], 422);
         }
 
@@ -282,14 +282,14 @@ class AccessControlController extends Controller
             $service->sync();
 
             return response()->json([
-                'messages' => ['success' => ["Copied {$accessControls->count()} access control list(s)."]],
+                'messages' => ['success' => [__('Copied :count access control list(s).', ['count' => $accessControls->count()])]],
             ], 201);
         } catch (\Throwable $e) {
             DB::rollBack();
             logger('AccessControlController@bulkCopy error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Failed to copy selected access control lists.']],
+                'messages' => ['error' => [__('Failed to copy selected access control lists.')]],
             ], 500);
         }
     }
@@ -298,7 +298,7 @@ class AccessControlController extends Controller
     {
         if (!userCheckPermission('access_control_view')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -306,7 +306,7 @@ class AccessControlController extends Controller
 
         return response()->json([
             'messages' => ['success' => array_filter([
-                'Access control lists reloaded.',
+                __('Access control lists reloaded.'),
                 $response ? "FreeSWITCH: {$response}" : null,
             ])],
         ]);

@@ -53,6 +53,67 @@ class StoreGatewayRequest extends FormRequest
         ];
     }
 
+    public function messages(): array
+    {
+        return [
+            'required' => __('The :attribute field is required.'),
+            'string' => __('The :attribute must be a string.'),
+            'max' => [
+                'string' => __('The :attribute must not be greater than :max characters.'),
+                'numeric' => __('The :attribute must not be greater than :max.'),
+                'array' => __('The :attribute must not be greater than :max.'),
+                'file' => __('The :attribute must not be greater than :max.'),
+            ],
+            'integer' => __('The :attribute must be an integer.'),
+            'min' => __('The :attribute must be at least :min.'),
+            'in' => __('The selected :attribute is invalid.'),
+            'uuid' => __('The :attribute must be a valid UUID.'),
+            'username.required_if' => __('The username is required when registration is enabled.'),
+            'password.required_if' => __('The password is required when registration is enabled.'),
+        ];
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'gateway' => __('Gateway'),
+            'username' => __('Username'),
+            'password' => __('Password'),
+            'distinct_to' => __('Distinct To'),
+            'auth_username' => __('Auth Username'),
+            'realm' => __('Realm'),
+            'from_user' => __('From User'),
+            'from_domain' => __('From Domain'),
+            'proxy' => __('Proxy'),
+            'register_proxy' => __('Register Proxy'),
+            'outbound_proxy' => __('Outbound Proxy'),
+            'expire_seconds' => __('Expire Seconds'),
+            'register' => __('Register'),
+            'register_transport' => __('Register Transport'),
+            'contact_params' => __('Contact Params'),
+            'retry_seconds' => __('Retry Seconds'),
+            'extension' => __('Extension'),
+            'ping' => __('Ping'),
+            'ping_min' => __('Ping Min'),
+            'ping_max' => __('Ping Max'),
+            'contact_in_ping' => __('Contact In Ping'),
+            'channels' => __('Channels'),
+            'caller_id_in_from' => __('Caller ID In From'),
+            'supress_cng' => __('Suppress CNG'),
+            'sip_cid_type' => __('SIP CID Type'),
+            'codec_prefs' => __('Codec Preferences'),
+            'extension_in_contact' => __('Extension In Contact'),
+            'context' => __('Context'),
+            'profile' => __('SIP Profile'),
+            'hostname' => __('FreeSWITCH Hostname'),
+            'enabled' => __('Gateway Enabled'),
+            'description' => __('Description'),
+            'domain_uuid' => __('Domain'),
+            'gateway_acl_cidrs' => __('Provider IPs'),
+            'gateway_acl_cidrs.*.node_cidr' => __('IP / CIDR'),
+        ];
+    }
+
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator) {
@@ -63,7 +124,7 @@ class StoreGatewayRequest extends FormRequest
                     continue;
                 }
 
-                $validator->errors()->add('gateway_acl_cidrs', 'Enter valid provider IP addresses or CIDR ranges.');
+                $validator->errors()->add('gateway_acl_cidrs', __('Enter valid provider IP addresses or CIDR ranges.'));
                 break;
             }
         });

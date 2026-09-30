@@ -8,25 +8,25 @@
                             <tr>
                                 <th scope="col"
                                     class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6 lg:pl-8">
-                                    Key
+                                    {{ $t("Key") }}
                                 </th>
                                 <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                                    Action
+                                    {{ $t("Action") }}
                                 </th>
                                 <th scope="col"
                                     class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 md:table-cell">
-                                    Ext./Number
+                                    {{ $t("Ext./Number") }}
                                 </th>
                                 <th scope="col"
                                     class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell">
-                                    Desc
+                                    {{ $t("Desc") }}
                                 </th>
                                 <th scope="col"
                                     class="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 md:table-cell">
-                                    Status
+                                    {{ $t("Status") }}
                                 </th>
                                 <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6 lg:pr-8">
-                                    <span class="sr-only">Edit</span>
+                                    <span class="sr-only">{{ $t("Edit") }}</span>
                                 </th>
                             </tr>
                         </thead>
@@ -50,7 +50,7 @@
                                         <dd class="mt-1 md:hidden">
                                             <Badge
                                                 v-if="option.ivr_menu_option_enabled"
-                                                :text="'Enabled'"
+                                                :text="$t('Enabled')"
                                                 backgroundColor="bg-green-50"
                                                 textColor="text-green-700"
                                                 ringColor="ring-green-600/20"
@@ -70,7 +70,7 @@
                                 <td class="hidden px-3 py-4 text-sm text-gray-500 md:table-cell">
                                     <Badge
                                         v-if="option.ivr_menu_option_enabled"
-                                        :text="'Enabled'"
+                                        :text="$t('Enabled')"
                                         backgroundColor="bg-green-50"
                                         textColor="text-green-700"
                                         ringColor="ring-green-600/20"
@@ -78,7 +78,7 @@
 
                                     <Badge
                                         v-else
-                                        :text="'Disabled'"
+                                        :text="$t('Disabled')"
                                         backgroundColor="bg-rose-50"
                                         textColor="text-rose-700"
                                         ringColor="ring-rose-600/20"
@@ -90,7 +90,7 @@
                                         <div>
                                             <MenuButton
                                                 class="flex items-center rounded-full bg-gray-100 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100">
-                                                <span class="sr-only">Open options</span>
+                                                <span class="sr-only">{{ $t("Open options") }}</span>
                                                 <EllipsisVerticalIcon
                                                     class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-500 hover:bg-gray-200 hover:text-gray-900 active:bg-gray-300 active:duration-150 cursor-pointer"
                                                     aria-hidden="true"
@@ -115,7 +115,7 @@
                                                             @click.prevent="emit('edit-key', option)"
                                                             :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm']"
                                                         >
-                                                            Edit
+                                                            {{ $t("Edit") }}
                                                         </a>
                                                     </MenuItem>
 
@@ -125,7 +125,7 @@
                                                             @click.prevent="emit('delete-key', option)"
                                                             :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'flex px-4 py-2 text-sm']"
                                                         >
-                                                            Delete
+                                                            {{ $t("Delete") }}
                                                             <Spinner class="ml-1" :show="isDeleting" />
                                                         </a>
                                                     </MenuItem>
@@ -145,7 +145,7 @@
             class="col-span-full flex justify-center bg-gray-100 px-4 py-4 text-center text-sm font-medium text-indigo-500 hover:text-indigo-700 sm:rounded-b-lg">
             <button @click.prevent="emit('add-key')" class="flex items-center gap-2">
                 <PlusIcon class="h-6 w-6 text-black-500 hover:text-black-900 active:h-8 active:w-8" />
-                <span>Add new key</span>
+                <span>{{ $t("Add new key") }}</span>
             </button>
         </div>
     </div>

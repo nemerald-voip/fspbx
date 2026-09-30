@@ -31,8 +31,8 @@ class AppCredentials extends BaseMailable
     public function content(): Content
     {
         return $this->databaseTemplateContent(new Content(
-            view: 'emails.app.credentials',
-            text: 'emails.app.credentials-text',
+            view: 'emails.en-us.app.credentials',
+            text: 'emails.en-us.app.credentials-text',
         ));
     }
 }

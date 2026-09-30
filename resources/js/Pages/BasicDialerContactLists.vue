@@ -5,16 +5,16 @@
         <div class="mb-3 flex items-center gap-2 text-sm text-gray-500">
             <a :href="routes.back" class="inline-flex items-center gap-1 text-indigo-600 hover:underline">
                 <ArrowLeftIcon class="h-4 w-4" />
-                Basic Dialer
+                {{ $t("Basic Dialer") }}
             </a>
             <span class="text-gray-300">/</span>
-            <span class="text-gray-700">Contact Lists</span>
+            <span class="text-gray-700">{{ $t("Contact Lists") }}</span>
         </div>
 
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-            <template #title>Contact Lists</template>
+            <template #title>{{ $t("Contact Lists") }}</template>
 
-            <template #subtitle>Manage reusable dialer contact lists.</template>
+            <template #subtitle>{{ $t("Manage reusable dialer contact lists.") }}</template>
 
             <template #filters>
                 <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
@@ -24,18 +24,18 @@
                     <input type="text" v-model="filterData.search" name="mobile-search-contact-lists"
                         id="mobile-search-contact-lists"
                         class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                        :placeholder="$t(&quot;Search&quot;)" @keydown.enter="handleSearchButtonClick" />
                     <input type="text" v-model="filterData.search" name="desktop-search-contact-lists"
                         id="desktop-search-contact-lists"
                         class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                        :placeholder="$t(&quot;Search&quot;)" @keydown.enter="handleSearchButtonClick" />
                 </div>
             </template>
 
             <template #action>
                 <button v-if="permissions.create" type="button" @click.prevent="handleCreateButtonClick"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                    Create
+                    {{ $t("Create") }}
                 </button>
             </template>
 
@@ -52,33 +52,33 @@
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                     <div class="pl-4 flex items-center cursor-pointer select-none" @click="handleSortRequest('name')">
-                        <span class="mr-2">Name</span>
+                        <span class="mr-2">{{ $t("Name") }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'name' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'name' && sortData.order === 'desc'"
                             class="h-4 w-4 text-gray-500" />
                     </div>
                 </TableColumnHeader>
-                <TableColumnHeader header="Enabled" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Contacts" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Campaigns" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Description" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t(&quot;Enabled&quot;)" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t(&quot;Contacts&quot;)" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t(&quot;Campaigns&quot;)" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t(&quot;Description&quot;)" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
             </template>
 
             <template v-if="selectPageItems" v-slot:current-selection>
                 <td colspan="6">
                     <div class="text-sm text-center m-2">
-                        <span class="font-semibold">{{ selectedItems.length }}</span> items are selected.
+                        {{ $t(":count selected", { count: selectedItems.length }) }}
                         <button v-if="!selectAll && selectedItems.length !== data.total"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleSelectAll">
-                            Select all {{ data.total }} items
+                            {{ $t("Select all :count", { count: data.total }) }}
                         </button>
                         <button v-if="selectAll"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleClearSelection">
-                            Clear selection
+                            {{ $t("Clear selection") }}
                         </button>
                     </div>
                 </td>
@@ -98,7 +98,7 @@
                         </div>
                     </TableField>
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
-                        <Badge :text="row.enabled ? 'True' : 'False'" v-bind="enabledBadgeProps(row.enabled)" />
+                        <Badge :text="row.enabled ? $t(&quot;True&quot;) : $t(&quot;False&quot;)" v-bind="enabledBadgeProps(row.enabled)" />
                     </TableField>
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                         :text="row.contacts_count ?? 0" />
@@ -111,11 +111,11 @@
                                 <PencilSquareIcon v-if="permissions.update"
                                     @click="handleEditButtonClick(row.basic_dialer_contact_list_uuid)"
                                     class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
-                                    title="Edit" />
+                                    :title="$t(&quot;Edit&quot;)" />
                                 <TrashIcon v-if="permissions.destroy"
                                     @click="handleSingleItemDeleteRequest(row.basic_dialer_contact_list_uuid)"
                                     class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
-                                    title="Delete" />
+                                    :title="$t(&quot;Delete&quot;)" />
                             </div>
                         </template>
                     </TableField>
@@ -125,8 +125,8 @@
             <template #empty>
                 <div v-if="data.data.length === 0" class="text-center my-5">
                     <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
-                    <p class="mt-1 text-sm text-gray-500">Adjust your search and try again.</p>
+                    <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ $t("No results found") }}</h3>
+                    <p class="mt-1 text-sm text-gray-500">{{ $t("Adjust your search and try again.") }}</p>
                 </div>
             </template>
 
@@ -144,7 +144,7 @@
 
     <ConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
         @confirm="confirmAction" :header="confirmationHeader" :text="confirmationText"
-        :confirm-button-label="confirmationButtonLabel" cancel-button-label="Cancel" />
+        :confirm-button-label="confirmationButtonLabel" :cancel-button-label="$t(&quot;Cancel&quot;)" />
 
     <BasicDialerContactListForm :show="showForm" :options="itemOptions" :mode="formMode" :loading="loadingForm"
         :header="formHeader" @close="handleFormClose" @error="handleErrorResponse" @success="showNotification"
@@ -155,6 +155,7 @@
 </template>
 
 <script setup>
+import { trans } from "@i18n";
 import { computed, onMounted, ref } from "vue";
 import axios from "axios";
 import DataTable from "./components/general/DataTable.vue";
@@ -184,9 +185,9 @@ const selectedItems = ref([]);
 const selectPageItems = ref(false);
 const confirmationModalTrigger = ref(false);
 const confirmAction = ref(null);
-const confirmationHeader = ref("Are you sure?");
+const confirmationHeader = ref(trans("Are you sure?"));
 const confirmationText = ref("");
-const confirmationButtonLabel = ref("Continue");
+const confirmationButtonLabel = ref(trans("Continue"));
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(false);
@@ -213,14 +214,14 @@ const sortData = ref({ name: "name", order: "asc" });
 const bulkActions = computed(() => {
     const actions = [];
     if (permissions.destroy) {
-        actions.push({ id: "bulk_delete", label: "Delete", icon: "TrashIcon" });
+        actions.push({ id: "bulk_delete", label: trans("Delete"), icon: "TrashIcon" });
     }
     return actions;
 });
 
 const formHeader = computed(() => {
-    if (formMode.value === "create") return "Create Contact List";
-    return `Update Contact List - ${itemOptions.value?.item?.name || "Loading..."}`;
+    if (formMode.value === "create") return trans("Create Contact List");
+    return trans("Update Contact List - :name", { name: itemOptions.value?.item?.name || trans("Loading...") });
 });
 
 onMounted(() => {
@@ -316,9 +317,9 @@ const handleClearSelection = () => {
 
 const handleSingleItemDeleteRequest = (uuid) => {
     showConfirmation({
-        header: "Confirm Deletion",
-        text: "This action will permanently delete the selected contact list.",
-        button: "Delete",
+        header: trans("Confirm Deletion"),
+        text: trans("This action will permanently delete the selected contact list."),
+        button: trans("Delete"),
         action: () => executeBulkDelete([uuid]),
     });
 };
@@ -326,9 +327,9 @@ const handleSingleItemDeleteRequest = (uuid) => {
 const handleBulkActionRequest = (action) => {
     if (action === "bulk_delete") {
         showConfirmation({
-            header: "Confirm Deletion",
-            text: "This action will permanently delete the selected contact list(s).",
-            button: "Delete",
+            header: trans("Confirm Deletion"),
+            text: trans("This action will permanently delete the selected contact list(s)."),
+            button: trans("Delete"),
             action: () => executeBulkDelete(),
         });
     }

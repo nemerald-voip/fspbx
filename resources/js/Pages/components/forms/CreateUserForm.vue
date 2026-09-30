@@ -48,6 +48,7 @@
 
 
                             <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
+                                @mounted="(form) => form.disableValidation()"
                                 @error="handleError" @response="handleResponse" :display-errors="false" :default="{
                                     time_zone: options.item.time_zone,
                                     user_email: options.item.user_email,
@@ -231,6 +232,9 @@ const props = defineProps({
 const form$ = ref(null)
 
 const submitForm = async (FormData, form$) => {
+    form$.messageBag.clear()
+    Object.values(form$.elements$).forEach(clearErrorsRecursive)
+
     // Using form$.requestData will EXCLUDE conditional elements and it 
     // will submit the form as Content-Type: application/json . 
     const requestData = form$.requestData

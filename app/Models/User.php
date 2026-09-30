@@ -11,6 +11,8 @@ use App\Models\Traits\Fortify\EmailChallengable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class User extends Authenticatable
 {
@@ -193,6 +195,28 @@ class User extends Authenticatable
     public function user_groups()
     {
         return $this->hasMany(UserGroup::class, 'user_uuid', 'user_uuid');
+    }
+
+    public function roles(): BelongsToMany
+    {
+        return $this->belongsToMany(Groups::class, 'v_user_groups', 'user_uuid', 'group_uuid')
+            ->withPivot('domain_uuid');
+    }
+
+    public function scopeSearchIdentity(Builder $query, string $search, bool $includeUsername = false): Builder
+    {
+        $operator = $query->getConnection()->getDriverName() === 'pgsql' ? 'ilike' : 'like';
+        $term = '%'.$search.'%';
+
+        return $query->where(function (Builder $identity) use ($operator, $term, $includeUsername) {
+            $identity->where('user_email', $operator, $term)
+                ->orWhereHas('user_adv_fields', fn (Builder $names) => $names
+                    ->where('first_name', $operator, $term)->orWhere('last_name', $operator, $term));
+
+            if ($includeUsername) {
+                $identity->orWhere('username', $operator, $term);
+            }
+        });
     }
 
     /**

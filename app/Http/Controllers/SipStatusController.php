@@ -82,7 +82,7 @@ class SipStatusController extends Controller
     {
         if (! $this->canViewPage()) {
             return response()->json([
-                'errors' => ['auth' => ['Access denied.']],
+                'errors' => ['auth' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -93,7 +93,7 @@ class SipStatusController extends Controller
                 'summary' => [],
                 'profiles' => [],
                 'switch_status' => null,
-                'errors' => ['event_socket' => ['Unable to connect to the FreeSWITCH event socket.']],
+                'errors' => ['event_socket' => [__('Unable to connect to the FreeSWITCH event socket.')]],
             ], 503);
         }
 
@@ -125,7 +125,7 @@ class SipStatusController extends Controller
             logger('SipStatusController@data error: '.$e->getMessage().' at '.$e->getFile().':'.$e->getLine());
 
             return response()->json([
-                'errors' => ['server' => ['Unable to load SIP status.']],
+                'errors' => ['server' => [__('Unable to load SIP status.')]],
             ], 500);
         } finally {
             $eslService->disconnect();
@@ -136,7 +136,7 @@ class SipStatusController extends Controller
     {
         if (! $this->canRunCommands()) {
             return response()->json([
-                'errors' => ['auth' => ['Access denied.']],
+                'errors' => ['auth' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -156,7 +156,7 @@ class SipStatusController extends Controller
 
             return response()->json([
                 'messages' => [
-                    'success' => [filled($result) ? $result : 'Request successfully processed.'],
+                    'success' => [filled($result) ? $result : __('Request successfully processed.')],
                 ],
             ]);
         } catch (ValidationException $e) {
@@ -165,7 +165,7 @@ class SipStatusController extends Controller
             logger('SipStatusController@action error: '.$e->getMessage().' at '.$e->getFile().':'.$e->getLine());
 
             return response()->json([
-                'errors' => ['server' => [$e->getMessage() ?: 'Unable to process request.']],
+                'errors' => ['server' => [$e->getMessage() ?: __('Unable to process request.')]],
             ], 500);
         } finally {
             $eslService->disconnect();
@@ -213,7 +213,7 @@ class SipStatusController extends Controller
                     'data' => (string) $row->to,
                     'state' => (string) $row->state,
                     'action' => $this->canRunCommands() ? [
-                        'label' => 'Stop',
+                        'label' => __('Stop'),
                         'action' => 'killgw',
                         'profile' => (string) $row->profile,
                         'gateway' => $gateway['gateway_uuid'] ?? null,
@@ -342,7 +342,7 @@ class SipStatusController extends Controller
 
         if (! $profileName) {
             throw ValidationException::withMessages([
-                'profile' => ['Invalid SIP profile.'],
+                'profile' => [__('Invalid SIP profile.')],
             ]);
         }
 
@@ -364,7 +364,7 @@ class SipStatusController extends Controller
     {
         if (! $gatewayUuid) {
             throw ValidationException::withMessages([
-                'gateway' => ['Invalid gateway.'],
+                'gateway' => [__('Invalid gateway.')],
             ]);
         }
 
@@ -374,7 +374,7 @@ class SipStatusController extends Controller
 
         if (! $gateway) {
             throw ValidationException::withMessages([
-                'gateway' => ['Invalid gateway.'],
+                'gateway' => [__('Invalid gateway.')],
             ]);
         }
 
@@ -384,7 +384,7 @@ class SipStatusController extends Controller
     protected function executeCommand(FreeswitchEslService $eslService, string $command): string
     {
         if (! $eslService->isConnected()) {
-            throw new \RuntimeException('Unable to connect to the FreeSWITCH event socket.');
+            throw new \RuntimeException(__('Unable to connect to the FreeSWITCH event socket.'));
         }
 
         return trim((string) $eslService->executeCommand($command));
@@ -394,7 +394,7 @@ class SipStatusController extends Controller
     {
         return FusionCache::flushAll()
             ? '+OK cache flushed'
-            : 'No cache method is configured or the cache could not be flushed.';
+            : __('No cache method is configured or the cache could not be flushed.');
     }
 
     protected function xmlResponse($response): ?SimpleXMLElement

@@ -3,7 +3,7 @@
 
         <div class="m-3">
             <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-                <template #title>Statistics by Extension</template>
+                <template #title>{{ $t("Statistics by Extension") }}</template>
 
                 <template #action>
                     <button
@@ -14,7 +14,7 @@
                         class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <DocumentArrowDownIcon class="h-5 w-5" aria-hidden="true" />
-                        Export CSV
+                        {{ $t("Export CSV") }}
                         <Spinner class="ml-1" :show="isExporting" />
                     </button>
                 </template>
@@ -30,7 +30,7 @@
                             name="mobile-search-candidate"
                             id="mobile-search-candidate"
                             class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
-                            placeholder="Search"
+                            :placeholder="$t(&quot;Search&quot;)"
                             @keydown.enter="handleSearchButtonClick"
                         />
                         <input
@@ -39,7 +39,7 @@
                             name="desktop-search-candidate"
                             id="desktop-search-candidate"
                             class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
-                            placeholder="Search"
+                            :placeholder="$t(&quot;Search&quot;)"
                             @keydown.enter="handleSearchButtonClick"
                         />
                     </div>
@@ -69,31 +69,31 @@
 
                 <template #table-header>
                     <TableColumnHeader
-                        header="Extension"
+                        :header="$t(&quot;Extension&quot;)"
                         class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
                     />
                     <TableColumnHeader
-                        header="Total Calls"
+                        :header="$t(&quot;Total Calls&quot;)"
                         class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
                     />
                     <TableColumnHeader
-                        header="Inbound"
+                        :header="$t(&quot;Inbound&quot;)"
                         class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
                     />
                     <TableColumnHeader
-                        header="Outbound"
+                        :header="$t(&quot;Outbound&quot;)"
                         class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
                     />
                     <TableColumnHeader
-                        header="Missed"
+                        :header="$t(&quot;Missed&quot;)"
                         class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
                     />
                     <TableColumnHeader
-                        header="Total Talk"
+                        :header="$t(&quot;Total Talk&quot;)"
                         class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
                     />
                     <TableColumnHeader
-                        header="Avg Call Duration"
+                        :header="$t(&quot;Avg Call Duration&quot;)"
                         class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
                     />
                 </template>
@@ -134,9 +134,9 @@
                 <template #empty>
                     <div v-if="data.data.length === 0" class="text-center my-5">
                         <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                        <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
+                        <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ $t("No results found") }}</h3>
                         <p class="mt-1 text-sm text-gray-500">
-                            Adjust your search and try again.
+                            {{ $t("Adjust your search and try again.") }}
                         </p>
                     </div>
                 </template>
@@ -175,6 +175,7 @@
 </template>
 
 <script setup>
+import { trans } from "@i18n";
 import axios from 'axios';
 import { ref, onMounted } from "vue";
 import MainLayout from '../Layouts/MainLayout.vue'
@@ -314,7 +315,7 @@ const exportCsv = async () => {
             const text = await response.data.text();
             const json = JSON.parse(text);
 
-            showNotification('error', json.errors || json.messages || { request: ['Export failed'] });
+            showNotification('error', json.errors || json.messages || { request: [trans("Export failed")] });
             return;
         }
 
@@ -333,9 +334,9 @@ const exportCsv = async () => {
             try {
                 const text = await error.response.data.text();
                 const json = JSON.parse(text);
-                showNotification('error', json.errors || json.messages || { request: ['Export failed'] });
+                showNotification('error', json.errors || json.messages || { request: [trans("Export failed")] });
             } catch {
-                showNotification('error', { request: ['Export failed. Server returned a non-JSON error response.'] });
+                showNotification('error', { request: [trans("Export failed. Server returned a non-JSON error response.")] });
             }
         } else {
             handleErrorResponse(error);
@@ -360,13 +361,13 @@ const showNotification = (type, messages = null) => {
 const handleErrorResponse = (error) => {
     if (error.response) {
         if (error.response.data instanceof Blob) {
-            showNotification('error', { request: ['The server returned a file/blob error response instead of JSON.'] });
+            showNotification('error', { request: [trans("The server returned a file/blob error response instead of JSON.")] });
             return;
         }
 
         showNotification('error', error.response.data.errors || { request: [error.message] });
     } else if (error.request) {
-        showNotification('error', { request: ['No response received from server.'] });
+        showNotification('error', { request: [trans("No response received from server.")] });
         console.log(error.request);
     } else {
         showNotification('error', { request: [error.message] });

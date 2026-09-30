@@ -34,7 +34,7 @@
                     <!-- Play / Pause (big circle) -->
                     <button @click="toggle"
                         class="grid h-14 w-14 place-items-center rounded-full bg-slate-800 text-white hover:bg-slate-700 transition"
-                        :title="playing ? 'Pause' : 'Play'">
+                        :title="playing ? $t('Pause') : $t('Play')">
                         <svg v-if="!playing" class="h-6 w-6" viewBox="0 0 24 24">
                             <use href="#play" fill="currentColor" />
                         </svg>
@@ -58,7 +58,7 @@
                     <!-- Download (mobile) -->
                     <button @click="handleDownload" :disabled="isDownloading"
                         class="grid h-9 w-9 place-items-center rounded-full text-slate-600 hover:text-slate-800 disabled:opacity-50"
-                        title="Download">
+                        :title="$t('Download')">
                         <DownloadIcon v-if="!isDownloading" class="h-6 w-6 text-slate-600" aria-hidden="true" />
                         <Spinner :show="isDownloading"
                             class="h-6 w-6 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 active:bg-gray-300 active:duration-150 cursor-pointer" />
@@ -77,7 +77,7 @@
             <div class="flex items-center gap-4">
                 <!-- Rewind 10s -->
                 <button type="button" class="grid h-10 w-10 place-items-center text-slate-500 hover:text-slate-700"
-                    @click="seekBy(-10)" title="Back 10s">
+                    @click="seekBy(-10)" :title="$t('Back 10s')">
                     <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none">
                         <use href="#backward" stroke="currentColor" />
                     </svg>
@@ -86,7 +86,7 @@
                 <!-- Play / Pause -->
                 <button type="button"
                     class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-slate-800 text-white hover:bg-slate-700 transition"
-                    @click="toggle" :title="playing ? 'Pause' : 'Play'">
+                    @click="toggle" :title="playing ? $t('Pause') : $t('Play')">
                     <!-- Play -->
                     <svg v-if="!playing" class="h-6 w-6" viewBox="0 0 24 24" aria-hidden="true">
                         <!-- fill uses currentColor so the icon is white on the dark button -->
@@ -101,7 +101,7 @@
 
                 <!-- Forward 10s -->
                 <button type="button" class="grid h-10 w-10 place-items-center text-slate-500 hover:text-slate-700"
-                    @click="seekBy(10)" title="Forward 10s">
+                    @click="seekBy(10)" :title="$t('Forward 10s')">
                     <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                         <!-- color comes from current text color -->
                         <use href="#forward" stroke="currentColor" />
@@ -126,13 +126,13 @@
 
                     <!-- 1x speed -->
                     <button type="button" class="text-sm text-slate-600 hover:text-slate-800 select-none"
-                        @click="cycleRate" title="Playback speed">
+                        @click="cycleRate" :title="$t('Playback speed')">
                         {{ rate }}x
                     </button>
 
                     <!-- Volume button -->
                     <button type="button" class="grid h-9 w-9 place-items-center text-slate-600 hover:text-slate-800"
-                        @click="toggleMute" :title="muted || volume === 0 ? 'Unmute' : 'Mute'">
+                        @click="toggleMute" :title="muted || volume === 0 ? $t('Unmute') : $t('Mute')">
                         <!-- muted/off -->
                         <svg v-if="muted || volume === 0" class="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
                             <use href="#off" fill="currentColor" />
@@ -145,12 +145,12 @@
 
                     <!-- Volume slider -->
                     <input type="range" min="0" max="1" step="0.01" v-model.number="volume"
-                        class="w-14 sm:w-20 lg:w-28 accent-indigo-500" :title="`Volume: ${(volume * 100) | 0}%`" />
+                        class="w-14 sm:w-20 lg:w-28 accent-indigo-500" :title="$t('Volume: :volume%', { volume: (volume * 100) | 0 })" />
 
                     <!-- Download (desktop) -->
                     <button @click="handleDownload" :disabled="isDownloading"
                         class="ml-2 grid h-9 w-9 place-items-center rounded-full text-slate-600 hover:text-slate-800 disabled:opacity-50"
-                        title="Download">
+                        :title="$t('Download')">
                         <DownloadIcon v-if="!isDownloading" class="h-6 w-6" aria-hidden="true" />
                         <Spinner :show="isDownloading"
                             class="h-6 w-6 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 active:bg-gray-300 active:duration-150 cursor-pointer" />

@@ -15,31 +15,11 @@ class DynamicRouteService
         private readonly PhoneNumberService $phoneNumbers,
     ) {}
 
-    public const DESTINATION_TYPES_WITHOUT_TARGET = [
-        'check_voicemail',
-        'company_directory',
-        'hangup',
-    ];
-
-    public const DESTINATION_TYPES = [
-        'extensions',
-        'voicemails',
-        'ring_groups',
-        'ivrs',
-        'business_hours',
-        'time_conditions',
-        'contact_centers',
-        'bridges',
-        'faxes',
-        'call_flows',
-        'recordings',
-        'conferences',
-        'conference_centers',
-        'ai_agents',
-        'check_voicemail',
-        'company_directory',
-        'hangup',
-    ];
+    public static function destinationTypes(): array
+    {
+        // Dynamic routes cannot target another dynamic route.
+        return array_values(array_diff(CallRoutingOptionsService::destinationTypes(), ['dynamic_routes']));
+    }
 
     public function save(array $validated, ?DynamicRoute $dynamicRoute = null): DynamicRoute
     {
@@ -172,7 +152,7 @@ class DynamicRouteService
 
     public function destinationAction(string $type, mixed $target, string $domainName): array
     {
-        if (! in_array($type, self::DESTINATION_TYPES, true)) {
+        if (! in_array($type, self::destinationTypes(), true)) {
             throw ValidationException::withMessages([
                 'destination_type' => [__('Choose a supported destination type.')],
             ]);

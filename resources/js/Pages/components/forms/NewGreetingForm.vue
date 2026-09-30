@@ -19,24 +19,24 @@
                             <DialogTitle as="h3" class="mb-4 pr-8 text-base font-semibold leading-6 text-gray-900">
                                 {{ header || title }}
                             </DialogTitle>
-                            <p class="mt-1 mb-6 text-sm text-gray-500">Select a method for creating a new greeting.</p>
+                            <p class="mt-1 mb-6 text-sm text-gray-500">{{ $t('Select a method for creating a new greeting.') }}</p>
 
                             <div class="absolute right-0 top-0 pr-4 pt-4 sm:block">
                                 <button type="button"
                                     class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                     @click="closeModal">
-                                    <span class="sr-only">Close</span>
+                                    <span class="sr-only">{{ $t('Close') }}</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
 
-                            <Vueform ref="form$" :endpoint="false">
+                            <Vueform @mounted="(form) => form.disableValidation()" @submit="clearServerFormErrors" ref="form$" :endpoint="false">
 
                                 <!-- Responsive Radio Group -->
                                 <RadiogroupElement name="greeting_method" :items="[
-                                    { value: 'text-to-speech', label: 'Text-to-speech' },
-                                    { value: 'upload', label: 'Upload' },
-                                    { value: 'phone-call', label: 'Phone Call' },
+                                    { value: 'text-to-speech', label: $t('Text-to-speech') },
+                                    { value: 'upload', label: $t('Upload') },
+                                    { value: 'phone-call', label: $t('Phone Call') },
                                 ]" default="text-to-speech" :columns="12" :remove-class="{
                                     wrapper: ['flex-col', 'space-y-1', 'space-y-2', 'space-y-3', 'space-y-4']
                                 }" :add-class="{
@@ -44,14 +44,14 @@
                                 }" />
 
                                 <!-- Text-to-Speech Fields -->
-                                <TextareaElement name="input" label="Custom greeting message"
+                                <TextareaElement name="input" :label="$t('Custom greeting message')"
                                     :placeholder="sample_message" :rows="3" :columns="12" :floating="false"
                                     :error="errors?.input ? errors.input[0] : null"
                                     :conditions="[['greeting_method', '==', 'text-to-speech']]" />
 
-                                <SelectElement name="voice" label="Voice" :items="voices"
+                                <SelectElement name="voice" :label="$t('Voice')" :items="voices"
                                     :search="true" :native="false" input-type="search"
-                                    autocomplete="off" placeholder="Choose Voice" :floating="false"
+                                    autocomplete="off" :placeholder="$t('Choose Voice')" :floating="false"
                                     :default="props.default_voice" :columns="{
                                         sm: {
                                             container: 6,
@@ -59,9 +59,9 @@
                                     }" :error="errors?.voice ? errors.voice[0] : null"
                                     :conditions="[['greeting_method', '==', 'text-to-speech']]" />
 
-                                <SelectElement name="speed" label="Speed" :items="speeds"
+                                <SelectElement name="speed" :label="$t('Speed')" :items="speeds"
                                    :search="true" :native="false" input-type="search" :default="'1.00'"
-                                    autocomplete="off" placeholder="Choose Speed" :floating="false" :columns="{
+                                    autocomplete="off" :placeholder="$t('Choose Speed')" :floating="false" :columns="{
                                         sm: {
                                             container: 6,
                                         },
@@ -72,7 +72,7 @@
                                     :secondary="true" :loading="isFormSubmiting" :submits="false" :full="true"
                                     :columns="{ container: 12, sm: 4 }"
                                     :conditions="[['greeting_method', '==', 'text-to-speech']]">
-                                    Generate
+                                    {{ $t('Generate') }}
                                 </ButtonElement>
 
                                 <StaticElement name="audio_player" v-if="audioUrl" :columns="{ container: 12, sm: 8 }"
@@ -81,7 +81,7 @@
                                         <audio controls controlsList="nodownload" :src="audioUrl" class="h-10 min-w-0 flex-1"></audio>
                                         <button type="button" @click="downloadDraftGreeting" :disabled="isDownloading"
                                             class="grid h-10 w-10 flex-none place-items-center rounded-md text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                            title="Download draft recording" aria-label="Download draft recording">
+                                            :title="$t('Download draft recording')" :aria-label="$t('Download draft recording')">
                                             <DownloadIcon class="h-5 w-5" :class="{ 'animate-pulse': isDownloading }" aria-hidden="true" />
                                         </button>
                                     </div>
@@ -91,12 +91,12 @@
                                     :loading="isSaving" :submits="false" :full="true"
                                     :columns="{ container: 12, sm: 4 }"
                                     :conditions="[['greeting_method', '==', 'text-to-speech']]">
-                                    Apply
+                                    {{ $t('Apply') }}
                                 </ButtonElement>
 
                                 <!-- Upload Fields -->
                                 <FileElement name="upload_file" label="" accept=".wav, .mp3, .m4a"
-                                    description="Supported formats: WAV, MP3, or M4A" :upload-temp-endpoint="false"
+                                    :description="$t('Supported formats: WAV, MP3, or M4A')" :upload-temp-endpoint="false"
                                     :remove-temp-endpoint="false" :remove-endpoint="false" :drop="true" :add-classes="{
                                         FilePreview: {
                                             wrapper: 'bg-teal-50 border border-teal-200 rounded-md p-2 mt-3 shadow-sm',
@@ -111,7 +111,7 @@
                                     :loading="isFormSubmiting" :disabled="!fileToUpload || isFormSubmiting"
                                     :submits="false" :full="true" :columns="{ container: 12, sm: 4 }"
                                     :conditions="[['greeting_method', '==', 'upload']]">
-                                    Upload
+                                    {{ $t('Upload') }}
                                 </ButtonElement>
 
                                 <!-- Phone Call Instructions -->
@@ -119,7 +119,7 @@
                                     :conditions="[['greeting_method', '==', 'phone-call']]">
                                     <div class="mt-3">
                                         <p class="text-sm text-gray-500">
-                                            To record a new greeting using your phone, follow these steps:
+                                            {{ $t('To record a new greeting using your phone, follow these steps:') }}
                                         </p>
                                         <ul class="mt-2 text-sm text-gray-500 list-disc pl-5">
                                             <li v-for="(instruction, index) in phone_call_instructions" :key="index"
@@ -169,6 +169,8 @@
 </template>
 
 <script setup>
+import { clearServerFormErrors, showServerFormErrors } from '../../../composables/serverFormErrors.js';
+import { trans } from '@i18n';
 import { computed, ref } from 'vue';
 import { usePage } from '@inertiajs/vue3';
 import axios from 'axios';
@@ -231,8 +233,9 @@ const handleVueformFileUpload = (newValue) => {
 };
 
 const uploadFile = () => {
+    clearServerFormErrors(form$.value);
     if (!props.routes?.upload_greeting_route) {
-        errors.value = { server: ["Configuration error: Upload route is missing."] };
+        errors.value = { server: [trans('Configuration error: Upload route is missing.')] };
         return;
     }
 
@@ -263,8 +266,9 @@ const uploadFile = () => {
 };
 
 const generateGreeting = () => {
+    clearServerFormErrors(form$.value);
     if (!props.routes?.text_to_speech_route) {
-        errors.value = { server: ["Configuration error: Text-to-speech route is missing."] };
+        errors.value = { server: [trans('Configuration error: Text-to-speech route is missing.')] };
         return;
     }
 
@@ -297,6 +301,7 @@ const generateGreeting = () => {
 };
 
 const saveGreeting = () => {
+    clearServerFormErrors(form$.value);
     isSaving.value = true;
     errors.value = null;
 
@@ -354,8 +359,16 @@ const downloadDraftGreeting = async () => {
 };
 
 const handleFormErrorResponse = (error) => {
+    if (form$.value) {
+        const fieldErrors = { ...error.response?.data?.errors };
+        if (fieldErrors.file) {
+            fieldErrors.upload_file = fieldErrors.file;
+            delete fieldErrors.file;
+        }
+        showServerFormErrors({ data: { errors: fieldErrors } }, form$.value);
+    }
     if (error.request?.status == 419) {
-        errors.value = { request: ["Session expired. Reload the page"] };
+        errors.value = { request: [trans('Session expired. Reload the page')] };
     } else if (error.response) {
         if (error.response.data && error.response.data.errors) {
             errors.value = error.response.data.errors;

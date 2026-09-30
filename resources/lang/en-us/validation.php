@@ -102,6 +102,8 @@ return [
     'numeric' => 'The :attribute must be a number.',
     'password' => 'The password is incorrect.',
     'password.mixed' => 'The password must contain both uppercase and lowercase characters.',
+    'password.letters' => 'The password must contain at least one letter.',
+    'password.numbers' => 'The password must contain at least one number.',
     'password.symbols' => 'The password must include at least one symbol.',
     'password.uncompromised' => 'The given password has appeared in a data leak. Please choose a different password.',
     'present' => 'The :attribute field must be present.',
@@ -144,11 +146,7 @@ return [
     |
     */
 
-    'custom' => [
-        'attribute-name' => [
-            'rule-name' => 'custom-message',
-        ],
-    ],
+    'custom' => [],
 
     /*
     |--------------------------------------------------------------------------
@@ -161,6 +159,14 @@ return [
     |
     */
 
-    'attributes' => [],
+    'attributes' => [
+        'user_email' => 'email address',
+        'email' => 'email address',
+        'password' => 'password',
+        'password_confirmation' => 'password confirmation',
+        'token' => 'reset token',
+        'code' => 'verification code',
+        'recovery_code' => 'recovery code',
+    ],
 
 ];

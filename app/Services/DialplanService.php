@@ -283,11 +283,11 @@ class DialplanService
         $errors = [];
 
         if ($xml === '') {
-            return ['XML is required.'];
+            return [__('XML is required.')];
         }
 
         if ($this->containsDangerousXml($xml)) {
-            $errors[] = 'This XML contains a FreeSWITCH application that is not allowed.';
+            $errors[] = __('This XML contains a FreeSWITCH application that is not allowed.');
         }
 
         $previous = libxml_use_internal_errors(true);
@@ -297,8 +297,8 @@ class DialplanService
         if (!$loaded) {
             $firstError = libxml_get_errors()[0] ?? null;
             $errors[] = $firstError
-                ? trim("XML is invalid: line {$firstError->line}, {$firstError->message}")
-                : 'XML is invalid.';
+                ? __('XML is invalid: line :line, :message', ['line' => $firstError->line, 'message' => trim($firstError->message)])
+                : __('XML is invalid.');
             libxml_clear_errors();
             libxml_use_internal_errors($previous);
 
@@ -309,13 +309,13 @@ class DialplanService
         libxml_use_internal_errors($previous);
 
         if ($document->documentElement?->tagName !== 'extension') {
-            $errors[] = 'Dialplan XML must use an extension element as the root node.';
+            $errors[] = __('Dialplan XML must use an extension element as the root node.');
         }
 
         foreach (['action', 'anti-action'] as $tagName) {
             foreach ($document->getElementsByTagName($tagName) as $node) {
                 if ($this->containsDangerousApplication($node->getAttribute('application'))) {
-                    $errors[] = 'This XML contains a FreeSWITCH application that is not allowed.';
+                    $errors[] = __('This XML contains a FreeSWITCH application that is not allowed.');
                     break 2;
                 }
             }

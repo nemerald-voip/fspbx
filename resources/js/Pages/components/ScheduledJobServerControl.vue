@@ -16,10 +16,10 @@
                 <p class="mt-1 max-w-3xl text-xs text-gray-500">{{ state.reason }}</p>
                 <p class="mt-1 max-w-3xl text-xs text-gray-500">
                     <template v-if="compact">
-                        {{ $t('Directory synchronization runs here. Add a second server for redundancy to choose which one runs scheduled jobs.') }}
+                        {{ $t('Coordinated scheduled jobs run here. Add a second server for redundancy to choose which one runs these jobs.') }}
                     </template>
                     <template v-else>
-                        {{ $t('Only the selected server runs directory synchronization and other coordinated scheduled jobs, so the same records are never written twice.') }}
+                        {{ $t('All coordinated jobs use this global server selection. Changing it here changes it everywhere.') }}
                     </template>
                 </p>
             </div>
@@ -146,7 +146,7 @@
                         </label>
                         <div class="mt-1 flex flex-col gap-2 sm:flex-row">
                             <input id="scheduled-job-manual-endpoint" v-model.trim="manualEndpoint" type="url"
-                                :placeholder="$t('https://server-address')"
+                                placeholder="https://server-address"
                                 class="min-w-0 flex-1 rounded-md border-gray-300 py-1.5 text-sm focus:border-indigo-500 focus:ring-indigo-500" />
                             <button type="button" class="secondary-button" :disabled="working || !state.secret_configured" @click="discoverNodes">
                                 {{ discovering ? $t('Discovering…') : $t('Discover servers') }}
@@ -345,7 +345,12 @@ function candidateStatus(candidate) {
 }
 
 function executionLabel(execution) {
-    return execution.job_type === 'ldap_directory_sync' ? trans('LDAP directory sync') : execution.job_type
+    return ({
+        ldap_directory_sync: trans('LDAP directory sync'),
+        contact_center_callback: trans('Contact Center callback'),
+        contact_center_callback_cleanup: trans('Callback recording cleanup'),
+        contact_center_availability: trans('Agent availability initialization'),
+    })[execution.job_type] || execution.job_type
 }
 
 const formatDate = value => value ? new Date(value).toLocaleString() : ''

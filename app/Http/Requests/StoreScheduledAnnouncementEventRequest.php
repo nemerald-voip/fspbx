@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
+use App\Support\Localization\ValidationMessages;
 use Illuminate\Validation\Rule;
 
 class StoreScheduledAnnouncementEventRequest extends FormRequest
@@ -46,7 +47,7 @@ class StoreScheduledAnnouncementEventRequest extends FormRequest
     private function validateTimeOfDay(string $attribute, mixed $value, \Closure $fail): void
     {
         if ($this->normalizeTimeOfDay($value) === null) {
-            $fail('The time field must be a valid time.');
+            $fail(__('The time field must be a valid time.'));
         }
     }
 
@@ -65,5 +66,22 @@ class StoreScheduledAnnouncementEventRequest extends FormRequest
         }
 
         return null;
+    }
+
+    public function messages(): array
+    {
+        return ValidationMessages::common() + [
+            'timezone' => __('The :attribute must be a valid timezone.'),
+        ];
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'scheduled_announcement_schedule_uuid' => __('Schedule'),
+            'time_of_day' => __('Time'),
+            'weekdays' => __('Weekdays'),
+            'weekdays.*' => __('Weekday'),
+        ];
     }
 }

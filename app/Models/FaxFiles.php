@@ -55,7 +55,8 @@ class FaxFiles extends Model
 
         return Carbon::createFromTimestamp($this->fax_epoch, 'UTC')
             ->setTimezone($timeZone)
-            ->format('g:i:s A M d, Y');
+            ->locale(app()->getLocale())
+            ->translatedFormat('g:i:s A M d, Y');
     }
 
     public function getFaxCallerIdNumberFormattedAttribute()

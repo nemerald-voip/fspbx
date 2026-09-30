@@ -32,13 +32,13 @@ class ExtensionStatisticsExport implements FromCollection, WithHeadings
     public function headings(): array
     {
         return [
-            'Extension',
-            'Total Calls',
-            'Inbound',
-            'Outbound',
-            'Missed',
-            'Total Talk',
-            'Avg Call Duration',
+            __('Extension'),
+            __('Total Calls'),
+            __('Inbound'),
+            __('Outbound'),
+            __('Missed'),
+            __('Total Talk'),
+            __('Avg Call Duration'),
         ];
     }
 }

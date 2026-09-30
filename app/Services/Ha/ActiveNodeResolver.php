@@ -532,7 +532,7 @@ class ActiveNodeResolver
         }, 3);
     }
 
-    public function finishExecution(ScheduledJobExecution $execution, string $status = 'completed', ?string $message = null): void
+    public function finishExecution(ScheduledJobExecution $execution, string $status = 'completed', ?string $message = null, bool $finalizeHandoff = true): void
     {
         try {
             DB::transaction(function () use ($execution, $status, $message) {
@@ -548,7 +548,7 @@ class ActiveNodeResolver
             // Revoked workers cannot overwrite expired or completed records.
             return;
         }
-        $this->finalizePendingHandoff();
+        if ($finalizeHandoff) { $this->finalizePendingHandoff(); }
     }
 
     /**
@@ -866,6 +866,16 @@ class ActiveNodeResolver
 
     private function finalizeHandoff(ScheduledJobHandoff $handoff): ?ScheduledJobHandoff
     {
+        // Resource cleanup can require network I/O. Run it outside ownership
+        // locks, after draining has blocked new claims; recheck below before
+        // committing the transfer. Optional consumers register their own hook.
+        if ($this->localNodeId() === $handoff->from_node_id
+            && $this->generation() === (int) $handoff->expected_generation
+            && in_array($handoff->fresh()?->status, ['requested', 'draining'], true)) {
+            $drain = new \App\Events\ScheduledJobsDraining($handoff->from_node_id, (int) $handoff->expected_generation);
+            event($drain);
+            if (! $drain->ready) { return $handoff->fresh(); }
+        }
         return DB::transaction(function () use ($handoff) {
             $this->lockOwnershipSettings();
             $this->assertManagementWriter();

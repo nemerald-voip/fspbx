@@ -27,7 +27,24 @@ class SaveLetsEncryptSettingsRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'push_secret.min' => 'The peer push secret should be at least 16 characters.',
+            'required' => __('The :attribute field is required.'),
+            'string' => __('The :attribute must be a string.'),
+            'max.string' => __('The :attribute must not be greater than :max characters.'),
+            'email' => __('The :attribute must be a valid email address.'),
+            'boolean' => __('The :attribute field must be true or false.'),
+            'push_secret.min' => __('The peer push secret should be at least 16 characters.'),
+        ];
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'domain' => __('Hostnames (SANs)'),
+            'account_email' => __('ACME account email'),
+            'webroot' => __('ACME challenge webroot'),
+            'staging' => __('Use staging (test) directory'),
+            'auto_renew' => __('Auto-renew'),
+            'push_secret' => __('Peer push secret'),
         ];
     }
 
@@ -43,14 +60,14 @@ class SaveLetsEncryptSettingsRequest extends FormRequest
             ));
 
             if (empty($hosts)) {
-                $fail('At least one hostname is required.');
+                $fail(__('At least one hostname is required.'));
 
                 return;
             }
 
             foreach ($hosts as $host) {
                 if (! preg_match('/^(?=.{1,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i', $host)) {
-                    $fail("Invalid hostname: {$host}.");
+                    $fail(__('Invalid hostname: :hostname.', ['hostname' => $host]));
 
                     return;
                 }

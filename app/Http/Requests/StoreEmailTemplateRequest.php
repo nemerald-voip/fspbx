@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Models\EmailTemplate;
 use App\Services\EmailTemplateService;
 use Illuminate\Foundation\Http\FormRequest;
+use App\Support\Localization\ValidationMessages;
 use Illuminate\Validation\Rule;
 
 class StoreEmailTemplateRequest extends FormRequest
@@ -37,6 +38,27 @@ class StoreEmailTemplateRequest extends FormRequest
         ];
     }
 
+    public function messages(): array
+    {
+        return ValidationMessages::common();
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'domain_uuid' => __('Account'),
+            'base_template_uuid' => __('Template to override'),
+            'template_language' => __('Language'),
+            'template_category' => __('Category'),
+            'template_subcategory' => __('Subcategory'),
+            'template_subject' => __('Subject'),
+            'template_html' => __('HTML'),
+            'template_text' => __('Plain text'),
+            'template_enabled' => __('Status'),
+            'template_description' => __('Description'),
+        ];
+    }
+
     protected function isCreate(): bool
     {
         return ! ($this->route('email_template') instanceof EmailTemplate);
@@ -63,10 +85,10 @@ class StoreEmailTemplateRequest extends FormRequest
 
             if (! $domainUuid) {
                 if (! userCheckPermission('email_templates_manage_global')) {
-                    $validator->errors()->add('domain_uuid', 'Global overrides require global-template access.');
+                    $validator->errors()->add('domain_uuid', __('Global overrides require global-template access.'));
                 }
             } elseif ($domainUuid !== session('domain_uuid')) {
-                $validator->errors()->add('domain_uuid', 'Templates can only be created for the current account.');
+                $validator->errors()->add('domain_uuid', __('Templates can only be created for the current account.'));
             }
 
             $this->validateTemplateUniqueness($validator);
@@ -126,7 +148,7 @@ class StoreEmailTemplateRequest extends FormRequest
         if ($existing->exists()) {
             $validator->errors()->add(
                 'template_subcategory',
-                'A custom template already overrides this category, subcategory, language, and account.'
+                __('A custom template already overrides this category, subcategory, language, and account.')
             );
         }
     }
@@ -136,7 +158,7 @@ class StoreEmailTemplateRequest extends FormRequest
         $service = app(EmailTemplateService::class);
         foreach (['template_subject', 'template_html', 'template_text'] as $field) {
             if ($service->containsExecutableSyntax($this->input($field))) {
-                $validator->errors()->add($field, 'Blade is supported, but @php, raw PHP tags, and scripts are not allowed.');
+                $validator->errors()->add($field, __('Blade is supported, but @php, raw PHP tags, and scripts are not allowed.'));
             }
         }
     }

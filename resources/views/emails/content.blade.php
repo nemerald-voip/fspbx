@@ -1,1 +1,1 @@
-{!! $data['content'] !!}
+@include('emails.en-us.content')

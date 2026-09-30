@@ -3,10 +3,10 @@
 
     <div class="m-3">
         <DataTable @search-action="fetchData(1)" @reset-filters="resetFilters">
-            <template #title>PIN Numbers</template>
+            <template #title>{{ $t("PIN Numbers") }}</template>
 
             <template #subtitle>
-                Manage PIN numbers and account codes.
+                {{ $t("Manage PIN numbers and account codes.") }}
             </template>
 
             <template #filters>
@@ -18,7 +18,7 @@
                         v-model="filterData.search"
                         type="text"
                         class="block w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600"
-                        placeholder="Search"
+                        :placeholder="$t(&quot;Search&quot;)"
                         @keydown.enter="fetchData(1)"
                     />
                 </div>
@@ -29,9 +29,9 @@
                         class="block w-full rounded-md border-0 py-1.5 pl-3 pr-8 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600"
                         @change="fetchData(1)"
                     >
-                        <option value="">All states</option>
-                        <option value="true">Enabled</option>
-                        <option value="false">Disabled</option>
+                        <option value="">{{ $t("All states") }}</option>
+                        <option value="true">{{ $t("Enabled") }}</option>
+                        <option value="false">{{ $t("Disabled") }}</option>
                     </select>
                 </div>
             </template>
@@ -44,7 +44,7 @@
                         class="inline-flex items-center gap-1 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
                     >
                         <ArrowDownTrayIcon class="h-4 w-4" />
-                        Export
+                        {{ $t("Export") }}
                     </a>
 
                     <button
@@ -54,7 +54,7 @@
                         @click="openCreateModal"
                     >
                         <PlusIcon class="h-4 w-4" />
-                        Add
+                        {{ $t("Add") }}
                     </button>
                 </div>
             </template>
@@ -87,7 +87,7 @@
                             class="h-4 w-4 rounded border-gray-300 text-indigo-600 disabled:cursor-not-allowed disabled:opacity-50"
                         />
                         <button class="flex items-center" :class="{ 'ml-4': hasSelectableActions }" @click="setSort('pin_number')">
-                            <span class="mr-2">PIN Number</span>
+                            <span class="mr-2">{{ $t("PIN Number") }}</span>
                             <ChevronUpIcon v-if="sortData.name === 'pin_number' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
                             <ChevronDownIcon v-else-if="sortData.name === 'pin_number' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
                         </button>
@@ -95,15 +95,15 @@
                 </TableColumnHeader>
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <button class="flex items-center" @click="setSort('accountcode')">
-                        <span class="mr-2">Account Code</span>
+                        <span class="mr-2">{{ $t("Account Code") }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'accountcode' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'accountcode' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
                     </button>
                 </TableColumnHeader>
-                <TableColumnHeader header="State" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t(&quot;State&quot;)" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <button class="flex items-center" @click="setSort('description')">
-                        <span class="mr-2">Description</span>
+                        <span class="mr-2">{{ $t("Description") }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'description' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'description' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
                     </button>
@@ -114,20 +114,20 @@
             <template v-if="selectPageItems" #current-selection>
                 <td :colspan="columnCount">
                     <div class="m-2 text-center text-sm">
-                        <span class="font-semibold">{{ selectedItems.length }}</span> PIN numbers are selected.
+                        {{ $t(':count selected', { count: selectedItems.length }) }}
                         <button
                             v-if="!selectAll && selectedItems.length !== data.total"
                             class="rounded px-2 py-2 text-blue-500 transition duration-500 ease-in-out hover:bg-blue-200 hover:text-blue-500 focus:bg-blue-200 focus:outline-none focus:ring-1 focus:ring-blue-300"
                             @click="selectAllMatching"
                         >
-                            Select all {{ data.total }} PIN numbers
+                            {{ $t('Select all :count', { count: data.total }) }}
                         </button>
                         <button
                             v-if="selectAll"
                             class="rounded px-2 py-2 text-blue-500 transition duration-500 ease-in-out hover:bg-blue-200 hover:text-blue-500 focus:bg-blue-200 focus:outline-none focus:ring-1 focus:ring-blue-300"
                             @click="clearSelection"
                         >
-                            Clear selection
+                            {{ $t("Clear selection") }}
                         </button>
                     </div>
                 </td>
@@ -158,18 +158,18 @@
                     </TableField>
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
-                        {{ row.accountcode || "No account code" }}
+                        {{ row.accountcode || $t("No account code") }}
                     </TableField>
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
                         <button v-if="permissions.update" type="button" @click="confirmAction('toggle', [row.pin_number_uuid])">
-                            <Badge :text="row.enabled === 'true' ? 'Enabled' : 'Disabled'" v-bind="enabledBadge(row.enabled)" />
+                            <Badge :text="row.enabled === 'true' ? $t(&quot;Enabled&quot;) : $t(&quot;Disabled&quot;)" v-bind="enabledBadge(row.enabled)" />
                         </button>
-                        <Badge v-else :text="row.enabled === 'true' ? 'Enabled' : 'Disabled'" v-bind="enabledBadge(row.enabled)" />
+                        <Badge v-else :text="row.enabled === 'true' ? $t(&quot;Enabled&quot;) : $t(&quot;Disabled&quot;)" v-bind="enabledBadge(row.enabled)" />
                     </TableField>
 
                     <TableField class="max-w-xl px-2 py-2 text-sm text-gray-500">
-                        <span class="line-clamp-2">{{ row.description || "No description" }}</span>
+                        <span class="line-clamp-2">{{ row.description || $t("No description") }}</span>
                     </TableField>
 
                     <TableField v-if="hasRowActions" class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
@@ -179,7 +179,7 @@
                                     v-if="permissions.update"
                                     type="button"
                                     class="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
-                                    title="Edit"
+                                    :title="$t(&quot;Edit&quot;)"
                                     @click="openEditModal(row.pin_number_uuid)"
                                 >
                                     <PencilSquareIcon class="h-5 w-5" />
@@ -188,7 +188,7 @@
                                     v-if="permissions.copy"
                                     type="button"
                                     class="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
-                                    title="Copy"
+                                    :title="$t(&quot;Copy&quot;)"
                                     @click="confirmAction('copy', [row.pin_number_uuid])"
                                 >
                                     <DocumentDuplicateIcon class="h-5 w-5" />
@@ -197,7 +197,7 @@
                                     v-if="permissions.destroy"
                                     type="button"
                                     class="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-red-600"
-                                    title="Delete"
+                                    :title="$t(&quot;Delete&quot;)"
                                     @click="confirmAction('delete', [row.pin_number_uuid])"
                                 >
                                     <TrashIcon class="h-5 w-5" />
@@ -210,7 +210,7 @@
 
             <template #empty>
                 <div v-if="!loading && data.data.length === 0" class="px-6 py-8 text-center text-sm text-gray-500">
-                    No PIN numbers found.
+                    {{ $t("No PIN numbers found.") }}
                 </div>
             </template>
 
@@ -251,7 +251,7 @@
         :header="confirmation.header"
         :text="confirmation.text"
         :confirm-button-label="confirmation.button"
-        cancel-button-label="Cancel"
+        :cancel-button-label="$t(&quot;Cancel&quot;)"
         :loading="confirmation.loading"
         :color="confirmation.color"
         @close="closeConfirmation"
@@ -262,6 +262,7 @@
 </template>
 
 <script setup>
+import { trans } from "@i18n";
 import { computed, onMounted, ref, watch } from "vue";
 import axios from "axios";
 import MainLayout from "../Layouts/MainLayout.vue";
@@ -337,9 +338,9 @@ const confirmation = ref({
     loading: false,
     action: null,
     items: [],
-    header: "Confirm Action",
+    header: trans("Confirm Action"),
     text: "",
-    button: "Continue",
+    button: trans("Continue"),
     color: "indigo",
 });
 
@@ -352,15 +353,15 @@ const bulkActions = computed(() => {
     const actions = [];
 
     if (permissions.copy) {
-        actions.push({ id: "copy", label: "Copy", icon: "DocumentDuplicateIcon" });
+        actions.push({ id: "copy", label: trans("Copy"), icon: "DocumentDuplicateIcon" });
     }
 
     if (permissions.update) {
-        actions.push({ id: "toggle", label: "Toggle Enabled", icon: "PencilSquareIcon" });
+        actions.push({ id: "toggle", label: trans("Toggle Enabled"), icon: "PencilSquareIcon" });
     }
 
     if (permissions.destroy) {
-        actions.push({ id: "delete", label: "Delete", icon: "TrashIcon" });
+        actions.push({ id: "delete", label: trans("Delete"), icon: "TrashIcon" });
     }
 
     return actions;
@@ -368,10 +369,10 @@ const bulkActions = computed(() => {
 
 const formHeader = computed(() => {
     if (formMode.value === "create") {
-        return "Create PIN Number";
+        return trans("Create PIN Number");
     }
 
-    return `Update PIN Number - ${itemOptions.value?.item?.pin_number || "Loading..."}`;
+    return trans("Update PIN Number - :name", { name: itemOptions.value?.item?.pin_number || trans("Loading...") });
 });
 
 onMounted(() => {
@@ -546,23 +547,23 @@ const handleBulkAction = (action) => {
 
 const confirmAction = (action, items) => {
     const copy = {
-        header: "Confirm Copy",
-        text: "Copy the selected PIN number(s)?",
-        button: "Copy",
+        header: trans("Confirm Copy"),
+        text: trans("Copy the selected PIN number(s)?"),
+        button: trans("Copy"),
         color: "indigo",
     };
 
     const toggle = {
-        header: "Confirm Toggle",
-        text: "Toggle enabled for the selected PIN number(s)?",
-        button: "Toggle",
+        header: trans("Confirm Toggle"),
+        text: trans("Toggle enabled for the selected PIN number(s)?"),
+        button: trans("Toggle"),
         color: "indigo",
     };
 
     const del = {
-        header: "Confirm Deletion",
-        text: "This action will permanently delete the selected PIN number(s).",
-        button: "Delete",
+        header: trans("Confirm Deletion"),
+        text: trans("This action will permanently delete the selected PIN number(s)."),
+        button: trans("Delete"),
         color: "red",
     };
 

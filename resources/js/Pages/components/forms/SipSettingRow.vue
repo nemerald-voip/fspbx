@@ -33,7 +33,7 @@
                     :inputmode="definition?.type === 'number' ? 'numeric' : undefined"
                     :disabled="!canEdit"
                     spellcheck="false"
-                    placeholder="value"
+                    :placeholder="$t('Value')"
                     class="block w-full rounded-md border-0 py-1.5 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 disabled:bg-gray-50 disabled:text-gray-500"
                 />
             </div>
@@ -48,7 +48,7 @@
                 <input
                     v-model="setting.sip_profile_setting_description"
                     :disabled="!canEdit"
-                    placeholder="Add a note"
+                    :placeholder="$t('Add a note')"
                     class="block w-full rounded-md border-0 bg-transparent py-1.5 text-sm text-gray-600 ring-1 ring-inset ring-transparent placeholder:text-gray-400 hover:ring-gray-200 focus:bg-white focus:ring-2 focus:ring-inset focus:ring-indigo-600 disabled:text-gray-400"
                 />
             </div>
@@ -59,7 +59,7 @@
                     v-if="canRemove"
                     type="button"
                     class="rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-red-600"
-                    title="Remove"
+                    :title="$t('Remove')"
                     @click="emit('remove')"
                 >
                     <TrashIcon class="h-4 w-4" />
@@ -68,7 +68,7 @@
         </div>
 
         <!-- Documentation for known parameters -->
-        <p v-if="definition" class="px-1 text-xs text-gray-400">{{ definition.description }}</p>
+        <p v-if="definition" class="px-1 text-xs text-gray-400">{{ definition.translatedDescription }}</p>
         <p v-if="hasError" class="px-1 text-xs text-red-600">{{ error }}</p>
     </div>
 </template>

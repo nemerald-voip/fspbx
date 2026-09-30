@@ -50,6 +50,8 @@ class RingGroupsController extends Controller
             return redirect('/');
         }
 
+        abort_unless(session('domain_uuid'), 403);
+
         return Inertia::render(
             $this->viewName,
             [
@@ -74,11 +76,13 @@ class RingGroupsController extends Controller
      */
     public function getData()
     {
+        abort_unless(userCheckPermission('ring_group_view') && session('domain_uuid'), 403);
+
         $perPage = fspbx_pagination_per_page();
         $currentDomain = session('domain_uuid');
 
         $items = QueryBuilder::for(RingGroups::class)
-            // only voicemails in the current domain
+            // Only ring groups in the current account.
             ->where('domain_uuid', $currentDomain)
             ->select(
                 'ring_group_uuid',
@@ -136,11 +140,18 @@ class RingGroupsController extends Controller
 
     public function getItemOptions()
     {
+        $domain_uuid = session('domain_uuid');
+        $item_uuid = request('item_uuid');
+
+        abort_unless($domain_uuid && userCheckPermission($item_uuid ? 'ring_group_edit' : 'ring_group_add'), 403);
+        abort_if(request('domain_uuid') !== null && request('domain_uuid') !== $domain_uuid, 403);
+
+        // Resolve ownership before loading editor options or entering the generic error handler.
+        $item = $item_uuid
+            ? $this->model::where('domain_uuid', $domain_uuid)->whereKey($item_uuid)->firstOrFail()
+            : $this->model;
+
         try {
-
-            $domain_uuid = request('domain_uuid') ?? session('domain_uuid');
-            $item_uuid = request('item_uuid'); // Retrieve item_uuid from the request
-
             $call_distributions = [
                 [
                     'value' => 'enterprise',
@@ -227,9 +238,7 @@ class RingGroupsController extends Controller
 
             // Check if item_uuid exists to find an existing model
             if ($item_uuid) {
-                // Find existing item by item_uuid
-                $item = $this->model::where($this->model->getKeyName(), $item_uuid)
-                    ->with(['destinations' => function ($query) {
+                $item->load(['destinations' => function ($query) {
                         $query
                             ->leftJoin('v_extensions', function ($join) {
                                 $join->on('v_ring_group_destinations.destination_number', '=', 'v_extensions.extension')
@@ -253,14 +262,7 @@ class RingGroupsController extends Controller
                             // same deterministic order here
                             ->orderBy('v_ring_group_destinations.destination_delay', 'asc')
                             ->orderBy('v_ring_group_destinations.ring_group_destination_uuid', 'asc');
-                    }])
-
-                    ->first();
-
-                // If a model exists, use it; otherwise, create a new one
-                if (!$item) {
-                    throw new \Exception("Failed to fetch item details. Item not found");
-                }
+                    }]);
 
                 $item->append([
                     'timeout_target_uuid',
@@ -295,7 +297,6 @@ class RingGroupsController extends Controller
 
 
                 // Create a new model if item_uuid is not provided
-                $item = $this->model;
                 $item->ring_group_extension = $item->generateUniqueSequenceNumber();
 
                 $routes = array_merge($routes, [
@@ -532,6 +533,8 @@ class RingGroupsController extends Controller
             ], 403);
         }
 
+        abort_unless(session('domain_uuid'), 403);
+
         try {
             DB::beginTransaction();
 
@@ -556,7 +559,7 @@ class RingGroupsController extends Controller
             }
 
             // Reload XML from FreeSWITCH
-            $freeSwitchService = new FreeswitchEslService();
+            $freeSwitchService = app(FreeswitchEslService::class);
             $command = 'bgapi reloadxml';
             $result = $freeSwitchService->executeCommand($command);
 
@@ -577,13 +580,11 @@ class RingGroupsController extends Controller
 
     public function selectAll()
     {
+        abort_unless(userCheckPermission('ring_group_view') && session('domain_uuid'), 403);
+
         try {
-            if (request()->get('showGlobal')) {
-                $uuids = $this->model::get($this->model->getKeyName())->pluck($this->model->getKeyName());
-            } else {
-                $uuids = $this->model::where('domain_uuid', session('domain_uuid'))
-                    ->get($this->model->getKeyName())->pluck($this->model->getKeyName());
-            }
+            $uuids = $this->model::where('domain_uuid', session('domain_uuid'))
+                ->pluck($this->model->getKeyName());
 
             // Return a JSON response indicating success
             return response()->json([
@@ -608,6 +609,8 @@ class RingGroupsController extends Controller
      */
     public function duplicate(Request $request)
     {
+        abort_unless(session('domain_uuid'), 403);
+
         // 1. Validate Input
         $request->validate([
             'uuid' => 'required|uuid|exists:v_ring_groups,ring_group_uuid',

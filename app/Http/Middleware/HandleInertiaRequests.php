@@ -4,7 +4,6 @@ namespace App\Http\Middleware;
 
 use Inertia\Middleware;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 use App\Support\Localization\LocaleRegistry;
 
@@ -52,8 +51,6 @@ class HandleInertiaRequests extends Middleware
 
             'menus' => Session::get('menu'),
 
-            'menuUsesCatalogTranslations' => fn() => $this->menuUsesCatalogTranslations(),
-
             'domainSelectPermission' => Session::get('domain_select'),
 
             'selectedDomain' => Session::get('domain_description'),
@@ -77,24 +74,6 @@ class HandleInertiaRequests extends Middleware
                 'error' =>  fn() => $request->session()->get('error'),
             ],
         ]);
-    }
-
-    private function menuUsesCatalogTranslations(): bool
-    {
-        if (Session::has('user.menu_uses_catalog_translations')) {
-            return (bool) Session::get('user.menu_uses_catalog_translations');
-        }
-
-        $menuUuid = Session::get('user.menu_uuid');
-        $usesCatalog = $menuUuid
-            && DB::table('v_menus')
-                ->where('menu_uuid', $menuUuid)
-                ->where('menu_name', 'fspbx')
-                ->exists();
-
-        Session::put('user.menu_uses_catalog_translations', (bool) $usesCatalog);
-
-        return (bool) $usesCatalog;
     }
 
     public function getPermissions()

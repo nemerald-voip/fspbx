@@ -23,7 +23,24 @@ class UpdateRecordingRequest extends FormRequest
         return [
             'recording_name' => ['sometimes', 'required', 'string', 'max:255'],
             'recording_description' => ['sometimes', 'nullable', 'string'],
-            'file' => ['sometimes', 'required', 'file', 'max:51200', 'mimetypes:audio/wav,audio/x-wav,audio/mpeg,audio/mp4,audio/x-m4a,audio/ogg,audio/flac,audio/x-flac,video/mp4'],
+            'file' => ['sometimes', 'required', 'file', 'max:51200', 'mimes:wav,mp3,m4a'],
+        ];
+    }
+
+    public function bodyParameters(): array
+    {
+        return [
+            'recording_name' => [
+                'description' => 'Optional recording display name.',
+                'example' => 'Updated Main Menu Greeting',
+            ],
+            'recording_description' => [
+                'description' => 'Optional description; may be null.',
+                'example' => 'Updated automatically',
+            ],
+            'file' => [
+                'description' => 'Optional WAV, MP3, or M4A audio file. Maximum size: 50 MB.',
+            ],
         ];
     }
 }

@@ -452,7 +452,7 @@ import MainLayout from "../Layouts/MainLayout.vue";
 import Notification from "./components/notifications/Notification.vue";
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import { TrashIcon } from '@heroicons/vue/24/outline';
-import { trans } from 'laravel-vue-i18n';
+import { trans } from '@i18n';
 // import Pusher from 'pusher-js';
 
 // --- Props (from Laravel/Inertia) ---

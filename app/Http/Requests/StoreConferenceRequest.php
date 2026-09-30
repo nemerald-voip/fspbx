@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Rules\UniqueExtension;
 use Illuminate\Foundation\Http\FormRequest;
+use App\Support\Localization\ValidationMessages;
 
 class StoreConferenceRequest extends FormRequest
 {
@@ -42,5 +43,26 @@ class StoreConferenceRequest extends FormRequest
     protected function conferenceUuid(): ?string
     {
         return null;
+    }
+
+    public function messages(): array
+    {
+        return ValidationMessages::common();
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'conference_name' => __('Name'),
+            'conference_extension' => __('Extension'),
+            'conference_pin_number' => __('PIN Number'),
+            'conference_profile' => __('Profile'),
+            'conference_flags' => __('Flags'),
+            'conference_email_address' => __('Email Address'),
+            'conference_account_code' => __('Account Code'),
+            'conference_order' => __('Order'),
+            'conference_description' => __('Description'),
+            'conference_enabled' => __('Conference Enabled'),
+        ];
     }
 }

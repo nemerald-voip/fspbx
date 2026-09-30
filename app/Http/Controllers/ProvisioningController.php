@@ -173,20 +173,20 @@ class ProvisioningController extends Controller
     {
         if (!userCheckPermission('device_provisioning_preview')) {
             return response()->json([
-                'errors' => ['authorization' => ['Access denied.']],
+                'errors' => ['authorization' => [__('Access denied.')]],
             ], 403);
         }
 
         if (!$this->canAccessDeviceForPreview($device)) {
             return response()->json([
-                'errors' => ['device' => ['Device not found.']],
+                'errors' => ['device' => [__('Device not found.')]],
             ], 404);
         }
 
         $tpl = $this->resolveTemplateForDevice($device);
         if (!$tpl) {
             return response()->json([
-                'errors' => ['template' => ['No provisioning template is assigned to this device.']],
+                'errors' => ['template' => [__('No provisioning template is assigned to this device.')]],
             ], 404);
         }
 

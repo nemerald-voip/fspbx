@@ -1,7 +1,7 @@
 <template>
-    <AddEditItemModal :show="show" :header="header" :loading="loading" @close="emit('close')">
+    <AddEditItemModal :show="show" :header="header || $t('PIN Number')" :loading="loading" @close="emit('close')">
         <template #modal-body>
-            <Vueform
+            <Vueform :locale="formLocale" @mounted="form => form.disableValidation()"
                 ref="form$"
                 :endpoint="submitForm"
                 :display-errors="false"
@@ -12,48 +12,49 @@
             >
                 <TextElement
                     name="pin_number"
-                    label="PIN Number"
-                    placeholder="Enter PIN number"
+                    :label="$t(&quot;PIN Number&quot;)"
+                    :placeholder="$t(&quot;Enter PIN number&quot;)"
                     :floating="false"
-                    :rules="['required', 'max:255']"
                 />
 
                 <TextElement
                     name="accountcode"
-                    label="Account Code"
-                    placeholder="Optional account code"
+                    :label="$t(&quot;Account Code&quot;)"
+                    :placeholder="$t(&quot;Optional account code&quot;)"
                     :floating="false"
-                    :rules="['max:255']"
                 />
 
                 <ToggleElement
                     name="enabled"
-                    text="Enabled"
+                    :text="$t(&quot;Enabled&quot;)"
                     true-value="true"
                     false-value="false"
-                    :labels="{ on: 'On', off: 'Off' }"
+                    :labels="{ on: $t(&quot;On&quot;), off: $t(&quot;Off&quot;) }"
                     label="&nbsp;"
                 />
 
                 <TextareaElement
                     name="description"
-                    label="Description"
+                    :label="$t(&quot;Description&quot;)"
                     :floating="false"
                     :rows="3"
-                    :rules="['max:255']"
                 />
 
                 <GroupElement name="button_container" />
 
-                <ButtonElement name="submit" button-label="Save" :submits="true" align="right" />
+                <ButtonElement name="submit" :button-label="$t(&quot;Save&quot;)" :submits="true" align="right" />
             </Vueform>
         </template>
     </AddEditItemModal>
 </template>
 
 <script setup>
+import { useVueformLocale } from "../../../composables/useVueformLocale.js";
+import { trans } from "@i18n";
 import { computed, ref } from "vue";
 import AddEditItemModal from "../modal/AddEditItemModal.vue";
+
+const formLocale = useVueformLocale();
 
 const props = defineProps({
     show: Boolean,
@@ -61,7 +62,7 @@ const props = defineProps({
     loading: Boolean,
     header: {
         type: String,
-        default: "PIN Number",
+        default: "",
     },
     mode: {
         type: String,
@@ -81,6 +82,8 @@ const defaultValues = computed(() => ({
 }));
 
 const submitForm = async (FormData, form$) => {
+    form$.messageBag.clear();
+    Object.values(form$.elements$).forEach(clearErrorsRecursive);
     const route = props.mode === "create"
         ? props.options.routes.store_route
         : props.options.routes.update_route;
@@ -130,6 +133,6 @@ const handleError = (error, details, form$) => {
         return;
     }
 
-    form$.messageBag.append("Could not submit form");
+    form$.messageBag.append(trans("Could not submit form"));
 };
 </script>

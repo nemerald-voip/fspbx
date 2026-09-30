@@ -16,8 +16,8 @@ class FaxInTransit extends BaseMailable
     public function content(): Content
     {
         return $this->databaseTemplateContent(new Content(
-            view: 'emails.fax.in-transit',
-            text: 'emails.fax.in-transit-text',
+            view: 'emails.en-us.fax.in-transit',
+            text: 'emails.en-us.fax.in-transit-text',
         ));
     }
 }

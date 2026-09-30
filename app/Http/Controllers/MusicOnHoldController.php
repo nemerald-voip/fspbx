@@ -61,7 +61,7 @@ class MusicOnHoldController extends Controller
         $stream = $service->save($request->validated());
 
         return response()->json([
-            'messages' => ['success' => ['Music on hold stream created.']],
+            'messages' => ['success' => [__('Music on hold stream created.')]],
             'music_on_hold_uuid' => $stream->music_on_hold_uuid,
         ], 201);
     }
@@ -73,7 +73,7 @@ class MusicOnHoldController extends Controller
         $service->save($request->validated(), $music_on_hold);
 
         return response()->json([
-            'messages' => ['success' => ['Music on hold stream updated.']],
+            'messages' => ['success' => [__('Music on hold stream updated.')]],
         ]);
     }
 
@@ -82,7 +82,7 @@ class MusicOnHoldController extends Controller
         $stream = $service->upload($request->validated(), $request->file('file'));
 
         return response()->json([
-            'messages' => ['success' => ['File uploaded.']],
+            'messages' => ['success' => [__('File uploaded.')]],
             'music_on_hold_uuid' => $stream->music_on_hold_uuid,
         ]);
     }
@@ -90,7 +90,7 @@ class MusicOnHoldController extends Controller
     public function reload(MusicOnHoldService $service): JsonResponse
     {
         if (! userCheckPermission('music_on_hold_edit')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $result = $service->reloadLocalStream();
@@ -105,18 +105,21 @@ class MusicOnHoldController extends Controller
     public function tenantSettings(Request $request, MusicOnHoldService $service): JsonResponse
     {
         if (! userCheckPermission('music_on_hold_edit')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $validated = $request->validate([
             'mode' => ['required', Rule::in(['stream', 'beeps', 'silence'])],
             'stream_uuid' => ['nullable', 'uuid', 'required_if:mode,stream'],
+        ], \App\Support\Localization\ValidationMessages::common(), [
+            'mode' => __('Music on Hold'),
+            'stream_uuid' => __('Stream'),
         ]);
 
         $service->applyTenantHoldMusic($validated);
 
         return response()->json([
-            'messages' => ['success' => ['Tenant music on hold updated.']],
+            'messages' => ['success' => [__('Tenant music on hold updated.')]],
         ]);
     }
 
@@ -126,15 +129,15 @@ class MusicOnHoldController extends Controller
         $purpose = $request->input('purpose');
 
         if ($itemUuid && ! userCheckPermission('music_on_hold_edit')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         if (! $itemUuid && $purpose === 'tenant_settings' && ! userCheckPermission('music_on_hold_edit')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         if (! $itemUuid && $purpose !== 'tenant_settings' && ! userCheckPermission('music_on_hold_add')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $item = $itemUuid
@@ -178,7 +181,7 @@ class MusicOnHoldController extends Controller
     public function getData(Request $request, MusicOnHoldService $service)
     {
         if (! userCheckPermission('music_on_hold_view')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $tenantSettings = $service->tenantHoldMusicSettings();
@@ -206,21 +209,21 @@ class MusicOnHoldController extends Controller
     public function selectAll(Request $request, MusicOnHoldService $service): JsonResponse
     {
         if (! userCheckPermission('music_on_hold_view')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         return response()->json([
             'items' => $this->baseQuery($request, $service)
                 ->defaultSort('music_on_hold_name')
                 ->pluck('music_on_hold_uuid'),
-            'messages' => ['success' => ['All matching streams selected.']],
+            'messages' => ['success' => [__('All matching streams selected.')]],
         ]);
     }
 
     public function bulkDelete(Request $request, MusicOnHoldService $service): JsonResponse
     {
         if (! userCheckPermission('music_on_hold_delete')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $items = collect($request->input('items', []))
@@ -228,7 +231,7 @@ class MusicOnHoldController extends Controller
             ->values();
 
         if ($items->isEmpty()) {
-            return response()->json(['messages' => ['error' => ['No streams selected.']]], 422);
+            return response()->json(['messages' => ['error' => [__('No streams selected.')]]], 422);
         }
 
         $streams = $this->manageableQuery($service)
@@ -238,19 +241,22 @@ class MusicOnHoldController extends Controller
         $deleted = $service->deleteStreams($streams);
 
         return response()->json([
-            'messages' => ['success' => ["Deleted {$deleted} music on hold stream(s)."]],
+            'messages' => ['success' => [trans_choice('{1} Deleted :count music on hold stream.|[0,*] Deleted :count music on hold streams.', $deleted)]],
         ]);
     }
 
     public function deleteFile(Request $request, MusicOnHoldService $service): JsonResponse
     {
         if (! userCheckPermission('music_on_hold_delete')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $validated = $request->validate([
             'music_on_hold_uuid' => ['required', 'uuid'],
             'file' => ['required', 'string'],
+        ], \App\Support\Localization\ValidationMessages::common(), [
+            'music_on_hold_uuid' => __('Stream'),
+            'file' => __('Audio File'),
         ]);
 
         $stream = $this->manageableQuery($service)
@@ -259,12 +265,12 @@ class MusicOnHoldController extends Controller
 
         if (! $service->deleteFile($stream, $validated['file'])) {
             return response()->json([
-                'messages' => ['error' => ['File not found.']],
+                'messages' => ['error' => [__('File not found.')]],
             ], 404);
         }
 
         return response()->json([
-            'messages' => ['success' => ['File deleted.']],
+            'messages' => ['success' => [__('File deleted.')]],
         ]);
     }
 
@@ -356,7 +362,7 @@ class MusicOnHoldController extends Controller
         return [
             'music_on_hold_uuid' => $stream->music_on_hold_uuid,
             'domain_uuid' => $stream->domain_uuid,
-            'domain_label' => $stream->domain?->domain_description ?: $stream->domain?->domain_name ?: 'Global',
+            'domain_label' => $stream->domain?->domain_description ?: $stream->domain?->domain_name ?: __('Global'),
             'music_on_hold_name' => $stream->music_on_hold_name,
             'music_on_hold_path' => $service->formPath($stream),
             'music_on_hold_rate' => null,
@@ -406,7 +412,7 @@ class MusicOnHoldController extends Controller
             ->values()
             ->all();
 
-        array_unshift($domains, ['label' => 'Global', 'value' => '__global__', 'domain_name' => 'global']);
+        array_unshift($domains, ['label' => __('Global'), 'value' => '__global__', 'domain_name' => 'global']);
 
         return $domains;
     }
@@ -447,7 +453,7 @@ class MusicOnHoldController extends Controller
         ];
 
         if ($includeDefault) {
-            array_unshift($rates, ['label' => 'Default', 'value' => '']);
+            array_unshift($rates, ['label' => __('Default'), 'value' => '']);
         }
 
         return $rates;

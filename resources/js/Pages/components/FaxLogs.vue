@@ -9,14 +9,14 @@
                     type="search"
                     v-model="filterData.search"
                     class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
-                    placeholder="Search"
+                    :placeholder="$t('Search')"
                     @keydown.enter="handleSearchButtonClick"
                 />
                 <input
                     type="search"
                     v-model="filterData.search"
                     class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
-                    placeholder="Search"
+                    :placeholder="$t('Search')"
                     @keydown.enter="handleSearchButtonClick"
                 />
             </div>
@@ -51,9 +51,9 @@
                     v-model="filterData.status"
                     class="block w-full rounded-md border-0 py-2 pl-3 pr-10 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600"
                 >
-                    <option value="all">All</option>
-                    <option value="success">Success</option>
-                    <option value="failed">Failed</option>
+                    <option value="all">{{ $t('All') }}</option>
+                    <option value="success">{{ $t('Success') }}</option>
+                    <option value="failed">{{ $t('Failed') }}</option>
                 </select>
             </div>
 
@@ -64,7 +64,7 @@
                         @click.prevent="handleSearchButtonClick"
                         class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                     >
-                        Search
+                        {{ $t('Search') }}
                     </button>
 
                     <button
@@ -72,7 +72,7 @@
                         @click.prevent="handleFiltersReset"
                         class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
                     >
-                        Reset
+                        {{ $t('Reset') }}
                     </button>
                 </div>
             </div>
@@ -109,18 +109,18 @@
                                     </div>
                                 </th>
                                 <th class="w-12 py-3 pl-6 pr-3 text-left text-sm font-semibold text-gray-900">
-                                    <span class="sr-only">Direction</span>
+                                    <span class="sr-only">{{ $t('Direction') }}</span>
                                 </th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Date</th>
-                                <th v-if="showDomainColumn" class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Domain</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">From</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">To</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Status</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Code</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Result</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">{{ $t('Date') }}</th>
+                                <th v-if="showDomainColumn" class="px-6 py-3 text-left text-sm font-semibold text-gray-900">{{ $t('Domain') }}</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">{{ $t('From') }}</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">{{ $t('To') }}</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">{{ $t('Status') }}</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">{{ $t('Code') }}</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">{{ $t('Result') }}</th>
                                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">ECM</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Pages</th>
-                                <th v-if="hasActions" class="px-6 py-3 text-right text-sm font-semibold text-gray-900">Action</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">{{ $t('Pages') }}</th>
+                                <th v-if="hasActions" class="px-6 py-3 text-right text-sm font-semibold text-gray-900">{{ $t('Action') }}</th>
                             </tr>
                         </thead>
 
@@ -128,26 +128,26 @@
                             <tr v-if="canDelete && (selectPageItems || selectAll)">
                                 <td :colspan="faxColumnCount">
                                     <div class="text-sm text-center m-2">
-                                        <span class="font-semibold">{{ selectedItems.length }}</span> items are selected.
+                                        {{ $tChoice('{1} :count item is selected.|[0,*] :count items are selected.', selectedItems.length) }}
                                         <button
                                             v-if="!selectAll && selectedItems.length != data.total"
                                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                                             @click="handleSelectAll"
                                         >
-                                            Select all {{ data.total }} items
+                                            {{ $tChoice('{1} Select all :count item|[0,*] Select all :count items', data.total) }}
                                         </button>
                                         <button
                                             v-if="selectAll"
                                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                                             @click="handleClearSelection"
                                         >
-                                            Clear selection
+                                            {{ $t('Clear selection') }}
                                         </button>
                                         <button
                                             class="text-red-500 rounded py-2 px-2 hover:bg-red-50 hover:text-red-600 focus:outline-none focus:ring-1 focus:bg-red-50 focus:ring-red-300 transition duration-500 ease-in-out"
                                             @click="handleBulkDeleteRequest"
                                         >
-                                            Delete selected
+                                            {{ $t('Delete selected') }}
                                         </button>
                                     </div>
                                 </td>
@@ -216,7 +216,7 @@
                                                     class="h-7 w-7 transition duration-300 ease-in-out p-1 text-gray-400 hover:bg-gray-200 hover:text-gray-600 rounded-full"
                                                 />
                                                 <div class="absolute bottom-full mb-1 hidden group-hover:block whitespace-nowrap bg-gray-800 text-white text-xs rounded py-1 px-2 z-10 shadow-lg">
-                                                    Retry outbound fax
+                                                    {{ $t('Retry outbound fax') }}
                                                     <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45"></div>
                                                 </div>
                                             </div>
@@ -226,7 +226,7 @@
                                                     class="h-7 w-7 transition duration-300 ease-in-out p-1 text-gray-400 hover:bg-gray-200 hover:text-gray-600 rounded-full"
                                                 />
                                                 <div class="absolute bottom-full mb-1 hidden group-hover:block whitespace-nowrap bg-gray-800 text-white text-xs rounded py-1 px-2 z-10 shadow-lg">
-                                                    Delete
+                                                    {{ $t('Delete') }}
                                                     <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45"></div>
                                                 </div>
                                             </div>
@@ -238,36 +238,36 @@
                                     <td :colspan="faxColumnCount" class="bg-gray-50 px-6 py-4 shadow-inner">
                                         <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
                                             <div class="rounded-md border border-gray-200 bg-white p-4">
-                                                <div class="text-sm font-semibold text-gray-900 mb-2">Overview</div>
+                                                <div class="text-sm font-semibold text-gray-900 mb-2">{{ $t('Overview') }}</div>
                                                 <div class="space-y-2 text-sm text-gray-600">
-                                                    <div><span class="font-medium text-gray-700">Log ID:</span> {{ displayValue(row.fax_log_uuid) }}</div>
-                                                    <div><span class="font-medium text-gray-700">Fax ID:</span> {{ displayValue(row.fax_uuid) }}</div>
-                                                    <div><span class="font-medium text-gray-700">Mode:</span> {{ displayValue(row.fax_file?.fax_mode) }}</div>
-                                                    <div><span class="font-medium text-gray-700">Direction:</span> {{ displayValue(directionText(row)) }}</div>
-                                                    <div><span class="font-medium text-gray-700">Date:</span> {{ displayValue(row.fax_date_formatted) }}</div>
-                                                    <div><span class="font-medium text-gray-700">Duration:</span> {{ displayValue(row.fax_duration) }}</div>
+                                                    <div><span class="font-medium text-gray-700">{{ $t('Log ID:') }}</span> {{ displayValue(row.fax_log_uuid) }}</div>
+                                                    <div><span class="font-medium text-gray-700">{{ $t('Fax ID:') }}</span> {{ displayValue(row.fax_uuid) }}</div>
+                                                    <div><span class="font-medium text-gray-700">{{ $t('Mode:') }}</span> {{ displayValue(row.fax_file?.fax_mode) }}</div>
+                                                    <div><span class="font-medium text-gray-700">{{ $t('Direction:') }}</span> {{ displayValue(directionText(row)) }}</div>
+                                                    <div><span class="font-medium text-gray-700">{{ $t('Date:') }}</span> {{ displayValue(row.fax_date_formatted) }}</div>
+                                                    <div><span class="font-medium text-gray-700">{{ $t('Duration:') }}</span> {{ displayValue(row.fax_duration) }}</div>
                                                 </div>
                                             </div>
 
                                             <div class="rounded-md border border-gray-200 bg-white p-4">
-                                                <div class="text-sm font-semibold text-gray-900 mb-2">Transmission</div>
+                                                <div class="text-sm font-semibold text-gray-900 mb-2">{{ $t('Transmission') }}</div>
                                                 <div class="space-y-2 text-sm text-gray-600">
-                                                    <div><span class="font-medium text-gray-700">From:</span> {{ displayValue(faxSource(row)) }}</div>
-                                                    <div><span class="font-medium text-gray-700">To:</span> {{ displayValue(faxDestination(row)) }}</div>
-                                                    <div><span class="font-medium text-gray-700">Local Station ID:</span> {{ displayValue(row.fax_local_station_id) }}</div>
-                                                    <div><span class="font-medium text-gray-700">Transfer Rate:</span> {{ displayValue(row.fax_transfer_rate) }}</div>
-                                                    <div><span class="font-medium text-gray-700">Bad Rows:</span> {{ displayValue(row.fax_bad_rows) }}</div>
-                                                    <div><span class="font-medium text-gray-700">Pages:</span> {{ displayValue(pagesText(row)) }}</div>
+                                                    <div><span class="font-medium text-gray-700">{{ $t('From:') }}</span> {{ displayValue(faxSource(row)) }}</div>
+                                                    <div><span class="font-medium text-gray-700">{{ $t('To:') }}</span> {{ displayValue(faxDestination(row)) }}</div>
+                                                    <div><span class="font-medium text-gray-700">{{ $t('Local Station ID:') }}</span> {{ displayValue(row.fax_local_station_id) }}</div>
+                                                    <div><span class="font-medium text-gray-700">{{ $t('Transfer Rate:') }}</span> {{ displayValue(row.fax_transfer_rate) }}</div>
+                                                    <div><span class="font-medium text-gray-700">{{ $t('Bad Rows:') }}</span> {{ displayValue(row.fax_bad_rows) }}</div>
+                                                    <div><span class="font-medium text-gray-700">{{ $t('Pages:') }}</span> {{ displayValue(pagesText(row)) }}</div>
                                                 </div>
                                             </div>
 
                                             <div class="rounded-md border border-gray-200 bg-white p-4 lg:col-span-2">
-                                                <div class="text-sm font-semibold text-gray-900 mb-2">Result</div>
+                                                <div class="text-sm font-semibold text-gray-900 mb-2">{{ $t('Result') }}</div>
                                                 <div class="space-y-2 text-sm text-gray-600">
-                                                    <div><span class="font-medium text-gray-700">Code:</span> {{ displayValue(row.fax_result_code) }}</div>
-                                                    <div><span class="font-medium text-gray-700">Text:</span> {{ displayValue(row.fax_result_text) }}</div>
-                                                    <div><span class="font-medium text-gray-700">URI:</span> <span class="break-all">{{ displayValue(row.fax_uri) }}</span></div>
-                                                    <div><span class="font-medium text-gray-700">File:</span> <span class="break-all">{{ displayValue(row.fax_file_path) }}</span></div>
+                                                    <div><span class="font-medium text-gray-700">{{ $t('Code:') }}</span> {{ displayValue(row.fax_result_code) }}</div>
+                                                    <div><span class="font-medium text-gray-700">{{ $t('Text:') }}</span> {{ displayValue(row.fax_result_text) }}</div>
+                                                    <div><span class="font-medium text-gray-700">{{ $t('URI:') }}</span> <span class="break-all">{{ displayValue(row.fax_uri) }}</span></div>
+                                                    <div><span class="font-medium text-gray-700">{{ $t('File:') }}</span> <span class="break-all">{{ displayValue(row.fax_file_path) }}</span></div>
                                                 </div>
                                             </div>
                                         </div>
@@ -279,7 +279,7 @@
 
                     <div v-if="!isDataLoading && data.data?.length === 0" class="text-center my-5">
                         <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                        <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
+                        <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ $t('No results found') }}</h3>
                     </div>
 
                     <div v-if="isDataLoading" class="text-center my-5 text-sm text-gray-500">
@@ -316,14 +316,15 @@
         :show="showDeleteConfirmationModal"
         @close="showDeleteConfirmationModal = false"
         @confirm="confirmDeleteAction"
-        :header="'Are you sure?'"
-        :text="'Are you sure you want to permanently delete selected fax logs? This action can not be undone.'"
-        :confirm-button-label="'Delete'"
-        cancel-button-label="Cancel"
+        :header="$t('Are you sure?')"
+        :text="$t('Are you sure you want to permanently delete selected fax logs? This action can not be undone.')"
+        :confirm-button-label="$t('Delete')"
+        :cancel-button-label="$t('Cancel')"
     />
 </template>
 
 <script setup>
+import { trans } from '@i18n';
 import { computed, ref, watch } from "vue";
 import axios from "axios";
 import moment from "moment-timezone";
@@ -393,7 +394,7 @@ const hasActions = computed(() => canDelete.value || canRetryPermission.value);
 const showDomainFilter = computed(() => props.domainOptions.length > 1);
 const showDomainColumn = computed(() => showDomainFilter.value);
 const domainFilterOptions = computed(() => [
-    { value: "all", label: "All domains" },
+    { value: "all", label: trans('All domains') },
     ...props.domainOptions,
 ]);
 const faxColumnCount = computed(() => 10 + (showDomainColumn.value ? 1 : 0) + (hasActions.value ? 1 : 0));
@@ -535,11 +536,11 @@ const faxSource = (row) => {
 };
 
 const directionText = (row) => {
-    return row.direction_label ?? "";
+    return { inbound: trans('Inbound'), outbound: trans('Outbound'), local: trans('Local') }[row.direction] ?? row.direction_label ?? '';
 };
 
 const directionTooltip = (row) => {
-    return row.direction ? `${row.direction} fax` : "Unknown direction";
+    return { inbound: trans('Inbound fax'), outbound: trans('Outbound fax'), local: trans('Local fax') }[row.direction] ?? trans('Unknown direction');
 };
 
 const domainLabel = (row) => {
@@ -605,7 +606,7 @@ const isRetryRequestedFromRow = (row) => {
 const statusBadge = (row) => {
     if (String(row?.fax_success ?? "0") === "1") {
         return {
-            text: "Success",
+            text: trans('Success'),
             backgroundColor: "bg-green-50",
             textColor: "text-green-700",
             ringColor: "ring-green-600/20",
@@ -616,14 +617,14 @@ const statusBadge = (row) => {
         switch (row?.outbound_fax?.status) {
             case "waiting":
                 return {
-                    text: "Retry queued",
+                    text: trans('Retry queued'),
                     backgroundColor: "bg-blue-50",
                     textColor: "text-blue-700",
                     ringColor: "ring-blue-600/20",
                 };
             case "sending":
                 return {
-                    text: "Sending",
+                    text: trans('Sending'),
                     backgroundColor: "bg-indigo-50",
                     textColor: "text-indigo-700",
                     ringColor: "ring-indigo-600/20",
@@ -631,14 +632,14 @@ const statusBadge = (row) => {
             case "trying":
             case "busy":
                 return {
-                    text: "Retrying",
+                    text: trans('Retrying'),
                     backgroundColor: "bg-yellow-50",
                     textColor: "text-yellow-800",
                     ringColor: "ring-yellow-600/20",
                 };
             case "sent":
                 return {
-                    text: "Retried",
+                    text: trans('Retried'),
                     backgroundColor: "bg-green-50",
                     textColor: "text-green-700",
                     ringColor: "ring-green-600/20",
@@ -647,7 +648,7 @@ const statusBadge = (row) => {
     }
 
     return {
-        text: "Failed",
+        text: trans('Failed'),
         backgroundColor: "bg-red-50",
         textColor: "text-red-700",
         ringColor: "ring-red-600/20",
@@ -656,7 +657,7 @@ const statusBadge = (row) => {
 
 const displayValue = (value) => {
     if (value === null || value === undefined || value === "") {
-        return "N/A";
+        return trans('N/A');
     }
 
     return value;

@@ -62,14 +62,14 @@ class ConferenceRoomController extends Controller
             $conferenceRoom = $service->save($request->validated());
 
             return response()->json([
-                'messages' => ['success' => ['Conference room created successfully.']],
+                'messages' => ['success' => [__('Conference room created successfully.')]],
                 'conference_room_uuid' => $conferenceRoom->conference_room_uuid,
             ], 201);
         } catch (\Throwable $e) {
             logger('ConferenceRoomController@store error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Failed to create conference room.']],
+                'messages' => ['error' => [__('Failed to create conference room.')]],
             ], 500);
         }
     }
@@ -78,7 +78,7 @@ class ConferenceRoomController extends Controller
     {
         if ($conference_room->domain_uuid !== session('domain_uuid')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -86,13 +86,13 @@ class ConferenceRoomController extends Controller
             $service->save($request->validated(), $conference_room);
 
             return response()->json([
-                'messages' => ['success' => ['Conference room updated successfully.']],
+                'messages' => ['success' => [__('Conference room updated successfully.')]],
             ]);
         } catch (\Throwable $e) {
             logger('ConferenceRoomController@update error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Failed to update conference room.']],
+                'messages' => ['error' => [__('Failed to update conference room.')]],
             ], 500);
         }
     }
@@ -103,13 +103,13 @@ class ConferenceRoomController extends Controller
 
         if ($itemUuid && ! userCheckPermission('conference_room_edit')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
         if (! $itemUuid && ! userCheckPermission('conference_room_add')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -162,7 +162,7 @@ class ConferenceRoomController extends Controller
     {
         if (! userCheckPermission('conference_room_view')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -212,7 +212,7 @@ class ConferenceRoomController extends Controller
     {
         if (! userCheckPermission('conference_room_view')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -223,7 +223,7 @@ class ConferenceRoomController extends Controller
 
         return response()->json([
             'items' => $items,
-            'messages' => ['success' => ['All matching conference rooms selected.']],
+            'messages' => ['success' => [__('All matching conference rooms selected.')]],
         ]);
     }
 
@@ -231,14 +231,14 @@ class ConferenceRoomController extends Controller
     {
         if (! userCheckPermission('conference_room_delete')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
         $uuids = $this->validatedUuids($request);
         if (empty($uuids)) {
             return response()->json([
-                'messages' => ['error' => ['No conference rooms selected.']],
+                'messages' => ['error' => [__('No conference rooms selected.')]],
             ], 422);
         }
 
@@ -250,7 +250,7 @@ class ConferenceRoomController extends Controller
         $deleted = $service->delete($items);
 
         return response()->json([
-            'messages' => ['success' => ["Deleted {$deleted} conference room(s)."]],
+            'messages' => ['success' => [trans_choice('{1} Deleted :count conference room.|[0,*] Deleted :count conference rooms.', $deleted)]],
         ]);
     }
 
@@ -258,21 +258,21 @@ class ConferenceRoomController extends Controller
     {
         if (! userCheckPermission('conference_room_edit')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
         $field = $request->input('field');
         if (! in_array($field, self::TOGGLE_FIELDS, true)) {
             return response()->json([
-                'messages' => ['error' => ['Invalid toggle field.']],
+                'messages' => ['error' => [__('Invalid toggle field.')]],
             ], 422);
         }
 
         $uuids = $this->validatedUuids($request);
         if (empty($uuids)) {
             return response()->json([
-                'messages' => ['error' => ['No conference rooms selected.']],
+                'messages' => ['error' => [__('No conference rooms selected.')]],
             ], 422);
         }
 
@@ -284,7 +284,7 @@ class ConferenceRoomController extends Controller
         $service->toggle($items, $field);
 
         return response()->json([
-            'messages' => ['success' => ['Conference room setting toggled.']],
+            'messages' => ['success' => [__('Conference room setting toggled.')]],
         ]);
     }
 

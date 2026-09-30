@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Support\Localization\ValidationMessages;
+
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -54,15 +56,17 @@ class PairZtpOrganizationRequest extends FormRequest
         return $input;
     }
 
-    /**
-     * Get custom attributes for validator errors.
-     *
-     * @return array
-     */
+
+    public function messages(): array
+    {
+        return ValidationMessages::common();
+    }
+
     public function attributes(): array
     {
         return [
-            'org_id' => 'organization',
+            'org_id' => __('Organization'),
+            'provider' => __('Provider'),
         ];
     }
 }

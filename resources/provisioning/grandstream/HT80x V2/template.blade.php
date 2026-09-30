@@ -1,4 +1,4 @@
-{{-- version: 1.0.4 --}}
+{{-- version: 1.0.5 --}}
 
 @switch($flavor)
 
@@ -329,7 +329,7 @@
     <!-- Unregister On Reboot. 0 - No, 1 - All, 2 - Instance. Default is 0. -->
     <!-- Number: 0, 1, 2 -->
     <!-- Mandatory -->
-    <P81>0</P81>
+    <P81>2</P81>
 
     <!-- Outgoing Call Without Registration. 0 - No, 1 - Yes. Default is 1. -->
     <!-- Number: 0, 1 -->
@@ -501,7 +501,7 @@
     <!-- Unregister On Reboot. 0 - No, 1 - All, 2 - Instance. Default is 0. -->
     <!-- Number: 0, 1, 2 -->
     <!-- Mandatory -->
-    <P752>0</P752>
+    <P752>2</P752>
 
     <!-- Outgoing Call Without Registration. 0 - No, 1 - Yes. Default is 1. -->
     <!-- Number: 0, 1 -->

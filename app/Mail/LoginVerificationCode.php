@@ -20,8 +20,8 @@ class LoginVerificationCode extends BaseMailable
     public function content(): Content
     {
         return $this->databaseTemplateContent(new Content(
-            view: 'emails.authentication.verification-code',
-            text: 'emails.authentication.verification-code-text',
+            view: 'emails.en-us.authentication.verification-code',
+            text: 'emails.en-us.authentication.verification-code-text',
         ));
     }
 }

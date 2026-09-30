@@ -74,10 +74,10 @@ class EmailChallengeController extends Controller
                 'max:6',
                 function ($attribute, $value, $fail) {
                     if ((string) $value !== (string) session('code')) {
-                        $fail('Supplied authentication code is invalid.');
+                        $fail(__('Supplied authentication code is invalid.'));
                     }
                     if (now()->greaterThan(session('code_expiration'))) {
-                        $fail('The code has expired.');
+                        $fail(__('The code has expired.'));
                     }
                 },
             ],
@@ -123,7 +123,7 @@ class EmailChallengeController extends Controller
             'links' => [
                 'email-challenge' => "/email-challenge",
             ],
-            'status' => 'Verification code has been resent',
+            'status' => __('Verification code has been resent'),
         ]);
     }
 

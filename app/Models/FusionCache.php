@@ -181,6 +181,51 @@ class FusionCache extends Model
     }
 
     /**
+     * Prepare for a restart without requiring an already-running FreeSWITCH
+     * for the file backend used by fresh installations.
+     */
+    public static function flushForRestart(): bool
+    {
+        if (static::cacheType() === 'file') {
+            $location = static::cacheLocation();
+            if (! $location || ! str_starts_with($location, '/') || rtrim($location, '/') === '') {
+                return false;
+            }
+
+            if (! File::exists($location)) {
+                return true;
+            }
+
+            if (! File::isDirectory($location) || realpath($location) === '/') {
+                return false;
+            }
+
+            static::cleanFileCacheDirectory($location);
+
+            foreach (new \DirectoryIterator($location) as $item) {
+                if (! $item->isDot() && ! static::isSyncthingMetadataPath($item->getPathname())) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        if (static::cacheType() === 'memcache') {
+            $esl = static::esl();
+            if (! $esl) {
+                return false;
+            }
+
+            $response = $esl->executeCommand('memcache flush');
+
+            return is_string($response) && preg_match('/^\+?OK\b/i', trim($response)) === 1;
+        }
+
+        return false;
+    }
+
+    /**
      * Remove generated FSPBX cache files without deleting sync metadata.
      */
     protected static function cleanFileCacheDirectory(string $cacheLocation): void

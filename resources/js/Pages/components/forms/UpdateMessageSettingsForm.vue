@@ -20,7 +20,7 @@
                                 <button type="button"
                                     class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                     @click="emit('close')">
-                                    <span class="sr-only">Close</span>
+                                    <span class="sr-only">{{ $t('Close') }}</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
@@ -38,7 +38,7 @@
                                             </path>
                                         </svg>
                                     </div>
-                                    <div class="text-lg text-blue-600 m-auto">Loading...</div>
+                                    <div class="text-lg text-blue-600 m-auto">{{ $t('Loading...') }}</div>
                                 </div>
                             </div>
 
@@ -51,16 +51,16 @@
                                     email: options.item.email,
                                     description: options.item.description,
 
-                                }">
+                                }" @mounted="(form) => form.disableValidation()" @submit="clearServerFormErrors">
 
                                 <template #empty>
 
                                     <FormElements>
 
-                                        <StaticElement name="h4" tag="h4" content="Update Settings" />
+                                        <StaticElement name="h4" tag="h4" :content="$t('Update Settings')" />
 
-                                        <TextElement name="destination" label="Phone Number"
-                                            placeholder="Enter Phone Number" :floating="false" :columns="{
+                                        <TextElement name="destination" :label="$t('Phone Number')"
+                                            :placeholder="$t('Enter Phone Number')" :floating="false" :columns="{
                                                 sm: {
                                                     container: 6,
                                                 },
@@ -68,9 +68,9 @@
 
 
                                         <SelectElement name="carrier" :items="options.carrier"
-                                            :search="true" :native="false" label="Message Provider" input-type="search"
+                                            :search="true" :native="false" :label="$t('Message Provider')" input-type="search"
                                             autocomplete="off" :floating="false" :strict="false"
-                                            placeholder="Choose Provider" :columns="{
+                                            :placeholder="$t('Choose Provider')" :columns="{
                                                 sm: {
                                                     container: 6,
                                                 },
@@ -82,18 +82,18 @@
                                             :description="$t('Selected extensions can send and receive messages using this number and see each other’s replies. Leave empty for no extension access.')"
                                             :columns="{ sm: { container: 12 } }" />
 
-                                        <TextElement name="email" label="Email" placeholder="Optional" :floating="false"
+                                        <TextElement name="email" :label="$t('Email')" :placeholder="$t('Optional')" :floating="false"
                                             :columns="{
                                                 sm: {
                                                     container: 6,
                                                 },
                                             }" />
 
-                                        <TextareaElement label="Description" name="description" :rows="2" />
+                                        <TextareaElement :label="$t('Description')" name="description" :rows="2" />
 
                                         <GroupElement name="container_3" />
 
-                                        <ButtonElement name="submit" button-label="Save" :submits="true"
+                                        <ButtonElement name="submit" :button-label="$t('Save')" :submits="true"
                                             align="right" />
 
                                     </FormElements>
@@ -111,6 +111,8 @@
 </template>
 
 <script setup>
+import { clearServerFormErrors } from '../../../composables/serverFormErrors.js';
+import { trans } from '@i18n';
 import { ref } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { XMarkIcon } from "@heroicons/vue/24/solid";
@@ -182,7 +184,7 @@ const handleError = (error, details, form$) => {
         case 'prepare':
             console.log(error) // Error object
 
-            form$.messageBag.append('Could not prepare form')
+            form$.messageBag.append(trans('Could not prepare form'))
             break
 
         // Error occured because response status is outside of 2xx
@@ -202,14 +204,14 @@ const handleError = (error, details, form$) => {
         case 'cancel':
             console.log(error) // Error object
 
-            form$.messageBag.append('Request cancelled')
+            form$.messageBag.append(trans('Request cancelled'))
             break
 
         // Some other errors happened (no response object)
         case 'other':
             console.log(error) // Error object
 
-            form$.messageBag.append('Couldn\'t submit form')
+            form$.messageBag.append(trans('Couldn\'t submit form'))
             break
     }
 }

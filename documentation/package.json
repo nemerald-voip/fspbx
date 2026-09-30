@@ -5,6 +5,9 @@
   "scripts": {
     "docusaurus": "docusaurus",
     "start": "docusaurus start --port 3001",
+    "releases:sync": "node scripts/sync-releases.mjs",
+    "test:releases": "node --test scripts/sync-releases.test.mjs",
+    "prebuild": "npm run releases:sync",
     "build": "docusaurus build",
     "swizzle": "docusaurus swizzle",
     "deploy": "docusaurus deploy",
@@ -21,6 +24,7 @@
     "@docusaurus/theme-search-algolia": "^3.9.2",
     "@headlessui/react": "^2.2.4",
     "@heroicons/react": "^2.2.0",
+    "@mdx-js/mdx": "^3.1.1",
     "@mdx-js/react": "^3.0.0",
     "clsx": "^2.0.0",
     "docusaurus-plugin-openapi-docs": "^4.5.1",

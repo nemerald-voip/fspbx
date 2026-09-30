@@ -15,7 +15,7 @@ class TestEmailController extends Controller
     {
         if (! userCheckPermission('email_test_send')) {
             return response()->json([
-                'messages' => ['error' => ['Permission denied.']],
+                'messages' => ['error' => [__('Permission denied.')]],
             ], 403);
         }
 
@@ -34,7 +34,7 @@ class TestEmailController extends Controller
             ]));
 
             return response()->json([
-                'messages' => ['success' => ['Test email sent.']],
+                'messages' => ['success' => [__('Test email sent.')]],
                 'log_uuid' => $logId,
             ]);
         } catch (\Throwable $exception) {
@@ -46,7 +46,7 @@ class TestEmailController extends Controller
                         logger('TestEmailController@store transport reported an error after logging test email: ' . $exception->getMessage());
 
                         return response()->json([
-                            'messages' => ['success' => ['Test email submitted. Check the email logs for delivery status.']],
+                            'messages' => ['success' => [__('Test email submitted. Check the email logs for delivery status.')]],
                             'log_uuid' => $logId,
                         ]);
                     }
@@ -58,7 +58,7 @@ class TestEmailController extends Controller
             logger('TestEmailController@store error: ' . $exception->getMessage() . ' at ' . $exception->getFile() . ':' . $exception->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Unable to send the test email. Check the email logs for details.']],
+                'messages' => ['error' => [__('Unable to send the test email. Check the email logs for details.')]],
             ], 500);
         }
     }

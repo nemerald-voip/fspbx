@@ -151,8 +151,21 @@ class CDR extends Model
 
     public function getCcResultAttribute()
     {
+        $outcome = \App\Services\QueueCallOutcome::fromAttributes($this->attributes);
+        if ($outcome !== null) {
+            return \App\Services\QueueCallOutcome::label($outcome);
+        }
+
+        if (($this->attributes['status'] ?? null) === 'callback_requested') {
+            return __('Callback requested');
+        }
+
         if ($this->cc_cause == 'answered') {
             return __('Answered');
+        }
+
+        if ($this->cc_cause === 'TIMEOUT') {
+            return __('Queue timeout reached');
         }
 
         if ($this->cc_cause == 'cancel') {
@@ -174,25 +187,12 @@ class CDR extends Model
 
     public function getStatusAttribute($value)
     {
-        // 1. Missed call condition
-        $status = $value;
+        return \App\Services\CdrStatus::fromAttributes($this->attributes);
+    }
 
-        if ($this->voicemail_message == false && $this->missed_call == true && $this->hangup_cause == "NORMAL_CLEARING") {
-            $status = "missed call";
-        }
-
-        // 2. Abandoned call upgrades missed call
-        if (
-            isset($this->cc_cancel_reason) &&
-            isset($this->cc_cause) &&
-            $status === "missed call" &&
-            $this->cc_cancel_reason == "BREAK_OUT" &&
-            $this->cc_cause == "cancel"
-        ) {
-            $status = "abandoned";
-        }
-
-        return $status;
+    public function getCcResultReasonAttribute(): ?string
+    {
+        return \App\Services\QueueCallOutcome::reason($this->attributes);
     }
 
     public function getFormattedDuration($value)

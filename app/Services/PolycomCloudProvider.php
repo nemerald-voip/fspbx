@@ -90,7 +90,7 @@ class PolycomCloudProvider implements CloudProviderInterface
         $token = $this->getApiToken();
 
         if (empty($token)) {
-            throw new \Exception("Polycom ZTP API token is missing.");
+            throw new \Exception(__('Polycom ZTP API token is missing.'));
         }
 
         return $token;
@@ -121,7 +121,7 @@ class PolycomCloudProvider implements CloudProviderInterface
             ->timeout($this->timeout)
             ->get('/devices?limit=' . $limit . '&cursor=' . $cursor)
             ->throw(function ($error) {
-                throw new \Exception("Unable to retrieve devices: " . json_encode($error));
+                throw new \Exception(__('Unable to retrieve devices: :error', ['error' => json_encode($error)]));
             });
 
         return $this->handleResponse($response);
@@ -144,7 +144,7 @@ class PolycomCloudProvider implements CloudProviderInterface
             ->timeout($this->timeout)
             ->get('/devices/' . $id)
             ->throw(function ($error) {
-                throw new \Exception("Unable to retrieve devices: " . json_encode($error));
+                throw new \Exception(__('Unable to retrieve devices: :error', ['error' => json_encode($error)]));
             });
 
         return $this->handleResponse($response);
@@ -402,7 +402,7 @@ class PolycomCloudProvider implements CloudProviderInterface
         $response = $this->handleResponse($response);
 
         if (empty($response['data']) || !is_array($response['data'])) {
-            throw new \Exception('Polycom organization not found or invalid response: ' . json_encode($response));
+            throw new \Exception(__('Polycom organization not found or invalid response: :error', ['error' => json_encode($response)]));
         }
 
         return PolycomOrganizationDTO::fromArray($response['data'] ?? null);
@@ -537,34 +537,34 @@ class PolycomCloudProvider implements CloudProviderInterface
         return [
             'dhcp_option_60_type_list' => [
                 ['value' => 'ASCII', 'label' => 'ASCII'],
-                ['value' => 'BINARY', 'label' => 'BINARY'],
+                ['value' => 'BINARY', 'label' => __('Binary')],
             ],
             'dhcp_boot_server_option_list' => [
-                ['value' => 'OPTION66', 'label' => 'OPTION66'],
-                ['value' => 'CUSTOM', 'label' => 'CUSTOM'],
-                ['value' => 'STATIC', 'label' => 'STATIC'],
-                ['value' => 'CUSTOM_OPTION66', 'label' => 'CUSTOM_OPTION66'],
+                ['value' => 'OPTION66', 'label' => __('Option 66')],
+                ['value' => 'CUSTOM', 'label' => __('Custom')],
+                ['value' => 'STATIC', 'label' => __('Static')],
+                ['value' => 'CUSTOM_OPTION66', 'label' => __('Custom + Option 66')],
             ],
             'locales' => [
-                ['value' => 'Chinese_China', 'label' => 'Chinese_China'],
-                ['value' => 'Chinese_Taiwan', 'label' => 'Chinese_Taiwan'],
-                ['value' => 'Danish_Denmark', 'label' => 'Danish_Denmark'],
-                ['value' => 'Dutch_Netherlands', 'label' => 'Dutch_Netherlands'],
-                ['value' => 'English_Canada', 'label' => 'English_Canada'],
-                ['value' => 'English_United_Kingdom', 'label' => 'English_United_Kingdom'],
-                ['value' => 'English_United_States', 'label' => 'English_United_States'],
-                ['value' => 'French_France', 'label' => 'French_France'],
-                ['value' => 'German_Germany', 'label' => 'German_Germany'],
-                ['value' => 'Italian_Italy', 'label' => 'Italian_Italy'],
-                ['value' => 'Japanese_Japan', 'label' => 'Japanese_Japan'],
-                ['value' => 'Korean_Korea', 'label' => 'Korean_Korea'],
-                ['value' => 'Norwegian_Norway', 'label' => 'Norwegian_Norway'],
-                ['value' => 'Polish_Poland', 'label' => 'Polish_Poland'],
-                ['value' => 'Portuguese_Portugal', 'label' => 'Portuguese_Portugal'],
-                ['value' => 'Russian_Russia', 'label' => 'Russian_Russia'],
-                ['value' => 'Slovenian_Slovenia', 'label' => 'Slovenian_Slovenia'],
-                ['value' => 'Spanish_Spain', 'label' => 'Spanish_Spain'],
-                ['value' => 'Swedish_Sweden', 'label' => 'Swedish_Sweden'],
+                ['value' => 'Chinese_China', 'label' => __('Chinese (China)')],
+                ['value' => 'Chinese_Taiwan', 'label' => __('Chinese (Taiwan)')],
+                ['value' => 'Danish_Denmark', 'label' => __('Danish (Denmark)')],
+                ['value' => 'Dutch_Netherlands', 'label' => __('Dutch (Netherlands)')],
+                ['value' => 'English_Canada', 'label' => __('English (Canada)')],
+                ['value' => 'English_United_Kingdom', 'label' => __('English (United Kingdom)')],
+                ['value' => 'English_United_States', 'label' => __('English (United States)')],
+                ['value' => 'French_France', 'label' => __('French (France)')],
+                ['value' => 'German_Germany', 'label' => __('German (Germany)')],
+                ['value' => 'Italian_Italy', 'label' => __('Italian (Italy)')],
+                ['value' => 'Japanese_Japan', 'label' => __('Japanese (Japan)')],
+                ['value' => 'Korean_Korea', 'label' => __('Korean (Korea)')],
+                ['value' => 'Norwegian_Norway', 'label' => __('Norwegian (Norway)')],
+                ['value' => 'Polish_Poland', 'label' => __('Polish (Poland)')],
+                ['value' => 'Portuguese_Portugal', 'label' => __('Portuguese (Portugal)')],
+                ['value' => 'Russian_Russia', 'label' => __('Russian (Russia)')],
+                ['value' => 'Slovenian_Slovenia', 'label' => __('Slovenian (Slovenia)')],
+                ['value' => 'Spanish_Spain', 'label' => __('Spanish (Spain)')],
+                ['value' => 'Swedish_Sweden', 'label' => __('Swedish (Sweden)')],
             ],
             'polycom_api_token' => get_domain_setting('polycom_api_token') ?? null,
             'polycom_provision_url' =>     get_domain_setting('polycom_provision_url') ?? null,

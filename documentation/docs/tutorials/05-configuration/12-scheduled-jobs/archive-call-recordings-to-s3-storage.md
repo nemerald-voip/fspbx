@@ -172,5 +172,3 @@ The archive job helps by:
 * reducing local storage usage on PBX servers
 * converting recordings to MP3 to reduce cloud storage usage
 * keeping archived recordings accessible from the Call History page
-
-If you want, I can also turn this into a **Docusaurus MDX page** or a **customer-facing knowledge base article**.

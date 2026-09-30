@@ -57,7 +57,7 @@
                                 <span :class="[
                                     selected ? 'font-medium' : 'font-normal',
                                     'block truncate',
-                                ]">None</span>
+                                ]">{{ $t("None") }}</span>
                             </li>
                         </ComboboxOption>
 
@@ -83,13 +83,13 @@
                         <div>
                             <button type="button" @click.prevent="selectAll" :disabled="allSelected"
                                 class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-indigo-300">
-                                Select All
+                                {{ $t("Select All") }}
                             </button>
 
                             <!-- <a class="text-indigo-600 underline cursor-pointer mx-2">Reset</a> -->
                             <button type="button" @click.prevent="resetSelection"
                                 class="ml-6 rounded-md bg-white text-sm font-medium text-indigo-600 hover:text-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-                                Reset
+                                {{ $t("Reset") }}
                             </button>
                         </div>
 
@@ -101,7 +101,7 @@
 
                         <button type="button" @click.prevent="applySelection" :disabled="!hasCurrentSelection"
                             class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-indigo-300">
-                            Apply
+                            {{ $t("Apply") }}
                         </button>
                     </div>
                 </ComboboxOptions>
@@ -112,6 +112,7 @@
 </template>
 
 <script setup>
+import { trans } from "@i18n";
 import { ref, watch, computed } from 'vue'
 import {
     Combobox,
@@ -175,11 +176,11 @@ const badgeText = computed(() => {
     if (props.multiple) {
         const selectionCount = currentSelection.value.length;
         if (props.options && selectionCount > 1 && selectionCount < props.options.length) {
-            return `Selected - ${selectionCount}`;
+            return trans("Selected - :count", { count: selectionCount });
         } else if (selectionCount === 1) {
             return currentSelection.value[0].name;
         } else if (props.options && selectionCount === props.options.length && props.options.length != 0) {
-            return 'All Selected';
+            return trans("All Selected");
         }
     }
     return '';

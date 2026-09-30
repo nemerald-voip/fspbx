@@ -14,7 +14,7 @@
                     ref="form$"
                     :endpoint="submitForm"
                     :default="defaultValues"
-                    :display-errors="false"
+                    :display-errors="false" validate-on=""
                     class="flex min-h-0 flex-1 flex-col"
                     @success="handleSuccess"
                     @error="handleError"
@@ -27,10 +27,10 @@
                                 class="mb-4 rounded-md bg-gray-50 px-4 py-3 text-sm text-gray-700 ring-1 ring-inset ring-gray-200"
                             >
                                 <template v-if="options?.item?.template_type === 'default'">
-                                    Default template v{{ options?.item?.version }}. FS PBX updates manage this template. Create a custom override to make account-specific changes.
+                                    {{ $t('Default template v:version. FS PBX updates manage this template. Create a custom override to make account-specific changes.', { version: options?.item?.version }) }}
                                 </template>
                                 <template v-else>
-                                    This global custom template is read-only with your current permissions.
+                                    {{ $t('This global custom template is read-only with your current permissions.') }}
                                 </template>
                             </div>
                             <div class="max-w-4xl">
@@ -39,7 +39,7 @@
                                 <SelectElement
                                     v-if="mode === 'create'"
                                     name="base_template_uuid"
-                                    label="Template to override"
+                                    :label="$t('Template to override')"
                                     :items="defaultTemplateItems"
                                     :native="false"
                                     :search="true"
@@ -47,15 +47,14 @@
                                     :floating="false"
                                     input-type="search"
                                     autocomplete="off"
-                                    placeholder="Select the template to override"
+                                    :placeholder="$t('Select the template to override')"
                                     :columns="baseColumns"
-                                    rules="required"
                                     @change="handleBaseChange"
                                 />
                                 <SelectElement
                                     v-if="mode !== 'create'"
                                     name="template_category"
-                                    label="Category"
+                                    :label="$t('Category')"
                                     :items="categoryOptions"
                                     :native="false"
                                     :search="true"
@@ -67,17 +66,19 @@
                                     disabled
                                     :columns="primaryColumns"
                                 />
-                                <TextElement
+                                <SelectElement
                                     v-if="mode !== 'create'"
                                     name="template_subcategory"
-                                    label="Subcategory"
+                                    :label="$t('Subcategory')"
+                                    :items="subcategoryOptions"
+                                    :native="false"
                                     disabled
                                     :floating="false"
                                     :columns="primaryColumns"
                                 />
                                 <SelectElement
                                     name="template_language"
-                                    label="Language"
+                                    :label="$t('Language')"
                                     :items="languageOptions"
                                     :native="false"
                                     :search="true"
@@ -89,46 +90,44 @@
                                     autocomplete="off"
                                     :disabled="locked"
                                     :columns="languageColumns"
-                                    rules="required"
                                 />
 
                                 <!-- Options -->
                                 <ToggleElement
                                     name="template_enabled"
-                                    label="Status"
-                                    text="Enabled"
+                                    :label="$t('Status')"
+                                    :text="$t('Enabled')"
                                     :true-value="true"
                                     :false-value="false"
                                     :disabled="locked"
-                                    :labels="{ on: 'On', off: 'Off' }"
+                                    :labels="{ on: $t('On'), off: $t('Off') }"
                                     :columns="toggleColumns"
                                 />
                                 <ToggleElement
                                     v-if="canShareAcrossAccounts"
                                     name="share_across_accounts"
-                                    label="Visibility"
-                                    text="Share across accounts"
+                                    :label="$t('Visibility')"
+                                    :text="$t('Share across accounts')"
                                     :true-value="true"
                                     :false-value="false"
                                     :disabled="locked"
-                                    :labels="{ on: 'On', off: 'Off' }"
+                                    :labels="{ on: $t('On'), off: $t('Off') }"
                                     :columns="shareColumns"
                                 />
 
                                 <!-- Subject + description -->
                                 <TextElement
                                     name="template_subject"
-                                    label="Subject"
-                                    placeholder="Email subject"
+                                    :label="$t('Subject')"
+                                    :placeholder="$t('Email subject')"
                                     :disabled="locked"
                                     :floating="false"
-                                    rules="required"
                                     :columns="subjectColumns"
                                 />
                                 <TextElement
                                     name="template_description"
-                                    label="Description"
-                                    placeholder="Optional internal note"
+                                    :label="$t('Description')"
+                                    :placeholder="$t('Optional internal note')"
                                     :disabled="locked"
                                     :floating="false"
                                     :columns="descriptionColumns"
@@ -139,14 +138,14 @@
                             <div class="mt-4 flex min-h-[28rem] flex-1 flex-col overflow-hidden rounded-lg border border-gray-200 bg-white">
                                 <div class="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 bg-gray-50 px-3 py-2">
                                     <div class="flex flex-wrap items-center gap-2">
-                                        <div class="flex items-center gap-1 rounded-md bg-gray-200/70 p-1" role="group" aria-label="Template format">
+                                        <div class="flex items-center gap-1 rounded-md bg-gray-200/70 p-1" role="group" :aria-label="$t('Template format')">
                                             <button
                                                 type="button"
                                                 :aria-pressed="activeBody === 'html'"
                                                 :class="viewButtonClass(activeBody === 'html')"
                                                 @click="activeBody = 'html'"
                                             >
-                                                HTML
+                                                {{ $t('HTML') }}
                                             </button>
                                             <button
                                                 type="button"
@@ -154,17 +153,17 @@
                                                 :class="viewButtonClass(activeBody === 'text')"
                                                 @click="activeBody = 'text'"
                                             >
-                                                Plain text
+                                                {{ $t('Plain text') }}
                                             </button>
                                         </div>
-                                        <div class="flex items-center gap-1 rounded-md bg-gray-200/70 p-1" role="group" aria-label="Template view">
+                                        <div class="flex items-center gap-1 rounded-md bg-gray-200/70 p-1" role="group" :aria-label="$t('Template view')">
                                             <button
                                                 type="button"
                                                 :aria-pressed="activeView === 'editor'"
                                                 :class="viewButtonClass(activeView === 'editor')"
                                                 @click="activeView = 'editor'"
                                             >
-                                                Editor
+                                                {{ $t('Editor') }}
                                             </button>
                                             <button
                                                 type="button"
@@ -172,12 +171,12 @@
                                                 :class="viewButtonClass(activeView === 'preview')"
                                                 @click="renderPreview"
                                             >
-                                                Preview
+                                                {{ $t('Preview') }}
                                             </button>
                                         </div>
                                     </div>
                                     <p class="text-xs text-gray-500">
-                                        HTML and plain text are required. Blade directives are supported; <code class="rounded bg-gray-200 px-1 py-0.5 text-gray-700">@php</code>, raw PHP tags, and scripts are rejected.
+                                        {{ $t('HTML and plain text are required. Blade directives are supported; @php, raw PHP tags, and scripts are rejected.') }}
                                     </p>
                                 </div>
 
@@ -200,7 +199,7 @@
                                             class="flex min-h-[22rem] flex-1 items-center justify-center gap-2 text-sm text-gray-600"
                                         >
                                             <Spinner :show="true" />
-                                            Rendering preview
+                                            {{ $t('Rendering preview') }}
                                         </div>
                                         <div
                                             v-else-if="previewError"
@@ -213,13 +212,13 @@
                                                 class="mt-4 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                                                 @click="renderPreview"
                                             >
-                                                Try again
+                                                {{ $t('Try again') }}
                                             </button>
                                         </div>
                                         <template v-else>
                                             <div class="flex flex-none items-start justify-between gap-4 rounded-md border border-gray-200 bg-white px-4 py-3">
                                                 <p class="min-w-0 text-sm text-gray-800">
-                                                    <span class="mr-2 font-semibold text-gray-500">Subject</span>
+                                                    <span class="mr-2 font-semibold text-gray-500">{{ $t('Subject') }}</span>
                                                     {{ previewSubject }}
                                                 </p>
                                                 <button
@@ -227,7 +226,7 @@
                                                     class="flex-none text-sm font-semibold text-indigo-600 hover:text-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                                                     @click="renderPreview"
                                                 >
-                                                    Refresh
+                                                    {{ $t('Refresh') }}
                                                 </button>
                                             </div>
                                             <div class="mt-3 min-h-0 flex-1">
@@ -237,7 +236,7 @@
                                                     class="h-full min-h-[19rem] w-full rounded-md border border-gray-200 bg-white"
                                                     sandbox
                                                     referrerpolicy="no-referrer"
-                                                    title="Rendered HTML email preview"
+                                                    :title="$t('Rendered HTML email preview')"
                                                 />
                                                 <pre
                                                     v-else
@@ -257,7 +256,7 @@
                                     class="inline-flex justify-center rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                                     @click="emit('close')"
                                 >
-                                    {{ locked ? "Close" : "Cancel" }}
+                                    {{ locked ? $t('Close') : $t('Cancel') }}
                                 </button>
                                 <button
                                     v-if="!locked"
@@ -267,7 +266,7 @@
                                     @click="form$?.submit()"
                                 >
                                     <Spinner :show="isSubmitting" />
-                                    Save
+                                    {{ $t('Save') }}
                                 </button>
                             </div>
                         </div>
@@ -279,6 +278,7 @@
 </template>
 
 <script setup>
+import { trans } from '@i18n';
 import axios from "axios";
 import { computed, ref, watch } from "vue";
 import AddEditItemModal from "../modal/AddEditItemModal.vue";
@@ -311,7 +311,51 @@ const previewError = ref(null);
 const selectedBase = ref(null);
 let previewRequestId = 0;
 
-const categoryOptions = computed(() => props.options?.categories ?? []);
+const templateLabels = computed(() => ({
+    'ai-agent': trans('AI Agent'),
+    app: trans('App'),
+    archive: trans('Archive'),
+    authentication: trans('Authentication'),
+    emergency: trans('Emergency'),
+    export: trans('Export'),
+    extension: trans('Extension'),
+    fax: trans('Fax'),
+    messages: trans('Messages'),
+    missed: trans('Missed'),
+    system: trans('System'),
+    transcription: trans('Transcription'),
+    voicemail: trans('Voicemail'),
+    call: trans('Call'),
+    'call-ready': trans('Call Ready'),
+    completed: trans('Completed'),
+    'contact-center': trans('Contact Center'),
+    credentials: trans('Credentials'),
+    default: trans('Default'),
+    'escalation-completion': trans('Escalation Completion'),
+    failed: trans('Failed'),
+    inbound: trans('Inbound'),
+    'in-transit': trans('In Transit'),
+    'invalid-destination': trans('Invalid Destination'),
+    'not-authorized': trans('Not Authorized'),
+    received: trans('Received'),
+    'reset-password': trans('Reset Password'),
+    'ring-group': trans('Ring Group'),
+    'send-email': trans('Send Email'),
+    sent: trans('Sent'),
+    'service-alert': trans('Service Alert'),
+    'storage-report': trans('Storage Report'),
+    test: trans('Test'),
+    'verification-code': trans('Verification Code'),
+    welcome: trans('Welcome'),
+}));
+const formatLabel = (value) => templateLabels.value[value]
+    ?? String(value ?? '').replace(/[_-]/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
+
+const categoryOptions = computed(() => (props.options?.categories ?? []).map((item) => ({ ...item, label: formatLabel(item.value) })));
+const subcategoryOptions = computed(() => {
+    const value = props.options?.item?.template_subcategory;
+    return value ? [{ value, label: formatLabel(value) }] : [];
+});
 const languageOptions = computed(() => props.options?.languages ?? []);
 const domainOptions = computed(() => props.options?.domains ?? []);
 // Global/shared scope is only offered when the account list exposes the
@@ -323,7 +367,7 @@ const currentDomainOption = computed(() =>
     domainOptions.value.find((option) => option.value !== "__global__" && option.value !== "__default__"),
 );
 const defaultTemplateItems = computed(() =>
-    (props.options?.defaults ?? []).map((item) => ({ value: item.value, label: item.label })),
+    (props.options?.defaults ?? []).map((item) => ({ value: item.value, label: [formatLabel(item.category), formatLabel(item.subcategory)].filter(Boolean).join(" / ") })),
 );
 const defaultTemplateMap = computed(() => {
     const map = {};
@@ -425,7 +469,7 @@ const renderPreview = () => {
 
     if (!route) {
         previewLoading.value = false;
-        previewError.value = "The preview route is unavailable.";
+        previewError.value = trans('The preview route is unavailable.');
         return;
     }
 
@@ -455,7 +499,7 @@ const renderPreview = () => {
         const errors = error?.response?.data?.errors ?? {};
         previewError.value = errors.preview?.[0]
             ?? Object.values(errors)?.[0]?.[0]
-            ?? "The template preview could not be rendered.";
+            ?? trans('The template preview could not be rendered.');
     }).finally(() => {
         if (requestId === previewRequestId) {
             previewLoading.value = false;
@@ -464,6 +508,8 @@ const renderPreview = () => {
 };
 
 const submitForm = async (FormData, form) => {
+    form.messageBag.clear();
+    Object.values(form.elements$).forEach(clearErrorsRecursive);
     isSubmitting.value = true;
     bodyError.value = null;
 
@@ -526,6 +572,6 @@ const handleError = (error, details, form) => {
         return;
     }
 
-    form.messageBag.append("Could not save the email template.");
+    form.messageBag.append(trans('Could not save the email template.'));
 };
 </script>

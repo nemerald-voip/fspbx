@@ -11,21 +11,21 @@ class PublicWebhookUrlValidator
         $parts = parse_url($url);
 
         if (! is_array($parts) || strtolower((string) ($parts['scheme'] ?? '')) !== 'https') {
-            throw new InvalidArgumentException('The webhook endpoint must use HTTPS.');
+            throw new InvalidArgumentException(__('The webhook endpoint must use HTTPS.'));
         }
 
         if (! empty($parts['user']) || ! empty($parts['pass'])) {
-            throw new InvalidArgumentException('The webhook endpoint cannot contain embedded credentials.');
+            throw new InvalidArgumentException(__('The webhook endpoint cannot contain embedded credentials.'));
         }
 
         $host = trim((string) ($parts['host'] ?? ''), '[]');
         if ($host === '') {
-            throw new InvalidArgumentException('The webhook endpoint must include a valid host.');
+            throw new InvalidArgumentException(__('The webhook endpoint must include a valid host.'));
         }
 
         $port = (int) ($parts['port'] ?? 443);
         if ($port < 1 || $port > 65535) {
-            throw new InvalidArgumentException('The webhook endpoint port is invalid.');
+            throw new InvalidArgumentException(__('The webhook endpoint port is invalid.'));
         }
 
         $addresses = filter_var($host, FILTER_VALIDATE_IP)
@@ -33,12 +33,12 @@ class PublicWebhookUrlValidator
             : $this->resolveHost($host);
 
         if ($addresses === []) {
-            throw new InvalidArgumentException('The webhook endpoint host could not be resolved.');
+            throw new InvalidArgumentException(__('The webhook endpoint host could not be resolved.'));
         }
 
         foreach ($addresses as $address) {
             if (! $this->isPublicAddress($address)) {
-                throw new InvalidArgumentException('The webhook endpoint must resolve only to public IP addresses.');
+                throw new InvalidArgumentException(__('The webhook endpoint must resolve only to public IP addresses.'));
             }
         }
 

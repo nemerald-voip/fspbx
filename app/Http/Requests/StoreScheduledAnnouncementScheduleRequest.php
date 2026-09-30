@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
+use App\Support\Localization\ValidationMessages;
 use Illuminate\Validation\Rule;
 
 class StoreScheduledAnnouncementScheduleRequest extends FormRequest
@@ -70,7 +71,7 @@ class StoreScheduledAnnouncementScheduleRequest extends FormRequest
     private function validateTimeOfDay(string $attribute, mixed $value, \Closure $fail): void
     {
         if ($this->normalizeTimeOfDay($value) === null) {
-            $fail('The time field must be a valid time.');
+            $fail(__('The time field must be a valid time.'));
         }
     }
 
@@ -89,5 +90,35 @@ class StoreScheduledAnnouncementScheduleRequest extends FormRequest
         }
 
         return null;
+    }
+
+    public function messages(): array
+    {
+        return ValidationMessages::common() + [
+            'timezone' => __('The :attribute must be a valid timezone.'),
+        ];
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'name' => __('Name'),
+            'description' => __('Description'),
+            'timezone' => __('Time Zone'),
+            'recording_filename' => __('Recording'),
+            'busy_extension_behavior' => __('Busy Extensions'),
+            'extension_uuids' => __('Extensions'),
+            'extension_uuids.*' => __('Extension'),
+            'enabled' => __('Enabled'),
+            'starts_on' => __('Start Date'),
+            'ends_on' => __('End Date'),
+            'events' => __('Announcement Times'),
+            'events.*.time_of_day' => __('Time'),
+            'events.*.weekdays' => __('Weekdays'),
+            'events.*.weekdays.*' => __('Weekday'),
+            'exceptions' => __('Exclusions'),
+            'exceptions.*.exception_date' => __('Date'),
+            'exceptions.*.comment' => __('Comment'),
+        ];
     }
 }

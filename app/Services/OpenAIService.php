@@ -17,7 +17,7 @@ class OpenAIService
     public function textToSpeech($model = 'gpt-4o-mini-tts-2025-12-15', $input, $voice = 'alloy', $response_format = 'wav', $speed = '1.0')
     {
         if (empty($this->apiKey)) {
-            throw new \Exception('OpenAI API key is not configured. Please set the API key in your environment file.');
+            throw new \Exception(__('OpenAI API key is not configured. Please set the API key in your environment file.'));
         }
 
         $url = 'https://api.openai.com/v1/audio/speech';
@@ -55,17 +55,17 @@ class OpenAIService
         if ($response->clientError()) {
             // Log client errors
             logger('OpenAI API Client Error: ' . $response->body());
-            throw new \Exception('There was an error with your request: ' . $response->json('error.message'));
+            throw new \Exception(__('There was an error with your request: :error', ['error' => $response->json('error.message')]));
         }
 
         if ($response->serverError()) {
             // Log server errors
             logger('OpenAI API Server Error: ' . $response->body());
-            throw new \Exception('The OpenAI API is currently unavailable. Please try again later.');
+            throw new \Exception(__('The OpenAI API is currently unavailable. Please try again later.'));
         }
 
         // Handle unexpected errors
-        throw new \Exception('An unexpected error occurred. Please try again.');
+        throw new \Exception(__('An unexpected error occurred. Please try again.'));
     }
 
     public function getVoices()
@@ -111,7 +111,7 @@ class OpenAIService
     public function transcribeAudio($filePath, $model = 'whisper-1', $language = null)
     {
         if (empty($this->apiKey)) {
-            throw new \Exception('OpenAI API key is not configured. Please set the API key in your environment file.');
+            throw new \Exception(__('OpenAI API key is not configured. Please set the API key in your environment file.'));
         }
 
         $url = 'https://api.openai.com/v1/audio/transcriptions';

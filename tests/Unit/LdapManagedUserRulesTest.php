@@ -2,7 +2,7 @@
 
 namespace Tests\Unit;
 
-use App\Http\Controllers\UsersController;
+use App\Http\Controllers\UserController;
 use App\Http\Requests\StoreLdapDirectoryRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Models\User;
@@ -75,7 +75,7 @@ class LdapManagedUserRulesTest extends TestCase
         );
         $this->assertSame(['prohibited'], $rules['user_enabled']);
         $this->assertSame(['prohibited'], $rules['extension_uuid']);
-        $this->assertSame(['sometimes', 'array'], $rules['groups']);
+        $this->assertSame(['sometimes', 'required', 'array', 'min:1'], $rules['groups']);
     }
 
     public function test_email_is_read_only_when_active_directory_provided_it(): void
@@ -103,7 +103,7 @@ class LdapManagedUserRulesTest extends TestCase
 
         $this->assertSame(['required', 'string', 'max:255'], $rules['first_name']);
         $this->assertSame(['nullable', 'uuid'], $rules['extension_uuid']);
-        $this->assertSame(['sometimes', 'required', 'array'], $rules['groups']);
+        $this->assertSame(['sometimes', 'required', 'array', 'min:1'], $rules['groups']);
     }
 
     public function test_directory_email_attribute_mapping_can_be_left_blank(): void
@@ -152,7 +152,7 @@ class LdapManagedUserRulesTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        $controller = new class extends UsersController
+        $controller = new class extends UserController
         {
             public function applyLocalSource($query, string $domainUuid): void
             {

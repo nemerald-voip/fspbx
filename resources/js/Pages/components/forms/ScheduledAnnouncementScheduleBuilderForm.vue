@@ -15,28 +15,28 @@
                         leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
                         <DialogPanel class="relative w-full max-w-6xl transform overflow-visible rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:p-6">
                             <DialogTitle as="h3" class="mb-5 pr-10 text-base font-semibold leading-6 text-gray-900">
-                                {{ header }}
+                                {{ header || $t('Schedule') }}
                             </DialogTitle>
 
                             <div class="absolute right-0 top-0 pr-4 pt-4 sm:block">
                                 <button type="button"
                                     class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                     @click="handleClose">
-                                    <span class="sr-only">Close</span>
+                                    <span class="sr-only">{{ $t("Close") }}</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
 
-                            <div v-if="loading" class="w-full py-10 text-center text-sm text-gray-500">Loading...</div>
+                            <div v-if="loading" class="w-full py-10 text-center text-sm text-gray-500">{{ $t("Loading...") }}</div>
 
-                            <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
+                            <Vueform :locale="formLocale" @mounted="form => form.disableValidation()" v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
                                 @error="handleError" @response="handleResponse" :display-errors="false"
                                 :default="defaultValues">
                                 <template #empty>
                                     <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
                                         <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
                                             <FormTabs view="vertical">
-                                                <FormTab name="schedule" label="Schedule" :elements="[
+                                                <FormTab name="schedule" :label="$t(&quot;Schedule&quot;)" :elements="[
                                                     'schedule_header',
                                                     'enabled',
                                                     'name',
@@ -54,7 +54,7 @@
                                                     'events',
                                                     'submit',
                                                 ]" />
-                                                <FormTab name="exclusions" label="Exclusions" :elements="[
+                                                <FormTab name="exclusions" :label="$t(&quot;Exclusions&quot;)" :elements="[
                                                     'exclusions_header',
                                                     'exceptions',
                                                     'submit',
@@ -64,25 +64,24 @@
 
                                         <div class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
                                             <FormElements>
-                                                <StaticElement name="schedule_header" tag="h4" content="Schedule"
-                                                    description="Give this schedule a name, pick the time zone for its announcement times, and choose the recording to play." />
+                                                <StaticElement name="schedule_header" tag="h4" :content="$t(&quot;Schedule&quot;)"
+                                                    :description="$t(&quot;Give this schedule a name, pick the time zone for its announcement times, and choose the recording to play.&quot;)" />
 
-                                                <ToggleElement name="enabled" text="Enabled"
-                                                    :labels="{ on: 'On', off: 'Off' }"
-                                                    description="Master switch for this schedule. When off, nothing plays — no events run on any day." />
+                                                <ToggleElement name="enabled" :text="$t(&quot;Enabled&quot;)"
+                                                    :labels="{ on: $t(&quot;On&quot;), off: $t(&quot;Off&quot;) }"
+                                                    :description="$t(&quot;Master switch for this schedule. When off, nothing plays — no events run on any day.&quot;)" />
 
-                                                <TextElement name="name" label="Name" :floating="false"
-                                                    :rules="['required']" :columns="{ sm: { container: 6 } }" />
-                                                <SelectElement name="timezone" label="Time Zone"
+                                                <TextElement name="name" :label="$t(&quot;Name&quot;)" :floating="false" :columns="{ sm: { container: 6 } }" />
+                                                <SelectElement name="timezone" :label="$t(&quot;Time Zone&quot;)"
                                                     :groups="true" :items="timezoneOptions" :search="true"
                                                     :native="false" input-type="search" autocomplete="off"
-                                                    placeholder="Choose time zone" :floating="false" :strict="false"
+                                                    :placeholder="$t(&quot;Choose time zone&quot;)" :floating="false" :strict="false"
                                                     :columns="{ sm: { container: 6 } }" />
-                                                <TextElement name="description" label="Description" :floating="false" />
+                                                <TextElement name="description" :label="$t(&quot;Description&quot;)" :floating="false" />
                                                 <SelectElement name="recording_filename"
-                                                    label="Recording or Sound" :items="fetchRecordings" :native="false"
-                                                    :search="true" :floating="false" :rules="['required']"
-                                                    description="Every announcement event in this schedule plays this recording or sound. Use the plus button to add a new file."
+                                                    :label="$t(&quot;Recording or Sound&quot;)" :items="fetchRecordings" :native="false"
+                                                    :search="true" :floating="false"
+                                                    :description="$t(&quot;Every announcement event in this schedule plays this recording or sound. Use the plus button to add a new file.&quot;)"
                                                     @change="handleRecordingChange"
                                                     :columns="{ sm: { container: 6 } }" />
                                                 <GroupElement name="recording_action_buttons" :columns="{ container: 6 }">
@@ -143,64 +142,61 @@
                                                             class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
                                                     </ButtonElement>
                                                 </GroupElement>
-                                                <StaticElement name="extensions_header" tag="h4" content="Extensions"
-                                                    description="Choose which extensions play this schedule. Search to add an extension; remove the tag to take it out of the schedule."
+                                                <StaticElement name="extensions_header" tag="h4" :content="$t(&quot;Extensions&quot;)"
+                                                    :description="$t(&quot;Choose which extensions play this schedule. Search to add an extension; remove the tag to take it out of the schedule.&quot;)"
                                                     :add-classes="{ StaticElement: { container: 'border-t border-gray-200 pt-6' } }" />
                                                 <TagsElement name="selectedExtensions" :close-on-select="false"
                                                     :items="extensionOptions" :search="true" :native="false"
-                                                    label="Add Extension" input-type="search" autocomplete="off"
-                                                    placeholder="Search by name or extension" :floating="false"
-                                                    :rules="['required']" :columns="{ container: 12 }" />
+                                                    :label="$t(&quot;Add Extension&quot;)" input-type="search" autocomplete="off"
+                                                    :placeholder="$t(&quot;Search by name or extension&quot;)" :floating="false" :columns="{ container: 12 }" />
                                                 <RadiogroupElement name="busy_extension_behavior"
-                                                    label="Busy Extensions" view="tabs"
+                                                    :label="$t(&quot;Busy Extensions&quot;)" view="tabs"
                                                     :items="busyExtensionBehaviorOptions"
-                                                    description="Skip leaves busy extensions alone. Force sends the announcement even if the phone is already on a call."
+                                                    :description="$t(&quot;Skip leaves busy extensions alone. Force sends the announcement even if the phone is already on a call.&quot;)"
                                                     :columns="{ container: 12 }" />
-                                                <StaticElement name="activation_header" tag="h4" content="When it runs"
-                                                    description="Optionally limit this schedule to a date range. Leave both blank to run indefinitely."
+                                                <StaticElement name="activation_header" tag="h4" :content="$t(&quot;When it runs&quot;)"
+                                                    :description="$t(&quot;Optionally limit this schedule to a date range. Leave both blank to run indefinitely.&quot;)"
                                                     :add-classes="{ StaticElement: { container: 'border-t border-gray-200 pt-6' } }" />
-                                                <DateElement name="starts_on" label="Starts" :time="false"
+                                                <DateElement name="starts_on" :label="$t(&quot;Starts&quot;)" :time="false"
                                                     :floating="false" :columns="{ sm: { container: 6 } }" />
-                                                <DateElement name="ends_on" label="Ends" :time="false"
+                                                <DateElement name="ends_on" :label="$t(&quot;Ends&quot;)" :time="false"
                                                     :floating="false" :columns="{ sm: { container: 6 } }" />
 
-                                                <StaticElement name="events_header" tag="h4" content="Events"
-                                                    description="Each row is one announcement time. Choose the time of day and the weekdays it should play."
+                                                <StaticElement name="events_header" tag="h4" :content="$t(&quot;Events&quot;)"
+                                                    :description="$t(&quot;Each row is one announcement time. Choose the time of day and the weekdays it should play.&quot;)"
                                                     :add-classes="{ StaticElement: { container: 'border-t border-gray-200 pt-6' } }" />
-                                                <ListElement name="events" :sort="true" :initial="1" label="Events"
+                                                <ListElement name="events" :sort="true" :initial="1" :label="$t(&quot;Events&quot;)"
                                                     :add-classes="{ ListElement: { listItem: 'bg-white p-3 sm:p-4 mb-4 rounded-lg shadow-md' } }">
                                                     <template #default="{ index }">
                                                         <ObjectElement :name="index">
-                                                            <DateElement name="time_of_day" label="Time"
+                                                            <DateElement name="time_of_day" :label="$t(&quot;Time&quot;)"
                                                                 :time="true" :date="false" :hour24="false"
-                                                                :floating="false" :rules="['required']" size="sm"
+                                                                :floating="false" size="sm"
                                                                 :columns="{ sm: { container: 4 } }" />
                                                             <CheckboxgroupElement name="weekdays" view="tabs"
-                                                                label="Days" :items="weekdayOptions" size="sm"
-                                                                :rules="['required']"
+                                                                :label="$t(&quot;Days&quot;)" :items="weekdayOptions" size="sm"
                                                                 :columns="{ sm: { container: 8 } }" />
                                                         </ObjectElement>
                                                     </template>
                                                 </ListElement>
 
-                                                <StaticElement name="exclusions_header" tag="h4" content="Exclusions"
-                                                    description="Use exclusions for holidays and other special dates. On these dates, this schedule will not play." />
-                                                <ListElement name="exceptions" :sort="true" label="Exclusions"
+                                                <StaticElement name="exclusions_header" tag="h4" :content="$t(&quot;Exclusions&quot;)"
+                                                    :description="$t(&quot;Use exclusions for holidays and other special dates. On these dates, this schedule will not play.&quot;)" />
+                                                <ListElement name="exceptions" :sort="true" :label="$t(&quot;Exclusions&quot;)"
                                                     :add-classes="{ ListElement: { listItem: 'bg-white p-3 sm:p-4 mb-4 rounded-lg shadow-md' } }">
                                                     <template #default="{ index }">
                                                         <ObjectElement :name="index">
-                                                            <DateElement name="exception_date" label="Date"
-                                                                :time="false" :floating="false"
-                                                                :rules="['required']" size="sm"
+                                                            <DateElement name="exception_date" :label="$t(&quot;Date&quot;)"
+                                                                :time="false" :floating="false" size="sm"
                                                                 :columns="{ sm: { container: 6 } }" />
-                                                            <TextElement name="comment" label="Comment"
+                                                            <TextElement name="comment" :label="$t(&quot;Comment&quot;)"
                                                                 :floating="false" size="sm"
                                                                 :columns="{ sm: { container: 6 } }" />
                                                         </ObjectElement>
                                                     </template>
                                                 </ListElement>
 
-                                                <ButtonElement name="submit" button-label="Save Schedule"
+                                                <ButtonElement name="submit" :button-label="$t(&quot;Save Schedule&quot;)"
                                                     :submits="true" align="right" />
                                             </FormElements>
                                         </div>
@@ -208,7 +204,7 @@
                                 </template>
                             </Vueform>
 
-                            <NewGreetingForm :header="'New Announcement Recording'" :show="showNewRecordingModal"
+                            <NewGreetingForm :header="$t(&quot;New Announcement Recording&quot;)" :show="showNewRecordingModal"
                                 @close="showNewRecordingModal = false" :voices="options?.voices"
                                 :speeds="options?.speeds" :default_voice="options?.default_voice"
                                 :phone_call_instructions="options?.phone_call_instructions"
@@ -222,9 +218,9 @@
 
                             <ConfirmationModal :show="showRecordingDeleteConfirmationModal"
                                 @close="showRecordingDeleteConfirmationModal = false"
-                                @confirm="confirmRecordingDeleteAction" :header="'Confirm Deletion'"
-                                :text="'This action will permanently delete this recording. Are you sure you want to proceed?'"
-                                :confirm-button-label="'Delete'" cancel-button-label="Cancel" />
+                                @confirm="confirmRecordingDeleteAction" :header="$t(&quot;Confirm Deletion&quot;)"
+                                :text="$t(&quot;This action will permanently delete this recording. Are you sure you want to proceed?&quot;)"
+                                :confirm-button-label="$t(&quot;Delete&quot;)" :cancel-button-label="$t(&quot;Cancel&quot;)" />
                         </DialogPanel>
                     </TransitionChild>
                 </div>
@@ -234,6 +230,9 @@
 </template>
 
 <script setup>
+import { useVueformLocale } from "../../../composables/useVueformLocale.js";
+import { weekdayLabel } from "../../data/localizedTime";
+import { trans } from "@i18n";
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import axios from 'axios'
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
@@ -244,11 +243,13 @@ import ConfirmationModal from '../modal/ConfirmationModal.vue'
 import UpdateGreetingModal from '../modal/UpdateGreetingModal.vue'
 import NewGreetingForm from './NewGreetingForm.vue'
 
+const formLocale = useVueformLocale();
+
 const props = defineProps({
     show: Boolean,
     options: Object,
     loading: Boolean,
-    header: { type: String, default: 'Schedule' },
+    header: { type: String, default: '' },
     mode: { type: String, default: 'create' },
 })
 
@@ -266,20 +267,12 @@ const isRecordingUpdating = ref(false)
 const recordingLabel = ref(null)
 const selectedRecording = ref(undefined)
 
-const weekdayOptions = [
-    { value: 1, label: 'M' },
-    { value: 2, label: 'T' },
-    { value: 3, label: 'W' },
-    { value: 4, label: 'T' },
-    { value: 5, label: 'F' },
-    { value: 6, label: 'S' },
-    { value: 7, label: 'S' },
-]
+const weekdayOptions = computed(() => Array.from({ length: 7 }, (_, index) => ({ value: index + 1, label: weekdayLabel(index + 1) })))
 
-const busyExtensionBehaviorOptions = [
-    { value: 'skip', label: 'Skip' },
-    { value: 'force', label: 'Force' },
-]
+const busyExtensionBehaviorOptions = computed(() => [
+    { value: 'skip', label: trans("Skip") },
+    { value: 'force', label: trans("Force") },
+])
 
 const timezoneOptions = computed(() => props.options?.timezones ?? [])
 
@@ -441,13 +434,13 @@ const playRecording = () => {
 
     currentAudio.value.play().catch(() => {
         stopRecordingAudio()
-        emit('error', { message: 'Audio playback failed' })
+        emit('error', { message: trans("Audio playback failed") })
     })
 
     currentAudio.value.addEventListener('ended', stopRecordingAudio)
     currentAudio.value.addEventListener('error', () => {
         stopRecordingAudio()
-        emit('error', { message: 'File not found or failed to load audio' })
+        emit('error', { message: trans("File not found or failed to load audio") })
     })
 }
 
@@ -489,7 +482,7 @@ const handleRecordingUpdate = async (updatedRecording) => {
             response: {
                 data: {
                     errors: {
-                        request: ['Recording name cannot be empty.'],
+                        request: [trans("Recording name cannot be empty.")],
                     },
                 },
             },
@@ -564,6 +557,8 @@ const confirmRecordingDeleteAction = async () => {
 }
 
 const submitForm = async (FormData, form$) => {
+    form$.messageBag.clear();
+    Object.values(form$.elements$).forEach(clearErrorsRecursive);
     const requestData = {
         ...form$.requestData,
         extension_uuids: (form$.el$('selectedExtensions')?.value ?? form$.requestData.selectedExtensions ?? [])
@@ -612,7 +607,10 @@ const handleResponse = (response, form$) => {
     Object.values(form$.elements$).forEach((el$) => clearErrorsRecursive(el$))
     if (response.data.errors) {
         Object.keys(response.data.errors).forEach((elName) => {
-            form$.el$(elName)?.messageBag.append(response.data.errors[elName][0])
+            const field = elName.replace(/^extension_uuids(?:\.\d+)?$/, 'selectedExtensions')
+            const element = form$.el$(field) ?? form$.el$(field.split('.')[0])
+            const messageBag = element?.messageBag ?? form$.messageBag
+            messageBag.append(response.data.errors[elName][0])
         })
     }
 }
@@ -626,7 +624,7 @@ const handleSuccess = (response) => {
 const handleError = (error, details, form$) => {
     form$?.messageBag?.clear()
     if (details?.type === 'submit') emit('error', error)
-    else form$?.messageBag?.append('Could not submit form')
+    else form$?.messageBag?.append(trans("Could not submit form"))
 }
 
 const handleClose = () => {

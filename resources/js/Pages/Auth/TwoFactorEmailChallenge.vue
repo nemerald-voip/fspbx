@@ -1,11 +1,10 @@
 <template>
-    <Head title="Two-factor Email Confirmation" />
+    <Head :title="$t('Two-factor Email Confirmation')" />
 
     <div class="flex min-h-full flex-1 flex-col justify-center py-12 sm:px-6 lg:px-8">
         <div class="sm:mx-auto sm:w-full sm:max-w-md">
-            <img class="mx-auto h-10 w-auto" :src="logoUrl" />
-            <h2 class="mt-6 text-center text-xl font-bold leading-9 tracking-tight text-gray-900">Two-factor
-                authentication code
+            <img class="mx-auto h-10 w-auto" :src="logoUrl" :alt="$t('Logo')" />
+            <h2 class="mt-6 text-center text-xl font-bold leading-9 tracking-tight text-gray-900">{{ $t('Two-factor authentication code') }}
             </h2>
         </div>
 
@@ -13,7 +12,7 @@
             <div class="bg-white px-6 py-12 shadow sm:rounded-lg sm:px-12">
 
                 <div class="mb-4 text-sm text-center text-gray-600">
-                    A one-time verification code has been sent to your email. Be sure to check your junk or spam folder.
+                    {{ $t('A one-time verification code has been sent to your email. Be sure to check your junk or spam folder.') }}
                 </div>
 
                 <div v-if="status" class="mb-4 font-medium text-sm text-green-600 dark:text-green-400">
@@ -26,11 +25,11 @@
 
                 <form class="space-y-6" action="#" method="POST">
                     <div>
-                        <!-- <label for="code" class="block text-sm font-medium leading-6 text-gray-900">Enter your verification code</label> -->
+                        <label for="code" class="sr-only">{{ $t('Enter your verification code') }}</label>
                         <div class="mt-2">
                             <input v-model="form.code" id="code" name="code" type="text" required
                                 :class="['block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6', { 'ring-1 ring-inset ring-red-600': errors.code, 'ring-1 ring-inset ring-gray-300': !errors.code }]"
-                                placeholder="Enter your verification code" />
+                                :placeholder="$t('Enter your verification code')" />
                         </div>
                         <!-- Error message for code -->
                         <div v-if="errors.code" class="mt-2 text-sm text-red-600">
@@ -42,8 +41,7 @@
                         <div class="flex items-center">
                             <input v-model="form.remember" id="remember" name="remember" type="checkbox"
                                 class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600" />
-                            <label for="remember" class="ml-3 block text-sm leading-6 text-gray-900">Remember this device
-                                for 7 days</label>
+                            <label for="remember" class="ml-3 block text-sm leading-6 text-gray-900">{{ $t('Remember this device for 7 days') }}</label>
                         </div>
 
                     </div>
@@ -61,7 +59,7 @@
                                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
                                 </path>
                             </svg>
-                            Verify
+                            {{ $t('Verify') }}
                         </button>
                     </div>
                     <div>
@@ -75,7 +73,7 @@
                                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
                                 </path>
                             </svg>
-                            Resend verification code?
+                            {{ $t('Resend verification code?') }}
                         </button>
 
                     </div>
@@ -89,6 +87,7 @@
 <script setup>
 import { ref } from 'vue';
 import { Head, useForm } from '@inertiajs/vue3';
+import { trans } from '@i18n';
 
 const form = useForm({
     code: '',
@@ -125,7 +124,7 @@ const submitForm = () => {
                 }
             });
         }).catch((error) => {
-            errorMessage.value = "Invalid token. Refresh the page."
+            errorMessage.value = trans('Invalid token. Refresh the page.');
             isLoading.value = false; // Reset loading state on error
         });
 }
@@ -148,7 +147,7 @@ const requestNewCode = () => {
                 }
             });
         }).catch((error) => {
-            errorMessage.value = "Invalid token. Refresh the page."
+            errorMessage.value = trans('Invalid token. Refresh the page.');
             isLoading.value = false; // Reset loading state on error
         });
 }

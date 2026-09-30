@@ -50,8 +50,8 @@ class CallWebhookController extends Controller
 
         return response()->json([
             'messages' => ['success' => [$created
-                ? 'Call webhook configured successfully.'
-                : 'Call webhook updated successfully.']],
+                ? __('Call webhook configured successfully.')
+                : __('Call webhook updated successfully.')]],
             'created' => $created,
             'secret' => $secret,
             'masked_secret' => $subscription->maskedSecret(),
@@ -71,7 +71,7 @@ class CallWebhookController extends Controller
         $subscriptionRegistry->invalidate();
 
         return response()->json([
-            'messages' => ['success' => ['Signing secret rotated successfully.']],
+            'messages' => ['success' => [__('Signing secret rotated successfully.')]],
             'secret' => $secret,
             'masked_secret' => $subscription->maskedSecret(),
         ]);
@@ -87,13 +87,13 @@ class CallWebhookController extends Controller
 
         if (! ($result['successful'] ?? false)) {
             return response()->json([
-                'messages' => ['error' => [$result['message'] ?? 'The test webhook failed.']],
+                'messages' => ['error' => [$result['message'] ?? __('The test webhook failed.')]],
                 'status' => $result['status'] ?? null,
             ], 422);
         }
 
         return response()->json([
-            'messages' => ['success' => ['Test webhook delivered successfully.']],
+            'messages' => ['success' => [__('Test webhook delivered successfully.')]],
             'status' => $result['status'] ?? null,
         ]);
     }
@@ -108,7 +108,7 @@ class CallWebhookController extends Controller
         $subscriptionRegistry->invalidate();
 
         return response()->json([
-            'messages' => ['success' => ['Call webhook configuration deleted.']],
+            'messages' => ['success' => [__('Call webhook configuration deleted.')]],
         ]);
     }
 
@@ -168,6 +168,6 @@ class CallWebhookController extends Controller
 
     private function denied(): JsonResponse
     {
-        return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+        return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
     }
 }

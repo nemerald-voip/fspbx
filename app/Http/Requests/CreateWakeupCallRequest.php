@@ -6,6 +6,7 @@ use App\Models\Extensions;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Http\FormRequest;
+use App\Support\Localization\ValidationMessages;
 
 class CreateWakeupCallRequest extends FormRequest
 {
@@ -44,11 +45,11 @@ class CreateWakeupCallRequest extends FormRequest
 
     public function messages(): array
     {
-        return [
-            'extension.uuid' => 'The extension field is required',
-            'wake_up_time.date' => 'The wake-up time must be a valid date format.',
-            'wake_up_time.after' => 'The wake-up time must be in the future.',
-            'status.in' => 'The status must be one of: scheduled, in progress, completed, or failed.',
+        return ValidationMessages::common() + [
+            'extension.uuid' => __('The selected :attribute is invalid.'),
+            'wake_up_time.date' => __('The wake-up time must be a valid date format.'),
+            'wake_up_time.after' => __('The wake-up time must be in the future.'),
+            'status.in' => __('The selected :attribute is invalid.'),
         ];
     }
 
@@ -86,12 +87,12 @@ class CreateWakeupCallRequest extends FormRequest
             $userExtensionUuid = optional($this->user())->extension_uuid;
 
             if (!$userExtensionUuid) {
-                $validator->errors()->add('extension', 'Your user account is not assigned to an extension.');
+                $validator->errors()->add('extension', __('Your user account is not assigned to an extension.'));
                 return;
             }
 
             if ($this->input('extension') !== $userExtensionUuid) {
-                $validator->errors()->add('extension', 'You can only manage wake-up calls for your own extension.');
+                $validator->errors()->add('extension', __('You can only manage wake-up calls for your own extension.'));
             }
         });
     }
@@ -117,5 +118,15 @@ class CreateWakeupCallRequest extends FormRequest
         $input = preg_replace('/[^\x20-\x7E]/', '', $input);
 
         return $input;
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'wake_up_time' => __('Wake-up Time'),
+            'extension' => __('Extension'),
+            'status' => __('Status'),
+            'recurring' => __('Daily Repeat'),
+        ];
     }
 }

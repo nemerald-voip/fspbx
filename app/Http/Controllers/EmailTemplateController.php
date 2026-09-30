@@ -11,6 +11,7 @@ use App\Support\Localization\LocaleRegistry;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Support\Localization\ValidationMessages;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -62,7 +63,7 @@ class EmailTemplateController extends Controller
     public function getData(Request $request)
     {
         if (! userCheckPermission('email_templates_view')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $paginator = $this->scoped($request)
@@ -102,8 +103,8 @@ class EmailTemplateController extends Controller
             'email_template_uuid' => $template->email_template_uuid,
             'domain_uuid' => $template->domain_uuid,
             'domain_label' => $template->domain_uuid === null
-                ? ($template->isDefault() ? 'All accounts' : 'Global override')
-                : ($template->domain?->domain_description ?: $template->domain?->domain_name ?: 'Account'),
+                ? ($template->isDefault() ? __('All accounts') : __('Global override'))
+                : ($template->domain?->domain_description ?: $template->domain?->domain_name ?: __('Account')),
             'base_template_uuid' => $template->base_template_uuid,
             'base_version' => $template->base_version,
             'template_key' => $template->template_key,
@@ -127,11 +128,11 @@ class EmailTemplateController extends Controller
         $itemUuid = $request->input('itemUuid', $request->input('item_uuid'));
 
         if ($itemUuid && ! userCheckPermission('email_templates_view')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         if (! $itemUuid && ! userCheckPermission('email_templates_create')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $item = $itemUuid
@@ -197,7 +198,7 @@ class EmailTemplateController extends Controller
     public function preview(Request $request, EmailTemplatePreviewService $previewer): JsonResponse
     {
         if (! userCheckPermission('email_templates_view')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $data = $request->validate([
@@ -208,6 +209,17 @@ class EmailTemplateController extends Controller
             'template_subject' => ['required', 'string', 'max:500'],
             'template_html' => ['required', 'string'],
             'template_text' => ['required', 'string'],
+        ], ValidationMessages::common(), [
+            'items' => __('Email Templates'),
+            'items.*' => __('Email Template'),
+            'domain_uuid' => __('Account'),
+            'email_template_uuid' => __('Email Template'),
+            'template_category' => __('Category'),
+            'template_subcategory' => __('Subcategory'),
+            'template_layout' => __('Layout'),
+            'template_subject' => __('Subject'),
+            'template_html' => __('HTML'),
+            'template_text' => __('Plain text'),
         ]);
 
         $template = filled($data['email_template_uuid'] ?? null)
@@ -236,7 +248,7 @@ class EmailTemplateController extends Controller
         } catch (\Throwable $exception) {
             return response()->json([
                 'errors' => [
-                    'preview' => ['Preview could not be rendered: '.$exception->getMessage()],
+                    'preview' => [__('Preview could not be rendered: :error', ['error' => $exception->getMessage()])],
                 ],
             ], 422);
         }
@@ -262,7 +274,7 @@ class EmailTemplateController extends Controller
         $template = EmailTemplate::create($data);
 
         return response()->json([
-            'messages' => ['success' => ['Custom email template created.']],
+            'messages' => ['success' => [__('Custom email template created.')]],
             'email_template_uuid' => $template->email_template_uuid,
             'routes' => [
                 'update_route' => route('email-templates.update', ['email_template' => $template->email_template_uuid]),
@@ -272,7 +284,7 @@ class EmailTemplateController extends Controller
 
     public function update(UpdateEmailTemplateRequest $request, EmailTemplate $email_template): JsonResponse
     {
-        abort_if($email_template->isDefault(), 403, 'Default templates are managed by FS PBX updates.');
+        abort_if($email_template->isDefault(), 403, __('Default templates are managed by FS PBX updates.'));
         abort_unless($this->canManage($email_template), 403);
 
         $data = $request->validated();
@@ -295,28 +307,28 @@ class EmailTemplateController extends Controller
         $email_template->update($data);
 
         return response()->json([
-            'messages' => ['success' => ['Custom email template updated.']],
+            'messages' => ['success' => [__('Custom email template updated.')]],
         ]);
     }
 
     public function selectAll(Request $request): JsonResponse
     {
         if (! userCheckPermission('email_templates_view')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         return response()->json([
             'items' => $this->scoped($request)
                 ->defaultSort('template_category', 'template_subcategory', 'template_language')
                 ->pluck('email_template_uuid'),
-            'messages' => ['success' => ['All matching email templates selected.']],
+            'messages' => ['success' => [__('All matching email templates selected.')]],
         ]);
     }
 
     public function copy(Request $request): JsonResponse
     {
         if (! userCheckPermission('email_templates_create')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $items = $this->validatedItems($request);
@@ -367,15 +379,15 @@ class EmailTemplateController extends Controller
 
         return response()->json([
             'messages' => ['success' => [$created > 0
-                ? "Created {$created} custom email template(s)."
-                : 'Matching custom templates already exist for this account.']],
+                ? __('Created :count custom email template(s).', ['count' => $created])
+                : __('Matching custom templates already exist for this account.')]],
         ]);
     }
 
     public function bulkToggle(Request $request): JsonResponse
     {
         if (! userCheckPermission('email_templates_update')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $items = $this->validatedItems($request);
@@ -389,21 +401,21 @@ class EmailTemplateController extends Controller
         });
 
         return response()->json([
-            'messages' => ['success' => ["Updated {$templates->count()} custom email template(s)."]],
+            'messages' => ['success' => [__('Updated :count custom email template(s).', ['count' => $templates->count()])]],
         ]);
     }
 
     public function bulkDelete(Request $request): JsonResponse
     {
         if (! userCheckPermission('email_templates_delete')) {
-            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+            return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }
 
         $items = $this->validatedItems($request);
         $deleted = $this->manageableCustomQuery()->whereIn('email_template_uuid', $items)->delete();
 
         return response()->json([
-            'messages' => ['success' => ["Deleted {$deleted} custom email template(s)."]],
+            'messages' => ['success' => [__('Deleted :count custom email template(s).', ['count' => $deleted])]],
         ]);
     }
 
@@ -493,7 +505,7 @@ class EmailTemplateController extends Controller
 
         validator(['domain_uuid' => $domainUuid], [
             'domain_uuid' => ['required', 'uuid', 'exists:v_domains,domain_uuid'],
-        ])->validate();
+        ], ValidationMessages::common(), ['domain_uuid' => __('Account')])->validate();
 
         abort_unless($domainUuid === session('domain_uuid'), 403);
 
@@ -505,6 +517,17 @@ class EmailTemplateController extends Controller
         return $request->validate([
             'items' => ['required', 'array', 'min:1'],
             'items.*' => ['required', 'uuid'],
+        ], ValidationMessages::common(), [
+            'items' => __('Email Templates'),
+            'items.*' => __('Email Template'),
+            'domain_uuid' => __('Account'),
+            'email_template_uuid' => __('Email Template'),
+            'template_category' => __('Category'),
+            'template_subcategory' => __('Subcategory'),
+            'template_layout' => __('Layout'),
+            'template_subject' => __('Subject'),
+            'template_html' => __('HTML'),
+            'template_text' => __('Plain text'),
         ])['items'];
     }
 
@@ -589,7 +612,7 @@ class EmailTemplateController extends Controller
         $domainLabel = data_get($domain, 'domain_description')
             ?: data_get($domain, 'domain_name')
             ?: session('domain_name')
-            ?: 'Current account';
+            ?: __('Current account');
 
         $options = collect([
             ['value' => $domainUuid, 'label' => $domainLabel],
@@ -599,11 +622,11 @@ class EmailTemplateController extends Controller
             userCheckPermission('email_templates_manage_global')
             || ($item->exists && $item->isCustom() && $item->domain_uuid === null)
         ) {
-            $options->push(['value' => '__global__', 'label' => 'Global override']);
+            $options->push(['value' => '__global__', 'label' => __('Global override')]);
         }
 
         if ($item->exists && $item->isDefault()) {
-            $options->push(['value' => '__default__', 'label' => 'Default for all accounts']);
+            $options->push(['value' => '__default__', 'label' => __('Default for all accounts')]);
         }
 
         return $options->values()->all();

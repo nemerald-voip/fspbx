@@ -252,14 +252,14 @@ class FaxLogController extends Controller
                 ->pluck('fax_log_uuid');
 
             return response()->json([
-                'messages' => ['success' => ['All items selected']],
+                'messages' => ['success' => [__('All items selected')]],
                 'items' => $ids,
             ], 200);
         } catch (\Throwable $e) {
             logger('FaxLogController@selectAll error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
-                'errors' => ['server' => ['Failed to select all items']]
+                'errors' => ['server' => [__('Failed to select all items')]]
             ], 500);
         }
     }
@@ -268,7 +268,7 @@ class FaxLogController extends Controller
     {
         if (! userCheckPermission('fax_log_delete')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']]
+                'messages' => ['error' => [__('Access denied.')]]
             ], 403);
         }
 
@@ -336,7 +336,7 @@ class FaxLogController extends Controller
                 DB::rollBack();
 
                 return response()->json([
-                    'messages' => ['error' => ['Some fax log files could not be deleted, so no records were removed.']],
+                    'messages' => ['error' => [__('Some fax log files could not be deleted, so no records were removed.')]],
                     'failed' => $failed,
                 ], 422);
             }
@@ -344,14 +344,14 @@ class FaxLogController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages' => ['success' => ['Selected fax log(s) were deleted successfully.']]
+                'messages' => ['success' => [__('Selected fax log(s) were deleted successfully.')]]
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
             logger('FaxLogController@bulkDelete error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['An error occurred while deleting the selected fax log(s).']]
+                'messages' => ['error' => [__('An error occurred while deleting the selected fax log(s).')]]
             ], 500);
         }
     }
@@ -360,7 +360,7 @@ class FaxLogController extends Controller
     {
         if (! userCheckPermission('fax_send')) {
             return response()->json([
-                'errors' => ['retry' => ['Access denied.']]
+                'errors' => ['retry' => [__('Access denied.')]]
             ], 403);
         }
 
@@ -374,19 +374,19 @@ class FaxLogController extends Controller
 
         if (!$log || !$log->outbound_fax_uuid || !$log->outboundFax) {
             return response()->json([
-                'errors' => ['retry' => ['Only outbound fax log rows can be retried.']]
+                'errors' => ['retry' => [__('Only outbound fax log rows can be retried.')]]
             ], 422);
         }
 
         if ((string) $log->fax_success === '1') {
             return response()->json([
-                'errors' => ['retry' => ['Successful fax attempts do not need to be retried.']]
+                'errors' => ['retry' => [__('Successful fax attempts do not need to be retried.')]]
             ], 422);
         }
 
         if ($log->outboundFax->status !== 'failed') {
             return response()->json([
-                'errors' => ['retry' => ['Only failed outbound faxes can be retried.']]
+                'errors' => ['retry' => [__('Only failed outbound faxes can be retried.')]]
             ], 422);
         }
 
@@ -406,14 +406,14 @@ class FaxLogController extends Controller
 
         if ($updated === 0) {
             return response()->json([
-                'errors' => ['retry' => ['The outbound fax could not be queued for retry.']]
+                'errors' => ['retry' => [__('The outbound fax could not be queued for retry.')]]
             ], 409);
         }
 
         SendFaxJob::dispatch($log->outbound_fax_uuid);
 
         return response()->json([
-            'messages' => ['success' => ['Outbound fax queued for retry.']]
+            'messages' => ['success' => [__('Outbound fax queued for retry.')]]
         ]);
     }
 

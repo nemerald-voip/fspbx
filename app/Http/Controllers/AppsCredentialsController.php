@@ -43,7 +43,7 @@ class AppsCredentialsController extends Controller
 
         // If reset password link not found throw an error
         if (!$appCredentials) {
-            abort(403, 'The link does not exist or expired. Contact your administrator');
+            abort(403, __('The link does not exist or expired. Contact your administrator'));
         }
 
         $extension = $appCredentials->extension()->first();
@@ -75,7 +75,7 @@ class AppsCredentialsController extends Controller
 
             // If reset password link not found throw an error
             if (!$appCredentials) {
-                abort(403, 'The link does not exist or expired. Contact your administrator');
+                abort(403, __('The link does not exist or expired. Contact your administrator'));
             }
 
             $appUser = MobileAppUsers::where('extension_uuid', $appCredentials->extension_uuid)->first();
@@ -103,7 +103,7 @@ class AppsCredentialsController extends Controller
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to retrieve credentials']]
+                'errors' => ['server' => [__('Failed to retrieve credentials')]]
             ], 500);
         }
     }

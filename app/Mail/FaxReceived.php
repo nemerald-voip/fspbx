@@ -90,8 +90,8 @@ class FaxReceived extends BaseMailable
     public function content(): Content
     {
         return $this->databaseTemplateContent(new Content(
-            view: 'emails.fax.received',
-            text: 'emails.fax.received-text',
+            view: 'emails.en-us.fax.received',
+            text: 'emails.en-us.fax.received-text',
         ));
     }
 

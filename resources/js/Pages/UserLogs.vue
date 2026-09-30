@@ -4,7 +4,7 @@
 
         <div class="m-3">
             <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-                <template #title>User Logs</template>
+                <template #title>{{ $t('User Logs') }}</template>
 
                 <template #action>
 
@@ -18,12 +18,12 @@
 
                     <button v-if="!filterData.showGlobal" type="button" @click.prevent="handleShowGlobal()"
                         class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                        Show global
+                        {{ $t('Show global') }}
                     </button>
 
                     <button v-if="filterData.showGlobal" type="button" @click.prevent="handleShowLocal()"
                         class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                        Show local
+                        {{ $t('Show local') }}
                     </button>
 
                 </template>
@@ -36,16 +36,16 @@
                         <input type="search" v-model="filterData.search" name="mobile-search-candidate"
                             id="mobile-search-candidate"
                             class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
-                            placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                            :placeholder="$t('Search')" @keydown.enter="handleSearchButtonClick" />
                         <input type="search" v-model="filterData.search" name="desktop-search-candidate"
                             id="desktop-search-candidate"
                             class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
-                            placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                            :placeholder="$t('Search')" @keydown.enter="handleSearchButtonClick" />
                     </div>
 
 
                     <div class="relative z-10 min-w-64 -mt-0.5 mb-2 scale-y-95 shrink-0 sm:mr-4">
-                        <DatePicker :dateRange="filterData.dateRange" :timezone="filterData.timezone"
+                        <DatePicker :dateRange="filterData.dateRange" :timezone="props.timezone"
                             @update:date-range="handleUpdateDateRange" />
                     </div>
 
@@ -71,31 +71,31 @@
                             class="h-4 w-4 rounded border-gray-300 text-indigo-600" />
                         <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
                             :has-selected-items="selectedItems.length > 0" />
-                        <span class="pl-4">Username</span>
+                        <span class="pl-4">{{ $t('Username') }}</span>
                     </TableColumnHeader>
 
                     <!-- Email -->
-                    <TableColumnHeader header="Email" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader :header="$t('Email')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
                     <!-- Domain (when global) -->
-                    <TableColumnHeader v-if="filterData.showGlobal" header="Domain"
+                    <TableColumnHeader v-if="filterData.showGlobal" :header="$t('Domain')"
                         class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
                     <!-- Type -->
-                    <TableColumnHeader header="Type" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader :header="$t('Type')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
                     <!-- Result -->
-                    <TableColumnHeader header="Result" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader :header="$t('Result')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
                     <!-- Timestamp -->
-                    <TableColumnHeader header="Date" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader :header="$t('Date')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
                     <!-- IP Address -->
-                    <TableColumnHeader header="IP Address"
+                    <TableColumnHeader :header="$t('IP Address')"
                         class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
                     <!-- User Agent -->
-                    <TableColumnHeader header="User Agent"
+                    <TableColumnHeader :header="$t('User Agent')"
                         class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
 
@@ -109,16 +109,16 @@
                 <template v-if="selectPageItems" v-slot:current-selection>
                     <td colspan="10">
                         <div class="text-sm text-center m-2">
-                            <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
+                            {{ $t(':count items are selected.', { count: selectedItems.length }) }}
                             <button v-if="!selectAll && selectedItems.length != data.total"
                                 class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                                 @click="handleSelectAll">
-                                Select all {{ data.total }} items
+                                {{ $t('Select all :total items', { total: data.total }) }}
                             </button>
                             <button v-if="selectAll"
                                 class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                                 @click="handleClearSelection">
-                                Clear selection
+                                {{ $t('Clear selection') }}
                             </button>
                         </div>
                     </td>
@@ -134,7 +134,7 @@
                                     :value="row.user_log_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                                 <div class="ml-9">
                                     <span class="flex items-center">
-                                        {{ row.user?.name_formatted ?? row.username ?? 'User missing?' }}
+                                        {{ row.user?.name_formatted ?? row.username ?? $t('Unknown user') }}
                                     </span>
                                 </div>
                             </div>
@@ -154,18 +154,18 @@
                         </TableField>
 
                         <!-- Type -->
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.type" />
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="logTypeLabel(row.type)" />
 
                         <!-- Result -->
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
-                            <Badge :text="row.result" :backgroundColor="determineColor(row.result).backgroundColor"
+                            <Badge :text="logResultLabel(row.result)" :backgroundColor="determineColor(row.result).backgroundColor"
                                 :textColor="determineColor(row.result).textColor"
                                 :ringColor="determineColor(row.result).ringColor" />
                         </TableField>
 
                         <!-- Timestamp (localized) -->
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                            :text="moment.tz(row.timestamp, filterData.timezone).format('YYYY-MM-DD HH:mm:ss')" />
+                            :text="moment.tz(row.timestamp, props.timezone).format('YYYY-MM-DD HH:mm:ss')" />
 
                         <!-- IP Address -->
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.remote_address" />
@@ -182,11 +182,11 @@
 
                 <template #empty>
                     <!-- Conditional rendering for 'no records' message -->
-                    <div v-if="data.data.length === 0" class="text-center my-5 ">
+                    <div v-if="!loading && data.data.length === 0" class="text-center my-5 ">
                         <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                        <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
+                        <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ $t('No results found') }}</h3>
                         <p class="mt-1 text-sm text-gray-500">
-                            Adjust your search and try again.
+                            {{ $t('Adjust your search and try again.') }}
                         </p>
                     </div>
                 </template>
@@ -198,7 +198,9 @@
                 <template #footer>
                     <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
                         :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
-                        @pagination-change-page="renderRequestedPage" />
+                        :page-size="perPage" :page-size-options="props.pagination?.per_page_options ?? []"
+                        :show-page-size-selector="true"
+                        @pagination-change-page="renderRequestedPage" @page-size-change="handlePageSizeChange" />
                 </template>
 
 
@@ -210,16 +212,12 @@
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
 
-    <ConfirmationModal :show="showRetryConfirmationModal" @close="showRetryConfirmationModal = false"
-        @confirm="confirmRetryAction" :header="'Are you sure?'"
-        :text="'Are you sure you want to retry sending the selected faxes? This action will attempt to resend them immediately.'"
-        :confirm-button-label="'Retry'" cancel-button-label="Cancel" />
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
-import { usePage } from '@inertiajs/vue3'
-import { router } from "@inertiajs/vue3";
+import { trans } from "@i18n";
+import { ref, computed, onMounted, onUnmounted } from "vue";
+import axios from 'axios';
 import MainLayout from '../Layouts/MainLayout.vue'
 import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
@@ -236,11 +234,10 @@ import BulkActionButton from "./components/general/BulkActionButton.vue";
 import RestartIcon from "./components/icons/RestartIcon.vue";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import Badge from "./components/general/Badge.vue";
-import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 
 import Loading from "./components/general/Loading.vue";
 
-const loading = ref(false)
+const loading = ref(true)
 const loadingModal = ref(false)
 const notificationType = ref(null);
 const notificationMessages = ref(null);
@@ -252,13 +249,14 @@ const showRetryConfirmationModal = ref(false);
 const confirmRetryAction = ref(null);
 
 const props = defineProps({
-    data: Object,
     startPeriod: String,
     endPeriod: String,
     timezone: String,
     routes: Object,
-    statusOptions: Object,
+    pagination: Object,
 });
+
+const perPage = ref(props.pagination?.per_page ?? 50);
 
 const startLocal = moment.utc(props.startPeriod).tz(props.timezone)
 const endLocal   = moment.utc(props.endPeriod).tz(props.timezone)
@@ -268,11 +266,26 @@ const dateRange = [
   endLocal.clone().endOf('day').toISOString(),     // UTC instant for local end-of-day
 ]
 
+const data = ref({
+    data: [],
+    prev_page_url: null,
+    next_page_url: null,
+    from: null,
+    to: null,
+    total: 0,
+    current_page: 1,
+    last_page: 1,
+    links: [],
+});
+const currentPage = ref(1);
+let activeRequest = null;
+let requestSequence = 0;
+let isUnmounted = false;
+
 const filterData = ref({
-    search: props.search,
+    search: null,
     showGlobal: false,
     dateRange: dateRange, 
-    timezone: props.timezone,
 
 });
 
@@ -286,27 +299,57 @@ const handleShowLocal = () => {
     handleSearchButtonClick();
 }
 
-const handleSearchButtonClick = () => {
-    loading.value = true;
+const getData = async (page = currentPage.value, { background = false } = {}) => {
+    if (isUnmounted) return;
 
-    router.visit(props.routes.current_page, {
-        data: {
-            filterData: filterData._rawValue,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: [
-            "data",
-        ],
-        onSuccess: (page) => {
-            loading.value = false;
-        },
-        onError: (error) => {
-            loading.value = false;
-            handleErrorResponse(error);
+    activeRequest?.abort();
+    const controller = new AbortController();
+    activeRequest = controller;
+    const sequence = ++requestSequence;
+    loading.value = !background;
+    currentPage.value = Number(page) || 1;
+
+    const sort = '-timestamp';
+
+    try {
+        const response = await axios.get(props.routes.data_route, {
+            params: {
+                filter: { ...filterData.value },
+                page: currentPage.value,
+                per_page: perPage.value,
+                sort,
+            },
+            signal: controller.signal,
+        });
+
+        if (isUnmounted || sequence !== requestSequence) return;
+
+        // A deletion may have removed the last row on this page.
+        if (response.data.last_page && currentPage.value > response.data.last_page) {
+            return await getData(response.data.last_page, { background });
         }
 
-    });
+        data.value = response.data;
+        currentPage.value = response.data.current_page ?? currentPage.value;
+        handleClearSelection();
+    } catch (error) {
+        if (!isUnmounted && sequence === requestSequence && !axios.isCancel(error)) {
+            handleErrorResponse(error);
+        }
+    } finally {
+        if (!isUnmounted && sequence === requestSequence) {
+            activeRequest = null;
+            loading.value = false;
+        }
+    }
+};
+
+const handleSearchButtonClick = () => {
+    getData(1);
+};
+
+const refreshData = () => {
+    getData(currentPage.value);
 };
 
 const handleFiltersReset = () => {
@@ -315,43 +358,25 @@ const handleFiltersReset = () => {
         endLocal.clone().endOf('day').toISOString(),     // UTC instant for local end-of-day
     ]
     filterData.value.search = null;
-    filterData.value.direction = null;
-    filterData.value.entity = null;
-    filterData.value.entityType = null;
-    filterData.value.statuses = [];
 
     // After resetting the filters, call handleSearchButtonClick to perform the search with the updated filters
     handleSearchButtonClick();
 }
 
-const renderRequestedPage = (url) => {
-    loading.value = true;
-    router.visit(url, {
-        data: {
-            filterData: filterData._rawValue,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: ["data"],
-        onSuccess: (page) => {
-            loading.value = false;
-        }
-
-    });
+const handlePageSizeChange = (newPerPage) => {
+    perPage.value = newPerPage;
+    handleSearchButtonClick();
 };
 
-// Computed property for bulk actions based on permissions
-const bulkActions = computed(() => {
-    const actions = [
-        // {
-        //     id: 'bulk_retry',
-        //     label: 'Retry',
-        //     icon: 'RestartIcon'
-        // }
-    ];
+const renderRequestedPage = (url) => {
+    if (!url) return;
 
-    return actions;
-});
+    const urlObj = new URL(url, window.location.origin);
+    getData(urlObj.searchParams.get('page') ?? 1);
+};
+
+
+
 
 const handleBulkActionRequest = (action) => {
     // if (action === 'bulk_retry') {
@@ -366,13 +391,16 @@ const handleUpdateDateRange = (newDateRange) => {
 }
 
 const handleSelectAll = () => {
-    axios.post(props.routes.select_all, filterData._rawValue)
+    const sequence = requestSequence;
+    axios.post(props.routes.select_all, { filter: { ...filterData.value } })
         .then((response) => {
+            if (isUnmounted || sequence !== requestSequence) return;
             selectedItems.value = response.data.items;
             selectAll.value = true;
             showNotification('success', response.data.messages);
 
         }).catch((error) => {
+            if (isUnmounted || sequence !== requestSequence) return;
             handleClearSelection();
             handleErrorResponse(error);
         });
@@ -412,7 +440,7 @@ const handleErrorResponse = (error) => {
 
 const handleSelectPageItems = () => {
     if (selectPageItems.value) {
-        selectedItems.value = props.data.data.map(item => item.user_log_uuid);
+        selectedItems.value = data.value.data.map(item => item.user_log_uuid);
     } else {
         selectedItems.value = [];
     }
@@ -428,6 +456,18 @@ const handleClearSelection = () => {
 const handleModalClose = () => {
     showRetryConfirmationModal.value = false;
 }
+
+const logTypeLabel = (type) => {
+    if (type === 'login_attempt') return trans('Login attempt');
+    if (type === 'password_reset') return trans('Password reset');
+    return type;
+};
+
+const logResultLabel = (result) => {
+    if (result === 'success') return trans('Success');
+    if (result === 'failed') return trans('Failed');
+    return result;
+};
 
 const determineColor = (status) => {
     switch (status) {
@@ -451,6 +491,13 @@ const determineColor = (status) => {
             };
     }
 };
+
+onMounted(() => getData());
+
+onUnmounted(() => {
+    isUnmounted = true;
+    activeRequest?.abort();
+});
 
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');
 

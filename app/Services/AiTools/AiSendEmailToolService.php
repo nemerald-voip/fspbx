@@ -66,6 +66,7 @@ class AiSendEmailToolService
             $args['subject'],
             $args['fields'],
             $args['notes'] ?? null,
+            $agent->email_from_address,
         )->afterCommit();
 
         return [

@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Support\Localization\LocaleFileLoader;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Symfony\Component\Finder\Finder;
@@ -10,8 +11,9 @@ use Symfony\Component\Finder\Finder;
  * Keeps resources/lang/{default}.json (the source-string manifest every other
  * locale is translated against) in sync with the literal strings actually
  * passed to __()/trans()/@lang() in PHP and Blade and to $t()/$tChoice()/
- * trans() in Vue/JS. Since the source locale's "translation" of a key is just
- * the key itself, running this after adding new UI copy is enough to make it
+ * trans()/transChoice() in Vue/JS, including installed modules. Since the
+ * source locale's "translation" of a key is just the key itself, running
+ * this after adding new UI copy is enough to make it
  * translatable -- no key naming or namespacing required.
  *
  * Also propagates the resulting key set to every other registered locale
@@ -24,15 +26,13 @@ class LangSyncCommand extends Command
     protected $signature = 'lang:sync
         {--prune : Also remove keys from the source file itself that no longer appear in scanned source (orphan keys are always removed from every other locale file, with or without this flag)}';
 
-    protected $description = 'Extract translatable strings into resources/lang/{default}.json and propagate the key set to every other locale file';
+    protected $description = 'Extract application and module translation strings into resources/lang/{default}.json and sync all locale keys';
 
-    private const PHP_DIRECTORIES = ['app', 'resources/views', 'routes'];
+    private const PHP_DIRECTORIES = ['app', 'resources/views', 'routes', 'Modules'];
 
-    private const JS_DIRECTORIES = ['resources/js'];
+    private const JS_DIRECTORIES = ['resources/js', 'Modules'];
 
-    private const EXCLUDED_PATHS = [
-        'resources/views/emails', // owned by the email template system, not this catalog
-    ];
+    private const EXCLUDED_DIRECTORIES = ['vendor', 'node_modules', 'Tests', 'tests', 'lang', 'dist', 'build'];
 
     public function handle(): int
     {
@@ -43,9 +43,12 @@ class LangSyncCommand extends Command
             ? (json_decode(File::get($path), true) ?: [])
             : [];
 
+        /** @var LocaleFileLoader $loader */
+        $loader = app('translation.loader');
         $found = array_unique(array_merge(
             $this->extract(self::PHP_DIRECTORIES, ['php'], $this->phpPatterns()),
-            $this->extract(self::JS_DIRECTORIES, ['js', 'vue'], $this->jsPatterns()),
+            $this->extract(self::JS_DIRECTORIES, ['js', 'mjs', 'ts', 'vue'], $this->jsPatterns()),
+            $loader->jsonGroupSourceStrings(),
         ));
 
         $added = array_values(array_diff($found, array_keys($existing)));
@@ -209,14 +212,13 @@ class LangSyncCommand extends Command
             return [];
         }
 
-        $finder = (new Finder())->files()->in($directories);
+        $finder = (new Finder())->files()->in($directories)->exclude(self::EXCLUDED_DIRECTORIES)
+            // Email copy belongs to the email template system, including module templates.
+            // Match the full path: Finder paths are relative to each scan root.
+            ->filter(fn (\SplFileInfo $file) => ! preg_match('~/[Rr]esources/views/emails/~', $file->getPathname()));
 
         foreach ($extensions as $extension) {
             $finder->name("*.{$extension}");
-        }
-
-        foreach (self::EXCLUDED_PATHS as $excluded) {
-            $finder->notPath(str_replace(base_path() . '/', '', base_path($excluded)));
         }
 
         $keys = [];
@@ -260,7 +262,7 @@ class LangSyncCommand extends Command
         // matches between a preceding space and a leading "$" and would
         // silently skip every $t(...)/$tChoice(...) call.
         return [
-            '/(?<![\w$])(?:\$t|\$tChoice|trans)\(\s*(\'|")((?:\\\\.|(?!\1).)*)\1/s',
+            '/(?<![\w$])(?:\$t|\$tChoice|trans|transChoice|trans_choice)\(\s*(\'|")((?:\\\\.|(?!\1).)*)\1/s',
         ];
     }
 
@@ -271,8 +273,8 @@ class LangSyncCommand extends Command
 
     /**
      * __('pagination.next') and friends address a resources/lang/{locale}/*.php
-     * group.item pair, not a literal source string -- Laravel resolves those
-     * through the ordinary PHP-array loader, so they must not be captured
+     * group.item pair, not a literal source string. Framework source messages
+     * are collected separately through LocaleFileLoader, so dotted keys must not be captured
      * into the flat JSON catalog (a literal "pagination.next" key there would
      * shadow the real translation for the active locale). Genuine UI copy
      * almost never looks like a bare, spaceless, dotted lowercase path, so
@@ -280,6 +282,6 @@ class LangSyncCommand extends Command
      */
     private function looksLikeNamespacedKey(string $key): bool
     {
-        return (bool) preg_match('/^[a-z0-9_]+(\.[a-z0-9_]+)+$/', $key);
+        return (bool) preg_match('/^(?:[a-z0-9_-]+::[a-z0-9_.-]+|[a-z0-9_]+(?:\.[a-z0-9_]+)+)$/', $key);
     }
 }

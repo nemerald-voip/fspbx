@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 use Illuminate\Validation\Rule;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Support\Localization\ValidationMessages;
 
 class StoreTranscriptionOptionsRequest extends FormRequest
 {
@@ -42,13 +43,26 @@ class StoreTranscriptionOptionsRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'provider_uuid.required' => 'Select a provider when enabling transcriptions at the system level.',
-            'provider_uuid.exists'   => 'Selected provider is not active or does not exist.',
+            ...ValidationMessages::common(),
+            'provider_uuid.required' => __('Select a provider when enabling transcriptions at the system level.'),
+            'provider_uuid.exists'   => __('Selected provider is not active or does not exist.'),
         ];
     }
 
     public function prepareForValidation(): void
     {
         // logger($this);
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'enabled' => __('Enabled'),
+            'auto_transcribe' => __('Automatically transcribe new calls'),
+            'provider_uuid' => __('Provider'),
+            'domain_uuid' => __('Account'),
+            'email_transcription' => __('Automatically email call transcripts'),
+            'email' => __('Email'),
+        ];
     }
 }

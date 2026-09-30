@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use App\Support\Localization\ValidationMessages;
 use Illuminate\Validation\Rule;
 
 class UploadMusicOnHoldFileRequest extends FormRequest
@@ -44,5 +45,21 @@ class UploadMusicOnHoldFileRequest extends FormRequest
         $value = trim((string) $value);
 
         return in_array($value, ['', '__global__'], true) ? null : $value;
+    }
+
+    public function messages(): array
+    {
+        return ValidationMessages::common();
+    }
+
+    public function attributes(): array
+    {
+        return [
+            'music_on_hold_uuid' => __('Stream'),
+            'music_on_hold_name' => __('Name'),
+            'domain_uuid' => __('Domain'),
+            'music_on_hold_rate' => __('Rate'),
+            'file' => __('Audio File'),
+        ];
     }
 }

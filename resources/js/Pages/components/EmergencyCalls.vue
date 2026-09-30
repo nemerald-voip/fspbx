@@ -4,7 +4,7 @@
             <!-- <h3 class="text-base font-semibold leading-6 text-gray-900">Emergency Calls</h3> -->
             <button type="button" @click.prevent="handleCreateButtonClick()"
                 class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                Create
+                {{ $t('Create') }}
             </button>
         </div>
     </div>
@@ -16,12 +16,12 @@
                     <table class="min-w-full divide-y divide-gray-200 mb-4">
                         <thead class="bg-gray-100">
                             <tr>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Number</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Extensions to Notify
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">{{ $t('Number') }}</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">{{ $t('Extensions to Notify') }}
                                 </th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Description</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">{{ $t('Description') }}</th>
                                 <th class="relative px-6 py-3 text-left text-sm font-medium text-gray-500">
-                                    <span class="sr-only">Actions</span>
+                                    <span class="sr-only">{{ $t('Actions') }}</span>
                                 </th>
                             </tr>
                         </thead>
@@ -44,7 +44,7 @@
                                 </td>
                                 <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                                     <div class="flex items-center whitespace-nowrap justify-end">
-                                        <ejs-tooltip :content="'Edit'" position='TopCenter'
+                                        <ejs-tooltip :content="$t('Edit')" position='TopCenter'
                                             target="#destination_tooltip_target">
                                             <div id="destination_tooltip_target">
                                                 <PencilSquareIcon @click="handleEditButtonClick(call.uuid)"
@@ -53,7 +53,7 @@
                                             </div>
                                         </ejs-tooltip>
 
-                                        <ejs-tooltip :content="'Delete'" position='TopCenter'
+                                        <ejs-tooltip :content="$t('Delete')" position='TopCenter'
                                             target="#delete_tooltip_target">
                                             <div id="delete_tooltip_target">
                                                 <TrashIcon @click="handleSingleItemDeleteRequest(call.uuid)"
@@ -70,7 +70,7 @@
                     <!-- Empty State -->
                     <div v-if="!loading && emergencyCalls.length === 0" class="text-center my-5">
                         <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                        <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
+                        <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ $t('No results found') }}</h3>
                         <!-- <p class="mt-1 text-sm text-gray-500">
                 Adjust your search and try again.
               </p> -->
@@ -78,14 +78,14 @@
 
                     <!-- Loading -->
                     <div v-if="loading" class="text-center my-5 text-sm text-gray-500">
-                        Loading emergency calls...
+                        {{ $t('Loading emergency calls...') }}
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <AddEditItemModal :customClass="'sm:max-w-xl'" :show="showCreateModal" :header="'Create New Emergency Call'"
+    <AddEditItemModal :customClass="'sm:max-w-xl'" :show="showCreateModal" :header="$t('Create New Emergency Call')"
         :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
             <CreateEmergencyCallForm :options="itemOptions" :errors="formErrors" :is-submitting="createFormSubmiting"
@@ -94,7 +94,7 @@
         </template>
     </AddEditItemModal>
 
-    <AddEditItemModal :customClass="'sm:max-w-xl'" :show="showEditModal" :header="'Edit Emergency Call'"
+    <AddEditItemModal :customClass="'sm:max-w-xl'" :show="showEditModal" :header="$t('Edit Emergency Call')"
         :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
             <UpdateEmergencyCallForm :options="itemOptions" :errors="formErrors" :is-submitting="updateFormSubmiting"
@@ -104,15 +104,16 @@
     </AddEditItemModal>
 
     <ConfirmationModal :show="showDeleteConfirmationModal" @close="showDeleteConfirmationModal = false"
-        @confirm="confirmDeleteAction" :header="'Confirm Deletion'"
-        :text="'This action will permanently delete the selected emergency call(s). Are you sure you want to proceed?'"
-        :confirm-button-label="'Delete'" cancel-button-label="Cancel" />
+        @confirm="confirmDeleteAction" :header="$t('Confirm Deletion')"
+        :text="$t('This action will permanently delete the selected emergency call(s). Are you sure you want to proceed?')"
+        :confirm-button-label="$t('Delete')" :cancel-button-label="$t('Cancel')" />
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
 </template>
 
 <script setup>
+import { trans } from '@i18n';
 import { ref, onMounted } from 'vue';
 import AddEditItemModal from "./modal/AddEditItemModal.vue";
 import CreateEmergencyCallForm from "./forms/CreateEmergencyCallForm.vue";
@@ -272,7 +273,7 @@ const handleClearErrors = () => {
 
 const handleFormErrorResponse = (error) => {
     if (error.request?.status == 419) {
-        showNotification('error', { request: ["Session expired. Reload the page"] });
+        showNotification('error', { request: [trans('Session expired. Reload the page')] });
     } else if (error.response) {
         // The request was made and the server responded with a status code
         // that falls out of the range of 2xx

@@ -24,8 +24,8 @@ class FaxSent extends BaseMailable
     public function content(): Content
     {
         return $this->databaseTemplateContent(new Content(
-            view: 'emails.fax.sent',
-            text: 'emails.fax.sent-text',
+            view: 'emails.en-us.fax.sent',
+            text: 'emails.en-us.fax.sent-text',
         ));
     }
 

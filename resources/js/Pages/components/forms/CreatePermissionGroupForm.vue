@@ -20,7 +20,7 @@
                                 <button type="button"
                                     class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                     @click="emit('close')">
-                                    <span class="sr-only">Close</span>
+                                    <span class="sr-only">{{ $t('Close') }}</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
@@ -38,35 +38,35 @@
                                             </path>
                                         </svg>
                                     </div>
-                                    <div class="text-lg text-blue-600 m-auto">Loading...</div>
+                                    <div class="text-lg text-blue-600 m-auto">{{ $t('Loading...') }}</div>
                                 </div>
                             </div>
                             
 
                             <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess" @error="handleError"
-                                @response="handleResponse" :display-errors="false" :default="{
+                                @response="handleResponse" :display-errors="false" @mounted="form => form.disableValidation()" :default="{
                                     group_name: options.item.group_name ?? null,
                                     domain_uuid: String(options.item.domain_uuid ?? ''),
                                     group_level: options.item.group_level ?? null,
                                     group_description: options.item.group_description ?? null
                                 }">
 
-                                <StaticElement name="h4" tag="h4" content="Create New Permission Group" />
-                                <TextElement name="group_name" label="Name" placeholder="Enter Group Name"  :floating="false"/>
+                                <StaticElement name="h4" tag="h4" :content="$t('Create New Permission Group')" />
+                                <TextElement name="group_name" :label="$t('Name')" :placeholder="$t('Enter Group Name')"  :floating="false"/>
                                 <SelectElement name="domain_uuid" :items="options.domains" :search="true" :native="false"
-                                    input-type="search" autocomplete="off" :floating="false" label="Account Name"
-                                    placeholder="Select Account Name" :strict="false" />
-                                <SelectElement name="group_level" :items="options.group_levels" :search="true" :native="false" label="Level" input-type="search" autocomplete="off"
-                                    placeholder="Select Level" :floating="false" />
-                                <TextElement name="group_description" label="Description"  :floating="false"/>
+                                    input-type="search" autocomplete="off" :floating="false" :label="$t('Account Name')"
+                                    :placeholder="$t('Select Account Name')" :strict="false" />
+                                <SelectElement name="group_level" :items="options.group_levels" :search="true" :native="false" :label="$t('Level')" input-type="search" autocomplete="off"
+                                    :placeholder="$t('Select Level')" :floating="false" />
+                                <TextElement name="group_description" :label="$t('Description')"  :floating="false"/>
 
                                 <GroupElement name="container_3" />
-                                <ButtonElement name="reset" button-label="Cancel" :secondary="true" :resets="true"
+                                <ButtonElement name="reset" :button-label="$t('Cancel')" :secondary="true" :resets="true"
                                     @click="emit('close')" :columns="{
                                         container: 6,
                                     }" />
 
-                                <ButtonElement name="submit" button-label="Save" :submits="true" align="right" :columns="{
+                                <ButtonElement name="submit" :button-label="$t('Save')" :submits="true" align="right" :columns="{
                                     container: 6,
                                 }" />
                             </Vueform> 
@@ -81,6 +81,7 @@
 </template>
 
 <script setup>
+import { trans } from '@i18n';
 import { ref } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { XMarkIcon } from "@heroicons/vue/24/solid";
@@ -97,6 +98,8 @@ const props = defineProps({
 const form$ = ref(null)
 
 const submitForm = async (FormData, form$) => {
+    form$.messageBag.clear()
+    Object.values(form$.elements$).forEach(clearErrorsRecursive)
     // Using form$.requestData will EXCLUDE conditional elements and it 
     // will submit the form as Content-Type: application/json . 
     const requestData = form$.requestData
@@ -151,7 +154,7 @@ const handleError = (error, details, form$) => {
         case 'prepare':
             console.log(error) // Error object
 
-            form$.messageBag.append('Could not prepare form')
+            form$.messageBag.append(trans('Could not prepare form'))
             break
 
         // Error occured because response status is outside of 2xx
@@ -171,14 +174,14 @@ const handleError = (error, details, form$) => {
         case 'cancel':
             console.log(error) // Error object
 
-            form$.messageBag.append('Request cancelled')
+            form$.messageBag.append(trans('Request cancelled'))
             break
 
         // Some other errors happened (no response object)
         case 'other':
             console.log(error) // Error object
 
-            form$.messageBag.append('Couldn\'t submit form')
+            form$.messageBag.append(trans('Couldn\'t submit form'))
             break
     }
 }

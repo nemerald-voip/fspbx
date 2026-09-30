@@ -41,7 +41,7 @@ class UpdateVirtualReceptionistRequest extends FormRequest
             'ring_back_tone' => 'present',
             'invalid_input_message' => 'present',
             'exit_message' => 'present',
-            'exit_action' => 'required',
+            'exit_action' => ['required', \Illuminate\Validation\Rule::in(\App\Services\CallRoutingOptionsService::destinationTypes())],
             'exit_target' => [
                 'nullable',
                 function ($attribute, $value, $fail) {
@@ -49,7 +49,7 @@ class UpdateVirtualReceptionistRequest extends FormRequest
 
                     if (
                         $action &&
-                        !in_array($action, ['company_directory', 'check_voicemail', 'hangup'], true) &&
+                        \App\Services\CallRoutingOptionsService::requiresTarget((string) $action) &&
                         ($value === null || $value === '')
                     ) {
                         $fail('The target field is required when action is selected.');

@@ -16,14 +16,14 @@
                         <DialogPanel
                             class="relative transform rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-5xl sm:p-6">
                             <DialogTitle as="h3" class="mb-4 pr-8 text-base font-semibold leading-6 text-gray-900">
-                                Create Outbound Route
+                                {{ $t("Create Outbound Route") }}
                             </DialogTitle>
 
                             <div class="absolute right-0 top-0 pr-4 pt-4 sm:block">
                                 <button type="button"
                                     class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                                     @click="emit('close')">
-                                    <span class="sr-only">Close</span>
+                                    <span class="sr-only">{{ $t("Close") }}</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
@@ -37,18 +37,18 @@
                                         <path class="opacity-75" fill="currentColor"
                                             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                                     </svg>
-                                    <div class="text-lg text-blue-600">Loading...</div>
+                                    <div class="text-lg text-blue-600">{{ $t("Loading...") }}</div>
                                 </div>
                             </div>
 
-                            <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
+                            <Vueform :locale="formLocale" @mounted="form => form.disableValidation()" v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
                                 @error="handleError" @response="handleResponse" :display-errors="false"
                                 :default="defaultValues">
                                 <template #empty>
                                     <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
                                         <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
                                             <FormTabs view="vertical">
-                                                <FormTab name="route" label="Route" :elements="[
+                                                <FormTab name="route" :label="$t(&quot;Route&quot;)" :elements="[
                                                     'route_header',
                                                     'dialplan_name',
                                                     'gateway_group',
@@ -66,7 +66,7 @@
                                                     'cancel',
                                                     'submit',
                                                 ]" />
-                                                <FormTab name="advanced" label="Advanced" :elements="[
+                                                <FormTab name="advanced" :label="$t(&quot;Advanced&quot;)" :elements="[
                                                     'advanced_header',
                                                     'domain_uuid',
                                                     'dialplan_context',
@@ -82,91 +82,91 @@
                                             <FormElements>
                                                 <HiddenElement name="dialplan_enabled" :meta="true" />
 
-                                                <StaticElement name="route_header" tag="h4" content="Route Pattern"
-                                                    description="Choose the gateway and number pattern this outbound route should match." />
+                                                <StaticElement name="route_header" tag="h4" :content="$t(&quot;Route Pattern&quot;)"
+                                                    :description="$t(&quot;Choose the gateway and number pattern this outbound route should match.&quot;)" />
 
-                                                <TextElement name="dialplan_name" label="Name"
-                                                    placeholder="Enter outbound route name" :floating="false"
+                                                <TextElement name="dialplan_name" :label="$t(&quot;Name&quot;)"
+                                                    :placeholder="$t(&quot;Enter outbound route name&quot;)" :floating="false"
                                                     :columns="{ sm: { container: 6 } }" />
 
                                                 <GroupElement name="gateway_group" :columns="{ sm: { container: 6 } }" />
 
                                                 <SelectElement name="gateway" :items="gatewayOptions" :groups="true"
-                                                    :search="true" :native="false" label="Gateway" input-type="search"
-                                                    autocomplete="off" placeholder="Select gateway" :floating="false"
+                                                    :search="true" :native="false" :label="$t(&quot;Gateway&quot;)" input-type="search"
+                                                    autocomplete="off" :placeholder="$t(&quot;Select gateway&quot;)" :floating="false"
                                                     allow-absent :strict="false"
                                                     :columns="{ sm: { container: 4 } }" />
 
                                                 <SelectElement name="gateway_2" :items="gatewayOptions" :groups="true"
-                                                    :search="true" :native="false" label="Alternate Gateway 1"
-                                                    input-type="search" autocomplete="off" placeholder="Optional"
+                                                    :search="true" :native="false" :label="$t(&quot;Alternate Gateway 1&quot;)"
+                                                    input-type="search" autocomplete="off" :placeholder="$t(&quot;Optional&quot;)"
                                                     :floating="false" allow-absent :strict="false"
                                                     :columns="{ sm: { container: 4 } }" />
 
                                                 <SelectElement name="gateway_3" :items="gatewayOptions" :groups="true"
-                                                    :search="true" :native="false" label="Alternate Gateway 2"
-                                                    input-type="search" autocomplete="off" placeholder="Optional"
+                                                    :search="true" :native="false" :label="$t(&quot;Alternate Gateway 2&quot;)"
+                                                    input-type="search" autocomplete="off" :placeholder="$t(&quot;Optional&quot;)"
                                                     :floating="false" allow-absent :strict="false"
                                                     :columns="{ sm: { container: 4 } }" />
 
                                                 <SelectElement name="pattern_picker" :items="patternOptions"
-                                                    :search="true" :native="false" label="Common Pattern"
+                                                    :search="true" :native="false" :label="$t(&quot;Common Pattern&quot;)"
                                                     input-type="search" autocomplete="off"
-                                                    placeholder="Insert a common pattern" :floating="false"
+                                                    :placeholder="$t(&quot;Insert a common pattern&quot;)" :floating="false"
                                                     :strict="false" :columns="{ sm: { container: 6 } }"
                                                     @change="insertPattern" />
 
-                                                <TextareaElement name="dialplan_expression" label="Dialplan Expression"
+                                                <TextareaElement name="dialplan_expression" :label="$t(&quot;Dialplan Expression&quot;)"
                                                     :rows="4"
                                                     info="One expression per line. Multiple lines create one outbound route pair per expression." />
 
-                                                <StaticElement name="options_header" tag="h4" content="Route Options"
-                                                    description="Fine tune prefixing, permissions, and how this route appears in the dialplan list." />
+                                                <StaticElement name="options_header" tag="h4" :content="$t(&quot;Route Options&quot;)"
+                                                    :description="$t(&quot;Fine tune prefixing, permissions, and how this route appears in the dialplan list.&quot;)" />
 
-                                                <TextElement name="prefix_number" label="Prefix Number"
-                                                    placeholder="Optional digits to prepend" :floating="false"
+                                                <TextElement name="prefix_number" :label="$t(&quot;Prefix Number&quot;)"
+                                                    :placeholder="$t(&quot;Optional digits to prepend&quot;)" :floating="false"
                                                     :columns="{ sm: { container: 4 } }" />
 
-                                                <TextElement name="toll_allow" label="Toll Allow"
-                                                    placeholder="Optional toll allow value" :floating="false"
+                                                <TextElement name="toll_allow" :label="$t(&quot;Toll Allow&quot;)"
+                                                    :placeholder="$t(&quot;Optional toll allow value&quot;)" :floating="false"
                                                     :columns="{ sm: { container: 4 } }" />
 
-                                                <TextElement name="accountcode" label="Account Code"
-                                                    placeholder="Optional account code" :floating="false"
+                                                <TextElement name="accountcode" :label="$t(&quot;Account Code&quot;)"
+                                                    :placeholder="$t(&quot;Optional account code&quot;)" :floating="false"
                                                     :columns="{ sm: { container: 4 } }" />
 
-                                                <TextareaElement name="dialplan_description" label="Description"
+                                                <TextareaElement name="dialplan_description" :label="$t(&quot;Description&quot;)"
                                                     :rows="2" />
 
                                                 <GroupElement name="button_container" />
 
-                                                <ButtonElement name="cancel" button-label="Cancel" :secondary="true"
+                                                <ButtonElement name="cancel" :button-label="$t(&quot;Cancel&quot;)" :secondary="true"
                                                     :resets="true" @click="emit('close')"
                                                     :columns="{ container: 6 }" />
 
-                                                <ButtonElement name="submit" button-label="Create" :submits="true"
+                                                <ButtonElement name="submit" :button-label="$t(&quot;Create&quot;)" :submits="true"
                                                     align="right" :columns="{ container: 6 }" />
 
                                                 <StaticElement name="advanced_header" tag="h4"
-                                                    content="Advanced Settings"
-                                                    description="Set the domain, context, dialplan order, and optional call limit." />
+                                                    :content="$t(&quot;Advanced Settings&quot;)"
+                                                    :description="$t(&quot;Set the domain, context, dialplan order, and optional call limit.&quot;)" />
 
                                                 <SelectElement name="domain_uuid" :items="domainOptions" :search="true"
-                                                    :native="false" label="Domain" input-type="search"
-                                                    autocomplete="off" placeholder="Select domain" :floating="false"
+                                                    :native="false" :label="$t(&quot;Domain&quot;)" input-type="search"
+                                                    autocomplete="off" :placeholder="$t(&quot;Select domain&quot;)" :floating="false"
                                                     :strict="false" :columns="{ sm: { container: 6 } }"
                                                     :conditions="[() => domainOptions.length > 0]" />
 
                                                 <SelectElement name="dialplan_context" :items="contextOptions"
-                                                    :search="true" :native="false" label="Context"
+                                                    :search="true" :native="false" :label="$t(&quot;Context&quot;)"
                                                     input-type="search" allow-absent autocomplete="off" :strict="false"
-                                                    placeholder="Select context" :floating="false"
+                                                    :placeholder="$t(&quot;Select context&quot;)" :floating="false"
                                                     :columns="{ sm: { container: 6 } }" />
 
-                                                <TextElement name="dialplan_order" input-type="number" label="Order"
+                                                <TextElement name="dialplan_order" input-type="number" :label="$t(&quot;Order&quot;)"
                                                     :floating="false" :columns="{ sm: { container: 6 } }" />
 
-                                                <TextElement name="limit" label="Call Limit" placeholder="Optional limit"
+                                                <TextElement name="limit" :label="$t(&quot;Call Limit&quot;)" :placeholder="$t(&quot;Optional limit&quot;)"
                                                     :floating="false" :columns="{ sm: { container: 6 } }" />
 
                                                 <!-- <ToggleElement name="pin_numbers_enabled" text="Require PIN"
@@ -188,9 +188,13 @@
 </template>
 
 <script setup>
+import { useVueformLocale } from "../../../composables/useVueformLocale.js";
+import { trans } from "@i18n";
 import { computed, ref } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from "@headlessui/vue";
 import { XMarkIcon } from "@heroicons/vue/24/solid";
+
+const formLocale = useVueformLocale();
 
 const props = defineProps({
     show: Boolean,
@@ -238,6 +242,8 @@ const insertPattern = (pattern) => {
 };
 
 const submitForm = async (FormData, form$) => {
+    form$.messageBag.clear();
+    Object.values(form$.elements$).forEach(clearErrorsRecursive);
     return await form$.$vueform.services.axios.post(
         props.options.routes.store_route,
         form$.requestData,
@@ -282,6 +288,6 @@ const handleError = (error, details, form$) => {
         return;
     }
 
-    form$.messageBag.append("Could not submit form");
+    form$.messageBag.append(trans("Could not submit form"));
 };
 </script>

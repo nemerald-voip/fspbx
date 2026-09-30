@@ -60,10 +60,10 @@ class SpeedDialImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, W
     public function customValidationMessages()
     {
         return [
-            'contact_name.required' => 'Contact Name field is required',
-            'contact_name.string' => 'Contact Name must be a string',
-            'phone_number.numeric' => 'Phone Number must only contain numeric values',
-            'phone_speed_dial.numeric' => 'Speed Dial must only contain numeric values',
+            'contact_name.required' => __('Contact Name field is required'),
+            'contact_name.string' => __('Contact Name must be a string'),
+            'phone_number.numeric' => __('Phone Number must only contain numeric values'),
+            'phone_speed_dial.numeric' => __('Speed Dial must only contain numeric values'),
         ];
     }
 

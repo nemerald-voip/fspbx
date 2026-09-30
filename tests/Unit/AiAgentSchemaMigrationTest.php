@@ -104,6 +104,33 @@ class AiAgentSchemaMigrationTest extends TestCase
         ]);
     }
 
+    public function test_sender_migration_preserves_existing_agents_and_allows_setting_and_clearing_an_override(): void
+    {
+        $createMigration = require base_path('database/migrations/2026_08_11_000001_create_ai_agents_tables.php');
+        $createMigration->up();
+
+        $agent = AiAgent::query()->create([
+            'domain_uuid' => (string) Str::uuid(),
+            'name' => 'Receptionist',
+            'extension' => '9450',
+            'inbound_agent_id' => 'agent_1',
+        ]);
+
+        $migration = require base_path('database/migrations/2026_09_21_000001_add_email_from_address_to_ai_agents_table.php');
+        $migration->up();
+
+        $this->assertNull($agent->refresh()->email_from_address);
+        $agent->update(['email_from_address' => 'reception@example.com']);
+        $this->assertSame('reception@example.com', $agent->refresh()->email_from_address);
+        $agent->update(['email_from_address' => null]);
+        $this->assertNull($agent->refresh()->email_from_address);
+
+        $migration->down();
+
+        $this->assertFalse(Schema::hasColumn('ai_agents', 'email_from_address'));
+        $this->assertSame('Receptionist', $agent->refresh()->name);
+    }
+
     public function test_send_email_tool_records_the_validated_invocation_payload(): void
     {
         $migration = require base_path('database/migrations/2026_08_11_000001_create_ai_agents_tables.php');

@@ -3,7 +3,7 @@
 
     <div class="m-3">
         <DataTable @search-action="handleSearch" @reset-filters="resetFilters">
-            <template #title>Recordings</template>
+            <template #title>{{ $t('Recordings') }}</template>
 
             <template #filters>
                 <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
@@ -14,7 +14,7 @@
                         v-model="filterData.search"
                         type="text"
                         class="block w-full rounded-md border-0 py-1.5 pl-10 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600"
-                        placeholder="Search"
+                        :placeholder="$t('Search')"
                         @keydown.enter="handleSearch"
                     />
                 </div>
@@ -27,7 +27,7 @@
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
                     @click="openNewRecordingModal"
                 >
-                    New Recording
+                    {{ $t('New Recording') }}
                 </button>
             </template>
 
@@ -58,7 +58,7 @@
                             @click.stop
                         >
                         <button class="ml-9 flex items-center" @click="setSort('recording_name')">
-                            <span class="mr-2">Name</span>
+                            <span class="mr-2">{{ $t('Name') }}</span>
                             <ChevronUpIcon v-if="sortData.name === 'recording_name' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
                             <ChevronDownIcon v-else-if="sortData.name === 'recording_name' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
                         </button>
@@ -67,17 +67,17 @@
 
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <button class="flex items-center" @click="setSort('recording_filename')">
-                        <span class="mr-2">File</span>
+                        <span class="mr-2">{{ $t('File') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'recording_filename' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'recording_filename' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
                     </button>
                 </TableColumnHeader>
 
-                <TableColumnHeader header="Description" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t('Description')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <button class="flex items-center" @click="setSort('insert_date')">
-                        <span class="mr-2">Created</span>
+                        <span class="mr-2">{{ $t('Created') }}</span>
                         <ChevronUpIcon v-if="sortData.name === 'insert_date' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
                         <ChevronDownIcon v-else-if="sortData.name === 'insert_date' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
                     </button>
@@ -89,20 +89,20 @@
             <template v-if="selectPageItems" #current-selection>
                 <td colspan="5">
                     <div class="m-2 text-center text-sm">
-                        <span class="font-semibold">{{ selectedItems.length }}</span> items are selected.
+                        {{ $tChoice('{1} :count item is selected.|[0,*] :count items are selected.', selectedItems.length) }}
                         <button
                             v-if="!selectAll && selectedItems.length !== data.total"
                             class="rounded px-2 py-2 text-blue-500 transition duration-500 ease-in-out hover:bg-blue-200 hover:text-blue-500 focus:bg-blue-200 focus:outline-none focus:ring-1 focus:ring-blue-300"
                             @click="handleSelectAll"
                         >
-                            Select all {{ data.total }} items
+                            {{ $tChoice('{1} Select all :count item|[0,*] Select all :count items', data.total) }}
                         </button>
                         <button
                             v-if="selectAll"
                             class="rounded px-2 py-2 text-blue-500 transition duration-500 ease-in-out hover:bg-blue-200 hover:text-blue-500 focus:bg-blue-200 focus:outline-none focus:ring-1 focus:ring-blue-300"
                             @click="handleClearSelection"
                         >
-                            Clear selection
+                            {{ $t('Clear selection') }}
                         </button>
                     </div>
                 </td>
@@ -179,8 +179,8 @@
             <template #empty>
                 <div v-if="!loading && data.data.length === 0" class="text-center my-5">
                     <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
-                    <p class="mt-1 text-sm text-gray-500">Adjust your search and try again.</p>
+                    <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ $t('No results found') }}</h3>
+                    <p class="mt-1 text-sm text-gray-500">{{ $t('Adjust your search and try again.') }}</p>
                 </div>
             </template>
 
@@ -209,7 +209,7 @@
     </div>
 
     <NewGreetingForm
-        :header="'New Recording'"
+        :header="$t('New Recording')"
         :show="showNewRecordingModal"
         :routes="recordingOptions.routes"
         :voices="recordingOptions.voices"
@@ -223,25 +223,25 @@
         @saved="handleNewRecordingSaved"
     />
 
-    <AddEditItemModal :show="showEditModal" :loading="formSubmitting" :header="'Edit Recording'" @close="closeModals">
+    <AddEditItemModal :show="showEditModal" :loading="formSubmitting" :header="$t('Edit Recording')" @close="closeModals">
         <template #modal-body>
             <form class="space-y-4" @submit.prevent="submitEdit">
                 <div>
-                    <label class="block text-sm font-medium text-gray-900">Name</label>
+                    <label class="block text-sm font-medium text-gray-900">{{ $t('Name') }}</label>
                     <input v-model="editForm.greeting_name" type="text" class="mt-2 block w-full rounded-md border-0 py-2 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600">
                     <p v-if="formErrors.greeting_name" class="mt-2 text-sm text-red-600">{{ formErrors.greeting_name[0] }}</p>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-900">Description</label>
+                    <label class="block text-sm font-medium text-gray-900">{{ $t('Description') }}</label>
                     <textarea v-model="editForm.greeting_description" rows="3" class="mt-2 block w-full rounded-md border-0 py-2 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600"></textarea>
                     <p v-if="formErrors.greeting_description" class="mt-2 text-sm text-red-600">{{ formErrors.greeting_description[0] }}</p>
                 </div>
 
                 <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50" @click="closeModals">Cancel</button>
+                    <button type="button" class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50" @click="closeModals">{{ $t('Cancel') }}</button>
                     <button type="submit" class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50" :disabled="formSubmitting">
-                        Save
+                        {{ $t('Save') }}
                     </button>
                 </div>
             </form>
@@ -251,16 +251,16 @@
     <AddEditItemModal
         :show="showPlayerModal"
         :loading="false"
-        :header="selectedRecording?.recording_name || 'Recording'"
+        :header="selectedRecording?.recording_name || $t('Recording')"
         :customClass="'sm:max-w-5xl'"
         @close="showPlayerModal = false"
     >
         <template #modal-body>
             <div class="space-y-4">
                 <div class="text-sm text-gray-500">
-                    <div><span class="font-medium text-gray-700">File:</span> {{ selectedRecording?.recording_filename }}</div>
+                    <div><span class="font-medium text-gray-700">{{ $t('File:') }}</span> {{ selectedRecording?.recording_filename }}</div>
                     <div v-if="selectedRecording?.recording_description">
-                        <span class="font-medium text-gray-700">Description:</span> {{ selectedRecording.recording_description }}
+                        <span class="font-medium text-gray-700">{{ $t('Description:') }}</span> {{ selectedRecording.recording_description }}
                     </div>
                 </div>
 
@@ -277,10 +277,10 @@
     <ConfirmationModal
         :show="showDeleteConfirmationModal"
         :loading="formSubmitting"
-        :header="'Confirm Deletion'"
-        :text="'This action will permanently delete the selected recording(s). Are you sure you want to proceed?'"
-        :confirm-button-label="'Delete'"
-        cancel-button-label="Cancel"
+        :header="$t('Confirm Deletion')"
+        :text="$t('This action will permanently delete the selected recording(s). Are you sure you want to proceed?')"
+        :confirm-button-label="$t('Delete')"
+        :cancel-button-label="$t('Cancel')"
         @close="showDeleteConfirmationModal = false"
         @confirm="confirmDeleteAction"
     />
@@ -289,6 +289,7 @@
 </template>
 
 <script setup>
+import { trans } from '@i18n';
 import { computed, onMounted, ref } from "vue";
 import axios from "axios";
 import MainLayout from "../Layouts/MainLayout.vue";
@@ -366,7 +367,7 @@ const bulkActions = computed(() => {
     if (props.permissions.recording_destroy) {
         actions.push({
             id: "bulk_delete",
-            label: "Delete",
+            label: trans('Delete'),
             icon: "TrashIcon",
         });
     }
@@ -491,7 +492,7 @@ const submitEdit = () => {
     })
         .then(() => {
             closeModals();
-            showSuccess("Recording updated successfully.");
+            showSuccess(trans('Recording updated successfully.'));
             fetchData(data.value.current_page || 1);
         })
         .catch((error) => handleError(error, true))
@@ -537,7 +538,7 @@ const deleteItems = (items) => {
         .then(() => {
             closeModals();
             handleClearSelection();
-            showSuccess("Recording deleted successfully.");
+            showSuccess(trans('Recording deleted successfully.'));
             fetchData(data.value.current_page || 1);
         })
         .catch(handleError)
@@ -603,7 +604,7 @@ const normalizeMessages = (error) => {
         return { request: [error.message] };
     }
 
-    return { request: ["An unexpected error occurred."] };
+    return { request: [trans('An unexpected error occurred.')] };
 };
 
 const buildItemRoute = (template, uuid) => template.replace("__RECORDING__", uuid);

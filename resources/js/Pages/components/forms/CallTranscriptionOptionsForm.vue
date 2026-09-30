@@ -4,7 +4,7 @@
     <div v-show="!isFormLoading" class="flex flex-col xl:flex-row">
         <div class="basis-3/4">
             <Vueform ref="form$" :endpoint="submitForm" @success="handleSuccess" @error="handleError"
-                @response="handleResponse" :display-errors="false">
+                @response="handleResponse" :display-errors="false" @mounted="(form) => form.disableValidation()" @submit="clearServerFormErrors">
 
                 <template #empty>
                     <div class="space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
@@ -13,7 +13,7 @@
                             <HiddenElement name="domain_uuid" :meta="true" />
 
                             <!-- Header -->
-                            <StaticElement name="header" tag="h4" :content="'Call Transcription Options'" />
+                            <StaticElement name="header" tag="h4" :content="$t('Call Transcription Options')" />
 
                             <StaticElement v-if="isInheriting" name="inherited_notice" tag="div" :add-classes="{
                                 StaticElement: { container: 'rounded-md border border-yellow-200 bg-yellow-50 p-3' }
@@ -23,8 +23,7 @@
                                         <ExclamationTriangleIcon class="size-5 text-yellow-500 shrink-0"
                                             aria-hidden="true" />
                                         <div class="text-sm text-yellow-900">
-                                            <p class="font-medium">No custom options set. Your account is using the
-                                                system defaults.</p>
+                                            <p class="font-medium">{{ $t('No custom options set. Your account is using the system defaults.') }}</p>
 
                                         </div>
 
@@ -35,28 +34,28 @@
                             <GroupElement name="container2" />
 
                             <!-- Enabled -->
-                            <ToggleElement name="enabled" text="Enable call transcriptions" :true-value="true"
+                            <ToggleElement name="enabled" :text="$t('Enable call transcriptions')" :true-value="true"
                                 :false-value="false" :disabled="disableOptions" />
 
                             <!-- Auto-transcribe -->
-                            <ToggleElement name="auto_transcribe" text="Automatically transcribe new calls"
+                            <ToggleElement name="auto_transcribe" :text="$t('Automatically transcribe new calls')"
                                 :true-value="true" :false-value="false" :disabled="disableOptions" />
 
                             <!-- Email Transcription -->
-                            <ToggleElement name="email_transcription" text="Automatically email call transcripts"
+                            <ToggleElement name="email_transcription" :text="$t('Automatically email call transcripts')"
                                 :true-value="true" :false-value="false" :disabled="disableOptions" />
 
-                            <TextElement name="email" label="Email"
+                            <TextElement name="email" :label="$t('Email')"
                                 :columns="{ lg: { wrapper: 5 } }" :conditions="[
                                     ['email_transcription', '==', true]
                                 ]" />
 
                             <!-- Provider -->
-                            <SelectElement v-if="!domain_uuid" name="provider_uuid" label="Provider" :search="true"
-                                :items="providers" :floating="false" placeholder="Select Provider"
+                            <SelectElement v-if="!domain_uuid" name="provider_uuid" :label="$t('Provider')" :search="true"
+                                :items="providers" :floating="false" :placeholder="$t('Select Provider')"
                                 :loading="isProvidersLoading" :native="false" input-type="search" autocomplete="off"
                                 :clearable="true" :columns="{ lg: { wrapper: 5 } }"
-                                description="Choose the default call transcription provider." />
+                                :description="$t('Choose the default call transcription provider.')" />
 
                             <!-- <GroupElement name="container" /> -->
 
@@ -80,19 +79,19 @@
 
                                         <!-- Override (only when inheriting & not already overriding) -->
                                         <ButtonElement v-if="showOverrideBtn" name="overrideDefaults" :secondary="true"
-                                            button-label="Override Defaults" @click="startOverride" />
+                                            :button-label="$t('Override Defaults')" @click="startOverride" />
 
                                         <!-- Save (system scope OR domain edit OR started override) -->
-                                        <ButtonElement v-if="showSaveBtn" name="save" button-label="Save"
+                                        <ButtonElement v-if="showSaveBtn" name="save" :button-label="$t('Save')"
                                             :submits="true" />
 
                                         <!-- Revert to Defaults (only when a saved domain override exists) -->
                                         <ButtonElement v-if="showRevertBtn" name="revertDefaults" :secondary="true"
-                                            button-label="Revert to Defaults" @click="revertToDefaults" />
+                                            :button-label="$t('Revert to Defaults')" @click="revertToDefaults" />
 
                                         <!-- Cancel (only when user just started override but hasn’t saved yet) -->
                                         <ButtonElement v-if="showCancelBtn" name="cancelOverride" :secondary="true"
-                                            button-label="Cancel" @click="cancelOverride" />
+                                            :button-label="$t('Cancel')" @click="cancelOverride" />
                                     </div>
                                 </template>
                             </StaticElement>
@@ -115,6 +114,8 @@
 
 
 <script setup>
+import { clearServerFormErrors } from '../../../composables/serverFormErrors.js';
+import { trans } from '@i18n';
 import { ref, onMounted, computed } from 'vue'
 import Skeleton from "@generalComponents/Skeleton.vue";
 import { ExclamationTriangleIcon } from '@heroicons/vue/20/solid'
@@ -283,7 +284,7 @@ const handleError = (error, details, form$) => {
         case 'prepare':
             console.log(error) // Error object
 
-            form$.messageBag.append('Could not prepare form')
+            form$.messageBag.append(trans('Could not prepare form'))
             break
 
         // Error occured because response status is outside of 2xx
@@ -303,14 +304,14 @@ const handleError = (error, details, form$) => {
         case 'cancel':
             console.log(error) // Error object
 
-            form$.messageBag.append('Request cancelled')
+            form$.messageBag.append(trans('Request cancelled'))
             break
 
         // Some other errors happened (no response object)
         case 'other':
             console.log(error) // Error object
 
-            form$.messageBag.append('Couldn\'t submit form')
+            form$.messageBag.append(trans('Couldn\'t submit form'))
             break
     }
 }

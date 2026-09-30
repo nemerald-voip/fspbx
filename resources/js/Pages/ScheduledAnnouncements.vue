@@ -5,15 +5,15 @@
         <div class="px-4 sm:px-6 lg:px-8">
             <div class="mb-6 mt-2 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                    <p class="text-xs font-semibold uppercase tracking-wide text-indigo-600">Scheduled Announcements</p>
-                    <h1 class="mt-1 text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl">Scheduled Announcements</h1>
-                    <p class="mt-1 text-sm text-gray-500">Build schedules with their recordings, extensions, announcement times, and exclusions in one window.</p>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-indigo-600">{{ $t("Scheduled Announcements") }}</p>
+                    <h1 class="mt-1 text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl">{{ $t("Scheduled Announcements") }}</h1>
+                    <p class="mt-1 text-sm text-gray-500">{{ $t("Build schedules with their recordings, extensions, announcement times, and exclusions in one window.") }}</p>
                 </div>
             </div>
         </div>
 
         <div class="mb-6 border-b border-gray-200 px-4 sm:px-6 lg:px-8">
-            <nav class="-mb-px flex gap-0.5 overflow-x-auto sm:gap-2" aria-label="Tabs">
+            <nav class="-mb-px flex gap-0.5 overflow-x-auto sm:gap-2" :aria-label="$t(&quot;Tabs&quot;)">
                 <button v-for="tab in tabs" :key="tab.id" type="button"
                     :class="[
                         'group relative -mb-px inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-t-lg px-3 py-2.5 text-sm font-semibold tracking-tight transition-colors sm:gap-2.5 sm:px-6 sm:py-3.5 sm:text-base',
@@ -52,18 +52,18 @@
                     <input type="text" v-model="filterData.search" name="scheduled-announcements-search"
                         id="mobile-search-scheduled-announcements"
                         class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                        :placeholder="$t(&quot;Search&quot;)" @keydown.enter="handleSearchButtonClick" />
                     <input type="text" v-model="filterData.search" name="desktop-search-scheduled-announcements"
                         id="desktop-search-scheduled-announcements"
                         class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                        :placeholder="$t(&quot;Search&quot;)" @keydown.enter="handleSearchButtonClick" />
                 </div>
             </template>
 
             <template #action>
                 <button v-if="canCreateActiveTab" type="button" @click.prevent="handleCreateButtonClick"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                    Create
+                    {{ $t("Create") }}
                 </button>
             </template>
 
@@ -82,43 +82,43 @@
                         <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
                             class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                         <div class="pl-4 flex items-center cursor-pointer select-none" @click="handleSortRequest('name')">
-                            <span class="mr-2">Name</span>
+                            <span class="mr-2">{{ $t("Name") }}</span>
                             <ChevronUpIcon v-if="sortData.name === 'name' && sortData.order === 'asc'"
                                 class="h-4 w-4 text-gray-500" />
                             <ChevronDownIcon v-else-if="sortData.name === 'name' && sortData.order === 'desc'"
                                 class="h-4 w-4 text-gray-500" />
                         </div>
                     </TableColumnHeader>
-                    <TableColumnHeader header="Plays" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="To" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="When" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader :header="$t(&quot;Plays&quot;)" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader :header="$t(&quot;To&quot;)" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader :header="$t(&quot;When&quot;)" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader :header="$t(&quot;Status&quot;)" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                     <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
                 </template>
 
                 <template v-else>
-                    <TableColumnHeader header="Scheduled" class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="Announcement" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="Trigger" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="Played" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="Error / Note" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader :header="$t(&quot;Scheduled&quot;)" class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader :header="$t(&quot;Announcement&quot;)" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader :header="$t(&quot;Trigger&quot;)" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader :header="$t(&quot;Status&quot;)" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader :header="$t(&quot;Played&quot;)" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader :header="$t(&quot;Error / Note&quot;)" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 </template>
             </template>
 
             <template v-if="activeTab === 'schedules' && selectPageItems" v-slot:current-selection>
                 <td colspan="6">
                     <div class="text-sm text-center m-2">
-                        <span class="font-semibold">{{ selectedItems.length }}</span> schedules are selected.
+                        {{ $t(":count selected", { count: selectedItems.length }) }}
                         <button v-if="!selectAll && selectedItems.length !== activeRows.length"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleSelectAll">
-                            Select all {{ activeRows.length }} schedules
+                            {{ $t("Select all :count", { count: activeRows.length }) }}
                         </button>
                         <button v-if="selectAll"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleClearSelection">
-                            Clear selection
+                            {{ $t("Clear selection") }}
                         </button>
                     </div>
                 </td>
@@ -152,10 +152,10 @@
                         <TableField class="px-2 py-2 align-middle text-sm text-gray-500">
                             <template v-if="item.when.lines.length">
                                 <div v-for="(line, i) in item.when.lines" :key="i" class="whitespace-nowrap">{{ line }}</div>
-                                <div v-if="item.when.extra > 0" class="text-xs text-gray-400">+{{ item.when.extra }} more</div>
+                                <div v-if="item.when.extra > 0" class="text-xs text-gray-400">{{ $t("+:count more", { count: item.when.extra }) }}</div>
                                 <div v-if="item.when.tz" class="truncate text-xs text-gray-400">{{ item.when.tz }}</div>
                             </template>
-                            <span v-else class="text-gray-400">No times set</span>
+                            <span v-else class="text-gray-400">{{ $t("No times set") }}</span>
                         </TableField>
                         <TableField class="whitespace-nowrap px-2 py-2 align-middle text-sm text-gray-500">
                             <Badge :text="item.status.label" v-bind="item.status.props" />
@@ -165,10 +165,10 @@
                                 <div class="flex items-center whitespace-nowrap justify-end">
                                     <PencilSquareIcon v-if="permissions.update" @click="handleEditButtonClick(item.row)"
                                         class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
-                                        title="Edit" />
+                                        :title="$t(&quot;Edit&quot;)" />
                                     <TrashIcon v-if="permissions.delete" @click="deleteRecord(item.row.scheduled_announcement_schedule_uuid)"
                                         class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
-                                        title="Delete" />
+                                        :title="$t(&quot;Delete&quot;)" />
                                 </div>
                             </template>
                         </TableField>
@@ -200,7 +200,7 @@
                             <span v-else class="text-gray-400">—</span>
                         </TableField>
                         <TableField class="max-w-xl px-2 py-2 align-middle text-sm text-gray-500">
-                            <span class="block max-w-xl truncate" :title="item.row.error_text">{{ item.row.error_text }}</span>
+                            <span class="block max-w-xl truncate" :title="runNote(item.row.error_text)">{{ runNote(item.row.error_text) }}</span>
                         </TableField>
                     </tr>
                 </template>
@@ -209,8 +209,8 @@
             <template #empty>
                 <div v-if="activeRows.length === 0" class="text-center my-5">
                     <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
-                    <p class="mt-1 text-sm text-gray-500">Adjust your search and try again.</p>
+                    <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ $t("No results found") }}</h3>
+                    <p class="mt-1 text-sm text-gray-500">{{ $t("Adjust your search and try again.") }}</p>
                 </div>
             </template>
 
@@ -229,7 +229,7 @@
 
     <ConfirmationModal :show="confirmationModalTrigger" @close="handleConfirmationClose"
         @confirm="confirmAction" :header="confirmationHeader" :text="confirmationText"
-        :confirm-button-label="confirmationButtonLabel" cancel-button-label="Cancel" />
+        :confirm-button-label="confirmationButtonLabel" :cancel-button-label="$t(&quot;Cancel&quot;)" />
 
     <ScheduledAnnouncementScheduleForm v-if="activeForm === 'schedules'" :show="showForm"
         :options="formOptions('schedules')" :loading="false" :mode="formMode" :header="formHeader"
@@ -240,6 +240,8 @@
 </template>
 
 <script setup>
+import { formatDuration, relativeTime, weekdayLabel, timeOfDay } from "./data/localizedTime";
+import { trans, currentLocale } from "@i18n";
 import { computed, onMounted, ref } from 'vue'
 import axios from 'axios'
 import DataTable from './components/general/DataTable.vue'
@@ -289,9 +291,9 @@ const selectedItems = ref([])
 const selectPageItems = ref(false)
 const confirmationModalTrigger = ref(false)
 const confirmAction = ref(null)
-const confirmationHeader = ref('Are you sure?')
+const confirmationHeader = ref(trans("Are you sure?"))
 const confirmationText = ref('')
-const confirmationButtonLabel = ref('Continue')
+const confirmationButtonLabel = ref(trans("Continue"))
 const notificationType = ref(null)
 const notificationMessages = ref(null)
 const notificationShow = ref(false)
@@ -316,31 +318,31 @@ const data = ref({
     timezones,
 })
 
-const tabMetadata = {
+const tabMetadata = computed(() => ({
     schedules: {
-        label: 'Schedules',
-        singular: 'Schedule',
-        subtitle: 'Define each schedule with its recording, extensions, announcement times, and exclusions.',
+        label: trans("Schedules"),
+        singular: trans("Schedule"),
+        subtitle: trans("Define each schedule with its recording, extensions, announcement times, and exclusions."),
         icon: CalendarDaysIcon,
         rows: 'schedules',
     },
     runs: {
-        label: 'Runs',
-        singular: 'Run',
-        subtitle: 'Review recent scheduler decisions and execution logs.',
+        label: trans("Runs"),
+        singular: trans("Run"),
+        subtitle: trans("Review recent scheduler decisions and execution logs."),
         icon: ClockIcon,
         rows: 'runs',
     },
-}
+}))
 
-const tabs = computed(() => Object.entries(tabMetadata).map(([id, meta]) => ({
+const tabs = computed(() => Object.entries(tabMetadata.value).map(([id, meta]) => ({
     id,
     label: meta.label,
     icon: meta.icon,
     count: data.value[meta.rows]?.length ?? 0,
 })))
 
-const activeTabDefinition = computed(() => tabMetadata[activeTab.value])
+const activeTabDefinition = computed(() => tabMetadata.value[activeTab.value])
 const canCreateActiveTab = computed(() => permissions.create && activeTab.value !== 'runs')
 const activeRows = computed(() => {
     const rows = data.value[activeTabDefinition.value.rows] ?? []
@@ -403,25 +405,14 @@ const runRows = computed(() => {
         scheduledAbs: formatDate(row.scheduled_for),
         announcement: runAnnouncement(row),
         trigger: runTrigger(row),
-        status: { label: row.status || '-', props: statusBadgeProps(row.status) },
+        status: { label: runStatusLabel(row.status), props: statusBadgeProps(row.status) },
         played: runPlayed(row),
     }))
 })
 
-const formHeader = computed(() => {
-    const singular = tabMetadata[activeForm.value]?.singular || 'Item'
-
-    if (formMode.value === 'create') {
-        return `Create ${singular}`
-    }
-
-    const name = selectedItem.value?.name
-        || selectedItem.value?.exception_date
-        || selectedItem.value?.time_of_day
-        || 'Loading...'
-
-    return `Update ${singular} - ${name}`
-})
+const formHeader = computed(() => formMode.value === 'create'
+    ? trans('Create Schedule')
+    : trans('Update Schedule - :name', { name: selectedItem.value?.name || trans('Loading...') }))
 
 onMounted(fetchData)
 
@@ -541,9 +532,9 @@ function formRoutes(tab) {
 
 async function deleteRecord(uuid) {
     showConfirmation({
-        header: 'Confirm Deletion',
-        text: 'This action will permanently delete the selected schedule.',
-        button: 'Delete',
+        header: trans("Confirm Deletion"),
+        text: trans("This action will permanently delete the selected schedule."),
+        button: trans("Delete"),
         action: () => executeDelete([uuid]),
     })
 }
@@ -555,7 +546,7 @@ async function executeDelete(uuids = selectedItems.value) {
         )
         handleConfirmationClose()
         handleClearSelection()
-        showNotification('success', responses.at(-1)?.data?.messages ?? { server: ['Schedule deleted.'] })
+        showNotification('success', responses.at(-1)?.data?.messages ?? { server: [trans("Schedule deleted.")] })
         await fetchData()
     } catch (error) {
         handleConfirmationClose()
@@ -595,13 +586,13 @@ function pageUrl(page) {
 }
 
 function paginationLinks(page, lastPage) {
-    const links = [{ url: page > 1 ? pageUrl(page - 1) : null, label: '&laquo; Previous', active: false }]
+    const links = [{ url: page > 1 ? pageUrl(page - 1) : null, label: trans("&laquo; Previous"), active: false }]
 
     for (let i = 1; i <= lastPage; i += 1) {
         links.push({ url: pageUrl(i), label: String(i), active: i === page })
     }
 
-    links.push({ url: page < lastPage ? pageUrl(page + 1) : null, label: 'Next &raquo;', active: false })
+    links.push({ url: page < lastPage ? pageUrl(page + 1) : null, label: trans("Next &raquo;"), active: false })
 
     return links
 }
@@ -617,7 +608,7 @@ function renderRequestedPage(url) {
 const bulkActions = computed(() => {
     if (activeTab.value !== 'schedules' || !permissions.delete) return []
 
-    return [{ id: 'bulk_delete', label: 'Delete', icon: 'TrashIcon' }]
+    return [{ id: 'bulk_delete', label: trans("Delete"), icon: 'TrashIcon' }]
 })
 
 function handleSelectPageItems() {
@@ -643,9 +634,9 @@ function handleBulkActionRequest(action) {
     if (action !== 'bulk_delete') return
 
     showConfirmation({
-        header: 'Confirm Deletion',
-        text: 'This action will permanently delete the selected schedule(s).',
-        button: 'Delete',
+        header: trans("Confirm Deletion"),
+        text: trans("This action will permanently delete the selected schedule(s)."),
+        button: trans("Delete"),
         action: () => executeDelete(),
     })
 }
@@ -664,10 +655,9 @@ function handleConfirmationClose() {
 }
 
 function formatDate(value) {
-    return value ? new Date(value).toLocaleString() : ''
+    return value ? new Date(value).toLocaleString(currentLocale.value) : ''
 }
 
-const WEEKDAY_LABELS = { 1: 'Mon', 2: 'Tue', 3: 'Wed', 4: 'Thu', 5: 'Fri', 6: 'Sat', 7: 'Sun' }
 
 function recordingLabel(row) {
     const value = row.recording_filename
@@ -696,30 +686,18 @@ function extensionSummary(row) {
 
 function formatWeekdays(days) {
     const sorted = [...(days ?? [])].map(Number).filter(Boolean).sort((a, b) => a - b)
-    if (!sorted.length) return 'No days'
-    if (sorted.length === 7) return 'Every day'
+    if (!sorted.length) return trans("No days")
+    if (sorted.length === 7) return trans("Every day")
 
     const consecutive = sorted.every((day, i) => i === 0 || day === sorted[i - 1] + 1)
     if (consecutive && sorted.length > 2) {
-        return `${WEEKDAY_LABELS[sorted[0]]}–${WEEKDAY_LABELS[sorted[sorted.length - 1]]}`
+        return `${weekdayLabel(sorted[0])}–${weekdayLabel(sorted[sorted.length - 1])}`
     }
 
-    return sorted.map((day) => WEEKDAY_LABELS[day]).join(', ')
+    return sorted.map((day) => weekdayLabel(day)).join(', ')
 }
 
-function formatTimeOfDay(value) {
-    if (!value) return ''
-
-    const match = String(value).match(/^(\d{1,2}):(\d{2})/)
-    if (!match) return String(value)
-
-    let hour = Number(match[1])
-    const minute = match[2]
-    const suffix = hour >= 12 ? 'PM' : 'AM'
-    hour = ((hour + 11) % 12) + 1
-
-    return `${hour}:${minute} ${suffix}`
-}
+const formatTimeOfDay = timeOfDay;
 
 function whenSummary(row) {
     const events = (row.events ?? []).filter((event) => event.enabled !== false)
@@ -744,7 +722,7 @@ function parseLocalDate(value) {
 
 function formatShortDate(value) {
     const date = parseLocalDate(value)
-    return date ? date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : ''
+    return date ? date.toLocaleDateString(currentLocale.value, { month: 'short', day: 'numeric' }) : ''
 }
 
 function scheduleStatus(row) {
@@ -752,36 +730,20 @@ function scheduleStatus(row) {
     const green = enabledBadgeProps(true)
     const yellow = { backgroundColor: 'bg-yellow-50', textColor: 'text-yellow-700', ringColor: 'ring-yellow-600/20' }
 
-    if (!row.enabled) return { label: 'Disabled', props: gray }
+    if (!row.enabled) return { label: trans("Disabled"), props: gray }
 
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     const starts = parseLocalDate(row.starts_on)
     const ends = parseLocalDate(row.ends_on)
 
-    if (ends && ends < today) return { label: 'Ended', props: gray }
-    if (starts && starts > today) return { label: `Starts ${formatShortDate(row.starts_on)}`, props: yellow }
+    if (ends && ends < today) return { label: trans("Ended"), props: gray }
+    if (starts && starts > today) return { label: trans("Starts :date", { date: formatShortDate(row.starts_on) }), props: yellow }
 
-    return { label: 'Active', props: green }
+    return { label: trans("Active"), props: green }
 }
 
-function relativeTime(value) {
-    if (!value) return ''
 
-    const date = new Date(value)
-    if (Number.isNaN(date.getTime())) return ''
-
-    const diffMs = date.getTime() - Date.now()
-    const mins = Math.round(Math.abs(diffMs) / 60000)
-    if (mins < 1) return 'just now'
-
-    let magnitude
-    if (mins < 60) magnitude = `${mins}m`
-    else if (mins < 1440) magnitude = `${Math.round(mins / 60)}h`
-    else magnitude = `${Math.round(mins / 1440)}d`
-
-    return diffMs > 0 ? `in ${magnitude}` : `${magnitude} ago`
-}
 
 function formatClock(value) {
     if (!value) return ''
@@ -789,26 +751,21 @@ function formatClock(value) {
     const date = new Date(value)
     return Number.isNaN(date.getTime())
         ? ''
-        : date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+        : date.toLocaleTimeString(currentLocale.value, { hour: 'numeric', minute: '2-digit' })
 }
 
 function latenessLabel(row) {
-    if (!row.executed_at || !row.scheduled_for) return 'done'
+    if (!row.executed_at || !row.scheduled_for) return trans('Done')
 
     const exec = new Date(row.executed_at).getTime()
     const sched = new Date(row.scheduled_for).getTime()
-    if (Number.isNaN(exec) || Number.isNaN(sched)) return 'done'
+    if (Number.isNaN(exec) || Number.isNaN(sched)) return trans('Done')
 
     const seconds = Math.round((exec - sched) / 1000)
-    if (Math.abs(seconds) <= 5) return 'on time'
+    if (Math.abs(seconds) <= 5) return trans("on time")
 
-    const abs = Math.abs(seconds)
-    let magnitude
-    if (abs < 60) magnitude = `${abs}s`
-    else if (abs < 3600) magnitude = `${Math.round(abs / 60)}m`
-    else magnitude = `${Math.round(abs / 3600)}h`
-
-    return seconds < 0 ? `${magnitude} early` : `${magnitude} late`
+    const duration = formatDuration(Math.abs(seconds))
+    return seconds < 0 ? trans(':duration early', { duration }) : trans(':duration late', { duration })
 }
 
 function scheduleNameForRun(row) {
@@ -820,7 +777,7 @@ function scheduleNameForRun(row) {
         if (match?.name) return match.name
     }
 
-    return row.manual ? 'Manual run' : '—'
+    return row.manual ? trans("Manual run") : '—'
 }
 
 function runAnnouncement(row) {
@@ -834,8 +791,8 @@ function runAnnouncement(row) {
 
 function runTrigger(row) {
     return row.manual
-        ? { label: 'Manual', props: { backgroundColor: 'bg-purple-50', textColor: 'text-purple-700', ringColor: 'ring-purple-600/20' } }
-        : { label: 'Auto', props: { backgroundColor: 'bg-gray-50', textColor: 'text-gray-700', ringColor: 'ring-gray-600/20' } }
+        ? { label: trans("Manual"), props: { backgroundColor: 'bg-purple-50', textColor: 'text-purple-700', ringColor: 'ring-purple-600/20' } }
+        : { label: trans("Auto"), props: { backgroundColor: 'bg-gray-50', textColor: 'text-gray-700', ringColor: 'ring-gray-600/20' } }
 }
 
 function runPlayed(row) {
@@ -882,6 +839,39 @@ const enabledBadgeProps = (enabled) => enabled
         textColor: 'text-gray-700',
         ringColor: 'ring-gray-600/20',
     }
+
+const runStatusLabel = (status) => ({
+    claimed: trans('Claimed'),
+    executed: trans('Executed'),
+    success: trans('Success'),
+    missed: trans('Missed'),
+    failed: trans('Failed'),
+    skipped_standby: trans('Skipped: standby server'),
+    skipped_active_unknown: trans('Skipped: active server unknown'),
+    skipped_busy_unknown: trans('Skipped: extension availability unknown'),
+    skipped_busy: trans('Skipped: extensions busy'),
+}[status] ?? status ?? '-');
+
+// Localize known saved notes while preserving raw diagnostics for troubleshooting.
+const runNote = (value) => ({
+    'Announcement was discovered outside the fire window.': trans('Announcement was discovered outside the fire window.'),
+    'Announcement recording is not playable.': trans('Announcement recording is not playable.'),
+    'Could not determine busy extensions.': trans('Could not determine busy extensions.'),
+    'FreeSWITCH returned no response.': trans('FreeSWITCH returned no response.'),
+    'No selected extensions were available for this schedule.': trans('No selected extensions were available for this schedule.'),
+    'All selected extensions were busy.': trans('All selected extensions were busy.'),
+    'No active FQDN could be determined from settings or APP_URL.': trans('No active FQDN could be determined from settings or APP_URL.'),
+    'No local or external node IP addresses could be determined.': trans('No local or external node IP addresses could be determined.'),
+    'Unable to discover the authoritative DNS zone.': trans('Unable to discover the authoritative DNS zone.'),
+    'Unable to discover authoritative nameservers.': trans('Unable to discover authoritative nameservers.'),
+    'The dig DNS lookup command is not available.': trans('The dig DNS lookup command is not available.'),
+    'No authoritative nameservers answered.': trans('No authoritative nameservers answered.'),
+    'Authoritative nameservers disagreed.': trans('Authoritative nameservers disagreed.'),
+    'Authoritative DNS returned no address records.': trans('Authoritative DNS returned no address records.'),
+    'Authoritative DNS points to another node.': trans('Authoritative DNS points to another node.'),
+    'FreeSWITCH ESL health is uncertain.': trans('FreeSWITCH ESL health is uncertain.'),
+    'Authoritative DNS points to this node.': trans('Authoritative DNS points to this node.'),
+}[value] ?? value ?? '');
 
 const statusBadgeProps = (status) => {
     if (['executed', 'success'].includes(status)) {

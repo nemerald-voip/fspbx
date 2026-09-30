@@ -26,9 +26,6 @@ class SpeedDialController extends Controller
 {
 
     public $model;
-    public $filters = [];
-    public $sortField;
-    public $sortOrder;
     protected $viewName = 'SpeedDial';
     protected $searchable = ['contact_organization', 'primaryPhone.phone_number', 'primaryPhone.phone_speed_dial',];
 
@@ -37,7 +34,7 @@ class SpeedDialController extends Controller
         $this->model = new SpeedDial();
     }
 
-    public function index()
+    public function index(Request $request)
     {
         if (!userCheckPermission("contact_view")) {
             return redirect('/');
@@ -46,11 +43,18 @@ class SpeedDialController extends Controller
         return Inertia::render(
             $this->viewName,
             [
-                'data' => function () {
-                    return $this->getData();
-                },
+                'pagination' => [
+                    'per_page' => fspbx_pagination_per_page($request),
+                    'per_page_options' => fspbx_pagination_options(),
+                ],
+                'permissions' => [
+                    'create' => userCheckPermission('contact_create'),
+                    'update' => userCheckPermission('contact_edit'),
+                    'destroy' => userCheckPermission('contact_delete'),
+                    'upload' => userCheckPermission('contact_upload'),
+                ],
                 'routes' => [
-                    'current_page' => route('speed-dial.index'),
+                    'data_route' => route('speed-dial.data'),
                     'store' => route('speed-dial.store'),
                     'select_all' => route('speed-dial.select.all'),
                     'bulk_delete' => route('speed-dial.bulk.delete'),
@@ -63,30 +67,19 @@ class SpeedDialController extends Controller
         );
     }
 
-    public function getData($paginate = 50)
+    public function getData(Request $request)
     {
-        if (!empty(request('filterData.search'))) {
-            $this->filters['search'] = request('filterData.search');
-        }
+        abort_unless(userCheckPermission('contact_view'), 403);
 
-        $this->sortField = request()->get('sortField', 'contact_organization');
-        $this->sortOrder = request()->get('sortOrder', 'asc');
-
-        $data = $this->builder($this->filters);
-
-        // Apply pagination if requested
-        if ($paginate) {
-            $data = $data->paginate($paginate);
-        } else {
-            $data = $data->get(); // This will return a collection
-        }
-
-        // logger($data);
+        $data = $this->builder(
+            ['search' => $request->input('filter.search')],
+            (string) $request->input('sort', 'contact_organization')
+        )->paginate(fspbx_pagination_per_page($request));
 
         return $data;
     }
 
-    public function builder(array $filters = [])
+    public function builder(array $filters = [], string $sort = 'contact_organization')
     {
         $data = $this->model::query();
         $domainUuid = session('domain_uuid');
@@ -108,13 +101,24 @@ class SpeedDialController extends Controller
 
         if (is_array($filters)) {
             foreach ($filters as $field => $value) {
+                if ($value === null || $value === '') {
+                    continue;
+                }
                 if (method_exists($this, $method = "filter" . ucfirst($field))) {
                     $this->$method($data, $value);
                 }
             }
         }
 
-        return $data->orderBy($this->sortField, $this->sortOrder);
+        $sortField = ltrim($sort, '-');
+        $sortOrder = str_starts_with($sort, '-') ? 'desc' : 'asc';
+        if (! in_array($sortField, ['contact_organization'], true)) {
+            $sortField = 'contact_organization';
+            $sortOrder = 'asc';
+        }
+        $data->orderBy($sortField, $sortOrder)->orderBy('contact_uuid');
+
+        return $data;
     }
 
     protected function filterSearch($query, $value)
@@ -177,14 +181,14 @@ class SpeedDialController extends Controller
 
             return response()->json([
                 'success' => true,
-                'messages' => ['success' => ['Item created successfully']],
+                'messages' => ['success' => [__('Item created successfully')]],
             ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to create this item']]
+                'errors' => ['server' => [__('Failed to create this item')]]
             ], 500);
         }
     }
@@ -200,7 +204,7 @@ class SpeedDialController extends Controller
         if (!$speed_dial) {
             return response()->json([
                 'success' => false,
-                'errors' => ['model' => ['Speed Dial not found']]
+                'errors' => ['model' => [__('Speed Dial not found')]]
             ], 404);
         }
 
@@ -243,13 +247,13 @@ class SpeedDialController extends Controller
 
             return response()->json([
                 'success' => true,
-                'messages' => ['success' => ['Item updated successfully']],
+                'messages' => ['success' => [__('Item updated successfully')]],
             ], 200);
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to update this item']]
+                'errors' => ['server' => [__('Failed to update this item')]]
             ], 500);
         }
     }
@@ -260,11 +264,11 @@ class SpeedDialController extends Controller
             DB::beginTransaction();
             $speed_dial->delete();
             DB::commit();
-            return response()->json(['messages' => ['success' => ['Contact deleted']]], 200);
+            return response()->json(['messages' => ['success' => [__('Contact deleted')]]], 200);
         } catch (\Exception $e) {
             DB::rollBack();
             logger($e);
-            return response()->json(['errors' => ['server' => ['Failed to delete contact']]], 500);
+            return response()->json(['errors' => ['server' => [__('Failed to delete contact')]]], 500);
         }
     }
 
@@ -279,13 +283,13 @@ class SpeedDialController extends Controller
             // Base navigation array without Greetings
             $navigation = [
                 [
-                    'name' => 'General',
+                    'name' => __('General'),
                     'icon' => 'Cog6ToothIcon',
                     'slug' => 'general',
                 ],
 
                 [
-                    'name' => 'Advanced',
+                    'name' => __('Advanced'),
                     'icon' => 'AdjustmentsHorizontalIcon',
                     'slug' => 'advanced',
                 ],
@@ -377,7 +381,7 @@ class SpeedDialController extends Controller
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to fetch item details']]
+                'errors' => ['server' => [__('Failed to fetch item details')]]
             ], 500);  // 500 Internal Server Error for any other errors
         }
     }
@@ -390,7 +394,7 @@ class SpeedDialController extends Controller
         if (empty($items)) {
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['No items selected for deletion.']]
+                'errors' => ['server' => [__('No items selected for deletion.')]]
             ], 400);
         }
 
@@ -415,7 +419,7 @@ class SpeedDialController extends Controller
 
             return response()->json([
                 'success' => true,
-                'messages' => ['success' => ['Selected contacts have been deleted successfully.']]
+                'messages' => ['success' => [__('Selected contacts have been deleted successfully.')]]
             ], 200);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -423,7 +427,7 @@ class SpeedDialController extends Controller
 
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Server returned an error while deleting the selected items.']]
+                'errors' => ['server' => [__('Server returned an error while deleting the selected items.')]]
             ], 500);
         }
     }
@@ -446,13 +450,13 @@ class SpeedDialController extends Controller
 
                 return response()->json([
                     'success' => false,
-                    'errors' => ['server' => ['Server returned an error while uploading this file.']]
+                    'errors' => ['server' => [__('Server returned an error while uploading this file.')]]
                 ], 500);
             }
 
             return response()->json([
                 'success' => true,
-                'messages' => ['success' => ['Speed dials have been successfully uploaded.']]
+                'messages' => ['success' => [__('Speed dials have been successfully uploaded.')]]
             ], 200);
         } catch (Throwable $e) {
             logger('SpeedDialController@import error: ' .$e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
@@ -475,26 +479,16 @@ class SpeedDialController extends Controller
      * @throws \Psr\Container\ContainerExceptionInterface
      * @throws \Psr\Container\NotFoundExceptionInterface
      */
-    public function selectAll()
+    public function selectAll(Request $request)
     {
-        try {
-            $uuids = $this->model::where('domain_uuid', session('domain_uuid'))
-                ->get($this->model->getKeyName())->pluck($this->model->getKeyName());
+        abort_unless(userCheckPermission('contact_view'), 403);
 
+        $uuids = $this->builder(['search' => $request->input('filter.search')])->pluck('contact_uuid');
 
-            // Return a JSON response indicating success
-            return response()->json([
-                'messages' => ['success' => ['All items selected']],
-                'items' => $uuids,
-            ], 200);
-        } catch (\Exception $e) {
-            logger($e);
-            // Handle any other exception that may occur
-            return response()->json([
-                'success' => false,
-                'errors' => ['server' => ['Failed to select all items']]
-            ], 500); // 500 Internal Server Error for any other errors
-        }
+        return response()->json([
+            'messages' => ['success' => [__('All items selected')]],
+            'items' => $uuids,
+        ]);
     }
 
     public function downloadTemplate()

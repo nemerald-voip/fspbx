@@ -46,14 +46,14 @@ class BridgeController extends Controller
             $bridge = $service->save($request->validated());
 
             return response()->json([
-                'messages' => ['success' => ['Bridge created successfully.']],
+                'messages' => ['success' => [__('Bridge created successfully.')]],
                 'bridge_uuid' => $bridge->bridge_uuid,
             ], 201);
         } catch (\Throwable $e) {
             logger('BridgeController@store error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Failed to create bridge.']],
+                'messages' => ['error' => [__('Failed to create bridge.')]],
             ], 500);
         }
     }
@@ -62,7 +62,7 @@ class BridgeController extends Controller
     {
         if ($bridge->domain_uuid !== session('domain_uuid')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -70,13 +70,13 @@ class BridgeController extends Controller
             $service->save($request->validated(), $bridge);
 
             return response()->json([
-                'messages' => ['success' => ['Bridge updated successfully.']],
+                'messages' => ['success' => [__('Bridge updated successfully.')]],
             ]);
         } catch (\Throwable $e) {
             logger('BridgeController@update error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Failed to update bridge.']],
+                'messages' => ['error' => [__('Failed to update bridge.')]],
             ], 500);
         }
     }
@@ -87,13 +87,13 @@ class BridgeController extends Controller
 
         if ($itemUuid && ! userCheckPermission('bridge_edit')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
         if (! $itemUuid && ! userCheckPermission('bridge_add')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -130,7 +130,7 @@ class BridgeController extends Controller
     {
         if (! userCheckPermission('bridge_view')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -160,7 +160,7 @@ class BridgeController extends Controller
     {
         if (! userCheckPermission('bridge_view')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
@@ -171,7 +171,7 @@ class BridgeController extends Controller
 
         return response()->json([
             'items' => $items,
-            'messages' => ['success' => ['All matching bridges selected.']],
+            'messages' => ['success' => [__('All matching bridges selected.')]],
         ]);
     }
 
@@ -179,21 +179,21 @@ class BridgeController extends Controller
     {
         if (! userCheckPermission('bridge_add')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
         $items = $this->itemsFromRequest($request);
         if ($items->isEmpty()) {
             return response()->json([
-                'messages' => ['error' => ['No bridges selected.']],
+                'messages' => ['error' => [__('No bridges selected.')]],
             ], 422);
         }
 
         $copied = $service->copy($items);
 
         return response()->json([
-            'messages' => ['success' => ["Copied {$copied} bridge(s)."]],
+            'messages' => ['success' => [__('Copied :count bridge(s).', ['count' => $copied])]],
         ]);
     }
 
@@ -201,21 +201,21 @@ class BridgeController extends Controller
     {
         if (! userCheckPermission('bridge_delete')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
         $items = $this->itemsFromRequest($request);
         if ($items->isEmpty()) {
             return response()->json([
-                'messages' => ['error' => ['No bridges selected.']],
+                'messages' => ['error' => [__('No bridges selected.')]],
             ], 422);
         }
 
         $deleted = $service->delete($items);
 
         return response()->json([
-            'messages' => ['success' => ["Deleted {$deleted} bridge(s)."]],
+            'messages' => ['success' => [__('Deleted :count bridge(s).', ['count' => $deleted])]],
         ]);
     }
 
@@ -223,21 +223,21 @@ class BridgeController extends Controller
     {
         if (! userCheckPermission('bridge_edit')) {
             return response()->json([
-                'messages' => ['error' => ['Access denied.']],
+                'messages' => ['error' => [__('Access denied.')]],
             ], 403);
         }
 
         $items = $this->itemsFromRequest($request);
         if ($items->isEmpty()) {
             return response()->json([
-                'messages' => ['error' => ['No bridges selected.']],
+                'messages' => ['error' => [__('No bridges selected.')]],
             ], 422);
         }
 
         $service->toggle($items);
 
         return response()->json([
-            'messages' => ['success' => ['Bridge status toggled.']],
+            'messages' => ['success' => [__('Bridge status toggled.')]],
         ]);
     }
 
@@ -292,7 +292,13 @@ class BridgeController extends Controller
             ->filter()
             ->map(fn ($action) => [
                 'value' => $action,
-                'label' => ucfirst($action),
+                'label' => match ($action) {
+                    'user' => __('User'),
+                    'gateway' => __('Gateway'),
+                    'profile' => __('Profile'),
+                    'loopback' => __('Loopback'),
+                    default => ucfirst($action),
+                },
             ])
             ->values()
             ->all();
@@ -326,7 +332,7 @@ class BridgeController extends Controller
             ->orderByRaw('domain_uuid = ? desc', [session('domain_uuid')])
             ->orderBy('gateway')
             ->get(['gateway_uuid', 'domain_uuid', 'gateway'])
-            ->groupBy(fn (Gateways $gateway) => $gateway->domain?->domain_description ?: $gateway->domain?->domain_name ?: 'Global')
+            ->groupBy(fn (Gateways $gateway) => $gateway->domain?->domain_description ?: $gateway->domain?->domain_name ?: __('Global'))
             ->map(fn ($items, $label) => [
                 'label' => $label,
                 'items' => $items->map(fn (Gateways $gateway) => [

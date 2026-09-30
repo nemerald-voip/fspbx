@@ -19,8 +19,8 @@ class TestEmail extends BaseMailable
     public function content(): Content
     {
         return $this->databaseTemplateContent(new Content(
-            view: 'emails.system.test',
-            text: 'emails.system.test-text',
+            view: 'emails.en-us.system.test',
+            text: 'emails.en-us.system.test-text',
         ));
     }
 }

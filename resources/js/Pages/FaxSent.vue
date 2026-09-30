@@ -6,20 +6,19 @@
                 <template #title>
                     <h1 class="text-xl font-bold text-gray-900 flex items-center">
                         <a :href="props.routes.faxes_index" class="hover:text-indigo-600">
-                            Fax Dashboard
+                            {{ $t("Fax Dashboard") }}
                         </a>
                         <svg class="mx-3 h-5 w-5 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                         </svg>
-                        <span class="font-medium text-gray-500">{{ props.fax_label ? `${props.fax_label} Sent` : 'Sent Faxes' }}</span>
+                        <span class="font-medium text-gray-500">{{ props.fax_label ? $t(':name Sent', { name: props.fax_label }) : $t("Sent Faxes") }}</span>
                     </h1>
                 </template>
 
                 <template #filters>
                     <div class="w-full mb-3 mt-1">
                         <p class="text-sm text-gray-500">
-                            The total page count for your filtered results is <span
-                                class="font-semibold text-gray-900">{{ stats.total_transferred_pages ?? 0 }}</span>.
+                            {{ $t('The total page count for your filtered results is :count.', { count: stats.total_transferred_pages ?? 0 }) }}
                         </p>
                     </div>
 
@@ -30,11 +29,11 @@
                         <input type="search" v-model="filterData.search" name="mobile-search-candidate"
                             id="mobile-search-candidate"
                             class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
-                            placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                            :placeholder="$t('Search')" @keydown.enter="handleSearchButtonClick" />
                         <input type="search" v-model="filterData.search" name="desktop-search-candidate"
                             id="desktop-search-candidate"
                             class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
-                            placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                            :placeholder="$t('Search')" @keydown.enter="handleSearchButtonClick" />
                     </div>
 
 
@@ -65,18 +64,18 @@
                         <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
                             class="h-4 w-4 rounded border-gray-300 text-indigo-600" />
 
-                        <span class="pl-4">From</span>
+                        <span class="pl-4">{{ $t("From") }}</span>
                     </TableColumnHeader>
 
                     <!-- Email -->
-                    <TableColumnHeader header="To" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader :header="$t('To')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
                     <!-- Timestamp -->
-                    <TableColumnHeader header="Date"
+                    <TableColumnHeader :header="$t('Date')"
                         class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
 
-                    <TableColumnHeader header="Pages"
+                    <TableColumnHeader :header="$t('Pages')"
                         class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
                     <!-- Empty for any action buttons -->
@@ -89,16 +88,16 @@
                 <template v-if="selectPageItems || selectAll" v-slot:current-selection>
                     <td colspan="10">
                         <div class="text-sm text-center m-2">
-                            <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
+                            {{ $t(':count selected', { count: selectedItems.length }) }}
                             <button v-if="!selectAll && selectedItems.length != data.total"
                                 class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                                 @click="handleSelectAll">
-                                Select all {{ data.total }} items
+                                {{ $t('Select all :count', { count: data.total }) }}
                             </button>
                             <button v-if="selectAll"
                                 class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                                 @click="handleClearSelection">
-                                Clear selection
+                                {{ $t("Clear selection") }}
                             </button>
                         </div>
                     </td>
@@ -141,7 +140,7 @@
 
                             <template #action-buttons>
                                 <div class="flex items-center whitespace-nowrap justify-end">
-                                    <ejs-tooltip :content="'Preview'" position="TopCenter"
+                                    <ejs-tooltip :content="$t('Preview')" position="TopCenter"
                                         target="#preview_tooltip_target">
                                         <div id="preview_tooltip_target">
                                             <EyeIcon @click="handlePreviewButtonClick(row.fax_file_uuid)"
@@ -149,7 +148,7 @@
                                         </div>
                                     </ejs-tooltip>
 
-                                    <ejs-tooltip v-if="permissions.delete" :content="'Download'" position='TopCenter'
+                                    <ejs-tooltip v-if="permissions.delete" :content="$t('Download')" position='TopCenter'
                                         target="#destination_tooltip_target">
                                         <div id="destination_tooltip_target">
                                             <CloudArrowDownIcon @click="handleDownloadButtonClick(row.fax_file_uuid)"
@@ -158,7 +157,7 @@
                                         </div>
                                     </ejs-tooltip>
 
-                                    <ejs-tooltip v-if="permissions.delete" :content="'Delete'" position='TopCenter'
+                                    <ejs-tooltip v-if="permissions.delete" :content="$t('Delete')" position='TopCenter'
                                         target="#delete_tooltip_target">
                                         <div id="delete_tooltip_target">
                                             <TrashIcon @click="handleDeleteButtonClick(row.fax_file_uuid)"
@@ -177,9 +176,9 @@
                     <!-- Conditional rendering for 'no records' message -->
                     <div v-if="data.data.length === 0" class="text-center my-5 ">
                         <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                        <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
+                        <h3 class="mt-2 text-sm font-semibold text-gray-900">{{ $t("No results found") }}</h3>
                         <p class="mt-1 text-sm text-gray-500">
-                            Adjust your search and try again.
+                            {{ $t("Adjust your search and try again.") }}
                         </p>
                     </div>
                 </template>
@@ -204,16 +203,16 @@
         @click.self="closePreviewModal">
         <div class="flex h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-lg bg-white shadow-xl">
             <div class="flex items-center justify-between border-b px-4 py-3">
-                <h2 class="text-lg font-semibold text-gray-900">Fax Preview</h2>
+                <h2 class="text-lg font-semibold text-gray-900">{{ $t("Fax Preview") }}</h2>
 
-                <button type="button" @click="closePreviewModal"
+                <button type="button" @click="closePreviewModal" :aria-label="$t('Close')"
                     class="rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700">
                     <XMarkIcon class="h-5 w-5" />
                 </button>
             </div>
 
             <div class="flex-1 bg-gray-100">
-                <iframe v-if="previewUrl" :src="previewUrl" class="h-full w-full" />
+                <iframe :title="$t('Fax Preview')" v-if="previewUrl" :src="previewUrl" class="h-full w-full" />
             </div>
         </div>
     </div>
@@ -222,12 +221,13 @@
         @update:show="hideNotification" />
 
     <ConfirmationModal :show="showDeleteConfirmationModal" @close="showDeleteConfirmationModal = false"
-        @confirm="confirmDeleteAction" :header="'Are you sure?'"
-        :text="'Are you sure you want to permanently delete selected faxes? This action can not be undone.'"
-        :confirm-button-label="'Delete'" cancel-button-label="Cancel" />
+        @confirm="confirmDeleteAction" :header="$t('Are you sure?')"
+        :text="$t('Are you sure you want to permanently delete selected faxes? This action can not be undone.')"
+        :confirm-button-label="$t('Delete')" :cancel-button-label="$t('Cancel')" />
 </template>
 
 <script setup>
+import { trans } from "@i18n";
 import { ref, computed, onMounted } from "vue";
 import MainLayout from '../Layouts/MainLayout.vue'
 import DataTable from "./components/general/DataTable.vue";
@@ -393,7 +393,7 @@ const bulkActions = computed(() => {
     const actions = [
         {
             id: 'bulk_delete',
-            label: 'Delete',
+            label: trans("Delete"),
             icon: 'TrashIcon'
         }
     ];

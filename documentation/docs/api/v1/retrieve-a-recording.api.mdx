@@ -1,0 +1,76 @@
+---
+id: retrieve-a-recording
+title: "Retrieve a recording"
+description: "Returns one recording and details about its stored audio file."
+sidebar_label: "Retrieve a recording"
+hide_title: true
+hide_table_of_contents: true
+api: eJzdWNtu2zgQ/RWCTwkgX2TLN6Eo0O5u2zwUDZIGaJEaLiWNLLYyqZKUU8Pgvy+ouy3FdXp52PWLbXFInplzZjTkHvMEBFGUs6sAu1iAEhS28OIGfC4CytbYwgFIX9DEGGEX34BKBZOIM0CitEKEBSgARWgsEfF4qhBVEknFBQSIpAHlKKQx9D+xT+yF74OUSKQxSPcT66G/SByDQJtUKhSRLSCSWyiOVARIEbEGhQK+IZShi+Jb+jyBy37nfDPrcwVutaXw8BklIDZUSspZH1s4IYJsQIGQ2L3fY2pcS4iKsIUZ2QB2cb7PKk1p0ArC+whKPHd3V3+bBeE72SSxmegM7Xk4I+PeHIak58w8r7cInbA3dDx7bI9hCLaHLSzgW0oFBNhVIgULSz+CDcHuHqtdYtaRShgCtLY68dX+PQqx5qeN0h+CP7ftcY8Qe9JzhsTvzZ3xrOfM7PkkCBaBHzpPQrk0xjLhTII046Ph0HwdorpNM2qxhX3OFDBlTEiSxNTPVDj4Io3dvr0P976Ar5ou7I9DcLZTxVqNGJrwNfh+AoklgoKVt0YTb4Gl6LUAUPnStdVhNK4F3RCxQ1sqVEpiwxdkY1QqtO6ab5Ko2ClNYk4CCFbE8+3RuP9AttjCWa6tyJbQmHgmSjlt+WMBSUx8Q2ZIYgkW9nbKkDWeO0PHsbCMyGgyxS6eBqOZ74f2zJvZw+liPPKdaTBaLMLFcB7OFmNvMvI9ezoPHd93Zt5sCOF0as8mExJ4k0XoYG3hRJjaomiuhmOqjvXzZGnqmsZTa9UM6yOKT806i33dpv/Umh3K0I9K49RC56lGd8vm1MJditIdkqrW8DiPgbDmIkZuuq23U1MyLepKjJUpZQrWIJqmuVB1rdRT7vy6iLOPhZ2uSnbFtiSmwVGN/U2FDYTg4iAU2WYrU41BqlU+buENSEnW8CicfoYn6FiifAW2XyS6lbvHaCrEh2b56ClGut3QDT9OzX7MRV36+IStswKV+39W9ShDU0vCbkvijpFURcCU4RyCP6SFxh6Usw4pHMFoaCA9AvgHqe5EeS7TLQ/OorjtXc3WuM3WKy48GgTAfhNPsmhtyndrTUi1E7rIOlC2bjSjl1lbVoa9ICosZ6xqQ0NC/aepTdPfdnBZATqn+J7Fy48c0da5Avoxm50h0IcxOC91i/DUYnDaYqjOO4hxhUKesj+Vvj8u5R1YGjksQPJU+LAqGPgPFvJOB89K8Zbzv1TGtYUVWZsDYA1J4qXxQkXcnALWkL8oVYRdPCAJHWztQd5FysG+0U7qQbWHHOwP99PYwhLEtjxrpiLGLo6USqQ7GOwjLpVuHd9e3aLrlx/Qi+srlM/FFt4SQU0HlpFkpuU6Dkkam8PMx3d3N71Xt9cvP/TevLt931ryDZfKNIHoIQIBqNiBmpM4Y4aNiyJiLgpl4n3v73gqermTfQbq0gRuaXzxU0HVLnOm2v5+2Ry7NamRA60sKoaM67g4SmZlCYjIHDzE+5GnyCcMlZcSyOBBin8FhjzT/kpqOt38cUBk5HEiguwqwo+p/9WMPfOevwZmrjggi2U2+9nAe97P0oOykGfAqMoLXBX1FhoTfxBF7d3amfK4VBuSlYLiTHZTQiVIPHaDsq/Lyv/lMqXgVcF3NUhiQrNCncl8XyTPPSYJNSG0q5O2uQRwDy9Z6hwyY0dZu7QKzd/j/d4jEu5ErLV5/C0FYdS4rFMk1yaV5nd93H2Uh4ub4prjEnVc7XS6V3ZjbJdlZpxCLpKvsDu6PDL3Nz8Npd3P/wSa4/q31BaOgAQgsjjlRkZJiWpMb73ydLM0vv7nPdb6XwaK9e0=
+sidebar_class_name: "get api-method"
+info_path: docs/api/v1/fs-pbx-api
+custom_edit_url: null
+hide_send_button: true
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Retrieve a recording"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/api/v1/domains/{domain_uuid}/recordings/{recording_uuid}"}
+  context={"endpoint"}
+>
+  
+</MethodEndpoint>
+
+
+
+Returns one recording and details about its stored audio file.
+
+Access rules:
+- Caller must have access to the target domain (domain scope).
+- Caller must have the `recording_view` permission.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"in":"path","name":"domain_uuid","description":"The domain UUID.","example":"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b","required":true,"schema":{"type":"string"}},{"in":"path","name":"recording_uuid","description":"The recording UUID.","example":"c0ec8113-aa15-40ac-8437-47185dd9dcf4","required":true,"schema":{"type":"string"}}]}
+>
+  
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+  
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"Success","content":{"application/json":{"schema":{"type":"object","example":{"recording_uuid":"c0ec8113-aa15-40ac-8437-47185dd9dcf4","object":"recording","domain_uuid":"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b","recording_name":"Main Menu Greeting","recording_description":"Primary virtual receptionist greeting","recording_filename":"uploaded_abc123.wav","audio_available":true,"audio_replaced":false,"bytes":384044,"sha256":"6d27ccf17b7106932c46d299f908f793b52cb168f4cc47b70ef661755adb59f4"},"properties":{"recording_uuid":{"type":"string","example":"c0ec8113-aa15-40ac-8437-47185dd9dcf4"},"object":{"type":"string","example":"recording"},"domain_uuid":{"type":"string","example":"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"},"recording_name":{"type":"string","example":"Main Menu Greeting"},"recording_description":{"type":"string","example":"Primary virtual receptionist greeting"},"recording_filename":{"type":"string","example":"uploaded_abc123.wav"},"audio_available":{"type":"boolean","example":true},"audio_replaced":{"type":"boolean","example":false},"bytes":{"type":"integer","example":384044},"sha256":{"type":"string","example":"6d27ccf17b7106932c46d299f908f793b52cb168f4cc47b70ef661755adb59f4"}}}}}},"400":{"description":"Invalid recording UUID","content":{"application/json":{"schema":{"type":"object","example":{"error":{"type":"invalid_request_error","message":"Invalid recording UUID.","code":"invalid_request","param":"recording_uuid"}},"properties":{"error":{"type":"object","properties":{"type":{"type":"string","example":"invalid_request_error"},"message":{"type":"string","example":"Invalid recording UUID."},"code":{"type":"string","example":"invalid_request"},"param":{"type":"string","example":"recording_uuid"}}}}}}}},"401":{"description":"Unauthenticated","content":{"application/json":{"schema":{"type":"object","example":{"error":{"type":"authentication_error","message":"Unauthenticated.","code":"unauthenticated"}},"properties":{"error":{"type":"object","properties":{"type":{"type":"string","example":"authentication_error"},"message":{"type":"string","example":"Unauthenticated."},"code":{"type":"string","example":"unauthenticated"}}}}}}}},"403":{"description":"Forbidden","content":{"application/json":{"schema":{"type":"object","example":{"success":false,"message":"Forbidden (missing permission).","error":{"code":"forbidden_permission","permission":"recording_view"}},"properties":{"success":{"type":"boolean","example":false},"message":{"type":"string","example":"Forbidden (missing permission)."},"error":{"type":"object","properties":{"code":{"type":"string","example":"forbidden_permission"},"permission":{"type":"string","example":"recording_view"}}}}}}}},"404":{"description":"Recording not found","content":{"application/json":{"schema":{"type":"object","example":{"error":{"type":"invalid_request_error","message":"Recording not found.","code":"resource_missing","param":"recording_uuid"}},"properties":{"error":{"type":"object","properties":{"type":{"type":"string","example":"invalid_request_error"},"message":{"type":"string","example":"Recording not found."},"code":{"type":"string","example":"resource_missing"},"param":{"type":"string","example":"recording_uuid"}}}}}}}}}}
+>
+  
+</StatusCodes>
+
+
+      

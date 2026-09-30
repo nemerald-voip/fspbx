@@ -81,7 +81,7 @@ class WakeupCallsController extends Controller
             // Base navigation array without Greetings
             $navigation = [
                 [
-                    'name' => 'Settings',
+                    'name' => __('Settings'),
                     'icon' => 'Cog6ToothIcon',
                     'slug' => 'settings',
                 ],
@@ -91,27 +91,27 @@ class WakeupCallsController extends Controller
             $status_options = [
                 [
                     'value' => 'scheduled',
-                    'name' => 'Scheduled',
+                    'name' => __('Scheduled'),
                 ],
                 [
                     'value' => 'in_progress',
-                    'name' => 'In Progress',
+                    'name' => __('In Progress'),
                 ],
                 [
                     'value' => 'snoozed',
-                    'name' => 'Snoozed',
+                    'name' => __('Snoozed'),
                 ],
                 [
                     'value' => 'completed',
-                    'name' => 'Completed',
+                    'name' => __('Completed'),
                 ],
                 [
                     'value' => 'canceled',
-                    'name' => 'Cancelled',
+                    'name' => __('Cancelled'),
                 ],
                 [
                     'value' => 'failed',
-                    'name' => 'Failed',
+                    'name' => __('Failed'),
                 ],
 
             ];
@@ -141,7 +141,7 @@ class WakeupCallsController extends Controller
 
                 // If a model exists, use it; otherwise, create a new one
                 if (!$wakeup_call) {
-                    throw new \Exception("Failed to fetch item details. Item not found");
+                    throw new \Exception(__("Failed to fetch item details. Item not found"));
                 }
 
                 // Define the update route
@@ -185,7 +185,7 @@ class WakeupCallsController extends Controller
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to fetch item details']]
+                'errors' => ['server' => [__('Failed to fetch item details')]]
             ], 500);  // 500 Internal Server Error for any other errors
         }
     }
@@ -196,7 +196,7 @@ class WakeupCallsController extends Controller
             if (!userCheckPermission('wakeup_calls_view_settings')) {
                 return response()->json([
                     'success' => false,
-                    'errors' => ['authorization' => ['Access denied.']]
+                    'errors' => ['authorization' => [__('Access denied.')]]
                 ], 403);
             }
 
@@ -205,7 +205,7 @@ class WakeupCallsController extends Controller
             // Base navigation array without Greetings
             $navigation = [
                 [
-                    'name' => 'Remote Wakeup',
+                    'name' => __('Remote Wakeup'),
                     'icon' => 'Cog6ToothIcon',
                     'slug' => 'remote_wakeup',
                 ],
@@ -263,7 +263,7 @@ class WakeupCallsController extends Controller
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to fetch settings']]
+                'errors' => ['server' => [__('Failed to fetch settings')]]
             ], 500);  // 500 Internal Server Error for any other errors
         }
     }
@@ -392,14 +392,14 @@ class WakeupCallsController extends Controller
 
             return response()->json([
                 'success' => true,
-                'messages' => ['success' => ['Wake-up call scheduled successfully']],
+                'messages' => ['success' => [__('Wake-up call scheduled successfully')]],
                 'data' => $wakeupCall,
             ], 201);
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to schedule wake-up call']]
+                'errors' => ['server' => [__('Failed to schedule wake-up call')]]
             ], 500);
         }
     }
@@ -439,14 +439,14 @@ class WakeupCallsController extends Controller
         if (!$wakeup_call) {
             return response()->json([
                 'success' => false,
-                'errors' => ['model' => ['Wake-up call not found']]
+                'errors' => ['model' => [__('Wake-up call not found')]]
             ], 404);
         }
 
         if (!$this->canAccessWakeupCall($wakeup_call)) {
             return response()->json([
                 'success' => false,
-                'errors' => ['authorization' => ['Access denied.']]
+                'errors' => ['authorization' => [__('Access denied.')]]
             ], 403);
         }
 
@@ -474,13 +474,13 @@ class WakeupCallsController extends Controller
 
             return response()->json([
                 'success' => true,
-                'messages' => ['success' => ['Wake-up call updated successfully']],
+                'messages' => ['success' => [__('Wake-up call updated successfully')]],
             ], 200);
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to update this item']]
+                'errors' => ['server' => [__('Failed to update this item')]]
             ], 500);
         }
     }
@@ -495,27 +495,27 @@ class WakeupCallsController extends Controller
     {
         try {
             if (!userCheckPermission('wakeup_calls_delete')) {
-                return redirect()->back()->with('error', ['server' => ['Access denied.']]);
+                return redirect()->back()->with('error', ['server' => [__('Access denied.')]]);
             }
 
             if (!$wakeup_call) {
                 return response()->json([
                     'success' => false,
-                    'errors' => ['message' => ['Wakeup call not found.']]
+                    'errors' => ['message' => [__('Wakeup call not found.')]]
                 ], 404);
             }
 
             if (!$this->canAccessWakeupCall($wakeup_call)) {
-                return redirect()->back()->with('error', ['server' => ['Access denied.']]);
+                return redirect()->back()->with('error', ['server' => [__('Access denied.')]]);
             }
 
             // Delete the record
             $wakeup_call->delete();
 
-            return redirect()->back()->with('message', ['server' => ['Item deleted']]);
+            return redirect()->back()->with('message', ['server' => [__('Item deleted')]]);
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
-            return redirect()->back()->with('error', ['server' => ['Server returned an error while deleting this item']]);
+            return redirect()->back()->with('error', ['server' => [__('Server returned an error while deleting this item')]]);
         }
     }
 
@@ -530,7 +530,7 @@ class WakeupCallsController extends Controller
             if (!userCheckPermission('wakeup_calls_delete')) {
                 return response()->json([
                     'success' => false,
-                    'errors' => ['authorization' => ['Access denied.']]
+                    'errors' => ['authorization' => [__('Access denied.')]]
                 ], 403);
             }
 
@@ -551,7 +551,7 @@ class WakeupCallsController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages' => ['server' => ['All selected items have been deleted successfully.']],
+                'messages' => ['server' => [__('All selected items have been deleted successfully.')]],
             ], 200);
         } catch (\Exception $e) {
             // Rollback Transaction if any error occurs
@@ -561,7 +561,7 @@ class WakeupCallsController extends Controller
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Server returned an error while deleting the selected items.']]
+                'errors' => ['server' => [__('Server returned an error while deleting the selected items.')]]
             ], 500); // 500 Internal Server Error for any other errors
         }
     }
@@ -579,7 +579,7 @@ class WakeupCallsController extends Controller
             if (!userCheckPermission('wakeup_calls_view_settings')) {
                 return response()->json([
                     'success' => false,
-                    'errors' => ['authorization' => ['Access denied.']]
+                    'errors' => ['authorization' => [__('Access denied.')]]
                 ], 403);
             }
 
@@ -609,14 +609,14 @@ class WakeupCallsController extends Controller
 
             return response()->json([
                 'success'  => true,
-                'messages' => ['success' => ['Wake-up call settings updated successfully']],
+                'messages' => ['success' => [__('Wake-up call settings updated successfully')]],
             ], 200);
         } catch (\Exception $e) {
             DB::rollBack();
             logger($e);
             return response()->json([
                 'success' => false,
-                'errors'  => ['server' => ['Failed to update this item']]
+                'errors'  => ['server' => [__('Failed to update this item')]]
             ], 500);
         }
     }
@@ -641,7 +641,7 @@ class WakeupCallsController extends Controller
             if (!$this->canViewRecords()) {
                 return response()->json([
                     'success' => false,
-                    'errors' => ['authorization' => ['Access denied.']]
+                    'errors' => ['authorization' => [__('Access denied.')]]
                 ], 403);
             }
 
@@ -685,7 +685,7 @@ class WakeupCallsController extends Controller
             logger($uuids->count());
             // Return a JSON response indicating success
             return response()->json([
-                'messages' => ['success' => ['All items selected']],
+                'messages' => ['success' => [__('All items selected')]],
                 'items' => $uuids,
             ], 200);
         } catch (\Exception $e) {
@@ -693,7 +693,7 @@ class WakeupCallsController extends Controller
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to select all items']]
+                'errors' => ['server' => [__('Failed to select all items')]]
             ], 500); // 500 Internal Server Error for any other errors
         }
     }

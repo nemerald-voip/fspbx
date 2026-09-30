@@ -5,7 +5,7 @@
             :value="modelValue"
             :disabled="disabled"
             type="text"
-            placeholder="parameter-name"
+            :placeholder="$t('Parameter name')"
             spellcheck="false"
             autocomplete="off"
             class="block w-full rounded-md border-0 py-1.5 pr-8 font-mono text-sm text-gray-900 ring-1 ring-inset focus:ring-2 focus:ring-inset focus:ring-indigo-600 disabled:bg-gray-50 disabled:text-gray-500"
@@ -35,7 +35,7 @@
                 :style="menuStyle"
             >
                 <template v-for="group in groups" :key="group.name">
-                    <div class="px-3 pb-0.5 pt-2 text-xs font-semibold uppercase tracking-wide text-gray-400">{{ group.name }}</div>
+                    <div class="px-3 pb-0.5 pt-2 text-xs font-semibold uppercase tracking-wide text-gray-400">{{ sipSettingGroupLabel(group.name) }}</div>
                     <button
                         v-for="opt in group.items"
                         :key="opt.name"
@@ -57,7 +57,7 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import { ChevronUpDownIcon, CheckIcon } from "@heroicons/vue/20/solid";
-import { SOFIA_SIP_SETTINGS, SIP_SETTING_GROUPS } from "../../data/sofiaSipProfileSettings";
+import { SOFIA_SIP_SETTINGS, SIP_SETTING_GROUPS, sipSettingGroupLabel } from "../../data/sofiaSipProfileSettings";
 
 const props = defineProps({
     modelValue: { type: String, default: "" },

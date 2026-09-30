@@ -27,8 +27,8 @@ class ContactCenterAbandonedCallNotification extends BaseMailable
     public function content(): Content
     {
         return $this->databaseTemplateContent(new Content(
-            view: 'emails.missed.contact-center',
-            text: 'emails.missed.contact-center-text',
+            view: 'emails.en-us.missed.contact-center',
+            text: 'emails.en-us.missed.contact-center-text',
         ));
     }
 
