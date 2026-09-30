@@ -222,6 +222,8 @@
                                 :backgroundColor="statusBadgeConfig[row.status]?.backgroundColor || 'bg-blue-50'"
                                 :textColor="statusBadgeConfig[row.status]?.textColor || 'text-blue-700'"
                                 :ringColor="statusBadgeConfig[row.status]?.ringColor || 'ring-blue-600/20'" />
+                            <div v-if="row.voicemail_message === true || row.voicemail_message === 'true'"
+                                class="mt-1 text-xs text-gray-500">{{ $t('Voicemail message left') }}</div>
                         </TableField>
 
                         <TableField v-if="permissions.cdr_mos_view"
@@ -452,9 +454,12 @@ const statusOptions = [
     { name: trans('Answered'), value: 'answered' },
     { name: trans('No Answer'), value: 'no_answer' },
     { name: trans('Cancelled'), value: 'cancelled' },
-    { name: trans('Voicemail'), value: 'voicemail' },
+    { name: trans('Voicemail message left'), value: 'voicemail' },
     { name: trans('Missed Call'), value: 'missed call' },
     { name: trans('Abandoned'), value: 'abandoned' },
+    { name: trans('Exited queue'), value: 'queue_exited' },
+    { name: trans('Timed out'), value: 'queue_timeout' },
+    { name: trans('Other queue outcome'), value: 'queue_other' },
     { name: trans('Callback requested'), value: 'callback_requested' },
 ];
 
@@ -491,6 +496,12 @@ const statusLabel = (status) => {
             return trans('Missed Call');
         case 'abandoned':
             return trans('Abandoned');
+        case 'queue_exited':
+            return trans('Exited queue');
+        case 'queue_timeout':
+            return trans('Timed out');
+        case 'queue_other':
+            return trans('Other queue outcome');
         case 'callback_requested':
             return trans('Callback requested');
         case 'failed':
@@ -755,11 +766,22 @@ const handleErrorResponse = (error) => {
     }
 }
 
+// Queue outcome badges match the Contact Center dashboard's outcome palette:
+// green answered, rose abandoned, sky exited, amber timed out, violet callback.
 const statusBadgeConfig = {
+    queue_exited: {
+        backgroundColor: 'bg-sky-50', textColor: 'text-sky-700', ringColor: 'ring-sky-600/20',
+    },
+    queue_timeout: {
+        backgroundColor: 'bg-amber-50', textColor: 'text-amber-700', ringColor: 'ring-amber-600/20',
+    },
+    queue_other: {
+        backgroundColor: 'bg-gray-50', textColor: 'text-gray-700', ringColor: 'ring-gray-600/20',
+    },
     callback_requested: {
-        backgroundColor: "bg-blue-50",
-        textColor: "text-blue-700",
-        ringColor: "ring-blue-600/20",
+        backgroundColor: "bg-violet-50",
+        textColor: "text-violet-700",
+        ringColor: "ring-violet-600/20",
     },
     answered: {
         backgroundColor: "bg-green-50",
@@ -787,9 +809,9 @@ const statusBadgeConfig = {
         ringColor: "ring-orange-600/20",
     },
     abandoned: {
-        backgroundColor: "bg-purple-50",
-        textColor: "text-purple-700",
-        ringColor: "ring-purple-600/20",
+        backgroundColor: "bg-rose-50",
+        textColor: "text-rose-700",
+        ringColor: "ring-rose-600/20",
     }
 };
 

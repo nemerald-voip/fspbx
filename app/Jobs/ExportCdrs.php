@@ -130,6 +130,7 @@ class ExportCdrs implements ShouldQueue
                     'Time'               => $cdr['start_time'],
                     'Duration'           => $cdr['duration_formatted'],
                     'Status'             => $cdr['status'],
+                    'Voicemail Message Left' => filter_var($cdr['voicemail_message'], FILTER_VALIDATE_BOOLEAN) ? 'true' : 'false',
                 ]);
 
                 // optional; not necessary for CLI workers

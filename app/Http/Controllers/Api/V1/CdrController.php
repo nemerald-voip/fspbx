@@ -47,7 +47,9 @@ class CdrController extends Controller
      * - `direction` filters by call direction.
      * - `status` filters by call status.
      *   Accepted values: `answered`, `no answer`, `cancelled`, `voicemail`,
-     *   `missed call`, `abandoned`, `callback_requested`.
+     *   `missed call`, `abandoned`, `queue_exited`, `queue_timeout`, `queue_other`, `callback_requested`.
+     * Queue exits and timeouts have their own effective status, including calls that later reach voicemail.
+     * The `voicemail` filter selects messages left independently of the queue status.
      * - `extension_uuid` filters by extension UUID.
      * - `call_center_queue_uuid` filters by queue UUID.
      * - `date_from` and `date_to` filter by `start_epoch` in epoch seconds.
@@ -67,7 +69,7 @@ class CdrController extends Controller
      * @queryParam starting_after string Optional. Return results after this CDR UUID (cursor). Example: c0ec8113-aa15-40ac-8437-47185dd9dcf4
      * @queryParam search string Optional. Search caller name, numbers, SIP Call-ID, and status. Example: 2135551212
      * @queryParam direction string Optional. Filter by direction. Example: inbound
-     * @queryParam status string Optional. Filter by status. Accepted values: answered, no answer, cancelled, voicemail, missed call, abandoned, callback_requested. Example: answered
+     * @queryParam status string Optional. Filter by status. Accepted values: answered, no answer, cancelled, voicemail, missed call, abandoned, queue_exited, queue_timeout, queue_other, callback_requested. Example: answered
      * @queryParam extension_uuid string Optional. Filter by extension UUID. Example: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5
      * @queryParam call_center_queue_uuid string Optional. Filter by queue UUID. Example: 89ea1ec3-44f8-4705-8f2c-f9769486f9f1
      * @queryParam date_from integer Optional. Start of date range in epoch seconds (UTC). Example: 1775001600

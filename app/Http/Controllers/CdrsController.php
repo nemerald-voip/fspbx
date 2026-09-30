@@ -137,6 +137,8 @@ class CdrsController extends Controller
                     'call_center_queue_uuid',
                     'cc_cancel_reason',
                     'cc_cause',
+                    'cc_side',
+                    'cc_agent_bridged',
                     'sip_hangup_disposition',
                     'status',
                     ...$this->cdrDataService->timelineSelectColumns(),

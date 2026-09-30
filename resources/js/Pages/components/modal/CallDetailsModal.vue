@@ -514,12 +514,13 @@
                                                                                         class="font-semibold text-gray-900">
                                                                                         {{ $t('Voicemail :name', { name: flow.dialplan_name }) }}
                                                                                     </div>
-                                                                                    <p v-if="item.voicemail_message">
+                                                                                    <p v-if="flow.voicemail_message === true">
                                                                                         {{ $t('The caller left a message') }}
                                                                                     </p>
-                                                                                    <p v-else="item.voicemail_message">
+                                                                                    <p v-else-if="flow.voicemail_message === false">
                                                                                         {{ $t('The caller did not leave a message') }}
                                                                                     </p>
+                                                                                    <p v-else>{{ $t('Message status unknown') }}</p>
 
                                                                                     <p class="mt-0.5 text-sm text-gray-500">
                                                                                         {{ flow.duration_formatted }}</p>
@@ -615,7 +616,9 @@
                                                                                         ({{ flow.destination_number }})
                                                                                     </div>
                                                                                     <p class="mt-0.5 text-sm text-gray-500">
-                                                                                        {{ $t('Result: :disposition', { disposition: flow.queue_result || $t('Unknown') }) }}</p>
+                                                                                        {{ $t('Queue outcome: :outcome', { outcome: flow.queue_result || $t('Unknown') }) }}</p>
+                                                                                    <p v-if="flow.queue_reason" class="mt-0.5 text-sm text-gray-500">
+                                                                                        {{ $t('Reason: :reason', { reason: flow.queue_reason }) }}</p>
                                                                                     <p class="mt-0.5 text-sm text-gray-500">
                                                                                         {{ flow.duration_formatted }}</p>
                                                                                 </div>
@@ -907,6 +910,12 @@ const statusLabel = (status) => {
             return trans('Missed Call');
         case 'abandoned':
             return trans('Abandoned');
+        case 'queue_exited':
+            return trans('Exited queue');
+        case 'queue_timeout':
+            return trans('Timed out');
+        case 'queue_other':
+            return trans('Other queue outcome');
         case 'callback_requested':
             return trans('Callback requested');
         case 'failed':

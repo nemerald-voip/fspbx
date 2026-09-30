@@ -41,7 +41,7 @@ class CdrTimelineOptimizationTest extends TestCase
                 'caller_destination', 'status', 'direction', 'sip_hangup_disposition', 'hangup_cause',
                 'cc_member_session_uuid', 'originating_leg_uuid', 'call_center_queue_uuid', 'extension_uuid',
                 'sip_call_id', 'record_path', 'record_name', 'caller_id_name', 'caller_id_number',
-                'missed_call', 'voicemail_message', 'hangup_cause_q850', 'cc_cancel_reason', 'cc_cause'] as $field) {
+                'missed_call', 'voicemail_message', 'hangup_cause_q850', 'cc_cancel_reason', 'cc_cause', 'cc_side', 'cc_agent_bridged'] as $field) {
                 $table->string($field)->nullable();
             }
             foreach (['start_epoch', 'answer_epoch', 'end_epoch', 'duration', 'billsec', 'waitsec'] as $field) {
@@ -178,7 +178,8 @@ class CdrTimelineOptimizationTest extends TestCase
         $first['extension']['application'] = $this->application('call_center_queue_uuid='.self::OTHER_DOMAIN);
         $last = $this->profile('9401', 1010, 1020);
         $last['extension']['application'] = $this->application('call_center_queue_uuid='.self::ATTEMPT);
-        $cdr = $this->cdr([$first, $last], ['call_center_queue_uuid' => self::ATTEMPT, 'cc_cause' => 'answered']);
+        $cdr = $this->cdr([$first, $last], ['call_center_queue_uuid' => self::ATTEMPT,
+            'cc_side' => 'member', 'cc_cause' => 'answered', 'cc_agent_bridged' => 'true']);
         $service = new CdrDataService();
         $this->assertSame(['Unknown', 'Answered'], $service->buildCallFlowSummary($cdr)->pluck('queue_result')->all());
         $cdr->call_flow = json_encode([$last, $last]);
@@ -268,6 +269,7 @@ class CdrTimelineOptimizationTest extends TestCase
             'status' => 'callback_requested', 'missed_call' => true, 'voicemail_message' => false,
             'hangup_cause' => 'NORMAL_CLEARING', 'call_center_queue_uuid' => self::ATTEMPT,
             'cc_cause' => 'cancel', 'cc_cancel_reason' => 'EXIT_WITH_KEY',
+            'cc_side' => 'member',
         ]);
         $agent = $this->cdr([$this->profile('100', 1005, 1007)], [
             'xml_cdr_uuid' => self::OTHER_DOMAIN, 'originating_leg_uuid' => $cdr->getKey(),
@@ -282,8 +284,78 @@ class CdrTimelineOptimizationTest extends TestCase
         $this->assertSame('The call was canceled before it was answered.', $steps[1]['call_disposition']);
         $this->assertSame('Callback requested', $service->buildApiCallFlowData($cdr)[0]->queue_result);
         $cdr->status = 'missed';
-        $this->assertSame('missed call', $cdr->status);
-        $this->assertSame('The caller pressed the exit key', $cdr->cc_result);
+        $this->assertSame('queue_exited', $cdr->status);
+        $this->assertSame('Exited queue', $cdr->cc_result);
+        $this->assertSame('The caller pressed the exit key', $cdr->cc_result_reason);
+    }
+
+    /** @dataProvider queueOutcomes */
+    public function test_queue_step_uses_the_shared_outcome_and_preserves_its_reason(array $attributes, string $label, string $reason): void
+    {
+        $profile = $this->profile('9400', 1000, 1038);
+        $profile['extension']['application'] = $this->application('call_center_queue_uuid='.self::ATTEMPT);
+        $cdr = $this->cdr([$profile], $attributes + [
+            'call_center_queue_uuid' => self::ATTEMPT, 'cc_side' => 'member',
+            'cc_cause' => 'cancel', 'cc_agent_bridged' => 'false', 'status' => 'missed',
+            'hangup_cause' => 'NORMAL_CLEARING', 'missed_call' => true, 'voicemail_message' => false,
+        ]);
+        $service = new CdrDataService();
+        $step = $service->buildCallFlowSummary($cdr)->first();
+        $this->assertSame($label, $step['queue_result']);
+        $this->assertSame($reason, $step['queue_reason']);
+        $api = $service->buildApiCallFlowData($cdr)[0];
+        $this->assertSame($label, $api->queue_result);
+        $this->assertSame($reason, $api->queue_reason);
+
+        $cdr->call_flow = json_encode([$profile, $profile]);
+        foreach ($service->buildCallFlowSummary($cdr) as $visit) {
+            $this->assertSame('Unknown', $visit['queue_result']);
+            $this->assertNull($visit['queue_reason'], 'Do not apply the final reason to multiple visits.');
+        }
+    }
+
+    public static function queueOutcomes(): array
+    {
+        return [
+            'exit' => [['cc_cancel_reason' => 'EXIT_WITH_KEY'], 'Exited queue', 'The caller pressed the exit key'],
+            'no agents' => [['cc_cancel_reason' => 'NO_AGENT_TIMEOUT'], 'Timed out', 'No-agent timeout'],
+            'maximum wait' => [['cc_cancel_reason' => 'TIMEOUT'], 'Timed out', 'Queue timeout reached'],
+            'callback deadline' => [['cc_cause' => 'TIMEOUT', 'cc_cancel_reason' => 'EXIT_WITH_KEY'], 'Timed out', 'Queue timeout reached'],
+            'caller disconnected' => [['cc_cancel_reason' => 'BREAK_OUT'], 'Abandoned', 'Caller disconnected while waiting'],
+            'network disconnect' => [['cc_cancel_reason' => 'BREAK_OUT', 'hangup_cause' => 'NETWORK_OUT_OF_ORDER'], 'Other queue outcome', 'Missing or unclassified queue outcome'],
+            'unverified answer' => [['cc_cause' => 'answered'], 'Other queue outcome', 'Unverified queue answer'],
+        ];
+    }
+
+    public function test_voicemail_steps_use_their_own_channel_evidence_and_keep_unknowns(): void
+    {
+        $queue = $this->profile('9400', 1000, 1010);
+        $queue['extension']['application'] = $this->application('call_center_queue_uuid='.self::ATTEMPT);
+        $cdr = $this->cdr([$queue, $this->profile('*996000', 1010, 1038)], [
+            'call_center_queue_uuid' => self::ATTEMPT, 'cc_side' => 'member', 'cc_cause' => 'cancel',
+            'cc_cancel_reason' => 'EXIT_WITH_KEY', 'voicemail_message' => 'true',
+        ]);
+        $related = $this->cdr([$this->profile('*99100', 1010, 1030)], [
+            'xml_cdr_uuid' => self::OTHER_DOMAIN, 'originating_leg_uuid' => $cdr->getKey(), 'voicemail_message' => 'false',
+        ]);
+        DB::table('v_xml_cdr')->insert($related->getAttributes());
+        $service = new CdrDataService();
+        $steps = $service->buildCallFlowSummary($cdr)->keyBy('destination_number');
+        $this->assertSame('Exited queue', $steps['9400']['queue_result']);
+        $this->assertTrue($steps['*996000']['voicemail_message']);
+        $this->assertFalse($steps['*99100']['voicemail_message'], 'The parent flag must not leak to the other leg.');
+        $api = collect($service->buildApiCallFlowData($cdr))->keyBy('destination_number');
+        $this->assertTrue($api['*996000']->voicemail_message);
+        $this->assertFalse($api['*99100']->voicemail_message);
+
+        $cdr->voicemail_message = null;
+        $this->assertNull($service->buildCallFlowSummary($cdr)->keyBy('destination_number')['*996000']['voicemail_message']);
+        $cdr->voicemail_message = true;
+        $cdr->call_flow = json_encode([$queue, $this->profile('*996000', 1010, 1020), $this->profile('*996001', 1020, 1038)]);
+        $steps = $service->buildCallFlowSummary($cdr)->keyBy('destination_number');
+        $this->assertNull($steps['*996000']['voicemail_message']);
+        $this->assertNull($steps['*996001']['voicemail_message']);
+        $this->assertFalse($steps['*99100']['voicemail_message']);
     }
 
     public function test_callback_filter_and_legacy_status_filters_agree_with_the_displayed_status(): void

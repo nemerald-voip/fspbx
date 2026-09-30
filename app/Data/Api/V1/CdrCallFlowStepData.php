@@ -38,5 +38,7 @@ class CdrCallFlowStepData extends Data
         public int|Optional|null $billsec = new Optional(),
         public int|Optional|null $waitsec = new Optional(),
         public string|Optional|null $queue_result = new Optional(),
+        public string|Optional|null $queue_reason = new Optional(),
+        public bool|Optional|null $voicemail_message = new Optional(),
     ) {}
 }

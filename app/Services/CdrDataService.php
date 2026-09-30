@@ -59,6 +59,8 @@ class CdrDataService
                 'missed_call',
                 'cc_cancel_reason',
                 'cc_cause',
+                'cc_side',
+                'cc_agent_bridged',
                 'waitsec',
                 'hangup_cause',
                 'hangup_cause_q850',
@@ -412,6 +414,8 @@ class CdrDataService
                 'sip_hangup_disposition',
                 'cc_cancel_reason',
                 'cc_cause',
+                'cc_side',
+                'cc_agent_bridged',
                 'status',
             ])
             ->with('archive_recording:xml_cdr_uuid,object_key');
@@ -542,33 +546,14 @@ class CdrDataService
             return;
         }
 
-        if (in_array($status, ['missed call', 'abandoned', 'voicemail'], true)) {
-            $query->where(fn ($q) => $q->whereNull('status')->orWhere('status', '!=', 'callback_requested'));
+        // Voicemail is an existing message-left filter, independent of queue outcome.
+        if ($status === 'voicemail') {
+            $query->where('voicemail_message', true)
+                ->where(fn ($q) => $q->whereNull('status')->orWhere('status', '!=', 'callback_requested'));
+            return;
         }
 
-        $query->where(function ($q) use ($status) {
-            if ($status === 'missed call') {
-                $q->where(function ($q2) {
-                    $q2->where('voicemail_message', false)
-                        ->where('missed_call', true)
-                        ->where('hangup_cause', 'NORMAL_CLEARING')
-                        ->whereNull('cc_cancel_reason')
-                        ->whereNull('cc_cause');
-                });
-            } elseif ($status === 'abandoned') {
-                $q->where(function ($q2) {
-                    $q2->where('voicemail_message', false)
-                        ->where('missed_call', true)
-                        ->where('hangup_cause', 'NORMAL_CLEARING')
-                        ->where('cc_cancel_reason', 'BREAK_OUT')
-                        ->where('cc_cause', 'cancel');
-                });
-            } elseif ($status === 'voicemail') {
-                $q->where('voicemail_message', true);
-            } else {
-                $q->where('status', $status);
-            }
-        });
+        $query->whereRaw('('.CdrStatus::sql().') = ?', [$status]);
     }
 
 
@@ -600,6 +585,8 @@ class CdrDataService
                 'hangup_cause_q850',
                 'cc_cancel_reason',
                 'cc_cause',
+                'cc_side',
+                'cc_agent_bridged',
                 'sip_hangup_disposition',
                 'status',
                 ...$this->timelineSelectColumns(),
@@ -705,6 +692,8 @@ class CdrDataService
                     billsec: $row['billsec'] ?? new Optional(),
                     waitsec: $row['waitsec'] ?? new Optional(),
                     queue_result: $row['queue_result'] ?? new Optional(),
+                    queue_reason: $row['queue_reason'] ?? new Optional(),
+                    voicemail_message: array_key_exists('voicemail_message', $row) ? $row['voicemail_message'] : new Optional(),
                 );
             })
             ->all();
@@ -737,7 +726,8 @@ class CdrDataService
                 $end + self::RELATED_CALL_WINDOW_PADDING_SECONDS,
             ]))
             ->select(['xml_cdr_uuid', 'call_flow', 'direction', 'hangup_cause',
-                'sip_hangup_disposition', 'call_center_queue_uuid', 'cc_cause', 'cc_cancel_reason', 'status'])
+                'sip_hangup_disposition', 'call_center_queue_uuid', 'cc_cause', 'cc_cancel_reason',
+                'cc_side', 'cc_agent_bridged', 'missed_call', 'voicemail_message', 'status'])
             ->orderBy('start_epoch')->orderBy('xml_cdr_uuid')
             ->get();
 
@@ -789,6 +779,8 @@ class CdrDataService
             $profile['_direction'] = $cdr->direction;
             $profile['_queue_uuid'] = $cdr->call_center_queue_uuid;
             $profile['_queue_result'] = $cdr->cc_result;
+            $profile['_queue_reason'] = $cdr->cc_result_reason;
+            $profile['_voicemail_message'] = $this->toBool($cdr->voicemail_message);
             if ($related) {
                 $profile['times']['call_disposition'] = $cdr->call_disposition;
             }
@@ -1123,6 +1115,8 @@ class CdrDataService
             '_direction' => $row['_direction'] ?? null,
             '_queue_uuid' => $row['_queue_uuid'] ?? null,
             '_queue_result' => $row['_queue_result'] ?? null,
+            '_queue_reason' => $row['_queue_reason'] ?? null,
+            '_voicemail_message' => $row['_voicemail_message'] ?? null,
         ];
     }
 

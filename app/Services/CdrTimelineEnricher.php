@@ -106,18 +106,31 @@ class CdrTimelineEnricher
         // Only attribute a CDR's final queue outcome when the corresponding
         // queue occurs once on that channel. Re-entry is ambiguous, not success.
         $queueCounts = [];
+        $voicemailCounts = [];
         foreach ($resolved as $row) {
             if ($row['dialplan_app_type'] === 'contact_center_queue') {
                 $key = ($row['_cdr_uuid'] ?? '').':'.($row['_resolved_uuid'] ?? '');
                 $queueCounts[$key] = ($queueCounts[$key] ?? 0) + 1;
             }
+            if ($row['dialplan_app_type'] === 'voicemail') {
+                $key = $row['_cdr_uuid'] ?? '';
+                $voicemailCounts[$key] = ($voicemailCounts[$key] ?? 0) + 1;
+            }
         }
-        return $resolved->map(function ($row) use ($queueCounts) {
+        return $resolved->map(function ($row) use ($queueCounts, $voicemailCounts) {
             if ($row['dialplan_app_type'] === 'contact_center_queue') {
                 $uuid = $row['_resolved_uuid'] ?? null;
                 $key = ($row['_cdr_uuid'] ?? '').':'.$uuid;
-                $row['queue_result'] = $uuid && $uuid === ($row['_queue_uuid'] ?? null) && $queueCounts[$key] === 1
-                    ? (($row['_queue_result'] ?? null) ?: __('Unknown')) : __('Unknown');
+                $attributable = $uuid && $uuid === ($row['_queue_uuid'] ?? null) && $queueCounts[$key] === 1;
+                $row['queue_result'] = $attributable ? (($row['_queue_result'] ?? null) ?: __('Unknown')) : __('Unknown');
+                $row['queue_reason'] = $attributable ? ($row['_queue_reason'] ?? null) : null;
+            }
+            if ($row['dialplan_app_type'] === 'voicemail') {
+                // The flag belongs to this channel, not the parent CDR. If a
+                // channel visited voicemail twice, the flag cannot identify which visit left a message.
+                $key = $row['_cdr_uuid'] ?? '';
+                $row['voicemail_message'] = $key !== '' && $voicemailCounts[$key] === 1
+                    ? ($row['_voicemail_message'] ?? null) : null;
             }
             foreach (array_keys($row) as $key) {
                 if (str_starts_with($key, '_')) {
