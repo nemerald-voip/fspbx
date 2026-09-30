@@ -1,4 +1,4 @@
-{{-- version: 1.1.12 --}}
+{{-- version: 1.1.13 --}}
 
 @switch($flavor)
 
@@ -6903,6 +6903,8 @@ PVALUES;
         $set($codes['dns'], $settings['grandstream_dns_mode'] ?? '0');
         $set($codes['nat'], $natTraversal);
         $set($codes['register'], '1');
+        // Unregister only this phone on reboot (2 = Instance).
+        $set([1 => 'P81', 2 => 'P411', 3 => 'P511', 4 => 'P611'][$number], '2');
         $set($codes['expires'], $registerExpires);
         $set($codes['subscribe'], '60');
         $set($codes['keepAlive'], '1');

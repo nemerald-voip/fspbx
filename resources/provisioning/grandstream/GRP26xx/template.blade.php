@@ -1,4 +1,4 @@
-{{-- version: 1.0.11 --}}
+{{-- version: 1.0.12 --}}
 
 @switch($flavor)
 
@@ -100,7 +100,7 @@
 
 		<!-- Unregister on Reboot -->
 		<!-- No, Yes, Instance -->
-		<item name="account.{{ $n }}.sip.unregisterOnReboot">No</item>
+		<item name="account.{{ $n }}.sip.unregisterOnReboot">Instance</item>
 
 		<!-- Register Expiration (m) -->
 		<!-- Number: 0 - 64800 -->
