@@ -93,7 +93,7 @@ class AccountSettingsController extends Controller
                 'pms_provider_options' => app(PmsProviderSettings::class)->options(),
                 'messagingSettings' => [
                     'enabled' => app(\App\Services\Messaging\PhotoCompressionSettings::class)->enabled(session('domain_uuid')),
-                    'available' => app(\App\Services\Messaging\PhotoCompressionClient::class)->available(),
+                    'available' => app(\App\Services\Messaging\PhotoCompressionService::class)->available(),
                 ],
                 // Schema-driven General-tab settings: the declarative field
                 // list, its resolved option lists, and this account's own
@@ -316,7 +316,7 @@ class AccountSettingsController extends Controller
         $data = $request->validate([
             'enabled' => ['sometimes', 'boolean'],
         ]);
-        if (($data['enabled'] ?? false) && !app(\App\Services\Messaging\PhotoCompressionClient::class)->available()) {
+        if (($data['enabled'] ?? false) && !app(\App\Services\Messaging\PhotoCompressionService::class)->available()) {
             throw \Illuminate\Validation\ValidationException::withMessages([
                 'enabled' => [__('Photo compression is unavailable. Please contact your administrator.')],
             ]);

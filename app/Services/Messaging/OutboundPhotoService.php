@@ -10,7 +10,7 @@ class OutboundPhotoService
 {
     public function __construct(
         protected PhotoCompressionSettings $settings,
-        protected PhotoCompressionClient $client,
+        protected PhotoCompressionService $processor,
         protected MessageMediaObjectStorageService $storage,
     ) {}
 
@@ -42,15 +42,19 @@ class OutboundPhotoService
         }
 
         $spool = config('message_photos.spool');
+        if (is_link($spool) || (!is_dir($spool) && !@mkdir($spool, 0700, true) && !is_dir($spool))) {
+            throw new \RuntimeException(__('Photo compression is unavailable. Please contact your administrator.'));
+        }
         $lock = @fopen($spool.'/client.lock', 'c');
         if (!$lock) throw new \RuntimeException(__('Photo compression is unavailable. Please contact your administrator.'));
         try {
             if (!flock($lock, LOCK_EX | LOCK_NB)) throw new PhotoCompressionBusy;
+            $this->cleanStaleRequests($spool);
             $started = microtime(true);
             foreach ($photos as $index => $item) {
                 // Persist each derivative before proceeding so retries reuse finished work.
                 $prepared = ($item['photo_compression']['version'] ?? null) === 1
-                    && (int) ($item['size'] ?? PHP_INT_MAX) <= $perPhoto;
+                    && (int) ($item['size'] ?? PHP_INT_MAX) <= ($perPhoto ?? config('message_photos.max_input_bytes'));
                 if ($prepared && !empty($item['access_path'])) continue;
                 if (microtime(true) - $started > 45) {
                     throw new \RuntimeException(__('Photo preparation took too long. Please retry the message.'));
@@ -114,7 +118,7 @@ class OutboundPhotoService
             if (!$bytes || $bytes > config('message_photos.max_input_bytes')) {
                 throw new \RuntimeException(__('The photo exceeds the 50 MB input limit.'));
             }
-            $result = $budget === null ? $this->client->convert($id) : $this->client->compress($id, $budget);
+            $result = $budget === null ? $this->processor->convert($id) : $this->processor->compress($id, $budget);
             if ($result['unchanged'] ?? false) {
                 if ($budget !== null && $bytes > $budget) throw new \RuntimeException(__('The photo exceeds the message attachment limit.'));
                 $item['size'] = $bytes;
@@ -133,11 +137,31 @@ class OutboundPhotoService
                 'original' => $item['photo_compression']['original'] ?? array_intersect_key($item, array_flip(['bucket', 'object_key', 'original_name', 'mime_type']))];
             return $stored;
         } finally {
-            // Only remove files belonging to this generated request directory.
-            foreach (['input', 'output.jpg'] as $file) {
-                if (is_file($directory.'/'.$file)) unlink($directory.'/'.$file);
-            }
-            @rmdir($directory);
+            $this->removeRequestDirectory($directory);
         }
+    }
+
+    protected function cleanStaleRequests(string $spool): void
+    {
+        foreach (new \DirectoryIterator($spool) as $entry) {
+            if (!$entry->isLink() && $entry->isDir() && Str::isUuid($entry->getFilename())
+                && $entry->getMTime() < time() - 3600) {
+                $this->removeRequestDirectory($entry->getPathname());
+            }
+        }
+    }
+
+    protected function removeRequestDirectory(string $directory): void
+    {
+        if (is_link($directory) || !is_dir($directory)) return;
+        // Only remove our input, output, and native decoder scratch files.
+        foreach (new \DirectoryIterator($directory) as $entry) {
+            if (($entry->isFile() || $entry->isLink())
+                && (in_array($entry->getFilename(), ['input', 'output.jpg'], true)
+                    || str_starts_with($entry->getFilename(), 'vips-'))) {
+                @unlink($entry->getPathname());
+            }
+        }
+        @rmdir($directory);
     }
 }

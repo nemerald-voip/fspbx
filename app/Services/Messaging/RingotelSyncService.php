@@ -2,6 +2,7 @@
 
 namespace App\Services\Messaging;
 
+use App\Jobs\SendSmsNotificationToSlack;
 use App\Models\Messages;
 use App\Models\RingotelMessageSync;
 use App\Models\RingotelMessageDelivery;
@@ -55,7 +56,7 @@ class RingotelSyncService
                 return;
             }
             if ($sync->ringotel_conversation_uuid !== $context['ringotel_conversation_uuid']) {
-                $this->status($sync, 'failed', 'The Ringotel assignment changed. Review this message before synchronizing it.');
+                $this->reportDeliveryProblem($message, $context, $sync, 'failed', 'The Ringotel assignment changed. Review this message before synchronizing it.');
                 return;
             }
 
@@ -72,7 +73,7 @@ class RingotelSyncService
                     // A crash/timeout can happen after Ringotel accepted the request. There
                     // is no documented idempotency key, so never blindly replay that part.
                     if (in_array($parts[$key]['status'] ?? null, ['sending', 'uncertain'], true)) {
-                        $this->status($sync, 'uncertain', 'A Ringotel request has an unknown outcome. Check the chat before retrying this part.');
+                        $this->reportDeliveryProblem($message, $context, $sync, 'uncertain', 'A Ringotel request has an unknown outcome. Check the chat before retrying this part.');
                         return;
                     }
 
@@ -104,7 +105,7 @@ class RingotelSyncService
                     } catch (\Throwable $e) {
                         $parts[$key]['status'] = 'uncertain';
                         $sync->update(['parts' => $parts]);
-                        $this->status($sync, 'uncertain', $e->getMessage());
+                        $this->reportDeliveryProblem($message, $context, $sync, 'uncertain', $e->getMessage());
                         return;
                     }
 
@@ -122,9 +123,30 @@ class RingotelSyncService
                 }
                 $this->status($sync, 'success');
             } catch (\Throwable $e) {
-                $this->status($sync, 'failed', $e->getMessage());
+                $this->reportDeliveryProblem($message, $context, $sync, 'failed', $e->getMessage());
             }
         });
+    }
+
+    protected function reportDeliveryProblem(Messages $message, array $context, RingotelMessageSync $sync, string $status, string $error): void
+    {
+        $changed = $sync->status !== $status;
+        $this->status($sync, $status, $error);
+
+        // Restore the inbound delivery alert on the new per-recipient path.
+        // Replaying an unresolved failure must not send the same alert again.
+        if (!$changed || $message->direction !== 'in' || !config('slack.sms')) return;
+
+        try {
+            SendSmsNotificationToSlack::dispatch(
+                "*Inbound message delivery to Ringotel {$status}*: From: {$message->source} To: {$context['extension']}\n{$error}"
+            )->onQueue('messages');
+        } catch (\Throwable $exception) {
+            // Slack availability must not change the saved delivery outcome.
+            logger()->warning('Unable to queue the Ringotel delivery Slack notification.', [
+                'message_uuid' => $message->message_uuid, 'error' => $exception->getMessage(),
+            ]);
+        }
     }
 
     /** Text and attachments are separate Ringotel messages in the same session. */
