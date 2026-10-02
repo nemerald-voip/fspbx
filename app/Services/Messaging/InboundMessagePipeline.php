@@ -103,6 +103,12 @@ class InboundMessagePipeline
                 'org_id' => $route->orgId,
             ]);
 
+            // Count before ingestion: failed downloads must not look like an
+            // MMS that legitimately contained only a text part.
+            $expectedMediaCount = $event->storedMedia === []
+                ? count($event->mediaUrls)
+                : (array_key_exists($route->destination, $event->storedMedia)
+                    ? count($event->storedMedia[$route->destination]) : null);
             $storedMedia = $storeMedia($route);
 
             messaging_webhook_debug('Media ingested', [
@@ -121,6 +127,7 @@ class InboundMessagePipeline
                 media: $storedMedia,
                 providerEvent: $event->providerEvent,
                 messageGroupUuid: $group?->message_group_uuid,
+                expectedMediaCount: $expectedMediaCount,
             );
 
             messaging_webhook_debug('Message saved', [

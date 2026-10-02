@@ -20,6 +20,7 @@ class MessageRepository
         array $media = [],
         ?string $providerEvent = null,
         ?string $messageGroupUuid = null,
+        ?int $expectedMediaCount = null,
     ): Messages {
         $countryCode = get_domain_setting('country', $domainUuid) ?? 'US';
 
@@ -59,6 +60,7 @@ class MessageRepository
                     'status'       => 'received',
                     'received_at'  => now()->toIso8601String(),
                     'last_event'   => $providerEvent,
+                    'expected_media_count' => $expectedMediaCount,
                     'error'        => null,
                 ],
             ],

@@ -38,6 +38,9 @@ class MessageReadService
 
         return Messages::query()->where('messages.domain_uuid', $domainUuid)
             ->where('messages.direction', 'in')
+            // Preserve the shared read state saved before per-user tracking.
+            // New reads only write message_user_reads, leaving this field null.
+            ->whereNull('messages.read_at')
             ->whereNotExists(function ($q) use ($userUuids) {
                 $q->selectRaw('1')->from('message_user_reads as reads')
                     ->whereColumn('reads.message_uuid', 'messages.message_uuid')

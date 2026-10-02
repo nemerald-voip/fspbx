@@ -169,8 +169,11 @@ class RingotelSyncService
             }
         }
         // Carrier group messages are MMS even when their only content is text.
-        // Keep the attachment-loss guard for legacy one-to-one MMS records.
-        if (!$payloads || ($message->type === 'mms' && !$seen && !$message->message_group_uuid)) {
+        // Inbound one-to-one MMS may also be text-only. Preserve the attachment
+        // guard unless ingestion explicitly recorded that no files were expected.
+        $confirmedTextOnly = $message->direction === 'in'
+            && data_get($message->delivery_meta, 'provider.expected_media_count') === 0;
+        if (!$payloads || ($message->type === 'mms' && !$seen && !$message->message_group_uuid && !$confirmedTextOnly)) {
             throw new RuntimeException('The message has no content or its MMS attachments are unavailable.');
         }
         return $payloads;
