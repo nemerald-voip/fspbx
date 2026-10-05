@@ -6,6 +6,7 @@ use App\Http\Requests\StoreDialplanRequest;
 use App\Http\Requests\StoreOutboundRouteRequest;
 use App\Http\Requests\UpdateDialplanRequest;
 use App\Models\Bridge;
+use App\Models\DefaultSettings;
 use App\Models\Dialplans;
 use App\Models\Domain;
 use App\Models\Gateways;
@@ -135,6 +136,16 @@ class DialplanController extends Controller
             ], 403);
         }
 
+        $defaultScope = DefaultSettings::query()
+            ->where('default_setting_category', 'dialplan')
+            ->where('default_setting_subcategory', 'outbound_route_default_scope')
+            ->where('default_setting_name', 'text')
+            ->where('default_setting_enabled', true)
+            ->value('default_setting_value');
+        $useCurrentDomain = $defaultScope === 'current_domain'
+            && filled(session('domain_uuid'))
+            && filled(session('domain_name'));
+
         return response()->json([
             'gateway_options' => $this->outboundRouteGatewayOptions(),
             'pattern_options' => $this->outboundRoutePatternOptions(),
@@ -144,8 +155,8 @@ class DialplanController extends Controller
                 'pin_numbers' => userCheckPermission('outbound_route_pin_numbers'),
             ],
             'defaults' => [
-                'domain_uuid' => '',
-                'dialplan_context' => 'global',
+                'domain_uuid' => $useCurrentDomain ? session('domain_uuid') : '',
+                'dialplan_context' => $useCurrentDomain ? session('domain_name') : 'global',
                 'dialplan_order' => '100',
                 'dialplan_enabled' => 'true',
                 'pin_numbers_enabled' => 'false',

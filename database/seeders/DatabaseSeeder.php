@@ -903,6 +903,14 @@ class DatabaseSeeder extends Seeder
     {
         $settings = [
             [
+                'default_setting_category'      => 'dialplan',
+                'default_setting_subcategory'   => 'outbound_route_default_scope',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => 'global',
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => 'Outbound Route Default Scope. Options: global (default), current_domain. Sets the initial domain and context for new outbound routes.',
+            ],
+            [
                 'default_setting_category'      => 'pms',
                 'default_setting_subcategory'   => 'pms_provider',
                 'default_setting_name'          => 'text',
