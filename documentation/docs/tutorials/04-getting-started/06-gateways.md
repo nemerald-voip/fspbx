@@ -60,6 +60,19 @@ Carrier sends calls to your public IP and expects outbound calls from your IP.
 * Pros: often more stable, fewer registration issues
 * Cons: requires static IP and provider-side configuration
 
+### Provider IPs for IP-authenticated trunks
+
+For **every IP-authenticated trunk**, add the provider's incoming SIP addresses to the gateway's **Provider IPs** tab. FS PBX uses these entries to populate the **providers** access control list (ACL), which allows inbound calls from that provider.
+
+1. Open the gateway and select **Provider IPs**.
+2. Click **Add Item** and enter an address or CIDR range in **IP / CIDR**.
+3. Add a separate row for every incoming SIP address or range supplied by the provider, including any failover sources.
+4. Click **Save**. FS PBX updates the providers ACL and reloads it on the server you are using.
+
+**Proxy** specifies where FS PBX sends calls. **Provider IPs** specifies where the provider sends calls from, so entering a proxy alone does not complete inbound setup. Use the provider's published incoming SIP addresses here; your PBX's public IP belongs in the provider's account configuration.
+
+On redundant installations, apply and verify the provider ACL on every server that may receive incoming calls.
+
 ---
 
 ## Do I need a Gateway for internal calling?
@@ -101,6 +114,7 @@ Multiple Domains share one or more carrier connections.
 * Auth info (if registration trunk)
 * Transport / port as required
 * Apply any provider-specific requirements
+* For IP-authenticated trunks, fill in **Provider IPs** so the providers ACL allows inbound calls
 
 2. **Confirm the gateway is healthy**
 

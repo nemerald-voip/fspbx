@@ -39,7 +39,7 @@ The summary row at the top of **Performance** shows:
 - **Service Level**: the percentage of answered calls that reached an agent within 60 seconds of entering the queue. It measures how quickly answered calls were picked up.
 - **Abandonment rate**: abandoned calls as a percentage of all queue calls in the report, with the average wait before those callers hung up. Exits, timeouts, and callback requests are included in the total, so they lower the rate instead of disappearing from it.
 
-**Queue Outcomes** places every queue call in exactly one outcome, so the outcomes always add up to the queue call total. The bar shows each outcome's share. The list shows its count, percentage, and details such as voicemail messages and short abandons, which are callers who hung up after waiting in the queue for less than 10 seconds. **Answered** and **Abandoned** are always listed; other outcomes appear only when they had calls in the report. **<1%** means the outcome happened but rounds below one percent.
+**Queue Outcomes** places every queue call in exactly one outcome, so the outcomes always add up to the queue call total. The bar shows each outcome's share. The list shows its count, percentage, and details such as voicemail messages and short abandons, which are callers who hung up after waiting in the queue for less than 10 seconds. **Answered** and **Abandoned** are always listed; other outcomes appear only when they had calls in the report. **&lt;1%** means the outcome happened but rounds below one percent.
 
 The **Call Volume** chart stacks the same outcomes by hour, in the same colors.
 
