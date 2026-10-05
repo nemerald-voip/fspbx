@@ -29,7 +29,7 @@ class SaveNumberTranslationRequest extends FormRequest
             'description' => ['nullable', 'string', 'max:1000', $xmlText],
             'enabled' => ['required', 'boolean'],
             'rules' => ['present', 'array', 'max:200'],
-            'rules.*' => ['array:uuid,regex,replace,order'],
+            'rules.*' => ['array:uuid,regex,replace'],
             'rules.*.uuid' => ['nullable', 'uuid', 'distinct', Rule::exists('v_number_translation_details', 'number_translation_detail_uuid')
                 ->where('number_translation_uuid', $uuid ?? '00000000-0000-0000-0000-000000000000')],
             'rules.*.regex' => ['bail', 'required', 'string', 'max:4096', $xmlText, function ($attribute, $value, $fail) {
@@ -39,8 +39,6 @@ class SaveNumberTranslationRequest extends FormRequest
                 }
             }],
             'rules.*.replace' => ['present', 'nullable', 'string', 'max:4096', $xmlText],
-            // Accept the legacy editor's zero-padded text values (for example 005).
-            'rules.*.order' => ['nullable', 'regex:/^[0-9]{1,3}$/D'],
         ];
     }
 
@@ -48,7 +46,6 @@ class SaveNumberTranslationRequest extends FormRequest
     {
         return [
             'name.regex' => __('Use letters, numbers, periods, underscores, or hyphens for the profile name.'),
-            'rules.*.order.regex' => __('Enter an order from 0 to 999, or leave it blank.'),
         ];
     }
 }

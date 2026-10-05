@@ -69,8 +69,8 @@ class NumberTranslationPostgresTest extends TestCase
         return array_replace([
             'name' => 'translation_test', 'description' => 'An & example', 'enabled' => true,
             'rules' => [
-                ['regex' => '^(.*)$', 'replace' => '$1', 'order' => 10],
-                ['regex' => '^\+(\d+)$', 'replace' => '$1', 'order' => 5],
+                ['regex' => '^\+(\d+)$', 'replace' => '$1'],
+                ['regex' => '^(.*)$', 'replace' => '$1'],
             ],
         ], $overrides);
     }
@@ -92,17 +92,24 @@ class NumberTranslationPostgresTest extends TestCase
         $profile = $service->save($this->values());
         $this->assertTrue(Str::isUuid($profile->getKey()));
         $this->assertSame(['005', '010'], $profile->rules->pluck('number_translation_detail_order')->all());
-        $first = $profile->rules->first();
+        $this->assertSame(['^\+(\d+)$', '^(.*)$'], $profile->rules->pluck('number_translation_detail_regex')->all());
+        [$first, $second] = $profile->rules->all();
         $first->update(['number_translation_detail_order' => '5']);
         $this->assertSame($first->getKey(), $profile->fresh()->rules->first()->getKey(), 'Unpadded legacy order is numeric.');
+        $reordered = $service->save($this->values(['rules' => [
+            ['uuid' => $second->getKey(), 'regex' => '^(.*)$', 'replace' => '$1'],
+            ['uuid' => $first->getKey(), 'regex' => '^\+(\d+)$', 'replace' => '$1'],
+        ]]), $profile);
+        $this->assertSame([$second->getKey(), $first->getKey()], $reordered->rules->modelKeys(), 'List position sets the order.');
+        $this->assertSame(['005', '010'], $reordered->rules->pluck('number_translation_detail_order')->all());
         $updated = $service->save($this->values([
             'name' => 'renamed', 'enabled' => false,
-            'rules' => [['uuid' => $first->getKey(), 'regex' => '^(44|49)$', 'replace' => '', 'order' => null]],
+            'rules' => [['uuid' => $first->getKey(), 'regex' => '^(44|49)$', 'replace' => '']],
         ]), $profile);
         $this->assertSame('false', $updated->number_translation_enabled);
         $this->assertSame($first->getKey(), $updated->rules->sole()->getKey());
         $this->assertSame('', $updated->rules->sole()->number_translation_detail_replace);
-        $this->assertNull($updated->rules->sole()->number_translation_detail_order);
+        $this->assertSame('005', $updated->rules->sole()->number_translation_detail_order);
         $this->assertSame(1, DB::table('v_number_translation_details')->count());
         $service->delete($updated);
         $this->assertSame(0, NumberTranslation::count());
@@ -155,7 +162,7 @@ class NumberTranslationPostgresTest extends TestCase
         $other = $service->save($this->values(['name' => 'other']));
         $profile = $service->save($this->values());
         $values = $this->values(['name' => 'should_rollback', 'rules' => [
-            ['uuid' => $other->rules->first()->getKey(), 'regex' => 'x', 'replace' => 'y', 'order' => 0],
+            ['uuid' => $other->rules->first()->getKey(), 'regex' => 'x', 'replace' => 'y'],
         ]]);
         $request = $this->request($values, $profile);
         $validator = Validator::make($values, $request->rules());
@@ -173,8 +180,8 @@ class NumberTranslationPostgresTest extends TestCase
     public function test_validation_accepts_captures_lookbehind_alternatives_variables_and_empty_replacements(): void
     {
         $values = $this->values(['rules' => [
-            ['regex' => '(?<=\+)(44|49)\d+$', 'replace' => '${country}$1&"', 'order' => '005'],
-            ['regex' => '^prefix~(\d+)$', 'replace' => null, 'order' => null],
+            ['regex' => '(?<=\+)(44|49)\d+$', 'replace' => '${country}$1&"'],
+            ['regex' => '^prefix~(\d+)$', 'replace' => null],
         ]]);
         $request = $this->request($values);
         $validator = Validator::make($values, $request->rules());
@@ -186,11 +193,12 @@ class NumberTranslationPostgresTest extends TestCase
         $service = new NumberTranslationService();
         $profile = $service->save($this->values());
         $values = $this->values(['rules' => [
-            ['regex' => '([', 'replace' => "bad\x01", 'order' => -5],
+            ['regex' => '([', 'replace' => "bad\x01"],
+            ['regex' => 'x', 'replace' => 'y', 'order' => 5],
         ]]);
         $validator = Validator::make($values, $this->request($values)->rules());
         $this->assertFalse($validator->passes());
-        foreach (['name', 'rules.0.regex', 'rules.0.replace', 'rules.0.order'] as $key) {
+        foreach (['name', 'rules.0.regex', 'rules.0.replace', 'rules.1'] as $key) {
             $this->assertArrayHasKey($key, $validator->errors()->toArray());
         }
         $values = $this->values();
@@ -200,7 +208,7 @@ class NumberTranslationPostgresTest extends TestCase
     public function test_http_trimming_preserves_literal_spaces_in_regex_and_replacement(): void
     {
         $values = $this->values(['name' => ' trimmed ', 'rules' => [
-            ['regex' => ' ^(.*)$ ', 'replace' => ' $1 ', 'order' => ' 5 '],
+            ['regex' => ' ^(.*)$ ', 'replace' => ' $1 '],
         ]]);
         $request = Request::create('/api/system-settings/number-translations', 'POST', $values);
         $this->app->instance('request', $request);
@@ -208,7 +216,6 @@ class NumberTranslationPostgresTest extends TestCase
         $this->assertSame('trimmed', $request->input('name'));
         $this->assertSame(' ^(.*)$ ', $request->input('rules.0.regex'));
         $this->assertSame(' $1 ', $request->input('rules.0.replace'));
-        $this->assertSame('5', $request->input('rules.0.order'));
     }
 
     public function test_configuration_check_rejects_stale_wrongly_ordered_or_disabled_profiles(): void

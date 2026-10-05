@@ -5,33 +5,40 @@
                 @mounted="form => form.disableValidation()" @submit="clearServerFormErrors"
                 @response="showServerFormErrors" @success="saved" @error="failed">
                 <template #empty>
-                    <FormElements>
-                        <TextElement name="name" :label="$t('Name')" :floating="false" :disabled="readOnly"
-                            :description="$t('Use this exact profile name in your dialplan. If you rename it, update the dialplan references too.')"
-                            :columns="{ sm: { container: 8 } }" />
-                        <ToggleElement name="enabled" :text="$t('Enabled')" :disabled="readOnly"
-                            :true-value="true" :false-value="false" :columns="{ sm: { container: 4 } }" />
-                        <TextElement name="description" :label="$t('Description')" :floating="false" :disabled="readOnly" />
-                        <StaticElement name="rules_heading" tag="h4" :content="$t('Rules')"
-                            :description="$t('Lower order runs first. The first matching rule wins. Use $1, $2, etc. for captured groups. A blank replacement removes the matched number.')" />
-                        <ListElement name="rules" :initial="0" :add-text="$t('Add rule')"
-                            :controls="{ add: !readOnly, remove: !readOnly }" :disabled="readOnly">
-                            <template #default="{ index }">
-                                <ObjectElement :name="index">
-                                    <HiddenElement name="uuid" />
-                                    <TextElement name="regex" :label="$t('Regular Expression')" :floating="false"
-                                        :disabled="readOnly" :columns="{ sm: { container: 5 } }"
-                                        :add-class="'font-mono'" autocomplete="off" />
-                                    <TextElement name="replace" :label="$t('Replace')" :floating="false"
-                                        :disabled="readOnly" :columns="{ sm: { container: 5 } }"
-                                        :add-class="'font-mono'" autocomplete="off" />
-                                    <TextElement name="order" :label="$t('Order')" :floating="false"
-                                        :disabled="readOnly" inputmode="numeric" :columns="{ sm: { container: 2 } }" />
-                                </ObjectElement>
-                            </template>
-                        </ListElement>
-                        <ButtonElement v-if="!readOnly" name="save" :button-label="$t('Save')" :submits="true" align="right" />
-                    </FormElements>
+                    <div class="space-y-6 bg-gray-50 px-4 py-6 text-gray-600 shadow sm:rounded-md sm:p-6">
+                        <FormElements>
+                            <TextElement name="name" :label="$t('Name')" :floating="false" :disabled="readOnly"
+                                :description="$t('Use this exact profile name in your dialplan. If you rename it, update the dialplan references too.')"
+                                autocomplete="off" :columns="{ sm: { container: 8 } }" />
+                            <ToggleElement name="enabled" :text="$t('Enabled')" label="&nbsp;" :disabled="readOnly"
+                                :true-value="true" :false-value="false" :columns="{ sm: { container: 4 } }" />
+                            <TextElement name="description" :label="$t('Description')" :floating="false"
+                                :disabled="readOnly" autocomplete="off" />
+
+                            <StaticElement name="rules_heading" tag="h4" :content="$t('Rules')"
+                                :description="$t('Rules run from top to bottom; drag a rule to reorder it. The first matching rule wins. Use $1, $2, etc. for captured groups. A blank replacement removes the matched number.')" />
+                            <ListElement name="rules" :initial="0" :add-text="$t('Add rule')" :sort="!readOnly"
+                                :controls="{ add: !readOnly, remove: !readOnly, sort: !readOnly }" :disabled="readOnly"
+                                :add-classes="{ ListElement: { listItem: 'bg-white p-3 mb-2 rounded-md border border-gray-200' } }">
+                                <template #default="{ index }">
+                                    <ObjectElement :name="index">
+                                        <!-- meta: keeps the uuid in the payload without taking a grid column -->
+                                        <HiddenElement name="uuid" :meta="true" />
+                                        <TextElement name="regex" :label="$t('Regular Expression')" :floating="false"
+                                            :disabled="readOnly" placeholder="^0(\d+)$" autocomplete="off"
+                                            :add-classes="{ TextElement: { input: 'font-mono' } }"
+                                            :columns="{ default: { container: 12 }, sm: { container: 6 } }" />
+                                        <TextElement name="replace" :label="$t('Replace')" :floating="false"
+                                            :disabled="readOnly" placeholder="44$1" autocomplete="off"
+                                            :add-classes="{ TextElement: { input: 'font-mono' } }"
+                                            :columns="{ default: { container: 12 }, sm: { container: 6 } }" />
+                                    </ObjectElement>
+                                </template>
+                            </ListElement>
+
+                            <ButtonElement v-if="!readOnly" name="save" :button-label="$t('Save')" :submits="true" align="right" />
+                        </FormElements>
+                    </div>
                 </template>
             </Vueform>
         </template>

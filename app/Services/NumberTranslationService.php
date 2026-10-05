@@ -21,7 +21,6 @@ class NumberTranslationService
                 'uuid' => $rule->getKey(),
                 'regex' => $rule->number_translation_detail_regex,
                 'replace' => $rule->number_translation_detail_replace ?? '',
-                'order' => $rule->number_translation_detail_order,
             ])->values()->all(),
         ];
     }
@@ -39,7 +38,7 @@ class NumberTranslationService
             ])->save();
 
             $retained = [];
-            foreach ($data['rules'] as $row) {
+            foreach (array_values($data['rules']) as $position => $row) {
                 // Scope every detail lookup to this profile; retain existing UUIDs.
                 $rule = ! empty($row['uuid'])
                     ? $translation->rules()->whereKey($row['uuid'])->firstOrFail()
@@ -47,8 +46,8 @@ class NumberTranslationService
                 $rule->forceFill([
                     'number_translation_detail_regex' => $row['regex'],
                     'number_translation_detail_replace' => $row['replace'] ?? '',
-                    'number_translation_detail_order' => isset($row['order'])
-                        ? str_pad((string) (int) $row['order'], 3, '0', STR_PAD_LEFT) : null,
+                    // List position is the rule order, stepped by 5 like the shipped defaults.
+                    'number_translation_detail_order' => str_pad((string) (($position + 1) * 5), 3, '0', STR_PAD_LEFT),
                 ])->save();
                 $retained[] = $rule->getKey();
             }
