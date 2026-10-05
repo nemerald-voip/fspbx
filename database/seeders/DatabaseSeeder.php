@@ -155,6 +155,10 @@ class DatabaseSeeder extends Seeder
             ['application_name' => 'User Manager', 'permission_name' => 'api_key_update'],
             ['application_name' => 'User Manager', 'permission_name' => 'api_key_delete'],
             ['application_name' => 'System Settings', 'permission_name' => 'scheduled_jobs_manage'],
+            ['application_name' => 'Number Translations', 'permission_name' => 'number_translation_view'],
+            ['application_name' => 'Number Translations', 'permission_name' => 'number_translation_add'],
+            ['application_name' => 'Number Translations', 'permission_name' => 'number_translation_edit'],
+            ['application_name' => 'Number Translations', 'permission_name' => 'number_translation_delete'],
             ['application_name' => 'Directory Services', 'permission_name' => 'ldap_directory_view'],
             ['application_name' => 'Directory Services', 'permission_name' => 'ldap_directory_create'],
             ['application_name' => 'Directory Services', 'permission_name' => 'ldap_directory_update'],
@@ -279,6 +283,10 @@ class DatabaseSeeder extends Seeder
         $permissionsByGroup = [
             'superadmin' => [
                 'scheduled_jobs_manage',
+                'number_translation_view',
+                'number_translation_add',
+                'number_translation_edit',
+                'number_translation_delete',
                 'message_settings_list_view',
                 'extension_suspended',
                 'mobile_apps_password_url_show',

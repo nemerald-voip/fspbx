@@ -49,6 +49,12 @@ class SystemSettingsController extends Controller
                 'routes' => [
                     'dashboard_route' => route('dashboard'),
                     'settings_update' => route('system-settings.update'),
+                    'number_translations' => [
+                        'index' => route('number-translations.index'),
+                        'store' => route('number-translations.store'),
+                        'item' => route('number-translations.show', ['number_translation' => '__UUID__']),
+                        'sync' => route('number-translations.sync'),
+                    ],
                     'sip_capture_update' => route('system-settings.sip_capture.update'),
                     'payment_gateways' => route('system-settings.payment_gateways'),
                     'payment_gateway_update' => route('gateway.update'),
@@ -234,6 +240,9 @@ class SystemSettingsController extends Controller
         $permissions['call_transcription_settings_view'] = userCheckPermission('call_transcription_settings_view');
         $permissions['default_setting_view'] = userCheckPermission('default_setting_view');
         $permissions['default_setting_edit'] = userCheckPermission('default_setting_edit');
+        foreach (['view', 'add', 'edit', 'delete'] as $action) {
+            $permissions['number_translation_' . $action] = userCheckPermission('number_translation_' . $action);
+        }
         $permissions['sip_capture_view'] = $this->canViewSipCapture();
         $permissions['sip_capture_edit'] = $this->canEditSipCapture();
 

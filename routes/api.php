@@ -92,6 +92,7 @@ use App\Http\Controllers\SwitchModuleController;
 use App\Http\Controllers\SwitchVariableController;
 use App\Http\Controllers\SystemController;
 use App\Http\Controllers\SystemSettingsController;
+use App\Http\Controllers\NumberTranslationController;
 use App\Http\Controllers\TestEmailController;
 use App\Http\Controllers\TigerTmsLogsController;
 use App\Http\Controllers\TigerTmsWebhookController;
@@ -925,6 +926,12 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
 
     // System Settings
     Route::put('system-settings/update', [SystemSettingsController::class, 'update'])->name('system-settings.update');
+    Route::get('system-settings/number-translations', [NumberTranslationController::class, 'index'])->name('number-translations.index');
+    Route::post('system-settings/number-translations', [NumberTranslationController::class, 'store'])->name('number-translations.store');
+    Route::post('system-settings/number-translations/sync', [NumberTranslationController::class, 'sync'])->name('number-translations.sync');
+    Route::get('system-settings/number-translations/{number_translation}', [NumberTranslationController::class, 'show'])->whereUuid('number_translation')->name('number-translations.show');
+    Route::put('system-settings/number-translations/{number_translation}', [NumberTranslationController::class, 'update'])->whereUuid('number_translation')->name('number-translations.update');
+    Route::delete('system-settings/number-translations/{number_translation}', [NumberTranslationController::class, 'destroy'])->whereUuid('number_translation')->name('number-translations.destroy');
     Route::put('system-settings/sip-capture', [SystemSettingsController::class, 'updateSipCapture'])->name('system-settings.sip_capture.update');
     Route::get('system-settings/payment_gateways', [SystemSettingsController::class, 'getPaymentGatewayData'])->name('system-settings.payment_gateways');
     Route::post('/gateways/test', [PaymentGatewayController::class, 'test'])->name('gateway.test');

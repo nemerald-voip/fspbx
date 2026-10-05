@@ -403,6 +403,11 @@ class FreeswitchEslService
                 return json_decode($response, true); // Decode JSON response as an associative array
             }
 
+            // XML attributes can contain pipes, notably PCRE alternatives in translate.conf.
+            if (str_starts_with($response, '<')) {
+                return $this->convertEslResponseToXml($response);
+            }
+
             // Check if the response contains CSV-like data
             if (strpos($response, '|') !== false) {
                 return $this->convertEslResponseToArray($response);
@@ -456,7 +461,7 @@ class FreeswitchEslService
 
     private function handleResponseErrors($eslEvent)
     {
-        if (strpos($eslEvent->getBody(), '-ERR') !== false) {
+        if (preg_match('/^-ERR\b/', ltrim($eslEvent->getBody()))) {
             throw new \Exception("ESL API Error: " . $eslEvent->getBody());
         }
     }

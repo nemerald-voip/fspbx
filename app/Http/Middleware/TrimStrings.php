@@ -16,4 +16,15 @@ class TrimStrings extends Middleware
         'password',
         'password_confirmation',
     ];
+
+    protected function transform($key, $value)
+    {
+        // Literal spaces are meaningful in number-translation expressions and replacements.
+        if (request()->is('api/system-settings/number-translations*')
+            && preg_match('/^rules\.\d+\.(regex|replace)$/', $key)) {
+            return $value;
+        }
+
+        return parent::transform($key, $value);
+    }
 }

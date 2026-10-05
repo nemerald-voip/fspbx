@@ -104,6 +104,11 @@
                     @success="showNotification" />
             </section>
 
+            <section v-if="selectedMenuOption === 'number_translations' && permissions?.number_translation_view">
+                <NumberTranslations :routes="routes.number_translations" :permissions="permissions"
+                    @error="handleErrorResponse" @success="showNotification" />
+            </section>
+
             <section v-if="selectedMenuOption === 'scheduled_jobs' && permissions?.scheduled_jobs_manage && scheduled_jobs">
                 <ScheduledJobServerControl :initial-state="scheduled_jobs.active_node" :routes="scheduled_jobs.routes"
                     :manage="scheduled_jobs.manage" @success="messages => showNotification('success', messages)"
@@ -151,6 +156,8 @@ import GraphicEqIcon from "@icons/GraphicEqIcon.vue"
 import AssemblyAiForm from "./components/forms/AssemblyAiForm.vue"
 import CallTranscriptionOptionsForm from "./components/forms/CallTranscriptionOptionsForm.vue"
 import SipCaptureSettingsForm from "./components/forms/SipCaptureSettingsForm.vue"
+import NumberTranslations from './components/NumberTranslations.vue'
+import { ArrowsRightLeftIcon } from '@heroicons/vue/24/outline'
 import { AdjustmentsVerticalIcon, SignalIcon } from "@heroicons/vue/24/outline";
 
 
@@ -224,6 +231,10 @@ onMounted(() => {
 
     if (props.permissions?.sip_capture_view) {
         navigation.value.push({ key: 'sip_capture', name: trans('SIP Capture'), icon: SignalIcon })
+    }
+
+    if (props.permissions?.number_translation_view) {
+        navigation.value.push({ key: 'number_translations', name: trans('Number Translations'), icon: ArrowsRightLeftIcon })
     }
 
     if (props.permissions?.scheduled_jobs_manage) {
