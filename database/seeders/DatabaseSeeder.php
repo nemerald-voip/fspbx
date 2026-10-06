@@ -1863,6 +1863,14 @@ class DatabaseSeeder extends Seeder
                 'default_setting_enabled'       => true,
                 'default_setting_description'   => 'Enable the Yealink outbound proxy when a primary proxy is configured. 0-Disabled. 1-Enabled.',
             ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'yealink_backlight_time',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => '600',
+                'default_setting_enabled'       => false,
+                'default_setting_description'   => 'Backlight timeout in seconds. Enable to override the provisioning template default; supported values depend on the phone model.',
+            ],
 
 
 
