@@ -21,7 +21,7 @@ class Update203
             return false;
         }
 
-        $counts = ['updated' => 0, 'would_update' => 0, 'correct' => 0, 'preserved' => 0, 'failed' => 0];
+        $counts = ['updated' => 0, 'would_update' => 0, 'correct' => 0, 'preserved' => 0, 'skipped' => 0, 'failed' => 0];
 
         try {
             // Match the Activated accounts on the Ringotel settings page.
@@ -104,6 +104,12 @@ class Update203
                 try {
                     $connections = $service->getConnections($orgId);
                 } catch (Throwable $exception) {
+                    if (strcasecmp(trim($exception->getMessage()), 'Organization not found') === 0) {
+                        echo "Ringotel {$account->domain_name}: organization not found; skipped.\n";
+                        $counts['skipped']++;
+                        continue;
+                    }
+
                     echo "Ringotel {$account->domain_name}: {$exception->getMessage()}\n";
                     $counts['failed']++;
                     continue;
@@ -167,9 +173,10 @@ class Update203
         }
 
         echo "Ringotel DND repair: {$counts['updated']} repaired, {$counts['would_update']} would repair, "
-            ."{$counts['correct']} already correct, {$counts['preserved']} preserved, {$counts['failed']} failed.\n";
+            ."{$counts['correct']} already correct, {$counts['preserved']} preserved, "
+            ."{$counts['skipped']} organization(s) skipped, {$counts['failed']} failed.\n";
 
-        // A failed API call must not mark the version complete. Successful repairs
+        // API failures other than missing organizations must not mark the version complete. Successful repairs
         // are skipped on retry, including when a prior response was lost.
         return $counts['failed'] === 0;
     }
