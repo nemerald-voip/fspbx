@@ -1288,11 +1288,19 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 's3_upload_calls',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => "true",
+                'default_setting_enabled'       => false,
+                'default_setting_description'   => "Enable this row to control S3 uploads globally (true/false). While disabled, existing enabled MAC switches preserve upload enablement. Scheduled job server selection takes priority over MAC selection when definite.",
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
                 'default_setting_subcategory'   => 's3_upload_calls_' . $this->getMacAddress(),
                 'default_setting_name'          => 'boolean',
                 'default_setting_value'         => "true",
                 'default_setting_enabled'       => false,
-                'default_setting_description'   => "Executes upload job only on the server with MAC address " . $this->getMacAddress(),
+                'default_setting_description'   => "Legacy S3 upload selection for MAC address " . $this->getMacAddress() . ". Used only when Scheduled job server ownership is unavailable or uncertain.",
             ],
             [
                 'default_setting_category'      => 'scheduled_jobs',

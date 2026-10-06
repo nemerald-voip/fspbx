@@ -146,9 +146,13 @@ Not every scheduled job uses the same mechanism yet.
 | [Contact Center callbacks](/docs/configuration/contact-center/queue-callbacks/) and callback cleanup | The same generic scheduled-job owner, generation, and execution claims |
 | Scheduled announcements | Failover DNS record, see [Scheduled Announcements](../05-configuration/13-scheduled-announcements/01-overview.md) |
 | TLS and Nginx certificate renewal | Failover DNS record recorded during certificate installation |
-| Archive call recordings to S3 | A per-server setting keyed by MAC address |
+| Archive call recordings to S3 | Generic scheduled-job owner and one bounded execution claim per recording |
 
-The recording archive job predates this mechanism and still uses its own switch, a setting named after the server's MAC address. See [Archive Call Recordings to S3 Storage](../05-configuration/12-scheduled-jobs/archive-call-recordings-to-s3-storage.md) for that one.
+Enable S3 uploads by enabling the `scheduled_jobs.s3_upload_calls` row with value `true`. A standalone server is selected automatically. On a redundant installation, complete node approval and owner selection before enabling uploads. Keep the setting row enabled and change its value to `false` to stop scheduled uploads. See [Archive Call Recordings to S3 Storage](../05-configuration/12-scheduled-jobs/archive-call-recordings-to-s3-storage.md) for storage and schedule settings.
+
+Scheduled S3 runs pass `--scheduled` and claim one recording at a time, with a 900-second claim and an 840-second CLI deadline. Conversion and network requests have shorter timeouts. A coordinated run stops if it loses authorization. Verified uploads, guarded CDR updates, and local cleanup receipts make retries recoverable. Existing archive filenames and folders are preserved. Failed or expired work keeps its source recording; missing files are deferred for file replication. Include `v_xml_cdr` in the same ordered replication stream as coordination/settings before using coordinated S3 uploads. Keep both servers updated before switching ownership.
+
+The plain `php artisan fs:upload-call-recordings-to-s3-storage` command retains its manual override: it bypasses enablement and owner selection, so it does not participate in draining. Run it outside scheduled uploads and ownership transfers, on only one server. Add `--scheduled` when the operator wants coordinated checks to apply.
 
 Other jobs can adopt the generic coordinator later, but must create an execution claim and place their database mutations inside `ActiveNodeResolver::withExecution()`. Checking only whether a node is active, or obtaining a claim without guarding writes, is insufficient. External effects such as calls, uploads or certificate deployment require their own idempotency/fencing boundary before adopting this mechanism.
 

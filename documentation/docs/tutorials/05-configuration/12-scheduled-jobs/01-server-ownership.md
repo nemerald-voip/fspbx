@@ -9,9 +9,9 @@ sidebar_position: 1
 
 The **Scheduled job server** control chooses which FS PBX server runs coordinated background work. On a redundant installation, it gives that work one owner while the other servers remain on standby.
 
-The selection is shared across all accounts and applies to LDAP directory synchronization and [Contact Center callbacks](/docs/configuration/contact-center/queue-callbacks/), including callback cleanup. Changing it on one page changes the same owner everywhere.
+The selection is shared across all accounts and applies to LDAP directory synchronization, [Contact Center callbacks](/docs/configuration/contact-center/queue-callbacks/) including callback cleanup, and enabled [S3 recording uploads](./archive-call-recordings-to-s3-storage.md). Changing it on one page changes the same owner everywhere.
 
-This control does not select the server for every scheduled task. S3 recording archiving retains its separate per-server setting, and scheduled announcements and certificate renewal retain their DNS-based selection.
+For S3 uploads, enable `s3_upload_calls` under **Advanced > Default Settings > scheduled_jobs**. A standalone server is selected automatically. On a redundant installation, approve the servers and choose the owner before enabling uploads. Scheduled announcements and certificate renewal use their DNS-based selection.
 
 ## Single-server installations
 

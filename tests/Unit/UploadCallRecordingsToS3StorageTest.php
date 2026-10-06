@@ -8,6 +8,29 @@ use Tests\TestCase;
 
 class UploadCallRecordingsToS3StorageTest extends TestCase
 {
+    /** @dataProvider commandModes */
+    public function test_plain_cli_remains_manual_and_only_the_scheduled_flag_enforces_selection(array $arguments, bool $scheduled): void
+    {
+        $command = new class(
+            \Mockery::mock(\App\Services\S3StorageConfigService::class),
+            \Mockery::mock(\App\Services\S3UploadServerSelector::class),
+            \Mockery::mock(\App\Services\Ha\ActiveNodeResolver::class),
+            \Mockery::mock(\App\Services\S3RecordingArchiver::class),
+        ) extends UploadCallRecordingsToS3Storage {
+            public ?bool $observedScheduled = null;
+            public function uploadRecordings(bool $scheduled = false) { $this->observedScheduled = $scheduled; }
+        };
+        $command->setLaravel($this->app);
+        $tester = new \Symfony\Component\Console\Tester\CommandTester($command);
+        $this->assertSame(0, $tester->execute($arguments));
+        $this->assertSame($scheduled, $command->observedScheduled);
+    }
+
+    public static function commandModes(): array
+    {
+        return ['manual' => [[], false], 'scheduled' => [['--scheduled' => true], true]];
+    }
+
     /**
      * Compiled Contact Center hold audio lives on the recordings disk. The
      * uploader converts a wav, deletes the local copy and clears the CDR

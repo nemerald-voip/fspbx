@@ -108,6 +108,23 @@ class ScheduledJobPostgresReplicationTest extends TestCase
         $switch('a');
         $this->assertSame('completed', $resolver->requestHandoff($ids['a'], 0, null)['status']);
         $this->await(fn () => DB::connection('lab_b')->table('v_default_settings')->where('default_setting_subcategory', 'active_node')->value('default_setting_value') === $ids['a']);
+        foreach (['s3_upload_calls', 's3_upload_calls_aa:bb:cc:dd:ee:ff'] as $key) {
+            DB::table('v_default_settings')->insert([
+                'default_setting_uuid' => (string) Str::uuid(), 'default_setting_category' => 'scheduled_jobs',
+                'default_setting_subcategory' => $key, 'default_setting_name' => 'boolean',
+                'default_setting_value' => 'true', 'default_setting_enabled' => true,
+            ]);
+        }
+        $this->await(fn () => DB::connection('lab_b')->table('v_default_settings')->where('default_setting_subcategory', 's3_upload_calls')->exists());
+        $s3Selector = new class($resolver) extends \App\Services\S3UploadServerSelector {
+            public function macAddress(): ?string { return 'aa:bb:cc:dd:ee:ff'; }
+        };
+        $this->assertTrue($s3Selector->resolve()['allowed']);
+        $switch('b');
+        $this->assertFalse($s3Selector->resolve()['allowed'], 'A standby MAC switch must not override the selected owner.');
+        $switch('a');
+        $s3Execution = $resolver->claimExecution('s3_recording_upload', 'recording', 900);
+        $this->assertNotNull($s3Execution);
         $execution = $resolver->claimExecution('ldap_directory_sync', 'directory', 600);
         $this->assertNotNull($execution);
         $this->assertNull($resolver->claimExecution('ldap_directory_sync', 'directory', 600));
@@ -134,14 +151,21 @@ class ScheduledJobPostgresReplicationTest extends TestCase
         DB::connection('lab_b')->statement('alter subscription manually_added_replacement disable');
         $this->await(fn () => DB::connection('lab_b')->selectOne("select count(*)::int as n from pg_stat_subscription where subname='manually_added_replacement' and pid is not null")->n === 0);
         $resolver->finishExecution($execution);
+        $this->assertSame($ids['a'], $resolver->configuredNode(), 'Transfer must wait for the in-flight S3 recording too.');
+        $this->assertFalse($s3Selector->resolve()['allowed'], 'Draining must not fall back to MAC.');
+        $resolver->withExecution($s3Execution, fn () => DB::table('coordination_test_effects')
+            ->where('value', 'authorized')->update(['value' => 'authorized']));
+        $resolver->finishExecution($s3Execution);
         $this->assertFalse($resolver->isActive());
         $this->assertSame('completed', $resolver->prepareHandoff($payload)['status'], 'Lost responses must be recoverable on old owner.');
         $switch('b');
         $this->assertFalse($resolver->isActive(), 'Standby must wait for ownership replication.');
+        $this->assertFalse($s3Selector->resolve()['allowed']);
         $this->assertNull($resolver->claimExecution('ldap_directory_sync', 'directory', 600));
         DB::statement('alter subscription manually_added_replacement enable');
         $this->await(fn () => $resolver->configuredNode() === $ids['b']);
         $this->assertTrue($resolver->isActive());
+        $this->assertTrue($s3Selector->resolve()['allowed']);
         $next = $resolver->claimExecution('ldap_directory_sync', 'directory', 600);
         $this->assertNotNull($next);
         $switch('a');

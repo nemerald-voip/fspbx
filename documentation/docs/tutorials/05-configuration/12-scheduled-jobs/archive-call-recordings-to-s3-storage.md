@@ -131,25 +131,45 @@ Example:
 | ----------------- | ------- |
 | `s3_upload_limit` | `2000`  |
 
-## Server-specific execution switch
+## Enable uploads
 
-This setting controls which server is allowed to run the archive job.
+Open **Advanced > Default Settings**, find category `scheduled_jobs`, and enable the `s3_upload_calls` row with value `true`.
 
-Format:
+Keep the row enabled and set its value to `false` to stop scheduled uploads on every server.
 
-```text id="t5258u"
-s3_upload_calls_MAC_ADDRESS
+Storage credentials alone do not enable uploads. Account-specific storage settings still determine where each account's recordings are uploaded.
+
+## Choose the upload server
+
+Use **Scheduled job server** under **System Settings > Scheduled Jobs** to choose which server runs uploads. See [Scheduled Job Server Setup](/docs/configuration/scheduled-jobs/server-ownership/) for setup instructions.
+
+| Installation state | Which server uploads? |
+| --- | --- |
+| Standalone installation | The standalone server is selected automatically. Enable uploads with `s3_upload_calls`. |
+| Redundant installation | Approve the servers and select the Scheduled job server before enabling uploads. Only the selected server runs scheduled uploads. |
+| Ownership transfer in progress | The current recording may finish. No new recording starts until the transfer completes. |
+
+These rules apply to scheduled runs. Set the daily upload time with `s3_upload_calls_time` (default `01:00`), in `scheduled_jobs_timezone` or the application's timezone. Recordings become eligible six hours after their start time.
+
+On redundant installations, ensure the selected server has the same storage settings and access to synchronized recording files. A recording that has not arrived locally is deferred; its Call History reference is preserved.
+
+Use the Scheduled job server control for later transfers. If the old server is unreachable, follow its forced-takeover procedure before starting uploads on a replacement.
+
+## Run uploads manually
+
+Run uploads immediately on the server where you execute this command, regardless of upload enablement or server selection:
+
+```bash
+php artisan fs:upload-call-recordings-to-s3-storage
 ```
 
-Example:
+This is an operator override and does not participate in coordinated ownership or draining. Run it on only one server at a time, outside a scheduled upload or ownership transfer. Storage configuration, recording age, upload limit, verification, and cleanup safeguards still apply.
 
-```text id="m3c6cb"
-s3_upload_calls_22:00:22:cd:3b:75
+To run manually with the same enablement and selection checks as the scheduler, add `--scheduled`:
+
+```bash
+php artisan fs:upload-call-recordings-to-s3-storage --scheduled
 ```
-
-Set its value to `true` on the server that should run the job.
-
-This is especially important in **HA environments**. In an HA deployment, **only one server needs to have the job enabled**. This prevents multiple servers from trying to archive the same recordings.
 
 # What happens after upload
 
@@ -158,6 +178,8 @@ After a recording is successfully uploaded:
 * the server updates the call record to point to the archived file
 * the local file is removed from the server
 * the recording remains available from the **Call History** page for playback and download
+
+Failed uploads or verification leave the local recording intact for a later retry. Interrupted local cleanup is retried when uploads next run on that server. Cleanup records are stored locally in `storage/app/s3-upload-cleanup`; keep that directory writable by the scheduler user and do not remove it during updates.
 
 This allows you to keep local storage usage low without losing access to archived recordings.
 

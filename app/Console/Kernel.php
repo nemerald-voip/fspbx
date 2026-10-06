@@ -41,15 +41,14 @@ class Kernel extends ConsoleKernel
         $s3UploadTime = $this->getScheduledJobTime($jobSettings, 's3_upload_calls_time', '01:00');
         $backupTime = $this->getScheduledJobTime($jobSettings, 'backup_time', '02:00');
 
-        // Upload call recordings to AWS
-        if (
-            isset($jobSettings['s3_upload_calls_' . $this->getMacAddress()])
-            && $jobSettings['s3_upload_calls_' . $this->getMacAddress()] === "true"
-        ) {
-            $schedule->command('fs:upload-call-recordings-to-s3-storage')
-                ->dailyAt($s3UploadTime)
-                ->timezone($scheduledJobsTimezone);
-        }
+        // Ownership is read fresh when due, then checked again inside the
+        // scheduled command and each recording's claim. Plain CLI runs remain
+        // an explicit operator override of enablement and server selection.
+        $schedule->command('fs:upload-call-recordings-to-s3-storage', ['--scheduled'])
+            ->dailyAt($s3UploadTime)
+            ->timezone($scheduledJobsTimezone)
+            ->when(fn () => app(\App\Services\S3UploadServerSelector::class)->resolve()['allowed'])
+            ->withoutOverlapping();
 
         if (isset($jobSettings['backup']) && $jobSettings['backup'] === "true") {
             $schedule->command('app:backup')
