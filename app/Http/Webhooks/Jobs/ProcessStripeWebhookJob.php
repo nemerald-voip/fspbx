@@ -3,6 +3,7 @@
 namespace App\Http\Webhooks\Jobs;
 
 use Exception;
+use App\Events\StripeWebhookReceived;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use App\Models\BillingPrice;
@@ -67,6 +68,17 @@ class ProcessStripeWebhookJob extends SpatieProcessWebhookJob
         'invoice.deleted',
         'invoice.voided',
         'invoice.marked_uncollectible',
+        'invoice.finalized',
+        'invoice.paid',
+        'invoice.payment_failed',
+        'invoice.payment_action_required',
+        'invoice.overdue',
+        'invoice_payment.paid',
+        'charge.succeeded',
+        'charge.failed',
+        'charge.pending',
+        'charge.refunded',
+        'charge.updated',
         'product.created',
         'product.deleted',
         'product.updated',
@@ -106,6 +118,11 @@ class ProcessStripeWebhookJob extends SpatieProcessWebhookJob
 
                 $type = $payload['type'] ?? null;
                 if (!in_array($type, $this->acceptedTypes)) return;
+
+                // Optional modules react here; the Billing module keeps local copies of
+                // invoices and payments. Fired before the CereTax checks below so those
+                // never hide an event from listeners.
+                event(new StripeWebhookReceived($payload));
 
                 // figure out mode from settings (fallback to Stripe event's livemode if needed)
                 $slug = 'stripe';
@@ -157,6 +174,20 @@ class ProcessStripeWebhookJob extends SpatieProcessWebhookJob
                     case 'customer.created':
                     case 'customer.deleted':
                         $this->handleStripeCustomerEvent($payload);
+                        break;
+
+                    case 'invoice.finalized':
+                    case 'invoice.paid':
+                    case 'invoice.payment_failed':
+                    case 'invoice.payment_action_required':
+                    case 'invoice.overdue':
+                    case 'invoice_payment.paid':
+                    case 'charge.succeeded':
+                    case 'charge.failed':
+                    case 'charge.pending':
+                    case 'charge.refunded':
+                    case 'charge.updated':
+                        // Only StripeWebhookReceived listeners use these.
                         break;
 
                     default:

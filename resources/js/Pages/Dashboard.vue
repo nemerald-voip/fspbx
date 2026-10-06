@@ -1,6 +1,7 @@
 <template>
     <MainLayout>
-        <TopBanner :show="showTopBanner" @close="showTopBanner = false" color="bg-rose-600" :text="topBannerText" />
+        <TopBanner :show="showTopBanner" @close="showTopBanner = false" color="bg-rose-600" :text="topBannerText"
+            :link-href="company_data.billing_pay_url" :link-text="$t('Pay now')" />
 
         <main class="bg-slate-50/60">
             <div class="mx-auto max-w-none px-4 py-8 sm:px-6 lg:px-8">

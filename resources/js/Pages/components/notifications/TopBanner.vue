@@ -4,6 +4,10 @@
             :class="['pointer-events-auto flex items-center gap-x-6 m-2 px-6 py-2.5 md:col-start-2 md:col-span-4 xl:col-start-4 xl:col-span-4 sm:rounded-xl sm:py-3 sm:pl-4 sm:pr-3.5', color]">
             <p class="text-sm leading-6 text-white">
                 {{ text }}
+                <a v-if="linkHref" :href="linkHref"
+                    class="ml-2 whitespace-nowrap font-semibold underline underline-offset-2 hover:text-white/90">
+                    {{ linkText }}<span aria-hidden="true"> &rarr;</span>
+                </a>
             </p>
             <div class="flex flex-1 justify-end">
                 <button type="button" class="-m-3 p-3 focus-visible:outline-offset-[-4px]" @click="handleClose">
@@ -31,6 +35,15 @@ const props = defineProps({
     text: {
         type: String,
         default: 'Label',
+    },
+    // Optional call-to-action link shown after the text.
+    linkHref: {
+        type: String,
+        default: null,
+    },
+    linkText: {
+        type: String,
+        default: null,
     },
 });
 

@@ -373,6 +373,11 @@ class DashboardController extends Controller
 
         $data['time_zone'] = get_domain_setting('time_zone');
         $data['billing_suspension'] = filter_var(get_domain_setting('billing_suspension'), FILTER_VALIDATE_BOOLEAN);
+        // Suspended accounts with a billing page get a "Pay now" link in the banner.
+        $data['billing_pay_url'] = $data['billing_suspension']
+            && $this->billingAccountService()?->customerForDomain(session('domain_uuid'))
+            ? '/billing/account'
+            : null;
 
         return $data;
     }
@@ -604,9 +609,51 @@ class DashboardController extends Controller
                 'alt_href' => userCheckPermission('billing_settings_edit') ? '/billing/settings' : null,
                 'alt_link_label' => userCheckPermission('billing_settings_edit') ? __('Settings') : null,
             ];
+        } elseif ($billingTile = $this->billingAccountTile()) {
+            $apps[] = $billingTile;
         }
 
 
         return $apps;
+    }
+
+    /**
+     * Tenant admins get a Billing tile only when their account is linked to a
+     * Stripe billing customer (Billing module). It shows the amount due.
+     */
+    private function billingAccountTile(): ?array
+    {
+        $billing = $this->billingAccountService();
+        $customer = $billing?->customerForDomain(session('domain_uuid'));
+
+        if (!$customer) {
+            return null;
+        }
+
+        return [
+            'name' => __('Billing'),
+            'href' => '/billing/account',
+            'icon' => 'CreditCardIcon',
+            'slug' => 'billing_account',
+            'count_label' => $billing->amountDueLabel($customer),
+        ];
+    }
+
+    /**
+     * The Billing module's BillingAccountService, or null when the module is
+     * unavailable or the user can't see the customer billing page.
+     */
+    private function billingAccountService(): ?object
+    {
+        if (
+            !Module::has('Billing')
+            || !Module::collections()->has('Billing')
+            || !userCheckPermission('billing_portal_view')
+            || !class_exists(\Modules\Billing\Services\BillingAccountService::class)
+        ) {
+            return null;
+        }
+
+        return app(\Modules\Billing\Services\BillingAccountService::class);
     }
 }
