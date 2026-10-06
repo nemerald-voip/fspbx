@@ -1,7 +1,7 @@
 <template>
     <TransitionRoot as="div" :show="show">
         <Dialog as="div" class="relative z-10"
-            :inert="showNewGreetingModal || showNewNameGreetingModal || showDeviceCreateModal || showDeviceAssignModal || showUpdatePasswordModal">
+            :inert="showNewGreetingModal || showNewNameGreetingModal || showDeviceCreateModal || showDeviceAssignModal || showUpdatePasswordModal || showCompanyCallerIdModal">
             <TransitionChild as="div" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100"
                 leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0">
                 <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
@@ -50,7 +50,7 @@
                             </div>
 
 
-                            <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
+                            <Vueform v-if="!loading" ref="form$" @mounted="form => form.disableValidation()" :endpoint="submitForm" @success="handleSuccess"
                                 @error="handleError" @response="handleResponse" :display-errors="false" :default="{
                                     extension_uuid: options.item.extension_uuid ?? '',
                                     directory_first_name: options.item.directory_first_name ?? '',
@@ -524,10 +524,18 @@
                                                 <SelectElement name="outbound_caller_id_number"
                                                     :items="options.phone_numbers" :search="true" :native="false"
                                                     input-type="search" autocomplete="off"
-                                                    :conditions="[() => options.permissions.manage_external_caller_id_number]" />
+                                                    :conditions="[() => options.permissions.manage_external_caller_id_number]">
+                                                    <template #description>
+                                                        <CompanyCallerId v-if="showCompanyCallerId('outbound')"
+                                                            :defaults="companyCallerId" type="outbound"
+                                                            :phone-numbers="options.phone_numbers"
+                                                            :extension-name="form$?.el$('outbound_caller_id_name')?.value"
+                                                            @edit="showCompanyCallerIdModal = true" />
+                                                    </template>
+                                                </SelectElement>
 
                                                 <TextElement name="outbound_caller_id_name" :label="$t('Name')"
-                                                    :placeholder="$t('Enter External Caller ID Name')" :floating="false"
+                                                    :placeholder="companyNamePlaceholder('outbound') || $t('Enter External Caller ID Name')" :floating="false"
                                                     :conditions="[() => options.permissions.manage_external_caller_id_name]" />
 
                                                 <StaticElement name="emergency_caller_id_title" tag="h4"
@@ -536,12 +544,20 @@
                                                     :conditions="[() => options.permissions.manage_emergency_caller_id_number]" />
 
                                                 <SelectElement name="emergency_caller_id_number"
-                                                    :items="options.phone_numbers" :search="true" :native="false"
+                                                    :items="options.emergency_phone_numbers" :search="true" :native="false"
                                                     input-type="search" autocomplete="off"
-                                                    :conditions="[() => options.permissions.manage_emergency_caller_id_number]" />
+                                                    :conditions="[() => options.permissions.manage_emergency_caller_id_number]">
+                                                    <template #description>
+                                                        <CompanyCallerId v-if="showCompanyCallerId('emergency')"
+                                                            :defaults="companyCallerId" type="emergency"
+                                                            :phone-numbers="options.phone_numbers"
+                                                            :extension-name="form$?.el$('emergency_caller_id_name')?.value"
+                                                            @edit="showCompanyCallerIdModal = true" />
+                                                    </template>
+                                                </SelectElement>
 
                                                 <TextElement name="emergency_caller_id_name" :label="$t('Name')"
-                                                    :placeholder="$t('Enter Emergency Caller ID Name')" :floating="false"
+                                                    :placeholder="companyNamePlaceholder('emergency') || $t('Enter Emergency Caller ID Name')" :floating="false"
                                                     :conditions="[() => options.permissions.manage_emergency_caller_id_name]" />
 
                                                 <GroupElement name="container_caller_id" />
@@ -1750,10 +1766,8 @@
                                                 <StaticElement name="divider16" tag="hr"
                                                     :conditions="[() => options.permissions.extension_call_screen]" />
 
-                                                <TextElement name="max_registrations" input-type="number" :rules="[
-                                                    'nullable',
-                                                    'numeric',
-                                                ]" autocomplete="off" :label="$t('Maximum registrations')"
+                                                <TextElement name="max_registrations" input-type="number"
+                                                    autocomplete="off" :label="$t('Maximum registrations')"
                                                     :description="$t('Enter the maximum registration allowed for this user')"
                                                     :columns="{
                                                         default: {
@@ -1766,10 +1780,8 @@
                                                     }"
                                                     :conditions="[() => options.permissions.extension_max_registrations]" />
 
-                                                <TextElement name="limit_max" input-type="number" :rules="[
-                                                    'nullable',
-                                                    'numeric',
-                                                ]" autocomplete="off" :label="$t('Max number of outbound calls')"
+                                                <TextElement name="limit_max" input-type="number"
+                                                    autocomplete="off" :label="$t('Max number of outbound calls')"
                                                     :description="$t('Enter the max number of outgoing calls for this user.')"
                                                     :columns="{
                                                         default: {
@@ -1975,6 +1987,11 @@
         @close="showUpdatePasswordModal = false" @error="emitErrorToParentFromChild"
         @success="emitSuccessToParentFromChild" @refresh-data="handleSipCredentialsButtonClick" />
 
+    <CompanyCallerIdModal v-if="companyCallerId" :show="showCompanyCallerIdModal" :defaults="companyCallerId"
+        :phone-numbers="(options.phone_numbers ?? []).filter(item => item.value)"
+        @close="showCompanyCallerIdModal = false" @saved="companyCallerId = $event"
+        @success="emitSuccessToParentFromChild" />
+
 </template>
 
 <script setup>
@@ -1992,6 +2009,8 @@ import AssignExtensionDeviceForm from "../forms/AssignExtensionDeviceForm.vue";
 import UpdateSipPasswordModal from "../modal/UpdateSipPasswordModal.vue";
 import Badge from "@generalComponents/Badge.vue";
 import AssignedDevices from "../AssignedDevices.vue";
+import CompanyCallerId from '../CompanyCallerId.vue';
+import CompanyCallerIdModal from '../modal/CompanyCallerIdModal.vue';
 import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
 import { ExclamationTriangleIcon } from '@heroicons/vue/20/solid'
 import { trans } from '@i18n';
@@ -2046,6 +2065,19 @@ async function copy(value, key) {
 }
 
 const form$ = ref(null)
+const companyCallerId = ref(props.options?.company_caller_id)
+watch(() => props.options?.company_caller_id, value => { companyCallerId.value = value })
+const showCompanyCallerIdModal = ref(false)
+// Only explain the company caller ID while a company option (an empty value) is selected.
+const showCompanyCallerId = (type) => Boolean(companyCallerId.value
+    && !form$.value?.el$(`${type}_caller_id_number`)?.value)
+// An empty name falls back to the company name whenever company caller ID is active.
+const companyNamePlaceholder = (type) => {
+    const defaults = companyCallerId.value
+    const name = defaults?.values?.[`${type}_caller_id_name`]
+    const active = defaults?.status === 'ready' || (defaults?.status === 'shared' && defaults.enabled)
+    return active && name ? trans('Company name: :name', { name }) : ''
+}
 const showResetConfirmationModal = ref(false);
 const isDevicesLoading = ref(false)
 const isMobileAppOptionsLoading = ref(false)
@@ -2201,6 +2233,7 @@ watch(
 );
 
 const submitForm = async (FormData, form$) => {
+    Object.values(form$.elements$).forEach(clearErrorsRecursive)
     // Using form$.requestData will EXCLUDE conditional elements and it 
     // will submit the form as Content-Type: application/json . 
     const requestData = form$.requestData

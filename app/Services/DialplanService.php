@@ -62,7 +62,7 @@ class DialplanService
             ];
 
             if ($isNew) {
-                $data['app_uuid'] = (string) Str::uuid();
+                $data['app_uuid'] = $dialplan->app_uuid ?: (string) Str::uuid();
                 $data['insert_date'] = now();
                 $data['insert_user'] = session('user_uuid');
             } else {

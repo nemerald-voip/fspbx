@@ -104,7 +104,7 @@
                                                 <SelectElement v-if="permissions.manage_external_caller_id_number" name="outbound_caller_id_number" :items="options.phone_numbers" :search="true" :native="false" :label="$t('External Caller ID')" input-type="search" autocomplete="off" :placeholder="$t('Select number')" :floating="false" :columns="{ container: 11 }" :disabled="[['outbound_caller_id_number_checkbox', false]]" />
 
                                                 <CheckboxElement v-if="permissions.manage_emergency_caller_id_number" name="emergency_caller_id_number_checkbox" :submit="false" label="&nbsp;" :columns="{ container: 1 }" />
-                                                <SelectElement v-if="permissions.manage_emergency_caller_id_number" name="emergency_caller_id_number" :items="options.phone_numbers" :search="true" :native="false" :label="$t('Emergency Caller ID')" input-type="search" autocomplete="off" :placeholder="$t('Select number')" :floating="false" :columns="{ container: 11 }" :disabled="[['emergency_caller_id_number_checkbox', false]]" />
+                                                <SelectElement v-if="permissions.manage_emergency_caller_id_number" name="emergency_caller_id_number" :items="options.emergency_phone_numbers" :search="true" :native="false" :label="$t('Emergency Caller ID')" input-type="search" autocomplete="off" :placeholder="$t('Select number')" :floating="false" :columns="{ container: 11 }" :disabled="[['emergency_caller_id_number_checkbox', false]]" />
 
                                                 <GroupElement name="caller_id_footer" />
                                                 <ButtonElement name="submit_caller_id" :button-label="$t('Save')" :submits="true" align="right" />

@@ -908,6 +908,12 @@ class ExtensionsController extends Controller
             'permissions' => $permissions,
             'routes'      => $routes,
             'phone_numbers' => $phone_numbers ?? null,
+            // Emergency calls fall back to a separate company number, so name that choice distinctly.
+            'emergency_phone_numbers' => collect($phone_numbers ?? [])
+                ->map(fn ($item) => $item['value'] === '' ? ['value' => '', 'label' => __('Company Emergency Number')] : $item)
+                ->all(),
+            'company_caller_id' => app(\App\Services\CompanyCallerIdService::class)
+                ->options(\App\Models\Domain::whereKey($currentDomain)->firstOrFail()),
             'mobile_app' => [
                 'org_id' => $mobileAppOrgId ?? null,
                 'connections' => $mobileAppConnections ?? [],

@@ -54,6 +54,7 @@ use App\Http\Controllers\ScheduledJobCoordinationController;
 use App\Http\Controllers\ScheduledJobPeerController;
 use App\Http\Controllers\EmailTemplateController;
 use App\Http\Controllers\ExtensionsController;
+use App\Http\Controllers\CompanyCallerIdController;
 use App\Http\Controllers\ExtensionWelcomeEmailController;
 use App\Http\Controllers\ExtensionStatisticsController;
 use App\Http\Controllers\FaxesController;
@@ -421,6 +422,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
 
     // Extensions
     Route::post('extensions', [ExtensionsController::class, 'store'])->name('extensions.store');
+    Route::put('extensions/company-caller-id/{domain}', [CompanyCallerIdController::class, 'update'])->name('extensions.company-caller-id.update');
     Route::put('extensions/{extension}', [ExtensionsController::class, 'update'])->name('extensions.update');
     Route::get('extensions/data', [ExtensionsController::class, 'getData'])->name('extensions.data');
     Route::post('extensions/item-options', [ExtensionsController::class, 'getItemOptions'])->name('extensions.item.options');
