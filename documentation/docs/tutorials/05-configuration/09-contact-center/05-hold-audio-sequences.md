@@ -10,7 +10,7 @@ sidebar_position: 5
 Each Contact Center queue has two hold-audio modes under **Settings → Caller Experience**:
 
 * **Continuous stream** keeps the existing behavior: callers join audio already playing. The callback offer uses the delay in **Callbacks**. The queue's **Music on Hold** selection applies to this mode, and the field is shown only when it is selected.
-* **Audio sequence** starts at the first step for each new queue visit. Audio repeats while the caller waits. A callback offer can be placed between clips.
+* **Audio sequence** starts at the first step for each new queue visit. Audio repeats while the caller waits. Callback offers and queue-position announcements can be placed between clips.
 
 Existing queues remain on continuous playback. This feature does not change Basic Queues.
 
@@ -21,14 +21,29 @@ Existing queues remain on continuous playback. This feature does not change Basi
 3. Leave **Duration limit** blank for the whole clip, or enter the number of seconds to play from its beginning. The limit cannot exceed the source duration.
 4. Arrange the steps with the **Move up**, **Move down**, and **Remove** buttons on each step. They are icon buttons and work with the keyboard.
 5. Optionally select **Add callback offer**. The step names the digit callers press to accept, which comes from the **Callbacks** tab. This release supports one callback step per sequence.
-6. Select **Preview sequence** to hear the clips, callback prompt, and configured acceptance digit, or use a single step's play button to hear just that clip. The step playing is highlighted. Preview does not create a callback.
-7. **Save**. The status below the steps reads *Preparing*, *Ready*, *Failed*, or *Not prepared*; select **Refresh preparation status** to check it again.
+6. Optionally select **Add queue position** wherever callers should hear their current place in line. You can add more than one position step.
+7. Select **Preview sequence** to hear the clips, position announcements, callback prompt, and configured acceptance digit, or use a single step's play button to hear just that clip. The step playing is highlighted. Position previews use the English sample “You are number one in line.” Preview does not create a callback.
+8. **Save**. The status below the steps reads *Preparing*, *Ready*, *Failed*, or *Not prepared*; select **Refresh preparation status** to check it again.
 
 For example:
 
-`Music 20s → Commercial A → Callback offer → Music 20s → Commercial B → Music 60s`
+`Music 20s → Queue position → Commercial A → Callback offer → Music 60s`
 
-Each step shows when it plays, for example `0:00 – 0:20`, and whether the clip is trimmed. The summary above the steps shows the step count, the total audio time, and the callback's position. There can be up to 40 steps and 30 minutes of audio. Queue announcements pause the sequence and resume where it stopped, so elapsed waiting time can be longer than the displayed audio time.
+Each step shows when it plays, for example `0:00 – 0:20`, and whether the clip is trimmed. The summary above the steps shows the step count, the total audio time, and the callback's position. There can be up to 40 steps and 30 minutes of audio. Position and callback announcements add to the displayed clip time.
+
+## Advanced announcements
+
+**Periodic Greeting**, **Periodic announcement frequency**, and **Announce Caller Position In Queue** are available only in **Continuous stream** mode. Selecting **Audio sequence** disables these controls and their announcements automatically, so they cannot interrupt a commercial or another sequence clip. Their saved values are retained for switching back to Continuous stream.
+
+Add greeting recordings and queue-position steps directly to the sequence to choose where they play. Advanced announcements also stay disabled if the sequence is temporarily using fallback music.
+
+## Queue-position steps
+
+A queue-position step announces the caller's current place in line every time the sequence reaches it, including later loops. It uses the same voice prompts as existing position announcements. If the position is temporarily unavailable, the step is skipped and playback continues.
+
+Position steps work independently of **Announce Caller Position In Queue** in Advanced settings. Without a position step, an audio sequence does not announce queue positions.
+
+At least one audio clip is required. The displayed total counts clip time; position and callback announcements add to the actual waiting time.
 
 ## Callback behavior
 
