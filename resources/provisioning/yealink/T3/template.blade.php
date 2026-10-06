@@ -1,4 +1,4 @@
-{{-- version: 1.0.7 --}}
+{{-- version: 1.0.8 --}}
 
 @switch($flavor)
 
@@ -43,7 +43,7 @@
     account.{{ $n }}.subscribe_mwi_to_vm = {{ isset($settings['yealink_subscribe_mwi_to_vm']) ? '1' : '0' }}
     
     @if (!empty($line['outbound_proxy_primary']))
-        account.{{ $n }}.outbound_proxy_enable = 1
+        account.{{ $n }}.outbound_proxy_enable = {{ $settings['yealink_outbound_proxy_enable'] ?? '0' }}
         account.{{ $n }}.outbound_proxy.1.address = {{ $line['outbound_proxy_primary'] ?? '' }}
         account.{{ $n }}.outbound_proxy.2.address = {{ $line['outbound_proxy_secondary'] ?? ''}}
         account.{{ $n }}.outbound_proxy.1.port = {{ $line['sip_port'] ?? '5060' }}
