@@ -52,6 +52,7 @@ log = require "resources.functions.log".ring_group
 --- include libs
 	local route_to_bridge = require "resources.functions.route_to_bridge"
 	local play_file   = require "resources.functions.play_file"
+	local diversion = require "resources.functions.diversion"
 
 --json escape a value for the local FreeSWITCH webhook payload
 	local function json_escape(value)
@@ -849,7 +850,7 @@ log = require "resources.functions.log".ring_group
 								end
 
 							--set the destination dial string
-								dial_string = "[toll_allow=".. toll_allow ..",".. caller_id ..",sip_invite_domain="..domain_name..",domain_name="..domain_name..",domain_uuid="..domain_uuid..",call_direction="..call_direction..","..group_confirm..""..timeout_name.."="..destination_timeout..","..delay_name.."="..destination_delay.."]"..route_bridge
+								dial_string = "["..diversion.loopback_variables(session).."toll_allow=".. toll_allow ..",".. caller_id ..",sip_invite_domain="..domain_name..",domain_name="..domain_name..",domain_uuid="..domain_uuid..",call_direction="..call_direction..","..group_confirm..""..timeout_name.."="..destination_timeout..","..delay_name.."="..destination_delay.."]"..route_bridge
 						end
 
 					--add a delimiter between destinations
@@ -950,7 +951,7 @@ log = require "resources.functions.log".ring_group
 								elseif (tonumber(destination_number) == nil) then
 									dial_string = "["..group_confirm.."sip_invite_domain="..domain_name..",originate_timeout="..destination_timeout..",call_direction=outbound,domain_name="..domain_name..",domain_uuid="..domain_uuid.."]" .. destination_number;
 								else
-									dial_string = "["..group_confirm.."sip_invite_domain="..domain_name..",originate_timeout="..destination_timeout..",domain_name="..domain_name..",domain_uuid="..domain_uuid..",call_direction=outbound]loopback/" .. destination_number;
+									dial_string = "["..diversion.loopback_variables(session)..group_confirm.."sip_invite_domain="..domain_name..",originate_timeout="..destination_timeout..",domain_name="..domain_name..",domain_uuid="..domain_uuid..",call_direction=outbound]loopback/" .. destination_number;
 								end
 
 							--add the delimiter

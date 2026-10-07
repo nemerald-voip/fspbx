@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Destinations;
 use libphonenumber\NumberParseException;
 use libphonenumber\PhoneNumberFormat;
 use libphonenumber\PhoneNumberUtil;
@@ -10,6 +11,45 @@ class PhoneNumberService
 {
     /** @var array<string, string> */
     private array $countryCodes = [];
+
+    /** Resolve a literal configured DID without changing its routing expression. */
+    public function originalDid(Destinations $phoneNumber): ?string
+    {
+        $number = trim((string) $phoneNumber->destination_number);
+        $prefix = trim((string) $phoneNumber->destination_prefix);
+        $area = trim((string) $phoneNumber->destination_area_code);
+        $trunk = trim((string) $phoneNumber->destination_trunk_prefix);
+
+        // Patterns (N/X/Z, regexes, etc.) do not identify one business number.
+        if (! preg_match('/^\+?[0-9]+$/D', $number)
+            || ($prefix !== '' && ! preg_match('/^\+?[0-9]+$/D', $prefix))
+            || ! preg_match('/^[0-9]*$/D', $area)
+            || ! preg_match('/^[0-9]*$/D', $trunk)) {
+            return null;
+        }
+
+        $country = $this->countryCodeForDomain($phoneNumber->domain_uuid);
+        if (str_starts_with($number, '+')) {
+            $match = $this->dialplanMatchForCountry($number, $country);
+        } elseif ($prefix !== '') {
+            $callingCode = ltrim($prefix, '+');
+            $national = $area . $number;
+            // Avoid duplicating a prefix when the stored number is already a
+            // complete, valid international number.
+            $complete = $this->dialplanMatchForCountry('+' . $national, $country);
+            if ($area === '' && str_starts_with($number, $callingCode) && $complete['is_phone_number']) {
+                $match = $complete;
+            } else {
+                // libphonenumber handles national trunk prefixes. Do not strip
+                // leading zeros ourselves: they are significant in Italy.
+                $match = $this->dialplanMatchForCountry('+' . $callingCode . $national, $country);
+            }
+        } else {
+            $match = $this->dialplanMatchForCountry($area . $number, $country);
+        }
+
+        return $match['is_phone_number'] ? $match['canonical'] : null;
+    }
 
     public function countryCodeForDomain(?string $domainUuid = null): string
     {

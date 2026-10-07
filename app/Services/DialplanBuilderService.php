@@ -10,15 +10,16 @@ class DialplanBuilderService
 {
     public function buildDialplanForPhoneNumber(Destinations $phoneNumber, $domainName): void
     {
-
+        $originalDid = app(PhoneNumberService::class)->originalDid($phoneNumber);
         // logger($phoneNumber);
         // Data to pass to the Blade template
         $data = [
             'phone_number' => $phoneNumber,
+            'original_did_export' => $originalDid === null ? null : self::originalDidExport($originalDid),
             'domain_name' => $domainName,
             'fax_data' => $phoneNumber->fax()->first() ?? null,
             'dialplan_continue' => 'false',
-            'destination_condition_field' => get_domain_setting('destination'),
+            'destination_condition_field' => get_domain_setting('destination', $phoneNumber->domain_uuid),
         ];
 
         // Render the Blade template and get the XML content as a string
@@ -63,13 +64,13 @@ class DialplanBuilderService
 
         $dialPlan->save();
 
-        $this->generateDialplanDetailsForPhoneNumber($phoneNumber, $dialPlan);
+        $this->generateDialplanDetailsForPhoneNumber($phoneNumber, $dialPlan, $originalDid, $domainName);
 
         //clear fusionpbx cache
         $this->clearCacheForPhoneNumber($phoneNumber);
     }
 
-    protected function generateDialplanDetailsForPhoneNumber(Destinations $phoneNumber, Dialplans $dialPlan): void
+    protected function generateDialplanDetailsForPhoneNumber(Destinations $phoneNumber, Dialplans $dialPlan, ?string $originalDid = null, ?string $domainName = null): void
     {
         // Remove existing device lines
         if ($dialPlan->dialplan_details()->exists()) {
@@ -79,7 +80,7 @@ class DialplanBuilderService
         $detailOrder = 20;
         $detailGroup = 0;
 
-        $destination_condition_field = get_domain_setting('destination');
+        $destination_condition_field = get_domain_setting('destination', $phoneNumber->domain_uuid);
 
         if ($phoneNumber->destination_conditions) {
             $conditions = json_decode($phoneNumber->destination_conditions);
@@ -132,6 +133,7 @@ class DialplanBuilderService
                 $dialPlanDetails = new DialplanDetails();
                 $dialPlanDetails->domain_uuid = $dialPlan->domain_uuid;
                 $dialPlanDetails->dialplan_uuid = $dialPlan->dialplan_uuid;
+                $this->addOriginalDidDetails($phoneNumber, $dialPlan, $originalDid, $domainName, $detailGroup, $detailOrder);
                 $dialPlanDetails->dialplan_detail_tag = "action";
                 $dialPlanDetails->dialplan_detail_type = $condition->condition_app;
                 $dialPlanDetails->dialplan_detail_data = $condition->condition_data;
@@ -157,6 +159,8 @@ class DialplanBuilderService
         $dialPlanDetails->save();
 
         $detailOrder += 10;
+
+        $this->addOriginalDidDetails($phoneNumber, $dialPlan, $originalDid, $domainName, $detailGroup, $detailOrder);
 
         if (!empty($phoneNumber->destination_cid_name_prefix)) {
             $dialPlanDetails = new DialplanDetails();
@@ -445,6 +449,40 @@ class DialplanBuilderService
                 $dialPlanDetails->save();
                 $detailOrder += 10;
             }
+        }
+    }
+
+    public static function originalDidExport(string $did): string
+    {
+        return 'original_did=' . $did;
+    }
+
+    private function addOriginalDidDetails(Destinations $phoneNumber, Dialplans $dialPlan, ?string $did, ?string $domainName, int $group, int &$order): void
+    {
+        if ($did === null) {
+            return;
+        }
+
+        // Keep the editable details consistent with the template's account
+        // context, so a subsequent dialplan save still captures the DID.
+        foreach ([
+            ['export', 'call_direction=inbound', 'true'],
+            ['set', 'domain_uuid=' . $phoneNumber->domain_uuid, 'true'],
+            ['set', 'domain_name=' . $domainName, 'true'],
+            ['export', self::originalDidExport($did), 'false'],
+        ] as [$application, $data, $inline]) {
+            DialplanDetails::create([
+                'domain_uuid' => $phoneNumber->domain_uuid,
+                'dialplan_uuid' => $dialPlan->dialplan_uuid,
+                'dialplan_detail_tag' => 'action',
+                'dialplan_detail_type' => $application,
+                'dialplan_detail_data' => $data,
+                'dialplan_detail_inline' => $inline,
+                'dialplan_detail_enabled' => 'true',
+                'dialplan_detail_group' => $group,
+                'dialplan_detail_order' => $order,
+            ]);
+            $order += 10;
         }
     }
 

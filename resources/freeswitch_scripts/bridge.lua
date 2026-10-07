@@ -31,6 +31,8 @@ if blank(domain_uuid) and blank(domain_name) then
 end
 
 local headers = {}
+local diversion_headers = {}
+local diversion = require "resources.functions.diversion"
 local ok, destination = pcall(function()
     local Database = require "resources.functions.database"
     local dbh = Database.new("system")
@@ -70,7 +72,8 @@ local ok, destination = pcall(function()
         local value = tostring(row.header_value or "")
 
         if name:match("^[%w%-]+$") and value ~= "" and not value:match("[,\r\n]") then
-            table.insert(headers, "sip_h_" .. name .. "=" .. value)
+            table.insert(headers, { name = name, value = value })
+            if name:lower() == "diversion" then table.insert(diversion_headers, value) end
         end
     end)
     dbh:release()
@@ -90,8 +93,20 @@ end
 
 -- Keep bridge_destination readable and build the FreeSWITCH variable block
 -- only when the call is actually routed.
-if #headers > 0 then
-    local header_variables = table.concat(headers, ",")
+local extra_diversion = table.concat(diversion_headers, ", ")
+-- Existing routes opt in by enabling their diversion.lua action. Resolving a
+-- saved Bridge alone must not activate automatic Diversion after an upgrade.
+local prepared = session:getVariable("diversion_applied") ~= nil
+diversion.reset(session)
+local use_diversion = prepared and diversion.is_gateway(destination) and diversion.apply(session, extra_diversion)
+local variables = {}
+for _, header in ipairs(headers) do
+    if not (use_diversion and header.name:lower() == "diversion") then
+        variables[#variables + 1] = "sip_h_" .. header.name .. "=" .. header.value
+    end
+end
+if #variables > 0 then
+    local header_variables = table.concat(variables, ",")
 
     if destination:sub(1, 1) == "{" then
         destination = "{" .. header_variables .. "," .. destination:sub(2)

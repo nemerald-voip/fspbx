@@ -261,7 +261,11 @@ class OutboundRouteService
             $order += 10;
         }
 
-        $details[] = $this->detail(
+        // Optional module: available to enable, never executed by default.
+        $details[] = $this->detail('action', 'lua', 'stir_shaken.lua', $order, inline: 'false', enabled: 'false');
+        $order += 10;
+        $routing = [];
+        $routing[] = $this->detail(
             'action',
             match ($primary['type']) {
                 'transfer' => 'transfer',
@@ -274,7 +278,7 @@ class OutboundRouteService
         $order += 10;
 
         foreach ($fallbacks as $fallback) {
-            $details[] = $this->detail(
+            $routing[] = $this->detail(
                 'action',
                 $fallback['type'] === 'bridge_uuid' ? 'lua' : 'bridge',
                 $this->bridgeData($fallback, $prefixNumber, $route['abbrv']),
@@ -283,7 +287,43 @@ class OutboundRouteService
             $order += 10;
         }
 
+        $mode = null;
+        $order = end($details)['dialplan_detail_order'] + 10;
+        foreach ($routing as $detail) {
+            $next = self::diversionAction($detail['dialplan_detail_type'], $detail['dialplan_detail_data']);
+            if ($mode !== $next) {
+                $details[] = $this->detail('action', 'lua', $next, $order, inline: 'false');
+                $order += 10;
+                $mode = $next;
+            }
+            $detail['dialplan_detail_order'] = $order;
+            $details[] = $detail;
+            $order += 10;
+            if ($detail['dialplan_detail_type'] === 'lua' && str_starts_with($detail['dialplan_detail_data'], 'bridge.lua ')) {
+                $mode = null;
+            }
+        }
+
         return $details;
+    }
+
+    /** A header action never replaces native routing applications. */
+    public static function diversionAction(string $application, string $data): string
+    {
+        return ($application === 'bridge' && self::supportsDiversion($data))
+            || ($application === 'lua' && str_starts_with($data, 'bridge.lua '))
+            ? 'diversion.lua' : 'diversion.lua clear';
+    }
+
+    /** Only definite gateway bridges receive a generated header. */
+    public static function supportsDiversion(string $destination): bool
+    {
+        if (stripos($destination, 'sip_h_Diversion') !== false) {
+            return false;
+        }
+        // Native generated gateway routes are literal single endpoints. Saved
+        // Bridges are resolved and classified separately in bridge.lua.
+        return (bool) preg_match('~^sofia/gateway/[a-zA-Z0-9_.-]+/[^,\s|{}\[\]]+$~D', $destination);
     }
 
     private function persistDialplan(array $attributes, array $details): Dialplans
