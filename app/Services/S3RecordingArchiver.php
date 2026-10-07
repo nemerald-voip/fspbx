@@ -84,10 +84,15 @@ class S3RecordingArchiver
             // Persist before the database commit, so a crash after commit or a
             // failed unlink can be recovered without uploading again.
             $receiptPath = $this->saveReceipt($receipt);
+            $recordingStart = Carbon::parse($recording->start_stamp);
             $updated = $write(fn () => CDR::query()
                 ->where('domain_uuid', $recording->domain_uuid)
                 ->where('record_path', $recording->record_path)
                 ->where('record_name', $recording->record_name)
+                ->whereBetween('start_stamp', [
+                    $recordingStart->copy()->subDay(),
+                    $recordingStart->copy()->addDay(),
+                ])
                 ->update(['record_path' => 'S3', 'record_name' => $key]));
             if (! $updated) {
                 throw new RuntimeException('Recording references changed before the archive could be committed.');
