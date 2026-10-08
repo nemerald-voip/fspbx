@@ -7,7 +7,6 @@ use Aws\Exception\AwsException;
 use Aws\S3\S3Client;
 use Carbon\Carbon;
 use Closure;
-use Illuminate\Support\Facades\File;
 use RuntimeException;
 use Symfony\Component\Process\Process;
 
@@ -75,15 +74,6 @@ class S3RecordingArchiver
             if (! is_file($source) || hash_file('sha256', $source) !== $sourceHash) {
                 throw new RuntimeException('The local recording changed during upload; retry deferred.');
             }
-            $receipt = [
-                'domain_uuid' => $recording->domain_uuid,
-                'record_path' => $recording->record_path, 'record_name' => $recording->record_name,
-                'source_hash' => $sourceHash, 'key' => $key, 'size' => $size, 'checksum' => $checksum,
-                'storage_hash' => $this->storage->getSettingsHash($settings),
-            ];
-            // Persist before the database commit, so a crash after commit or a
-            // failed unlink can be recovered without uploading again.
-            $receiptPath = $this->saveReceipt($receipt);
             $recordingStart = Carbon::parse($recording->start_stamp);
             $updated = $write(fn () => CDR::query()
                 ->where('domain_uuid', $recording->domain_uuid)
@@ -97,7 +87,6 @@ class S3RecordingArchiver
             if (! $updated) {
                 throw new RuntimeException('Recording references changed before the archive could be committed.');
             }
-            $this->cleanup($receiptPath, $receipt, $settings, $authorize);
 
             return $key;
         } finally {
@@ -107,93 +96,6 @@ class S3RecordingArchiver
                 }
             }
         }
-    }
-
-    public function cleanup(string $receiptPath, array $receipt, array $settings, Closure $authorize): void
-    {
-        $authorize();
-        if ($receipt['storage_hash'] !== $this->storage->getSettingsHash($settings)) {
-            return;
-        }
-        // A receipt alone never authorizes deletion: require committed S3
-        // references and no remaining local references, including other accounts.
-        if (! CDR::query()->where('domain_uuid', $receipt['domain_uuid'])
-            ->where('record_path', 'S3')->where('record_name', $receipt['key'])->exists()
-            || CDR::query()->where('record_path', $receipt['record_path'])
-                ->where('record_name', $receipt['record_name'])->exists()) {
-            return;
-        }
-        $source = rtrim($receipt['record_path'], '/').'/'.$receipt['record_name'];
-        if (is_file($source)) {
-            $s3 = $this->storage->buildClientFromSettings($settings);
-            if (! $this->verified($s3, $settings['bucket'], $receipt['key'], $receipt['size'], $receipt['checksum'])) {
-                throw new RuntimeException('Archived recording could not be verified for local cleanup.');
-            }
-            $authorize();
-            if (hash_file('sha256', $source) !== $receipt['source_hash']) {
-                throw new RuntimeException('Local recording changed; retained for review.');
-            }
-            if (! $this->deleteSource($source)) {
-                throw new RuntimeException('Local cleanup failed; it will be retried on a later run.');
-            }
-        }
-        if (is_file($receiptPath)) {
-            unlink($receiptPath);
-        }
-    }
-
-    public function receipts(): iterable
-    {
-        if (! is_dir($this->receiptDirectory())) {
-            return;
-        }
-        $count = 0;
-        foreach (new \DirectoryIterator($this->receiptDirectory()) as $file) {
-            if (! $file->isFile() || $file->getExtension() !== 'json') {
-                continue;
-            }
-            $receipt = json_decode(file_get_contents($file->getPathname()), true);
-            if (is_array($receipt) && count(array_intersect([
-                'domain_uuid', 'record_path', 'record_name', 'source_hash', 'key', 'size', 'checksum', 'storage_hash',
-            ], array_keys($receipt))) === 8) {
-                yield $file->getPathname() => $receipt;
-            }
-            if (++$count >= 2000) {
-                break;
-            }
-        }
-    }
-
-    protected function receiptDirectory(): string
-    {
-        return storage_path('app/s3-upload-cleanup');
-    }
-
-    protected function saveReceipt(array $receipt): string
-    {
-        File::ensureDirectoryExists($this->receiptDirectory(), 0700);
-        $path = $this->receiptDirectory().'/'.hash('sha256', json_encode($receipt)).'.json';
-        $temporary = tempnam($this->receiptDirectory(), '.receipt-');
-        if ($temporary === false) {
-            throw new RuntimeException('Could not create an archive cleanup receipt.');
-        }
-        try {
-            if (file_put_contents($temporary, json_encode($receipt, JSON_THROW_ON_ERROR)) === false
-                || ! rename($temporary, $path)) {
-                throw new RuntimeException('Could not persist the archive cleanup receipt.');
-            }
-        } finally {
-            if (is_file($temporary)) {
-                unlink($temporary);
-            }
-        }
-
-        return $path;
-    }
-
-    protected function deleteSource(string $source): bool
-    {
-        return unlink($source);
     }
 
     protected function convert(string $source, string $destination): void
