@@ -93,6 +93,7 @@ class AccountSettingsController extends Controller
                 'pms_provider_options' => app(PmsProviderSettings::class)->options(),
                 'messagingSettings' => [
                     'enabled' => app(\App\Services\Messaging\PhotoCompressionSettings::class)->enabled(session('domain_uuid')),
+                    'convert_photos' => app(\App\Services\Messaging\PhotoCompressionSettings::class)->conversionEnabled(session('domain_uuid')),
                     'available' => app(\App\Services\Messaging\PhotoCompressionService::class)->available(),
                 ],
                 // Schema-driven General-tab settings: the declarative field
@@ -315,17 +316,23 @@ class AccountSettingsController extends Controller
             && \App\Services\Messaging\MessageSettingsAccess::canManage(), 403);
         $data = $request->validate([
             'enabled' => ['sometimes', 'boolean'],
+            'convert_photos' => ['sometimes', 'boolean'],
         ]);
-        if (($data['enabled'] ?? false) && !app(\App\Services\Messaging\PhotoCompressionService::class)->available()) {
+        if ((($data['enabled'] ?? false) || ($data['convert_photos'] ?? false))
+            && !app(\App\Services\Messaging\PhotoCompressionService::class)->available()) {
             throw \Illuminate\Validation\ValidationException::withMessages([
-                'enabled' => [__('Photo compression is unavailable. Please contact your administrator.')],
+                ($data['enabled'] ?? false) ? 'enabled' : 'convert_photos' => [__('Photo compression is unavailable. Please contact your administrator.')],
             ]);
         }
         if (array_key_exists('enabled', $data)) {
             app(\App\Services\Messaging\PhotoCompressionSettings::class)->set(session('domain_uuid'), $data['enabled']);
         }
+        if (array_key_exists('convert_photos', $data)) {
+            app(\App\Services\Messaging\PhotoCompressionSettings::class)->setConversion(session('domain_uuid'), $data['convert_photos']);
+        }
         return response()->json([
             'enabled' => app(\App\Services\Messaging\PhotoCompressionSettings::class)->enabled(session('domain_uuid')),
+            'convert_photos' => app(\App\Services\Messaging\PhotoCompressionSettings::class)->conversionEnabled(session('domain_uuid')),
             'messages' => ['success' => [__('Messaging settings saved.')]],
         ]);
     }
