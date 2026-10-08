@@ -131,7 +131,17 @@
 			event:addHeader('event-string', 'check-sync;reboot=true');
 		end
 		if (command == "check_sync") then
-			event:addHeader('event-string', 'resync');
+			event:addHeader('event-string', 'check-sync;reboot=false');
+		end
+	end
+
+--sangoma P/D-series (XML provisioning; D-series reconfigure requires firmware 2.3+)
+	if (vendor == "sangoma-p" or vendor == "sangoma-d") then
+		if (command == "reboot") then
+			event:addHeader('event-string', 'check-sync');
+		end
+		if (command == "check_sync") then
+			event:addHeader('event-string', 'check-sync-reconfig');
 		end
 	end
 

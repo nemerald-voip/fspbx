@@ -2,8 +2,12 @@
 
 namespace Tests\Unit;
 
+use App\Events\StripeWebhookReceived;
+use Illuminate\Contracts\Queue\Job;
+use Illuminate\Events\CallQueuedListener;
 use Illuminate\Support\Carbon;
 use Mockery;
+use Modules\Billing\Listeners\MirrorStripeBillingEvent;
 use Modules\Billing\Models\BillingInvoice;
 use Modules\Billing\Models\BillingPayment;
 use Modules\Billing\Services\BillingAccountHistoryService;
@@ -175,6 +179,26 @@ class BillingAccountHistoryTest extends TestCase
         $history->handleEvent(['type' => 'charge.dispute.created', 'livemode' => false, 'data' => ['object' => ['id' => 'dp_1', 'object' => 'dispute']]]);
 
         // Mockery verifies on tear down that no Stripe client was requested.
+        $this->addToAssertionCount(1);
+    }
+
+    public function test_queued_webhook_listener_runs_with_only_the_event(): void
+    {
+        $history = Mockery::mock(BillingAccountHistoryService::class);
+        $history->shouldReceive('handleEvent')->once()->with(['type' => 'invoice.paid']);
+        $this->app->instance(BillingAccountHistoryService::class, $history);
+
+        // Same path as a queue worker: the container builds the listener and
+        // handle() receives only the event, so services must come in through
+        // the constructor.
+        $queued = new CallQueuedListener(
+            MirrorStripeBillingEvent::class,
+            'handle',
+            [new StripeWebhookReceived(['type' => 'invoice.paid'])]
+        );
+        $queued->setJob(Mockery::mock(Job::class));
+        $queued->handle($this->app);
+
         $this->addToAssertionCount(1);
     }
 

@@ -127,7 +127,7 @@
                                                         'side_keys_submit',
 
                                                     ]"
-                                                    :conditions="[() => options?.item?.device_vendor == 'fanvil']" />
+                                                    :conditions="[() => ['fanvil', 'sangoma'].includes(options?.item?.device_vendor)]" />
 
                                                 <FormTab name="multi_purpose_keys" :label="$t('Multi Purpose Keys')" :elements="[
                                                     'multi_purpose_keys_container',
@@ -149,7 +149,7 @@
                                                     'expansion_keys_submit_keys',
 
                                                 ]"
-                                                    :conditions="[() => options?.item?.device_vendor == 'cisco' || options?.item?.device_vendor == 'snom' || options?.item?.device_vendor == 'yealink']" />
+                                                    :conditions="[() => ['cisco', 'snom', 'yealink', 'sangoma'].includes(options?.item?.device_vendor)]" />
 
                                                 <FormTab name="phonebook" :label="$t('Phonebook')" :elements="[
                                                     'phonebook_title',
@@ -647,10 +647,10 @@
                                                 <ButtonElement name="submit_keys" :button-label="$t('Save')" :submits="true"
                                                     align="right" />
 
-                                                <!-- Fanvil Side Keys -->
+                                                <!-- Side Keys -->
                                                 <StaticElement name="side_keys_title" tag="h4"
                                                     :content="$t('Side Keys')"
-                                                    :description="$t('Keys beside the display on supported Fanvil phones. Use these for primary-screen line appearances and other call actions.')" />
+                                                    :description="$t('Keys beside the display on supported Fanvil phones and built-in Rapid Dial keys on Sangoma D50/D70 phones.')" />
 
                                                 <GroupElement name="side_keys_container" />
                                                 <ListElement name="side_keys" :sort="true" size="sm"

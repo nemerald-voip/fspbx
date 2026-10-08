@@ -141,7 +141,7 @@
                                                     align="right" />
 
                                                 <StaticElement name="side_header" tag="h4" :content="$t('Side Keys')"
-                                                    :description="$t('Keys beside the display on supported Fanvil phones. Use these for primary-screen line appearances and other call actions.')" />
+                                                    :description="$t('Keys beside the display on supported Fanvil phones and built-in Rapid Dial keys on Sangoma D50/D70 phones.')" />
                                                 <DeviceKeyTemplateKeyList name="side_keys" area="side"
                                                     :key-types="keyTypes" :form-data="form$?.data"
                                                     :get-next-key-number="getNextKeyNumber"
