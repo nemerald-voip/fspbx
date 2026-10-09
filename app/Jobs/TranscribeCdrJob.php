@@ -102,12 +102,21 @@ class TranscribeCdrJob implements ShouldQueue
             // 2) Kick off provider
             $result = $service->transcribeCdr($this->xmlCdrUuid, $this->domainUuid, $this->overrides);
 
-            CallTranscription::where('xml_cdr_uuid', $this->xmlCdrUuid)->update([
+            $updateData = [
                 'external_id'      => data_get($result, 'id'),
                 'status'           => data_get($result, 'status'),
                 'request_payload'  => $service->payload ?? null,
                 'response_payload' => $result ?: null,
-            ]);
+            ];
+
+            // For synchronous providers (e.g. ElevenLabs), the result is
+            // already complete — store it as the final result immediately.
+            if (data_get($result, 'status') === 'completed') {
+                $updateData['result_payload'] = $result;
+                $updateData['completed_at']   = now();
+            }
+
+            CallTranscription::where('xml_cdr_uuid', $this->xmlCdrUuid)->update($updateData);
     
         }, function () {
             $this->release(30);
