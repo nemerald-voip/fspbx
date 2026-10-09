@@ -20,10 +20,11 @@ class OutboundPhotoService
 
         $media = $message->media;
         $compress = $this->settings->enabled($message->domain_uuid);
-        $photos = array_filter($media, function ($item) use ($compress) {
+        $convert = $this->settings->conversionEnabled($message->domain_uuid);
+        $photos = array_filter($media, function ($item) use ($compress, $convert) {
             $format = $this->photoFormat($item);
-            return in_array($format, ['heic', 'webp', 'avif', 'tiff'], true)
-                || ($compress && in_array($format, ['jpeg', 'png'], true));
+            return ($convert && in_array($format, ['heic', 'webp', 'avif', 'tiff'], true))
+                || ($compress && ($format === 'jpeg' || ($convert && $format === 'png')));
         });
         if (!$photos) return;
         $perPhoto = null;

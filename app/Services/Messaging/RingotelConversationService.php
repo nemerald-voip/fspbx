@@ -198,21 +198,9 @@ class RingotelConversationService
             }
         }
 
-        // A known legacy conversation cannot be recovered by creating an empty session:
-        // live testing showed that this can return a different, concurrently active session.
-        $legacyMessages = Messages::query()->where('domain_uuid', $context['domain_uuid'])
-            ->where(fn ($query) => $query->where('extension_uuid', $context['extension_uuid'])->orWhereNull('extension_uuid'))
-            ->whereNull('delivery_meta->ringotel_tracking')
-            ->select(['source', 'destination', 'direction'])->cursor();
-        foreach ($legacyMessages as $legacy) {
-            $local = $legacy->direction === 'in' ? $legacy->destination : $legacy->source;
-            $remote = $legacy->direction === 'in' ? $legacy->source : $legacy->destination;
-            if ($this->normalize($local, $context['country']) === $context['local_number']
-                && $this->normalize($remote, $context['country']) === $context['remote_number']) {
-                throw new RuntimeException('Existing conversation has no retained Ringotel session. Bind a verified session with ringotel:sync-message --session.');
-            }
-        }
-
+        // Legacy history may have no retained session. Establish a Ringotel session
+        // for this user/contact; FS PBX history stays in its existing conversation.
+        // Ringotel can return a new session, so do not replay historical messages.
         $result = $this->api->message([
             'orgid' => $context['org_id'],
             'from' => $context['remote_number'],
