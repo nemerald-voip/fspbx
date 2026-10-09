@@ -259,7 +259,11 @@ class LdapDirectorySyncService
                 'display_name' => $profile['display_name'],
                 'extension' => $profile['extension'],
                 'remote_enabled' => $profile['remote_enabled'],
-                'profile' => $profile,
+                // Keep projection ownership separate from the latest remote value.
+                // This uses the existing replicated JSON column on both nodes.
+                'profile' => $profile + [
+                    '_extension_assignment' => $directoryUser->profile['_extension_assignment'] ?? null,
+                ],
                 'last_seen_at' => $seenAt,
             ]);
 
@@ -272,9 +276,9 @@ class LdapDirectorySyncService
 
             $wasLinked = filled($directoryUser->user_uuid);
             $directoryUser->user_uuid = $localUser->user_uuid;
-            $directoryUser->save();
 
             $this->projectUser($directory, $domain, $directoryUser, $localUser, $profile, $previousDirectoryEmail);
+            $directoryUser->save();
             $changedUserUuids[] = $localUser->user_uuid;
 
             if ($wasLinked) {
@@ -379,6 +383,7 @@ class LdapDirectorySyncService
         if ($directoryUser->user_uuid) {
             $linkedUser = User::query()
                 ->where('domain_uuid', $directory->domain_uuid)
+                ->lockForUpdate()
                 ->find($directoryUser->user_uuid);
 
             if ($linkedUser) {
@@ -390,6 +395,7 @@ class LdapDirectorySyncService
             // so this same sync can match or recreate the local user.
             $this->removeManagedLocalGroups($directoryUser);
             $directoryUser->user_uuid = null;
+            $directoryUser->profile = array_diff_key($directoryUser->profile ?? [], ['_extension_assignment' => true]);
             $directoryUser->save();
             $this->messages[] = "{$profile['username']} was relinked because its local user no longer existed.";
         }
@@ -410,6 +416,12 @@ class LdapDirectorySyncService
             ->first();
 
         if ($user) {
+            $user = User::query()
+                ->where('domain_uuid', $directory->domain_uuid)
+                ->whereKey($user->user_uuid)
+                ->lockForUpdate()
+                ->firstOrFail();
+
             $alreadyManaged = LdapDirectoryUser::query()
                 ->where('user_uuid', $user->user_uuid)
                 ->where('directory_uuid', '!=', $directory->directory_uuid)
@@ -506,6 +518,36 @@ class LdapDirectorySyncService
             return;
         }
 
+        $assignment = $directoryUser->profile['_extension_assignment'] ?? null;
+        $currentExtensionUuid = $user->extension_uuid ?: null;
+
+        if (is_array($assignment) && ($assignment['user_uuid'] ?? null) === $user->user_uuid
+            && array_key_exists('extension_uuid', $assignment)) {
+            // A different assignment, including an explicit local clear, is an override.
+            $canAssign = $currentExtensionUuid === $assignment['extension_uuid'];
+        } else {
+            $currentNumber = $currentExtensionUuid === null ? null : Extensions::query()
+                ->where('domain_uuid', $directory->domain_uuid)
+                ->whereKey($currentExtensionUuid)
+                ->value('extension');
+            $previousNumber = trim((string) $directoryUser->getRawOriginal('extension'));
+
+            // Adopt matching legacy links before overwriting their imported value.
+            // An already-divergent legacy assignment has no reliable ownership evidence.
+            $canAssign = $currentExtensionUuid === null
+                || $currentNumber === $number
+                || ($directoryUser->getRawOriginal('user_uuid') === $user->user_uuid
+                    && $previousNumber !== '' && $currentNumber === $previousNumber);
+        }
+
+        if (! $canAssign) {
+            $this->messages[] = "{$profile['username']} already has a different manually assigned extension.";
+            return;
+        }
+
+        // Retain ownership even if the new number cannot be linked this run.
+        $this->rememberExtensionAssignment($directoryUser, $user);
+
         $extension = Extensions::query()
             ->where('domain_uuid', $directory->domain_uuid)
             ->where('extension', $number)
@@ -520,12 +562,18 @@ class LdapDirectorySyncService
             return;
         }
 
-        if ($user->extension_uuid && $user->extension_uuid !== $extension->extension_uuid) {
-            $this->messages[] = "{$profile['username']} already has a different manually assigned extension.";
-            return;
-        }
-
         $user->extension_uuid = $extension->extension_uuid;
+        $this->rememberExtensionAssignment($directoryUser, $user);
+    }
+
+    private function rememberExtensionAssignment(LdapDirectoryUser $directoryUser, User $user): void
+    {
+        $directoryUser->profile = array_replace($directoryUser->profile ?? [], [
+            '_extension_assignment' => [
+                'user_uuid' => $user->user_uuid,
+                'extension_uuid' => $user->extension_uuid ?: null,
+            ],
+        ]);
     }
 
     private function createDefaultExtension(LdapDirectory $directory, Domain $domain, array $profile): ?Extensions
