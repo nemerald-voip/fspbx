@@ -721,6 +721,7 @@ const billingBadge = computed(() => {
 
 const invoiceStatusLabels = computed(() => ({
     open: trans('Open'),
+    processing: trans('Processing'),
     past_due: trans('Past due'),
     paid: trans('Paid'),
     void: trans('Void'),
@@ -734,6 +735,7 @@ const invoiceStatusLabel = (status) => invoiceStatusLabels.value[status] ?? stat
 const invoiceStatusClasses = (status) => ({
     paid: 'bg-emerald-50 text-emerald-700',
     open: 'bg-blue-50 text-blue-700',
+    processing: 'bg-amber-50 text-amber-800',
     past_due: 'bg-rose-50 text-rose-700',
 }[status] ?? 'bg-gray-100 text-gray-600');
 
