@@ -125,6 +125,7 @@ This repo is a Laravel, Vue/Inertia, VueForm, and FreeSWITCH application. Before
 
 - Not every server has optional modules under `Modules/`. Main-repo features should not assume an optional module exists unless the code has an explicit availability check and a safe fallback.
 - Module-specific implementation notes belong in an `AGENTS.md` inside that module instead of the root guide.
+- Modules add menu entries at request time, not as `v_menu_items` rows: call `App\Support\ModuleMenuItems::addToAdvanced(title, link, permission)` from the module's service provider (it only boots while the module is enabled). `HandleInertiaRequests` applies them to copies of the session menu, finds Advanced by its `/default-settings`, `/menus`, `/modules` links (titles and IDs differ per menu and language), skips links already in the menu, and gives the entries their own menu when the user has no Advanced menu. Legacy `/public` pages build their own menu and don't show these entries.
 
 ## FreeSWITCH Modules Page
 
