@@ -33,7 +33,12 @@ class OutboundRouteService
                 ])->filter()->values()->all();
 
                 $created[] = $this->persistDialplan([
-                    'dialplan_name' => $this->routeName($primary, $route['abbrv'], $customName),
+                    'dialplan_name' => $this->routeName(
+                        $primary,
+                        $route['abbrv'],
+                        $customName,
+                        (bool) ($validated['preserve_dialplan_name'] ?? false)
+                    ),
                     'dialplan_order' => (string) $validated['dialplan_order'],
                     'dialplan_continue' => 'false',
                     'dialplan_enabled' => $validated['dialplan_enabled'],
@@ -146,9 +151,13 @@ class OutboundRouteService
         ];
     }
 
-    private function routeName(array $destination, string $abbrv, ?string $customName = null): string
+    private function routeName(array $destination, string $abbrv, ?string $customName = null, bool $preserveCustomName = false): string
     {
         if (filled($customName)) {
+            if ($preserveCustomName) {
+                return $customName;
+            }
+
             return $customName . ' - ' . $abbrv;
         }
 
