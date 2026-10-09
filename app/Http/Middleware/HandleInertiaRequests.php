@@ -6,6 +6,7 @@ use Inertia\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use App\Support\Localization\LocaleRegistry;
+use App\Support\ModuleMenuItems;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -49,7 +50,8 @@ class HandleInertiaRequests extends Middleware
             // other way to know a dialect's fallback parents.
             'localeChain' => fn() => app(LocaleRegistry::class)->chain(app()->getLocale()),
 
-            'menus' => Session::get('menu'),
+            // The login-time menu plus entries from enabled modules the user may see.
+            'menus' => fn () => app(ModuleMenuItems::class)->apply(Session::get('menu')),
 
             'domainSelectPermission' => Session::get('domain_select'),
 

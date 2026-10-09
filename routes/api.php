@@ -143,6 +143,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::get('/dashboard/data', [DashboardController::class, 'getData'])->name('dashboard.data');
     Route::get('/dashboard/counts', [DashboardController::class, 'getCounts'])->name('dashboard.counts');
     Route::get('/dashboard/my-extension-status', [DashboardController::class, 'getMyExtensionStatus'])->name('dashboard.my-extension-status');
+    Route::get('/dashboard/call-stats', [DashboardController::class, 'getCallStats'])->name('dashboard.call-stats');
     Route::get('/dashboard/customer-notes', [CustomerNotesController::class, 'show'])->name('dashboard.customer-notes');
     Route::put('/dashboard/customer-notes', [CustomerNotesController::class, 'update'])->name('dashboard.customer-notes.update');
 
