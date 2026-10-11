@@ -74,6 +74,7 @@ class Flag extends Model
             })
             ->orderBy('ring_group_extension')
             ->get(['ring_group_extension', 'ring_group_name'])
+            ->toBase()
             ->map(fn ($row) => __('Ring Group') . ': ' . $row->ring_group_extension . ' - ' . $row->ring_group_name);
 
         $ivrs = IvrMenus::query()
@@ -85,6 +86,7 @@ class Flag extends Model
             })
             ->orderBy('ivr_menu_extension')
             ->get(['ivr_menu_extension', 'ivr_menu_name'])
+            ->toBase()
             ->map(fn ($row) => __('Virtual Receptionist') . ': ' . $row->ivr_menu_extension . ' - ' . $row->ivr_menu_name);
 
         return $ringGroups->merge($ivrs)->values()->all();
