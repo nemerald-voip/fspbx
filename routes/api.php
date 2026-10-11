@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\LocationsController;
 use App\Http\Controllers\Api\ProvisioningTemplateController;
 use App\Http\Controllers\BasicQueueController;
 use App\Http\Controllers\BusinessHoursController;
+use App\Http\Controllers\FlagsController;
 use App\Http\Controllers\BridgeController;
 use App\Http\Controllers\CallBlockController;
 use App\Http\Controllers\CallWebhookController;
@@ -333,6 +334,15 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('business-hours/bulk-delete', [BusinessHoursController::class, 'bulkDelete'])->name('business-hours.bulk.delete');
     Route::post('business-hours/select-all', [BusinessHoursController::class, 'selectAll'])->name('business-hours.select.all');
     Route::post('business-hours/duplicate', [BusinessHoursController::class, 'duplicate'])->name('business-hours.duplicate');
+
+    // Flags
+    Route::get('flags/data', [FlagsController::class, 'getData'])->name('flags.data');
+    Route::post('flags', [FlagsController::class, 'store'])->name('flags.store');
+    Route::put('flags/{flag}', [FlagsController::class, 'update'])->name('flags.update');
+    Route::post('flags/item-options', [FlagsController::class, 'getItemOptions'])->name('flags.item.options');
+    Route::post('flags/select-all', [FlagsController::class, 'selectAll'])->name('flags.select.all');
+    Route::post('flags/bulk-delete', [FlagsController::class, 'bulkDelete'])->name('flags.bulk.delete');
+    Route::post('flags/bulk-toggle', [FlagsController::class, 'bulkToggle'])->name('flags.bulk.toggle');
 
     // Holiday Hours
     Route::resource('/holiday-hours', HolidayHoursController::class);

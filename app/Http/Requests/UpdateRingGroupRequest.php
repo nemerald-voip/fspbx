@@ -132,6 +132,8 @@ class UpdateRingGroupRequest extends FormRequest
                 'sometimes',
                 'required',
             ],
+
+            ...\App\Services\FlagService::overrideRules(),
         ];
     }
 
@@ -141,6 +143,7 @@ class UpdateRingGroupRequest extends FormRequest
             'timeout_action.required' => 'The no answer action is required.',
             'members.*.delay.required_with' =>  'The member setting is required',
             'members.*.timeout.required_with' =>  'The member setting is required',
+            ...\App\Services\FlagService::overrideMessages(),
             'forward_action.required_if' =>  'The action is required when call forwarding is enabled.',
             'notification_email.required_if' => 'The notification email is required when missed call notifications are enabled.',
             'forward_target.required_unless' =>  'The forwarding target is required',

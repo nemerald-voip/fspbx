@@ -58,6 +58,8 @@ class UpdateVirtualReceptionistRequest extends FormRequest
             ],
             'exit_target_uuid' => 'nullable',
             'direct_dial' => 'present',
+
+            ...\App\Services\FlagService::overrideRules(),
         ];
     }
 
@@ -99,6 +101,11 @@ class UpdateVirtualReceptionistRequest extends FormRequest
         $input = preg_replace('/[^\x20-\x7E]/', '', $input);
 
         return $input;
+    }
+
+    public function messages(): array
+    {
+        return \App\Services\FlagService::overrideMessages();
     }
 
     /**

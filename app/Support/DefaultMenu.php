@@ -56,6 +56,7 @@ class DefaultMenu
                     ['title' => __('Ring Groups', [], $locale), 'link' => '/ring-groups', 'groups' => ['superadmin', 'admin']],
                     ['title' => __('Streams', [], $locale), 'link' => '/streams', 'groups' => ['superadmin']],
                     ['title' => __('Business Hours', [], $locale), 'link' => '/business-hours', 'groups' => ['superadmin', 'admin']],
+                    ['title' => __('Flags', [], $locale), 'link' => '/flags', 'groups' => ['superadmin', 'admin']],
                     ['title' => __('Voicemails', [], $locale), 'link' => '/voicemails', 'groups' => ['superadmin', 'admin']],
                     ['title' => __('Wakeup Calls', [], $locale), 'link' => '/wakeup-calls', 'groups' => ['superadmin', 'admin']],
                     ['title' => __('Scheduled Announcements', [], $locale), 'link' => '/scheduled-announcements', 'groups' => ['superadmin', 'admin']],
