@@ -120,6 +120,14 @@ class Kernel extends ConsoleKernel
             $schedule->job(new ProcessScheduledAnnouncements())->everyMinute();
         }
 
+        // Local on every server: each one cuts PCAPs from its own capture spool.
+        // The installer runs the scheduler as root; PCAP files must stay owned by www-data.
+        $schedule->command('pcap:maintain')
+            ->user(function_exists('posix_geteuid') && posix_geteuid() === 0 ? 'www-data' : null)
+            ->everyMinute()
+            ->withoutOverlapping(15)
+            ->runInBackground();
+
         $schedule->command('ldap:dispatch-due')->everyFiveMinutes()->withoutOverlapping();
         $schedule->command('scheduled-jobs:maintain')->everyFiveMinutes()->withoutOverlapping();
 

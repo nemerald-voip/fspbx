@@ -72,6 +72,7 @@ class DefaultMenu
                     ['title' => __('Extension Statistics', [], $locale), 'link' => '/extension-statistics', 'groups' => ['superadmin', 'admin']],
                     ['title' => __('Firewall', [], $locale), 'link' => '/firewall', 'groups' => ['superadmin']],
                     ['title' => __('Logs', [], $locale), 'link' => '/logs', 'groups' => ['superadmin']],
+                    ['title' => __('PCAPs', [], $locale), 'link' => '/pcaps', 'groups' => ['superadmin', 'admin']],
                     ['title' => __('Registrations', [], $locale), 'link' => '/registrations', 'groups' => ['superadmin', 'admin']],
                     ['title' => __('SIP Status', [], $locale), 'link' => '/sip-status', 'groups' => ['superadmin']],
                     ['title' => __('System Status', [], $locale), 'link' => '/system', 'groups' => ['superadmin']],
