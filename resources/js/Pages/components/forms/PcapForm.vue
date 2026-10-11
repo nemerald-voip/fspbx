@@ -53,8 +53,11 @@
                                                 :placeholder="$t('Example: One-way audio on reception phone')" :floating="false" />
 
                                             <RadiogroupElement name="duration" :label="$t('Capture for')" view="tabs"
-                                                :items="durationOptions"
-                                                :info="$t('Timed captures stop and delete all of their files when the time is up. Forever captures run until you stop or delete them.')" />
+                                                :items="durationOptions" />
+
+                                            <RadiogroupElement name="keep_hours" :label="$t('Keep files for')" view="tabs"
+                                                :items="keepOptions"
+                                                :info="$t('Files are deleted automatically this long after the capture ends, or straight away if you delete the capture.')" />
 
                                             <CheckboxgroupElement name="directions" :label="$t('Calls to capture')" view="tabs"
                                                 :items="directionOptions" />
@@ -103,13 +106,19 @@ const durationOptions = [
     { value: "4h", label: trans("4 hours") },
     { value: "8h", label: trans("8 hours") },
     { value: "24h", label: trans("24 hours") },
+    { value: "48h", label: trans("48 hours") },
     { value: "1w", label: trans("1 week") },
-    { value: "forever", label: trans("Forever") },
+];
+
+const keepOptions = [
+    { value: 24, label: trans("24 hours") },
+    { value: 48, label: trans("48 hours") },
+    { value: 72, label: trans("72 hours") },
 ];
 
 const directionOptions = [
-    { value: "inbound", label: trans("Incoming external") },
-    { value: "outbound", label: trans("Outgoing external") },
+    { value: "inbound", label: trans("Incoming") },
+    { value: "outbound", label: trans("Outgoing") },
     { value: "local", label: trans("Internal") },
 ];
 
@@ -122,6 +131,7 @@ const defaultValues = computed(() => {
     return {
         name: item.name ?? null,
         duration: item.duration ?? "1h",
+        keep_hours: item.keep_hours ?? 24,
         directions: item.directions ?? ["inbound", "outbound", "local"],
         scope: item.scope ?? "all",
         extension_uuids: item.extension_uuids ?? [],

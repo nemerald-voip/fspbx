@@ -21,15 +21,18 @@ class PcapSession extends Model
     public const SCOPE_ALL = 'all';
     public const SCOPE_EXTENSIONS = 'extensions';
 
-    // Duration key => minutes. Null captures until someone stops or deletes the session.
+    // Duration key => minutes.
     public const DURATIONS = [
         '1h' => 60,
         '4h' => 240,
         '8h' => 480,
         '24h' => 1440,
+        '48h' => 2880,
         '1w' => 10080,
-        'forever' => null,
     ];
+
+    // Hours files are kept after capturing ends. 72 is the hard maximum.
+    public const KEEP_HOURS = [24, 48, 72];
 
     protected $table = 'pcap_sessions';
     protected $primaryKey = 'uuid';
@@ -46,6 +49,8 @@ class PcapSession extends Model
         'started_at',
         'expires_at',
         'stopped_at',
+        'keep_hours',
+        'delete_at',
         'created_by',
     ];
 
@@ -55,6 +60,8 @@ class PcapSession extends Model
         'started_at' => 'datetime',
         'expires_at' => 'datetime',
         'stopped_at' => 'datetime',
+        'keep_hours' => 'integer',
+        'delete_at' => 'datetime',
     ];
 
     public function captures(): HasMany
@@ -71,13 +78,12 @@ class PcapSession extends Model
 
         return $query->whereNull('stopped_at')
             ->where('started_at', '<=', $at)
-            ->where(fn ($query) => $query->whereNull('expires_at')->orWhere('expires_at', '>', $at));
+            ->where('expires_at', '>', $at);
     }
 
     public function isCapturing(): bool
     {
-        return $this->stopped_at === null
-            && ($this->expires_at === null || $this->expires_at->isFuture());
+        return $this->stopped_at === null && $this->expires_at->isFuture();
     }
 
     /**
@@ -89,9 +95,12 @@ class PcapSession extends Model
             return false;
         }
 
-        $end = $this->stopped_at ?? $this->expires_at;
+        return $epoch <= $this->captureEndsAt()->getTimestamp();
+    }
 
-        return $end === null || $epoch <= $end->getTimestamp();
+    public function captureEndsAt(): Carbon
+    {
+        return $this->stopped_at !== null && $this->stopped_at->lt($this->expires_at) ? $this->stopped_at : $this->expires_at;
     }
 
     public function storageDirectory(): string

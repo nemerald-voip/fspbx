@@ -14,7 +14,7 @@ return new class extends Migration
                 $table->uuid('uuid')->primary()->default(DB::raw('uuid_generate_v4()'));
                 $table->uuid('domain_uuid')->index();
                 $table->string('name');
-                // 1h, 4h, 8h, 24h, 1w or forever
+                // 1h, 4h, 8h, 24h, 48h or 1w
                 $table->string('duration', 20);
                 // Any of inbound, outbound, local
                 $table->json('directions');
@@ -22,9 +22,13 @@ return new class extends Migration
                 $table->string('scope', 20)->default('all');
                 $table->json('extension_uuids')->nullable();
                 $table->timestamp('started_at');
-                // Capturing stops and every file is deleted at this time. Null keeps the session until deleted.
-                $table->timestamp('expires_at')->nullable()->index();
+                // Capturing stops at this time.
+                $table->timestamp('expires_at')->index();
                 $table->timestamp('stopped_at')->nullable();
+                // Files are kept this long after capturing ends (24, 48 or 72).
+                $table->integer('keep_hours')->default(24);
+                // The session and all of its files are deleted at this time.
+                $table->timestamp('delete_at')->index();
                 $table->uuid('created_by')->nullable();
                 $table->timestamps();
             });

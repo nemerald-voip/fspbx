@@ -121,8 +121,9 @@ class PcapCaptureTest extends TestCase
         $this->assertTrue(PcapService::matches($session, $this->leg(['created_epoch' => 2999]), [], []));
         $this->assertFalse(PcapService::matches($session, $this->leg(['created_epoch' => 3001]), [], []));
 
-        $forever = $this->makeSession(['expires_at' => null]);
-        $this->assertTrue(PcapService::matches($forever, $this->leg(['created_epoch' => 99999999]), [], []));
+        $expired = $this->makeSession();
+        $this->assertTrue(PcapService::matches($expired, $this->leg(['created_epoch' => 5000]), [], []));
+        $this->assertFalse(PcapService::matches($expired, $this->leg(['created_epoch' => 5001]), [], []));
     }
 
     public function test_session_matches_selected_extensions_on_any_leg(): void
@@ -194,6 +195,15 @@ class PcapCaptureTest extends TestCase
 
         $this->assertEquals(Carbon::parse('2026-10-11 16:00:00'), PcapService::expiresAt('4h', $start));
         $this->assertEquals(Carbon::parse('2026-10-18 12:00:00'), PcapService::expiresAt('1w', $start));
-        $this->assertNull(PcapService::expiresAt('forever', $start));
+        $this->assertEquals(Carbon::parse('2026-10-13 12:00:00'), PcapService::expiresAt('48h', $start));
+    }
+
+    public function test_files_are_kept_for_the_chosen_hours_up_to_72(): void
+    {
+        $end = Carbon::parse('2026-10-11 16:00:00');
+
+        $this->assertEquals(Carbon::parse('2026-10-12 16:00:00'), PcapService::deleteAt($end, 24));
+        $this->assertEquals(Carbon::parse('2026-10-14 16:00:00'), PcapService::deleteAt($end, 72));
+        $this->assertEquals(Carbon::parse('2026-10-14 16:00:00'), PcapService::deleteAt($end, 500));
     }
 }

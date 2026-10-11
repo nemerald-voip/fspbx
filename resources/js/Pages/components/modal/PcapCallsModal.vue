@@ -117,8 +117,8 @@ const emptyData = () => ({ data: [], from: 0, to: 0, total: 0, last_page: 1, pre
 const data = ref(emptyData());
 
 const directionLabel = (direction) => ({
-    inbound: trans("Incoming external"),
-    outbound: trans("Outgoing external"),
+    inbound: trans("Incoming"),
+    outbound: trans("Outgoing"),
     local: trans("Internal"),
 }[direction] ?? direction);
 

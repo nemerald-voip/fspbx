@@ -69,11 +69,17 @@ class PcapService
         return (bool) Cache::get(self::PAUSED_CACHE, false);
     }
 
-    public static function expiresAt(string $duration, \DateTimeInterface $start): ?\Illuminate\Support\Carbon
+    public static function expiresAt(string $duration, \DateTimeInterface $start): \Illuminate\Support\Carbon
     {
-        $minutes = PcapSession::DURATIONS[$duration] ?? null;
+        return \Illuminate\Support\Carbon::instance($start)->addMinutes(PcapSession::DURATIONS[$duration]);
+    }
 
-        return $minutes === null ? null : \Illuminate\Support\Carbon::instance($start)->addMinutes($minutes);
+    /**
+     * Files are kept for the chosen hours after capturing ends, never more than 72.
+     */
+    public static function deleteAt(\DateTimeInterface $captureEnd, int $keepHours): \Illuminate\Support\Carbon
+    {
+        return \Illuminate\Support\Carbon::instance($captureEnd)->addHours(min($keepHours, max(PcapSession::KEEP_HOURS)));
     }
 
     /**
@@ -235,14 +241,13 @@ class PcapService
     }
 
     /**
-     * Timed sessions are removed with all of their files once their time is up.
+     * Sessions are removed with all of their files once their keep time is up.
      */
     public function deleteExpiredSessions(): int
     {
         $count = 0;
         PcapSession::query()
-            ->whereNotNull('expires_at')
-            ->where('expires_at', '<=', now())
+            ->where('delete_at', '<=', now())
             ->each(function (PcapSession $session) use (&$count) {
                 $this->deleteSession($session);
                 $count++;

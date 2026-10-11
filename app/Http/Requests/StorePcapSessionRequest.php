@@ -18,6 +18,7 @@ class StorePcapSessionRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'duration' => ['required', Rule::in(array_keys(PcapSession::DURATIONS))],
+            'keep_hours' => ['required', 'integer', Rule::in(PcapSession::KEEP_HOURS)],
             'directions' => ['required', 'array', 'min:1'],
             'directions.*' => [Rule::in(PcapSession::DIRECTIONS)],
             'scope' => ['required', Rule::in([PcapSession::SCOPE_ALL, PcapSession::SCOPE_EXTENSIONS])],

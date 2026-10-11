@@ -65,12 +65,13 @@
                         <ChevronDownIcon v-else-if="sortData.name === 'started_at' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
                     </div>
                 </TableColumnHeader>
+                <TableColumnHeader :header="$t('Capture ends')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader :header="$t('Files deleted')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
             </template>
 
             <template v-if="selectPageItems" v-slot:current-selection>
-                <td colspan="8">
+                <td colspan="9">
                     <div class="text-sm text-center m-2">
                         {{ $t(':count items are selected.', { count: selectedItems.length }) }}
                         <button v-if="selectedItems.length"
@@ -109,8 +110,9 @@
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.started_at" />
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.expires_at ?? $t('Never (until deleted)')" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.capture_ends_at" />
+
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.delete_at" />
 
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
@@ -118,7 +120,7 @@
                                 <ListBulletIcon @click="openCalls(row)"
                                     class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
                                     :title="$t('Captured Calls')" />
-                                <StopCircleIcon v-if="permissions.stop && row.status !== 'stopped'"
+                                <StopCircleIcon v-if="permissions.stop && ['capturing', 'paused'].includes(row.status)"
                                     @click="handleStopRequest([row.uuid])"
                                     class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
                                     :title="$t('Stop')" />
@@ -254,8 +256,8 @@ onMounted(() => {
 });
 
 const directionLabel = (direction) => ({
-    inbound: trans("Incoming external"),
-    outbound: trans("Outgoing external"),
+    inbound: trans("Incoming"),
+    outbound: trans("Outgoing"),
     local: trans("Internal"),
 }[direction] ?? direction);
 
@@ -263,6 +265,7 @@ const statusLabel = (value) => ({
     capturing: trans("Capturing"),
     paused: trans("Paused"),
     stopped: trans("Stopped"),
+    finished: trans("Finished"),
 }[value] ?? value);
 
 const statusBadgeProps = (value) => ({

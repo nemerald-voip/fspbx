@@ -68,7 +68,7 @@ class PcapsController extends Controller
                     }
                 }),
             ])
-            ->allowedSorts(['name', 'started_at', 'expires_at'])
+            ->allowedSorts(['name', 'started_at', 'expires_at', 'delete_at'])
             ->defaultSort('-started_at')
             ->paginate(fspbx_pagination_per_page($request));
 
@@ -94,7 +94,8 @@ class PcapsController extends Controller
                 'calls' => $session->ready_count,
                 'started_at' => $this->formatTime($session->started_at, $timezone),
                 'stopped_at' => $this->formatTime($session->stopped_at, $timezone),
-                'expires_at' => $this->formatTime($session->expires_at, $timezone),
+                'capture_ends_at' => $this->formatTime($session->captureEndsAt(), $timezone),
+                'delete_at' => $this->formatTime($session->delete_at, $timezone),
             ];
         });
 
@@ -120,6 +121,7 @@ class PcapsController extends Controller
             'item' => [
                 'name' => null,
                 'duration' => '1h',
+                'keep_hours' => 24,
                 'directions' => PcapSession::DIRECTIONS,
                 'scope' => PcapSession::SCOPE_ALL,
                 'extension_uuids' => [],
@@ -136,6 +138,7 @@ class PcapsController extends Controller
     {
         $data = $request->validated();
         $startedAt = now();
+        $expiresAt = PcapService::expiresAt($data['duration'], $startedAt);
 
         PcapSession::query()->create([
             'domain_uuid' => session('domain_uuid'),
@@ -145,7 +148,9 @@ class PcapsController extends Controller
             'scope' => $data['scope'],
             'extension_uuids' => $data['scope'] === PcapSession::SCOPE_EXTENSIONS ? array_values(array_unique($data['extension_uuids'] ?? [])) : null,
             'started_at' => $startedAt,
-            'expires_at' => PcapService::expiresAt($data['duration'], $startedAt),
+            'expires_at' => $expiresAt,
+            'keep_hours' => (int) $data['keep_hours'],
+            'delete_at' => PcapService::deleteAt($expiresAt, (int) $data['keep_hours']),
             'created_by' => auth()->user()?->user_uuid,
         ]);
 
@@ -168,11 +173,19 @@ class PcapsController extends Controller
             'items.*' => ['uuid'],
         ]);
 
-        $count = PcapSession::query()
+        // Stopping early starts the keep time now.
+        $sessions = PcapSession::query()
             ->where('domain_uuid', session('domain_uuid'))
             ->whereIn('uuid', $validated['items'])
-            ->whereNull('stopped_at')
-            ->update(['stopped_at' => now()]);
+            ->capturing()
+            ->get();
+
+        foreach ($sessions as $session) {
+            $session->stopped_at = now();
+            $session->delete_at = PcapService::deleteAt($session->stopped_at, $session->keep_hours);
+            $session->save();
+        }
+        $count = $sessions->count();
 
         $this->pcap->forgetCapturingDomains();
         $this->pcap->syncCaptureFlag();
@@ -272,6 +285,10 @@ class PcapsController extends Controller
     {
         if ($session->stopped_at !== null) {
             return 'stopped';
+        }
+
+        if (!$session->expires_at->isFuture()) {
+            return 'finished';
         }
 
         return $this->pcap->isPaused() ? 'paused' : 'capturing';
