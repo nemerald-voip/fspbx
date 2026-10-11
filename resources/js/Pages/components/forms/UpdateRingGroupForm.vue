@@ -47,6 +47,11 @@
                                 'forward_external_target',
                                 'call_forward_submit',
                             ]" :conditions="[() => localOptions.permissions.manage_forwarding]" />
+                            <FormTab name="page_flag" :label="$t('Flag Overrides')" :elements="[
+                                'h4_flag',
+                                'flag_overrides',
+                                'flag_submit',
+                            ]" />
                             <FormTab name="page2" :label="$t('Advanced')" :elements="[
                                 'h4_3',
                                 'ring_group_caller_id_name',
@@ -375,6 +380,57 @@
                             <ButtonElement name="call_forward_submit" :button-label="$t('Save')" :submits="true"
                                 align="right" />
 
+                            <!-- Flag Override -->
+                            <StaticElement name="h4_flag" tag="h4" :content="$t('Flag Overrides')"
+                                :description="$t('While a flag is active, calls skip this ring group and go to its destination. The first active flag in the list wins; drag rows to change the order. When no flag is active, calls ring as normal.')" />
+
+                            <ListElement name="flag_overrides" :sort="true" :add-text="$t('+ Add flag override')"
+                                :add-classes="{ ListElement: { listItem: 'bg-white p-3 sm:p-4 mb-4 rounded-lg shadow-md' } }">
+                                <template #default="{ index }">
+                                    <ObjectElement :name="index">
+                                        <SelectElement name="flag_uuid" :items="localOptions.flag_options ?? []" :search="true"
+                                            :native="false" :label="$t('Flag')" input-type="search" autocomplete="off"
+                                            :placeholder="$t('Choose Flag')" :floating="false" :strict="false" size="sm"
+                                            :columns="{ default: { container: 12 }, sm: { container: 4 } }" />
+                                        <SelectElement name="action" :items="localOptions.routing_types" label-prop="name" :search="true"
+                                            :native="false" :label="$t('When Active, Send Calls To')" input-type="search"
+                                            autocomplete="off" :placeholder="$t('Choose Action')" :floating="false" :strict="false"
+                                            size="sm" :columns="{ default: { container: 12 }, sm: { container: 4 } }"
+                                            @change="(newValue, oldValue, el$) => {
+                                                let target = el$.form$.el$('flag_overrides').children$[index].children$['target']
+                                                if (oldValue !== null && oldValue !== undefined) {
+                                                    target.clear();
+                                                }
+                                                target.updateItems()
+                                            }" />
+                                        <SelectElement name="target" :items="async (query, input) => {
+                                            let action = input.$parent.el$.form$.el$('flag_overrides').children$[index].children$['action'];
+                                            if (!action?.value || ['check_voicemail', 'company_directory', 'hangup'].includes(action.value)) {
+                                                return [];
+                                            }
+                                            try {
+                                                let response = await action.$vueform.services.axios.post(
+                                                    options.routes.get_routing_options,
+                                                    { category: action.value }
+                                                );
+                                                return response.data.options;
+                                            } catch (error) {
+                                                emits('error', error);
+                                                return [];
+                                            }
+                                        }" :search="true" label-prop="name" :native="false" :label="$t('Target')" input-type="search"
+                                            allow-absent :object="true" :format-data="formatTarget" autocomplete="off"
+                                            :placeholder="$t('Choose Target')" :floating="false" :strict="false" size="sm"
+                                            :columns="{ default: { container: 12 }, sm: { container: 4 } }" :conditions="[
+                                                ['flag_overrides.*.action', 'not_empty'],
+                                                ['flag_overrides.*.action', 'not_in', ['check_voicemail', 'company_directory', 'hangup']]
+                                            ]" />
+                                    </ObjectElement>
+                                </template>
+                            </ListElement>
+
+                            <ButtonElement name="flag_submit" :button-label="$t('Save')" :submits="true" align="right" />
+
 
                             <!-- Advanced tab -->
                             <StaticElement name="h4_3" tag="h4" :content="$t('Advanced')"
@@ -581,6 +637,7 @@ onMounted(() => {
         forward_toll_allow: props.options.ring_group.ring_group_forward_toll_allow ?? null,
         ring_group_context: props.options.ring_group.ring_group_context ?? null,
         ring_group_description: props.options.ring_group.ring_group_description ?? null,
+        flag_overrides: props.options.flag_overrides ?? [],
     })
 
     form$.value.clean()
