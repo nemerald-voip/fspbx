@@ -10,6 +10,7 @@ use App\Models\IvrMenus;
 use App\Models\CallFlows;
 use App\Models\Extensions;
 use App\Models\DynamicRoute;
+use App\Models\PagingGroup;
 use App\Models\RingGroups;
 use App\Models\Voicemails;
 use App\Models\Conferences;
@@ -143,6 +144,13 @@ class UniqueExtension implements ValidationRule
             ->where('domain_uuid', $this->domainUuid)
             ->when($this->currentUuid, function ($query) {
                 return $query->where('dynamic_route_uuid', '!=', $this->currentUuid);
+            });
+
+        $subqueries[] = PagingGroup::select('extension')
+            ->where('extension', $value)
+            ->where('domain_uuid', $this->domainUuid)
+            ->when($this->currentUuid, function ($query) {
+                return $query->where('uuid', '!=', $this->currentUuid);
             });
 
         // Combine all subqueries using UNION

@@ -52,6 +52,7 @@ class DefaultMenu
                     ['title' => __('Virtual Receptionists', [], $locale), 'link' => '/virtual-receptionists', 'groups' => ['superadmin', 'admin']],
                     ['title' => __('Messages', [], $locale), 'link' => '/messages', 'groups' => ['superadmin']],
                     ['title' => __('Music on Hold', [], $locale), 'link' => '/music-on-hold','groups' => ['superadmin']],
+                    ['title' => __('Paging Groups', [], $locale), 'link' => '/paging-groups', 'groups' => ['superadmin', 'admin']],
                     ['title' => __('Recordings Manager', [], $locale), 'link' => '/recordings-manager', 'groups' => ['superadmin', 'admin']],
                     ['title' => __('Ring Groups', [], $locale), 'link' => '/ring-groups', 'groups' => ['superadmin', 'admin']],
                     ['title' => __('Streams', [], $locale), 'link' => '/streams', 'groups' => ['superadmin']],
