@@ -5,6 +5,7 @@ namespace Tests\Unit;
 use App\Models\PcapSession;
 use App\Services\Pcap\PcapExtractor;
 use App\Services\Pcap\PcapService;
+use App\Services\Pcap\SipTraceCollector;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\File;
 use Tests\TestCase;
@@ -186,6 +187,130 @@ class PcapCaptureTest extends TestCase
             $this->assertSame(2, PcapExtractor::countPackets($path));
         } finally {
             @unlink($path);
+        }
+    }
+
+    private function hepPacket(string $callId): string
+    {
+        $chunk = fn (int $type, string $value) => pack('nnn', 0, $type, 6 + strlen($value)) . $value;
+        $sip = "INVITE sip:200@192.168.10.231 SIP/2.0\r\nCall-ID: {$callId}\r\nCSeq: 1 INVITE\r\nContent-Length: 0\r\n\r\n";
+        $body = $chunk(1, chr(2)) . $chunk(2, chr(6))
+            . $chunk(3, inet_pton('192.168.10.174')) . $chunk(4, inet_pton('192.168.10.231'))
+            . $chunk(7, pack('n', 56967)) . $chunk(8, pack('n', 5061))
+            . $chunk(9, pack('N', 1500)) . $chunk(10, pack('N', 250000))
+            . $chunk(11, chr(1)) . $chunk(15, $sip);
+
+        return 'HEP3' . pack('n', 6 + strlen($body)) . $body;
+    }
+
+    public function test_hep_sip_is_rebuilt_as_udp_packets_for_missing_call_ids(): void
+    {
+        // Two HEP packets to 127.0.0.1:9060 inside Linux cooked v2 frames, as tcpdump -i any writes them.
+        $frame = function (string $hep) {
+            $udp = pack('nnnn', 40000, 9060, 8 + strlen($hep), 0) . $hep;
+            $ip = pack('CCnnnCCn', 0x45, 0, 20 + strlen($udp), 0, 0, 64, 17, 0) . inet_pton('127.0.0.1') . inet_pton('127.0.0.1');
+            $data = pack('nnNnCC', 0x0800, 0, 1, 772, 0, 6) . str_repeat("\0", 8) . $ip . $udp;
+
+            return pack('VVVV', 1500, 300000, strlen($data), strlen($data)) . $data;
+        };
+
+        $source = tempnam(sys_get_temp_dir(), 'pcap');
+        $output = tempnam(sys_get_temp_dir(), 'pcap');
+        file_put_contents($source, pack('VvvVVVV', 0xa1b2c3d4, 2, 4, 0, 0, 262144, 276)
+            . $frame($this->hepPacket('tls-call')) . $frame($this->hepPacket('other-call')));
+
+        try {
+            $this->assertSame(1, PcapExtractor::writeHepSip($source, $output, 9060, ['tls-call'], 1000, 2000));
+            $this->assertSame(1, PcapExtractor::countPackets($output));
+
+            $written = file_get_contents($output);
+            $this->assertSame(276, unpack('V', substr($written, 20, 4))[1]);
+            $this->assertStringContainsString('Call-ID: tls-call', $written);
+            $this->assertStringNotContainsString('other-call', $written);
+            // Original addresses and HEP time are kept.
+            $this->assertStringContainsString(inet_pton('192.168.10.174') . inet_pton('192.168.10.231'), $written);
+            $this->assertSame([1500, 250000], array_values(unpack('V2', substr($written, 24, 8))));
+
+            $this->assertSame(0, PcapExtractor::writeHepSip($source, $output, 9060, ['tls-call'], 2000, 3000));
+        } finally {
+            @unlink($source);
+            @unlink($output);
+        }
+    }
+
+    public function test_hep_parser_rejects_other_data(): void
+    {
+        $this->assertNull(PcapExtractor::parseHep('not hep'));
+        $hep = PcapExtractor::parseHep($this->hepPacket('abc'));
+        $this->assertSame(4, $hep['family']);
+        $this->assertSame(5061, $hep['dst_port']);
+    }
+
+    private function traceEntry(string $head, array $lines): string
+    {
+        $bytes = array_sum(array_map(fn ($line) => strlen($line) + 2, $lines));
+
+        return sprintf($head, $bytes) . "\n" . str_repeat('-', 72) . "\n" . implode("\n", $lines) . "\n";
+    }
+
+    public function test_sip_trace_entries_are_parsed_with_bodies_and_dates(): void
+    {
+        $invite = ['INVITE sip:200@192.168.10.231 SIP/2.0', 'Call-ID: tls-1', 'Content-Type: application/sdp', 'Content-Length: 13', '', 'v=0', 'o=- 1 1'];
+        $log = "2026-10-11 23:59:58.100000 99.00% [DEBUG] sofia.c:1 something\n"
+            . $this->traceEntry('recv %d bytes from tls/[192.168.10.174]:56967 at 23:59:59.500000:', $invite)
+            . "\n"
+            . $this->traceEntry('send %d bytes to udp/[192.168.10.50]:5060 at 00:00:01.250000:', ['SIP/2.0 200 OK', 'Call-ID: udp-1', 'Content-Length: 0', ''])
+            // Still being written: the byte count is not reached yet.
+            . "send 900 bytes to tls/[192.168.10.174]:56967 at 00:00:02.000000:\n" . str_repeat('-', 72) . "\nSIP/2.0 180 Ringing\n";
+
+        $tz = new \DateTimeZone('America/Toronto');
+        $parsed = SipTraceCollector::parse($log, $tz, '2026-10-01');
+
+        $this->assertCount(2, $parsed['entries']);
+        [$first, $second] = $parsed['entries'];
+
+        $this->assertSame(['recv', 'tls', '192.168.10.174', 56967], [$first['direction'], $first['transport'], $first['ip'], $first['port']]);
+        $this->assertSame((new \DateTimeImmutable('2026-10-11 23:59:59', $tz))->getTimestamp(), $first['seconds']);
+        $this->assertSame(500000, $first['micros']);
+        $this->assertStringContainsString("Content-Length: 13\r\n\r\nv=0\r\no=- 1 1\r\n", $first['message']);
+
+        // After midnight the date moves to the next day.
+        $this->assertSame((new \DateTimeImmutable('2026-10-12 00:00:01', $tz))->getTimestamp(), $second['seconds']);
+        $this->assertSame('udp', $second['transport']);
+
+        // Reading resumes at the incomplete entry.
+        $this->assertSame(strpos($log, 'send 900 bytes'), $parsed['consumed']);
+    }
+
+    public function test_sip_trace_packets_use_freeswitch_tls_port_from_via(): void
+    {
+        $dir = sys_get_temp_dir() . '/pcap-trace-' . uniqid();
+        File::ensureDirectoryExists($dir);
+        $log = "{$dir}/freeswitch.log";
+        // FreeSWITCH omits the Via port, which means 5061 for TLS.
+        file_put_contents($log, "2026-10-11 23:23:00.000000 [DEBUG] x\n" . $this->traceEntry(
+            'send %d bytes to tls/[192.168.10.190]:12440 at 23:23:04.186291:',
+            ['INVITE sip:200@192.168.10.190:12440;transport=TLS SIP/2.0', 'Via: SIP/2.0/TLS 192.168.10.231;branch=z9hG4bK1', 'Call-ID: b-leg', 'Content-Length: 0', '']
+        ));
+
+        $listeners = [
+            ['family' => 4, 'ip' => '192.168.10.231', 'port' => 5081, 'internal' => false],
+            ['family' => 4, 'ip' => '192.168.10.231', 'port' => 5061, 'internal' => true],
+        ];
+        // Never touch the server's real cache.
+        config(['cache.default' => 'array']);
+        $collector = new SipTraceCollector($log, "{$dir}/sip", $listeners, new \DateTimeZone('America/Toronto'));
+
+        try {
+            \Illuminate\Support\Facades\Cache::forever('pcap:siptrace_offset', ['inode' => stat($log)['ino'], 'offset' => 0]);
+            $this->assertSame(1, $collector->collect(276));
+
+            $written = file_get_contents(glob("{$dir}/sip/*.pcap")[0]);
+            // Linux cooked v2 (20) + IPv4 (20): UDP ports follow.
+            $this->assertSame([5061, 12440], array_values(unpack('n2', substr($written, 24 + 16 + 40, 4))));
+        } finally {
+            $collector->stop();
+            File::deleteDirectory($dir);
         }
     }
 

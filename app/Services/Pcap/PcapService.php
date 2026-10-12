@@ -34,6 +34,8 @@ class PcapService
     public const SPOOL_FALLBACK_SECONDS = 21600;
 
     private const CAPTURING_DOMAINS_CACHE = 'pcap:capturing_domains';
+    private const SIPTRACE_STATE_CACHE = 'pcap:siptrace_state';
+    private const SIPTRACE_LEVEL = 'debug';
     private const PAUSED_CACHE = 'pcap:paused';
 
     public function spoolDir(): string
@@ -44,6 +46,33 @@ class PcapService
     public function flagFile(): string
     {
         return self::BASE_DIR . '/capture.on';
+    }
+
+    /**
+     * The capture service also records FreeSWITCH's HEP stream on this port.
+     */
+    public function hepPortFile(): string
+    {
+        return self::BASE_DIR . '/hep.port';
+    }
+
+    /**
+     * UDP port of the SIP Capture (HEP) stream, or null when SIP Capture is off.
+     * HEP carries readable SIP for phones registered over TLS.
+     */
+    public function hepPort(): ?int
+    {
+        try {
+            $settings = app(\App\Services\SipCaptureService::class)->settings();
+        } catch (\Throwable $e) {
+            return null;
+        }
+
+        $port = (int) ($settings['collector_port'] ?? 0);
+
+        return !empty($settings['enabled']) && ($settings['transport'] ?? null) === 'udp' && $port > 0 && $port <= 65535
+            ? $port
+            : null;
     }
 
     public function node(): string
@@ -230,6 +259,8 @@ class PcapService
             'paused' => $this->checkDiskSpace(),
         ];
 
+        // Read trace output before syncing, so turning trace off keeps the last calls' SIP.
+        $result['sip_traced'] = $this->collectSipTrace();
         $result['capturing'] = $this->syncCaptureFlag();
         $result['captured'] = $this->missingTools() ? 0 : $this->processFinishedCalls();
         $result['spool_deleted'] = $this->cleanSpool();
@@ -327,11 +358,22 @@ class PcapService
             return false;
         }
 
+        $hepPort = $this->hepPort();
+        if ($hepPort) {
+            if (@file_get_contents($this->hepPortFile()) !== (string) $hepPort) {
+                @file_put_contents($this->hepPortFile(), (string) $hepPort);
+            }
+        } elseif (is_file($this->hepPortFile())) {
+            @unlink($this->hepPortFile());
+        }
+
         if ($capturing) {
             @touch($this->flagFile());
         } elseif (is_file($this->flagFile())) {
             @unlink($this->flagFile());
         }
+
+        $this->syncSipTrace($capturing);
 
         return $capturing;
     }
@@ -380,6 +422,152 @@ class PcapService
             <=> [(int) $b['created_epoch'], ($b['channel_direction'] ?? null) === 'inbound' ? 0 : 1]);
 
         return $group[0];
+    }
+
+    /**
+     * Keep FreeSWITCH SIP trace on while capturing, so calls from phones on TLS
+     * get readable signalling. It is re-sent every minute because a FreeSWITCH
+     * restart turns it off. The previous trace level is restored afterwards.
+     */
+    public function syncSipTrace(bool $capturing): void
+    {
+        $state = Cache::get(self::SIPTRACE_STATE_CACHE);
+
+        if ($capturing) {
+            if (!$state) {
+                $level = $this->eslApi('sofia tracelevel');
+                $previous = $level !== null && preg_match('/tracelevel is (\w+)/i', $level, $m) ? strtolower($m[1]) : 'console';
+                $collector = $this->sipTraceCollector();
+                $collector?->startAtEnd();
+                Cache::forever(self::SIPTRACE_STATE_CACHE, ['previous_level' => $previous]);
+            }
+            $this->eslApi('sofia tracelevel ' . self::SIPTRACE_LEVEL);
+            $this->eslApi('sofia global siptrace on');
+
+            return;
+        }
+
+        if ($state) {
+            $this->collectSipTrace();
+            $this->eslApi('sofia global siptrace off');
+            $this->eslApi('sofia tracelevel ' . preg_replace('/[^a-z]/', '', $state['previous_level'] ?? 'console'));
+            $this->sipTraceCollector()?->stop();
+            Cache::forget(self::SIPTRACE_STATE_CACHE);
+        }
+    }
+
+    /**
+     * Convert new SIP trace output into spool packets.
+     */
+    public function collectSipTrace(): int
+    {
+        if (!Cache::get(self::SIPTRACE_STATE_CACHE) || !is_dir($this->spoolDir())) {
+            return 0;
+        }
+
+        try {
+            return $this->sipTraceCollector()?->collect($this->spoolLinkType()) ?? 0;
+        } catch (\Throwable $e) {
+            logger('PCAP SIP trace collection failed: ' . $e->getMessage());
+            return 0;
+        }
+    }
+
+    protected function sipTraceCollector(): ?SipTraceCollector
+    {
+        $logDir = Cache::remember('pcap:fs_log_dir', 3600, fn () => trim((string) $this->eslApi('global_getvar log_dir')) ?: '/var/log/freeswitch');
+        if (!str_starts_with($logDir, '/')) {
+            $logDir = '/var/log/freeswitch';
+        }
+
+        return new SipTraceCollector(
+            rtrim($logDir, '/') . '/freeswitch.log',
+            $this->spoolDir() . '/sip',
+            $this->tlsListeners(),
+            self::systemTimezone(),
+        );
+    }
+
+    /**
+     * FreeSWITCH TLS listeners from `sofia xmlstatus`.
+     *
+     * @return array<int, array{family: int, ip: string, port: int, internal: bool}>
+     */
+    protected function tlsListeners(): array
+    {
+        return Cache::remember('pcap:tls_listeners', 600, function () {
+            $xml = $this->eslApi('sofia xmlstatus');
+            if (!$xml || !preg_match_all('/<name>([^<]+)<\/name>\s*<type>profile<\/type>\s*<data>[^<]*@(\[[^\]]+\]|[^:<]+):(\d+)<\/data>\s*<state>[^<]*\(TLS\)<\/state>/', $xml, $matches, PREG_SET_ORDER)) {
+                return [];
+            }
+
+            return array_map(fn ($m) => [
+                'family' => str_starts_with($m[2], '[') ? 6 : 4,
+                'ip' => trim($m[2], '[]'),
+                'port' => (int) $m[3],
+                'internal' => str_starts_with($m[1], 'internal'),
+            ], $matches);
+        });
+    }
+
+    /**
+     * FreeSWITCH writes its log in the server's local time.
+     */
+    public static function systemTimezone(): \DateTimeZone
+    {
+        $candidates = [];
+        if (is_link('/etc/localtime') && preg_match('#zoneinfo/(.+)$#', (string) readlink('/etc/localtime'), $m)) {
+            $candidates[] = $m[1];
+        }
+        if (is_readable('/etc/timezone')) {
+            $candidates[] = trim((string) file_get_contents('/etc/timezone'));
+        }
+        foreach ($candidates as $name) {
+            try {
+                return new \DateTimeZone($name);
+            } catch (\Throwable $e) {
+            }
+        }
+
+        return new \DateTimeZone(date_default_timezone_get());
+    }
+
+    /**
+     * Link type of the newest spool file, so trace packets merge with it.
+     */
+    protected function spoolLinkType(): int
+    {
+        $chunks = glob($this->spoolDir() . '/*.pcap') ?: [];
+        rsort($chunks, SORT_NATURAL);
+        foreach ($chunks as $chunk) {
+            $header = @file_get_contents($chunk, false, null, 0, 24);
+            if ($header !== false && strlen($header) === 24) {
+                $format = in_array(bin2hex(substr($header, 0, 4)), ['d4c3b2a1', '4d3cb2a1'], true) ? 'V' : 'N';
+                return unpack($format, substr($header, 20, 4))[1] & 0xFFFF;
+            }
+        }
+
+        // Linux cooked v2, which `tcpdump -i any` writes.
+        return 276;
+    }
+
+    /**
+     * Raw FreeSWITCH API reply, or null when FreeSWITCH could not be asked.
+     */
+    protected function eslApi(string $command): ?string
+    {
+        try {
+            $esl = app(FreeswitchEslService::class);
+            if (!$esl->isConnected()) {
+                return null;
+            }
+            $reply = $esl->connection()->api($command);
+            $esl->disconnect();
+
+            return $reply ? (string) $reply->getBody() : null;
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 
     /**
@@ -459,7 +647,7 @@ class PcapService
         foreach (self::TOOLS as $tool) {
             $tools[$tool] = $this->findTool($tool) ?? $tool;
         }
-        $extractor = new PcapExtractor($this->spoolDir(), storage_path('app/pcap-tmp'), $tools);
+        $extractor = new PcapExtractor($this->spoolDir(), storage_path('app/pcap-tmp'), $tools, $this->hepPort());
         $fileName = $this->fileName($aLeg, $callUuid);
 
         $captured = 0;
@@ -563,6 +751,12 @@ class PcapService
             $next = $starts[$index + 1] ?? null;
             // Never delete the file tcpdump is writing to.
             if ($next !== null && $next < $keepFrom && @unlink($chunks[$start])) {
+                $deleted++;
+            }
+        }
+
+        foreach (glob($this->spoolDir() . '/sip/*.pcap') ?: [] as $path) {
+            if (preg_match('/^\d+-(\d+)-/', basename($path), $m) && (int) $m[1] < $keepFrom && @unlink($path)) {
                 $deleted++;
             }
         }
