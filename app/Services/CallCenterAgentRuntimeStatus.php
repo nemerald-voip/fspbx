@@ -28,6 +28,10 @@ class CallCenterAgentRuntimeStatus
             'last_status_change' => $agent['last_status_change'] ?? null,
             'talk_time' => $agent['talk_time'] ?? null,
             'calls_answered' => $agent['calls_answered'] ?? null,
+            // Native deadlines are shared with the dashboard's single clock.
+            'ready_time' => max(0, (int) ($agent['ready_time'] ?? 0)),
+            'last_bridge_end' => max(0, (int) ($agent['last_bridge_end'] ?? 0)),
+            'wrap_up_time' => max(0, (int) ($agent['wrap_up_time'] ?? 0)),
         ];
     }
 }

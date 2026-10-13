@@ -100,6 +100,18 @@ function M.track(session, api, mode, warn)
             warn("mod_callcenter is unavailable; call continues without tracking")
             return
         end
+        -- Attended-transfer recovery copies channel variables, but not the
+        -- native tracking hook. Keep its identity on the original channel:
+        -- copying it can charge the destination's hangup to the wrong agent.
+        local no_copy = get("attended_transfer_no_copy")
+        local protected = false
+        for name in no_copy:gmatch("[^,]+") do
+            if name:lower() == "cc_tracked_agent" then protected = true end
+        end
+        if not protected then
+            session:setVariable("attended_transfer_no_copy",
+                no_copy == "" and "cc_tracked_agent" or no_copy .. ",cc_tracked_agent")
+        end
         session:execute("callcenter_track", agent)
         if get("cc_tracked_agent") ~= agent then
             warn("FreeSWITCH did not track agent " .. agent .. "; call continues")

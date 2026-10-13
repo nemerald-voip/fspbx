@@ -16,6 +16,8 @@ use Illuminate\Support\Facades\Blade;
 use App\Services\Provisioning\Phonebook\PhonebookBuilder;
 use App\Services\Provisioning\Phonebook\Formatters\YealinkFormatter;
 use App\Services\Provisioning\Phonebook\Formatters\GrandstreamFormatter;
+use App\Services\Provisioning\ProvisioningAuthPolicy;
+use App\Services\Provisioning\ProvisioningSettingsResolver;
 
 class ProvisioningController extends Controller
 {
@@ -374,6 +376,10 @@ class ProvisioningController extends Controller
         $vars += [
             'flavor' => $flv['flavor'],
             'requested_ext' => strtolower((string) ($ext ?: $this->extensionFromFlavor($flv['flavor']))),
+            'device_model' => (string) $device->device_model,
+            'device_firmware_version' => (string) $device->device_firmware_version,
+            'device_provisioned_agent' => (string) $device->device_provisioned_agent,
+            'user_agent' => (string) $request->userAgent(),
         ];
 
         try {
@@ -490,6 +496,8 @@ class ProvisioningController extends Controller
             'model-mac.cfg' => $this->previewModelName($device, $tpl) . "-{$mac}.cfg",
             'serial.xml' => ((string) ($device->serial_number ?: $mac)) . '.xml',
             'mac.cfg' => in_array($vendor, ['poly', 'polycom'], true) ? '000000000000.cfg' : "{$mac}.cfg",
+            'mac-contacts.xml' => "{$mac}-contacts.xml",
+            'mac-smartblf.xml' => "{$mac}-smartblf.xml",
             default => str_contains($flavor, '.') ? $flavor : "{$mac}.cfg",
         };
     }
@@ -792,6 +800,8 @@ class ProvisioningController extends Controller
             'lines'       => $lines,
             'line_count'  => count($lines),
             'settings'    => $settings,
+            'sangoma_key_file_urls' => strtolower((string) $device->device_vendor) === 'sangoma'
+                ? $this->buildSangomaKeyFileUrls($device) : [],
 
             'phonebooks'  => $phonebooks,
         ];
@@ -944,6 +954,20 @@ class ProvisioningController extends Controller
         $idLower = strtolower($id);
         $extLower = strtolower($ext);
 
+        if ($vendor === 'sangoma' && $extLower === 'xml'
+            && preg_match('/^[0-9a-f]{12}-(contacts|smartblf)$/', $idLower, $matches)) {
+            return [
+                'flavor' => 'mac-' . $matches[1] . '.xml',
+                'mime' => 'application/xml',
+            ];
+        }
+
+        // S-series phones fetch cfgMAC.xml; P-series use MAC.cfg plus key files.
+        if ($vendor === 'sangoma' && $extLower === 'xml'
+            && preg_match('/^(?:cfg)?[0-9a-f]{12}$/', $idLower)) {
+            return ['flavor' => 'cfgmac.xml', 'mime' => 'application/xml'];
+        }
+
         provisioning_debug('ProvisioningController: evaluating provisioning flavor', [
             'device_uuid' => (string) $device->device_uuid,
             'vendor' => $vendor,
@@ -1093,6 +1117,24 @@ class ProvisioningController extends Controller
         return [
             'flavor' => 'mac.cfg',
             'mime'   => $mime,
+        ];
+    }
+
+    private function buildSangomaKeyFileUrls(Devices $device): array
+    {
+        // Match the account credentials accepted by DigestProvisionAuth, including password arrays.
+        $settings = app(ProvisioningSettingsResolver::class)->resolve((string) $device->domain_uuid);
+        $policy = app(ProvisioningAuthPolicy::class);
+        $credentials = $policy->requiresHttpAuthentication($settings)
+            ? rawurlencode($policy->username($settings)) . ':' . rawurlencode($policy->passwords($settings)[0]) . '@'
+            : '';
+        $baseUrl = rtrim((string) config('app.url'), '/') . '/prov/';
+        $baseUrl = str_replace('://', '://' . $credentials, $baseUrl);
+        $mac = $this->normalizeMac((string) $device->device_address);
+
+        return [
+            'contacts' => $baseUrl . $mac . '-contacts.xml',
+            'smartblf' => $baseUrl . $mac . '-smartblf.xml',
         ];
     }
 
@@ -1286,6 +1328,10 @@ class ProvisioningController extends Controller
                     // Legacy/profile line indexes appear to be zero-based:
                     // 0 => first line, 1 => second line, etc.
                     $lookupLineNumber = $line !== null ? $line + 1 : 1;
+
+                    if ($vendor === 'sangoma') {
+                        $line = $lookupLineNumber;
+                    }
 
                     $lineObj = collect($device->lines ?? [])->firstWhere('line_number', $lookupLineNumber);
 
@@ -1641,10 +1687,13 @@ class ProvisioningController extends Controller
             }));
         }
 
-        foreach ($keys as $i => &$k) {
-            $k['id'] = $i + 1;
+        // Sangoma key indices are physical slots; gaps must not move later buttons.
+        if (strtolower((string) $device->device_vendor) !== 'sangoma') {
+            foreach ($keys as $i => &$k) {
+                $k['id'] = $i + 1;
+            }
+            unset($k);
         }
-        unset($k);
 
         // Fill labels from Extensions.effective_caller_id_name (domain-scoped)
         $blfTargets = collect($keys)

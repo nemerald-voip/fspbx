@@ -28,6 +28,11 @@ class VendorRouter
             return $m[1];
         }
 
+        // Sangoma P-series auxiliary contacts and Smart BLF documents.
+        if (preg_match('/^([0-9a-f]{12})-(?:contacts|smartblf)$/', $stem, $m)) {
+            return $m[1];
+        }
+
         // 2b) Generic cfg<MAC> (e.g., "cfg200a0d30064a")
         if (preg_match('/^cfg([0-9a-f]{12})$/', $stem, $m)) {
             return $m[1];

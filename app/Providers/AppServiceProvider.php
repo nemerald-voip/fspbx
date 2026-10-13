@@ -66,6 +66,9 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->singleton(LocaleRegistry::class);
 
+        // Menu entries optional modules register while they're enabled.
+        $this->app->singleton(\App\Support\ModuleMenuItems::class);
+
         $this->app->scoped(PhoneNumberService::class);
 
         // Merge a locale's JSON strings over its LocaleRegistry::chain() so

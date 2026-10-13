@@ -87,7 +87,7 @@ You can also add or manage devices while setting up a user's extension.
 1. Go to **Devices** > **Key Templates**.
 2. Click **Create**.
 3. Enter a name and an optional description.
-4. Add keys to the available areas (**Main keys**, **Multi-purpose keys**, and **Expansion keys**).
+4. Add keys to the available areas (**Function Keys**, **Side Keys**, **Multi Purpose Keys**, and **Expansion Keys**), as supported by the phone.
 5. Save the template. 
 
 Once saved, you can assign this template to devices via the device form, extension modal, or bulk update tool.
@@ -97,6 +97,19 @@ Once saved, you can assign this template to devices via the device form, extensi
 ## 3. Connect the Phone
 
 To download its configuration, the physical phone needs to know where to look. Enter the provisioning URL and any configured HTTP credentials into the phone’s web interface, or distribute them through DHCP or a vendor cloud service.
+
+### Vendor setup guides
+
+Use these guides for the phone's provisioning fields, URL format, and first-download checks:
+
+| Phone family | Setup guide |
+| --- | --- |
+| Polycom / Poly VVX | [Enter the server and credentials directly](/docs/phone-provisioning/polycom/) |
+| Yealink SIP phones | [Enter the server and credentials directly](/docs/phone-provisioning/yealink/) |
+| Grandstream GXP / GRP | [Enter the server and credentials directly](/docs/phone-provisioning/grandstream/) |
+| Sangoma P-Series | [Set up DHCP Option 66](/docs/phone-provisioning/sangoma-p-series/#set-dhcp-option-66) |
+| Sangoma S-Series | [Enter the server and credentials, and check HTTPS certificate acceptance](/docs/phone-provisioning/sangoma-s-series/#configure-the-phones-provisioning-server) |
+| Sangoma D-Series | [Set up DHCP Option 66 and Rapid Dial keys](/docs/phone-provisioning/sangoma-d-series/) |
 
 ### Provisioning Authentication
 Provisioning access can be restricted by source IP or CIDR range, HTTP credentials, or both.
@@ -125,19 +138,14 @@ For account-specific values, open **Domains**, select the account's settings, an
 > **Security recommendation:** Use HTTPS even when CIDR restrictions are enabled. CIDR restrictions control where requests may originate but do not encrypt provisioning credentials or phone configuration files.
 
 ### Provisioning URL
-Always use your FS PBX domain name as the base URL. However, the exact path depends entirely on the **Device Template** assigned to the phone in FS PBX. *(Note: Key Templates handle button layouts, but do not affect the URL).*
 
-**1. Modern Provisioning URL (`/prov/`)**
-Use this if the assigned Device Template includes **version information** in its name (e.g., `yealink/t54w (v1.0.5)`). These are newer, actively managed templates.
+Select a current, versioned **Device Template** for the phone and use your reachable FS PBX hostname with the `/prov/` path:
+
 ```text
 https://pbx.example.com/prov/
 ```
 
-**2. Legacy Provisioning URL (`/app/provision/`)**
-Use this if the assigned Device Template is an older filesystem template displaying a **plain vendor/model path** without a version number (e.g., `yealink/t44w` or `polycom/6.x`).
-```text
-https://pbx.example.com/app/provision/
-```
+Keep the trailing slash. Some phones have a separate HTTPS selector and expect only `pbx.example.com/prov/` in the server field; follow the vendor guide above. **Key Templates** control button layouts and do not change the provisioning URL.
 
 **How it works:** You only provide the base URL. When the phone reaches out, it automatically appends the file it needs. FS PBX reads the request, extracts the MAC address, finds the device record, and dynamically renders the matching template.
 
@@ -159,7 +167,7 @@ Anytime you change a device, key template, profile, or extension assignment:
 **If the phone does not provision:**
 - Verify the MAC address in FS PBX exactly matches the phone.
 - Confirm the device is assigned to the correct domain.
-- Check that the phone is using the correct Provisioning URL (Modern vs. Legacy).
+- Check that the phone is using your FS PBX hostname and the `/prov/` path, with the URL format required by its vendor.
 - Ensure the phone can reach the FS PBX server over the network and trusts the HTTPS certificate.
 - Verify the HTTP Provisioning username and password are correct.
 - If CIDR restrictions are enabled, confirm the phone's source IP as seen by FS PBX matches an enabled `provision` > `cidr` row. A CIDR rejection returns a `404` response, while failed HTTP authentication returns `401`.

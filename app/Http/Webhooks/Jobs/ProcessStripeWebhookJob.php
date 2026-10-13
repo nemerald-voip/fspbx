@@ -62,6 +62,7 @@ class ProcessStripeWebhookJob extends SpatieProcessWebhookJob
      */
     public $deleteWhenMissingModels = true;
 
+    // Documented with their purpose in Modules/Billing/AGENTS.md ("Stripe Webhook Events"); keep both in sync.
     private $acceptedTypes = [
         'invoice.created',
         'invoice.updated',
@@ -79,6 +80,7 @@ class ProcessStripeWebhookJob extends SpatieProcessWebhookJob
         'charge.pending',
         'charge.refunded',
         'charge.updated',
+        'setup_intent.succeeded',
         'product.created',
         'product.deleted',
         'product.updated',
@@ -187,6 +189,7 @@ class ProcessStripeWebhookJob extends SpatieProcessWebhookJob
                     case 'charge.pending':
                     case 'charge.refunded':
                     case 'charge.updated':
+                    case 'setup_intent.succeeded':
                         // Only StripeWebhookReceived listeners use these.
                         break;
 

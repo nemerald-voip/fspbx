@@ -178,6 +178,10 @@ class DeviceActionService
             return "polycom";
         } elseif (preg_match("/snom/i", $agentString)) {
                 return "yealink"; //This is correct, Snom and Yealink are the same
+        } elseif (preg_match('/\bSangoma[\s\/_-]+P\d+(?=[\s\/_-]|$)/i', $agentString)) {
+            return "sangoma-p";
+        } elseif (preg_match('/\b(?:Digium|Sangoma)[\s\/_-]+D\d+(?=[\s\/_-]|$)/i', $agentString)) {
+            return "sangoma-d";
         } elseif (preg_match("/sangoma/i", $agentString)) {
             return "sangoma";
         } elseif (preg_match("/htek/i", $agentString)) {
