@@ -494,6 +494,7 @@ class ExtensionsController extends Controller
                     'emergency_caller_id_number',
                     'outbound_caller_id_name',
                     'emergency_caller_id_name',
+                    'emergency_location',
                     'directory_first_name',
                     'directory_last_name',
                     'directory_visible',
@@ -1470,6 +1471,9 @@ public function store(StoreExtensionRequest $request)
             FusionCache::clear("directory:" . $extension->extension . "@" . $extension->user_context);
 
             $freshExtension = $extension->fresh(['advSettings']);
+            if (array_key_exists('emergency_location', $data) && filled($extension->number_alias)) {
+                FusionCache::clear("directory:" . $extension->number_alias . "@" . $extension->user_context);
+            }
             $freshExtension->load([
                 'voicemail' => function ($query) use ($currentDomain) {
                     $query->where('domain_uuid', $currentDomain);

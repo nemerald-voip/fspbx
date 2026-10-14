@@ -66,6 +66,8 @@ class UpdateExtensionRequest extends FormRequest
             'emergency_caller_id_number' => ['nullable', 'string'],
             'outbound_caller_id_name' => ['nullable', 'string'],
             'emergency_caller_id_name' => ['nullable', 'string'],
+            'emergency_location' => ['sometimes', 'nullable', 'string', 'max:60', 'not_regex:/[$\x00-\x1f\x7f]/u',
+                Rule::prohibitedIf(! userCheckPermission('emergency_caller_id_number'))],
 
             'forward_all_enabled' => [
                 'nullable',
@@ -259,6 +261,9 @@ class UpdateExtensionRequest extends FormRequest
 
 public function prepareForValidation()
 {
+    if ($this->exists('emergency_location') && is_string($this->input('emergency_location'))) {
+        $this->merge(['emergency_location' => trim($this->input('emergency_location'))]);
+    }
     // logger($this->all());
     $first = $this->input('directory_first_name', '');
     $last  = $this->input('directory_last_name', '');
