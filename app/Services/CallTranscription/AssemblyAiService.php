@@ -44,7 +44,7 @@ class AssemblyAiService implements TranscriptionProviderInterface
      */
     public function requestCallSummary(array $utterancesLines): array
     {
-        $model = config('services.assemblyai.llm_model', 'gpt-5-nano');
+        $model = config('services.assemblyai.llm_model', 'gpt-5.6-luna');
 
         $systemText = implode("\n", [
             'You are a precise call-summary assistant for a VoIP platform.',

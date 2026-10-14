@@ -55,7 +55,7 @@ class SummarizeCallTranscription implements ShouldQueue
 
             // Kick off OpenAI background task
             $openAiService = app(\App\Services\OpenAIService::class);
-            $start  = $openAiService->createBackgroundSummary($lines, 'gpt-5-nano');
+            $start  = $openAiService->createBackgroundSummary($lines, 'gpt-5.6-luna');
 
             $responseId = $start['id'] ?? null;
             $status     = $start['status'] ?? 'queued';

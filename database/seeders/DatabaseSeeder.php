@@ -1711,9 +1711,9 @@ class DatabaseSeeder extends Seeder
                 'default_setting_category'      => 'voicemail',
                 'default_setting_subcategory'   => 'openai_transcription_model',
                 'default_setting_name'          => 'text',
-                'default_setting_value'         => "whisper-1",
+                'default_setting_value'         => "gpt-transcribe",
                 'default_setting_enabled'       => true,
-                'default_setting_description'   => "gpt-4o-transcribe - best quality, gpt-4o-mini-transcribe - faster/cheaper/less accurate, whisper-1 - good, but older",
+                'default_setting_description'   => "gpt-transcribe - transcription of recorded voicemail audio",
             ],
             [
                 'default_setting_category'      => 'recordings',

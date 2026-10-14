@@ -108,7 +108,7 @@ class OpenAIService
         return $openAiSpeeds;
     }
 
-    public function transcribeAudio($filePath, $model = 'whisper-1', $language = null)
+    public function transcribeAudio($filePath, $model = 'gpt-transcribe', $language = null)
     {
         if (empty($this->apiKey)) {
             throw new \Exception(__('OpenAI API key is not configured. Please set the API key in your environment file.'));
@@ -120,7 +120,11 @@ class OpenAIService
             'model' => $model,
         ];
         if ($language) {
-            $params['language'] = $language;
+            if ($model === 'gpt-transcribe') {
+                $params['languages[]'] = $language;
+            } else {
+                $params['language'] = $language;
+            }
         }
 
         $response = Http::withToken($this->apiKey)

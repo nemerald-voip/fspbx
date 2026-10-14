@@ -202,11 +202,13 @@ class GenericPhoneControlDriver implements PhoneControlDriver
         $callerName = trim(preg_replace('/[\'",{}\[\]]/', '', (string) $extension->effective_caller_id_name))
             ?: (string) $extension->extension;
 
+        // As in click-to-dial, load the originating user's caller-ID variables
+        // and let XML routing apply the company defaults for missing overrides.
         $command = sprintf(
             'originate {domain_uuid=%5$s,domain_name=%6$s,sip_invite_domain=%6$s,'
                 . 'origination_caller_id_number=%7$s,origination_caller_id_name=%7$s,'
                 . 'sip_auto_answer=true,ignore_early_media=true}sofia/%2$s/%3$s'
-                . ' \'unset:sip_auto_answer,unset:ignore_early_media,unset:sip_h_Call-Info,'
+                . ' \'set_user:%7$s@%6$s,unset:sip_auto_answer,unset:ignore_early_media,unset:sip_h_Call-Info,'
                 . 'set:effective_caller_id_number=%7$s,set:effective_caller_id_name=%8$s,'
                 . 'set:caller_id_number=%7$s,set:caller_id_name=%8$s,'
                 . 'set:presence_id=%7$s@%6$s,'

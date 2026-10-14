@@ -6,9 +6,9 @@ sidebar_position: 1
 ---
 # OpenAI
 
-This guide outlines the steps required to configure the OpenAI Speech to Text API (Whisper) for use with the FS PBX voicemail transcription service.
+This guide outlines the steps required to configure the OpenAI Speech to Text API for use with the FS PBX voicemail transcription service.
 
-OpenAI uses a modern and straightforward **API Key** for authentication. The underlying model, Whisper, is highly accurate and supports a wide range of languages.
+OpenAI uses an **API Key** for authentication. FS PBX uses `gpt-transcribe` by default to transcribe recorded voicemail audio.
 
 ## Prerequisites
 
@@ -49,18 +49,19 @@ Now, we will configure FS PBX to use your new OpenAI API key.
 Add the following line to your `.env` file and populate it with the secret key you just copied.
 
 ```dotenv
-# --- OPENAI SPEECH-TO-TEXT (WHISPER) CREDENTIALS ---
+# --- OPENAI SPEECH-TO-TEXT CREDENTIALS ---
 OPENAI_API_KEY="sk-YourSecretApiKeyCopiedFromOpenAI"
 ```
 
 ### 2. Optional: Select a Transcription Model
 
-FS PBX allows you to choose between different OpenAI Whisper models to balance cost, speed, and accuracy. This setting can be found in the user interface under **Default Settings -> Voicemail** by modifying the `openai_transcription_model` value.
+The recommended model is **`gpt-transcribe`**, which is the default for recorded voicemail audio. Set it under **Default Settings -> Voicemail** by modifying the `openai_transcription_model` value.
 
-The available models are:
-*   **`whisper-1`** (Default): The original, high-quality Whisper model. A great balance of speed and accuracy.
-*   **`gpt-4o-transcribe`**: The latest and most advanced model, offering the highest transcription accuracy.
-*   **`gpt-4o-mini-transcribe`**: A newer, more efficient model that provides faster and cheaper transcriptions, suitable for scenarios where speed is more critical than maximum accuracy.
+The FS PBX 2.0.5 update replaces deprecated OpenAI transcription models in this global default with `gpt-transcribe`. Custom model values and account overrides are preserved. If an account has its own `openai_transcription_model` override, update that value separately.
+
+`whisper-1`, `gpt-4o-transcribe`, and `gpt-4o-mini-transcribe` are scheduled to shut down on **February 26, 2027**. See [OpenAI's deprecation notice](https://developers.openai.com/api/docs/deprecations#2026-08-26-transcription-models).
+
+`gpt-live-transcribe` uses a live streaming workflow and is not supported by this recorded-voicemail setting.
 
 ### 3. Clear Configuration Cache
 

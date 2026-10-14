@@ -15,7 +15,7 @@ class VoicemailTranscriptionService
 
             if ($provider === 'openai') {
                 // Get the model from your settings or default
-                $model = get_domain_setting('openai_transcription_model', $domain_uuid) ?? 'whisper-1';
+                $model = get_domain_setting('openai_transcription_model', $domain_uuid) ?? 'gpt-transcribe';
 
                 /** @var \App\Services\OpenAIService $openAI */
                 $openAI = app(\App\Services\OpenAIService::class);
