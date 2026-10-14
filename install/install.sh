@@ -130,6 +130,12 @@ else
     exit 1
 fi
 
+print_success "Installing photo processing dependencies..."
+if ! bash /var/www/fspbx/install/install_message_photos.sh; then
+    print_error "Error occurred while installing photo processing dependencies."
+    exit 1
+fi
+
 # Include the install_cron_jobs.sh script
 sh /var/www/fspbx/install/install_cron_jobs.sh
 if [ $? -eq 0 ]; then

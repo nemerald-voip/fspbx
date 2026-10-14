@@ -22,6 +22,7 @@ class Messages extends Model
 
     protected $fillable = [
         'message_uuid',
+        'message_group_uuid',
         'extension_uuid',
         'domain_uuid',
         'source',
@@ -84,6 +85,18 @@ class Messages extends Model
     public function domain()
     {
         return $this->belongsTo(Domain::class, 'domain_uuid', 'domain_uuid');
+    }
+
+    public function group()
+    {
+        return $this->belongsTo(MessageGroup::class, 'message_group_uuid', 'message_group_uuid');
+    }
+
+    public function roomId(): string
+    {
+        $local = $this->direction === 'in' ? $this->destination : $this->source;
+        $remote = $this->message_group_uuid ?: ($this->direction === 'in' ? $this->source : $this->destination);
+        return $local.'_'.$remote;
     }
 
     public function updateDeliveryMeta(string $path, mixed $value): void

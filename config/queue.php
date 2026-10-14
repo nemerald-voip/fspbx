@@ -29,6 +29,12 @@ return [
     */
 
     'connections' => [
+        // Ringotel may be slow; its requests never occupy carrier-send workers.
+        'ringotel' => [
+            'driver' => 'redis', 'connection' => 'default',
+            'queue' => 'ringotel', 'retry_after' => 240,
+            'block_for' => null, 'after_commit' => true,
+        ],
         // Isolate LDAP's long runtime from the default 90-second retry window.
         'scheduled-jobs' => [
             'driver' => 'redis', 'connection' => 'default',

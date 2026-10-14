@@ -54,6 +54,7 @@ class AccountSettingsController extends Controller
                 'routes' => [
                     'dashboard_route' => route('dashboard'),
                     'settings_update' => route('account-settings.update'),
+                    'messaging_update' => route('account-settings.messaging.update'),
                     'emergency_calls' => route('emergency-calls.index'),
                     'emergency_calls_store' => route('emergency-calls.store'),
                     'emergency_calls_item_options' => route('emergency-calls.item.options'),
@@ -90,6 +91,11 @@ class AccountSettingsController extends Controller
                     //'bulk_update' => route('devices.bulk.update'),
                 ],
                 'pms_provider_options' => app(PmsProviderSettings::class)->options(),
+                'messagingSettings' => [
+                    'enabled' => app(\App\Services\Messaging\PhotoCompressionSettings::class)->enabled(session('domain_uuid')),
+                    'convert_photos' => app(\App\Services\Messaging\PhotoCompressionSettings::class)->conversionEnabled(session('domain_uuid')),
+                    'available' => app(\App\Services\Messaging\PhotoCompressionService::class)->available(),
+                ],
                 // Schema-driven General-tab settings: the declarative field
                 // list, its resolved option lists, and this account's own
                 // override values (null = inheriting the default).
@@ -304,9 +310,37 @@ class AccountSettingsController extends Controller
         ]);
     }
 
+    public function updateMessaging(Request $request)
+    {
+        abort_unless(userCheckPermission('account_settings_list_view')
+            && \App\Services\Messaging\MessageSettingsAccess::canManage(), 403);
+        $data = $request->validate([
+            'enabled' => ['sometimes', 'boolean'],
+            'convert_photos' => ['sometimes', 'boolean'],
+        ]);
+        if ((($data['enabled'] ?? false) || ($data['convert_photos'] ?? false))
+            && !app(\App\Services\Messaging\PhotoCompressionService::class)->available()) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                ($data['enabled'] ?? false) ? 'enabled' : 'convert_photos' => [__('Photo compression is unavailable. Please contact your administrator.')],
+            ]);
+        }
+        if (array_key_exists('enabled', $data)) {
+            app(\App\Services\Messaging\PhotoCompressionSettings::class)->set(session('domain_uuid'), $data['enabled']);
+        }
+        if (array_key_exists('convert_photos', $data)) {
+            app(\App\Services\Messaging\PhotoCompressionSettings::class)->setConversion(session('domain_uuid'), $data['convert_photos']);
+        }
+        return response()->json([
+            'enabled' => app(\App\Services\Messaging\PhotoCompressionSettings::class)->enabled(session('domain_uuid')),
+            'convert_photos' => app(\App\Services\Messaging\PhotoCompressionSettings::class)->conversionEnabled(session('domain_uuid')),
+            'messages' => ['success' => [__('Messaging settings saved.')]],
+        ]);
+    }
+
     public function getUserPermissions()
     {
         $permissions = [];
+        $permissions['messaging_manage'] = \App\Services\Messaging\MessageSettingsAccess::canManage();
         $permissions['location_view'] = userCheckPermission('location_view');
         $permissions['location_create'] = userCheckPermission('location_create');
         $permissions['ldap_directory_view'] = userCheckPermission('ldap_directory_view');

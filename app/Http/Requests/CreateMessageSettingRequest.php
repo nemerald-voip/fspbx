@@ -17,7 +17,7 @@ class CreateMessageSettingRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return Auth::check();
+        return \App\Services\Messaging\MessageSettingsAccess::canManage(session('domain_uuid'));
     }
 
     /**
@@ -38,7 +38,10 @@ class CreateMessageSettingRequest extends FormRequest
             ],
             'chatplan_detail_data' => [
                 'nullable',
+                Rule::exists('v_extensions', 'extension')->where('domain_uuid', session('domain_uuid')),
             ],
+            'allowed_extension_uuids' => ['sometimes', 'array'],
+            'allowed_extension_uuids.*' => ['uuid', 'distinct', Rule::exists('v_extensions', 'extension_uuid')->where('domain_uuid', session('domain_uuid'))],
             'email' => [
                 'nullable',
                 'email:rfc,dns'
@@ -49,6 +52,7 @@ class CreateMessageSettingRequest extends FormRequest
             ],
             'domain_uuid' => [
                 'required',
+                Rule::in([session('domain_uuid')]),
             ],
             'enabled' => [
                 'nullable',

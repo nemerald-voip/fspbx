@@ -4,7 +4,7 @@
 
 <head>
     <meta charset="utf-8"/>
-    <title>{{ isset($title) ? $title . " | " : config('app.name', 'Laravel') }} </title>
+    <title inertia>{{ isset($title) ? $title . " | " : config('app.name', 'Laravel') }} </title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta content="{{ config('app.name', 'Laravel') }} Phone System Portal" name="description" />
     <meta content="{{ config('app.name', 'Laravel') }}" name="{{ config('app.name', 'Laravel') }}" />
