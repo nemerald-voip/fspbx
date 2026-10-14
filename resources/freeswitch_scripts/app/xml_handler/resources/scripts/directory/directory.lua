@@ -27,6 +27,7 @@
 
 --include xml library
 	local Xml = require "resources.functions.xml";
+	local EmergencyLocation = require "resources.functions.emergency_location";
 
 --include cache library
 	local cache = require "resources.functions.cache"
@@ -324,6 +325,7 @@
 								outbound_caller_id_number = row.outbound_caller_id_number;
 								emergency_caller_id_name = row.emergency_caller_id_name;
 								emergency_caller_id_number = row.emergency_caller_id_number;
+								emergency_location = row.emergency_location;
 								missed_call_app = row.missed_call_app;
 								missed_call_data = row.missed_call_data;
 								directory_first_name = row.directory_first_name;
@@ -607,6 +609,10 @@
 							end
 							if (emergency_caller_id_number ~= nil) and (string.len(emergency_caller_id_number) > 0) then
 								xml:append([[								<variable name="emergency_caller_id_number" value="]] ..  xml.sanitize(emergency_caller_id_number) .. [["/>]]);
+							end
+							local emergency_caller_id_location = EmergencyLocation.encode(emergency_location);
+							if emergency_caller_id_location then
+								xml:append([[								<variable name="emergency_caller_id_location" value="]] .. xml.sanitize(emergency_caller_id_location) .. [["/>]]);
 							end
 							if (missed_call_app ~= nil) and (string.len(missed_call_app) > 0) then
 								xml:append([[								<variable name="missed_call_app" value="]] ..  xml.sanitize(missed_call_app) .. [["/>]]);

@@ -42,6 +42,7 @@ class Extensions extends Model
         'outbound_caller_id_number',
         'emergency_caller_id_name',
         'emergency_caller_id_number',
+        'emergency_location',
         'directory_first_name',
         'directory_last_name',
         'directory_visible',
