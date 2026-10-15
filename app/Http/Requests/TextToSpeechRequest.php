@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Services\OpenAIService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Http\FormRequest;
 use App\Support\Localization\ValidationMessages;
@@ -29,8 +30,8 @@ class TextToSpeechRequest extends FormRequest
             'input' => 'required|string|max:1000',
             'model' => 'nullable|string',
             'voice' => 'string',
-            'response_format' => 'nullable|string',
-            'speed' => 'string',
+            'response_format' => 'nullable|string|in:wav,mp3,opus,aac,flac,pcm',
+            'speed' => 'required|numeric|between:0.25,4',
         ];
     }
 
@@ -41,8 +42,8 @@ class TextToSpeechRequest extends FormRequest
     {
         
         $this->merge([
-            'model' => $this->input('model', 'gpt-4o-mini-tts-2025-12-15'),
-            'response_format' => $this->input('response_format', 'wav'),
+            'model' => $this->input('model') ?: OpenAIService::DEFAULT_SPEECH_MODEL,
+            'response_format' => $this->input('response_format') ?: 'wav',
         ]);
 
         if ($this->has('voice')) {
