@@ -108,6 +108,60 @@ class Destinations extends Model
         return $service->reverseEngineerDestinationActions($this->destination_actions);
     }
 
+    /**
+     * Plain-language description of each routing action, for list displays.
+     * Each entry is ['name' => ?string, 'type' => ?string, 'invalid' => bool]. An action is
+     * invalid when it does not resolve to a destination the phone number editor can select.
+     */
+    public function routingSummary(): array
+    {
+        $actions = json_decode((string) $this->destination_actions, true);
+
+        if (!is_array($actions) || $actions === []) {
+            return [];
+        }
+
+        $service = new \App\Services\CallRoutingOptionsService($this->domain_uuid);
+
+        return collect($actions)
+            ->filter(fn ($action) => is_array($action) && filled($action['destination_app'] ?? null))
+            ->map(fn (array $action) => $this->summarizeRoutingAction($service, $action))
+            ->values()
+            ->all();
+    }
+
+    protected function summarizeRoutingAction(\App\Services\CallRoutingOptionsService $service, array $action): array
+    {
+        // Resolve one action at a time so results stay aligned with the stored actions.
+        $option = $service->reverseEngineerDestinationActions(json_encode([$action]))[0] ?? null;
+        $type = is_array($option) ? ($option['type'] ?? null) : null;
+
+        if ($type) {
+            $name = $option['name'] ?? null;
+            $extension = (string) ($option['extension'] ?? '');
+
+            if (filled($name) && preg_match('/^\*?\d+$/', $extension) && !str_starts_with($name, $extension)) {
+                $name = "{$extension} - {$name}";
+            }
+
+            if (!filled($name) && !in_array($type, ['hangup', 'check_voicemail', 'company_directory'], true)) {
+                $name = $extension !== '' ? $extension : null;
+            }
+
+            return [
+                'name' => $name ?: null,
+                'type' => $service->getFriendlyTypeName($type),
+                'invalid' => false,
+            ];
+        }
+
+        return [
+            'name' => null,
+            'type' => null,
+            'invalid' => true,
+        ];
+    }
+
     public function getLabelAttribute()
     {
         $phoneNumberFormatted = $this->destination_number_formatted;
