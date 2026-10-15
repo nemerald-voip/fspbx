@@ -258,6 +258,10 @@ class CallFlowController extends Controller
                 'call_flow_status',
                 'call_flow_label',
                 'call_flow_alternate_label',
+                'call_flow_app',
+                'call_flow_data',
+                'call_flow_alternate_app',
+                'call_flow_alternate_data',
                 'call_flow_context',
                 'call_flow_enabled',
                 'call_flow_group',
@@ -304,7 +308,17 @@ class CallFlowController extends Controller
                 'call_flow_description',
             ])
             ->defaultSort('call_flow_name')
-            ->paginate($this->perPage);
+            ->paginate($this->perPage)
+            ->through(function (CallFlows $callFlow) {
+                $route = $callFlow->activeRouteSummary();
+
+                return $callFlow
+                    ->makeHidden(['call_flow_app', 'call_flow_data', 'call_flow_alternate_app', 'call_flow_alternate_data'])
+                    ->toArray() + [
+                        'routing_to_name' => $route['name'],
+                        'routing_to_type' => $route['type'],
+                    ];
+            });
 
         return $items;
     }
