@@ -1,4 +1,4 @@
-{{-- version: 1.0.9 --}}
+{{-- version: 1.0.10 --}}
 
 @switch($flavor)
 
@@ -426,7 +426,7 @@
     <!-- Polarity Reversal. 0 - No, 1 - Yes. Default is 0. -->
     <!-- Number: 0, 1 -->
     <!-- Mandatory -->
-    <P865>{{ $settings['grandstream_polarity_reversal'] ?? '0' }}</P865>
+    <P205>{{ $settings['grandstream_polarity_reversal'] ?? '0' }}</P205>
     @elseif ($n === 2)
     <!-- ###################################################################### -->
     <!-- ## Port Settings / FXS Port 2 / Account Registration                  ## -->
@@ -598,6 +598,21 @@
     <!-- Number: 0, 1, 2 -->
     <!-- Mandatory -->
     <P751>0</P751>
+
+    <!-- Loop Current Disconnect. 0 - No, 1 - Yes. Default is 0. -->
+    <!-- Number: 0, 1 -->
+    <!-- Mandatory -->
+    <P893>{{ $settings['grandstream_loop_current_disconnect'] ?? '0' }}</P893>
+
+    <!-- Loop Current Disconnect Duration, in milliseconds. Default is 200. -->
+    <!-- Number: 100 to 10000 -->
+    <!-- Mandatory -->
+    <P857>{{ $settings['grandstream_loop_current_disconnect_duration'] ?? '200' }}</P857>
+
+    <!-- Polarity Reversal. 0 - No, 1 - Yes. Default is 0. -->
+    <!-- Number: 0, 1 -->
+    <!-- Mandatory -->
+    <P865>{{ $settings['grandstream_polarity_reversal'] ?? '0' }}</P865>
     @endif
 @endforeach
 

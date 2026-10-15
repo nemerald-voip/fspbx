@@ -1349,7 +1349,7 @@ class DatabaseSeeder extends Seeder
                 'default_setting_name'          => 'numeric',
                 'default_setting_value'         => '0',
                 'default_setting_enabled'       => true,
-                'default_setting_description'   => 'Loop Current Disconnect for Grandstream HT80x V2 FXS Port 1 (P892): 0 = No, 1 = Yes. Default: 0.',
+                'default_setting_description'   => 'Loop Current Disconnect for both Grandstream HT80x V2 FXS ports (P892/P893): 0 = No, 1 = Yes. Default: 0.',
             ],
             [
                 'default_setting_category'      => 'provision',
@@ -1357,7 +1357,7 @@ class DatabaseSeeder extends Seeder
                 'default_setting_name'          => 'numeric',
                 'default_setting_value'         => '200',
                 'default_setting_enabled'       => true,
-                'default_setting_description'   => 'Loop Current Disconnect Duration for Grandstream HT80x V2 FXS Port 1 (P856), in milliseconds. Range: 100-10000. Default: 200.',
+                'default_setting_description'   => 'Loop Current Disconnect Duration for both Grandstream HT80x V2 FXS ports (P856/P857), in milliseconds. Range: 100-10000. Default: 200.',
             ],
             [
                 'default_setting_category'      => 'provision',
@@ -1365,7 +1365,7 @@ class DatabaseSeeder extends Seeder
                 'default_setting_name'          => 'numeric',
                 'default_setting_value'         => '0',
                 'default_setting_enabled'       => true,
-                'default_setting_description'   => 'Polarity Reversal for Grandstream HT80x V2 FXS Port 1 (P865): 0 = No, 1 = Yes. Default: 0.',
+                'default_setting_description'   => 'Polarity Reversal for both Grandstream HT80x V2 FXS ports (P205/P865): 0 = No, 1 = Yes. Default: 0.',
             ],
             [
                 'default_setting_category'      => 'provision',
