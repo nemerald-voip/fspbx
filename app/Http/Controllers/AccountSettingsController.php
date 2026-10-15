@@ -16,6 +16,9 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Contracts\Foundation\Application;
 use App\Http\Requests\UpdateAccountSettingsRequest;
+use App\Http\Requests\UpdateMessagingSettingsRequest;
+use App\Services\Messaging\PhotoCompressionSettings;
+use App\Services\Messaging\PhotoCompressionService;
 use App\Services\Settings\AccountSettingsSchema;
 use App\Services\Settings\SettingsManagementService;
 
@@ -55,6 +58,7 @@ class AccountSettingsController extends Controller
                     'dashboard_route' => route('dashboard'),
                     'settings_update' => route('account-settings.update'),
                     'messaging_update' => route('account-settings.messaging.update'),
+                    'messaging_reset' => route('account-settings.messaging.destroy'),
                     'emergency_calls' => route('emergency-calls.index'),
                     'emergency_calls_store' => route('emergency-calls.store'),
                     'emergency_calls_item_options' => route('emergency-calls.item.options'),
@@ -92,9 +96,8 @@ class AccountSettingsController extends Controller
                 ],
                 'pms_provider_options' => app(PmsProviderSettings::class)->options(),
                 'messagingSettings' => [
-                    'enabled' => app(\App\Services\Messaging\PhotoCompressionSettings::class)->enabled(session('domain_uuid')),
-                    'convert_photos' => app(\App\Services\Messaging\PhotoCompressionSettings::class)->conversionEnabled(session('domain_uuid')),
-                    'available' => app(\App\Services\Messaging\PhotoCompressionService::class)->available(),
+                    ...app(PhotoCompressionSettings::class)->settings(session('domain_uuid')),
+                    'available' => app(PhotoCompressionService::class)->available(),
                 ],
                 // Schema-driven General-tab settings: the declarative field
                 // list, its resolved option lists, and this account's own
@@ -310,30 +313,24 @@ class AccountSettingsController extends Controller
         ]);
     }
 
-    public function updateMessaging(Request $request)
+    public function updateMessaging(UpdateMessagingSettingsRequest $request, PhotoCompressionSettings $settings)
+    {
+        return response()->json([
+            ...$settings->save(session('domain_uuid'), $request->validated()),
+            'available' => app(PhotoCompressionService::class)->available(),
+            'messages' => ['success' => [__('Messaging settings saved.')]],
+        ]);
+    }
+
+    public function destroyMessaging(PhotoCompressionSettings $settings)
     {
         abort_unless(userCheckPermission('account_settings_list_view')
-            && \App\Services\Messaging\MessageSettingsAccess::canManage(), 403);
-        $data = $request->validate([
-            'enabled' => ['sometimes', 'boolean'],
-            'convert_photos' => ['sometimes', 'boolean'],
-        ]);
-        if ((($data['enabled'] ?? false) || ($data['convert_photos'] ?? false))
-            && !app(\App\Services\Messaging\PhotoCompressionService::class)->available()) {
-            throw \Illuminate\Validation\ValidationException::withMessages([
-                ($data['enabled'] ?? false) ? 'enabled' : 'convert_photos' => [__('Photo compression is unavailable. Please contact your administrator.')],
-            ]);
-        }
-        if (array_key_exists('enabled', $data)) {
-            app(\App\Services\Messaging\PhotoCompressionSettings::class)->set(session('domain_uuid'), $data['enabled']);
-        }
-        if (array_key_exists('convert_photos', $data)) {
-            app(\App\Services\Messaging\PhotoCompressionSettings::class)->setConversion(session('domain_uuid'), $data['convert_photos']);
-        }
+            && session('domain_uuid') && \App\Services\Messaging\MessageSettingsAccess::canManage(), 403);
+
         return response()->json([
-            'enabled' => app(\App\Services\Messaging\PhotoCompressionSettings::class)->enabled(session('domain_uuid')),
-            'convert_photos' => app(\App\Services\Messaging\PhotoCompressionSettings::class)->conversionEnabled(session('domain_uuid')),
-            'messages' => ['success' => [__('Messaging settings saved.')]],
+            ...$settings->revert(session('domain_uuid')),
+            'available' => app(PhotoCompressionService::class)->available(),
+            'messages' => ['success' => [__('Reverted to defaults.')]],
         ]);
     }
 

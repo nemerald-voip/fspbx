@@ -3,6 +3,13 @@
         :initial-menu-option="initialMenuOption" @update-selected-menu-option="handleUpdateSelectedMenuOption">
 
         <template #default="{ selectedMenuOption }">
+            <section v-if="permissions?.default_setting_view && messagingSettings" v-show="selectedMenuOption === 'messaging'">
+                <MessagingSettingsForm :settings="messagingSettings" :route="routes.messaging_update" system
+                    :can-manage="permissions?.default_setting_edit"
+                    @success="messages => showNotification('success', messages)"
+                    @error="messages => showNotification('error', messages)" />
+            </section>
+
             <!-- GENERAL: system-wide default settings (default_settings) -->
             <section v-show="selectedMenuOption === 'general'">
                 <Vueform ref="generalForm$" :endpoint="submitForm" @success="handleSuccess" @error="handleError"
@@ -150,10 +157,11 @@ import PageWithSideMenu from '../Layouts/PageWithSideMenu.vue'
 import Notification from "./components/notifications/Notification.vue";
 import UpdateStripeSettingsModal from "./components/modal/UpdateStripeSettingsModal.vue";
 import Badge from "@generalComponents/Badge.vue";
-import { CreditCardIcon, Cog6ToothIcon, ServerStackIcon } from '@heroicons/vue/24/outline'
+import { CreditCardIcon, Cog6ToothIcon, ServerStackIcon, ChatBubbleLeftRightIcon } from '@heroicons/vue/24/outline'
 import ScheduledJobServerControl from './components/ScheduledJobServerControl.vue'
 import GraphicEqIcon from "@icons/GraphicEqIcon.vue"
 import AssemblyAiForm from "./components/forms/AssemblyAiForm.vue"
+import MessagingSettingsForm from "./components/forms/MessagingSettingsForm.vue"
 import CallTranscriptionOptionsForm from "./components/forms/CallTranscriptionOptionsForm.vue"
 import SipCaptureSettingsForm from "./components/forms/SipCaptureSettingsForm.vue"
 import NumberTranslations from './components/NumberTranslations.vue'
@@ -164,6 +172,7 @@ import { AdjustmentsVerticalIcon, SignalIcon } from "@heroicons/vue/24/outline";
 const props = defineProps({
     routes: Object,
     permissions: Object,
+    messagingSettings: { type: Object, default: null },
     scheduled_jobs: { type: Object, default: null },
     // Declarative system-default fields (SystemSettingsSchema), the option
     // lists they reference, and the current global default values. The
@@ -223,6 +232,7 @@ onMounted(() => {
 
     if (props.permissions?.default_setting_view) {
         navigation.value.push({ key: 'general', name: trans('General'), icon: Cog6ToothIcon })
+        navigation.value.push({ key: 'messaging', name: trans('Messaging'), icon: ChatBubbleLeftRightIcon })
     }
 
     if (props.permissions?.payment_gateways_view) {

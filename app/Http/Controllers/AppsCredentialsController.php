@@ -28,7 +28,8 @@ class AppsCredentialsController extends Controller
 
         return response($qrCode, 200)
             ->header('Content-Type', 'image/png')
-            ->header('Cache-Control', 'private, max-age=2592000');
+            // The QR code carries app credentials; keep it out of browser caches.
+            ->header('Cache-Control', 'no-store, private');
     }
 
     /**

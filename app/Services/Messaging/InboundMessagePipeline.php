@@ -30,7 +30,7 @@ class InboundMessagePipeline
 
     protected function handleInbound(InboundMessageEventData $event, MessagingWebhookParser $parser): void
     {
-        if ($event->provider !== 'sinch' && $event->providerReferenceId
+        if (!app(MessageCarrierCapabilities::class)->supportsGroups($event->provider) && $event->providerReferenceId
             && $this->messages->inboundReferenceExists($event->provider, $event->providerReferenceId)) {
             messaging_webhook_debug('Inbound message event already processed', [
                 'provider' => $event->provider,
@@ -73,9 +73,10 @@ class InboundMessagePipeline
             'provider_reference_id' => $event->providerReferenceId,
         ]);
 
-        foreach (array_unique(array_filter($event->to)) as $destination) {
-            // Inteliquent includes external group participants in `to` too.
-            if ($event->provider === 'sinch' && !$this->resolver->isLocal($destination)) continue;
+        $supportsGroups = app(MessageCarrierCapabilities::class)->supportsGroups($event->provider);
+        foreach (array_unique(array_filter($event->localRecipients ?? $event->to)) as $destination) {
+            // A group's participant list also contains external numbers we must not route locally.
+            if ($supportsGroups && !$this->resolver->isLocal($destination)) continue;
             messaging_webhook_debug('Resolving destination', [
                 'destination' => $destination,
             ]);
@@ -87,7 +88,7 @@ class InboundMessagePipeline
                 ->where('reference_id', $event->providerReferenceId)
                 ->where('delivery_meta->provider->name', $event->provider)->exists()) continue;
             $group = null;
-            if ($event->provider === 'sinch') {
+            if ($supportsGroups) {
                 $groups = app(MessageGroupService::class);
                 $recipients = $groups->recipients(array_merge([$event->from], $event->to), $local,
                     get_domain_setting('country', $route->domainUuid) ?? 'US');
@@ -171,6 +172,8 @@ class InboundMessagePipeline
             status: $event->status,
             description: $event->description,
             providerEvent: $event->providerEvent,
+            recipient: $event->recipient,
+            occurredAt: $event->occurredAt,
         );
     }
 }

@@ -885,6 +885,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::put('account-settings/pms-provider', [AccountSettingsController::class, 'updatePmsProvider'])->name('account-settings.pms-provider.update');
     Route::put('account-settings/update', [AccountSettingsController::class, 'update'])->name('account-settings.update');
     Route::put('account-settings/messaging', [AccountSettingsController::class, 'updateMessaging'])->name('account-settings.messaging.update');
+    Route::delete('account-settings/messaging', [AccountSettingsController::class, 'destroyMessaging'])->name('account-settings.messaging.destroy');
 
     // Default Settings
     Route::get('default-settings/data', [DefaultSettingsController::class, 'data'])->name('default-settings.data');
@@ -940,6 +941,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
 
     // System Settings
     Route::put('system-settings/update', [SystemSettingsController::class, 'update'])->name('system-settings.update');
+    Route::put('system-settings/messaging', [SystemSettingsController::class, 'updateMessaging'])->name('system-settings.messaging.update');
     Route::get('system-settings/number-translations', [NumberTranslationController::class, 'index'])->name('number-translations.index');
     Route::post('system-settings/number-translations', [NumberTranslationController::class, 'store'])->name('number-translations.store');
     Route::post('system-settings/number-translations/sync', [NumberTranslationController::class, 'sync'])->name('number-translations.sync');

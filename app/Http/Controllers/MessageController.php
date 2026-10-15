@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Services\Messaging\RetryMessageService;
 use App\Services\Messaging\MessageParticipantService;
 use App\Services\Messaging\MessageGroupService;
+use App\Services\Messaging\MessageCarrierCapabilities;
 use App\Models\MessageGroup;
 use App\Models\User;
 use Inertia\Inertia;
@@ -115,7 +116,10 @@ class MessageController extends Controller
                     'dids' => $myDids->map(function ($did) {
                         return [
                             'number' => $did->destination,
-                            'label' => $did->description ?? null
+                            'label' => $did->description ?? null,
+                            'max_recipients' => app(MessageCarrierCapabilities::class)->recipientLimit(
+                                (string) $did->carrier, (string) $did->destination
+                            ),
                         ];
                     })->values()->all() // Ensure clean array
                 ];
@@ -472,9 +476,19 @@ class MessageController extends Controller
 
         app(\App\Services\Messaging\MessageConversationVisibility::class)->history($query, auth()->id());
 
-        // 3. Pagination & Format (Same as before)
-        $rows = $query->orderBy('created_at', 'desc')
+        // 3. Newest page first; `before` pages back from the oldest message the client shows.
+        $request->validate(['before' => ['nullable', 'uuid']]);
+        if ($before = $request->input('before')) {
+            $query->whereRaw(
+                '(messages.created_at, messages.message_uuid) < (select created_at, message_uuid from messages where message_uuid = ? and domain_uuid = ?)',
+                [$before, $domainUuid]
+            );
+        }
+
+        $rows = $query->orderBy('created_at', 'desc')->orderBy('message_uuid', 'desc')
             ->paginate($request->input('page.size', 50));
+
+        $isSharedNumber = app(MessageParticipantService::class)->members($domainUuid, $local)->count() > 1;
 
         $directory = $this->contactDirectory(
             $domainUuid,
@@ -483,29 +497,31 @@ class MessageController extends Controller
                 ->pluck('source')
         );
 
-        $messages = collect($rows->items())->map(function ($r) use ($directory) {
+        $messages = collect($rows->items())->map(function ($r) use ($directory, $isSharedNumber) {
             $isOutbound = in_array(strtolower($r->direction), ['out', 'outbound', 'outgoing']);
             return [
                 'id' => $r->message_uuid,
                 'sender_name' => $isOutbound
                     ? app(MessageParticipantService::class)->sender($r)
                     : ($directory[$r->source] ?? $this->formatPhoneNumber($r->source)),
+                'show_sender_name' => (bool) $r->message_group_uuid || ($isOutbound && $isSharedNumber),
                 'text' => $r->message,
                 'role' => $isOutbound ? 'user' : 'ai',
                 'timestamp' => $r->created_at->toIsoString(),
                 'send_error' => $isOutbound && $r->status === 'failed'
                     ? data_get($r->delivery_meta, 'outbound.provider.error', __('Message could not be sent.')) : null,
-                'media' => collect($r->media ?? [])->map(fn ($media, $index) => array_replace($media, [
-                    'access_path' => $media['access_path'] ?? route('messages.media.show', [
+                'media' => collect($r->mediaItems())->map(fn ($media, $index) => array_replace($media, [
+                    'access_path' => $media['access_path'] ?? $media['url'] ?? route('messages.media.show', [
                         'message_uuid' => $r->message_uuid, 'index' => $index,
                         'file_name' => $media['stored_name'] ?? ('file_'.$index),
                     ], false),
-                ]))->all(),
+                ]))->values()->all(),
             ];
         });
 
         return response()->json([
             'messages' => $messages,
+            'has_more' => $rows->hasMorePages(),
             'pagination' => [
                 'total' => $rows->total(),
                 'per_page' => $rows->perPage(),
@@ -629,9 +645,7 @@ class MessageController extends Controller
         if (count($recipients) > 1) {
             $extension = Extensions::where('domain_uuid', $domain)->findOrFail($extensionUuid);
             $config = $this->getPhoneNumberSmsConfig($local, $extension->extension, $domain);
-            if ($config->carrier !== 'sinch') throw \Illuminate\Validation\ValidationException::withMessages([
-                'recipients' => [__('Group messaging is available through Inteliquent in FS PBX.')],
-            ]);
+            app(MessageCarrierCapabilities::class)->validateGroup($config->carrier, $local, $recipients);
             $group = $groups->findOrCreate($domain, $local, $recipients);
         }
         return response()->json(['room' => [

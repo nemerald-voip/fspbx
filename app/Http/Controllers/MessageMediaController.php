@@ -4,11 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Messages;
 use App\Services\MessageMediaObjectStorageService;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class MessageMediaController extends Controller
 {
     public function show(
+        Request $request,
         string $message_uuid,
         int $index,
         MessageMediaObjectStorageService $mediaStorage
@@ -17,7 +20,7 @@ class MessageMediaController extends Controller
             ->select(['message_uuid', 'domain_uuid', 'media'])
             ->firstOrFail();
 
-        $media = $message->media;
+        $media = $message->mediaItems();
 
         if (!is_array($media) || !array_key_exists($index, $media)) {
             abort(404);
@@ -29,6 +32,14 @@ class MessageMediaController extends Controller
             abort(404);
         }
 
+        // A stored object never changes, so a browser that already has it gets a 304
+        // without resolving S3 settings or downloading the object again.
+        $etag = sha1($item['bucket'] . '/' . $item['object_key']);
+        $notModified = $this->cacheable(new Response(), $etag);
+        if ($notModified->isNotModified($request)) {
+            return $notModified;
+        }
+
         $object = $mediaStorage->getObjectForDomain(
             domainUuid: $message->domain_uuid,
             bucket: $item['bucket'],
@@ -37,7 +48,7 @@ class MessageMediaController extends Controller
 
         $fileName = $item['original_name'] ?? $item['stored_name'] ?? 'file';
 
-        return new StreamedResponse(
+        return $this->cacheable(new StreamedResponse(
             function () use ($object) {
                 $stream = $object['body'];
 
@@ -52,8 +63,12 @@ class MessageMediaController extends Controller
             [
                 'Content-Type' => $item['mime_type'] ?? $object['content_type'] ?? 'application/octet-stream',
                 'Content-Disposition' => 'inline; filename="' . addslashes($fileName) . '"',
-                'Cache-Control' => 'private, max-age=300',
             ]
-        );
+        ), $etag);
+    }
+
+    protected function cacheable(Response $response, string $etag): Response
+    {
+        return $response->setEtag($etag)->setPrivate()->setMaxAge(86400)->setImmutable();
     }
 }

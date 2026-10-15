@@ -12,5 +12,7 @@ class DeliveryStatusEventData extends MessagingEventData
         public string $status,
         public ?string $description = null,
         public ?string $providerEvent = null,
+        public ?string $recipient = null,
+        public ?string $occurredAt = null,
     ) {}
 }

@@ -66,6 +66,7 @@
             <!-- MESSAGING -->
             <section v-show="selectedMenuOption === 'messaging'">
                 <MessagingSettingsForm :settings="messagingSettings" :route="routes.messaging_update"
+                    :reset-route="routes.messaging_reset"
                     :can-manage="permissions?.messaging_manage"
                     @success="messages => showNotification('success', messages)"
                     @error="messages => showNotification('error', messages)" />

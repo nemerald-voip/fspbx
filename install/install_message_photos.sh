@@ -8,36 +8,108 @@ package_installed() {
   [[ $(dpkg-query -W -f='${Status}' "$1" 2>/dev/null) == 'install ok installed' ]]
 }
 
+package_version() { dpkg-query -W -f='${Version}' "$1" 2>/dev/null; }
+
+package_at_least() {
+  package_installed "$1" && dpkg --compare-versions "$(package_version "$1")" ge "$2"
+}
+
+detect_platform() {
+  # Keep backports on the matching Debian release; never mix stable releases.
+  source /etc/os-release
+  [[ ${ID:-} == debian ]] || fail 'Photo dependencies require Debian 12 or 13.'
+  photo_codename=${VERSION_CODENAME:-}
+  case "$photo_codename" in
+    bookworm|trixie) ;;
+    *) fail "Unsupported Debian release: $photo_codename. Expected bookworm or trixie." ;;
+  esac
+}
+
 select_packages() {
-  # Debian 12 uses libvips42; Debian 13 uses libvips42t64.
   photo_vips_package=libvips42
-  if package_installed libvips42t64 || apt-cache show libvips42t64 >/dev/null 2>&1; then
-    photo_vips_package=libvips42t64
-  fi
-  # libvips-tools supplies vips/vipsheader; the library depends on the JPEG,
-  # PNG, WebP, TIFF, and HEIF libraries. nice/prlimit come from the base tools.
+  [[ $photo_codename != trixie ]] || photo_vips_package=libvips42t64
   photo_packages=("$photo_vips_package" libvips-tools coreutils util-linux)
-  # Newer libheif packages split HEIC/AVIF decoders into plugins.
-  if [[ $photo_vips_package == libvips42t64 ]] || apt-cache show libheif-plugin-libde265 >/dev/null 2>&1; then
-    photo_packages+=(libheif-plugin-libde265 libheif-plugin-dav1d)
+  # Messaging decodes HEIC/AVIF inputs and writes JPEG output.
+  photo_heif_packages=(libheif1 libheif-plugin-libde265 libheif-plugin-dav1d)
+}
+
+packages_ready() {
+  local photo_package
+  for photo_package in "${photo_packages[@]}" "${photo_heif_packages[@]}"; do
+    package_installed "$photo_package" || return 1
+  done
+  # 1.18 fixes metadata handling for HEIC photos produced by newer iPhones.
+  package_at_least libheif1 1.18.0 && package_at_least libvips-tools 8.13.0
+}
+
+ensure_bookworm_backports() {
+  # Reuse an existing active backports source when available.
+  if apt-cache policy | grep 'n=bookworm-backports[, ]' >/dev/null; then return; fi
+  [[ -r /usr/share/keyrings/debian-archive-keyring.gpg ]] || fail 'Debian archive signing keys are missing.'
+  local photo_source=/etc/apt/sources.list.d/fspbx-message-photos.sources
+  local photo_source_tmp
+  photo_source_tmp=$(mktemp)
+  cat > "$photo_source_tmp" <<'SOURCE'
+# FS PBX photo processing: packages built for Debian 12.
+Types: deb
+URIs: https://deb.debian.org/debian
+Suites: bookworm-backports
+Components: main
+Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
+SOURCE
+  if ! cmp -s "$photo_source_tmp" "$photo_source"; then
+    install -m 0644 "$photo_source_tmp" "$photo_source"
+    echo 'Photo processing setup: enabled Debian bookworm-backports.'
   fi
+  rm -f "$photo_source_tmp"
+}
+
+verify_tools() {
+  local photo_operations photo_operation
+  photo_operations=$(vips -l foreign)
+  for photo_operation in jpegload pngload webpload heifload tiffload jpegsave; do
+    [[ $photo_operations == *"($photo_operation)"* ]] || fail "libvips is missing $photo_operation."
+  done
+  vipsheader --version
+  nice -n 10 prlimit --as=536870912 --cpu=3 --core=0 -- vips --version
+  echo "Photo processing ready: libheif $(package_version libheif1), libvips $(package_version libvips-tools)."
 }
 
 install_dependencies() {
   require_root
-  local photo_missing=0 photo_package
+  detect_platform
   select_packages
-  for photo_package in "${photo_packages[@]}"; do
-    package_installed "$photo_package" || photo_missing=1
-  done
-  if [[ $photo_missing == 1 ]]; then
-    export DEBIAN_FRONTEND=noninteractive
-    apt-get -o Acquire::Retries=3 -o DPkg::Lock::Timeout=120 update
-    select_packages
-    apt-get -o Acquire::Retries=3 -o DPkg::Lock::Timeout=120 install -y --no-install-recommends \
-      "${photo_packages[@]}"
+  if packages_ready; then
+    verify_tools
+    return
   fi
-  echo 'Photo processing dependencies are installed.'
+
+  [[ ${1:-} != --check ]] || fail 'Photo dependencies need upgrading. Run install/install_message_photos.sh as root.'
+  export DEBIAN_FRONTEND=noninteractive
+  # Avoid unrelated automatic service restarts from needrestart during apt.
+  export NEEDRESTART_MODE=l
+  local photo_install=("${photo_packages[@]}") photo_package
+  if [[ $photo_codename == bookworm ]]; then
+    ensure_bookworm_backports
+    for photo_package in "${photo_heif_packages[@]}"; do
+      photo_install+=("$photo_package/bookworm-backports")
+    done
+  else
+    photo_install+=("${photo_heif_packages[@]}")
+  fi
+
+  apt-get -o Acquire::Retries=3 -o DPkg::Lock::Timeout=120 update
+  # Show the exact plan first and refuse removals or implicit downgrades.
+  apt-get -s --no-remove --no-install-recommends install "${photo_install[@]}"
+  if [[ ${1:-} == --dry-run ]]; then return; fi
+  apt-get -o Acquire::Retries=3 -o DPkg::Lock::Timeout=120 install -y --no-remove --no-install-recommends \
+    "${photo_install[@]}"
+  packages_ready || fail 'Installation finished without the required libheif 1.18+ and decoder plugins.'
+  verify_tools
 }
 
-install_dependencies
+if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
+  [[ $# == 0 || ( $# == 1 && ( $1 == --check || $1 == --dry-run ) ) ]] \
+    || fail 'Usage: install_message_photos.sh [--check|--dry-run]. Dry-run configures the package source and shows the install plan.'
+  install_dependencies "${1:-}"
+fi

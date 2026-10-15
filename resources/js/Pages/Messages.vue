@@ -394,16 +394,16 @@
         <div v-if="showCreateModal"
             class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
             <div class="bg-white rounded-lg shadow-2xl w-96 p-6 transform transition-all scale-100">
-                <h3 class="text-lg font-bold text-gray-900 mb-4">Start New Conversation</h3>
+                <h3 class="text-lg font-bold text-gray-900 mb-4">{{ $t('Start New Conversation') }}</h3>
 
                 <!-- VueForm Component -->
-                <Vueform :endpoint="false" :float-placeholders="false" :schema="createRoomSchema"
-                    @submit="handleCreateRoom" />
+                <Vueform :endpoint="false" :float-placeholders="false" :schema="createRoomSchema" :validate-on="''"
+                    @mounted="(form) => form.disableValidation()" @submit="handleCreateRoom" />
 
                 <!-- Close Button (Optional, if not included in form actions) -->
                 <div class="mt-4 flex justify-center">
                     <button @click="showCreateModal = false"
-                        class="text-sm text-gray-400 hover:text-gray-600">Cancel</button>
+                        class="text-sm text-gray-400 hover:text-gray-600">{{ $t('Cancel') }}</button>
                 </div>
             </div>
         </div>
@@ -453,6 +453,7 @@ import Notification from "./components/notifications/Notification.vue";
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import { TrashIcon } from '@heroicons/vue/24/outline';
 import { trans } from '@i18n';
+import { clearServerFormErrors, showServerFormErrors } from '../composables/serverFormErrors.js';
 // import Pusher from 'pusher-js';
 
 // --- Props (from Laravel/Inertia) ---
@@ -492,9 +493,30 @@ const extensionForm$ = ref(null);
 
 // DIDs State (Populated when extension changes)
 const myDids = ref([]);
+const newConversationSource = ref(null);
+const newConversationRecipientLimit = computed(() =>
+    myDids.value.find(did => did.number === newConversationSource.value)?.max_recipients ?? 1);
+watch(showCreateModal, (open) => {
+    if (open) newConversationSource.value = myDids.value[0]?.number ?? null;
+});
 const elementRef = ref(null);
 let historyRequest = 0;
 let roomsRequest = 0;
+
+// The thread opens on the newest page; scrolling near the top loads earlier pages.
+const MESSAGE_PAGE_SIZE = 20;
+const loadedRows = new Map(); // message id -> API row for the active room
+let hasOlderMessages = false;
+let loadingOlderMessages = false;
+let historyGeneration = 0; // bumps when the active room changes
+let keepPlaceOnRender = null; // 'prepend' while adding earlier messages above the reader
+
+watch(() => activeRoomId.value, () => {
+    historyGeneration++;
+    loadedRows.clear();
+    hasOlderMessages = false;
+    loadingOlderMessages = false;
+}, { flush: 'sync' });
 
 // --- Computed ---
 const currentRoomName = computed(() => {
@@ -509,6 +531,10 @@ const chatMessageStyles = {
         shared: { bubble: { maxWidth: '80%', padding: '10px 15px', borderRadius: '12px' } },
         user: { bubble: { backgroundColor: '#3b82f6', color: 'white' } },
         ai: { bubble: { backgroundColor: '#ffffff', color: '#1f2937' } },
+    },
+    // Deep Chat's own preview of a photo while it sends; history photos use renderMessageMedia().
+    image: {
+        shared: { media: { width: 'auto', height: 'auto', maxWidth: '100%', maxHeight: '320px' } },
     },
 };
 // Some browsers provide no MIME type for HEIC. Accept its extension as well.
@@ -526,19 +552,73 @@ let renderedHistory = null;
 
 function renderChatHistory() {
     const chat = elementRef.value;
-    if (!chat || !chat.shadowRoot?.querySelector('#messages')) return;
+    const placeMode = keepPlaceOnRender;
+    keepPlaceOnRender = null;
+    const messages = chat?.shadowRoot?.querySelector('#messages');
+    if (!messages) return;
     const history = [{
         role: 'ai',
-        text: activeRoomId.value
-            ? `Conversation with ${currentRoomName.value}`
-            : 'Select a conversation to start chatting.',
+        text: !activeRoomId.value
+            ? 'Select a conversation to start chatting.'
+            : hasOlderMessages
+                ? trans('Loading earlier messages...')
+                : `Conversation with ${currentRoomName.value}`,
     }, ...currentHistory.value];
     const signature = JSON.stringify(history);
     if (renderedChat === chat && renderedHistory === signature) return;
+
+    // Re-rendering replaces every bubble. Keep the reader below newly added earlier
+    // messages, or where they were reading if they had scrolled up.
+    const fromBottom = messages.scrollHeight - messages.scrollTop;
+    const fromTop = messages.scrollTop;
+    const restore = renderedChat !== chat ? null
+        : placeMode === 'prepend' ? () => { messages.scrollTop = messages.scrollHeight - fromBottom; }
+        : pinnedScrollers.get(messages) === false ? () => { messages.scrollTop = fromTop; }
+        : null;
+
     chat.clearMessages(false);
     history.forEach(message => chat.addMessage(message, false));
     renderedChat = chat;
     renderedHistory = signature;
+    followMessageScroll(messages, restore);
+}
+
+// Photos finish loading after the history renders. Follow them to the newest message while
+// the reader is at the bottom; when one grows above the reader's view, shift by the same
+// amount so their place holds. Scrolling near the top loads earlier messages.
+const pinnedScrollers = new WeakMap();
+
+function followMessageScroll(messages, restore) {
+    if (!pinnedScrollers.has(messages)) {
+        messages.addEventListener('scroll', () => {
+            pinnedScrollers.set(messages, messages.scrollHeight - messages.scrollTop - messages.clientHeight < 40);
+            if (messages.scrollTop < 200) loadOlderMessages();
+        }, { passive: true });
+    }
+    pinnedScrollers.set(messages, !restore);
+    // Runs after Deep Chat's own scroll to the latest message
+    if (restore) setTimeout(restore);
+
+    // A short thread cannot be scrolled, so once its photos settle, fill the view instead.
+    const fillView = () => {
+        if (messages.scrollHeight <= messages.clientHeight) loadOlderMessages();
+    };
+    const pending = [...messages.querySelectorAll('img')].filter(img => !img.complete);
+    let waiting = pending.length;
+    if (!waiting) setTimeout(fillView);
+    pending.forEach(img => {
+        const heightBefore = img.offsetHeight;
+        const settle = () => {
+            if (pinnedScrollers.get(messages)) {
+                messages.scrollTop = messages.scrollHeight;
+            } else if (img.getBoundingClientRect().bottom <= messages.getBoundingClientRect().top) {
+                messages.scrollTop += img.offsetHeight - heightBefore;
+            }
+            if (--waiting === 0) fillView();
+        };
+        img.addEventListener('load', settle, { once: true });
+        img.addEventListener('error', settle, { once: true });
+    });
 }
 
 watch([currentHistory, currentRoomName], renderChatHistory, { flush: 'post' });
@@ -844,14 +924,15 @@ async function fetchMessages(roomId) {
     const url = props.routes.roomMessages.replace(':roomId', roomId);
 
     try {
-        const { data } = await axios.get(url, { params: { 'page[size]': 50, extension_uuid: extension } });
+        const { data } = await axios.get(url, { params: { 'page[size]': MESSAGE_PAGE_SIZE, extension_uuid: extension } });
         if (requestId !== historyRequest || activeRoomId.value !== roomId || extension !== currentExtensionUuid.value) return;
         const rawMessages = data.messages || [];
 
-        // DeepChat expects: { text: '...', role: 'user' | 'ai' }
-        // We need to reverse because API usually sends Newest -> Oldest, 
-        // but Chat UI needs Oldest -> Newest (top to bottom)
-        currentHistory.value = rawMessages.map(m => normalizeMessageForDeepChat(m)).reverse();
+        // Merge the newest page into what is already loaded so earlier pages the
+        // reader scrolled to stay in place when a new message arrives.
+        if (!loadedRows.size) hasOlderMessages = !!data.has_more;
+        rawMessages.forEach(row => loadedRows.set(row.id, row));
+        currentHistory.value = loadedHistory();
         await nextTick();
         if (requestId === historyRequest && activeRoomId.value === roomId
             && extension === currentExtensionUuid.value
@@ -869,6 +950,43 @@ async function fetchMessages(roomId) {
             currentHistory.value = [{ text: "Error loading history.", role: "ai" }];
         }
     }
+}
+
+// Loaded rows oldest -> newest, matching the API's created_at + message_uuid order
+function loadedRowsOldestFirst() {
+    const compare = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
+    return [...loadedRows.values()].sort((a, b) =>
+        compare(String(a.timestamp), String(b.timestamp)) || compare(String(a.id), String(b.id)));
+}
+
+function loadedHistory() {
+    return loadedRowsOldestFirst().map(normalizeMessageForDeepChat);
+}
+
+// --- API: Fetch the page before the oldest loaded message ---
+async function loadOlderMessages() {
+    const roomId = activeRoomId.value;
+    const oldest = loadedRowsOldestFirst()[0];
+    if (!roomId || !oldest || !hasOlderMessages || loadingOlderMessages) return;
+
+    const generation = historyGeneration;
+    loadingOlderMessages = true;
+    try {
+        const { data } = await axios.get(props.routes.roomMessages.replace(':roomId', roomId), {
+            params: { 'page[size]': MESSAGE_PAGE_SIZE, before: oldest.id, extension_uuid: currentExtensionUuid.value },
+        });
+        if (generation !== historyGeneration) return;
+        (data.messages || []).forEach(row => loadedRows.set(row.id, row));
+        hasOlderMessages = !!data.has_more;
+    } catch (e) {
+        console.error("Error loading earlier messages:", e);
+        if (generation !== historyGeneration) return;
+        hasOlderMessages = false;
+    } finally {
+        if (generation === historyGeneration) loadingOlderMessages = false;
+    }
+    keepPlaceOnRender = 'prepend';
+    currentHistory.value = loadedHistory();
 }
 
 // --- DeepChat Configuration ---
@@ -991,6 +1109,34 @@ function escapeMessageHtml(value) {
     }[char]));
 }
 
+// Media paths are app routes or provider URLs; only allow http(s) into src/href.
+function safeMediaUrl(value) {
+    try {
+        const url = new URL(String(value || ''), window.location.origin);
+        return ['http:', 'https:'].includes(url.protocol) ? url.href : null;
+    } catch {
+        return null;
+    }
+}
+
+// Formats every browser can show inline. Others (HEIC, TIFF, video) become a link, because
+// browsers that cannot decode them abort the download midway and show a broken image.
+const INLINE_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif', 'image/bmp'];
+
+// Cap photo height and let width follow the aspect ratio; clicking opens the full image.
+function renderMessageMedia(mediaItem) {
+    const src = safeMediaUrl(mediaItem?.access_path);
+    if (!src) return '';
+    const href = escapeMessageHtml(src);
+    const mimeType = String(mediaItem.mime_type || '').toLowerCase();
+    if (mimeType && !INLINE_IMAGE_TYPES.includes(mimeType)) {
+        const fileName = escapeMessageHtml(mediaItem.original_name || 'attachment');
+        return `<a href="${href}" target="_blank" rel="noopener" style="color: inherit; text-decoration: underline; word-break: break-all;">📎 ${fileName}</a>`;
+    }
+    const name = escapeMessageHtml(mediaItem.original_name || 'image');
+    return `<a href="${href}" target="_blank" rel="noopener" style="display: block;"><img src="${href}" alt="${name}" style="display: block; max-width: 100%; max-height: 320px; border-radius: 8px;"></a>`;
+}
+
 function normalizeMessageForDeepChat(row) {
     // 1. Calculate Role
     let role = row.role;
@@ -1002,43 +1148,26 @@ function normalizeMessageForDeepChat(row) {
 
     // 2. Format Timestamp using our new Smart Formatter
     const rawTime = row.timestamp || row.created_at;
-    const timeString = [row.sender_name, formatMessageTimestamp(rawTime)].filter(Boolean).map(escapeMessageHtml).join(' · ');
+    const senderName = row.show_sender_name ? row.sender_name : null;
+    const timeString = [senderName, formatMessageTimestamp(rawTime)].filter(Boolean).map(escapeMessageHtml).join(' · ');
 
     // 3. Handle Images
-    let filesArray = undefined;
-
-    if (row.media && Array.isArray(row.media) && row.media.length > 0) {
-        // Map over the media items and extract the access_path
-        filesArray = row.media.map(mediaItem => {
-            return {
-                src: mediaItem.access_path, // This maps to your MessageMediaController route
-                type: 'image',
-                name: mediaItem.original_name || 'image.png'
-            };
-        });
-    }
+    // Deep Chat always draws file bubbles after the HTML bubble, which put the timestamp
+    // above the photo. Render photos inside the HTML bubble instead.
+    const photos = Array.isArray(row.media) ? row.media.map(renderMessageMedia).join('') : '';
 
     // 4. Handle Text Content
     const content = escapeMessageHtml(row.text || row.message || '');
     const sendError = row.send_error
-        ? `<div role="alert" style="color: #b91c1c; font-size: 12px; margin-top: 6px;">${escapeMessageHtml(row.send_error)}</div>` : '';
+        ? `<div role="alert" style="background: #fef2f2; color: #991b1b; border-radius: 6px; padding: 4px 8px; font-size: 12px; line-height: 1.4; margin-top: 6px;">${escapeMessageHtml(row.send_error)}</div>` : '';
 
-    // If there is an image but NO text, return just the image with the timestamp under it
-    if (filesArray && !content) {
-        return {
-            role: role,
-            files: filesArray,
-            html: sendError + (timeString ? `<div style="font-size: 10px; opacity: 0.7; text-align: right; margin-top: 4px; white-space: nowrap;">${timeString}</div>` : '')
-        };
-    }
-
-    // If there is Text, construct an HTML bubble with the text and the smart date
+    // One bubble: photos, then text, then any send error, then the smart date
     return {
         role: role,
-        files: filesArray,
         html: `
             <div style="display: flex; flex-direction: column;">
-                <div style="white-space: pre-wrap; line-height: 1.4;">${content}</div>
+                ${photos ? `<div style="display: flex; flex-direction: column; gap: 6px;">${photos}</div>` : ''}
+                ${content ? `<div style="white-space: pre-wrap; line-height: 1.4;${photos ? ' margin-top: 8px;' : ''}">${content}</div>` : ''}
                 ${sendError}
                 ${timeString ? `<div style="font-size: 10px; opacity: 0.7; text-align: right; margin-top: 6px; white-space: nowrap;">${timeString}</div>` : ''}
             </div>
@@ -1049,6 +1178,7 @@ function normalizeMessageForDeepChat(row) {
 // --- Action: Handle Form Submit ---
 const handleCreateRoom = async (form$) => {
     if (creatingConversation.value) return;
+    clearServerFormErrors(form$);
     creatingConversation.value = true;
     const extension = currentExtensionUuid.value;
     try {
@@ -1061,7 +1191,11 @@ const handleCreateRoom = async (form$) => {
         showCreateModal.value = false;
         await selectRoom(room.id);
     } catch (error) {
-        handleError(error);
+        if (error.response?.status === 422 && error.response.data?.errors) {
+            showServerFormErrors(error.response, form$);
+        } else {
+            handleErrorResponse(error);
+        }
     } finally {
         creatingConversation.value = false;
     }
@@ -1114,29 +1248,32 @@ const createRoomSchema = computed(() => {
     return {
         source: {
             type: 'select',
-            label: 'From',
+            label: trans('From'),
             items: myDids.value.map(did => ({
                 value: did.number,
                 label: [did.number, did.label].filter(Boolean).join(' - ')
             })),
-            rules: ['required'],
             default: myDids.value.length > 0 ? myDids.value[0].number : null,
+            onChange: (value) => { newConversationSource.value = value; },
             search: true,
             native: false, // Use custom select UI
         },
         recipients: {
             type: 'tags',
-            label: trans('Recipients'),
+            label: newConversationRecipientLimit.value > 1 ? trans('Recipients') : trans('Recipient'),
             placeholder: trans('Enter a phone number and press Enter'),
-            description: trans('Add multiple numbers for a group conversation. Everyone in the group sees replies.'),
+            description: newConversationRecipientLimit.value > 1
+                ? trans('Add up to :count recipients. Everyone in the group sees replies.', { count: newConversationRecipientLimit.value })
+                : trans('This sending number supports one recipient per conversation.'),
             items: [], create: true, search: true, native: false,
+            max: newConversationRecipientLimit.value,
             closeOnSelect: true, inputType: 'search', autocomplete: 'off',
-            rules: ['required', 'max:20'], floating: false,
+            floating: false,
         },
         submit: {
             type: 'button',
             submits: true,
-            buttonLabel: 'Start Chat',
+            buttonLabel: trans('Start Chat'),
             align: 'center',
             buttonClass: 'bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded mt-2',
 

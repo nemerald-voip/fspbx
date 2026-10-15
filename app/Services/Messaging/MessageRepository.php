@@ -102,6 +102,8 @@ class MessageRepository
         string $status,
         ?string $description = null,
         ?string $providerEvent = null,
+        ?string $recipient = null,
+        ?string $occurredAt = null,
     ): void {
         messaging_webhook_debug('applyProviderStatus called', [
             'provider' => $provider,
@@ -109,6 +111,11 @@ class MessageRepository
             'status' => $status,
             'provider_event' => $providerEvent,
         ]);
+
+        if ($provider === 'bandwidth' && $recipient !== null
+            && $this->applyBandwidthGroupRecipientStatus($referenceId, $recipient, $status, $description, $providerEvent, $occurredAt)) {
+            return;
+        }
 
         $message = Messages::where('reference_id', $referenceId)->first();
 
@@ -135,6 +142,62 @@ class MessageRepository
         messaging_webhook_debug('applyProviderStatus updated message', [
             'message_uuid' => $message->message_uuid,
         ]);
+    }
+
+    private function applyBandwidthGroupRecipientStatus(
+        string $referenceId,
+        string $recipient,
+        string $status,
+        ?string $description,
+        ?string $providerEvent,
+        ?string $occurredAt,
+    ): bool {
+        // Different recipients can report concurrently. Keep their outcomes together.
+        return (new Messages())->getConnection()->transaction(function () use ($referenceId, $recipient, $status, $description, $providerEvent, $occurredAt) {
+            $message = Messages::where('reference_id', $referenceId)->where('direction', 'out')
+                ->whereNotNull('message_group_uuid')
+                ->where('delivery_meta->outbound->provider->name', 'bandwidth')->lockForUpdate()->first();
+            if (!$message) {
+                return false;
+            }
+
+            $recipients = $message->group->recipients;
+            if (!in_array($recipient, $recipients, true)) {
+                return true;
+            }
+            $meta = $message->delivery_meta ?? [];
+            $outcomes = data_get($meta, 'outbound.provider.recipients', []);
+            $previousTime = $outcomes[$recipient]['occurred_at'] ?? null;
+            if ($previousTime && $occurredAt && strtotime($occurredAt) < strtotime($previousTime)) {
+                return true;
+            }
+            $outcomes[$recipient] = [
+                'status' => $status,
+                'error' => $status === 'failed' ? $description : null,
+                'last_event' => $providerEvent,
+                'occurred_at' => $occurredAt,
+            ];
+            $failed = array_values(array_filter($recipients, fn ($number) => ($outcomes[$number]['status'] ?? null) === 'failed'));
+            $delivered = array_filter($recipients, fn ($number) => ($outcomes[$number]['status'] ?? null) === 'delivered');
+            $overall = $failed ? 'failed' : (count($delivered) === count($recipients) ? 'delivered' : 'sent');
+            $error = $failed ? __('Delivery failed for :recipients.', ['recipients' => implode(', ', $failed)]) : null;
+
+            data_set($meta, 'outbound.provider.recipients', $outcomes);
+            data_set($meta, 'outbound.provider.status', $overall);
+            data_set($meta, 'outbound.provider.error', $error);
+            // A delivery callback proves carrier acceptance. Retrying must not resend to the group.
+            data_set($meta, 'outbound.provider.accepted_at', data_get($meta, 'outbound.provider.accepted_at') ?: now()->toIso8601String());
+            foreach ([
+                'name' => 'bandwidth', 'reference_id' => $referenceId, 'status' => $overall,
+                'last_event' => $providerEvent, 'error' => $error, 'updated_at' => now()->toIso8601String(),
+            ] as $key => $value) {
+                data_set($meta, 'provider.'.$key, $value);
+            }
+            $message->delivery_meta = $meta;
+            $message->status = $overall;
+            $message->save();
+            return true;
+        });
     }
 
     public function storeOutbound(

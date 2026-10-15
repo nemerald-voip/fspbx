@@ -941,7 +941,7 @@ class DatabaseSeeder extends Seeder
                 'default_setting_name'          => 'boolean',
                 'default_setting_value'         => 'false',
                 'default_setting_enabled'       => true,
-                'default_setting_description'   => 'Initial photo compression setting for newly created accounts only. Existing accounts are unchanged. Manage each account under Account Settings > Messaging.',
+                'default_setting_description'   => 'System default for outbound photo compression. Accounts inherit this unless overridden under Account Settings > Messaging.',
             ],
             [
                 'default_setting_category'      => 'messaging',
@@ -949,7 +949,7 @@ class DatabaseSeeder extends Seeder
                 'default_setting_name'          => 'boolean',
                 'default_setting_value'         => 'true',
                 'default_setting_enabled'       => true,
-                'default_setting_description'   => 'Initial photo conversion setting for newly created accounts only. Existing accounts are unchanged. Manage each account under Account Settings > Messaging.',
+                'default_setting_description'   => 'System default for outbound JPEG conversion. Accounts inherit this unless overridden under Account Settings > Messaging.',
             ],
             [
                 'default_setting_category'      => 'pms',

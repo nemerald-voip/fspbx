@@ -22,11 +22,13 @@ class CreateOutboundMessageService
         if ($data->messageGroupUuid) {
             $group = \App\Models\MessageGroup::where('domain_uuid', $data->domainUuid)
                 ->where('local_number', $data->source)->findOrFail($data->messageGroupUuid);
-            if ($data->carrier !== 'sinch' || ! in_array($data->origin, ['portal', 'api'], true)) {
+            if (! in_array($data->origin, ['portal', 'api'], true)) {
                 throw \Illuminate\Validation\ValidationException::withMessages([
-                    'recipients' => [__('Group messaging is available through Inteliquent in FS PBX.')],
+                    'recipients' => [__('Start group conversations in the portal or API.')],
                 ]);
             }
+            app(\App\Services\Messaging\MessageCarrierCapabilities::class)
+                ->validateGroup($data->carrier, $data->source, $group->recipients);
             $data->destination = $group->recipients[0];
         }
         messaging_webhook_debug('CreateOutboundMessageService create() started', [

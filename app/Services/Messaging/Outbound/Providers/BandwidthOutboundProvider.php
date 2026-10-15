@@ -54,9 +54,8 @@ class BandwidthOutboundProvider implements OutboundProviderInterface
 
         $payload = [
             'from' => (string) $message->source,
-            'to' => [
-                (string) $message->destination,
-            ],
+            // Multiple recipients make this a group MMS, including text-only messages.
+            'to' => $message->message_group_uuid ? $message->group->recipients : [(string) $message->destination],
             'applicationId' => $applicationId,
             'tag' => (string) $message->message_uuid,
         ];

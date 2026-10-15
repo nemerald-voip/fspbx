@@ -82,6 +82,12 @@ class SendOutboundSMSMessage implements ShouldQueue
             }
 
             try {
+                if ($message->message_group_uuid) {
+                    $group = \App\Models\MessageGroup::where('domain_uuid', $message->domain_uuid)
+                        ->where('local_number', $message->source)->findOrFail($message->message_group_uuid);
+                    app(\App\Services\Messaging\MessageCarrierCapabilities::class)
+                        ->validateGroup($carrier, $message->source, $group->recipients);
+                }
                 app(\App\Services\Messaging\OutboundPhotoService::class)->prepare($message);
                 $provider = $factory->make($carrier);
 
@@ -104,6 +110,8 @@ class SendOutboundSMSMessage implements ShouldQueue
                 if ($result->success) {
                     app(RingotelSyncDispatcher::class)->dispatch($message);
                 }
+            } catch (\Illuminate\Validation\ValidationException $e) {
+                $messages->markOutboundFailure($message, $carrier, $e->getMessage());
             } catch (\App\Services\Messaging\PhotoCompressionBusy $e) {
                 if ($this->attempts() >= $this->tries) {
                     $messages->markOutboundFailure($message, $carrier, __('Photo compression is busy. Please retry the message.'));
