@@ -374,6 +374,7 @@ class RingotelApiService
                     'beta_updates' => $params['beta_updates'] ?? false,
                     'vmail' => [
                         'ext' => $params['voicemail_extension'] ?? '',
+                        'unsolicited' => (bool) $params['voicemail_allow_unsolicited_notifications'],
                         'name' => 'Voicemail',
                         'mess' => 'You have a new message',
                         'off' => '',
@@ -571,6 +572,7 @@ class RingotelApiService
                     'beta_updates' => $params['beta_updates'] ?? false,
                     'vmail' => [
                         'ext' => $params['voicemail_extension'] ?? '',
+                        'unsolicited' => (bool) $params['voicemail_allow_unsolicited_notifications'],
                         'name' => 'Voicemail',
                         'mess' => 'You have a new message',
                         'off' => '',

@@ -416,6 +416,26 @@
                     </div>
                 </div>
 
+                <div v-if="activeTab === 'miscellaneous'" class="shadow sm:rounded-md">
+                    <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
+                        <h3 class="text-base font-semibold leading-6 text-gray-900">{{ $t('Miscellaneous') }}</h3>
+                        <Toggle :label="$t('Allow unsolicited notifications')"
+                            :description="$t('Allow unsolicited voicemail notifications from the PBX.')"
+                            v-model="form.voicemail_allow_unsolicited_notifications" customClass="py-4" />
+                        <div v-if="errors?.voicemail_allow_unsolicited_notifications" class="mt-2 text-xs text-red-600">
+                            {{ errors.voicemail_allow_unsolicited_notifications[0] }}
+                        </div>
+                        <div class="mt-5 sm:flex sm:flex-row-reverse">
+                            <button type="submit" :disabled="isSubmitting"
+                                class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 sm:ml-3 sm:w-auto">
+                                <Spinner :show="isSubmitting" />
+                                {{ $t('Save') }}
+                            </button>
+                            <button type="button" @click="emits('cancel')"
+                                class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">{{ $t('Cancel') }}</button>
+                        </div>
+                    </div>
+                </div>
             </form>
         </div>
     </div>
@@ -430,7 +450,7 @@ import InputField from "../general/InputField.vue";
 import LabelInputOptional from "../general/LabelInputOptional.vue";
 import LabelInputRequired from "../general/LabelInputRequired.vue";
 import Spinner from "../general/Spinner.vue";
-import { Cog6ToothIcon, AdjustmentsHorizontalIcon } from '@heroicons/vue/24/outline';
+import { Cog6ToothIcon, AdjustmentsHorizontalIcon, WrenchScrewdriverIcon } from '@heroicons/vue/24/outline';
 import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
 import Toggle from "@generalComponents/Toggle.vue";
 import SettingsApplications from "@icons/SettingsApplications.vue"
@@ -442,7 +462,7 @@ const props = defineProps({
 });
 
 const page = usePage();
-const createConnectionTabs = ['settings', 'features', 'pbx_features'];
+const createConnectionTabs = ['settings', 'features', 'pbx_features', 'miscellaneous'];
 const createConnectionNavigation = computed(() => {
     return props.options.conn_navigation.filter((item) => createConnectionTabs.includes(item.slug));
 });
@@ -505,6 +525,7 @@ const form = reactive({
     max_registrations: props.options.settings.max_registrations,
     app_opus_codec: props.options.settings.app_opus_codec === "true",
     one_push: props.options.settings.one_push === "true",
+    voicemail_allow_unsolicited_notifications: (props.options.settings.voicemail_allow_unsolicited_notifications ?? 'true') === 'true',
     show_call_settings: props.options.settings.show_call_settings === "true", 
     allow_call_recording: props.options.settings.allow_call_recording === "true", 
     allow_state_change: props.options.settings.allow_state_change === "true", 
@@ -559,6 +580,7 @@ const handleUpdateProtocolField = (selected) => {
 }
 
 const iconComponents = {
+    'WrenchScrewdriverIcon': WrenchScrewdriverIcon,
     'Cog6ToothIcon': Cog6ToothIcon,
     'SettingsApplications': SettingsApplications,
     'AdjustmentsHorizontalIcon': AdjustmentsHorizontalIcon,

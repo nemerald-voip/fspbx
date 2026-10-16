@@ -434,6 +434,8 @@
     "Allow registrations without authentication (insecure).": "Разрешать регистрации без аутентификации (небезопасно).",
     "Allow state change": "Разрешить изменение статуса",
     "Allow this extension to sign in and use the mobile app.": "Разрешите этому внутреннему номеру вход и использование мобильного приложения.",
+    "Allow unsolicited notifications": "",
+    "Allow unsolicited voicemail notifications from the PBX.": "",
     "Allow users to block contacts": "Разрешить блокировку контактов",
     "Allow users to change their state from the app, such as Online/DND/At the desk.": "Разрешите пользователям менять статус в приложении, например «В сети», «Не беспокоить» или «За столом».",
     "Allow users to configure call settings from within the app, such as call forwarding, voicemail, call waiting.": "Разрешите пользователям настраивать в приложении переадресацию, голосовую почту, ожидание вызова и другие параметры.",
