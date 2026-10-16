@@ -6,6 +6,7 @@ use Illuminate\Process\Exceptions\ProcessTimedOutException;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Str;
 use RuntimeException;
+use Symfony\Component\Process\Exception\ExceptionInterface as ProcessException;
 use Symfony\Component\Process\Exception\ProcessSignaledException;
 
 class PhotoCompressionService
@@ -165,6 +166,9 @@ class PhotoCompressionService
             $this->timedOut();
         } catch (ProcessSignaledException) {
             $this->failed();
+        } catch (ProcessException) {
+            // Native startup errors can include commands, paths, and library names.
+            throw new RuntimeException(__('Photo compression is unavailable. Please contact your administrator.'));
         } finally {
             $cleaningUp = true;
             if ($process && $process->running()) {

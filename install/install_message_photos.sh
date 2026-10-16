@@ -16,13 +16,20 @@ package_at_least() {
 
 detect_platform() {
   # Keep backports on the matching Debian release; never mix stable releases.
-  source /etc/os-release
-  [[ ${ID:-} == debian ]] || fail 'Photo dependencies require Debian 12 or 13.'
+  source /etc/os-release || fail 'Unable to read /etc/os-release.'
   photo_codename=${VERSION_CODENAME:-}
-  case "$photo_codename" in
-    bookworm|trixie) ;;
-    *) fail "Unsupported Debian release: $photo_codename. Expected bookworm or trixie." ;;
+  local photo_platform_error
+  case "${ID:-}:$photo_codename" in
+    debian:bookworm|debian:trixie) return 0 ;;
+    debian:*) photo_platform_error="Unsupported Debian release: $photo_codename. Expected bookworm or trixie." ;;
+    *) photo_platform_error='Photo dependencies require Debian 12 or 13.' ;;
   esac
+
+  [[ ${1:-} == --skip-unsupported ]] || fail "$photo_platform_error"
+  echo "WARNING: Photo processing setup skipped. $photo_platform_error" >&2
+  echo 'WARNING: Outbound photo conversion/compression may fail until compatible dependencies are installed.' >&2
+  echo 'After upgrading the OS, run: bash /var/www/fspbx/install/install_message_photos.sh' >&2
+  return 1
 }
 
 select_packages() {
@@ -77,7 +84,8 @@ verify_tools() {
 
 install_dependencies() {
   require_root
-  detect_platform
+  # Updates may defer photo setup on older systems without changing APT sources.
+  if ! detect_platform "${1:-}"; then return 0; fi
   select_packages
   if packages_ready; then
     verify_tools
@@ -109,7 +117,7 @@ install_dependencies() {
 }
 
 if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
-  [[ $# == 0 || ( $# == 1 && ( $1 == --check || $1 == --dry-run ) ) ]] \
-    || fail 'Usage: install_message_photos.sh [--check|--dry-run]. Dry-run configures the package source and shows the install plan.'
+  [[ $# == 0 || ( $# == 1 && ( $1 == --check || $1 == --dry-run || $1 == --skip-unsupported ) ) ]] \
+    || fail 'Usage: install_message_photos.sh [--check|--dry-run|--skip-unsupported]. Dry-run configures the package source and shows the install plan.'
   install_dependencies "${1:-}"
 fi

@@ -10,10 +10,10 @@ class Update206
     public function apply(): bool
     {
         try {
-            // Install the native packages before recording 2.0.6 as applied. All PHP
-            // dependencies already exist; photo processing uses native tools.
+            // Defer photo dependencies on unsupported operating systems so the
+            // application update can finish before the OS is upgraded.
             Process::timeout(600)->run([
-                'bash', base_path('install/install_message_photos.sh'),
+                'bash', base_path('install/install_message_photos.sh'), '--skip-unsupported',
             ], function (string $type, string $output) {
                 echo $output;
             })->throw();
