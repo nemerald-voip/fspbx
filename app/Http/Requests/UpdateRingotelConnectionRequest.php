@@ -28,7 +28,7 @@ class UpdateRingotelConnectionRequest extends FormRequest
             'port' => 'nullable|numeric',
             'dont_verify_server_certificate' => 'present',
             'disable_srtp' => 'present',
-            'multitenant' => 'present',
+            'multitenant' => 'present|boolean',
             'proxy' => 'nullable|string',
             'codecs' => 'present|array',
             'codecs.*.name' => 'required|string',

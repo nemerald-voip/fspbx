@@ -10,7 +10,7 @@
                         aria-hidden="true" />
                     <span class="truncate">{{ item.name }}</span>
                     <ExclamationCircleIcon
-                        v-if="((errors?.connection_name || errors?.domain || errors?.registration_ttl || errors?.max_registrations) && item.slug === 'settings')"
+                        v-if="((errors?.connection_name || errors?.domain || errors?.multitenant || errors?.registration_ttl || errors?.max_registrations) && item.slug === 'settings')"
                         class="ml-2 h-5 w-5 text-red-500" aria-hidden="true" />
 
                 </a>
@@ -80,6 +80,15 @@
 
                                     <Toggle :label="$t('Disable SRTP')" description="" v-model="form.disable_srtp"
                                         customClass="py-4" />
+
+                                    <div>
+                                        <Toggle :label="$t('Multi-tenant mode')"
+                                            :description="$t('Route calls using the Ringotel organization domain.')"
+                                            v-model="form.multitenant" customClass="py-4" />
+                                        <div v-if="errors?.multitenant" class="mb-4 text-xs text-red-600">
+                                            {{ errors.multitenant[0] }}
+                                        </div>
+                                    </div>
 
                                 </div>
                             </div>
@@ -923,7 +932,7 @@ const form = reactive({
     dont_verify_server_certificate: props.selectedConnection?.provision?.noverify ?? false,
     disable_srtp: props.selectedConnection?.provision?.nosrtp ?? false,
     proxy: props.selectedConnection?.provision?.proxy?.paddr ?? '',
-    multitenant: props.options?.settings?.multitenant_mode === "true",
+    multitenant: parseBoolean(props.selectedConnection?.provision?.multitenant),
     codecs: initialCodecs,
     registration_ttl: String(props.selectedConnection?.provision?.regexpires ?? ''),
     max_registrations: String(props.selectedConnection?.provision?.maxregs ?? ''),
