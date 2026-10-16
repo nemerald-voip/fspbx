@@ -313,7 +313,7 @@ class OutboundRouteService
             $presence['dialplan_detail_break'] = 'never';
             $headers[] = $presence;
             $headers[] = $this->detail('action', 'export', 'sip_h_Geolocation-Routing=yes', $headerOrder + 10);
-            $headers[] = $this->detail('action', 'export', 'sip_geolocation=<https://location.somewhere.com/?loc=${emergency_caller_id_location}>', $headerOrder + 20);
+            $headers[] = $this->detail('action', 'export', 'sip_geolocation=<https://location.somewhere.com/?loc=${url_encode(${emergency_caller_id_location})}>', $headerOrder + 20);
             foreach ($details as &$detail) {
                 $detail['dialplan_detail_group'] = 1;
             }
