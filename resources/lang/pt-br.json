@@ -434,6 +434,8 @@
     "Allow registrations without authentication (insecure).": "Permitir registros sem autenticação (inseguro).",
     "Allow state change": "Permitir alteração de status",
     "Allow this extension to sign in and use the mobile app.": "Permite que este ramal entre e use o aplicativo móvel.",
+    "Allow unsolicited notifications": "",
+    "Allow unsolicited voicemail notifications from the PBX.": "",
     "Allow users to block contacts": "Permitir que os usuários bloqueiem contatos",
     "Allow users to change their state from the app, such as Online/DND/At the desk.": "Permitir que os usuários alterem seu status pelo aplicativo, como Online, Não perturbe ou Na mesa.",
     "Allow users to configure call settings from within the app, such as call forwarding, voicemail, call waiting.": "Permitir que os usuários configurem opções de chamada pelo aplicativo, como encaminhamento, correio de voz e chamada em espera.",

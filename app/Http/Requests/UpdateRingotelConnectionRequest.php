@@ -48,6 +48,7 @@ class UpdateRingotelConnectionRequest extends FormRequest
             'desktop_app_delay' => 'present',
             'pbx_features' => 'present',
             'voicemail_extension' => 'nullable|string',
+            'voicemail_allow_unsolicited_notifications' => 'required|boolean',
             'dnd_on_code' => 'nullable|string',
             'dnd_off_code' => 'nullable|string',
             'cf_on_code' => 'nullable|string',

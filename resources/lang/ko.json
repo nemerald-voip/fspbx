@@ -434,6 +434,8 @@
     "Allow registrations without authentication (insecure).": "",
     "Allow state change": "",
     "Allow this extension to sign in and use the mobile app.": "",
+    "Allow unsolicited notifications": "",
+    "Allow unsolicited voicemail notifications from the PBX.": "",
     "Allow users to block contacts": "",
     "Allow users to change their state from the app, such as Online/DND/At the desk.": "",
     "Allow users to configure call settings from within the app, such as call forwarding, voicemail, call waiting.": "",

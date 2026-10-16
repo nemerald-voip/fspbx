@@ -720,6 +720,14 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'default_setting_category'      => 'mobile_apps',
+                'default_setting_subcategory'   => 'voicemail_allow_unsolicited_notifications',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => 'true',
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => 'Allow unsolicited voicemail notifications for new Ringotel connections. Account settings override this default.',
+            ],
+            [
+                'default_setting_category'      => 'mobile_apps',
                 'default_setting_subcategory'   => 'pbx_features',
                 'default_setting_name'          => 'boolean',
                 'default_setting_value'         => 'true',
