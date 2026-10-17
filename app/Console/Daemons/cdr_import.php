@@ -375,6 +375,20 @@ if (!class_exists('cdr_import')) {
 		}
 
 		/**
+		 * Decide whether a recording file actually has audio worth exposing as a playable
+		 * recording. FreeSWITCH can create/open a WAV container before answer even when
+		 * record_answer_req=true, so a failed/cancelled/unanswered call can leave a 44-byte
+		 * RIFF/WAV header-only file on disk. record_length (from record_seconds or a
+		 * duration fallback) doesn't reflect this -- it's not a measurement of the file
+		 * itself -- so check the file's actual size instead.
+		 */
+		public static function recording_is_playable(string $path, string $name): bool {
+			$file = $path.'/'.$name;
+
+			return file_exists($file) && filesize($file) > 44;
+		}
+
+		/**
 		 * process method converts the xml cdr and adds it to the database
 		 */
 		public function xml_array($key, $leg, $xml_string) {
@@ -984,7 +998,7 @@ if (!class_exists('cdr_import')) {
 						//exit;
 
 					//add the call record path, name and length to the database
-						if (isset($record_path) && isset($record_name) && file_exists($record_path.'/'.$record_name)) {
+						if (isset($record_path) && isset($record_name) && self::recording_is_playable($record_path, $record_name)) {
 							$this->array[$key]['record_path'] = $record_path;
 							$this->array[$key]['record_name'] = $record_name;
 							if (isset($record_length)) {
