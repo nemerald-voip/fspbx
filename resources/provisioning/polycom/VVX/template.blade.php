@@ -1,4 +1,4 @@
-{{-- version: 1.0.8 --}}
+{{-- version: 1.0.9 --}}
 
 @switch($flavor)
 
@@ -60,7 +60,10 @@
 <PHONE_CONFIG>
 <REGISTRATION
   @foreach ($lines as $line)
-    @php  $n = (int)($line['line_number'] ?? 0); @endphp
+    @php
+        $n = (int) ($line['line_number'] ?? 0);
+        $hasSecondaryServer = !empty($line['outbound_proxy_secondary']) || !empty($line['server_address_secondary']);
+    @endphp
     @continue($n <= 0)
 
     reg.{{ $n }}.server.1.register="1"
@@ -77,21 +80,18 @@
     reg.{{ $n }}.server.1.port="{{ $line['sip_port'] ?? '' }}"
     reg.{{ $n }}.server.1.transport="{{ $line['sip_transport'] ?? 'UDPOnly' }}"
     reg.{{ $n }}.server.1.expires="{{ $line['register_expires'] ?? '3600' }}"
-    @if (($line['sip_transport'] ?? 'UDPOnly') == "TLS" && array_key_exists('polycom_srtp_enable', $settings) && $settings['polycom_srtp_enable'] == '1')
+    @if ($hasSecondaryServer || (($line['sip_transport'] ?? 'UDPOnly') == "TLS" && ($settings['polycom_srtp_enable'] ?? '0') == '1'))
         reg.{{ $n }}.srtp.enable="{{ $settings['polycom_srtp_enable'] ?? '0' }}"
     @endif
     reg.{{ $n }}.srtp.offer="{{ $settings['polycom_srtp_offer'] ?? '0' }}"
     reg.{{ $n }}.srtp.require="{{ $settings['polycom_srtp_require'] ?? '0' }}"
 
 
-    @if (!empty($line['outbound_proxy_secondary']) || !empty($line['server_address_secondary']))
+    @if ($hasSecondaryServer)
         reg.{{ $n }}.server.2.address="{{ $line['outbound_proxy_secondary'] ?? $line['server_address_secondary'] }}"
         reg.{{ $n }}.server.2.port="{{ $line['sip_port'] ?? '' }}"
         reg.{{ $n }}.server.2.transport="{{ $line['sip_transport'] ?? 'UDPOnly' }}"
         reg.{{ $n }}.server.2.expires="{{ $line['register_expires'] ?? '3600' }}"
-        reg.{{ $n }}.srtp.enable="{{ $settings['polycom_srtp_enable'] ?? '0' }}"
-        reg.{{ $n }}.srtp.offer="{{ $settings['polycom_srtp_offer'] ?? '0' }}"
-        reg.{{ $n }}.srtp.require="{{ $settings['polycom_srtp_require'] ?? '0' }}"
     @endif
     
     {{-- handle shared lines --}}
@@ -438,7 +438,7 @@
             tcpIpApp.dns.server="{{ $settings['polycom_dns_server'] }}"
         @endif
         @if (isset($settings['polycom_dns_alt_server']))
-            tcpIpApp.dns.server="{{ $settings['polycom_dns_alt_server'] }}"
+            tcpIpApp.dns.altServer="{{ $settings['polycom_dns_alt_server'] }}"
         @endif
         @if (isset($settings['polycom_boot_server_option']))
             device.dhcp.bootSrvUseOpt.set="1"
