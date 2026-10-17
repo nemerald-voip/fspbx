@@ -298,7 +298,7 @@ class SpeedDialController extends Controller
 
 
             $users = User::where('domain_uuid', $domain_uuid)
-                ->select('user_uuid')
+                ->select('user_uuid', 'username')
                 ->orderBy('username', 'asc')
                 ->get();
 
