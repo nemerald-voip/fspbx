@@ -511,6 +511,10 @@ class ProvisioningController extends Controller
         }
 
         $template = strtoupper((string) ($device->device_template ?: $tpl?->name ?: ''));
+        if (str_contains($template, 'TRIO') && str_contains($template, '8800')) {
+            return 'Trio8800';
+        }
+
         if (str_contains($template, 'EDGE')) {
             $edgeModel = preg_replace('/[^A-Za-z0-9]/', '', (string) ($tpl?->name ?: $device->device_template));
             return $edgeModel !== '' ? $edgeModel : 'EdgeE350';
@@ -1013,11 +1017,11 @@ class ProvisioningController extends Controller
             ];
         }
 
-        // Polycom model-MAC (3–4 digit models, e.g., VVX600-, SPIP321-, SSIP7000-; also SSDuo)
+        // Polycom model-MAC (desk phones and the Trio 8800 conference phone).
         if (
             $vendor === 'polycom' &&
             $extLower === 'cfg' &&
-            preg_match('#(^|/)(?:(?:SPIP|VVX|SSIP|EdgeE)\d{3,4}|SSDuo)-[0-9a-f]{12}\.cfg$#i', $raw)
+            preg_match('#(^|/)(?:(?:SPIP|VVX|SSIP|EdgeE)\d{3,4}|Trio8800|SSDuo)-[0-9a-f]{12}\.cfg$#i', $raw)
         ) {
             provisioning_debug('ProvisioningController: matched Polycom model MAC flavor', [
                 'device_uuid' => (string) $device->device_uuid,
