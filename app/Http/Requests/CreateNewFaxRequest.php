@@ -22,7 +22,7 @@ class CreateNewFaxRequest extends FormRequest
             'fax_message' => ['nullable','string'],
             'sender_fax_number' => ['required', 'string', 'max:60'],
             'cover_letter' => ['nullable'],
-            'files'             => ['required', 'array', 'min:1'],
+            'files'             => ['required', 'array', 'min:1', 'max:5'],
             'files.*'           => [
                 'file',
                 'mimes:pdf,doc,docx,rtf,xls,xlsx,csv,txt,tif,tiff,jpg,jpeg', // allowed file types

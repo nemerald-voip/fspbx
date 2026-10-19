@@ -375,6 +375,7 @@
                     <!-- EDIT MODE (Form) -->
                     <div v-else class="flex flex-col h-full">
                         <Vueform ref="contactForm$" :float-placeholders="false" :schema="contactFormSchema"
+                            :validate-on="''" @mounted="(form) => form.disableValidation()"
                             :endpoint="submitContactForm" @response="handleContactResponse"
                             @success="handleContactSuccess" @error="handleContactError" :display-errors="false" />
 
@@ -1551,7 +1552,12 @@ const toggleContactEditForm = async () => {
 }
 
 const submitContactForm = async (FormData, form$) => {
-    const requestData = form$.requestData
+    form$.messageBag.clear()
+    Object.values(form$.elements$).forEach(el$ => clearErrorsRecursive(el$))
+    const requestData = {
+        ...form$.requestData,
+        contact_uuid: contactData.value?.contact_uuid ?? null,
+    }
     return await form$.$vueform.services.axios.post(props.routes.contactStore, requestData)
 }
 

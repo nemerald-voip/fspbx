@@ -96,12 +96,21 @@
                                     <span class="text-sm tabular-nums text-gray-700">
                                         {{ contact.number_formatted || contact.value }}
                                     </span>
-                                    <span v-if="contact.phone_type"
-                                        class="rounded-md px-1.5 py-0.5 text-[11px] font-medium capitalize"
-                                        :class="contact.phone_type.toLowerCase() === 'fax'
-                                            ? 'bg-teal-50 text-teal-700 ring-1 ring-inset ring-teal-600/20'
-                                            : 'bg-gray-100 text-gray-600'">
-                                        {{ phoneTypeLabel(contact.phone_type) }}
+                                    <span class="flex flex-wrap justify-end gap-1">
+                                        <span v-if="contact.phone_type"
+                                            class="rounded-md px-1.5 py-0.5 text-[11px] font-medium capitalize"
+                                            :class="contact.phone_type.toLowerCase() === 'fax'
+                                                ? 'bg-teal-50 text-teal-700 ring-1 ring-inset ring-teal-600/20'
+                                                : 'bg-gray-100 text-gray-600'">
+                                            {{ phoneTypeLabel(contact.phone_type) }}
+                                        </span>
+                                        <span v-if="contact.visibility === 'shared' || contact.visibility === 'private'"
+                                            class="rounded-md px-1.5 py-0.5 text-[11px] font-medium ring-1 ring-inset"
+                                            :class="contact.visibility === 'shared'
+                                                ? 'bg-gray-100 text-gray-600 ring-gray-500/20'
+                                                : 'bg-indigo-50 text-indigo-700 ring-indigo-600/20'">
+                                            {{ contact.visibility === 'shared' ? $t('Shared') : $t('Private') }}
+                                        </span>
                                     </span>
                                 </span>
                             </button>

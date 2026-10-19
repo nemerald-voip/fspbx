@@ -44,7 +44,8 @@
 
 
                             <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
-                                @error="handleError" @response="handleResponse" :display-errors="false" :default="{
+                                @error="handleError" @response="handleResponse" :display-errors="false"
+                                validate-on="" @mounted="(form) => form.disableValidation()" :default="{
                                     send_confirmation: options.send_confirmation_default ?? false,
                                 }">
 
@@ -54,7 +55,7 @@
                                     autocomplete="off" />
                                 <!-- Kept flat (no GroupElement): form$.el$() only resolves top-level names. -->
                                 <TextElement name="recipient" :label="$t('Fax recipient')" :floating="false"
-                                    input-type="tel" autocomplete="off" :rules="['required']"
+                                    input-type="tel" autocomplete="off"
                                     :placeholder="$t('Enter a fax number')"
                                     :columns="{ default: { container: 12 }, sm: { container: 9 } }"
                                     @change="handleRecipientChange" />
@@ -153,8 +154,17 @@
                                                 :create="true" input-type="search" autocomplete="off"
                                                 :floating="false" :strict="false" allow-absent :submit="false"
                                                 :placeholder="$t('Search or add a company (optional)')"
-                                                :description="canSaveContact ? null : $t('Enter a first name or choose a company.')"
+                                                :description="$t('Enter a first name or choose a company.')"
                                                 @change="newContact.company = $event" />
+
+                                            <ToggleElement name="new_contact_is_shared"
+                                                :text="$t('Share with everyone in this account')"
+                                                :description="newContact.is_shared
+                                                    ? $t('Everyone in this account can view, edit, and delete this contact.')
+                                                    : null"
+                                                :submit="false" :default="newContact.is_shared"
+                                                :disabled="savingContact"
+                                                @change="newContact.is_shared = $event" />
 
                                             <ButtonElement name="new_contact_cancel" :button-label="$t('Cancel')"
                                                 :secondary="true" :columns="{ container: 6 }" :full="true"
@@ -162,7 +172,7 @@
 
                                             <ButtonElement name="new_contact_save" :button-label="$t('Save contact')"
                                                 :columns="{ container: 6 }" align="right" :full="true"
-                                                :disabled="!canSaveContact" :loading="savingContact"
+                                                :disabled="savingContact" :loading="savingContact"
                                                 @click="saveNewContact" />
                                         </GroupElement>
                                     </FormChildModal>
@@ -178,9 +188,7 @@
                                 <MultifileElement name="files" :label="$t('Upload files')" :upload-temp-endpoint="false"
                                     :description="$t('Supported file types: .pdf, .doc, .docx, .rtf, .xls, .xlsx, .csv, .txt, .jpg')"
                                     :urls="{}" :drop="true"
-                                    accept=".pdf,.doc,.docx,.rtf,.xls,.xlsx,.csv,.txt,.jpeg,.jpg" :rules="[
-                                        'max:5',
-                                    ]" :add-classes="{
+                                    accept=".pdf,.doc,.docx,.rtf,.xls,.xlsx,.csv,.txt,.jpeg,.jpg" :add-classes="{
                                         MultifileElement: {
                                             listItem: '!bg-teal-50 !border !border-teal-200 rounded-md !p-2 mt-2 shadow-sm !text-teal-700 font-semibold [&_.form-bg-passive]:!bg-teal-200 hover:[&_.form-bg-passive]:!bg-teal-300 [&_.form-bg-passive>span]:!bg-teal-800'
                                         }
@@ -205,7 +213,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from "vue";
+import { ref, watch } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { XMarkIcon } from "@heroicons/vue/24/solid";
 import { BookOpenIcon, CheckCircleIcon, UserPlusIcon } from "@heroicons/vue/24/outline";
@@ -233,7 +241,7 @@ const matchedContact = ref(null)
 const lookupState = ref('idle')
 
 // Mirrors the new_contact_* elements shown inside the add-to-phone-book modal.
-const emptyNewContact = () => ({ number: '', first_name: '', last_name: '', company: null })
+const emptyNewContact = () => ({ number: '', first_name: '', last_name: '', company: null, is_shared: false })
 const newContact = ref(emptyNewContact())
 const savingContact = ref(false)
 
@@ -245,13 +253,6 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
  * the server, which knows the domain's country.
  */
 const digitCount = (value) => String(value ?? '').replace(/\D+/g, '').length
-
-const canSaveContact = computed(() => {
-    const hasNumber = digitCount(newContact.value.number) >= 7
-    const hasIdentity = !!String(newContact.value.first_name ?? '').trim() || !!newContact.value.company
-
-    return hasNumber && hasIdentity
-})
 
 let lookupTimer = null
 let lookupRequest = 0
@@ -369,7 +370,10 @@ const searchOrganizations = async (query) => {
 const saveNewContact = async () => {
     const route = props.options?.routes?.contact_store_route
 
-    if (!route || !canSaveContact.value || savingContact.value) return
+    if (!route || savingContact.value) return
+
+    const fields = form$.value?.el$('new_contact.new_contact_fields')
+    if (fields) clearErrorsRecursive(fields)
 
     // The company select holds a uuid when an existing company was picked, and the
     // raw text when a new one was typed - the server creates the latter.
@@ -386,12 +390,30 @@ const saveNewContact = async () => {
             organization_uuid: isExisting ? company : null,
             organization_name: !isExisting && company ? String(company).trim() : null,
             phone_label: 'fax',
+            is_shared: newContact.value.is_shared,
         })
 
         showAddContact.value = false
         handleContactSaved(response.data?.contact ?? null)
     } catch (error) {
-        emit('error', error)
+        const errors = error.response?.status === 422 ? error.response.data?.errors : null
+        const fieldNames = {
+            phone_number: 'new_contact_number',
+            first_name: 'new_contact_first_name',
+            last_name: 'new_contact_last_name',
+            organization_uuid: 'new_contact_company',
+            organization_name: 'new_contact_company',
+            is_shared: 'new_contact_is_shared',
+        }
+        let unmappedError = !errors
+
+        for (const [name, messages] of Object.entries(errors ?? {})) {
+            const field = fields?.children$?.[fieldNames[name]]
+            if (field) field.messageBag.append(messages[0])
+            else unmappedError = true
+        }
+
+        if (unmappedError) emit('error', error)
     } finally {
         savingContact.value = false
     }
@@ -444,6 +466,9 @@ watch(() => props.show, (show) => {
 })
 
 const submitForm = async (FormData, form$) => {
+    form$.messageBag.clear()
+    Object.values(form$.elements$).forEach(clearErrorsRecursive)
+
     // Using FormData will EXCLUDE conditional elements and it
     // will submit the form as "Content-Type: multipart/form-data".
     const formData = FormData
