@@ -174,6 +174,10 @@ class UserService
         $managedGroups = collect($directory['managed_roles'])->pluck('value');
         $groups = null;
         if (array_key_exists('groups', $data)) {
+            // Old group deletions left memberships behind. Removing those is not a role change.
+            if (! $creating) {
+                $user->user_groups()->whereDoesntHave('group')->delete();
+            }
             $localGroups = collect($data['groups'])->diff($managedGroups)->unique()->values();
             $desired = $localGroups->merge($managedGroups)->unique()->sort()->values()->all();
             $current = $creating ? [] : $user->user_groups()->pluck('group_uuid')->unique()->sort()->values()->all();

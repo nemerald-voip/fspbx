@@ -654,25 +654,34 @@ class GroupsController extends Controller
         ]);
 
         try {
-            DB::beginTransaction();
+            $affectedUserUuids = DB::transaction(function () use ($validated) {
+                $groupUuids = Groups::query()
+                    ->whereIn('group_uuid', $validated['items'])
+                    ->where(function ($query) {
+                        $query->where('domain_uuid', session('domain_uuid'))
+                            ->orWhereNull('domain_uuid');
+                    })
+                    ->lockForUpdate()
+                    ->pluck('group_uuid');
 
-            // delete all matching groups in one query
-            Groups::query()
-                ->whereIn('group_uuid', $validated['items'])
-                ->where(function ($query) {
-                    $query->where('domain_uuid', session('domain_uuid'))
-                        ->orWhereNull('domain_uuid');
-                })
-                ->delete();
+                $memberships = UserGroup::query()->whereIn('group_uuid', $groupUuids);
+                $affectedUserUuids = (clone $memberships)->pluck('user_uuid');
 
-            DB::commit();
+                // Global groups may have members in multiple accounts.
+                $memberships->delete();
+                GroupPermissions::query()->whereIn('group_uuid', $groupUuids)->delete();
+                Groups::query()->whereIn('group_uuid', $groupUuids)->delete();
+
+                return $affectedUserUuids;
+            });
+
+            app(UserSessionInvalidationService::class)->invalidateByUserUuids($affectedUserUuids);
 
             return response()->json([
                 'messages' => ['success' => [__('Selected group(s) were deleted successfully.')]]
             ]);
         } catch (\Throwable $e) {
-            DB::rollBack();
-            logger('RingGroups bulkDelete error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            logger('Groups bulkDelete error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
                 'messages' => ['error' => [__('An error occurred while deleting the selected group(s).')]]
