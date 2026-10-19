@@ -19,6 +19,7 @@ class DeviceObserver
                 'domain_uuid' => $device->domain_uuid,
                 'device_vendor' => $device->device_vendor,
                 'device_address' => $device->device_address,
+                'serial_number' => $device->serial_number,
             ];
 
             $cloudProviderSelector = app()->make(CloudProviderSelector::class);
@@ -72,6 +73,7 @@ class DeviceObserver
                     'domain_uuid' => $device->domain_uuid,
                     'device_vendor' => $device->device_vendor,
                     'device_address' => $device->device_address,
+                    'serial_number' => $device->serial_number,
                 ]);
             }
 
