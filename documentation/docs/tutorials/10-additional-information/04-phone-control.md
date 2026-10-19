@@ -16,6 +16,14 @@ Two artisan commands are involved:
 
 This guide covers `phone:control`. In every example, `101` is the extension being controlled and `example.com` is the domain (a domain name or UUID both work).
 
+### API and Browser Extension Permissions
+
+API keys use the permissions and assigned extension of their user. `phone_control_view` allows phone discovery and active-call lookup; `phone_control_call` allows click-to-dial and call-control actions. By default, both are limited to the extension assigned on the user's profile. A user assigned extension `100` receives HTTP 403 (`forbidden_extension`) if they enter `101` in a browser extension or API request. With this default scope, users without an assigned extension cannot control a phone.
+
+The normal permission seeder grants `phone_control_view` and `phone_control_call` to the `user` group. For access to other extensions, grant `phone_control_view_all_records` alongside the required view or call permission. This expands the extension scope only within accounts the user can already access. The seeder grants this additional scope to `admin` and `superadmin`; custom roles must be granted it explicitly. `force` and `dry_run` do not bypass these access checks.
+
+These user permissions apply to the API endpoints, including the legacy click-to-dial target endpoint. The server-side artisan commands retain their existing behavior.
+
 * * * * *
 
 ### Supported Phones and Actions

@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\ListClickToDialTargetsRequest;
 use App\Http\Requests\Api\V1\StoreClickToDialCallRequest;
 use App\Models\Domain;
+use App\Services\Auth\PhoneControlAccessService;
 use App\Services\ClickToDialService;
 use App\Services\FreeswitchEslService;
 use Illuminate\Support\Collection;
@@ -15,6 +16,8 @@ use Throwable;
 
 class ClickToDialController extends Controller
 {
+    public function __construct(private PhoneControlAccessService $access) {}
+
     /**
      * Legacy click-to-dial target discovery endpoint.
      *
@@ -32,6 +35,7 @@ class ClickToDialController extends Controller
     ) {
         $domain = $this->resolveDomain($domain_uuid);
         $validated = $request->validated();
+        $this->access->authorizeExtension($request->user(), $domain_uuid, $validated['extension']);
 
         try {
             $groups = $clickToDial->candidateGroups(
@@ -71,6 +75,8 @@ class ClickToDialController extends Controller
      * Access rules:
      * - Caller must have access to the target domain.
      * - Caller must have the `phone_control_call` permission.
+     * - Only the caller's assigned extension is accessible unless they also have
+     *   `phone_control_view_all_records` for account-wide access.
      *
      * @group Phone Control
      * @authenticated
@@ -113,6 +119,7 @@ class ClickToDialController extends Controller
      * @response 401 scenario="Unauthenticated" {"error":{"type":"authentication_error","message":"Unauthenticated.","code":"unauthenticated"}}
      * @response 403 scenario="Forbidden (domain access)" {"error":{"type":"invalid_request_error","message":"You do not have access to this domain.","code":"forbidden_domain","param":"domain_uuid"}}
      * @response 403 scenario="Forbidden (missing permission)" {"success":false,"message":"Forbidden (missing permission).","error":{"code":"forbidden_permission","permission":"phone_control_call"}}
+     * @response 403 scenario="Forbidden (extension access)" {"error":{"type":"invalid_request_error","message":"You do not have access to this extension.","code":"forbidden_extension","param":"extension"}}
      * @response 404 scenario="Domain not found" {"error":{"type":"invalid_request_error","message":"Domain not found.","code":"resource_missing","param":"domain_uuid"}}
      * @response 404 scenario="Extension not found" {"error":{"type":"invalid_request_error","message":"Extension not found.","code":"resource_missing","param":"extension"}}
      * @response 409 scenario="No controllable registrations" {"error":{"type":"invalid_request_error","message":"No controllable registrations found for 1001@pbx.example.com.","code":"no_controllable_registrations","param":"extension"}}
@@ -126,6 +133,7 @@ class ClickToDialController extends Controller
     ) {
         $domain = $this->resolveDomain($domain_uuid);
         $validated = $request->validated();
+        $this->access->authorizeExtension($request->user(), $domain_uuid, $validated['extension']);
 
         try {
             $result = $clickToDial->makeCall(

@@ -10,7 +10,7 @@
     ],
     "info": {
         "name": "FS PBX",
-        "_postman_id": "ad464a68-e599-4a4a-a24d-c078cbaf1ab2",
+        "_postman_id": "f782a43e-d4b8-43b7-b3df-6705019d7615",
         "description": "",
         "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
     },
@@ -312,7 +312,7 @@
                                 {
                                     "key": "status",
                                     "value": "answered",
-                                    "description": "Optional. Filter by status. Accepted values: answered, no answer, cancelled, voicemail, missed call, abandoned, callback_requested.",
+                                    "description": "Optional. Filter by status. Accepted values: answered, no answer, cancelled, voicemail, missed call, abandoned, queue_exited, queue_timeout, queue_other, callback_requested.",
                                     "disabled": false
                                 },
                                 {
@@ -362,7 +362,7 @@
                             }
                         ],
                         "body": null,
-                        "description": "Returns CDRs for the specified domain the caller is allowed to access.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `xml_cdr_view` permission.\n\nPagination (cursor-based):\n- Both `limit` and `starting_after` are optional.\n- If `limit` is not provided, it defaults to 500.\n- If `starting_after` is not provided, results start from the beginning.\n- If `has_more` is true, request the next page by passing `starting_after`\n  equal to the last item's `xml_cdr_uuid` from the previous response.\n\nOptional filters:\n- `search` matches caller\/destination fields and status.\n- `direction` filters by call direction.\n- `status` filters by call status.\n  Accepted values: `answered`, `no answer`, `cancelled`, `voicemail`,\n  `missed call`, `abandoned`, `callback_requested`.\n- `extension_uuid` filters by extension UUID.\n- `call_center_queue_uuid` filters by queue UUID.\n- `date_from` and `date_to` filter by `start_epoch` in epoch seconds.\n\nExamples:\n- First page: `GET \/api\/v1\/domains\/{domain_uuid}\/cdrs`\n- Next page:  `GET \/api\/v1\/domains\/{domain_uuid}\/cdrs?starting_after={last_xml_cdr_uuid}`\n- Custom size: `GET \/api\/v1\/domains\/{domain_uuid}\/cdrs?limit=25`\n- Search: `GET \/api\/v1\/domains\/{domain_uuid}\/cdrs?search=2135551212`\n- Date range (epoch): `GET \/api\/v1\/domains\/{domain_uuid}\/cdrs?date_from=1775001600&date_to=1775087999`"
+                        "description": "Returns CDRs for the specified domain the caller is allowed to access.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `xml_cdr_view` permission.\n\nPagination (cursor-based):\n- Both `limit` and `starting_after` are optional.\n- If `limit` is not provided, it defaults to 500.\n- If `starting_after` is not provided, results start from the beginning.\n- If `has_more` is true, request the next page by passing `starting_after`\n  equal to the last item's `xml_cdr_uuid` from the previous response.\n\nOptional filters:\n- `search` matches caller\/destination fields and status.\n- `direction` filters by call direction.\n- `status` filters by call status.\n  Accepted values: `answered`, `no answer`, `cancelled`, `voicemail`,\n  `missed call`, `abandoned`, `queue_exited`, `queue_timeout`, `queue_other`, `callback_requested`.\nQueue exits and timeouts have their own effective status, including calls that later reach voicemail.\nThe `voicemail` filter selects messages left independently of the queue status.\n- `extension_uuid` filters by extension UUID.\n- `call_center_queue_uuid` filters by queue UUID.\n- `date_from` and `date_to` filter by `start_epoch` in epoch seconds.\n\nExamples:\n- First page: `GET \/api\/v1\/domains\/{domain_uuid}\/cdrs`\n- Next page:  `GET \/api\/v1\/domains\/{domain_uuid}\/cdrs?starting_after={last_xml_cdr_uuid}`\n- Custom size: `GET \/api\/v1\/domains\/{domain_uuid}\/cdrs?limit=25`\n- Search: `GET \/api\/v1\/domains\/{domain_uuid}\/cdrs?search=2135551212`\n- Date range (epoch): `GET \/api\/v1\/domains\/{domain_uuid}\/cdrs?date_from=1775001600&date_to=1775087999`"
                     },
                     "response": [
                         {
@@ -780,7 +780,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"device_address\":\"0004f23a5bc7\",\"serial_number\":\"8603123456789\",\"device_profile_uuid\":\"51759db8-c8bf-4b2f-b48a-6577d7ad6a1a\",\"device_template\":\"Yealink T46U\",\"device_template_uuid\":\"a6cf59ba-4b2b-4bdd-b870-35cc55bca146\",\"device_keys\":[\"tempore\"],\"phonebook_mode\":\"custom\",\"phonebook_uuids\":[\"53881632-acf5-3437-9d11-3845270b4ef8\"],\"device_description\":\"Reception desk device\",\"device_lines\":[[]]}"
+                            "raw": "{\"device_address\":\"0004f23a5bc7\",\"serial_number\":\"8603123456789\",\"device_profile_uuid\":\"51759db8-c8bf-4b2f-b48a-6577d7ad6a1a\",\"device_template\":\"Yealink T46U\",\"device_template_uuid\":\"a6cf59ba-4b2b-4bdd-b870-35cc55bca146\",\"device_keys\":[\"ad\"],\"phonebook_mode\":\"default\",\"phonebook_uuids\":[\"6fca1bbb-0318-337e-9a4b-3fe5f2443ac8\"],\"device_description\":\"Reception desk device\",\"device_lines\":[[]]}"
                         },
                         "description": "Creates a new device in the specified domain.\n\nNotes:\n- `device_template` is deprecated and retained for backward compatibility.\n- Use `device_template_uuid` as its successor."
                     },
@@ -1785,7 +1785,7 @@
                             "mode": "raw",
                             "raw": "{\"extension\":\"1001\",\"destination\":\"18005551212\",\"agent\":\"SIP-T53W\",\"vendor\":\"yealink\",\"event\":\"ACTION-URI\",\"content_type\":\"message\\\/sipfrag\",\"body\":\"number=18005551212&outgoing_uri=sip:1001@example.com\"}"
                         },
-                        "description": "Makes the selected registered phone place a call to the requested\ndestination. If no selector is provided, FS PBX picks the freshest\ncontrollable registration group and returns any other matching groups in\n`skipped_targets`. To select a specific phone, retrieve its `agent` from\n`GET \/api\/v1\/domains\/{domain_uuid}\/phone-control\/targets` and send it\nwith this request. Use `vendor` only when any phone from that vendor is\nan acceptable target.\n\nAccess rules:\n- Caller must have access to the target domain.\n- Caller must have the `phone_control_call` permission."
+                        "description": "Makes the selected registered phone place a call to the requested\ndestination. If no selector is provided, FS PBX picks the freshest\ncontrollable registration group and returns any other matching groups in\n`skipped_targets`. To select a specific phone, retrieve its `agent` from\n`GET \/api\/v1\/domains\/{domain_uuid}\/phone-control\/targets` and send it\nwith this request. Use `vendor` only when any phone from that vendor is\nan acceptable target.\n\nAccess rules:\n- Caller must have access to the target domain.\n- Caller must have the `phone_control_call` permission.\n- Only the caller's assigned extension is accessible unless they also have\n  `phone_control_view_all_records` for account-wide access."
                     },
                     "response": [
                         {
@@ -1823,6 +1823,12 @@
                             "code": 403,
                             "body": "{\"success\":false,\"message\":\"Forbidden (missing permission).\",\"error\":{\"code\":\"forbidden_permission\",\"permission\":\"phone_control_call\"}}",
                             "name": "Forbidden (missing permission)"
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"You do not have access to this extension.\",\"code\":\"forbidden_extension\",\"param\":\"extension\"}}",
+                            "name": "Forbidden (extension access)"
                         },
                         {
                             "header": [],
@@ -1886,7 +1892,7 @@
                             }
                         ],
                         "body": null,
-                        "description": "Returns the registered phones that FS PBX can control for one extension.\nUse the returned `agent` value with either the click-to-dial or phone-control\naction endpoint. Each target also lists its supported phone-control actions.\nUse `vendor`, `lan_ip`, or a `registration_call_ids` value when needed.\nSee [Supported phones and actions](https:\/\/www.fspbx.com\/docs\/additional-information\/phone-control\/#supported-phones-and-actions)\nfor vendor-specific capabilities and behavior.\n\nAccess rules:\n- Caller must have access to the target domain.\n- Caller must have the `phone_control_view` permission."
+                        "description": "Returns the registered phones that FS PBX can control for one extension.\nUse the returned `agent` value with either the click-to-dial or phone-control\naction endpoint. Each target also lists its supported phone-control actions.\nUse `vendor`, `lan_ip`, or a `registration_call_ids` value when needed.\nSee [Supported phones and actions](https:\/\/www.fspbx.com\/docs\/additional-information\/phone-control\/#supported-phones-and-actions)\nfor vendor-specific capabilities and behavior.\n\nAccess rules:\n- Caller must have access to the target domain.\n- Caller must have the `phone_control_view` permission.\n- Only the caller's assigned extension is accessible unless they also have\n  `phone_control_view_all_records` for account-wide access."
                     },
                     "response": [
                         {
@@ -1924,6 +1930,12 @@
                             "code": 403,
                             "body": "{\"success\":false,\"message\":\"Forbidden (missing permission).\",\"error\":{\"code\":\"forbidden_permission\",\"permission\":\"phone_control_view\"}}",
                             "name": "Forbidden (missing permission)"
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"You do not have access to this extension.\",\"code\":\"forbidden_extension\",\"param\":\"extension\"}}",
+                            "name": "Forbidden (extension access)"
                         },
                         {
                             "header": [],
@@ -1981,7 +1993,7 @@
                             }
                         ],
                         "body": null,
-                        "description": "Returns the extension's current FreeSWITCH calls and their states. Use\nthis before or after an action to confirm whether a call is `RINGING`,\n`ACTIVE`, or `HELD`. An empty `data` array means there are no calls.\n\nAccess rules:\n- Caller must have access to the target domain.\n- Caller must have the `phone_control_view` permission."
+                        "description": "Returns the extension's current FreeSWITCH calls and their states. Use\nthis before or after an action to confirm whether a call is `RINGING`,\n`ACTIVE`, or `HELD`. An empty `data` array means there are no calls.\n\nAccess rules:\n- Caller must have access to the target domain.\n- Caller must have the `phone_control_view` permission.\n- Only the caller's assigned extension is accessible unless they also have\n  `phone_control_view_all_records` for account-wide access."
                     },
                     "response": [
                         {
@@ -2019,6 +2031,12 @@
                             "code": 403,
                             "body": "{\"success\":false,\"message\":\"Forbidden (missing permission).\",\"error\":{\"code\":\"forbidden_permission\",\"permission\":\"phone_control_view\"}}",
                             "name": "Forbidden (missing permission)"
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"You do not have access to this extension.\",\"code\":\"forbidden_extension\",\"param\":\"extension\"}}",
+                            "name": "Forbidden (extension access)"
                         },
                         {
                             "header": [],
@@ -2072,7 +2090,7 @@
                             "mode": "raw",
                             "raw": "{\"extension\":\"1001\",\"action\":\"hold\",\"destination\":\"2001\",\"agent\":\"SIP-T53W\",\"vendor\":\"yealink\",\"lan_ip\":\"10.0.0.25\",\"call_id\":\"8cc81337-3728-4b87-a507-f59627abf313\",\"force\":false,\"no_resume\":false,\"dry_run\":false}"
                         },
-                        "description": "Controls a registered phone or its active call through the same service\nused by `php artisan phone:control`. Vendor support differs, so first use\nthe targets endpoint and choose an action from that phone's\n`supported_actions`. Prefer `agent` when selecting a specific phone.\nSee [Supported phones and actions](https:\/\/www.fspbx.com\/docs\/additional-information\/phone-control\/#supported-phones-and-actions)\nfor vendor-specific capabilities and behavior.\n\nCall-state safeguards are enabled by default. Hold, resume, end-call,\ntransfer, and answer-call normally require one unambiguous call in the\nexpected state. `force=true` bypasses those checks. `dry_run=true`\nresolves the target and returns a command preview without sending it.\n\nAccess rules:\n- Caller must have access to the target domain.\n- Caller must have the `phone_control_call` permission."
+                        "description": "Controls a registered phone or its active call through the same service\nused by `php artisan phone:control`. Vendor support differs, so first use\nthe targets endpoint and choose an action from that phone's\n`supported_actions`. Prefer `agent` when selecting a specific phone.\nSee [Supported phones and actions](https:\/\/www.fspbx.com\/docs\/additional-information\/phone-control\/#supported-phones-and-actions)\nfor vendor-specific capabilities and behavior.\n\nCall-state safeguards are enabled by default. Hold, resume, end-call,\ntransfer, and answer-call normally require one unambiguous call in the\nexpected state. `force=true` bypasses those checks. `dry_run=true`\nresolves the target and returns a command preview without sending it.\n\nAccess rules:\n- Caller must have access to the target domain.\n- Caller must have the `phone_control_call` permission.\n- Only the caller's assigned extension is accessible unless they also have\n  `phone_control_view_all_records` for account-wide access."
                     },
                     "response": [
                         {
@@ -2116,6 +2134,12 @@
                             "code": 403,
                             "body": "{\"success\":false,\"message\":\"Forbidden (missing permission).\",\"error\":{\"code\":\"forbidden_permission\",\"permission\":\"phone_control_call\"}}",
                             "name": "Forbidden (missing permission)"
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"You do not have access to this extension.\",\"code\":\"forbidden_extension\",\"param\":\"extension\"}}",
+                            "name": "Forbidden (extension access)"
                         },
                         {
                             "header": [],
@@ -3953,7 +3977,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"limit\":10,\"starting_after\":\"5598cd04-2106-3f6a-af05-840b46bde7a6\",\"search\":\"n\",\"user_enabled\":true}"
+                            "raw": "{\"limit\":22,\"starting_after\":\"90dbaa5a-e53b-3754-8f24-3acc14e4b3d5\",\"search\":\"gslusmpcqtgbgytchdm\",\"user_enabled\":true}"
                         },
                         "description": "Lists FS PBX users in the specified account. Use this endpoint to browse user\nprofiles or find a user to retrieve, update, or delete. Each result includes\nthe user's UUID, name, email, enabled status, assigned extension, roles,\nand whether the user is directory-managed. Use Retrieve a user for the\ntime zone, managed accounts, account groups, and locations.\n\nSearch by name or email, or filter by enabled status. Results are paginated;\nwhen `has_more` is true, pass the last result's `user_uuid` as `starting_after`\nto fetch the next page.\n\nRequires access to the domain in the URL and `user_view`. Passwords, API tokens,\nand two-factor secrets are never returned."
                     },
@@ -4092,13 +4116,13 @@
                             "mode": "raw",
                             "raw": "{\"first_name\":\"Jane\",\"last_name\":\"Smith\",\"user_email\":\"jane.smith@example.com\",\"user_enabled\":false,\"extension_uuid\":\"d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b\",\"groups\":[\"6fdb722a-3f2f-430d-ab05-46a75de8c587\"],\"time_zone\":\"America\\\/New_York\",\"accounts\":[],\"account_groups\":[],\"locations\":[]}"
                         },
-                        "description": "Creates a local FS PBX user in the specified account. Use this endpoint to\nadd a staff member or administrator who will sign in to the FS PBX web\ninterface. Returns the created user's profile and `user_uuid`, which can\nbe used to retrieve, update, or delete the user.\n\nOnly `first_name` and `user_email` are required. You can also assign an\nexisting extension and roles to configure the user's access. No role is\nassigned automatically. If `groups` is supplied, it must contain at least\none existing role UUID. The domain in the URL owns the new user. Password\nsetup is a separate step: call Send a password reset email for the new\n`user_uuid` to let the user choose their password. Creating the user does\nnot send an email or set or return a password.\n\nRequires domain access and `user_add`. Role assignments require\n`user_group_edit` and cannot exceed the caller's role level. Only superadmins\nmay assign the superadmin role. Disabled creation requires `user_status`.\nAccount assignments require their corresponding management permissions.\nThe domain's user limit is enforced."
+                        "description": "Creates a local FS PBX user in the specified account. Use this endpoint to\nadd a staff member or administrator who will sign in to the FS PBX web\ninterface. Returns the created user's profile and `user_uuid`, which can\nbe used to retrieve, update, or delete the user.\n\nOnly `first_name` and `user_email` are required. You can also assign an\nexisting extension and roles to configure the user's access. No role is\nassigned automatically. If `groups` is supplied, it must contain at least\none existing role UUID. The domain in the URL owns the new user. Password\nsetup is a separate step: call Send a password reset email for the new\n`user_uuid` to let the user choose their password. Creating the user does\nnot send an email or set or return a password.\n\nIf `time_zone` is omitted or null, it defaults to the account's local timezone,\nfalling back to the system timezone setting or UTC.\n\nRequires domain access and `user_add`. Role assignments require\n`user_group_edit` and cannot exceed the caller's role level. Only superadmins\nmay assign the superadmin role. Disabled creation requires `user_status`.\nAccount assignments require their corresponding management permissions.\nThe domain's user limit is enforced."
                     },
                     "response": [
                         {
                             "header": [],
                             "code": 201,
-                            "body": "{\"user_uuid\":\"c9a76140-0ca4-4ea3-95af-7e12c2ff0df5\",\"object\":\"user\",\"domain_uuid\":\"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\"user_email\":\"jane.smith@example.com\",\"first_name\":\"Jane\",\"last_name\":\"Smith\",\"user_enabled\":true,\"extension_uuid\":null,\"time_zone\":null,\"groups\":[],\"accounts\":[],\"account_groups\":[],\"locations\":[],\"directory_managed\":false}",
+                            "body": "{\"user_uuid\":\"c9a76140-0ca4-4ea3-95af-7e12c2ff0df5\",\"object\":\"user\",\"domain_uuid\":\"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\"user_email\":\"jane.smith@example.com\",\"first_name\":\"Jane\",\"last_name\":\"Smith\",\"user_enabled\":true,\"extension_uuid\":null,\"time_zone\":\"America\/New_York\",\"groups\":[],\"accounts\":[],\"account_groups\":[],\"locations\":[],\"directory_managed\":false}",
                             "name": ""
                         },
                         {

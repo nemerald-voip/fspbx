@@ -565,7 +565,7 @@ paths:
     get:
       summary: 'List Call Detail Records'
       operationId: listCallDetailRecords
-      description: "Returns CDRs for the specified domain the caller is allowed to access.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `xml_cdr_view` permission.\n\nPagination (cursor-based):\n- Both `limit` and `starting_after` are optional.\n- If `limit` is not provided, it defaults to 500.\n- If `starting_after` is not provided, results start from the beginning.\n- If `has_more` is true, request the next page by passing `starting_after`\n  equal to the last item's `xml_cdr_uuid` from the previous response.\n\nOptional filters:\n- `search` matches caller/destination fields and status.\n- `direction` filters by call direction.\n- `status` filters by call status.\n  Accepted values: `answered`, `no answer`, `cancelled`, `voicemail`,\n  `missed call`, `abandoned`, `callback_requested`.\n- `extension_uuid` filters by extension UUID.\n- `call_center_queue_uuid` filters by queue UUID.\n- `date_from` and `date_to` filter by `start_epoch` in epoch seconds.\n\nExamples:\n- First page: `GET /api/v1/domains/{domain_uuid}/cdrs`\n- Next page:  `GET /api/v1/domains/{domain_uuid}/cdrs?starting_after={last_xml_cdr_uuid}`\n- Custom size: `GET /api/v1/domains/{domain_uuid}/cdrs?limit=25`\n- Search: `GET /api/v1/domains/{domain_uuid}/cdrs?search=2135551212`\n- Date range (epoch): `GET /api/v1/domains/{domain_uuid}/cdrs?date_from=1775001600&date_to=1775087999`"
+      description: "Returns CDRs for the specified domain the caller is allowed to access.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `xml_cdr_view` permission.\n\nPagination (cursor-based):\n- Both `limit` and `starting_after` are optional.\n- If `limit` is not provided, it defaults to 500.\n- If `starting_after` is not provided, results start from the beginning.\n- If `has_more` is true, request the next page by passing `starting_after`\n  equal to the last item's `xml_cdr_uuid` from the previous response.\n\nOptional filters:\n- `search` matches caller/destination fields and status.\n- `direction` filters by call direction.\n- `status` filters by call status.\n  Accepted values: `answered`, `no answer`, `cancelled`, `voicemail`,\n  `missed call`, `abandoned`, `queue_exited`, `queue_timeout`, `queue_other`, `callback_requested`.\nQueue exits and timeouts have their own effective status, including calls that later reach voicemail.\nThe `voicemail` filter selects messages left independently of the queue status.\n- `extension_uuid` filters by extension UUID.\n- `call_center_queue_uuid` filters by queue UUID.\n- `date_from` and `date_to` filter by `start_epoch` in epoch seconds.\n\nExamples:\n- First page: `GET /api/v1/domains/{domain_uuid}/cdrs`\n- Next page:  `GET /api/v1/domains/{domain_uuid}/cdrs?starting_after={last_xml_cdr_uuid}`\n- Custom size: `GET /api/v1/domains/{domain_uuid}/cdrs?limit=25`\n- Search: `GET /api/v1/domains/{domain_uuid}/cdrs?search=2135551212`\n- Date range (epoch): `GET /api/v1/domains/{domain_uuid}/cdrs?date_from=1775001600&date_to=1775087999`"
       parameters:
         -
           in: query
@@ -610,12 +610,12 @@ paths:
         -
           in: query
           name: status
-          description: 'Optional. Filter by status. Accepted values: answered, no answer, cancelled, voicemail, missed call, abandoned, callback_requested.'
+          description: 'Optional. Filter by status. Accepted values: answered, no answer, cancelled, voicemail, missed call, abandoned, queue_exited, queue_timeout, queue_other, callback_requested.'
           example: answered
           required: false
           schema:
             type: string
-            description: 'Optional. Filter by status. Accepted values: answered, no answer, cancelled, voicemail, missed call, abandoned, callback_requested.'
+            description: 'Optional. Filter by status. Accepted values: answered, no answer, cancelled, voicemail, missed call, abandoned, queue_exited, queue_timeout, queue_other, callback_requested.'
             example: answered
         -
           in: query
@@ -1749,13 +1749,13 @@ paths:
                   type: array
                   description: ''
                   example:
-                    - tempore
+                    - ad
                   items:
                     type: integer
                 phonebook_mode:
                   type: string
                   description: ''
-                  example: custom
+                  example: default
                   enum:
                     - default
                     - custom
@@ -1763,7 +1763,7 @@ paths:
                   type: array
                   description: 'Must be a valid UUID.'
                   example:
-                    - 53881632-acf5-3437-9d11-3845270b4ef8
+                    - 6fca1bbb-0318-337e-9a4b-3fe5f2443ac8
                   items:
                     type: string
                 device_description:
@@ -4531,7 +4531,7 @@ paths:
     post:
       summary: 'Create a click-to-dial call'
       operationId: createAClickToDialCall
-      description: "Makes the selected registered phone place a call to the requested\ndestination. If no selector is provided, FS PBX picks the freshest\ncontrollable registration group and returns any other matching groups in\n`skipped_targets`. To select a specific phone, retrieve its `agent` from\n`GET /api/v1/domains/{domain_uuid}/phone-control/targets` and send it\nwith this request. Use `vendor` only when any phone from that vendor is\nan acceptable target.\n\nAccess rules:\n- Caller must have access to the target domain.\n- Caller must have the `phone_control_call` permission."
+      description: "Makes the selected registered phone place a call to the requested\ndestination. If no selector is provided, FS PBX picks the freshest\ncontrollable registration group and returns any other matching groups in\n`skipped_targets`. To select a specific phone, retrieve its `agent` from\n`GET /api/v1/domains/{domain_uuid}/phone-control/targets` and send it\nwith this request. Use `vendor` only when any phone from that vendor is\nan acceptable target.\n\nAccess rules:\n- Caller must have access to the target domain.\n- Caller must have the `phone_control_call` permission.\n- Only the caller's assigned extension is accessible unless they also have\n  `phone_control_view_all_records` for account-wide access."
       parameters: []
       responses:
         200:
@@ -4671,33 +4671,33 @@ paths:
                         type: string
                         example: unauthenticated
         403:
-          description: 'Forbidden (missing permission)'
+          description: 'Forbidden (extension access)'
           content:
             application/json:
               schema:
                 type: object
                 example:
-                  success: false
-                  message: 'Forbidden (missing permission).'
                   error:
-                    code: forbidden_permission
-                    permission: phone_control_call
+                    type: invalid_request_error
+                    message: 'You do not have access to this extension.'
+                    code: forbidden_extension
+                    param: extension
                 properties:
-                  success:
-                    type: boolean
-                    example: false
-                  message:
-                    type: string
-                    example: 'Forbidden (missing permission).'
                   error:
                     type: object
                     properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'You do not have access to this extension.'
                       code:
                         type: string
-                        example: forbidden_permission
-                      permission:
+                        example: forbidden_extension
+                      param:
                         type: string
-                        example: phone_control_call
+                        example: extension
         404:
           description: 'Extension not found'
           content:
@@ -4827,7 +4827,7 @@ paths:
     get:
       summary: 'List phone-control targets'
       operationId: listPhoneControlTargets
-      description: "Returns the registered phones that FS PBX can control for one extension.\nUse the returned `agent` value with either the click-to-dial or phone-control\naction endpoint. Each target also lists its supported phone-control actions.\nUse `vendor`, `lan_ip`, or a `registration_call_ids` value when needed.\nSee [Supported phones and actions](https://www.fspbx.com/docs/additional-information/phone-control/#supported-phones-and-actions)\nfor vendor-specific capabilities and behavior.\n\nAccess rules:\n- Caller must have access to the target domain.\n- Caller must have the `phone_control_view` permission."
+      description: "Returns the registered phones that FS PBX can control for one extension.\nUse the returned `agent` value with either the click-to-dial or phone-control\naction endpoint. Each target also lists its supported phone-control actions.\nUse `vendor`, `lan_ip`, or a `registration_call_ids` value when needed.\nSee [Supported phones and actions](https://www.fspbx.com/docs/additional-information/phone-control/#supported-phones-and-actions)\nfor vendor-specific capabilities and behavior.\n\nAccess rules:\n- Caller must have access to the target domain.\n- Caller must have the `phone_control_view` permission.\n- Only the caller's assigned extension is accessible unless they also have\n  `phone_control_view_all_records` for account-wide access."
       parameters:
         -
           in: query
@@ -4995,33 +4995,33 @@ paths:
                         type: string
                         example: unauthenticated
         403:
-          description: 'Forbidden (missing permission)'
+          description: 'Forbidden (extension access)'
           content:
             application/json:
               schema:
                 type: object
                 example:
-                  success: false
-                  message: 'Forbidden (missing permission).'
                   error:
-                    code: forbidden_permission
-                    permission: phone_control_view
+                    type: invalid_request_error
+                    message: 'You do not have access to this extension.'
+                    code: forbidden_extension
+                    param: extension
                 properties:
-                  success:
-                    type: boolean
-                    example: false
-                  message:
-                    type: string
-                    example: 'Forbidden (missing permission).'
                   error:
                     type: object
                     properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'You do not have access to this extension.'
                       code:
                         type: string
-                        example: forbidden_permission
-                      permission:
+                        example: forbidden_extension
+                      param:
                         type: string
-                        example: phone_control_view
+                        example: extension
         404:
           description: 'Extension not found'
           content:
@@ -5085,7 +5085,7 @@ paths:
     get:
       summary: 'List active calls for phone control'
       operationId: listActiveCallsForPhoneControl
-      description: "Returns the extension's current FreeSWITCH calls and their states. Use\nthis before or after an action to confirm whether a call is `RINGING`,\n`ACTIVE`, or `HELD`. An empty `data` array means there are no calls.\n\nAccess rules:\n- Caller must have access to the target domain.\n- Caller must have the `phone_control_view` permission."
+      description: "Returns the extension's current FreeSWITCH calls and their states. Use\nthis before or after an action to confirm whether a call is `RINGING`,\n`ACTIVE`, or `HELD`. An empty `data` array means there are no calls.\n\nAccess rules:\n- Caller must have access to the target domain.\n- Caller must have the `phone_control_view` permission.\n- Only the caller's assigned extension is accessible unless they also have\n  `phone_control_view_all_records` for account-wide access."
       parameters:
         -
           in: query
@@ -5205,33 +5205,33 @@ paths:
                         type: string
                         example: unauthenticated
         403:
-          description: 'Forbidden (missing permission)'
+          description: 'Forbidden (extension access)'
           content:
             application/json:
               schema:
                 type: object
                 example:
-                  success: false
-                  message: 'Forbidden (missing permission).'
                   error:
-                    code: forbidden_permission
-                    permission: phone_control_view
+                    type: invalid_request_error
+                    message: 'You do not have access to this extension.'
+                    code: forbidden_extension
+                    param: extension
                 properties:
-                  success:
-                    type: boolean
-                    example: false
-                  message:
-                    type: string
-                    example: 'Forbidden (missing permission).'
                   error:
                     type: object
                     properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'You do not have access to this extension.'
                       code:
                         type: string
-                        example: forbidden_permission
-                      permission:
+                        example: forbidden_extension
+                      param:
                         type: string
-                        example: phone_control_view
+                        example: extension
         404:
           description: 'Extension not found'
           content:
@@ -5295,7 +5295,7 @@ paths:
     post:
       summary: 'Create a phone-control action'
       operationId: createAPhoneControlAction
-      description: "Controls a registered phone or its active call through the same service\nused by `php artisan phone:control`. Vendor support differs, so first use\nthe targets endpoint and choose an action from that phone's\n`supported_actions`. Prefer `agent` when selecting a specific phone.\nSee [Supported phones and actions](https://www.fspbx.com/docs/additional-information/phone-control/#supported-phones-and-actions)\nfor vendor-specific capabilities and behavior.\n\nCall-state safeguards are enabled by default. Hold, resume, end-call,\ntransfer, and answer-call normally require one unambiguous call in the\nexpected state. `force=true` bypasses those checks. `dry_run=true`\nresolves the target and returns a command preview without sending it.\n\nAccess rules:\n- Caller must have access to the target domain.\n- Caller must have the `phone_control_call` permission."
+      description: "Controls a registered phone or its active call through the same service\nused by `php artisan phone:control`. Vendor support differs, so first use\nthe targets endpoint and choose an action from that phone's\n`supported_actions`. Prefer `agent` when selecting a specific phone.\nSee [Supported phones and actions](https://www.fspbx.com/docs/additional-information/phone-control/#supported-phones-and-actions)\nfor vendor-specific capabilities and behavior.\n\nCall-state safeguards are enabled by default. Hold, resume, end-call,\ntransfer, and answer-call normally require one unambiguous call in the\nexpected state. `force=true` bypasses those checks. `dry_run=true`\nresolves the target and returns a command preview without sending it.\n\nAccess rules:\n- Caller must have access to the target domain.\n- Caller must have the `phone_control_call` permission.\n- Only the caller's assigned extension is accessible unless they also have\n  `phone_control_view_all_records` for account-wide access."
       parameters: []
       responses:
         200:
@@ -5404,33 +5404,33 @@ paths:
                         type: string
                         example: unauthenticated
         403:
-          description: 'Forbidden (missing permission)'
+          description: 'Forbidden (extension access)'
           content:
             application/json:
               schema:
                 type: object
                 example:
-                  success: false
-                  message: 'Forbidden (missing permission).'
                   error:
-                    code: forbidden_permission
-                    permission: phone_control_call
+                    type: invalid_request_error
+                    message: 'You do not have access to this extension.'
+                    code: forbidden_extension
+                    param: extension
                 properties:
-                  success:
-                    type: boolean
-                    example: false
-                  message:
-                    type: string
-                    example: 'Forbidden (missing permission).'
                   error:
                     type: object
                     properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'You do not have access to this extension.'
                       code:
                         type: string
-                        example: forbidden_permission
-                      permission:
+                        example: forbidden_extension
+                      param:
                         type: string
-                        example: phone_control_call
+                        example: extension
         404:
           description: 'Extension not found'
           content:
@@ -9224,18 +9224,20 @@ paths:
                   example: voicemails
                   enum:
                     - extensions
+                    - voicemails
                     - ring_groups
                     - ivrs
                     - business_hours
+                    - time_conditions
                     - contact_centers
-                    - ai_agents
                     - bridges
                     - faxes
-                    - conferences
                     - call_flows
                     - dynamic_routes
-                    - voicemails
                     - recordings
+                    - conferences
+                    - conference_centers
+                    - ai_agents
                     - check_voicemail
                     - company_directory
                     - hangup
@@ -9253,15 +9255,18 @@ paths:
                   example: ring_groups
                   enum:
                     - extensions
+                    - voicemails
                     - ring_groups
                     - ivrs
                     - business_hours
+                    - time_conditions
                     - contact_centers
                     - faxes
-                    - conferences
                     - call_flows
                     - dynamic_routes
-                    - voicemails
+                    - conferences
+                    - conference_centers
+                    - ai_agents
                     - external
                 forward_target:
                   type: string
@@ -9839,18 +9844,20 @@ paths:
                   example: voicemails
                   enum:
                     - extensions
+                    - voicemails
                     - ring_groups
                     - ivrs
                     - business_hours
+                    - time_conditions
                     - contact_centers
-                    - ai_agents
                     - bridges
                     - faxes
-                    - conferences
                     - call_flows
                     - dynamic_routes
-                    - voicemails
                     - recordings
+                    - conferences
+                    - conference_centers
+                    - ai_agents
                     - check_voicemail
                     - company_directory
                     - hangup
@@ -9880,15 +9887,18 @@ paths:
                   example: ring_groups
                   enum:
                     - extensions
+                    - voicemails
                     - ring_groups
                     - ivrs
                     - business_hours
+                    - time_conditions
                     - contact_centers
                     - faxes
-                    - conferences
                     - call_flows
                     - dynamic_routes
-                    - voicemails
+                    - conferences
+                    - conference_centers
+                    - ai_agents
                     - external
                 forward_target:
                   type: string
@@ -10228,15 +10238,15 @@ paths:
                 limit:
                   type: integer
                   description: 'Must be at least 1. Must not be greater than 100.'
-                  example: 10
+                  example: 22
                 starting_after:
                   type: string
                   description: 'Must be a valid UUID.'
-                  example: 5598cd04-2106-3f6a-af05-840b46bde7a6
+                  example: 90dbaa5a-e53b-3754-8f24-3acc14e4b3d5
                 search:
                   type: string
                   description: 'Must not be greater than 255 characters.'
-                  example: 'n'
+                  example: gslusmpcqtgbgytchdm
                 user_enabled:
                   type: boolean
                   description: ''
@@ -10244,7 +10254,7 @@ paths:
     post:
       summary: 'Create a user'
       operationId: createAUser
-      description: "Creates a local FS PBX user in the specified account. Use this endpoint to\nadd a staff member or administrator who will sign in to the FS PBX web\ninterface. Returns the created user's profile and `user_uuid`, which can\nbe used to retrieve, update, or delete the user.\n\nOnly `first_name` and `user_email` are required. You can also assign an\nexisting extension and roles to configure the user's access. No role is\nassigned automatically. If `groups` is supplied, it must contain at least\none existing role UUID. The domain in the URL owns the new user. Password\nsetup is a separate step: call Send a password reset email for the new\n`user_uuid` to let the user choose their password. Creating the user does\nnot send an email or set or return a password.\n\nRequires domain access and `user_add`. Role assignments require\n`user_group_edit` and cannot exceed the caller's role level. Only superadmins\nmay assign the superadmin role. Disabled creation requires `user_status`.\nAccount assignments require their corresponding management permissions.\nThe domain's user limit is enforced."
+      description: "Creates a local FS PBX user in the specified account. Use this endpoint to\nadd a staff member or administrator who will sign in to the FS PBX web\ninterface. Returns the created user's profile and `user_uuid`, which can\nbe used to retrieve, update, or delete the user.\n\nOnly `first_name` and `user_email` are required. You can also assign an\nexisting extension and roles to configure the user's access. No role is\nassigned automatically. If `groups` is supplied, it must contain at least\none existing role UUID. The domain in the URL owns the new user. Password\nsetup is a separate step: call Send a password reset email for the new\n`user_uuid` to let the user choose their password. Creating the user does\nnot send an email or set or return a password.\n\nIf `time_zone` is omitted or null, it defaults to the account's local timezone,\nfalling back to the system timezone setting or UTC.\n\nRequires domain access and `user_add`. Role assignments require\n`user_group_edit` and cannot exceed the caller's role level. Only superadmins\nmay assign the superadmin role. Disabled creation requires `user_status`.\nAccount assignments require their corresponding management permissions.\nThe domain's user limit is enforced."
       parameters: []
       responses:
         201:
@@ -10262,7 +10272,7 @@ paths:
                   last_name: Smith
                   user_enabled: true
                   extension_uuid: null
-                  time_zone: null
+                  time_zone: America/New_York
                   groups: []
                   accounts: []
                   account_groups: []
@@ -10295,7 +10305,7 @@ paths:
                     example: null
                   time_zone:
                     type: string
-                    example: null
+                    example: America/New_York
                   groups:
                     type: array
                     example: []
@@ -10457,7 +10467,7 @@ paths:
                     type: string
                 time_zone:
                   type: string
-                  description: 'Optional user timezone setting. Must be a valid time zone, such as <code>Africa/Accra</code>.'
+                  description: 'Optional user timezone. On creation, omit or send null to use the account default, falling back to the system setting or UTC. On update, omit to preserve the current value; send null to clear it. Must be a valid time zone, such as <code>Africa/Accra</code>.'
                   example: America/New_York
                 accounts:
                   type: array
@@ -10886,7 +10896,7 @@ paths:
                     type: string
                 time_zone:
                   type: string
-                  description: 'Optional user timezone setting. Must be a valid time zone, such as <code>Africa/Accra</code>.'
+                  description: 'Optional user timezone. On creation, omit or send null to use the account default, falling back to the system setting or UTC. On update, omit to preserve the current value; send null to clear it. Must be a valid time zone, such as <code>Africa/Accra</code>.'
                   example: America/New_York
                 accounts:
                   type: array
