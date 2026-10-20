@@ -7,6 +7,7 @@ use Aws\Exception\AwsException;
 use Aws\S3\S3Client;
 use Carbon\Carbon;
 use Closure;
+use Illuminate\Support\Facades\File;
 use RuntimeException;
 use Symfony\Component\Process\Process;
 
@@ -57,17 +58,15 @@ class S3RecordingArchiver
             $key = $this->objectKey($recording, $settings, $timeZone, $extension);
             $s3 = $this->storage->buildClientFromSettings($settings);
             $authorize();
-            if (! $this->verified($s3, $settings['bucket'], $key, $size, $checksum, true)) {
-                $s3->putObject([
-                    'Bucket' => $settings['bucket'], 'Key' => $key, 'SourceFile' => $upload,
-                    'ContentMD5' => base64_encode(hash_file('md5', $upload, true)),
-                    'Metadata' => ['fspbx-sha256' => $checksum],
-                    '@http' => ['connect_timeout' => 10, 'timeout' => 120],
-                    '@retries' => 0,
-                ]);
-                if (! $this->verified($s3, $settings['bucket'], $key, $size, $checksum)) {
-                    throw new RuntimeException('The uploaded recording could not be verified.');
-                }
+            $s3->putObject([
+                'Bucket' => $settings['bucket'], 'Key' => $key, 'SourceFile' => $upload,
+                'ContentMD5' => base64_encode(hash_file('md5', $upload, true)),
+                'Metadata' => ['fspbx-sha256' => $checksum],
+                '@http' => ['connect_timeout' => 10, 'timeout' => 120],
+                '@retries' => 0,
+            ]);
+            if (! $this->verified($s3, $settings['bucket'], $key, $size, $checksum)) {
+                throw new RuntimeException('The uploaded recording could not be verified.');
             }
 
             $authorize();
@@ -75,6 +74,16 @@ class S3RecordingArchiver
                 throw new RuntimeException('The local recording changed during upload; retry deferred.');
             }
             $recordingStart = Carbon::parse($recording->start_stamp);
+            $receipt = [
+                'xml_cdr_uuid' => $recording->getKey(), 'start_stamp' => $recordingStart->toIso8601String(),
+                'domain_uuid' => $recording->domain_uuid,
+                'record_path' => $recording->record_path, 'record_name' => $recording->record_name,
+                'source_hash' => $sourceHash, 'key' => $key, 'size' => $size, 'checksum' => $checksum,
+                'storage_hash' => $this->storage->getSettingsHash($settings),
+            ];
+            // Persist before committing CDR changes so interrupted deletion can
+            // be retried even after the recording leaves the upload selection.
+            $receiptPath = $this->saveReceipt($receipt);
             $updated = $write(fn () => CDR::query()
                 ->where('domain_uuid', $recording->domain_uuid)
                 ->where('record_path', $recording->record_path)
@@ -87,6 +96,9 @@ class S3RecordingArchiver
             if (! $updated) {
                 throw new RuntimeException('Recording references changed before the archive could be committed.');
             }
+            // This upload was just verified; only cleanup retries need another
+            // remote check. Keep the normal path to one PUT followed by one HEAD.
+            $this->cleanup($receiptPath, $receipt, $settings, $authorize, verifyRemote: false);
 
             return $key;
         } finally {
@@ -98,6 +110,100 @@ class S3RecordingArchiver
         }
     }
 
+    public function cleanup(string $receiptPath, array $receipt, array $settings, Closure $authorize, bool $verifyRemote = true): void
+    {
+        $authorize();
+        // Old receipts have no call timestamp. Retain them rather than fall
+        // back to the unbounded CDR searches removed for performance.
+        if (empty($receipt['xml_cdr_uuid']) || empty($receipt['start_stamp'])
+            || $receipt['storage_hash'] !== $this->storage->getSettingsHash($settings)) {
+            return;
+        }
+        $start = Carbon::parse($receipt['start_stamp']);
+        $window = [$start->copy()->subDay(), $start->copy()->addDay()];
+        if (! CDR::query()->whereBetween('start_stamp', $window)
+            ->where('xml_cdr_uuid', $receipt['xml_cdr_uuid'])
+            ->where('domain_uuid', $receipt['domain_uuid'])
+            ->where('record_path', 'S3')->where('record_name', $receipt['key'])->exists()
+            || CDR::query()->whereBetween('start_stamp', $window)
+                ->where('record_path', $receipt['record_path'])
+                ->where('record_name', $receipt['record_name'])->exists()) {
+            return;
+        }
+        $source = rtrim($receipt['record_path'], '/').'/'.$receipt['record_name'];
+        if (is_file($source)) {
+            if ($verifyRemote && ! $this->verified($this->storage->buildClientFromSettings($settings),
+                $settings['bucket'], $receipt['key'], $receipt['size'], $receipt['checksum'])) {
+                throw new RuntimeException('Archived recording could not be verified for local cleanup.');
+            }
+            $authorize();
+            if (hash_file('sha256', $source) !== $receipt['source_hash']) {
+                throw new RuntimeException('Local recording changed; retained for review.');
+            }
+            if (! $this->deleteSource($source)) {
+                throw new RuntimeException('Local cleanup failed; it will be retried on a later run.');
+            }
+        }
+        if (is_file($receiptPath)) {
+            unlink($receiptPath);
+        }
+    }
+
+    public function receipts(): iterable
+    {
+        if (! is_dir($this->receiptDirectory())) {
+            return;
+        }
+        $count = 0;
+        foreach (new \DirectoryIterator($this->receiptDirectory()) as $file) {
+            if (! $file->isFile() || $file->getExtension() !== 'json') {
+                continue;
+            }
+            $receipt = json_decode(file_get_contents($file->getPathname()), true);
+            if (is_array($receipt) && count(array_intersect([
+                'xml_cdr_uuid', 'start_stamp', 'domain_uuid', 'record_path', 'record_name',
+                'source_hash', 'key', 'size', 'checksum', 'storage_hash',
+            ], array_keys($receipt))) === 10) {
+                yield $file->getPathname() => $receipt;
+                if (++$count >= 2000) {
+                    break;
+                }
+            }
+        }
+    }
+
+    protected function receiptDirectory(): string
+    {
+        return storage_path('app/s3-upload-cleanup');
+    }
+
+    protected function saveReceipt(array $receipt): string
+    {
+        File::ensureDirectoryExists($this->receiptDirectory(), 0700);
+        $path = $this->receiptDirectory().'/'.hash('sha256', json_encode($receipt)).'.json';
+        $temporary = tempnam($this->receiptDirectory(), '.receipt-');
+        if ($temporary === false) {
+            throw new RuntimeException('Could not create an archive cleanup receipt.');
+        }
+        try {
+            if (file_put_contents($temporary, json_encode($receipt, JSON_THROW_ON_ERROR)) === false
+                || ! rename($temporary, $path)) {
+                throw new RuntimeException('Could not persist the archive cleanup receipt.');
+            }
+        } finally {
+            if (is_file($temporary)) {
+                unlink($temporary);
+            }
+        }
+
+        return $path;
+    }
+
+    protected function deleteSource(string $source): bool
+    {
+        return unlink($source);
+    }
+
     protected function convert(string $source, string $destination): void
     {
         $process = new Process(['ffmpeg', '-nostdin', '-y', '-i', $source,
@@ -106,7 +212,7 @@ class S3RecordingArchiver
         $process->mustRun();
     }
 
-    protected function verified(S3Client $s3, string $bucket, string $key, int $size, string $checksum, bool $beforeUpload = false): bool
+    protected function verified(S3Client $s3, string $bucket, string $key, int $size, string $checksum): bool
     {
         try {
             $head = $s3->headObject([
@@ -114,18 +220,14 @@ class S3RecordingArchiver
                 '@http' => ['connect_timeout' => 10, 'timeout' => 30], '@retries' => 0,
             ]);
         } catch (AwsException $exception) {
-            // Without ListBucket permission S3 reports a missing key as 403.
-            // Verification after upload must still succeed with the existing
-            // GetObject permission.
-            if ($exception->getStatusCode() === 404 || ($beforeUpload && $exception->getStatusCode() === 403)) {
+            if ($exception->getStatusCode() === 404) {
                 return false;
             }
             throw $exception;
         }
         if ((int) ($head['ContentLength'] ?? -1) !== $size
             || ($head['Metadata']['fspbx-sha256'] ?? null) !== $checksum) {
-            // Do not overwrite an unexpected object, even on a retry.
-            throw new RuntimeException('S3 object verification failed; the existing object was left unchanged.');
+            throw new RuntimeException('S3 object verification failed; the local recording was retained.');
         }
 
         return true;
