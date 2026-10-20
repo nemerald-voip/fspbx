@@ -2,11 +2,10 @@
 
 namespace App\Models;
 
+use App\Services\PhoneNumberService;
 use Carbon\Carbon;
-use libphonenumber\PhoneNumberUtil;
 use libphonenumber\PhoneNumberFormat;
 use Illuminate\Database\Eloquent\Model;
-use libphonenumber\NumberParseException;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class CDR extends Model
@@ -55,18 +54,25 @@ class CDR extends Model
 
     public function getCallerIdNumberFormattedAttribute()
     {
-        return $this->caller_id_number ? formatPhoneNumber($this->caller_id_number) : null;
+        return $this->caller_id_number ? app(PhoneNumberService::class)->formatForDomain(
+            $this->caller_id_number,
+            $this->domain_uuid,
+            PhoneNumberFormat::NATIONAL
+        ) : null;
     }
 
     public function getCallerIdNameFormattedAttribute()
     {
-        // If the "name" looks like a US +1 number, normalize it
-        if (preg_match('/^(?:\+?1)?[2-9]\d{9}$/', $this->caller_id_name)) {
-            return formatPhoneNumber($this->caller_id_name);
+        // Preserve names: libphonenumber can also interpret letters as vanity numbers.
+        if (!preg_match('/^\+?[0-9\s().-]+$/D', trim((string) $this->caller_id_name))) {
+            return $this->caller_id_name;
         }
 
-        // Otherwise return as-is (because it's likely a real name)
-        return $this->caller_id_name;
+        return app(PhoneNumberService::class)->formatForDomain(
+            $this->caller_id_name,
+            $this->domain_uuid,
+            PhoneNumberFormat::NATIONAL
+        );
     }
 
     public function getCallerDestinationFormattedAttribute()
@@ -74,7 +80,11 @@ class CDR extends Model
         if ($this->caller_destination === null || $this->caller_destination === '') {
             return null;
         }
-        return formatPhoneNumber($this->caller_destination);
+        return app(PhoneNumberService::class)->formatForDomain(
+            $this->caller_destination,
+            $this->domain_uuid,
+            PhoneNumberFormat::NATIONAL
+        );
     }
 
     public function getDestinationNumberFormattedAttribute()
@@ -83,7 +93,11 @@ class CDR extends Model
             return null;
         }
 
-        return formatPhoneNumber($this->destination_number);
+        return app(PhoneNumberService::class)->formatForDomain(
+            $this->destination_number,
+            $this->domain_uuid,
+            PhoneNumberFormat::NATIONAL
+        );
     }
 
     public function getStartDateAttribute()
@@ -243,28 +257,6 @@ class CDR extends Model
     public function callTranscription()
     {
         return $this->hasOne(CallTranscription::class, 'xml_cdr_uuid', 'xml_cdr_uuid');
-    }
-
-    public function formatPhoneNumber($value)
-    {
-        //Get libphonenumber object
-        $phoneNumberUtil = PhoneNumberUtil::getInstance();
-
-        //try to convert phone number to National format
-        try {
-            $phoneNumberObject = $phoneNumberUtil->parse($value, 'US');
-            if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-                $number_formatted = $phoneNumberUtil
-                    ->format($phoneNumberObject, PhoneNumberFormat::NATIONAL);
-            } else {
-                $number_formatted = $value;
-            }
-        } catch (NumberParseException $e) {
-            // Do nothing and leave the numbner as is
-            $number_formatted = $value;
-        }
-
-        return $number_formatted;
     }
 
     public function relatedQueueCalls()
