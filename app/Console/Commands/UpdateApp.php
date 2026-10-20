@@ -60,6 +60,7 @@ use App\Console\Commands\Updates\Update204;
 use App\Console\Commands\Updates\Update205;
 use App\Console\Commands\Updates\Update206;
 use App\Console\Commands\Updates\Update207;
+use App\Console\Commands\Updates\Update208;
 use App\Console\Commands\Updates\Update0917;
 use App\Console\Commands\Updates\Update0918;
 use App\Console\Commands\Updates\Update0924;
@@ -196,6 +197,7 @@ class UpdateApp extends Command
             '2.0.5' => Update205::class,
             '2.0.6' => Update206::class,
             '2.0.7' => Update207::class,
+            '2.0.8' => Update208::class,
             // Add more versions as needed
         ];
 

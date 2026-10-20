@@ -2,6 +2,7 @@
 
 namespace App\Services\Settings;
 
+use App\Models\DefaultSettings;
 use App\Models\Domain;
 use App\Models\DomainSettings;
 use App\Models\Menu;
@@ -21,6 +22,13 @@ class AccountSettingsSchema extends SettingsSchema
 {
     public function fields(): array
     {
+        $lineDisplayNameDefault = (string) (DefaultSettings::query()
+            ->where('default_setting_category', 'provision')
+            ->where('default_setting_subcategory', 'line_display_name_format')
+            ->where('default_setting_name', 'text')
+            ->where('default_setting_enabled', true)
+            ->value('default_setting_value') ?: '{extension}');
+
         return [
             [
                 'key' => 'time_zone',
@@ -64,6 +72,18 @@ class AccountSettingsSchema extends SettingsSchema
                 'searchable' => true,
                 'info' => __('Leave empty to inherit the system default.'),
                 'description' => __('Sign out and back in to apply menu changes.'),
+            ],
+            [
+                'key' => 'line_display_name_format',
+                'category' => 'provision',
+                'subcategory' => 'line_display_name_format',
+                'name' => 'text',
+                'type' => 'text',
+                'label' => __('Line Display Name'),
+                'group' => __('Devices'),
+                'placeholder' => __('Use system default (:value)', ['value' => $lineDisplayNameDefault]),
+                'info' => __('Leave empty to inherit the system default.'),
+                'description' => __('What phone lines show when their Display Name is left blank. Use {extension}, {name}, {first_name}, and {last_name}. A name typed on a line always wins.'),
             ],
         ];
     }

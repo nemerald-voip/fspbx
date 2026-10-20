@@ -62,6 +62,17 @@ class SystemSettingsSchema extends SettingsSchema
                 'info' => __('Used by accounts without their own menu override.'),
                 'description' => __('Sign out and back in to apply menu changes.'),
             ],
+            [
+                'key' => 'line_display_name_format',
+                'category' => 'provision',
+                'subcategory' => 'line_display_name_format',
+                'name' => 'text',
+                'type' => 'text',
+                'label' => __('Line Display Name'),
+                'group' => __('Devices'),
+                'placeholder' => '{extension}',
+                'description' => __('What phone lines show when their Display Name is left blank. Use {extension}, {name}, {first_name}, and {last_name}. A name typed on a line always wins.'),
+            ],
         ];
     }
 

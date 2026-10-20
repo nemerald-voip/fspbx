@@ -36,7 +36,7 @@
                                                 :columns="{ sm: { container: 6 } }" />
                                             <TextElement v-else-if="field.type === 'text'" :name="field.key"
                                                 :label="field.label" :placeholder="field.placeholder" :floating="false"
-                                                :info="field.info || undefined"
+                                                :info="field.info || undefined" :description="field.description || undefined"
                                                 :disabled="!permissions?.default_setting_edit"
                                                 :columns="{ sm: { container: 6 } }" />
                                             <ToggleElement v-else-if="field.type === 'toggle'" :name="field.key"

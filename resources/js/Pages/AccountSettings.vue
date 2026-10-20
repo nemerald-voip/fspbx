@@ -45,7 +45,8 @@
                                                 :columns="{ sm: { container: 6 } }" />
                                             <TextElement v-else-if="field.type === 'text'" :name="field.key"
                                                 :label="field.label" :placeholder="field.placeholder" :floating="false"
-                                                :info="field.info || undefined" :columns="{ sm: { container: 6 } }" />
+                                                :info="field.info || undefined" :description="field.description || undefined"
+                                                :columns="{ sm: { container: 6 } }" />
                                             <ToggleElement v-else-if="field.type === 'toggle'" :name="field.key"
                                                 :text="field.label" />
                                         </template>

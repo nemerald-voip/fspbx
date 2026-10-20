@@ -1469,6 +1469,14 @@ class DatabaseSeeder extends Seeder
                 'default_setting_description'   => 'Number of predefined Park options in device and key template editors, starting at 5901. Use 1-99; missing or invalid values use 10.',
             ],
             [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'line_display_name_format',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => '{extension}',
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => 'Display name for device lines whose Display Name is blank. Tokens: {extension}, {name}, {first_name}, {last_name}. Examples: {name}, {extension} {name}, {name} ({extension}). Falls back to the extension number when the name is empty. A typed Display Name always wins. Default: {extension}.',
+            ],
+            [
                 'default_setting_category'      => 'company',
                 'default_setting_subcategory'   => 'billing_suspension',
                 'default_setting_name'          => 'text',

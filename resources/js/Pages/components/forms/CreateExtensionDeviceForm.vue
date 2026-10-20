@@ -55,7 +55,7 @@
                                             user_id: extension.extension,
                                             auth_id: extension.extension,
                                             shared_line: null,
-                                            display_name: extension.extension,
+                                            display_name: null,
                                             line_type_id: 'line',
                                         }
                                     ]

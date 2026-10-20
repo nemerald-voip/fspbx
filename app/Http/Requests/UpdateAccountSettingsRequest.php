@@ -135,6 +135,7 @@ class UpdateAccountSettingsRequest extends FormRequest
             'settings.time_zone' => __('Time Zone'),
             'settings.language' => __('Language'),
             'settings.menu' => __('Account Menu'),
+            'settings.line_display_name_format' => __('Line Display Name'),
         ];
     }
 }
