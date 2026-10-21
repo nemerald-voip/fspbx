@@ -676,6 +676,7 @@ class FaxesController extends Controller
             'contact_options_route' => route('contacts.options'),
             'contact_store_route' => route('contacts.store'),
             'contact_show_route' => route('contacts.show', ['phoneNumber' => ':phoneNumber']),
+            'contact_update_route' => route('contacts.update', ['contact' => ':contact']),
             'contact_destroy_route' => route('contacts.destroy', ['contact' => ':contact']),
             'organization_options_route' => route('organizations.index'),
         ]);

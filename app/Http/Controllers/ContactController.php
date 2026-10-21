@@ -89,7 +89,7 @@ class ContactController extends Controller
                 $name = $personName !== '' ? $personName : $organization;
                 $subtitle = $personName !== '' ? $organization : '';
 
-                return $contact->phones->map(function (ContactPhone $phone) use ($contact, $data, $name, $subtitle) {
+                return $contact->phones->map(function (ContactPhone $phone) use ($contact, $data, $name, $subtitle, $organization) {
                     $number = trim((string) $phone->phone_number);
                     $type = trim((string) $phone->label);
                     $displayName = $name !== '' ? $name : $number;
@@ -103,6 +103,11 @@ class ContactController extends Controller
                         ])),
                         'contact_uuid' => $contact->contact_uuid,
                         'visibility' => $contact->owner_user_uuid === null ? 'shared' : 'private',
+                        // The raw fields, so a row can be edited without another request.
+                        'first_name' => $contact->first_name,
+                        'last_name' => $contact->last_name,
+                        'organization_uuid' => $contact->organization_uuid,
+                        'organization_name' => $organization !== '' ? $organization : null,
                         'phone_uuid' => $phone->phone_uuid,
                         'phone_type' => $type,
                         'name' => $displayName,
@@ -328,19 +333,9 @@ class ContactController extends Controller
 
             DB::commit();
 
-            $contact->load('organization:organization_uuid,name');
-
             return response()->json([
                 'success' => true,
-                'contact' => [
-                    'contact_uuid' => $contact->contact_uuid,
-                    'name' => trim($contact->full_name) !== ''
-                        ? trim($contact->full_name)
-                        : ($contact->organization?->name ?? $data['phone_number']),
-                    'organization' => $contact->organization?->name,
-                    'phone_number' => $data['phone_number'],
-                    'phone_number_formatted' => $this->toDisplay($data['phone_number']),
-                ],
+                'contact' => $this->savedContact($contact, $data['phone_number']),
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -354,7 +349,97 @@ class ContactController extends Controller
         }
     }
 
+    /**
+     * Edit one phone book row: the contact's name, company and sharing, and the
+     * number on that row. The contact's other details are left as they are.
+     */
+    public function update(Request $request, $uuid)
+    {
+        $data = $request->validate([
+            'phone_uuid'   => 'required|uuid',
+            'is_shared'    => 'sometimes|boolean',
+            'phone_number' => 'required|string',
+            // A contact needs an identity: a person's name, or the company it belongs to.
+            'first_name'   => 'required_without_all:organization_uuid,organization_name|nullable|string',
+            'last_name'    => 'nullable|string',
+            'organization_uuid' => 'nullable|uuid',
+            'organization_name' => 'nullable|string|max:255',
+        ]);
+
+        $domainUuid = $this->currentDomainUuid();
+        $userUuid = $this->currentUserUuid();
+
+        // Resolve access before the exception handler so an inaccessible UUID is a 404.
+        $contact = Contact::visibleToUser($domainUuid, $userUuid)
+            ->where('contact_uuid', $uuid)
+            ->firstOrFail();
+        $phone = $contact->phones()->where('phone_uuid', $data['phone_uuid'])->firstOrFail();
+
+        $orgId = $data['organization_uuid'] ?? null;
+
+        if ($orgId && !$this->organizationBelongsToDomain($orgId, $domainUuid)) {
+            return response()->json([
+                'success' => false,
+                'errors' => ['organization_uuid' => [__('Company not found.')]],
+            ], 422);
+        }
+
+        $phoneNumber = $this->toE164($data['phone_number']);
+
+        try {
+            DB::transaction(function () use ($contact, $phone, $data, $orgId, $domainUuid, $userUuid, $phoneNumber) {
+                if (!$orgId && trim((string) ($data['organization_name'] ?? '')) !== '') {
+                    $orgId = $this->organizationByName($data['organization_name'], $domainUuid)
+                        ->organization_uuid;
+                }
+
+                $fields = [
+                    'first_name' => $data['first_name'] ?? null,
+                    'last_name' => $data['last_name'] ?? null,
+                    'organization_uuid' => $orgId,
+                ];
+
+                // Un-sharing makes the contact private to whoever saves it, which
+                // removes it from everyone else's phone book.
+                if (array_key_exists('is_shared', $data)) {
+                    $fields['owner_user_uuid'] = $data['is_shared'] ? null : $userUuid;
+                }
+
+                $contact->update($fields);
+
+                $phone->update(['phone_number' => $phoneNumber]);
+            });
+
+            return response()->json([
+                'success' => true,
+                'contact' => $this->savedContact($contact, $phoneNumber),
+            ]);
+        } catch (\Exception $e) {
+            logger('ContactController@update error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => [__('Failed to save contact')]]
+            ], 500);
+        }
+    }
+
     // ... private methods ...
+    private function savedContact(Contact $contact, string $phoneNumber): array
+    {
+        $contact->load('organization:organization_uuid,name');
+
+        return [
+            'contact_uuid' => $contact->contact_uuid,
+            'name' => trim($contact->full_name) !== ''
+                ? trim($contact->full_name)
+                : ($contact->organization?->name ?? $phoneNumber),
+            'organization' => $contact->organization?->name,
+            'phone_number' => $phoneNumber,
+            'phone_number_formatted' => $this->toDisplay($phoneNumber),
+        ];
+    }
+
     private function currentDomainUuid()
     { /* ... */
         return session('domain_uuid');

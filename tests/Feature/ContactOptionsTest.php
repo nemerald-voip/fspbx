@@ -702,6 +702,175 @@ class ContactOptionsTest extends TestCase
         $this->assertSame(1, $other->phones()->count());
     }
 
+    public function test_options_carry_the_fields_needed_to_edit_a_row(): void
+    {
+        $domain = (string) Str::uuid();
+        $organizationUuid = (string) Str::uuid();
+        DB::table('organizations')->insert([
+            'organization_uuid' => $organizationUuid, 'domain_uuid' => $domain, 'name' => 'Northwind Clinic',
+        ]);
+        $contact = $this->createContact($domain, 'Ada', 'Lovelace', $organizationUuid);
+        $this->createPhone($contact, '+14155550100', 'fax');
+        $this->setSession($domain, 'fax_send');
+
+        $option = (new ContactController())->options(Request::create('/', 'GET', ['channel' => 'fax']))
+            ->getData(true)['options'][0];
+
+        $this->assertSame('Ada', $option['first_name']);
+        $this->assertSame('Lovelace', $option['last_name']);
+        $this->assertSame($organizationUuid, $option['organization_uuid']);
+        $this->assertSame('Northwind Clinic', $option['organization_name']);
+        $this->assertSame($contact->phones()->first()->phone_uuid, $option['phone_uuid']);
+    }
+
+    public function test_editing_a_row_changes_its_name_company_and_number_only(): void
+    {
+        $domain = (string) Str::uuid();
+        $shared = $this->createContact($domain, 'Shared', 'Clinic');
+        $shared->update(['title' => 'Front desk', 'notes' => 'Call first']);
+        $this->createPhone($shared, '+14155550100', 'fax');
+        $this->createPhone($shared, '+14155550199', 'work');
+        $faxPhone = $shared->phones()->where('label', 'fax')->first();
+        $this->setSession($domain, 'fax_send');
+
+        $response = (new ContactController())->update(Request::create('/', 'PUT', [
+            'phone_uuid' => $faxPhone->phone_uuid, 'phone_number' => '(415) 555-0123',
+            'first_name' => 'Renamed', 'last_name' => null, 'organization_name' => 'Northwind Clinic',
+            // Without is_shared the sharing stays as it was, and an owner is never taken from input.
+            'owner_user_uuid' => auth()->id(),
+        ]), $shared->contact_uuid);
+
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame('Renamed', $response->getData(true)['contact']['name']);
+        $this->assertSame('(415) 555-0123', $response->getData(true)['contact']['phone_number_formatted']);
+
+        $shared->refresh();
+        $this->assertSame('Renamed', $shared->first_name);
+        $this->assertNull($shared->last_name);
+        $this->assertNull($shared->owner_user_uuid);
+        $this->assertSame('Front desk', $shared->title);
+        $this->assertSame('Call first', $shared->notes);
+        $this->assertSame('Northwind Clinic', $shared->organization->name);
+        $this->assertSame('+14155550123', $faxPhone->fresh()->phone_number);
+        $this->assertSame('fax', $faxPhone->fresh()->label);
+        $this->assertDatabaseHas('contact_phones', ['phone_number' => '+14155550199', 'label' => 'work']);
+        $this->assertSame(2, $shared->phones()->count());
+        $this->assertSame(1, Contact::count());
+    }
+
+    public function test_editing_a_row_can_share_and_unshare_the_contact(): void
+    {
+        $domain = (string) Str::uuid();
+        $alice = (string) Str::uuid();
+        $bob = (string) Str::uuid();
+        $contact = $this->createContact($domain, 'Ada', 'Lovelace', null, $alice);
+        $this->createPhone($contact, '+14155550100', 'fax');
+        $phoneUuid = $contact->phones()->first()->phone_uuid;
+        $edit = fn (bool $shared) => (new ContactController())->update(Request::create('/', 'PUT', [
+            'phone_uuid' => $phoneUuid, 'phone_number' => '+14155550100', 'first_name' => 'Ada',
+            'last_name' => 'Lovelace', 'is_shared' => $shared, 'owner_user_uuid' => $bob,
+        ]), $contact->contact_uuid);
+        $visibleTo = function (string $user) use ($domain) {
+            $this->setSession($domain, 'fax_send', $user);
+
+            return array_column((new ContactController())->options(
+                Request::create('/', 'GET', ['channel' => 'fax'])
+            )->getData(true)['options'], 'visibility');
+        };
+
+        $this->assertSame([], $visibleTo($bob));
+
+        $this->setSession($domain, 'fax_send', $alice);
+        $this->assertSame(200, $edit(true)->getStatusCode());
+        $this->assertNull($contact->fresh()->owner_user_uuid);
+        $this->assertSame(['shared'], $visibleTo($bob));
+
+        // Bob can edit a shared contact, so un-sharing makes it his and hides it from Alice.
+        $this->assertSame(200, $edit(false)->getStatusCode());
+        $this->assertSame($bob, $contact->fresh()->owner_user_uuid);
+        $this->assertSame(['private'], $visibleTo($bob));
+        $this->assertSame([], $visibleTo($alice));
+        $this->assertSame(1, Contact::count());
+
+        try {
+            (new ContactController())->update(Request::create('/', 'PUT', [
+                'phone_uuid' => $phoneUuid, 'phone_number' => '+14155550100', 'first_name' => 'Ada',
+                'is_shared' => 'everyone',
+            ]), $contact->contact_uuid);
+            $this->fail('An invalid sharing value must be rejected.');
+        } catch (\Illuminate\Validation\ValidationException $exception) {
+            $this->assertArrayHasKey('is_shared', $exception->errors());
+        }
+    }
+
+    public function test_editing_a_row_requires_a_name_or_company_from_this_account(): void
+    {
+        $domain = (string) Str::uuid();
+        $contact = $this->createContact($domain, 'Ada', 'Lovelace');
+        $this->createPhone($contact, '+14155550100', 'fax');
+        $phoneUuid = $contact->phones()->first()->phone_uuid;
+        $foreignOrganization = (string) Str::uuid();
+        DB::table('organizations')->insert([
+            'organization_uuid' => $foreignOrganization, 'domain_uuid' => (string) Str::uuid(), 'name' => 'Elsewhere',
+        ]);
+        $this->setSession($domain, 'fax_send');
+
+        try {
+            (new ContactController())->update(Request::create('/', 'PUT', [
+                'phone_uuid' => $phoneUuid, 'phone_number' => '+14155550100', 'first_name' => '',
+            ]), $contact->contact_uuid);
+            $this->fail('A contact without a name or company must be rejected.');
+        } catch (\Illuminate\Validation\ValidationException $exception) {
+            $this->assertArrayHasKey('first_name', $exception->errors());
+        }
+
+        $response = (new ContactController())->update(Request::create('/', 'PUT', [
+            'phone_uuid' => $phoneUuid, 'phone_number' => '+14155550100',
+            'first_name' => 'Ada', 'organization_uuid' => $foreignOrganization,
+        ]), $contact->contact_uuid);
+
+        $this->assertSame(422, $response->getStatusCode());
+        $this->assertArrayHasKey('organization_uuid', $response->getData(true)['errors']);
+        $this->assertNull($contact->fresh()->organization_uuid);
+        $this->assertSame('Lovelace', $contact->fresh()->last_name);
+    }
+
+    public function test_an_edit_cannot_target_another_users_contact_or_another_contacts_number(): void
+    {
+        $domain = (string) Str::uuid();
+        $alice = (string) Str::uuid();
+        $own = $this->createContact($domain, 'Alice', 'Clinic', null, $alice);
+        $private = $this->createContact($domain, 'Private', 'Clinic', null, (string) Str::uuid());
+        $foreign = $this->createContact((string) Str::uuid(), 'Foreign', 'Clinic');
+        $this->createPhone($own, '+14155550100', 'fax');
+        $this->createPhone($private, '+14155550101', 'fax');
+        $this->createPhone($foreign, '+14155550102', 'fax');
+        $this->setSession($domain, 'fax_send', $alice);
+
+        $attempts = [
+            [$private, $private->phones()->first()->phone_uuid, Contact::class],
+            [$foreign, $foreign->phones()->first()->phone_uuid, Contact::class],
+            // Their own contact, but a number that belongs to someone else's.
+            [$own, $private->phones()->first()->phone_uuid, \App\Models\ContactPhone::class],
+        ];
+
+        foreach ($attempts as [$contact, $phoneUuid, $model]) {
+            try {
+                (new ContactController())->update(Request::create('/', 'PUT', [
+                    'phone_uuid' => $phoneUuid, 'phone_number' => '+14155550199', 'first_name' => 'Attacker',
+                ]), $contact->contact_uuid);
+                $this->fail('An inaccessible contact or number must be treated as not found.');
+            } catch (ModelNotFoundException $exception) {
+                $this->assertSame($model, $exception->getModel());
+            }
+        }
+
+        $this->assertSame('Alice', $own->fresh()->first_name);
+        $this->assertSame('Private', $private->fresh()->first_name);
+        $this->assertSame('Foreign', $foreign->fresh()->first_name);
+        $this->assertDatabaseMissing('contact_phones', ['phone_number' => '+14155550199']);
+    }
+
     public function test_messages_directory_excludes_private_and_foreign_contacts_but_keeps_shared_companies(): void
     {
         $domain = (string) Str::uuid();
@@ -860,6 +1029,14 @@ class ContactOptionsTest extends TestCase
         $this->postJson('/api/contacts', [
             'contact_uuid' => $private->contact_uuid, 'phone_number' => '+14155550100', 'first_name' => 'Attacker',
         ])->assertNotFound();
+        $this->putJson('/api/contacts/' . $private->contact_uuid, [
+            'phone_uuid' => $private->phones()->first()->phone_uuid, 'phone_number' => '+14155550100',
+            'first_name' => 'Attacker',
+        ])->assertNotFound();
+        $this->putJson('/api/contacts/' . $shared->contact_uuid, [
+            'phone_uuid' => $shared->phones()->first()->phone_uuid, 'phone_number' => '+14155550101',
+            'first_name' => 'Edited',
+        ])->assertOk()->assertJsonPath('contact.name', 'Edited');
         $this->deleteJson('/api/contacts/' . $private->contact_uuid)->assertNotFound();
 
         $response = $this->postJson('/api/contacts', [

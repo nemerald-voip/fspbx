@@ -115,6 +115,13 @@
                                 </span>
                             </button>
 
+                            <button v-if="editable && contact.contact_uuid && contact.phone_uuid" type="button"
+                                class="flex-none rounded-lg p-2 text-gray-400 transition hover:bg-indigo-50 hover:text-indigo-600"
+                                @click="emit('edit', contact)">
+                                <span class="sr-only">{{ $t('Edit contact') }}</span>
+                                <PencilSquareIcon class="h-4 w-4" aria-hidden="true" />
+                            </button>
+
                             <button v-if="destroyRoute && contact.contact_uuid" type="button"
                                 class="flex-none rounded-lg p-2 text-gray-400 transition hover:bg-red-50 hover:text-red-600"
                                 @click="confirmingKey = rowKey(contact)">
@@ -160,17 +167,19 @@
 import { nextTick, ref, watch } from 'vue'
 import axios from 'axios'
 import { trans } from '@i18n'
-import { BookOpenIcon, InformationCircleIcon, MagnifyingGlassIcon, TrashIcon, UserPlusIcon, XMarkIcon } from '@heroicons/vue/24/outline'
+import { BookOpenIcon, InformationCircleIcon, MagnifyingGlassIcon, PencilSquareIcon, TrashIcon, UserPlusIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import FormChildModal from '../FormChildModal.vue'
 import Loading from '../general/Loading.vue'
 
-const emit = defineEmits(['close', 'select', 'create', 'deleted', 'error'])
+const emit = defineEmits(['close', 'select', 'create', 'edit', 'deleted', 'error'])
 
 const props = defineProps({
     show: Boolean,
     route: String,
     // Contains a ":contact" placeholder, as built by route('contacts.destroy').
     destroyRoute: String,
+    // Shows an edit button per row; the parent handles the 'edit' event.
+    editable: Boolean,
     channel: {
         type: String,
         default: 'fax',
