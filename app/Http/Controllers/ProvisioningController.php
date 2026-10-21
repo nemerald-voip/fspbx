@@ -851,7 +851,7 @@ class ProvisioningController extends Controller
             $extension = $extensions->get(trim((string) $line->auth_id));
 
             if ($extension) {
-                $line->display_name = fspbx_format_line_display_name(
+                $line->display_name = fspbx_format_extension_label(
                     is_string($format) ? $format : null,
                     $extension->only(['extension', 'effective_caller_id_name', 'directory_first_name', 'directory_last_name'])
                 );
@@ -1743,7 +1743,8 @@ class ProvisioningController extends Controller
             unset($k);
         }
 
-        // Fill labels from Extensions.effective_caller_id_name (domain-scoped)
+        // Fill blank labels from the target extension (domain-scoped), formatted
+        // with blf_label_format. A label typed on the key always wins.
         $blfTargets = collect($keys)
             ->filter(fn($k) => (empty($k['label']) || $k['label'] === null) && !empty($k['value']))
             ->map(fn($k) => (string) ($k['value'] ?? ''))
@@ -1752,12 +1753,18 @@ class ProvisioningController extends Controller
             ->values();
 
         if ($blfTargets->isNotEmpty()) {
-            $extLabels = Extensions::query()
+            $labelFormat = $settings['blf_label_format'] ?? null;
+            $extLabels = Extensions::without('advSettings')
                 ->where('domain_uuid', $device->domain_uuid)
                 ->whereIn('extension', $blfTargets->all())
-                ->get(['extension', 'effective_caller_id_name'])
-                ->keyBy('extension')
-                ->map(fn($r) => $r->effective_caller_id_name)
+                ->get(['extension', 'effective_caller_id_name', 'directory_first_name', 'directory_last_name'])
+                ->mapWithKeys(fn ($r) => [
+                    (string) $r->extension => fspbx_format_extension_label(
+                        is_string($labelFormat) ? $labelFormat : null,
+                        $r->only(['extension', 'effective_caller_id_name', 'directory_first_name', 'directory_last_name']),
+                        '{name}'
+                    ),
+                ])
                 ->toArray();
 
             $labelsFilled = 0;

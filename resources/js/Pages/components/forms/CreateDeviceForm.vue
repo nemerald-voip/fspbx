@@ -548,7 +548,7 @@ import { XMarkIcon } from "@heroicons/vue/24/solid";
 import { Cog8ToothIcon } from "@heroicons/vue/24/outline";
 import FormChildModal from "../FormChildModal.vue"
 import { trans } from "@i18n";
-import { effectiveLineDisplayName } from "../../../composables/lineDisplayName.js";
+import { automaticKeyLabel, effectiveLineDisplayName } from "../../../composables/extensionLabel.js";
 
 
 const props = defineProps({
@@ -749,7 +749,7 @@ const updateLabel = (newValue, oldValue, el$, index) => {
         const selected = (keyValueOptionsByIndex[index] ?? [])
             .find(o => String(o.extension) === String(newValue))
 
-        label = nameOnlyFromOption(selected)
+        label = automaticKeyLabel(newValue, props.options) ?? nameOnlyFromOption(selected)
 
         // Clear the actual input value
         keyLabelEl.update(null)

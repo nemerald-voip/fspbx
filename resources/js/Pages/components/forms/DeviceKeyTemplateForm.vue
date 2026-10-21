@@ -187,6 +187,7 @@
 
 <script setup>
 import { trans } from '@i18n';
+import { automaticKeyLabel } from "../../../composables/extensionLabel.js";
 import { computed, ref } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from "@headlessui/vue";
 import { XMarkIcon } from "@heroicons/vue/24/solid";
@@ -252,11 +253,7 @@ const normalizeKeysForForm = (keys = []) => {
         let label = null;
 
         if (keyType === "blf" || keyType === "speed_dial") {
-            const match = props.options?.extensions?.find((extension) =>
-                String(extension.value ?? extension.extension) === String(keyValue)
-            );
-
-            label = match ? nameOnlyFromOption(match) : keyValue;
+            label = automaticKeyLabel(keyValue, props.options) ?? keyValue;
         }
 
         const row = {
@@ -366,7 +363,7 @@ const updateLabel = (newValue, oldValue, el$, index, listName) => {
     if (keyType === "blf" || keyType === "speed_dial") {
         const selected = (keyValueOptionsByIndex[cacheKey] ?? [])
             .find((option) => String(option.extension) === String(newValue));
-        label = nameOnlyFromOption(selected);
+        label = automaticKeyLabel(newValue, props.options) ?? nameOnlyFromOption(selected);
     }
 
     row._generated_label.update(label);

@@ -626,21 +626,21 @@ class DeviceController extends Controller
                 $extensionOptions[] = [
                     'value' => $extension->extension,
                     'name' => $extension->name_formatted,
-                    // Used to preview automatic line display names.
+                    // Used for automatic line display name and key label placeholders.
                     'caller_id_name' => $extension->effective_caller_id_name,
                     'first_name' => $extension->directory_first_name,
                     'last_name' => $extension->directory_last_name,
                 ];
             }
 
-            // Same precedence as provisioning: device setting, then account, then default.
-            $lineDisplayNameFormat = $itemUuid
+            // Label formats for placeholders. Same precedence as provisioning:
+            // device setting, then account, then default.
+            $labelFormat = fn (string $subcategory) => ($itemUuid
                 ? \App\Models\DeviceSettings::where('device_uuid', $itemUuid)
-                    ->where('device_setting_subcategory', 'line_display_name_format')
+                    ->where('device_setting_subcategory', $subcategory)
                     ->where('device_setting_enabled', 'true')
                     ->value('device_setting_value')
-                : null;
-            $lineDisplayNameFormat ??= get_domain_setting('line_display_name_format', $domain_uuid);
+                : null) ?? get_domain_setting($subcategory, $domain_uuid);
 
             $domainOptions = [];
             // Loop through each domain and create an option
@@ -755,7 +755,8 @@ class DeviceController extends Controller
                 'line_key_types' => $lineKeyTypes,
                 'sip_transport_types' => $sipTransportTypes,
                 'default_line_options' => $defaultLineOptions,
-                'line_display_name_format' => $lineDisplayNameFormat,
+                'line_display_name_format' => $labelFormat('line_display_name_format'),
+                'blf_label_format' => $labelFormat('blf_label_format'),
                 'cloud_providers' => $cloudProviders,
                 'routes' => $routes,
                 'permissions' => $this->getUserPermissions(),

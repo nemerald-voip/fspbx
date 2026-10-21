@@ -1,7 +1,8 @@
-// Mirrors fspbx_format_line_display_name() in app/helpers.php, which
-// provisioning applies to device lines with a blank Display Name.
-// `extension` is a device form extension option.
-export function formatLineDisplayName(format, extension) {
+// Mirrors fspbx_format_extension_label() in app/helpers.php, which
+// provisioning applies to device lines with a blank Display Name
+// (line_display_name_format) and to BLF/speed dial keys with a blank Label
+// (blf_label_format). `extension` is an editor extension option.
+export function formatExtensionLabel(format, extension, fallbackFormat = '{extension}') {
     if (!extension) {
         return '';
     }
@@ -11,7 +12,7 @@ export function formatLineDisplayName(format, extension) {
     const last = String(extension.last_name ?? '').trim();
     const name = String(extension.caller_id_name ?? '').trim() || `${first} ${last}`.trim();
 
-    const pattern = String(format ?? '').trim() || '{extension}';
+    const pattern = String(format ?? '').trim() || fallbackFormat;
     const names = { '{name}': name, '{first_name}': first, '{last_name}': last };
     const usedNames = Object.keys(names).filter((token) => pattern.includes(token));
     if (usedNames.length && usedNames.every((token) => names[token] === '')) {
@@ -26,6 +27,10 @@ export function formatLineDisplayName(format, extension) {
     return label || number;
 }
 
+function findExtension(value, options) {
+    return (options?.extensions ?? []).find((item) => String(item.value) === String(value ?? ''));
+}
+
 // The name a device line will show: its typed Display Name, or the automatic one.
 export function effectiveLineDisplayName(displayName, authId, options) {
     const typed = String(displayName ?? '').trim();
@@ -33,7 +38,13 @@ export function effectiveLineDisplayName(displayName, authId, options) {
         return typed;
     }
 
-    const extension = (options?.extensions ?? []).find((item) => String(item.value) === String(authId ?? ''));
+    return formatExtensionLabel(options?.line_display_name_format, findExtension(authId, options));
+}
 
-    return formatLineDisplayName(options?.line_display_name_format, extension);
+// The automatic label for a BLF/speed dial key targeting an extension, or null
+// when the value is not an extension in this account.
+export function automaticKeyLabel(value, options) {
+    const extension = findExtension(value, options);
+
+    return extension ? formatExtensionLabel(options?.blf_label_format, extension, '{name}') : null;
 }

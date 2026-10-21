@@ -2033,7 +2033,8 @@ if (!function_exists('buildDestinationAction')) {
             string $device_uuid,
             string $vendor,
             array $device_lines = [],
-            string $domain_uuid = ''
+            string $domain_uuid = '',
+            $blf_label_format = null
         ): void {
             if ($device_keys === null) {
                 $device_keys = [];
@@ -2057,7 +2058,8 @@ if (!function_exists('buildDestinationAction')) {
                         $device_uuid,
                         $vendor,
                         $device_lines,
-                        $domain_uuid
+                        $domain_uuid,
+                        $blf_label_format
                     );
 
                     // The old provisioning class applies v_device_keys before it
@@ -2068,7 +2070,8 @@ if (!function_exists('buildDestinationAction')) {
                         $device_uuid,
                         $vendor,
                         $domain_uuid,
-                        $device_lines
+                        $device_lines,
+                        $blf_label_format
                     );
                 }
             }
@@ -2079,7 +2082,8 @@ if (!function_exists('buildDestinationAction')) {
                 $device_uuid,
                 $vendor,
                 $device_lines,
-                $domain_uuid
+                $domain_uuid,
+                $blf_label_format
             );
         }
     }
@@ -2091,7 +2095,8 @@ if (!function_exists('buildDestinationAction')) {
             string $device_uuid,
             string $vendor,
             array $device_lines = [],
-            string $domain_uuid = ''
+            string $domain_uuid = '',
+            $blf_label_format = null
         ): void {
             if ($device_keys === null) {
                 $device_keys = [];
@@ -2101,7 +2106,7 @@ if (!function_exists('buildDestinationAction')) {
                 $device_lines = [];
             }
 
-            $blfLabelMap = fspbx_prefetch_extension_labels($domain_uuid, $new_keys_rows);
+            $blfLabelMap = fspbx_prefetch_extension_labels($domain_uuid, $new_keys_rows, $blf_label_format);
 
             $polycomLineCounts = [];
             $polycomFirstIndex = [];
@@ -2286,7 +2291,8 @@ if (!function_exists('buildDestinationAction')) {
             string $device_uuid,
             string $vendor,
             string $domain_uuid,
-            array $device_lines = []
+            array $device_lines = [],
+            $blf_label_format = null
         ): void {
             $sql = "select * from v_device_keys ";
             $sql .= "where device_uuid = :device_uuid ";
@@ -2324,7 +2330,7 @@ if (!function_exists('buildDestinationAction')) {
                 return;
             }
 
-            $blfLabelMap = fspbx_prefetch_blf_labels($domain_uuid, $keys);
+            $blfLabelMap = fspbx_prefetch_blf_labels($domain_uuid, $keys, $blf_label_format);
 
             foreach ($keys as $row) {
                 $id = $row['device_key_id'];
@@ -2353,8 +2359,26 @@ if (!function_exists('buildDestinationAction')) {
     }
 
 
+    if (!function_exists('fspbx_blf_label_format')) {
+        /**
+         * BLF/speed dial label format on the old provision.php path. That class
+         * passes its merged provision settings (default, account, device);
+         * without them, the session's default/account value is used.
+         */
+        function fspbx_blf_label_format($format = null): string
+        {
+            if (is_string($format) && trim($format) !== '') {
+                return trim($format);
+            }
+
+            $session = $_SESSION['provision']['blf_label_format']['text'] ?? null;
+
+            return is_string($session) && trim($session) !== '' ? trim($session) : '{name}';
+        }
+    }
+
     if (!function_exists('fspbx_prefetch_extension_labels')) {
-        function fspbx_prefetch_extension_labels(string $domain_uuid, array $new_keys_rows): array
+        function fspbx_prefetch_extension_labels(string $domain_uuid, array $new_keys_rows, $format = null): array
         {
             $exts = [];
 
@@ -2381,7 +2405,7 @@ if (!function_exists('buildDestinationAction')) {
                 $params[$ph] = $ext;
             }
 
-            $sql = "select extension, effective_caller_id_name
+            $sql = "select extension, effective_caller_id_name, directory_first_name, directory_last_name
                 from v_extensions
                 where domain_uuid = :domain_uuid
                   and extension in (" . implode(',', $placeholders) . ")";
@@ -2389,10 +2413,11 @@ if (!function_exists('buildDestinationAction')) {
             $database = new database;
             $rows = $database->select($sql, $params, 'all');
 
+            $format = fspbx_blf_label_format($format);
             $map = [];
             if (is_array($rows)) {
                 foreach ($rows as $r) {
-                    $map[(string)$r['extension']] = (string)($r['effective_caller_id_name'] ?? '');
+                    $map[(string)$r['extension']] = fspbx_format_extension_label($format, $r, '{name}');
                 }
             }
 
@@ -2401,7 +2426,7 @@ if (!function_exists('buildDestinationAction')) {
     }
 
     if (!function_exists('fspbx_prefetch_blf_labels')) {
-        function fspbx_prefetch_blf_labels(string $domain_uuid, array $keys): array
+        function fspbx_prefetch_blf_labels(string $domain_uuid, array $keys, $format = null): array
         {
             // Collect unique extensions that need labels
             $need = [];
@@ -2428,7 +2453,7 @@ if (!function_exists('buildDestinationAction')) {
                 $params[$k] = $ext;
             }
 
-            $sql = "select extension, effective_caller_id_name
+            $sql = "select extension, effective_caller_id_name, directory_first_name, directory_last_name
             from v_extensions
             where domain_uuid = :domain_uuid
               and extension in (" . implode(',', $ph) . ")";
@@ -2436,10 +2461,11 @@ if (!function_exists('buildDestinationAction')) {
             $database = new database;
             $rows = $database->select($sql, $params, 'all');
 
+            $format = fspbx_blf_label_format($format);
             $map = [];
             if (is_array($rows)) {
                 foreach ($rows as $r) {
-                    $map[(string)$r['extension']] = (string)($r['effective_caller_id_name'] ?? '');
+                    $map[(string)$r['extension']] = fspbx_format_extension_label($format, $r, '{name}');
                 }
             }
 
@@ -2466,18 +2492,20 @@ if (!function_exists('buildDestinationAction')) {
         }
     }
 
-    if (!function_exists('fspbx_format_line_display_name')) {
+    if (!function_exists('fspbx_format_extension_label')) {
         /**
-         * Format an automatic line display name. Tokens: {extension}, {name},
-         * {first_name}, {last_name}. {name} is the effective caller ID name,
-         * falling back to the directory first/last name. When every name token
-         * in the format is empty, the extension number is used alone.
+         * Format an automatic label for an extension: device line display names
+         * (line_display_name_format) and BLF/speed dial key labels
+         * (blf_label_format). Tokens: {extension}, {name}, {first_name},
+         * {last_name}. {name} is the effective caller ID name, falling back to
+         * the directory first/last name. When every name token in the format is
+         * empty, the extension number is used alone. A blank format uses $default.
          *
          * Shared by native provisioning and the old provision.php path, so it
-         * must not depend on Laravel. Mirrored for form previews in
-         * resources/js/composables/lineDisplayName.js.
+         * must not depend on Laravel. Mirrored for form placeholders in
+         * resources/js/composables/extensionLabel.js.
          */
-        function fspbx_format_line_display_name(?string $format, array $extension): string
+        function fspbx_format_extension_label(?string $format, array $extension, string $default = '{extension}'): string
         {
             $number = trim((string)($extension['extension'] ?? ''));
             $first  = trim((string)($extension['directory_first_name'] ?? ''));
@@ -2489,7 +2517,7 @@ if (!function_exists('buildDestinationAction')) {
 
             $format = trim((string)$format);
             if ($format === '') {
-                $format = '{extension}';
+                $format = $default;
             }
 
             $names = ['{name}' => $name, '{first_name}' => $first, '{last_name}' => $last];
@@ -2555,7 +2583,7 @@ if (!function_exists('buildDestinationAction')) {
 
                 $extension = $extensions[trim((string)$line['auth_id'])] ?? null;
                 if ($extension !== null) {
-                    $device_lines[$key]['display_name'] = fspbx_format_line_display_name($format, $extension);
+                    $device_lines[$key]['display_name'] = fspbx_format_extension_label($format, $extension);
                 }
             }
 

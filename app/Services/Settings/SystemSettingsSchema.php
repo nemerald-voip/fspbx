@@ -73,6 +73,17 @@ class SystemSettingsSchema extends SettingsSchema
                 'placeholder' => '{extension}',
                 'description' => __('What phone lines show when their Display Name is left blank. Use {extension}, {name}, {first_name}, and {last_name}. A name typed on a line always wins.'),
             ],
+            [
+                'key' => 'blf_label_format',
+                'category' => 'provision',
+                'subcategory' => 'blf_label_format',
+                'name' => 'text',
+                'type' => 'text',
+                'label' => __('BLF Label'),
+                'group' => __('Devices'),
+                'placeholder' => '{name}',
+                'description' => __('What BLF and speed dial keys show when their Label is left blank. Use {extension}, {name}, {first_name}, and {last_name}. A label typed on a key always wins.'),
+            ],
         ];
     }
 

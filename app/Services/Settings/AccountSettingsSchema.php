@@ -22,12 +22,8 @@ class AccountSettingsSchema extends SettingsSchema
 {
     public function fields(): array
     {
-        $lineDisplayNameDefault = (string) (DefaultSettings::query()
-            ->where('default_setting_category', 'provision')
-            ->where('default_setting_subcategory', 'line_display_name_format')
-            ->where('default_setting_name', 'text')
-            ->where('default_setting_enabled', true)
-            ->value('default_setting_value') ?: '{extension}');
+        $lineDisplayNameDefault = $this->provisionDefault('line_display_name_format', '{extension}');
+        $blfLabelDefault = $this->provisionDefault('blf_label_format', '{name}');
 
         return [
             [
@@ -85,7 +81,33 @@ class AccountSettingsSchema extends SettingsSchema
                 'info' => __('Leave empty to inherit the system default.'),
                 'description' => __('What phone lines show when their Display Name is left blank. Use {extension}, {name}, {first_name}, and {last_name}. A name typed on a line always wins.'),
             ],
+            [
+                'key' => 'blf_label_format',
+                'category' => 'provision',
+                'subcategory' => 'blf_label_format',
+                'name' => 'text',
+                'type' => 'text',
+                'label' => __('BLF Label'),
+                'group' => __('Devices'),
+                'placeholder' => __('Use system default (:value)', ['value' => $blfLabelDefault]),
+                'info' => __('Leave empty to inherit the system default.'),
+                'description' => __('What BLF and speed dial keys show when their Label is left blank. Use {extension}, {name}, {first_name}, and {last_name}. A label typed on a key always wins.'),
+            ],
         ];
+    }
+
+    /**
+     * The global provisioning default an empty account field inherits, for
+     * its placeholder.
+     */
+    private function provisionDefault(string $subcategory, string $fallback): string
+    {
+        return (string) (DefaultSettings::query()
+            ->where('default_setting_category', 'provision')
+            ->where('default_setting_subcategory', $subcategory)
+            ->where('default_setting_name', 'text')
+            ->where('default_setting_enabled', true)
+            ->value('default_setting_value') ?: $fallback);
     }
 
     /**

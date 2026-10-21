@@ -1388,7 +1388,7 @@ import Badge from "@generalComponents/Badge.vue";
 import { XCircleIcon } from '@heroicons/vue/20/solid'
 import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
 import { trans } from '@i18n';
-import { effectiveLineDisplayName } from "../../../composables/lineDisplayName.js";
+import { automaticKeyLabel, effectiveLineDisplayName } from "../../../composables/extensionLabel.js";
 
 
 const props = defineProps({
@@ -1693,7 +1693,7 @@ const updateLabel = (newValue, oldValue, el$, index, listName = 'device_keys') =
         const selected = (keyValueOptionsByIndex[cacheKey] ?? [])
             .find(o => String(o.extension) === String(newValue))
 
-        label = nameOnlyFromOption(selected)
+        label = automaticKeyLabel(newValue, props.options) ?? nameOnlyFromOption(selected)
 
         keyLabelEl.update(null)
         generatedLabelEl.update(label)
@@ -1829,11 +1829,7 @@ const normalizeDeviceKeysForForm = (keys = []) => {
         let label = null
 
         if (key_type === 'blf' || key_type === 'speed_dial') {
-            const match = props.options.extensions?.find(ext =>
-                String(ext.value ?? ext.extension) === String(key_value)
-            )
-
-            label = match ? nameOnlyFromOption(match) : key_value
+            label = automaticKeyLabel(key_value, props.options) ?? key_value
         }
 
         const row = {
