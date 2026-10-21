@@ -23,6 +23,7 @@ use App\Http\Controllers\CallWebhookController;
 use App\Http\Controllers\CallFlowController;
 use App\Http\Controllers\CallTranscriptionController;
 use App\Http\Controllers\CdrsController;
+use App\Http\Controllers\HomerApiController;
 use App\Http\Controllers\CharPmsWebhookController;
 use App\Http\Controllers\ConferenceCenterController;
 use App\Http\Controllers\ConferenceController;
@@ -125,6 +126,9 @@ Route::post('/ai-tools/retell/send-email', [AiToolController::class, 'sendEmail'
     ->name('ai-tools.retell.send-email');
 
 Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () {
+    Route::put('/system-settings/homer-api', [HomerApiController::class, 'update'])->name('homer-api.update');
+    Route::post('/system-settings/homer-api/test', [HomerApiController::class, 'test'])->middleware('throttle:6,1')->name('homer-api.test');
+    Route::post('/cdrs/sip-trace', [HomerApiController::class, 'trace'])->middleware('throttle:10,1')->name('cdrs.sip-trace');
     Route::get('/ai-agents/data', [AiAgentController::class, 'data'])->name('ai-agents.data');
     Route::post('/ai-agents/item-options', [AiAgentController::class, 'itemOptions'])->name('ai-agents.item-options');
     Route::get('/ai-agents/integration', [AiProviderIntegrationController::class, 'show'])->name('ai-agents.integration.show');

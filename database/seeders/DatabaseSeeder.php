@@ -160,6 +160,8 @@ class DatabaseSeeder extends Seeder
             ['application_name' => 'User Manager', 'permission_name' => 'api_key_update'],
             ['application_name' => 'User Manager', 'permission_name' => 'api_key_delete'],
             ['application_name' => 'System Settings', 'permission_name' => 'scheduled_jobs_manage'],
+            ['application_name' => 'System Settings', 'permission_name' => 'homer_api_manage'],
+            ['application_name' => 'XML CDR', 'permission_name' => 'xml_cdr_pcap'],
             ['application_name' => 'Number Translations', 'permission_name' => 'number_translation_view'],
             ['application_name' => 'Number Translations', 'permission_name' => 'number_translation_add'],
             ['application_name' => 'Number Translations', 'permission_name' => 'number_translation_edit'],
@@ -288,6 +290,8 @@ class DatabaseSeeder extends Seeder
     {
         $permissionsByGroup = [
             'superadmin' => [
+                'homer_api_manage',
+                'xml_cdr_pcap',
                 'messages_delete',
                 'scheduled_jobs_manage',
                 'number_translation_view',
