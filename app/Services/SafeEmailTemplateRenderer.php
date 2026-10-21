@@ -58,7 +58,7 @@ class SafeEmailTemplateRenderer
         $rendered = $this->renderString($this->renderBlade($subject, $variables), $variables, false);
 
         // The subject is a plain-text email header, but Blade's {{ }} echo
-        // HTML-escapes its output (e.g. "<6467052267>" becomes "&lt;...&gt;").
+        // HTML-escapes its output (e.g. "<3055552267>" becomes "&lt;...&gt;").
         // Decode those entities so the subject reads as plain text.
         $rendered = html_entity_decode($rendered, ENT_QUOTES | ENT_HTML5);
 

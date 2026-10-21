@@ -114,7 +114,113 @@ install_esl_php84_via_installer() {
     exit 1
   fi
 }
+
+upgrade_php84_packages() {
+  # Patch the existing installation without running the fresh-install setup.
+  # CVE-2026-109618 and CVE-2026-109619 are fixed in PHP 8.4.27.
+  local minimum_version="8.4.27"
+  local ID="" VERSION_ID="" package status version candidate package_rows
+  local cli_version fpm_version
+  local -a packages=()
+  local -a apt_options=(
+    -o DPkg::Lock::Timeout=60
+    -o Acquire::Retries=2
+    -o Acquire::http::Timeout=30
+    -o Acquire::https::Timeout=30
+    -o Dpkg::Options::=--force-confdef
+    -o Dpkg::Options::=--force-confold
+  )
+
+  . /etc/os-release
+  case "${ID}:${VERSION_ID}" in
+    debian:11|debian:12|debian:13) ;;
+    *)
+      print_error "PHP package upgrade supports Debian 11, 12, and 13. Check PHP security updates manually."
+      return 1
+      ;;
+  esac
+
+  export LC_ALL=C DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=l
+
+  # Use exact installed package names, including extensions with their own
+  # version numbering. Do not install another PHP branch or change repositories.
+  package_rows="$(dpkg-query -W -f='${db:Status-Status}\t${binary:Package}\t${Version}\n' 'php8.4*' 2>/dev/null || true)"
+  while IFS=$'\t' read -r status package version; do
+    if [[ "$status" == installed ]]; then
+      packages+=("$package")
+    fi
+  done <<< "$package_rows"
+
+  for package in php8.4-cli php8.4-fpm php8.4-common; do
+    status="$(dpkg-query -W -f='${db:Status-Status}' "$package" 2>/dev/null || true)"
+    if [[ "$status" != installed ]]; then
+      print_error "${package} is not installed. PHP security patching requires an existing PHP 8.4 installation."
+      return 1
+    fi
+  done
+
+  print_success "Refreshing package lists for the Debian ${VERSION_ID} PHP 8.4 update..."
+  # A failed unrelated repository must not prevent installing a patched PHP
+  # candidate. Keep APT authentication enabled and verify the installed version.
+  if ! apt-get "${apt_options[@]}" -o APT::Update::Error-Mode=any update; then
+    print_warn "Some package lists could not be refreshed. Checking available PHP packages; APT signature verification remains enabled."
+  fi
+
+  for package in php8.4-cli php8.4-fpm php8.4-common; do
+    candidate="$(apt-cache policy "$package" | awk '/Candidate:/ {print $2; exit}')"
+    if [[ -z "$candidate" || "$candidate" == '(none)' ]] ||
+        ! dpkg --compare-versions "${candidate#*:}" ge "$minimum_version"; then
+      print_error "${package}: candidate ${candidate:-unavailable} does not provide PHP ${minimum_version}. Check this server's PHP repository."
+      return 1
+    fi
+  done
+
+  print_success "Upgrading installed PHP 8.4 packages (configuration files are preserved)..."
+  apt-get "${apt_options[@]}" install -y --only-upgrade --no-install-recommends --no-remove "${packages[@]}"
+
+  for package in php8.4-cli php8.4-fpm php8.4-common; do
+    version="$(dpkg-query -W -f='${Version}' "$package")"
+    if ! dpkg --compare-versions "${version#*:}" ge "$minimum_version"; then
+      print_error "${package} is still ${version}; PHP ${minimum_version} or newer is required."
+      return 1
+    fi
+  done
+
+  # Check the binaries launched after installation, not the PHP process that
+  # started app:update (which continues using its original executable).
+  cli_version="$(php8.4 -r 'echo PHP_VERSION;')"
+  fpm_version="$(php-fpm8.4 -v | awk '/^PHP / {print $2; exit}')"
+  if ! dpkg --compare-versions "$cli_version" ge "$minimum_version" ||
+      ! dpkg --compare-versions "$fpm_version" ge "$minimum_version"; then
+    print_error "The PHP CLI/FPM binaries are not both running version ${minimum_version} or newer."
+    return 1
+  fi
+
+  php-fpm8.4 -t
+  print_success "Restarting php8.4-fpm to load the security update..."
+  if has_cmd systemctl; then
+    systemctl restart php8.4-fpm
+    systemctl is-active --quiet php8.4-fpm
+  else
+    service php8.4-fpm restart
+    service php8.4-fpm status
+  fi
+
+  print_success "PHP security update verified: CLI ${cli_version}, FPM ${fpm_version}."
+  print_warn "Long-running PHP workers must also restart. app:update handles the standard FS PBX workers."
+}
+
 # ---------------- MAIN ----------------
+if [[ $# -gt 0 ]]; then
+  if [[ $# -eq 1 && "$1" == --upgrade-only ]]; then
+    require_root
+    upgrade_php84_packages
+    exit 0
+  fi
+  print_error "Usage: bash $0 [--upgrade-only]"
+  exit 1
+fi
+
 require_root
 export DEBIAN_FRONTEND=noninteractive
 
