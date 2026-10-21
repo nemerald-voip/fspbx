@@ -7,6 +7,7 @@ use App\Services\EmailTemplateService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Address;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Mail\Mailables\Headers;
@@ -83,6 +84,25 @@ abstract class BaseMailable extends Mailable
             from: new Address($fromEmail, $fromName),
             subject: $this->attributes['email_subject'] ?? '',
         );
+    }
+
+    /**
+     * Keep file references for resends without persisting attachment contents.
+     *
+     * @param array<int, array{path: string, name: string, mime: string, disk?: string}> $references
+     * @return array<int, Attachment>
+     */
+    protected function attachmentsFromReferences(array $references): array
+    {
+        $this->attributes['attachments'] = $references;
+
+        return array_map(function (array $reference): Attachment {
+            $attachment = isset($reference['disk'])
+                ? Attachment::fromStorageDisk($reference['disk'], $reference['path'])
+                : Attachment::fromPath($reference['path']);
+
+            return $attachment->as($reference['name'])->withMime($reference['mime']);
+        }, $references);
     }
 
     protected function useEmailTemplate(string $category, string $subcategory): void

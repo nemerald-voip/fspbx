@@ -4,7 +4,6 @@ namespace App\Mail;
 
 use App\Models\DomainSettings;
 use App\Models\DefaultSettings;
-use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Support\Facades\Storage;
 
@@ -103,14 +102,15 @@ class VoicemailNotification extends BaseMailable
                 $extension = pathinfo($path, PATHINFO_EXTENSION);
                 $friendlyFilename = 'voicemail.' . $extension;
 
-                return [
-                    Attachment::fromStorageDisk($disk, $path)
-                        ->as($friendlyFilename)
-                        ->withMime('audio/' . ($extension === 'mp3' ? 'mpeg' : 'wav')),
-                ];
+                return $this->attachmentsFromReferences([[
+                    'disk' => $disk,
+                    'path' => $path,
+                    'name' => $friendlyFilename,
+                    'mime' => 'audio/' . ($extension === 'mp3' ? 'mpeg' : 'wav'),
+                ]]);
             }
         }
 
-        return [];
+        return $this->attachmentsFromReferences([]);
     }
 }

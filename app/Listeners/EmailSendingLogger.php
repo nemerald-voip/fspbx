@@ -53,7 +53,10 @@ class EmailSendingLogger
                     'status'      => 'sending',
                     'provider'    => $this->likelyUsesPostmark() ? 'postmark' : null,
                     'provider_message_stream' => config('mail.mailers.postmark.message_stream_id'),
-                    // 'attachments' => $attributes['attachments'] ?? null,
+                    // Resends keep their existing references, including missing files.
+                    ...(array_key_exists('attachments', $attributes) ? [
+                        'attachments' => $attributes['attachments'],
+                    ] : []),
                 ]
             );
         } catch (\Throwable $e) {

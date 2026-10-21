@@ -136,6 +136,18 @@ class SafeEmailTemplateRendererTest extends TestCase
         $this->assertSame('<ul><li>One</li><li>&lt;Two&gt;</li></ul>', $rendered);
     }
 
+    public function test_plain_text_bodies_are_not_html_escaped(): void
+    {
+        $renderer = app(SafeEmailTemplateRenderer::class);
+
+        $rendered = $renderer->renderText(
+            "Preview: {{ \$message_text }}\nFrom: {{ \$caller_id_name }}",
+            ['message_text' => "Let's see if A & B \"work\"", 'caller_id_name' => "O'Brien <101>"]
+        );
+
+        $this->assertSame("Preview: Let's see if A & B \"work\"\nFrom: O'Brien <101>", $rendered);
+    }
+
     public function test_inbound_message_template_keeps_editable_image_and_attachment_loops(): void
     {
         $definition = app(EmailTemplateSourceService::class)

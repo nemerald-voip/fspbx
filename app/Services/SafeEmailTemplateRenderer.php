@@ -43,7 +43,12 @@ class SafeEmailTemplateRenderer
 
         $this->assertSafe($text);
 
-        return $this->renderString($this->renderBlade($text, $variables), $variables, false);
+        // The text part is plain text, but Blade's {{ }} echo HTML-escapes
+        // its output (e.g. "Let's" becomes "Let&#039;s"). Decode the Blade
+        // output so recipients see the literal characters.
+        $rendered = html_entity_decode($this->renderBlade($text, $variables), ENT_QUOTES | ENT_HTML5);
+
+        return $this->renderString($rendered, $variables, false);
     }
 
     public function renderSubject(string $subject, array $variables): string

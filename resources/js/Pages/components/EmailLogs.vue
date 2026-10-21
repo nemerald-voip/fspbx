@@ -138,33 +138,135 @@
                                 </tr>
                                 <!-- EXPANDABLE ROW -->
                                 <tr v-if="expandedRow === row.uuid">
-                                    <td :colspan="emailColumnCount" class="bg-gray-50 px-6 py-4">
-
-                                        <div class="flex gap-2">
-                                            <div class="text-gray-500 text-sm ">ID: </div>
-                                            <div class="text-gray-400 text-sm "> {{ row.uuid }}</div>
-                                        </div>
-                                        <div class="flex gap-2">
-                                            <div class="text-gray-500 text-sm ">{{ $t('From:') }} </div>
-                                            <div class="text-gray-400 text-sm "> {{ row.from }}</div>
-                                        </div>
-                                        <div class="flex gap-2">
-                                            <div class="text-gray-500 text-sm ">{{ $t('To:') }} </div>
-                                            <div class="text-gray-400 text-sm "> {{ row.to }}</div>
-                                        </div>
-                                        <div v-if="row.cc" class="flex gap-2">
-                                            <div class="text-gray-500 text-sm ">{{ $t('CC:') }} </div>
-                                            <div class="text-gray-400 text-sm "> {{ row.cc }}</div>
-                                        </div>
-                                        <div v-if="row.bcc" class="flex gap-2">
-                                            <div class="text-gray-500 text-sm ">{{ $t('BCC:') }} </div>
-                                            <div class="text-gray-400 text-sm "> {{ row.bcc }}</div>
-                                        </div>
-                                        <div v-if="row.sent_debug_info" class="flex gap-2">
-                                            <div class="text-gray-500 text-sm ">{{ $t('Debug:') }} </div>
-                                            <div class="text-gray-400 text-sm "> {{ row.sent_debug_info }}</div>
+                                    <td :colspan="emailColumnCount" class="bg-gray-50 px-6 py-4 shadow-inner">
+                                        <div v-if="expandedDetailsLoading" class="animate-pulse space-y-3 py-2">
+                                            <div class="h-2 w-1/3 rounded bg-slate-200"></div>
+                                            <div class="h-2 w-1/2 rounded bg-slate-200"></div>
+                                            <div class="h-2 w-1/4 rounded bg-slate-200"></div>
                                         </div>
 
+                                        <div v-else-if="expandedDetailsError" class="text-sm text-rose-700">
+                                            {{ expandedDetailsError }}
+                                        </div>
+
+                                        <div v-else-if="expandedDetails" class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                                            <div class="rounded-md border border-gray-200 bg-white p-4">
+                                                <div class="text-gray-900 font-semibold text-sm mb-2">{{ $t('Overview') }}</div>
+
+                                                <div class="space-y-2 text-sm text-gray-600">
+                                                    <div><span class="font-medium text-gray-700">{{ $t('Email ID:') }}</span>
+                                                        <span class="ml-1 font-mono text-xs">{{ expandedDetails.uuid }}</span></div>
+                                                    <div><span class="font-medium text-gray-700">{{ $t('Domain:') }}</span>
+                                                        {{ expandedDetails.domain_label || $t('System') }}</div>
+                                                    <div><span class="font-medium text-gray-700">{{ $t('Status:') }}</span>
+                                                        {{ statusLabel(expandedDetails.status) }}</div>
+                                                    <div><span class="font-medium text-gray-700">{{ $t('Created:') }}</span>
+                                                        {{ expandedDetails.created_at_formatted || '—' }}</div>
+                                                    <div><span class="font-medium text-gray-700">{{ $t('Last Updated:') }}</span>
+                                                        {{ expandedDetails.updated_at_formatted || '—' }}</div>
+                                                    <div><span class="font-medium text-gray-700">{{ $t('Provider:') }}</span>
+                                                        {{ expandedDetails.provider || '—' }}</div>
+                                                    <div v-if="expandedDetails.provider_message_id">
+                                                        <span class="font-medium text-gray-700">{{ $t('Provider ID:') }}</span>
+                                                        <span class="ml-1 font-mono text-xs">{{ expandedDetails.provider_message_id }}</span></div>
+                                                    <div v-if="expandedDetails.provider && expandedDetails.provider_message_stream">
+                                                        <span class="font-medium text-gray-700">{{ $t('Message Stream:') }}</span>
+                                                        {{ expandedDetails.provider_message_stream }}</div>
+                                                </div>
+
+                                                <button v-if="canShowDeliveryDetails(row)" type="button"
+                                                    class="mt-3 text-sm font-medium text-indigo-600 hover:text-indigo-500"
+                                                    @click.stop="handleDeliveryDetails(row)">
+                                                    {{ $t('View provider events') }}
+                                                </button>
+                                            </div>
+
+                                            <div class="rounded-md border border-gray-200 bg-white p-4">
+                                                <div class="text-gray-900 font-semibold text-sm mb-2">{{ $t('Recipients') }}</div>
+
+                                                <div class="space-y-2 text-sm text-gray-600 break-words">
+                                                    <div><span class="font-medium text-gray-700">{{ $t('From:') }}</span>
+                                                        {{ expandedDetails.from || '—' }}</div>
+                                                    <div><span class="font-medium text-gray-700">{{ $t('To:') }}</span>
+                                                        {{ expandedDetails.to || '—' }}</div>
+                                                    <div v-if="expandedDetails.cc"><span class="font-medium text-gray-700">{{ $t('CC:') }}</span>
+                                                        {{ expandedDetails.cc }}</div>
+                                                    <div v-if="expandedDetails.bcc"><span class="font-medium text-gray-700">{{ $t('BCC:') }}</span>
+                                                        {{ expandedDetails.bcc }}</div>
+                                                    <div><span class="font-medium text-gray-700">{{ $t('Subject:') }}</span>
+                                                        {{ expandedDetails.subject || '—' }}</div>
+                                                </div>
+                                            </div>
+
+                                            <div class="rounded-md border border-gray-200 bg-white p-4 lg:col-span-2">
+                                                <div class="text-gray-900 font-semibold text-sm mb-2">{{ $t('Send Log') }}</div>
+                                                <pre v-if="expandedDetails.sent_debug_info"
+                                                    class="max-h-60 overflow-auto text-gray-700 text-sm whitespace-pre-wrap break-words">{{ expandedDetails.sent_debug_info }}</pre>
+                                                <p v-else class="text-sm text-gray-500">{{ $t('No send errors or retries were recorded.') }}</p>
+                                            </div>
+
+                                            <div v-if="expandedDetails.attachments?.length"
+                                                class="rounded-md border border-gray-200 bg-white p-4 lg:col-span-2">
+                                                <div class="text-gray-900 font-semibold text-sm mb-2">{{ $t('Attachments') }}</div>
+
+                                                <div class="space-y-2">
+                                                    <div v-for="(item, index) in expandedDetails.attachments"
+                                                        :key="`${expandedDetails.uuid}-${index}`"
+                                                        class="flex items-center justify-between rounded border border-gray-200 px-3 py-2 text-sm">
+                                                        <div class="min-w-0">
+                                                            <div class="truncate font-medium text-gray-800">{{ item.name }}</div>
+                                                            <div class="text-xs text-gray-500">
+                                                                {{ item.mime || $t('Unknown') }}
+                                                                <span v-if="item.size !== null"> • {{ formatBytes(item.size) }}</span>
+                                                            </div>
+                                                        </div>
+                                                        <Badge v-if="!item.available" :text="$t('File missing')"
+                                                            backgroundColor="bg-amber-100" textColor="text-amber-800"
+                                                            ringColor="ring-amber-400/20" class="ml-4 px-2 py-1 text-xs" />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="rounded-md border border-gray-200 bg-white p-4 lg:col-span-2">
+                                                <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+                                                    <div class="text-gray-900 font-semibold text-sm">{{ $t('Message') }}</div>
+                                                    <div class="flex items-center gap-1 rounded-md bg-gray-200/70 p-1" role="group">
+                                                        <button v-if="expandedDetails.html_body" type="button"
+                                                            :aria-pressed="messageView === 'html'"
+                                                            :class="viewButtonClass(messageView === 'html')"
+                                                            @click.stop="messageView = 'html'">
+                                                            {{ $t('HTML') }}
+                                                        </button>
+                                                        <button type="button"
+                                                            :aria-pressed="messageView === 'text'"
+                                                            :class="viewButtonClass(messageView === 'text')"
+                                                            @click.stop="messageView = 'text'">
+                                                            {{ $t('Plain text') }}
+                                                        </button>
+                                                        <button v-if="expandedDetails.html_body" type="button"
+                                                            :aria-pressed="messageView === 'source'"
+                                                            :class="viewButtonClass(messageView === 'source')"
+                                                            @click.stop="messageView = 'source'">
+                                                            {{ $t('HTML source') }}
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                <iframe v-if="messageView === 'html' && expandedDetails.html_body"
+                                                    :srcdoc="expandedDetails.html_body"
+                                                    class="h-[36rem] w-full rounded-md border border-gray-200 bg-white"
+                                                    sandbox
+                                                    referrerpolicy="no-referrer"
+                                                    :title="$t('Rendered HTML email preview')" />
+                                                <pre v-else-if="messageView === 'source' && expandedDetails.html_body"
+                                                    class="max-h-[36rem] overflow-auto rounded-md bg-gray-900 p-3 text-xs text-gray-100 whitespace-pre-wrap break-words">{{ expandedDetails.html_body }}</pre>
+                                                <template v-else>
+                                                    <pre v-if="expandedDetails.text_body"
+                                                        class="max-h-[36rem] overflow-auto text-gray-700 text-sm whitespace-pre-wrap break-words">{{ expandedDetails.text_body }}</pre>
+                                                    <p v-else class="text-sm text-gray-500">{{ $t('No plain-text body was recorded.') }}</p>
+                                                </template>
+                                            </div>
+                                        </div>
                                     </td>
                                 </tr>
                             </template>
@@ -338,6 +440,10 @@ const data = ref({
     links: [],
 });
 const expandedRow = ref(null)
+const expandedDetails = ref(null)
+const expandedDetailsLoading = ref(false)
+const expandedDetailsError = ref(null)
+const messageView = ref('html')
 const domainFilterKey = ref(0)
 
 
@@ -408,6 +514,45 @@ watch(() => props.trigger, (newVal) => {
 
 const toggleExpand = (uuid) => {
     expandedRow.value = expandedRow.value === uuid ? null : uuid;
+
+    if (expandedRow.value) {
+        fetchExpandedDetails(uuid);
+    }
+};
+
+const fetchExpandedDetails = (uuid) => {
+    expandedDetails.value = null;
+    expandedDetailsError.value = null;
+    expandedDetailsLoading.value = true;
+
+    axios.get(props.routes.email_log_details.replace('__UUID__', uuid))
+        .then((response) => {
+            if (expandedRow.value === uuid) {
+                expandedDetails.value = response.data;
+                messageView.value = response.data.html_body ? 'html' : 'text';
+            }
+        }).catch((error) => {
+            if (expandedRow.value === uuid) {
+                expandedDetailsError.value = error.response?.data?.messages?.error?.[0] || trans('Unable to load email details.');
+            }
+        }).finally(() => {
+            if (expandedRow.value === uuid) {
+                expandedDetailsLoading.value = false;
+            }
+        });
+};
+
+const viewButtonClass = (active) => [
+    'rounded px-3 py-1 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600',
+    active
+        ? 'bg-white text-gray-900 shadow-sm'
+        : 'text-gray-600 hover:text-gray-900',
+];
+
+const formatBytes = (bytes) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
 const handleUpdateDateRange = (newDateRange) => {
@@ -468,6 +613,10 @@ const handleFiltersReset = () => {
     filterData.value.search = null;
     filterData.value.domain_uuid = props.selectedDomainUuid;
     domainFilterKey.value += 1;
+    filterData.value.dateRange = [
+        startLocal.clone().startOf('day').toISOString(),
+        endLocal.clone().endOf('day').toISOString(),
+    ];
     // After resetting the filters, call handleSearchButtonClick to perform the search with the updated filters
     handleSearchButtonClick();
 }
@@ -529,12 +678,14 @@ const handleRetry = (uuid) => {
     axios.post(props.routes.email_retry, { 'items': [uuid] })
         .then((response) => {
             showNotification('success', response.data.messages);
-            handleClearSelection();
         }).catch((error) => {
-            handleClearSelection();
             handleErrorResponse(error);
         }).finally(() => {
             fetchData(data.value.current_page || 1);
+
+            if (expandedRow.value === uuid) {
+                fetchExpandedDetails(uuid);
+            }
         });
 }
 
