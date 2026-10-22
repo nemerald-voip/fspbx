@@ -2,12 +2,13 @@
 namespace App\Services;
 
 use App\Models\Dialplans;
-use App\Models\FusionCache;
 use App\Models\Destinations;
 use App\Models\DialplanDetails;
 
 class DialplanBuilderService
 {
+    public const INBOUND_DESTINATION_FIELD = '${fspbx_inbound_did}';
+
     public function buildDialplanForPhoneNumber(Destinations $phoneNumber, $domainName): void
     {
         $originalDid = app(PhoneNumberService::class)->originalDid($phoneNumber);
@@ -19,7 +20,7 @@ class DialplanBuilderService
             'domain_name' => $domainName,
             'fax_data' => $phoneNumber->fax()->first() ?? null,
             'dialplan_continue' => 'false',
-            'destination_condition_field' => get_domain_setting('destination', $phoneNumber->domain_uuid),
+            'destination_condition_field' => self::INBOUND_DESTINATION_FIELD,
         ];
 
         // Render the Blade template and get the XML content as a string
@@ -80,7 +81,7 @@ class DialplanBuilderService
         $detailOrder = 20;
         $detailGroup = 0;
 
-        $destination_condition_field = get_domain_setting('destination', $phoneNumber->domain_uuid);
+        $destination_condition_field = self::INBOUND_DESTINATION_FIELD;
 
         if ($phoneNumber->destination_conditions) {
             $conditions = json_decode($phoneNumber->destination_conditions);
@@ -488,24 +489,8 @@ class DialplanBuilderService
 
     public function clearCacheForPhoneNumber(Destinations $phoneNumber): void
     {
-        // Handling for multiple dialplan mode
-        FusionCache::clear("dialplan:public");
-
-        // Handling for single dialplan mode
-        if (isset($phoneNumber->destination_prefix) && is_numeric($phoneNumber->destination_prefix) && isset($phoneNumber->destination_number) && is_numeric($phoneNumber->destination_number)) {
-            //  logger("dialplan:". $phoneNumber->destination_context.":".$phoneNumber->destination_prefix.$phoneNumber->destination_number);
-            FusionCache::clear("dialplan:" . $phoneNumber->destination_context . ":" . $phoneNumber->destination_prefix . $phoneNumber->destination_number);
-            //logger("dialplan:". $phoneNumber->destination_context.":+".$phoneNumber->destination_prefix.$phoneNumber->destination_number);
-            FusionCache::clear("dialplan:" . $phoneNumber->destination_context . ":+" . $phoneNumber->destination_prefix . $phoneNumber->destination_number);
-        }
-        if (isset($phoneNumber->destination_number) && str_starts_with($phoneNumber->destination_number, '+') && is_numeric(str_replace('+', '', $phoneNumber->destination_number))) {
-            //logger("dialplan:". $phoneNumber->destination_context.":".$phoneNumber->destination_number);
-            FusionCache::clear("dialplan:" . $phoneNumber->destination_context . ":" . $phoneNumber->destination_number);
-        }
-        if (isset($phoneNumber->destination_number) && is_numeric($phoneNumber->destination_number)) {
-            //logger("dialplan:". $phoneNumber->destination_context.":".$phoneNumber->destination_number);
-            FusionCache::clear("dialplan:" . $phoneNumber->destination_context . ":" . $phoneNumber->destination_number);
-        }
-
+        // Clear cached misses as well as XML: adding/removing a Request-URI
+        // match can change which header wins for another cached call pattern.
+        app(DialplanService::class)->clearDialplanCache($phoneNumber->destination_context ?: 'public');
     }
 }

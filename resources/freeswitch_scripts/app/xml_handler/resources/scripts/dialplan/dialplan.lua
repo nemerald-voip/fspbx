@@ -41,37 +41,6 @@
 	end
 
 --get the dialplan mode from the cache
-	dialplan_destination_key = "dialplan:destination";
-	dialplan_destination, err = cache.get(dialplan_destination_key);
-
---if not found in the cache then get it from the database
-	if (err == 'NOT FOUND') then
-		--get the mode from default settings
-		sql = "select default_setting_value from v_default_settings "
-		sql = sql .. "where default_setting_category = 'dialplan' ";
-		sql = sql .. "and default_setting_subcategory = 'destination' ";
-		dialplan_destination = dbh:first_value(sql, nil);
-		if (dialplan_destination) then
-			local ok, err = cache.set(dialplan_destination_key, dialplan_destination, expire["dialplan"]);
-		end
-
-		--set the default
-		if (dialplan_destination == nil or dialplan_destination == '') then
-			dialplan_destination = "destination_number";
-		end
-
-		--send a message to the log
-		if (debug['cache']) then
-			log.notice(dialplan_destination_key.." source: database destination: "..dialplan_destination);
-		end
-	else
-		--send a message to the log
-		if (debug['cache']) then
-			log.notice(dialplan_destination_key.." source: cache destination: "..dialplan_destination);
-		end
-	end
-
---get the dialplan mode from the cache
 	dialplan_mode_key = "dialplan:mode";
 	dialplan_mode, err = cache.get(dialplan_mode_key);
 
@@ -114,14 +83,15 @@
 		context_name = 'public';
 	end
 
---use alternative sip_to_user instead of the default
-	if (dialplan_destination == '${sip_to_user}' or dialplan_destination == 'sip_to_user') then
-		destination_number = api:execute("url_decode", sip_to_user);
-	end
-
---use alternative sip_req_user instead of the default
-	if (dialplan_destination == '${sip_req_user}' or dialplan_destination == 'sip_req_user') then
-		destination_number = api:execute("url_decode", sip_req_user);
+--Resolve only public calls. Internal transfers keep their called number.
+	local inbound_destination
+	local selected_number
+	local hostname = trim(api:execute("hostname", ""));
+	if context_name == 'public' then
+		inbound_destination = require "resources.functions.inbound_destination";
+		selected_number = inbound_destination.resolve(dbh, cache, api, call_context,
+			dialplan_mode, hostname, sip_req_user, sip_to_user, destination_number, expire["dialplan"]);
+		destination_number = selected_number;
 	end
 
 --set the dialplan cache key
@@ -155,9 +125,6 @@
 		--exits the script if we didn't connect properly
 			assert(dbh:connected());
 
-		--get the hostname
-			hostname = trim(api:execute("hostname", ""));
-
 		--set the xml array and then concatenate the array to a string
 			local xml = Xml:new();
 			xml:append([[<?xml version="1.0" encoding="UTF-8" standalone="no"?>]]);
@@ -172,16 +139,8 @@
 				sql = sql .. "FROM v_dialplans AS p ";
 				sql = sql .. "WHERE ( ";
 				sql = sql .. "	p.dialplan_uuid IN ( ";
-				sql = sql .. "		SELECT dialplan_uuid FROM v_destinations ";
-				sql = sql .. "		WHERE ( ";
-				sql = sql .. "			CONCAT(destination_prefix, destination_area_code, destination_number) = :destination_number ";
-				sql = sql .. "			OR CONCAT(destination_trunk_prefix, destination_area_code, destination_number) = :destination_number ";
-				sql = sql .. "			OR CONCAT(destination_prefix, destination_number) = :destination_number ";
-				sql = sql .. "			OR CONCAT('+', destination_prefix, destination_number) = :destination_number ";
-				sql = sql .. "			OR CONCAT('+', destination_prefix, destination_area_code, destination_number) = :destination_number ";
-				sql = sql .. "			OR CONCAT(destination_area_code, destination_number) = :destination_number ";
-				sql = sql .. "			OR destination_number = :destination_number ";
-				sql = sql .. "		) ";
+				sql = sql .. "\t\tSELECT dialplan_uuid FROM v_destinations AS d ";
+				sql = sql .. "\t\tWHERE " .. inbound_destination.number_match_sql("d");
 				sql = sql .. "	) ";
 				sql = sql .. "	or (p.dialplan_context like '%public%' and p.domain_uuid IS NULL) ";
 				sql = sql .. ") ";
@@ -266,11 +225,17 @@
 				freeswitch.consoleLog("notice", "[xml_handler] " .. dialplan_cache_key .. " source: database\n");
 			end
 	else
+		dbh:release();
 		--send to the console
 			if (debug["cache"]) then
 				freeswitch.consoleLog("notice", "[xml_handler] " .. dialplan_cache_key .. " source: cache\n");
 			end
 	end --if XML_STRING
+
+--Only this response receives the selected DID; the cached XML stays reusable.
+	if inbound_destination then
+		XML_STRING = inbound_destination.apply(XML_STRING, selected_number);
+	end
 
 --send the xml to the console
 	if (debug["xml_string"]) then
