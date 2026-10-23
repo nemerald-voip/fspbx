@@ -20,8 +20,6 @@ use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 class Handler extends ExceptionHandler
 {
-    protected $dontFlash = ['current_password', 'password', 'password_confirmation', 'api_token'];
-
     public function register(): void
     {
         // CSRF and throttling can stop a web request before locale middleware runs.
