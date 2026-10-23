@@ -106,9 +106,12 @@
             </section>
 
             <section v-if="selectedMenuOption === 'sip_capture'">
-                <SipCaptureSettingsForm :route="routes.sip_capture_update" :settings="sip_capture"
+                <SipCaptureSettingsForm v-if="permissions?.sip_capture_view" :route="routes.sip_capture_update" :settings="sip_capture"
                     :can-edit="permissions?.sip_capture_edit" @error="handleErrorResponse"
                     @success="showNotification" />
+                <HomerApiSettingsForm v-if="permissions?.homer_api_manage && homer_api" :settings="homer_api"
+                    :save-route="routes.homer_api_update" :test-route="routes.homer_api_test"
+                    @error="handleErrorResponse" @success="showNotification" />
             </section>
 
             <section v-if="selectedMenuOption === 'number_translations' && permissions?.number_translation_view">
@@ -164,6 +167,7 @@ import AssemblyAiForm from "./components/forms/AssemblyAiForm.vue"
 import MessagingSettingsForm from "./components/forms/MessagingSettingsForm.vue"
 import CallTranscriptionOptionsForm from "./components/forms/CallTranscriptionOptionsForm.vue"
 import SipCaptureSettingsForm from "./components/forms/SipCaptureSettingsForm.vue"
+import HomerApiSettingsForm from "./components/forms/HomerApiSettingsForm.vue"
 import NumberTranslations from './components/NumberTranslations.vue'
 import { ArrowsRightLeftIcon } from '@heroicons/vue/24/outline'
 import { AdjustmentsVerticalIcon, SignalIcon } from "@heroicons/vue/24/outline";
@@ -172,6 +176,7 @@ import { AdjustmentsVerticalIcon, SignalIcon } from "@heroicons/vue/24/outline";
 const props = defineProps({
     routes: Object,
     permissions: Object,
+    homer_api: { type: Object, default: null },
     messagingSettings: { type: Object, default: null },
     scheduled_jobs: { type: Object, default: null },
     // Declarative system-default fields (SystemSettingsSchema), the option
@@ -239,7 +244,7 @@ onMounted(() => {
         navigation.value.push({ key: 'payment_gateways', name: trans('Payment Gateways'), icon: CreditCardIcon })
     }
 
-    if (props.permissions?.sip_capture_view) {
+    if (props.permissions?.sip_capture_view || props.permissions?.homer_api_manage) {
         navigation.value.push({ key: 'sip_capture', name: trans('SIP Capture'), icon: SignalIcon })
     }
 

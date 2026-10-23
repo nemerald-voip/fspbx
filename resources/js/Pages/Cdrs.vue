@@ -298,6 +298,7 @@
 
 
     <CallDetailsModal :show="showDetailsModal" :item="itemOptions?.item" :loading="loadingModal"
+        :pcap-route="routes.sip_trace" :can-view-pcap="permissions.cdr_pcap"
         :customClass="'sm:max-w-4xl'" @close="handleModalClose" 
         @success="showNotification" 
         @error="handleErrorResponse">

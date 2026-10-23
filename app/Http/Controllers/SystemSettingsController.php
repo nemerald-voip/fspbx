@@ -60,6 +60,8 @@ class SystemSettingsController extends Controller
                         'sync' => route('number-translations.sync'),
                     ],
                     'sip_capture_update' => route('system-settings.sip_capture.update'),
+                    'homer_api_update' => route('homer-api.update'),
+                    'homer_api_test' => route('homer-api.test'),
                     'payment_gateways' => route('system-settings.payment_gateways'),
                     'payment_gateway_update' => route('gateway.update'),
                     'payment_gateway_deactivate' => route('gateway.deactivate'),
@@ -85,6 +87,8 @@ class SystemSettingsController extends Controller
                         ? $this->sipCapture->settings()
                         : null;
                 },
+                'homer_api' => fn () => \App\Services\HomerApiService::canManage()
+                    ? app(\App\Services\HomerApiService::class)->publicSettings() : null,
                 'messagingSettings' => function () {
                     return userCheckPermission('default_setting_view') ? [
                         ...app(PhotoCompressionSettings::class)->settings(),
@@ -264,6 +268,7 @@ class SystemSettingsController extends Controller
         }
         $permissions['sip_capture_view'] = $this->canViewSipCapture();
         $permissions['sip_capture_edit'] = $this->canEditSipCapture();
+        $permissions['homer_api_manage'] = \App\Services\HomerApiService::canManage();
 
         return $permissions;
     }
