@@ -5688,5 +5688,7 @@
     "{1} Toggled :count domain override.|[0,*] Toggled :count domain overrides.": "",
     "· stays here until saved": "",
     "“Instead of waiting on the line, you can keep your place in line and receive a callback. To have us call you back, press :key.”": "",
-    "✗ missing": ""
+    "✗ missing": "",
+    "Leave blank to keep the saved token.": "保存済みのトークンを保持するには空欄にしてください。",
+    "Enable Homer API Integration": "Homer API連携を有効にする"
 }

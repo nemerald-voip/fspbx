@@ -5688,5 +5688,7 @@
     "{1} Toggled :count domain override.|[0,*] Toggled :count domain overrides.": "{1} État modifié pour :count substitution de domaine.|[0,*] État modifié pour :count substitutions de domaine.",
     "· stays here until saved": "· reste ici jusqu’à l’enregistrement",
     "“Instead of waiting on the line, you can keep your place in line and receive a callback. To have us call you back, press :key.”": "« Au lieu d’attendre en ligne, vous pouvez garder votre place dans la file et recevoir un rappel. Pour que nous vous rappelions, appuyez sur :key. »",
-    "✗ missing": "✗ manquant"
+    "✗ missing": "✗ manquant",
+    "Leave blank to keep the saved token.": "Laissez vide pour conserver le jeton enregistré.",
+    "Enable Homer API Integration": "Activer l’intégration à l’API Homer"
 }

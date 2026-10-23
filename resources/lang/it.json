@@ -5688,5 +5688,7 @@
     "{1} Toggled :count domain override.|[0,*] Toggled :count domain overrides.": "{1} Stato di :count personalizzazione di dominio invertito.|[0,*] Stato di :count personalizzazioni di dominio invertito.",
     "· stays here until saved": "· resta qui fino al salvataggio",
     "“Instead of waiting on the line, you can keep your place in line and receive a callback. To have us call you back, press :key.”": "«Invece di restare in linea, puoi mantenere il tuo posto in coda e ricevere una richiamata. Per farti richiamare, premi :key.»",
-    "✗ missing": "✗ mancante"
+    "✗ missing": "✗ mancante",
+    "Leave blank to keep the saved token.": "Lasciare vuoto per mantenere il token salvato.",
+    "Enable Homer API Integration": "Abilita l’integrazione API Homer"
 }

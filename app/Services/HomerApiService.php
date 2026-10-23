@@ -16,8 +16,8 @@ class HomerApiService
 
     public static function canView(): bool
     {
-        // Correlation headers are caller-controlled, not a tenant authorization boundary.
-        return isSuperAdmin() && userCheckPermission('xml_cdr_view')
+        // PCAP permission grants the full correlated trace; the controller scopes the selected CDR.
+        return userCheckPermission('xml_cdr_view')
             && userCheckPermission('xml_cdr_view_all_records')
             && userCheckPermission('xml_cdr_pcap');
     }
@@ -42,7 +42,6 @@ class HomerApiService
         return [
             'enabled' => (bool) $settings->enabled,
             'base_url' => $settings->base_url ?? '',
-            'auth_type' => $settings->auth_type ?? 'auth_token',
             'has_api_token' => filled($settings->getRawOriginal('api_token')),
         ];
     }
@@ -67,12 +66,12 @@ class HomerApiService
 
         if (filled($token)) {
             $settings->api_token = $token;
-        } elseif ($url !== rtrim((string) $settings->base_url, '/') || $data['auth_type'] !== ($settings->auth_type ?? 'auth_token')) {
+        } elseif ($url !== rtrim((string) $settings->base_url, '/') || ($settings->auth_type ?? 'auth_token') !== 'auth_token') {
             // Never forward a saved credential to a changed destination.
             $settings->api_token = null;
         }
 
-        $settings->fill(['enabled' => $data['enabled'], 'base_url' => $url, 'auth_type' => $data['auth_type']]);
+        $settings->fill(['enabled' => $data['enabled'], 'base_url' => $url, 'auth_type' => 'auth_token']);
         if ($settings->enabled && (! $url || ! $settings->api_token)) {
             throw ValidationException::withMessages(['api_token' => [__('Enter an API token for this HOMER connection.')]]);
         }
@@ -193,7 +192,7 @@ class HomerApiService
     private function request(HomerApiSettings $settings, string $path, array $payload): string
     {
         if (! self::validBaseUrl((string) $settings->base_url) || ! $settings->api_token
-            || ! in_array($settings->auth_type, ['auth_token', 'bearer'], true)) {
+            || $settings->auth_type !== 'auth_token') {
             throw new RuntimeException(__('Configure the HOMER API URL and token first.'));
         }
 
@@ -208,9 +207,7 @@ class HomerApiService
                     }
                 },
             ])->withHeaders(['Accept-Encoding' => 'identity']);
-            $client = $settings->auth_type === 'bearer'
-                ? $client->withToken($settings->api_token)
-                : $client->withHeaders(['Auth-Token' => $settings->api_token]);
+            $client = $client->withHeaders(['Auth-Token' => $settings->api_token]);
             $response = $client->post(rtrim($settings->base_url, '/').'/api/v4/'.$path, $payload);
             if (! $response->successful() || strlen($response->body()) > self::MAX_BYTES) {
                 throw new RuntimeException('Upstream request failed.');

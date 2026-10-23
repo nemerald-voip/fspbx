@@ -4,7 +4,6 @@ namespace App\Http\Requests;
 
 use App\Services\HomerApiService;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class UpdateHomerApiSettingsRequest extends FormRequest
 {
@@ -22,7 +21,6 @@ class UpdateHomerApiSettingsRequest extends FormRequest
                     $fail(__('Enter an HTTPS base URL without credentials, query parameters, or a fragment.'));
                 }
             }],
-            'auth_type' => ['required', Rule::in(['auth_token', 'bearer'])],
             'api_token' => ['nullable', 'string', 'max:4096', 'regex:/^[\x21-\x7e]+$/'],
         ];
     }

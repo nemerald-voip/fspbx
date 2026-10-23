@@ -5688,5 +5688,7 @@
     "{1} Toggled :count domain override.|[0,*] Toggled :count domain overrides.": "",
     "· stays here until saved": "",
     "“Instead of waiting on the line, you can keep your place in line and receive a callback. To have us call you back, press :key.”": "",
-    "✗ missing": ""
+    "✗ missing": "",
+    "Leave blank to keep the saved token.": "저장된 토큰을 유지하려면 비워 두세요.",
+    "Enable Homer API Integration": "Homer API 연동 활성화"
 }

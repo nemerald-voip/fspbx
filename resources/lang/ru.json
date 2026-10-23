@@ -5688,5 +5688,7 @@
     "{1} Toggled :count domain override.|[0,*] Toggled :count domain overrides.": "Переключено :count переопределение домена.|Переключено :count переопределения домена.|Переключено :count переопределений домена.",
     "· stays here until saved": "· останется здесь до сохранения",
     "“Instead of waiting on the line, you can keep your place in line and receive a callback. To have us call you back, press :key.”": "«Вместо ожидания на линии вы можете сохранить своё место в очереди и получить обратный вызов. Чтобы мы вам перезвонили, нажмите :key».",
-    "✗ missing": "✗ отсутствует"
+    "✗ missing": "✗ отсутствует",
+    "Leave blank to keep the saved token.": "Оставьте поле пустым, чтобы сохранить текущий токен.",
+    "Enable Homer API Integration": "Включить интеграцию с API Homer"
 }

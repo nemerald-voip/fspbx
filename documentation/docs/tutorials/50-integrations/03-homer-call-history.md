@@ -11,12 +11,12 @@ Connect FS PBX to HOMER 11 to inspect SIP messages and download a Wireshark-comp
 
 1. Sign in as a superadmin and open **System Settings → SIP Capture → Remote HOMER API**.
 2. Enter the HOMER HTTPS base URL, without `/api/v4`. The certificate must be trusted by the PBX. Redirects are not followed.
-3. Select **Auth-Token** for a HOMER API token, or **Bearer JWT** for a session token. HOMER must have API token access enabled for Auth-Token authentication. JWTs expire according to HOMER's configuration.
-4. Enter the token, select **Enable Call History integration**, then use **Test Connection** and **Save**. Testing does not save the form.
+3. Obtain an API token from your HOMER administrator. FS PBX always uses **Auth-Token** authentication; there is no authentication option to select. API token access must be enabled on HOMER.
+4. Enter the token, select **Enable Homer API Integration**, then use **Test Connection** and click **Save** at the bottom of the tab. Testing does not save the form.
 
-Saved tokens are encrypted and never shown again. Leave the token blank to retain it; changing the URL or authentication type requires a new token. On redundant installations sharing these settings, every application node needs the same Laravel encryption key and connectivity to HOMER.
+Saved tokens are encrypted and never shown again. Leave the token blank to retain it. If you change the HOMER address, enter the API token again.
 
-These API settings are independent of the HEP collector settings above them. Saving the API connection does not change FreeSWITCH capture settings or restart profiles.
+The **Save** button at the bottom saves both the SIP capture settings and the Remote HOMER API connection, where you have permission to edit them. If either section has an error, correct the highlighted fields and save again. The notification identifies which settings were saved and any problems, including whether FreeSWITCH could apply the capture settings live.
 
 ## View or download a call
 
@@ -31,9 +31,11 @@ HOMER resolves related legs using its configured correlation script. The downloa
 
 ## Access and limits
 
-Configuration requires superadmin membership and `homer_api_manage`. Viewing and downloading require superadmin membership, `xml_cdr_view`, `xml_cdr_view_all_records`, and `xml_cdr_pcap`. The selected CDR is also account-scoped unless the user has `xml_cdr_domain`.
+A superadmin configures the HOMER connection. Viewing and downloading traces is controlled by the **PCAP** permission, which is granted to superadmins by default. An administrator can grant it to other groups through Group Permissions. Users also need Call History access to all records in their permitted account scope.
 
-Assigning the PCAP permission to an account administrator does not grant access. Correlation headers such as `X-CID` can be supplied by callers and cannot establish account ownership; a correlated trace may span accounts.
+The PCAP permission allows the **full correlated trace**, including related connections from other accounts. Grant it only to people authorized to see that information. It does not grant permission to change the HOMER connection settings.
+
+Users can open a trace only from a call record they are allowed to access. After changing group permissions, sign out and back in to refresh access.
 
 Requests have time, response-size, and rate limits. Traces with 10,000 or more messages are rejected rather than knowingly exporting a truncated trace; exports support at most 50 related Call-IDs. SIP contents are displayed as text, and trace responses are marked private and non-cacheable.
 

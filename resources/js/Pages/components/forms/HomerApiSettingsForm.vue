@@ -7,23 +7,18 @@
                 <FormElements>
                     <StaticElement name="heading" tag="h4" :content="$t('Remote HOMER API')"
                         :description="$t('Connect to a remote HOMER server to view SIP traces and download PCAP files from Call History.')" />
-                    <StaticElement name="access_notice" :content="$t('SIP traces are available only to superadmins with the PCAP permission. Correlated traces can contain multiple accounts.')" />
-                    <ToggleElement name="enabled" :text="$t('Enable Call History integration')" :true-value="true" :false-value="false" />
+                    <ToggleElement name="enabled" :text="$t('Enable Homer API Integration')" :true-value="true" :false-value="false" />
                     <TextElement name="base_url" :label="$t('HOMER API base URL')" :floating="false"
                         placeholder="https://homer.example.com" autocomplete="off"
                         :description="$t('Use HTTPS with a trusted certificate. Do not append /api/v4. Private monitoring addresses are supported.')" />
-                    <SelectElement name="auth_type" :label="$t('Authentication')" :floating="false" :native="false"
-                        :items="[{ value: 'auth_token', label: 'Auth-Token' }, { value: 'bearer', label: 'Bearer JWT' }]"
-                        :description="$t('For Auth-Token, enable API token access in HOMER. Bearer JWT tokens expire according to HOMER settings.')" />
                     <TextElement name="api_token" :label="$t('API token')" input-type="password" autocomplete="new-password" :floating="false"
-                        :description="hasToken ? $t('A token is saved. Leave blank to keep it. Enter a new token when changing the URL or authentication type.') : $t('The API token is encrypted at rest and is never returned to the browser.')" />
+                        :description="hasToken ? $t('Leave blank to keep the saved token.') : $t('The API token is encrypted at rest and is never returned to the browser.')" />
                     <StaticElement name="test_action">
                         <button type="button" :disabled="testing" @click="testConnection"
                             class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-gray-300 disabled:opacity-50">
                             {{ testing ? $t('Testing…') : $t('Test Connection') }}
                         </button>
                     </StaticElement>
-                    <ButtonElement name="save" :button-label="$t('Save')" :submits="true" align="right" />
                 </FormElements>
             </div>
         </template>
@@ -43,7 +38,7 @@ const testing = ref(false);
 const hasToken = ref(props.settings?.has_api_token ?? false);
 
 onMounted(() => {
-    form$.value.update({ enabled: false, base_url: '', auth_type: 'auth_token', ...props.settings, api_token: '' });
+    form$.value.update({ enabled: false, base_url: '', ...props.settings, api_token: '' });
     form$.value.clean();
 });
 
@@ -53,11 +48,11 @@ const handleResponse = (response, form) => {
         form.el$(name)?.messageBag.append(messages[0]);
     });
 };
-const handleSuccess = (response, form) => {
+const handleSuccess = (response, form, notify = true) => {
     hasToken.value = response.data.settings.has_api_token;
     form.update({ api_token: '' });
     form.clean();
-    emit('success', 'success', response.data.messages);
+    if (notify) emit('success', 'success', response.data.messages);
 };
 const handleError = (error) => emit('error', error);
 const testConnection = async () => {
@@ -74,4 +69,19 @@ const testConnection = async () => {
         testing.value = false;
     }
 };
+const save = async () => {
+    const form = form$.value;
+    clearServerFormErrors(form);
+    try {
+        const response = await submitForm(null, form);
+        handleSuccess(response, form, false);
+        return response.data;
+    } catch (error) {
+        handleResponse(error.response, form);
+        throw error;
+    }
+};
+
+defineExpose({ save });
+
 </script>
