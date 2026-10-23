@@ -5715,5 +5715,7 @@
     "{1} Toggled :count domain override.|[0,*] Toggled :count domain overrides.": "",
     "· stays here until saved": "",
     "“Instead of waiting on the line, you can keep your place in line and receive a callback. To have us call you back, press :key.”": "",
-    "✗ missing": ""
+    "✗ missing": "",
+    "Leave blank to keep the saved token.": "Lad feltet være tomt for at beholde det gemte token.",
+    "Enable Homer API Integration": "Aktivér Homer API-integration"
 }

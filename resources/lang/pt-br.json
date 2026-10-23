@@ -5715,5 +5715,7 @@
     "{1} Toggled :count domain override.|[0,*] Toggled :count domain overrides.": "{1} Status alterado para :count substituição de domínio.|[0,*] Status alterado para :count substituições de domínio.",
     "· stays here until saved": "· permanece aqui até salvar",
     "“Instead of waiting on the line, you can keep your place in line and receive a callback. To have us call you back, press :key.”": "“Em vez de esperar na linha, você pode manter seu lugar na fila e receber um retorno. Para que possamos ligar de volta, pressione :key.”",
-    "✗ missing": "✗ ausente"
+    "✗ missing": "✗ ausente",
+    "Leave blank to keep the saved token.": "Deixe em branco para manter o token salvo.",
+    "Enable Homer API Integration": "Ativar integração com a API do Homer"
 }

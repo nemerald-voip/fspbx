@@ -81,8 +81,6 @@
                         :floating="false" :disabled="!canEdit"
                         :description="$t('Select every profile whose SIP messages should be sent to the collector, usually the internal and external profiles.')" />
 
-                    <ButtonElement v-if="canEdit" name="sip_capture_save" :button-label="$t('Save')"
-                        :submits="true" align="right" />
                 </FormElements>
             </div>
         </template>
@@ -143,12 +141,12 @@ const handleResponse = (response, form) => {
     })
 }
 
-const handleSuccess = (response, form) => {
+const handleSuccess = (response, form, notify = true) => {
     form.clean()
     captureId.value = response.data.capture_id ?? captureId.value
     captureIdConfigured.value = true
     const type = response.data.runtime_synchronized === false ? 'error' : 'success'
-    emit('success', type, response.data.messages)
+    if (notify) emit('success', type, response.data.messages)
 }
 
 const handleError = (error, details, form) => {
@@ -161,4 +159,20 @@ const handleError = (error, details, form) => {
 
     form.messageBag.append(trans('Could not submit the SIP capture settings.'))
 }
+const save = async () => {
+    if (!props.canEdit) return null
+    const form = form$.value
+    clearServerFormErrors(form)
+    try {
+        const response = await submitForm(null, form)
+        handleSuccess(response, form, false)
+        return response.data
+    } catch (error) {
+        handleResponse(error.response, form)
+        throw error
+    }
+}
+
+defineExpose({ save })
+
 </script>

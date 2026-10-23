@@ -106,12 +106,21 @@
             </section>
 
             <section v-if="selectedMenuOption === 'sip_capture'">
-                <SipCaptureSettingsForm v-if="permissions?.sip_capture_view" :route="routes.sip_capture_update" :settings="sip_capture"
+                <fieldset :disabled="savingSipSettings" :aria-busy="savingSipSettings" class="min-w-0">
+                <SipCaptureSettingsForm ref="sipCaptureForm" v-if="permissions?.sip_capture_view" :route="routes.sip_capture_update" :settings="sip_capture"
                     :can-edit="permissions?.sip_capture_edit" @error="handleErrorResponse"
                     @success="showNotification" />
-                <HomerApiSettingsForm v-if="permissions?.homer_api_manage && homer_api" :settings="homer_api"
+                <HomerApiSettingsForm ref="homerApiForm" v-if="permissions?.homer_api_manage && homer_api" :settings="homer_api"
                     :save-route="routes.homer_api_update" :test-route="routes.homer_api_test"
                     @error="handleErrorResponse" @success="showNotification" />
+                <div v-if="permissions?.sip_capture_edit || (permissions?.homer_api_manage && homer_api)"
+                    class="flex justify-end bg-gray-50 px-4 pb-6 sm:px-6">
+                    <button type="button" :disabled="savingSipSettings" @click="saveSipSettings"
+                        class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:cursor-wait disabled:opacity-50">
+                        {{ savingSipSettings ? $t('Saving…') : $t('Save') }}
+                    </button>
+                </div>
+                </fieldset>
             </section>
 
             <section v-if="selectedMenuOption === 'number_translations' && permissions?.number_translation_view">
@@ -199,6 +208,39 @@ const props = defineProps({
         default: () => ({}),
     },
 })
+
+const sipCaptureForm = ref(null)
+const homerApiForm = ref(null)
+const savingSipSettings = ref(false)
+
+const saveSipSettings = async () => {
+    if (savingSipSettings.value) return
+    savingSipSettings.value = true
+    try {
+        const forms = []
+        if (props.permissions?.sip_capture_edit && sipCaptureForm.value) forms.push(sipCaptureForm.value)
+        if (props.permissions?.homer_api_manage && homerApiForm.value) forms.push(homerApiForm.value)
+        const results = await Promise.allSettled(forms.map(form => form.save()))
+        const messages = {}
+        let failed = false
+        results.forEach((result, index) => {
+            if (result.status === 'rejected') {
+                failed = true
+                const errors = result.reason?.response?.data?.errors
+                    ?? { request: [trans('Could not submit the SIP capture settings.')] }
+                Object.entries(errors).forEach(([key, value]) => { messages[`${index}_${key}`] = value })
+            } else if (result.value) {
+                if (result.value.runtime_synchronized === false) failed = true
+                Object.entries(result.value.messages ?? {}).forEach(([key, value]) => {
+                    messages[`${index}_${key}`] = value
+                })
+            }
+        })
+        if (results.length) showNotification(failed ? 'error' : 'success', messages)
+    } finally {
+        savingSipSettings.value = false
+    }
+}
 
 const form$ = ref(null)
 const generalForm$ = ref(null)
