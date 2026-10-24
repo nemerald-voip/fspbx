@@ -14,6 +14,9 @@ class FlagOverride extends Model
     public const OWNER_RING_GROUP = 'ring_group';
     public const OWNER_IVR_MENU = 'ivr_menu';
 
+    public const STATE_ACTIVE = 'active';
+    public const STATE_INACTIVE = 'inactive';
+
     protected $table = 'flag_overrides';
     protected $primaryKey = 'uuid';
     public $incrementing = false;
@@ -24,6 +27,7 @@ class FlagOverride extends Model
         'owner_type',
         'owner_uuid',
         'flag_uuid',
+        'match_state',
         'override_app',
         'override_data',
         'sort_order',

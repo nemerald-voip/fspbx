@@ -45,6 +45,28 @@ class FlagOverrideDialplanTest extends TestCase
         $this->assertSame('app.lua ring_groups', $xpath->evaluate('string(/extension/condition[4]/action[@application="lua"]/@data)'));
     }
 
+    public function test_inactive_overrides_are_passed_with_their_state(): void
+    {
+        $ringGroup = new RingGroups([
+            'domain_uuid' => self::DOMAIN,
+            'ring_group_name' => 'Sales',
+            'ring_group_extension' => '9000',
+        ]);
+        // The same flag can be used once when active and once when inactive.
+        $ringGroup->setRelation('flagOverrides', collect([
+            $this->override(self::FLAG_A, 'transfer', '1001 XML example.test'),
+            $this->override(self::FLAG_A, 'transfer', '*991002 XML example.test', FlagOverride::STATE_INACTIVE),
+        ]));
+
+        $xpath = $this->render('layouts.xml.ring-group-dial-plan-template', ['ring_group' => $ringGroup]);
+
+        $this->assertSame(
+            'flag_match=${lua(lua/flag_check.lua ' . self::DOMAIN . ' ' . self::FLAG_A . ' ' . self::FLAG_A . ':inactive)}',
+            $xpath->evaluate('string(/extension/condition[1]/action[@inline="true"]/@data)')
+        );
+        $this->assertSame('*991002 XML example.test', $xpath->evaluate('string(/extension/condition[3]/action[@application="transfer"]/@data)'));
+    }
+
     public function test_ring_group_without_flags_is_unchanged(): void
     {
         $ringGroup = new RingGroups([
@@ -79,11 +101,12 @@ class FlagOverrideDialplanTest extends TestCase
         $this->assertSame(3, $xpath->query('/extension/condition')->length);
     }
 
-    private function override(string $flagUuid, string $app, string $data): FlagOverride
+    private function override(string $flagUuid, string $app, string $data, string $state = FlagOverride::STATE_ACTIVE): FlagOverride
     {
         return new FlagOverride([
             'domain_uuid' => self::DOMAIN,
             'flag_uuid' => $flagUuid,
+            'match_state' => $state,
             'override_app' => $app,
             'override_data' => $data,
         ]);

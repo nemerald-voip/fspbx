@@ -400,7 +400,7 @@
                                                     :submits="true" align="right" />
 
                                                 <StaticElement name="flag_title" tag="h4" :content="$t('Flag Overrides')"
-                                                    :description="$t('While a flag is active, calls skip this virtual receptionist and go to its destination. The first active flag in the list wins; drag rows to change the order. When no flag is active, callers hear the menu as normal.')" />
+                                                    :description="$t('Send calls somewhere else while a flag is active or inactive. The first matching row wins; drag rows to change the order. When no row matches, callers hear the menu as normal.')" />
 
                                                 <ListElement name="flag_overrides" :sort="true" :add-text="$t('+ Add flag override')"
                                                     :add-classes="{ ListElement: { listItem: 'bg-white p-3 sm:p-4 mb-4 rounded-lg shadow-md' } }">
@@ -409,11 +409,17 @@
                                                             <SelectElement name="flag_uuid" :items="options.flag_options ?? []" :search="true"
                                                                 :native="false" :label="$t('Flag')" input-type="search" autocomplete="off"
                                                                 :placeholder="$t('Choose Flag')" :floating="false" :strict="false" size="sm"
-                                                                :columns="{ default: { container: 12 }, sm: { container: 4 } }" />
+                                                                :columns="{ default: { container: 12 }, sm: { container: 3 } }" />
+                                                            <SelectElement name="match_state" :items="[
+                                                                    { value: 'active', label: $t('Active') },
+                                                                    { value: 'inactive', label: $t('Inactive') },
+                                                                ]" :native="false" :label="$t('When the Flag Is')" :floating="false" :can-clear="false"
+                                                                :can-deselect="false" default="active" size="sm"
+                                                                :columns="{ default: { container: 12 }, sm: { container: 2 } }" />
                                                             <SelectElement name="action" :items="options.routing_types" label-prop="name" :search="true"
-                                                                :native="false" :label="$t('When Active, Send Calls To')" input-type="search"
+                                                                :native="false" :label="$t('Send Calls To')" input-type="search"
                                                                 autocomplete="off" :placeholder="$t('Choose Action')" :floating="false" :strict="false"
-                                                                size="sm" :columns="{ default: { container: 12 }, sm: { container: 4 } }"
+                                                                size="sm" :columns="{ default: { container: 12 }, sm: { container: 3 } }"
                                                                 @change="(newValue, oldValue, el$) => {
                                                                     let target = el$.form$.el$('flag_overrides').children$[index].children$['target']
                                                                     if (oldValue !== null && oldValue !== undefined) {

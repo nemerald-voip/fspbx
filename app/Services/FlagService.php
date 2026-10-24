@@ -106,7 +106,7 @@ class FlagService
 
     /**
      * Replace the flag overrides for a ring group or virtual receptionist.
-     * Row order is the priority: the first active flag wins.
+     * Row order is the priority: the first row whose flag is in its state wins.
      */
     public function syncOverrides(string $ownerType, string $ownerUuid, string $domainUuid, array $rows, string $domainName): void
     {
@@ -134,6 +134,9 @@ class FlagService
                 'owner_type' => $ownerType,
                 'owner_uuid' => $ownerUuid,
                 'flag_uuid' => $row['flag_uuid'],
+                'match_state' => ($row['match_state'] ?? null) === FlagOverride::STATE_INACTIVE
+                    ? FlagOverride::STATE_INACTIVE
+                    : FlagOverride::STATE_ACTIVE,
                 'override_app' => $destination['destination_app'],
                 'override_data' => $destination['destination_data'],
                 'sort_order' => $index,
@@ -180,6 +183,7 @@ class FlagService
 
             $rows[] = [
                 'flag_uuid' => $override->flag_uuid,
+                'match_state' => $override->match_state ?? FlagOverride::STATE_ACTIVE,
                 'action' => $details['type'] ?? null,
                 'target' => $hasTarget ? [
                     'value' => $details['option'] ?? $details['extension'] ?? null,
@@ -201,12 +205,31 @@ class FlagService
         $domainUuid = session('domain_uuid');
 
         return [
-            'flag_overrides' => ['sometimes', 'nullable', 'array'],
+            'flag_overrides' => [
+                'sometimes',
+                'nullable',
+                'array',
+                // A flag can be used once for each state: once when active and once when inactive.
+                function (string $attribute, mixed $rows, \Closure $fail) {
+                    $seen = [];
+                    foreach ((array) $rows as $row) {
+                        $key = ($row['flag_uuid'] ?? '') . '|' . (($row['match_state'] ?? null) === FlagOverride::STATE_INACTIVE ? 'inactive' : 'active');
+                        if (isset($seen[$key])) {
+                            $fail(__('Each flag can only be used once when active and once when inactive.'));
+                            return;
+                        }
+                        $seen[$key] = true;
+                    }
+                },
+            ],
             'flag_overrides.*.flag_uuid' => [
                 'required',
                 'uuid',
-                'distinct',
                 \Illuminate\Validation\Rule::exists('flags', 'uuid')->where('domain_uuid', $domainUuid),
+            ],
+            'flag_overrides.*.match_state' => [
+                'nullable',
+                \Illuminate\Validation\Rule::in([FlagOverride::STATE_ACTIVE, FlagOverride::STATE_INACTIVE]),
             ],
             'flag_overrides.*.action' => [
                 'required',
@@ -220,8 +243,7 @@ class FlagService
     {
         return [
             'flag_overrides.*.flag_uuid.required' => __('Choose a flag.'),
-            'flag_overrides.*.flag_uuid.distinct' => __('Each flag can only be used once.'),
-            'flag_overrides.*.action.required' => __('Choose where calls go while the flag is active.'),
+            'flag_overrides.*.action.required' => __('Choose where to send calls.'),
         ];
     }
 
