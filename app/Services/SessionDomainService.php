@@ -71,10 +71,13 @@ class SessionDomainService
                 ])
                 ->get();
         } else {
-            // Non-superadmin: from user_permissions
+            // Non-superadmin: their own account plus explicit account grants.
             $domains = Domain::where('v_domains.domain_enabled', '=', 't')
-                ->whereHas('user_permissions', function ($query) use ($user) {
-                    $query->where('user_uuid', '=', $user->user_uuid);
+                ->where(function ($query) use ($user) {
+                    $query->where('v_domains.domain_uuid', $user->domain_uuid)
+                        ->orWhereHas('user_permissions', function ($permissions) use ($user) {
+                            $permissions->where('user_uuid', '=', $user->user_uuid);
+                        });
                 })
                 ->selectRaw('coalesce(domain_description, domain_name) as domain_description')
                 ->addSelect([

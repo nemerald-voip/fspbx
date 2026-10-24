@@ -281,7 +281,7 @@ const hasLoaded = ref(false)
 const lines = ref([])
 const copiedLog = ref(false)
 const sipTraceEnabled = ref(null)
-const fileOptions = ref([{ value: 'freeswitch.log', label: 'freeswitch.log' }])
+const fileOptions = ref([{ value: 'all', label: trans('All local logs') }])
 const correlation = ref({
     seed: null,
     whole_call: true,
@@ -320,7 +320,7 @@ const filterData = ref({
     seed_uuid: '',
     whole_call: true,
     search: '',
-    log_file: 'freeswitch.log',
+    log_file: 'all',
     level: 'all',
     read_size_mb: DEFAULT_READ_SIZE_MB,
     max_lines: 3000,
@@ -425,7 +425,7 @@ const fetchData = async () => {
         meta.value = response.data.meta || meta.value
 
         if (!usingOpenSearch.value && !fileOptions.value.some((file) => file.value === filterData.value.log_file)) {
-            filterData.value.log_file = fileOptions.value[0]?.value || 'freeswitch.log'
+            filterData.value.log_file = fileOptions.value[0]?.value || 'all'
         }
     } catch (error) {
         if (requestSequence !== searchRequestSequence) return
@@ -453,7 +453,7 @@ const handleFiltersReset = () => {
         seed_uuid: '',
         whole_call: true,
         search: '',
-        log_file: 'freeswitch.log',
+        log_file: 'all',
         level: 'all',
         read_size_mb: DEFAULT_READ_SIZE_MB,
         max_lines: 3000,

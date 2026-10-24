@@ -58,6 +58,13 @@ use App\Console\Commands\Updates\Update200;
 use App\Console\Commands\Updates\Update203;
 use App\Console\Commands\Updates\Update204;
 use App\Console\Commands\Updates\Update205;
+use App\Console\Commands\Updates\Update206;
+use App\Console\Commands\Updates\Update207;
+use App\Console\Commands\Updates\Update208;
+use App\Console\Commands\Updates\Update209;
+use App\Console\Commands\Updates\Update210;
+use App\Console\Commands\Updates\Update211;
+use App\Console\Commands\Updates\Update212;
 use App\Console\Commands\Updates\Update0917;
 use App\Console\Commands\Updates\Update0918;
 use App\Console\Commands\Updates\Update0924;
@@ -76,6 +83,7 @@ use App\Console\Commands\Updates\Update0969;
 use App\Console\Commands\Updates\Update0970;
 use App\Services\GitHubApiService;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Process as LaravelProcess;
 use Symfony\Component\Process\Process;
 
 class UpdateApp extends Command
@@ -192,6 +200,13 @@ class UpdateApp extends Command
             '2.0.3' => Update203::class,
             '2.0.4' => Update204::class,
             '2.0.5' => Update205::class,
+            '2.0.6' => Update206::class,
+            '2.0.7' => Update207::class,
+            '2.0.8' => Update208::class,
+            '2.0.9' => Update209::class,
+            '2.1.0' => Update210::class,
+            '2.1.1' => Update211::class,
+            '2.1.2' => Update212::class,
             // Add more versions as needed
         ];
 
@@ -267,7 +282,7 @@ class UpdateApp extends Command
         $modulePrograms = app(\App\Services\ProFeaturesService::class)->getSupervisorProgramsToRestart();
         $supervisorProgramsToRestart = array_merge($supervisorProgramsToRestart, $modulePrograms);
         if (!empty($supervisorProgramsToRestart)) {
-            $this->restartSupervisorPrograms($supervisorProgramsToRestart, !empty($modulePrograms));
+            $this->restartSupervisorPrograms($supervisorProgramsToRestart);
         }
 
         try {
@@ -345,7 +360,7 @@ class UpdateApp extends Command
         $this->executeCommand("chown -R www-data:www-data $directory");
     }
 
-    protected function restartSupervisorPrograms(array $programs, bool $failOnError = false)
+    protected function restartSupervisorPrograms(array $programs): void
     {
         $programs = array_values(array_filter(array_unique($programs)));
 
@@ -353,10 +368,63 @@ class UpdateApp extends Command
             return;
         }
 
-        $this->info('Restarting Supervisor programs: ' . implode(', ', $programs));
+        try {
+            $result = LaravelProcess::timeout(15)->run(['supervisorctl', 'status']);
+        } catch (\Throwable $exception) {
+            $this->warn('Could not read Supervisor status; continuing the update: '.$exception->getMessage());
+            return;
+        }
 
-        $escapedPrograms = implode(' ', array_map('escapeshellarg', $programs));
+        // Status exits nonzero when any program is stopped. Use the individual
+        // states so an intentionally disabled service does not affect others.
+        preg_match_all(
+            '/^(\S+)\s+(STOPPED|STARTING|RUNNING|BACKOFF|STOPPING|EXITED|FATAL|UNKNOWN)\b/m',
+            $result->output(),
+            $matches,
+            PREG_SET_ORDER
+        );
+        $states = array_column($matches, 2, 1);
 
-        $this->executeCommand("supervisorctl restart {$escapedPrograms}", 150, $failOnError);
+        if (empty($states) && $result->failed()) {
+            $this->warn('Could not read Supervisor status; continuing the update: '.trim($result->errorOutput().' '.$result->output()));
+            return;
+        }
+
+        $restartTargets = [];
+        foreach ($programs as $program) {
+            $group = str_ends_with($program, ':*') ? substr($program, 0, -2) : $program;
+            $programStates = array_filter($states, fn ($name) => $name === $program || str_starts_with($name, $group.':'), ARRAY_FILTER_USE_KEY);
+
+            if (empty($programStates)) {
+                $this->info("Skipping Supervisor program {$program}: not configured.");
+                continue;
+            }
+
+            foreach ($programStates as $name => $state) {
+                if ($state === 'RUNNING') {
+                    $restartTargets[$name] = true;
+                } else {
+                    $this->info("Skipping Supervisor program {$name}: {$state}.");
+                }
+            }
+        }
+
+        // Restart each running process separately, including group members, so
+        // stopped siblings stay stopped and a failure cannot block the update.
+        foreach (array_keys($restartTargets) as $program) {
+            $this->info("Restarting Supervisor program: {$program}");
+
+            try {
+                $result = LaravelProcess::timeout(150)->run(['supervisorctl', 'restart', $program], function (string $type, string $output) {
+                    $this->output->write($output);
+                });
+
+                if ($result->failed()) {
+                    $this->warn("Could not restart Supervisor program {$program}; continuing the update.");
+                }
+            } catch (\Throwable $exception) {
+                $this->warn("Could not restart Supervisor program {$program}; continuing the update: ".$exception->getMessage());
+            }
+        }
     }
 }

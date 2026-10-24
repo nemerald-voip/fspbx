@@ -16,6 +16,9 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Contracts\Foundation\Application;
 use App\Http\Requests\UpdateAccountSettingsRequest;
+use App\Http\Requests\UpdateMessagingSettingsRequest;
+use App\Services\Messaging\PhotoCompressionSettings;
+use App\Services\Messaging\PhotoCompressionService;
 use App\Services\Settings\AccountSettingsSchema;
 use App\Services\Settings\SettingsManagementService;
 
@@ -54,6 +57,8 @@ class AccountSettingsController extends Controller
                 'routes' => [
                     'dashboard_route' => route('dashboard'),
                     'settings_update' => route('account-settings.update'),
+                    'messaging_update' => route('account-settings.messaging.update'),
+                    'messaging_reset' => route('account-settings.messaging.destroy'),
                     'emergency_calls' => route('emergency-calls.index'),
                     'emergency_calls_store' => route('emergency-calls.store'),
                     'emergency_calls_item_options' => route('emergency-calls.item.options'),
@@ -90,6 +95,10 @@ class AccountSettingsController extends Controller
                     //'bulk_update' => route('devices.bulk.update'),
                 ],
                 'pms_provider_options' => app(PmsProviderSettings::class)->options(),
+                'messagingSettings' => [
+                    ...app(PhotoCompressionSettings::class)->settings(session('domain_uuid')),
+                    'available' => app(PhotoCompressionService::class)->available(),
+                ],
                 // Schema-driven General-tab settings: the declarative field
                 // list, its resolved option lists, and this account's own
                 // override values (null = inheriting the default).
@@ -304,9 +313,31 @@ class AccountSettingsController extends Controller
         ]);
     }
 
+    public function updateMessaging(UpdateMessagingSettingsRequest $request, PhotoCompressionSettings $settings)
+    {
+        return response()->json([
+            ...$settings->save(session('domain_uuid'), $request->validated()),
+            'available' => app(PhotoCompressionService::class)->available(),
+            'messages' => ['success' => [__('Messaging settings saved.')]],
+        ]);
+    }
+
+    public function destroyMessaging(PhotoCompressionSettings $settings)
+    {
+        abort_unless(userCheckPermission('account_settings_list_view')
+            && session('domain_uuid') && \App\Services\Messaging\MessageSettingsAccess::canManage(), 403);
+
+        return response()->json([
+            ...$settings->revert(session('domain_uuid')),
+            'available' => app(PhotoCompressionService::class)->available(),
+            'messages' => ['success' => [__('Reverted to defaults.')]],
+        ]);
+    }
+
     public function getUserPermissions()
     {
         $permissions = [];
+        $permissions['messaging_manage'] = \App\Services\Messaging\MessageSettingsAccess::canManage();
         $permissions['location_view'] = userCheckPermission('location_view');
         $permissions['location_create'] = userCheckPermission('location_create');
         $permissions['ldap_directory_view'] = userCheckPermission('ldap_directory_view');

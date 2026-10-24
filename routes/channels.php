@@ -18,23 +18,19 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
 });
 
 
-Broadcast::channel('room.{roomId}', function ($user, $roomId) {
-
-    return true;
-    // SECURITY:
-    // 1. If Admin, allow access to all rooms
-    if ($user->can('view_all_rooms') || $user->role === 'admin') {
-        return true;
+Broadcast::channel('room.{domainUuid}.{roomId}', function ($user, $domainUuid, $roomId) {
+    if ($domainUuid !== session('domain_uuid') || !userCheckPermission('messages_view')) {
+        return false;
     }
-
-    // 2. If User, only allow if the room belongs to their extension
-    // You might need to query DB here if room IDs aren't directly linked to user IDs
-    // For now, let's assume if they are logged in and belong to the domain, it's okay:
-    return $user->domain_uuid === request()->user()->domain_uuid;
+    $local = explode('_', $roomId)[0];
+    $members = app(\App\Services\Messaging\MessageParticipantService::class)->members($domainUuid, '+'.$local);
+    return $members->isNotEmpty() && (userCheckPermission('messages_view_as')
+        || $members->contains('extension_uuid', $user->extension_uuid));
 });
 
 Broadcast::channel('extension.{extensionUuid}', function ($user, $extensionUuid) {
-    // Allow if the user owns this extension OR is an admin
-    return true;
-    return $user->extension_uuid === $extensionUuid; // Adjust based on your Auth logic
+    return userCheckPermission('messages_view')
+        && ($user->extension_uuid === $extensionUuid || userCheckPermission('messages_view_as'))
+        && \App\Models\Extensions::where('domain_uuid', session('domain_uuid'))
+            ->where('extension_uuid', $extensionUuid)->exists();
 });

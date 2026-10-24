@@ -24,6 +24,7 @@ class S3RecordingArchiverTest extends TestCase
     private string $originalConnection;
     private S3RecordingArchiver $archiver;
     private array $objects = [];
+    private array $requests = [];
     private int $puts = 0;
     private $afterPut = null;
     private bool $corrupt = false;
@@ -52,6 +53,7 @@ class S3RecordingArchiverTest extends TestCase
             'version' => 'latest', 'region' => 'us-east-1',
             'credentials' => ['key' => 'test', 'secret' => 'test'],
             'handler' => function ($command) {
+                $this->requests[] = $command->getName();
                 $key = $command['Key'];
                 if ($command->getName() === 'PutObject') {
                     $this->puts++;
@@ -100,12 +102,20 @@ class S3RecordingArchiverTest extends TestCase
     {
         $record = $this->record();
         $sibling = $this->record();
+        DB::table('v_xml_cdr')->where('xml_cdr_uuid', $sibling->getKey())->update([
+            'caller_destination' => '1003', 'start_stamp' => '2026-10-01 12:00:10',
+        ]);
+        $this->afterPut = function () use ($record) {
+            $this->assertSame($this->directory, $record->fresh()->record_path);
+            $this->assertFileExists($this->directory.'/call.mp3');
+        };
         $key = $this->archive($record);
         $this->assertSame('S3', $record->fresh()->record_path);
         $this->assertSame($key, $sibling->fresh()->record_name);
         $this->assertFileDoesNotExist($this->directory.'/call.mp3');
         $this->assertNull($this->archive($sibling));
         $this->assertSame(1, $this->puts);
+        $this->assertSame(['PutObject', 'HeadObject'], $this->requests);
         $this->assertSame([], iterator_to_array($this->archiver->receipts()));
     }
 
@@ -120,7 +130,7 @@ class S3RecordingArchiverTest extends TestCase
         $this->assertNotNull($this->archive($record));
     }
 
-    public function test_lost_put_response_is_recovered_without_a_second_upload(): void
+    public function test_lost_put_response_retains_source_and_retry_uploads_before_verification(): void
     {
         $record = $this->record();
         $this->afterPut = fn () => throw new RuntimeException('Lost response.');
@@ -129,10 +139,12 @@ class S3RecordingArchiverTest extends TestCase
         $this->assertSame('call.mp3', $record->fresh()->record_name);
         $this->afterPut = null;
         $this->archive($record);
-        $this->assertSame(1, $this->puts);
+        $this->assertSame(2, $this->puts);
+        $this->assertSame(['PutObject', 'PutObject', 'HeadObject'], $this->requests);
+        $this->assertFileDoesNotExist($this->directory.'/call.mp3');
     }
 
-    public function test_verification_failure_retains_source_and_retry_reuses_existing_object(): void
+    public function test_verification_failure_retains_source_and_retry_uploads_again(): void
     {
         $record = $this->record();
         $this->headFailure = true;
@@ -141,16 +153,18 @@ class S3RecordingArchiverTest extends TestCase
         $this->assertFileExists($this->directory.'/call.mp3');
         $this->headFailure = false;
         $this->archive($record);
-        $this->assertSame(1, $this->puts);
+        $this->assertSame(2, $this->puts);
+        $this->assertSame(['PutObject', 'HeadObject', 'PutObject', 'HeadObject'], $this->requests);
+        $this->assertFileDoesNotExist($this->directory.'/call.mp3');
     }
 
-    public function test_wrong_remote_size_is_never_committed_or_overwritten_on_retry(): void
+    public function test_wrong_remote_size_never_commits_cdrs_or_deletes_source(): void
     {
         $record = $this->record();
         $this->corrupt = true;
         $this->fails(fn () => $this->archive($record), 'verification failed');
         $this->fails(fn () => $this->archive($record), 'verification failed');
-        $this->assertSame(1, $this->puts);
+        $this->assertSame(2, $this->puts);
         $this->assertSame('call.mp3', $record->fresh()->record_name);
         $this->assertFileExists($this->directory.'/call.mp3');
     }
@@ -161,6 +175,7 @@ class S3RecordingArchiverTest extends TestCase
         $record = $this->record();
         $this->assertNotNull($this->archive($record));
         $this->assertSame('S3', $record->fresh()->record_path);
+        $this->assertSame(['PutObject', 'HeadObject'], $this->requests);
     }
 
     public function test_wrong_remote_checksum_with_correct_size_is_rejected(): void
@@ -174,6 +189,7 @@ class S3RecordingArchiverTest extends TestCase
         $this->fails(fn () => $this->archive($record), 'verification failed');
         $this->assertSame('call.mp3', $record->fresh()->record_name);
         $this->assertFileExists($this->directory.'/call.mp3');
+        $this->assertSame([], iterator_to_array($this->archiver->receipts()));
     }
 
     public function test_ownership_change_during_upload_preserves_source_and_database_references(): void
@@ -202,7 +218,7 @@ class S3RecordingArchiverTest extends TestCase
         $this->assertFileExists($this->directory.'/call.mp3');
         $this->assertSame('call.mp3', $record->fresh()->record_name);
         $this->archive($record);
-        $this->assertSame(1, $this->puts);
+        $this->assertSame(2, $this->puts);
     }
 
     public function test_failed_cleanup_is_recovered_from_receipt_after_cdr_is_already_on_s3(): void
@@ -237,16 +253,20 @@ class S3RecordingArchiverTest extends TestCase
         $this->assertSame('recordings/2026/10/01/120000_inbound_1001_1002.mp3', $this->archive($this->record('other.mp3')));
     }
 
-    public function test_existing_name_collision_with_different_content_is_reported_without_overwriting(): void
+    public function test_existing_name_collision_uploads_replacement_and_verifies_it_before_cleanup(): void
     {
         $one = $this->record();
         $two = $this->record('other.mp3');
         file_put_contents($this->directory.'/other.mp3', 'different audio');
-        $this->archive($one);
-        $this->fails(fn () => $this->archive($two), 'verification failed');
-        $this->assertSame(1, $this->puts);
-        $this->assertSame('other.mp3', $two->fresh()->record_name);
-        $this->assertFileExists($this->directory.'/other.mp3');
+        $key = $this->archive($one);
+        $this->assertSame($key, $this->archive($two));
+        $this->assertSame(2, $this->puts);
+        $this->assertSame(['PutObject', 'HeadObject', 'PutObject', 'HeadObject'], $this->requests);
+        $this->assertSame(hash('sha256', 'different audio'), $this->objects[$key]['Metadata']['fspbx-sha256']);
+        $this->assertSame($key, $one->fresh()->record_name);
+        $this->assertSame($key, $two->fresh()->record_name);
+        $this->assertSame('S3', $two->fresh()->record_path);
+        $this->assertFileDoesNotExist($this->directory.'/other.mp3');
     }
 
     public function test_other_tenant_sharing_a_path_is_not_updated_or_left_without_a_source(): void
@@ -260,7 +280,79 @@ class S3RecordingArchiverTest extends TestCase
         $this->archive($other);
         $this->recoverCleanup();
         $this->assertFileDoesNotExist($this->directory.'/call.mp3');
+        $this->assertSame(2, $this->puts);
+    }
+
+    public function test_cdr_update_and_cleanup_queries_keep_the_24_hour_window(): void
+    {
+        $record = $this->record();
+        $before = $this->record();
+        $after = $this->record();
+        DB::table('v_xml_cdr')->where('xml_cdr_uuid', $before->getKey())
+            ->update(['start_stamp' => '2026-09-30 11:59:59']);
+        DB::table('v_xml_cdr')->where('xml_cdr_uuid', $after->getKey())
+            ->update(['start_stamp' => '2026-10-02 12:00:01']);
+
+        DB::enableQueryLog();
+        try {
+            $this->archive($record);
+            $queries = collect(DB::getQueryLog())->filter(fn ($entry) =>
+                str_starts_with($entry['query'], 'update ')
+                || str_contains($entry['query'], 'exists('));
+            $this->assertCount(3, $queries);
+            foreach ($queries as $query) {
+                $this->assertStringContainsString('"start_stamp" between ? and ?', $query['query']);
+                $bindings = array_map(fn ($value) => $value instanceof \DateTimeInterface
+                    ? $value->format('Y-m-d H:i:s') : $value, $query['bindings']);
+                $this->assertContains('2026-09-30 12:00:00', $bindings);
+                $this->assertContains('2026-10-02 12:00:00', $bindings);
+            }
+        } finally {
+            DB::disableQueryLog();
+            DB::flushQueryLog();
+        }
+        $this->assertSame($this->directory, $before->fresh()->record_path);
+        $this->assertSame($this->directory, $after->fresh()->record_path);
+    }
+
+    public function test_cleanup_retry_verifies_remote_object_without_uploading_again(): void
+    {
+        $record = $this->record();
+        $this->archiver->failDelete = true;
+        $this->fails(fn () => $this->archive($record), 'cleanup failed');
+        $this->archiver->failDelete = false;
+        $this->headFailure = true;
+        $this->fails(fn () => $this->recoverCleanup(), 'verification failure');
+        $this->assertFileExists($this->directory.'/call.mp3');
+        $this->headFailure = false;
+        $this->recoverCleanup();
+        $this->assertFileDoesNotExist($this->directory.'/call.mp3');
         $this->assertSame(1, $this->puts);
+        $this->assertSame(['PutObject', 'HeadObject', 'HeadObject', 'HeadObject'], $this->requests);
+    }
+
+    public function test_legacy_receipt_without_timestamp_is_retained_without_querying_cdr_history(): void
+    {
+        $record = $this->record();
+        $this->archiver->failDelete = true;
+        $this->fails(fn () => $this->archive($record), 'cleanup failed');
+        $receipts = iterator_to_array($this->archiver->receipts());
+        $path = array_key_first($receipts);
+        $receipt = $receipts[$path];
+        unset($receipt['xml_cdr_uuid'], $receipt['start_stamp']);
+        file_put_contents($path, json_encode($receipt));
+
+        DB::enableQueryLog();
+        try {
+            $this->assertSame([], iterator_to_array($this->archiver->receipts()));
+            $this->archiver->cleanup($path, $receipt, $this->settings, fn () => null);
+            $this->assertSame([], DB::getQueryLog());
+        } finally {
+            DB::disableQueryLog();
+            DB::flushQueryLog();
+        }
+        $this->assertFileExists($path);
+        $this->assertFileExists($this->directory.'/call.mp3');
     }
 
     public function test_wav_conversion_does_not_overwrite_an_existing_sibling_mp3(): void

@@ -1,4 +1,4 @@
-{{-- version: 1.0.5 --}}
+{{-- version: 1.0.10 --}}
 
 @switch($flavor)
 
@@ -48,6 +48,11 @@
     <!-- ###################################################################### -->
     <!-- ## System Settings / Security Settings / User Info Management        ## -->
     <!-- ###################################################################### -->
+
+    <!-- Allow lowercase, uppercase, numbers, and special characters (1 + 2 + 4 + 8). -->
+    <!-- The firmware default of 7 rejects passwords containing special characters. -->
+    <!-- Keep strict password rules, minimum length, and required classes unchanged. -->
+    <P28792>15</P28792>
 
     <!-- New Admin Password. Uses the same admin_password setting as other Grandstream templates. -->
     <!-- String: 4 to 30 characters -->
@@ -407,6 +412,21 @@
     <!-- Number: 0, 1, 2 -->
     <!-- Mandatory -->
     <P191>0</P191>
+
+    <!-- Loop Current Disconnect. 0 - No, 1 - Yes. Default is 0. -->
+    <!-- Number: 0, 1 -->
+    <!-- Mandatory -->
+    <P892>{{ $settings['grandstream_loop_current_disconnect'] ?? '0' }}</P892>
+
+    <!-- Loop Current Disconnect Duration, in milliseconds. Default is 200. -->
+    <!-- Number: 100 to 10000 -->
+    <!-- Mandatory -->
+    <P856>{{ $settings['grandstream_loop_current_disconnect_duration'] ?? '200' }}</P856>
+
+    <!-- Polarity Reversal. 0 - No, 1 - Yes. Default is 0. -->
+    <!-- Number: 0, 1 -->
+    <!-- Mandatory -->
+    <P205>{{ $settings['grandstream_polarity_reversal'] ?? '0' }}</P205>
     @elseif ($n === 2)
     <!-- ###################################################################### -->
     <!-- ## Port Settings / FXS Port 2 / Account Registration                  ## -->
@@ -578,6 +598,21 @@
     <!-- Number: 0, 1, 2 -->
     <!-- Mandatory -->
     <P751>0</P751>
+
+    <!-- Loop Current Disconnect. 0 - No, 1 - Yes. Default is 0. -->
+    <!-- Number: 0, 1 -->
+    <!-- Mandatory -->
+    <P893>{{ $settings['grandstream_loop_current_disconnect'] ?? '0' }}</P893>
+
+    <!-- Loop Current Disconnect Duration, in milliseconds. Default is 200. -->
+    <!-- Number: 100 to 10000 -->
+    <!-- Mandatory -->
+    <P857>{{ $settings['grandstream_loop_current_disconnect_duration'] ?? '200' }}</P857>
+
+    <!-- Polarity Reversal. 0 - No, 1 - Yes. Default is 0. -->
+    <!-- Number: 0, 1 -->
+    <!-- Mandatory -->
+    <P865>{{ $settings['grandstream_polarity_reversal'] ?? '0' }}</P865>
     @endif
 @endforeach
 

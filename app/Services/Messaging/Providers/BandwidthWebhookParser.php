@@ -41,6 +41,9 @@ class BandwidthWebhookParser implements MessagingWebhookParser
                     'text' => (string) data_get($event, 'message.text', ''),
                     'mediaUrls' => $this->normalizeMediaUrls(data_get($event, 'message.media', [])),
                     'providerEvent' => $type,
+                    'isMms' => data_get($event, 'message.channel') === 'mms'
+                        || count($this->normalizeToList(data_get($event, 'message.to', []))) > 1,
+                    'localRecipients' => $this->normalizeToList(data_get($event, 'message.owner') ?: data_get($event, 'to')) ?: null,
                 ]);
 
                 messaging_webhook_debug('Bandwidth parser yielding inbound event', [
@@ -63,6 +66,8 @@ class BandwidthWebhookParser implements MessagingWebhookParser
                     'status' => $type === 'message-delivered' ? 'delivered' : 'failed',
                     'description' => $this->buildStatusDescription($event),
                     'providerEvent' => $type,
+                    'recipient' => data_get($event, 'to'),
+                    'occurredAt' => data_get($event, 'time'),
                 ]);
 
                 messaging_webhook_debug('Bandwidth parser yielding status event', [

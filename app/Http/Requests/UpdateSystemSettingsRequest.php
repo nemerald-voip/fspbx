@@ -74,6 +74,8 @@ class UpdateSystemSettingsRequest extends FormRequest
             'settings.time_zone' => __('Time Zone'),
             'settings.language' => __('Language'),
             'settings.menu' => __('Default Menu'),
+            'settings.line_display_name_format' => __('Line Display Name'),
+            'settings.blf_label_format' => __('BLF Label'),
         ];
     }
 }

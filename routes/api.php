@@ -17,12 +17,14 @@ use App\Http\Controllers\Api\ProvisioningTemplateController;
 use App\Http\Controllers\BasicQueueController;
 use App\Http\Controllers\BusinessHoursController;
 use App\Http\Controllers\FlagsController;
+use App\Http\Controllers\PagingGroupsController;
 use App\Http\Controllers\BridgeController;
 use App\Http\Controllers\CallBlockController;
 use App\Http\Controllers\CallWebhookController;
 use App\Http\Controllers\CallFlowController;
 use App\Http\Controllers\CallTranscriptionController;
 use App\Http\Controllers\CdrsController;
+use App\Http\Controllers\HomerApiController;
 use App\Http\Controllers\CharPmsWebhookController;
 use App\Http\Controllers\ConferenceCenterController;
 use App\Http\Controllers\ConferenceController;
@@ -125,6 +127,9 @@ Route::post('/ai-tools/retell/send-email', [AiToolController::class, 'sendEmail'
     ->name('ai-tools.retell.send-email');
 
 Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () {
+    Route::put('/system-settings/homer-api', [HomerApiController::class, 'update'])->name('homer-api.update');
+    Route::post('/system-settings/homer-api/test', [HomerApiController::class, 'test'])->middleware('throttle:6,1')->name('homer-api.test');
+    Route::post('/cdrs/sip-trace', [HomerApiController::class, 'trace'])->middleware('throttle:10,1')->name('cdrs.sip-trace');
     Route::get('/ai-agents/data', [AiAgentController::class, 'data'])->name('ai-agents.data');
     Route::post('/ai-agents/item-options', [AiAgentController::class, 'itemOptions'])->name('ai-agents.item-options');
     Route::get('/ai-agents/integration', [AiProviderIntegrationController::class, 'show'])->name('ai-agents.integration.show');
@@ -343,6 +348,14 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('flags/select-all', [FlagsController::class, 'selectAll'])->name('flags.select.all');
     Route::post('flags/bulk-delete', [FlagsController::class, 'bulkDelete'])->name('flags.bulk.delete');
     Route::post('flags/bulk-toggle', [FlagsController::class, 'bulkToggle'])->name('flags.bulk.toggle');
+    // Paging groups
+    Route::get('paging-groups/data', [PagingGroupsController::class, 'getData'])->name('paging-groups.data');
+    Route::post('paging-groups', [PagingGroupsController::class, 'store'])->name('paging-groups.store');
+    Route::put('paging-groups/{paging_group}', [PagingGroupsController::class, 'update'])->name('paging-groups.update');
+    Route::post('paging-groups/item-options', [PagingGroupsController::class, 'getItemOptions'])->name('paging-groups.item.options');
+    Route::post('paging-groups/select-all', [PagingGroupsController::class, 'selectAll'])->name('paging-groups.select.all');
+    Route::post('paging-groups/bulk-delete', [PagingGroupsController::class, 'bulkDelete'])->name('paging-groups.bulk.delete');
+    Route::post('paging-groups/bulk-toggle', [PagingGroupsController::class, 'bulkToggle'])->name('paging-groups.bulk.toggle');
 
     // Holiday Hours
     Route::resource('/holiday-hours', HolidayHoursController::class);
@@ -884,6 +897,8 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::get('account-settings/pms-provider', [AccountSettingsController::class, 'pmsProvider'])->name('account-settings.pms-provider');
     Route::put('account-settings/pms-provider', [AccountSettingsController::class, 'updatePmsProvider'])->name('account-settings.pms-provider.update');
     Route::put('account-settings/update', [AccountSettingsController::class, 'update'])->name('account-settings.update');
+    Route::put('account-settings/messaging', [AccountSettingsController::class, 'updateMessaging'])->name('account-settings.messaging.update');
+    Route::delete('account-settings/messaging', [AccountSettingsController::class, 'destroyMessaging'])->name('account-settings.messaging.destroy');
 
     // Default Settings
     Route::get('default-settings/data', [DefaultSettingsController::class, 'data'])->name('default-settings.data');
@@ -913,6 +928,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('contacts', [ContactController::class, 'store'])->name('contacts.store');
     Route::get('contacts/options', [ContactController::class, 'options'])->name('contacts.options');
     Route::get('contacts/{phoneNumber}', [ContactController::class, 'show'])->name('contacts.show');
+    Route::put('/contacts/{contact}', [ContactController::class, 'update'])->name('contacts.update');
     Route::delete('/contacts/{contact}', [ContactController::class, 'destroy'])->name('contacts.destroy');
 
     // Route::post('/contacts/item-options', [ContactsController::class, 'getItemOptions'])->name('contacts.item.options');
@@ -939,6 +955,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
 
     // System Settings
     Route::put('system-settings/update', [SystemSettingsController::class, 'update'])->name('system-settings.update');
+    Route::put('system-settings/messaging', [SystemSettingsController::class, 'updateMessaging'])->name('system-settings.messaging.update');
     Route::get('system-settings/number-translations', [NumberTranslationController::class, 'index'])->name('number-translations.index');
     Route::post('system-settings/number-translations', [NumberTranslationController::class, 'store'])->name('number-translations.store');
     Route::post('system-settings/number-translations/sync', [NumberTranslationController::class, 'sync'])->name('number-translations.sync');
@@ -980,11 +997,14 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
 
     // Messages
     Route::get('/messages/rooms', [MessageController::class, 'rooms'])->name('messages.rooms');
+    Route::post('/messages/conversations', [MessageController::class, 'prepareConversation'])->name('messages.prepare-conversation');
     Route::get('/messages/rooms/{roomId}/messages', [MessageController::class, 'roomMessages'])->name('messages.room.messages');
     Route::post('/messages/send', [MessageController::class, 'send'])->name('messages.send');
     Route::get('/messages/logs', [MessageController::class, 'logs'])->name('messages.logs');
     Route::get('/messages/data', [MessageController::class, 'getData'])->name('messages.data');
     Route::post('/messages/mark-read', [MessageController::class, 'markRead'])->name('messages.mark-read');
+    Route::post('/messages/hide-conversation', [MessageController::class, 'hideConversation'])->name('messages.hide-conversation');
+    Route::delete('/messages/conversation', [MessageController::class, 'deleteConversation'])->name('messages.delete-conversation');
     Route::post('/messages/retry', [MessageController::class, 'retry'])->name('messages.retry');
 
     // Message Settings

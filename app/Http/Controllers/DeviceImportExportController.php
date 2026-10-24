@@ -316,10 +316,10 @@ class DeviceImportExportController extends Controller
             'server_address_secondary' => get_domain_setting('server_address_secondary', $domainUuid),
             'outbound_proxy_primary' => get_domain_setting('outbound_proxy_primary', $domainUuid),
             'outbound_proxy_secondary' => get_domain_setting('outbound_proxy_secondary', $domainUuid),
-            'display_name' => $extension->extension,
+            'display_name' => null,
             'user_id' => $extension->extension,
             'auth_id' => $extension->extension,
-            'label' => $extension->extension,
+            'label' => null,
             'password' => $extension->password,
             'sip_port' => get_domain_setting('line_sip_port', $domainUuid),
             'sip_transport' => get_domain_setting('line_sip_transport', $domainUuid),
@@ -342,6 +342,11 @@ class DeviceImportExportController extends Controller
 
         $linePayload['device_uuid'] = $device->device_uuid;
         $linePayload['device_line_uuid'] = $existingLine?->device_line_uuid;
+
+        // Re-importing the same extension keeps a name typed on the line.
+        if ($existingLine && (string) $existingLine->auth_id === (string) $linePayload['auth_id']) {
+            unset($linePayload['display_name'], $linePayload['label']);
+        }
 
         $line = $existingLine ?: new DeviceLines();
         $line->fill($linePayload);

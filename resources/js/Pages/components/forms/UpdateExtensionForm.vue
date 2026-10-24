@@ -68,6 +68,7 @@
                                     emergency_caller_id_number: options.item.emergency_caller_id_number_e164 ?? '',
                                     outbound_caller_id_name: options.item.outbound_caller_id_name ?? '',
                                     emergency_caller_id_name: options.item.emergency_caller_id_name ?? '',
+                                    emergency_location: options.item.emergency_location ?? '',
                                     call_timeout: options.item.call_timeout ?? null,
                                     call_screen_enabled: options.item.call_screen_enabled ?? 'false',
                                     max_registrations: options.item.max_registrations ?? '',
@@ -224,6 +225,7 @@
                                                     'outbound_caller_id_name',
                                                     'emergency_caller_id_number',
                                                     'emergency_caller_id_name',
+                                                    'emergency_location',
                                                     'container_caller_id',
                                                     'submit_caller_id',
 
@@ -559,6 +561,11 @@
                                                 <TextElement name="emergency_caller_id_name" :label="$t('Name')"
                                                     :placeholder="companyNamePlaceholder('emergency') || $t('Enter Emergency Caller ID Name')" :floating="false"
                                                     :conditions="[() => options.permissions.manage_emergency_caller_id_name]" />
+
+                                                <TextElement name="emergency_location" :label="$t('Location')" autocomplete="off"
+                                                    :placeholder="$t('Suite, floor, or other location')" :floating="false"
+                                                    :info="$t('Location information for Dynamic E911, such as a suite or floor. Your carrier must support this feature.')"
+                                                    :conditions="[() => options.permissions.manage_emergency_caller_id_number]" />
 
                                                 <GroupElement name="container_caller_id" />
 

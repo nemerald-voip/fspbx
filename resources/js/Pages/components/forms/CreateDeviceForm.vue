@@ -248,7 +248,9 @@
                                                                 }" :placeholder="$t('Choose Ext/Number')" :floating="false"
                                                                 @change="(newValue, oldValue, el$) => {
 
-                                                                    el$.form$.el$('device_lines').children$[index].children$['display_name'].update(newValue);
+                                                                    if (oldValue && newValue !== oldValue) {
+                                                                        el$.form$.el$('device_lines').children$[index].children$['display_name'].update('');
+                                                                    }
                                                                     el$.form$.el$('device_lines').children$[index].children$['user_id'].update(newValue);
 
 
@@ -277,7 +279,7 @@
                                                                     sm: {
                                                                         container: 3,
                                                                     },
-                                                                }" :placeholder="$t('Display Name')" :floating="false" />
+                                                                }" :placeholder="lineDisplayNamePlaceholder(index)" :floating="false" />
 
                                                             <StaticElement label="&nbsp;" name="key_advanced" :columns="{
 
@@ -546,6 +548,7 @@ import { XMarkIcon } from "@heroicons/vue/24/solid";
 import { Cog8ToothIcon } from "@heroicons/vue/24/outline";
 import FormChildModal from "../FormChildModal.vue"
 import { trans } from "@i18n";
+import { automaticKeyLabel, effectiveLineDisplayName } from "../../../composables/extensionLabel.js";
 
 
 const props = defineProps({
@@ -598,6 +601,28 @@ function isExternalLine(index) {
     return form$?.value?.el$(`device_lines.${index}.line_type_id`)?.value === 'externalline'
 }
 
+// A blank Display Name follows the account's line display name format.
+function lineDisplayName(form, index) {
+    const displayName = form?.el$(`device_lines.${index}.display_name`)?.value
+
+    if (form?.el$(`device_lines.${index}.line_type_id`)?.value === 'externalline') {
+        return String(displayName ?? '').trim()
+    }
+
+    return effectiveLineDisplayName(displayName, form?.el$(`device_lines.${index}.auth_id`)?.value, props.options)
+}
+
+function lineDisplayNamePlaceholder(index) {
+    if (isExternalLine(index)) {
+        return trans('Display Name')
+    }
+
+    const authId = form$.value?.el$(`device_lines.${index}.auth_id`)?.value
+    const automatic = effectiveLineDisplayName('', authId, props.options)
+
+    return automatic || trans('Display Name')
+}
+
 const handleTabSelected = (activeTab, previousTab) => {
 
 }
@@ -645,7 +670,7 @@ const getKeyValueSelectItems = async (query, input, index) => {
         const count = deviceLinesEl?.children$Array?.length ?? deviceLinesEl?.value?.length ?? 0
 
         return Array.from({ length: count }, (_, i) => {
-            const displayName = form$.el$(`device_lines.${i}.display_name`)?.value ?? ''
+            const displayName = lineDisplayName(form$, i)
             return {
                 extension: `${i + 1}`,
                 name: trans('Line :number', { number: i + 1 }) + (displayName ? ' - ' + displayName : ''),
@@ -724,7 +749,7 @@ const updateLabel = (newValue, oldValue, el$, index) => {
         const selected = (keyValueOptionsByIndex[index] ?? [])
             .find(o => String(o.extension) === String(newValue))
 
-        label = nameOnlyFromOption(selected)
+        label = automaticKeyLabel(newValue, props.options) ?? nameOnlyFromOption(selected)
 
         // Clear the actual input value
         keyLabelEl.update(null)

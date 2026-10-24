@@ -80,6 +80,23 @@ class CallFlows extends Model
         )->shouldCache();
     }
 
+    /**
+     * Destination the call flow currently sends calls to, for list displays.
+     */
+    public function activeRouteSummary(): array
+    {
+        $details = $this->call_flow_status !== 'false'
+            ? $this->call_flow_option_details
+            : $this->call_flow_alternate_option_details;
+
+        $type = $details['type'] ?? null;
+
+        return [
+            'name' => $details['name'] ?? null,
+            'type' => $type ? (new CallRoutingOptionsService($this->domain_uuid))->getFriendlyTypeName($type) : null,
+        ];
+    }
+
     protected function computeCallFlowOptionDetails(?string $app, ?string $data): array
     {
         if (!filled($app)) {

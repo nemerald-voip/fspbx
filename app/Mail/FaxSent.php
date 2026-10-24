@@ -2,7 +2,6 @@
 
 namespace App\Mail;
 
-use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 
 class FaxSent extends BaseMailable
@@ -34,13 +33,13 @@ class FaxSent extends BaseMailable
         $path = $this->attributes['attachment_path'] ?? null;
 
         if (!$path || !is_file($path)) {
-            return [];
+            return $this->attachmentsFromReferences([]);
         }
 
-        return [
-            Attachment::fromPath($path)
-                ->as($this->attributes['attachment_name'] ?? basename($path))
-                ->withMime($this->attributes['attachment_mime'] ?? 'application/pdf'),
-        ];
+        return $this->attachmentsFromReferences([[
+            'path' => $path,
+            'name' => $this->attributes['attachment_name'] ?? basename($path),
+            'mime' => $this->attributes['attachment_mime'] ?? 'application/pdf',
+        ]]);
     }
 }

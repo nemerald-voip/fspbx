@@ -15,6 +15,9 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Contracts\Foundation\Application;
 use App\Http\Requests\UpdateSipCaptureSettingsRequest;
 use App\Http\Requests\UpdateSystemSettingsRequest;
+use App\Http\Requests\UpdateMessagingSettingsRequest;
+use App\Services\Messaging\PhotoCompressionSettings;
+use App\Services\Messaging\PhotoCompressionService;
 use App\Services\Settings\SettingsManagementService;
 use App\Services\Settings\SystemSettingsSchema;
 use App\Services\SipCaptureService;
@@ -49,6 +52,7 @@ class SystemSettingsController extends Controller
                 'routes' => [
                     'dashboard_route' => route('dashboard'),
                     'settings_update' => route('system-settings.update'),
+                    'messaging_update' => route('system-settings.messaging.update'),
                     'number_translations' => [
                         'index' => route('number-translations.index'),
                         'store' => route('number-translations.store'),
@@ -56,6 +60,8 @@ class SystemSettingsController extends Controller
                         'sync' => route('number-translations.sync'),
                     ],
                     'sip_capture_update' => route('system-settings.sip_capture.update'),
+                    'homer_api_update' => route('homer-api.update'),
+                    'homer_api_test' => route('homer-api.test'),
                     'payment_gateways' => route('system-settings.payment_gateways'),
                     'payment_gateway_update' => route('gateway.update'),
                     'payment_gateway_deactivate' => route('gateway.deactivate'),
@@ -81,6 +87,14 @@ class SystemSettingsController extends Controller
                         ? $this->sipCapture->settings()
                         : null;
                 },
+                'homer_api' => fn () => \App\Services\HomerApiService::canManage()
+                    ? app(\App\Services\HomerApiService::class)->publicSettings() : null,
+                'messagingSettings' => function () {
+                    return userCheckPermission('default_setting_view') ? [
+                        ...app(PhotoCompressionSettings::class)->settings(),
+                        'available' => app(PhotoCompressionService::class)->available(),
+                    ] : null;
+                },
                 'scheduled_jobs' => function () {
                     return userCheckPermission('scheduled_jobs_manage')
                         ? app(ScheduledJobCoordinationController::class)->controlProps()
@@ -91,6 +105,15 @@ class SystemSettingsController extends Controller
                 },
             ]
         );
+    }
+
+    public function updateMessaging(UpdateMessagingSettingsRequest $request, PhotoCompressionSettings $settings): JsonResponse
+    {
+        return response()->json([
+            ...$settings->save(null, $request->validated()),
+            'available' => app(PhotoCompressionService::class)->available(),
+            'messages' => ['success' => [__('Messaging settings saved.')]],
+        ]);
     }
 
     public function updateSipCapture(UpdateSipCaptureSettingsRequest $request): JsonResponse
@@ -245,6 +268,7 @@ class SystemSettingsController extends Controller
         }
         $permissions['sip_capture_view'] = $this->canViewSipCapture();
         $permissions['sip_capture_edit'] = $this->canEditSipCapture();
+        $permissions['homer_api_manage'] = \App\Services\HomerApiService::canManage();
 
         return $permissions;
     }

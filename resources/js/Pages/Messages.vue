@@ -1,8 +1,9 @@
 <template>
+    <Head :title="unreadTotal ? `(${unreadTotal}) ${$t('Messages')}` : $t('Messages')" />
 
     <div class="flex flex-col h-screen overflow-hidden">
 
-        <MainLayout />
+        <MainLayout :message-unread-count="unreadTotal" />
 
         <!-- Main Layout: Full Screen Flex Container -->
         <div class="flex-1 min-h-0 flex w-full mx-auto m-4 border rounded-xl overflow-hidden shadow-xl bg-white">
@@ -11,7 +12,7 @@
             <aside class="w-80 bg-white border-r border-gray-200 flex flex-col">
                 <!-- Header -->
                 <div class="p-4 border-b border-gray-100 flex justify-between items-center">
-                    <h2 class="text-xl font-bold text-gray-800">Messages</h2>
+                    <h2 class="text-xl font-bold text-gray-800">{{ $t('Messages') }} <span v-if="unreadTotal" class="rounded-full bg-blue-100 px-2 text-sm text-blue-700">{{ unreadTotal }}</span></h2>
                     <!-- Optional: Loading Indicator -->
                     <div class="flex items-center space-x-2">
 
@@ -92,10 +93,20 @@
                         <div class="flex flex-col items-end space-y-1">
 
                             <!-- Time -->
-                            <span class="text-[10px] font-medium whitespace-nowrap"
-                                :class="room.unread > 0 ? 'text-blue-600' : 'text-gray-400'">
+                            <div class="grid min-h-6 items-center justify-items-end">
+                            <span class="col-start-1 row-start-1 text-[10px] font-medium whitespace-nowrap"
+                                :class="[props.permissions.messages_delete && 'group-hover:invisible group-focus-within:invisible',
+                                    room.unread > 0 ? 'text-blue-600' : 'text-gray-400']">
                                 {{ formatDate(room.timestamp) }}
                             </span>
+
+                            <button v-if="props.permissions.messages_delete" type="button"
+                                class="col-start-1 row-start-1 inline-flex opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 items-center justify-center rounded p-1 text-red-600 hover:bg-red-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-red-600"
+                                :aria-label="$t('Delete conversation for me')" :title="$t('Delete conversation for me')"
+                                :disabled="hidingRoom === room.id" @click.stop="conversationToDelete = { room, extension: currentExtensionUuid }">
+                                <TrashIcon class="h-4 w-4" aria-hidden="true" />
+                            </button>
+                            </div>
 
                             <!-- Red Unread Badge -->
                             <span v-if="room.unread > 0"
@@ -114,12 +125,15 @@
 
                 <!-- Chat Toolbar -->
                 <div
-                    class="h-16 border-b border-gray-200 bg-white flex justify-between items-center px-6 shadow-sm z-10">
-                    <div>
+                    class="min-h-16 py-3 border-b border-gray-200 bg-white flex justify-between items-center px-6 shadow-sm z-10">
+                    <div class="min-w-0">
                         <h3 class="font-bold text-gray-800 text-lg">{{ currentRoomName }}</h3>
                         <span class="text-xs text-gray-500 font-mono" v-if="activeRoomId">
-                            {{ activeRoomId.split('_')[1] }}
+                            {{ currentRoom?.message_group_uuid ? $t('Group MMS') : activeRoomId.split('_')[1] }}
                         </span>
+                        <p v-if="currentRoom?.message_group_uuid" class="text-xs text-gray-500 break-words mt-1">
+                            {{ currentRoom.recipients.join(', ') }}
+                        </p>
                     </div>
 
                     <!-- Toggle Contact Panel Button -->
@@ -135,27 +149,10 @@
                     </button>
                 </div>
 
-                <deep-chat ref="elementRef" :history="currentHistory" :connect="connectConfig" :images="true"
-                    :introMessage="introMessage"
-                    style="width: 100%; height: 100%; border: none; background-color: #f3f4f6;" :messageStyles="{
-                        default: {
-                            shared: {
-                                bubble: { maxWidth: '80%', padding: '10px 15px', borderRadius: '12px' }
-                            },
-                            user: {
-                                bubble: { backgroundColor: '#3b82f6', color: 'white' }
-                            },
-                            ai: {
-                                bubble: { backgroundColor: '#ffffff', color: '#1f2937' }
-                            }
-                        }
-                    }" :textInput="{
-                        placeholder: { text: 'Type a message...' },
-                        styles: {
-                            container: { backgroundColor: 'white', borderTop: '1px solid #e5e7eb', maxHeight: '100px', },
-                            text: { color: '#374151' }
-                        }
-                    }">
+                <deep-chat :key="`${currentExtensionUuid}:${activeRoomId}`" ref="elementRef"
+                    :connect="connectConfig" :images="chatImageInput" :onComponentRender="renderChatHistory"
+                    :messageStyles="chatMessageStyles" :textInput="chatTextInput"
+                    style="width: 100%; height: 100%; border: none; background-color: #f3f4f6;">
                 </deep-chat>
             </main>
 
@@ -167,11 +164,19 @@
                 <div
                     class="flex-shrink-0 h-16 px-6 border-b border-gray-100 flex justify-between items-center bg-white">
                     <h2 class="text-lg font-bold text-gray-800">
-                        {{ isEditingContact ? 'Edit Contact' : 'Contact Details' }}
+                        {{ currentRoom?.message_group_uuid && !selectedGroupParticipant
+                            ? $t('Conversation Details')
+                            : (isEditingContact ? $t('Edit Contact') : $t('Contact Details')) }}
                     </h2>
                     <div class="flex items-center space-x-3">
+                        <button v-if="currentRoom?.message_group_uuid && selectedGroupParticipant"
+                            @click="showGroupParticipants"
+                            class="text-sm font-medium text-blue-600 hover:text-blue-800">
+                            {{ $t('Back') }}
+                        </button>
                         <!-- Edit/Cancel Button -->
-                        <button @click="toggleContactEditForm" class="text-sm font-medium transition-colors"
+                        <button v-if="!currentRoom?.message_group_uuid || selectedGroupParticipant"
+                            @click="toggleContactEditForm" class="text-sm font-medium transition-colors"
                             :class="isEditingContact ? 'text-red-500 hover:text-red-700' : 'text-blue-600 hover:text-blue-800'">
                             {{ isEditingContact ? 'Cancel' : 'Edit' }}
                         </button>
@@ -190,8 +195,39 @@
                 <!-- SCROLLABLE CONTENT AREA -->
                 <div class="flex-1 overflow-y-auto p-6">
 
+                    <!-- GROUP PARTICIPANTS -->
+                    <div v-if="currentRoom?.message_group_uuid && !selectedGroupParticipant" class="space-y-5">
+                        <div>
+                            <p class="text-xs font-bold uppercase tracking-wider text-gray-400">{{ $t('Sending number') }}</p>
+                            <p class="mt-1 text-sm font-medium text-gray-900">{{ currentRoom.my_number }}</p>
+                        </div>
+
+                        <div class="border-t border-gray-100 pt-4">
+                            <p class="mb-3 text-xs font-bold uppercase tracking-wider text-gray-400">{{ $t('Participants') }}</p>
+                            <div class="space-y-2">
+                                <div v-for="participant in groupParticipants" :key="participant.number"
+                                    class="flex items-center justify-between gap-3 rounded-lg border border-gray-100 px-3 py-3">
+                                    <div class="min-w-0">
+                                        <button v-if="participant.name" type="button"
+                                            class="block truncate text-left text-sm font-semibold text-blue-600 hover:underline"
+                                            @click="openGroupParticipant(participant)">
+                                            {{ participant.name }}
+                                        </button>
+                                        <p v-else class="text-sm font-medium text-gray-900">{{ participant.number }}</p>
+                                        <p v-if="participant.name" class="truncate text-xs text-gray-500">{{ participant.number }}</p>
+                                    </div>
+                                    <button v-if="!participant.name" type="button"
+                                        class="shrink-0 rounded-md px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50"
+                                        @click="addGroupParticipant(participant.number)">
+                                        {{ $t('Add contact') }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- VIEW MODE -->
-                    <div v-if="!isEditingContact" class="space-y-6">
+                    <div v-else-if="!isEditingContact" class="space-y-6">
 
                         <!-- Identity Header -->
                         <div class="text-center">
@@ -339,6 +375,7 @@
                     <!-- EDIT MODE (Form) -->
                     <div v-else class="flex flex-col h-full">
                         <Vueform ref="contactForm$" :float-placeholders="false" :schema="contactFormSchema"
+                            :validate-on="''" @mounted="(form) => form.disableValidation()"
                             :endpoint="submitContactForm" @response="handleContactResponse"
                             @success="handleContactSuccess" @error="handleContactError" :display-errors="false" />
 
@@ -358,16 +395,16 @@
         <div v-if="showCreateModal"
             class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
             <div class="bg-white rounded-lg shadow-2xl w-96 p-6 transform transition-all scale-100">
-                <h3 class="text-lg font-bold text-gray-900 mb-4">Start New Conversation</h3>
+                <h3 class="text-lg font-bold text-gray-900 mb-4">{{ $t('Start New Conversation') }}</h3>
 
                 <!-- VueForm Component -->
-                <Vueform :endpoint="false" :float-placeholders="false" :schema="createRoomSchema"
-                    @submit="handleCreateRoom" />
+                <Vueform :endpoint="false" :float-placeholders="false" :schema="createRoomSchema" :validate-on="''"
+                    @mounted="(form) => form.disableValidation()" @submit="handleCreateRoom" />
 
                 <!-- Close Button (Optional, if not included in form actions) -->
                 <div class="mt-4 flex justify-center">
                     <button @click="showCreateModal = false"
-                        class="text-sm text-gray-400 hover:text-gray-600">Cancel</button>
+                        class="text-sm text-gray-400 hover:text-gray-600">{{ $t('Cancel') }}</button>
                 </div>
             </div>
         </div>
@@ -394,6 +431,12 @@
         @update:show="hideNotification" />
 
     <!-- DELETE CONTACT CONFIRMATION MODAL -->
+    <ConfirmationModal :show="!!conversationToDelete" :loading="!!hidingRoom"
+        @close="!hidingRoom && (conversationToDelete = null)" @confirm="deleteConversation"
+        :header="$t('Delete conversation for me?')"
+        :text="$t('Existing messages will be permanently removed from your conversation history. Other users keep their copies. New messages will start a fresh history for you.')"
+        :confirm-button-label="$t('Delete')" :cancel-button-label="$t('Cancel')" />
+
     <ConfirmationModal :show="showDeleteContactModal" @close="showDeleteContactModal = false"
         @confirm="handleDeleteContact" header="Delete Contact?"
         :text="`Are you sure you want to delete ${contactFullName}? This action cannot be undone, but your chat history will remain.`"
@@ -402,25 +445,36 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, onBeforeUnmount, nextTick } from "vue";
+import { computed, onMounted, ref, onBeforeUnmount, nextTick, watch } from "vue";
 import axios from 'axios';
+import { Head } from '@inertiajs/vue3';
 import 'deep-chat'; // Registers the web component
 import MainLayout from "../Layouts/MainLayout.vue";
 import Notification from "./components/notifications/Notification.vue";
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
+import { TrashIcon } from '@heroicons/vue/24/outline';
+import { trans } from '@i18n';
+import { clearServerFormErrors, showServerFormErrors } from '../composables/serverFormErrors.js';
 // import Pusher from 'pusher-js';
 
 // --- Props (from Laravel/Inertia) ---
 const props = defineProps({
     routes: { type: Object, required: true },
+    domainUuid: { type: String, required: true },
+    currentUserUuid: { type: String, required: true },
     permissions: { type: Object, default: () => ({}) }
 })
 
 // --- State ---
 const data = ref([]);
 const activeRoomId = ref(null);
+const creatingConversation = ref(false);
+const currentRoom = computed(() => rooms.value.find(room => room.id === activeRoomId.value));
 const rooms = ref([]);
+const unreadTotal = ref(0);
 const loadingRooms = ref(false);
+const hidingRoom = ref(null);
+const conversationToDelete = ref(null);
 const currentHistory = ref([]); // Messages for the active room
 const showCreateModal = ref(false);
 const currentExtensionUuid = ref(null);
@@ -430,6 +484,7 @@ const notificationShow = ref(null);
 let globalEchoChannel = null;
 const showContactPanel = ref(true); // Toggle for right sidebar
 const contactData = ref(null);
+const selectedGroupParticipant = ref(null);
 const isEditingContact = ref(false);
 const showOrgModal = ref(false);
 const contactForm$ = ref(null);
@@ -439,21 +494,135 @@ const extensionForm$ = ref(null);
 
 // DIDs State (Populated when extension changes)
 const myDids = ref([]);
-const locallySentMessages = ref([]);
+const newConversationSource = ref(null);
+const newConversationRecipientLimit = computed(() =>
+    myDids.value.find(did => did.number === newConversationSource.value)?.max_recipients ?? 1);
+watch(showCreateModal, (open) => {
+    if (open) newConversationSource.value = myDids.value[0]?.number ?? null;
+});
+const elementRef = ref(null);
+let historyRequest = 0;
+let roomsRequest = 0;
 
-// Global Variable to store DeepChat signals ---
-let deepChatSignals = null;
+// The thread opens on the newest page; scrolling near the top loads earlier pages.
+const MESSAGE_PAGE_SIZE = 20;
+const loadedRows = new Map(); // message id -> API row for the active room
+let hasOlderMessages = false;
+let loadingOlderMessages = false;
+let historyGeneration = 0; // bumps when the active room changes
+let keepPlaceOnRender = null; // 'prepend' while adding earlier messages above the reader
+
+watch(() => activeRoomId.value, () => {
+    historyGeneration++;
+    loadedRows.clear();
+    hasOlderMessages = false;
+    loadingOlderMessages = false;
+}, { flush: 'sync' });
 
 // --- Computed ---
 const currentRoomName = computed(() => {
     return rooms.value.find(r => r.id === activeRoomId.value)?.name || 'Chat';
 });
 
-const introMessage = computed(() => {
-    return activeRoomId.value
-        ? { text: `Conversation with ${currentRoomName.value}` }
-        : { text: 'Select a conversation to start chatting.' };
-});
+// Deep Chat rebuilds its composer when any configuration property is assigned.
+// Keep configuration references stable and update history through its message API
+// so focus/Reverb refreshes cannot discard an open file picker or an unsent draft.
+const chatMessageStyles = {
+    default: {
+        shared: { bubble: { maxWidth: '80%', padding: '10px 15px', borderRadius: '12px' } },
+        user: { bubble: { backgroundColor: '#3b82f6', color: 'white' } },
+        ai: { bubble: { backgroundColor: '#ffffff', color: '#1f2937' } },
+    },
+    // Deep Chat's own preview of a photo while it sends; history photos use renderMessageMedia().
+    image: {
+        shared: { media: { width: 'auto', height: 'auto', maxWidth: '100%', maxHeight: '320px' } },
+    },
+};
+// Some browsers provide no MIME type for HEIC. Accept its extension as well.
+const chatImageInput = { files: { acceptedFormats: '.jpg,.jpeg,.jpe,.jfif,.png,.gif,.bmp,.dib,.heic,.heif,.webp,.avif,.tif,.tiff' } };
+
+const chatTextInput = {
+    placeholder: { text: 'Type a message...' },
+    styles: {
+        container: { backgroundColor: 'white', borderTop: '1px solid #e5e7eb', maxHeight: '100px' },
+        text: { color: '#374151' },
+    },
+};
+let renderedChat = null;
+let renderedHistory = null;
+
+function renderChatHistory() {
+    const chat = elementRef.value;
+    const placeMode = keepPlaceOnRender;
+    keepPlaceOnRender = null;
+    const messages = chat?.shadowRoot?.querySelector('#messages');
+    if (!messages) return;
+    const history = [{
+        role: 'ai',
+        text: !activeRoomId.value
+            ? 'Select a conversation to start chatting.'
+            : hasOlderMessages
+                ? trans('Loading earlier messages...')
+                : `Conversation with ${currentRoomName.value}`,
+    }, ...currentHistory.value];
+    const signature = JSON.stringify(history);
+    if (renderedChat === chat && renderedHistory === signature) return;
+
+    // Re-rendering replaces every bubble. Keep the reader below newly added earlier
+    // messages, or where they were reading if they had scrolled up.
+    const fromBottom = messages.scrollHeight - messages.scrollTop;
+    const fromTop = messages.scrollTop;
+    const restore = renderedChat !== chat ? null
+        : placeMode === 'prepend' ? () => { messages.scrollTop = messages.scrollHeight - fromBottom; }
+        : pinnedScrollers.get(messages) === false ? () => { messages.scrollTop = fromTop; }
+        : null;
+
+    chat.clearMessages(false);
+    history.forEach(message => chat.addMessage(message, false));
+    renderedChat = chat;
+    renderedHistory = signature;
+    followMessageScroll(messages, restore);
+}
+
+// Photos finish loading after the history renders. Follow them to the newest message while
+// the reader is at the bottom; when one grows above the reader's view, shift by the same
+// amount so their place holds. Scrolling near the top loads earlier messages.
+const pinnedScrollers = new WeakMap();
+
+function followMessageScroll(messages, restore) {
+    if (!pinnedScrollers.has(messages)) {
+        messages.addEventListener('scroll', () => {
+            pinnedScrollers.set(messages, messages.scrollHeight - messages.scrollTop - messages.clientHeight < 40);
+            if (messages.scrollTop < 200) loadOlderMessages();
+        }, { passive: true });
+    }
+    pinnedScrollers.set(messages, !restore);
+    // Runs after Deep Chat's own scroll to the latest message
+    if (restore) setTimeout(restore);
+
+    // A short thread cannot be scrolled, so once its photos settle, fill the view instead.
+    const fillView = () => {
+        if (messages.scrollHeight <= messages.clientHeight) loadOlderMessages();
+    };
+    const pending = [...messages.querySelectorAll('img')].filter(img => !img.complete);
+    let waiting = pending.length;
+    if (!waiting) setTimeout(fillView);
+    pending.forEach(img => {
+        const heightBefore = img.offsetHeight;
+        const settle = () => {
+            if (pinnedScrollers.get(messages)) {
+                messages.scrollTop = messages.scrollHeight;
+            } else if (img.getBoundingClientRect().bottom <= messages.getBoundingClientRect().top) {
+                messages.scrollTop += img.offsetHeight - heightBefore;
+            }
+            if (--waiting === 0) fillView();
+        };
+        img.addEventListener('load', settle, { once: true });
+        img.addEventListener('error', settle, { once: true });
+    });
+}
+
+watch([currentHistory, currentRoomName], renderChatHistory, { flush: 'post' });
 
 const extensionList = computed(() => data.value.extensions || []);
 
@@ -468,9 +637,53 @@ onMounted(async () => {
 
     // 2. Fetch Rooms (only after we have the Extension ID)
     await fetchRooms();
+    window.Echo?.connector?.pusher?.connection.bind('connected', refreshAfterReconnect);
+    document.addEventListener('visibilitychange', refreshWhenVisible);
+    window.addEventListener('focus', refreshWhenVisible);
+});
+
+function refreshWhenVisible() {
+    if (document.visibilityState === 'visible' && document.hasFocus()) refreshAfterReconnect();
+}
+
+async function refreshAfterReconnect() {
+    await fetchRooms();
+    if (activeRoomId.value) await fetchMessages(activeRoomId.value);
+}
+
+onBeforeUnmount(() => {
+    window.Echo?.connector?.pusher?.connection.unbind('connected', refreshAfterReconnect);
+    document.removeEventListener('visibilitychange', refreshWhenVisible);
+    window.removeEventListener('focus', refreshWhenVisible);
 });
 
 // --- Actions ---
+
+async function deleteConversation() {
+    if (hidingRoom.value || !conversationToDelete.value) return;
+    const { room, extension } = conversationToDelete.value;
+    hidingRoom.value = room.id;
+    try {
+        await axios.delete(props.routes.deleteConversation, { data: { roomId: room.id, extension_uuid: extension } });
+        conversationToDelete.value = null;
+        if (extension !== currentExtensionUuid.value) return;
+        ++roomsRequest;
+        if (activeRoomId.value === room.id) {
+            ++historyRequest;
+            leaveChannel(room.id);
+            activeRoomId.value = null;
+            currentHistory.value = [];
+            showContactPanel.value = false;
+            contactData.value = null;
+        }
+        rooms.value = rooms.value.filter(item => item.id !== room.id);
+        await fetchRooms();
+    } catch (error) {
+        handleErrorResponse(error);
+    } finally {
+        hidingRoom.value = null;
+    }
+}
 
 const getData = async () => {
     try {
@@ -516,6 +729,7 @@ const getData = async () => {
 
 // When user selects from Dropdown
 const onExtensionChange = (uuid) => {
+    leaveChannel(activeRoomId.value);
     // 1. Update the string UUID
     currentExtensionUuid.value = uuid || null;
 
@@ -542,6 +756,8 @@ const onExtensionChange = (uuid) => {
 // --- Actions ---
 
 async function fetchRooms() {
+    const requestId = ++roomsRequest;
+    const extension = currentExtensionUuid.value;
     loadingRooms.value = true;
     try {
         const { data } = await axios.get(props.routes.roomsIndex, {
@@ -550,6 +766,9 @@ async function fetchRooms() {
             }
         });
 
+        if (requestId !== roomsRequest || extension !== currentExtensionUuid.value) return;
+        unreadTotal.value = Number(data.unread_total || 0);
+        const selectedDraft = rooms.value.find(r => r.draft && r.id === activeRoomId.value);
         rooms.value = (data.rooms || []).map(r => ({
             id: String(r.id),
             name: r.name,
@@ -559,12 +778,16 @@ async function fetchRooms() {
 
             // CAPTURE NEW FIELDS
             my_number: r.my_number, // The local DID
+            message_group_uuid: r.message_group_uuid,
+            recipients: r.recipients,
+            recipient_contacts: r.recipient_contacts || [],
             timestamp: r.timestamp  // ISO String
         }));
+        if (selectedDraft && !rooms.value.some(r => r.id === selectedDraft.id)) rooms.value.unshift(selectedDraft);
 
-        if (rooms.value.length > 0) {
-            selectRoom(rooms.value[0].id);
-        } else {
+        if (!activeRoomId.value && rooms.value.length > 0) {
+            await selectRoom(rooms.value[0].id);
+        } else if (!rooms.value.length && !activeRoomId.value) {
             activeRoomId.value = null;
         }
     } catch (e) {
@@ -616,62 +839,12 @@ const updateSidebar = (roomId, newMessageText, timestamp = null) => {
 
 // --- REVERB WEBSOCKET LOGIC ---
 function joinChannel(roomId) {
-    leaveChannel(activeRoomId.value);
     if (!window.Echo) return;
-
     const channelId = roomId.replace(/\+/g, '');
-    console.log(`🔌 Joining Reverb channel: room.${channelId}`);
-
-    window.Echo.private(`room.${channelId}`)
-        .listen('.message.new', (e) => {
-            console.log('✅ LISTENER FIRED:', e);
-
-            const rawText = e.text || e.message || '';
-            let role = e.role;
-            if (!role) {
-                const dir = String(e.direction || '').toLowerCase();
-                role = ['out', 'outbound', 'outgoing'].includes(dir) ? 'user' : 'ai';
-            }
-
-            // Determine what string to look for in our local tracker
-            let matchText = rawText;
-            if (!matchText && e.media && e.media.length > 0) {
-                matchText = '📷 Image';
-            }
-
-            // --- SMART DEDUPLICATION ---
-            if (role === 'user') {
-                // Did we JUST send this message from this specific Vue window?
-                const localIndex = locallySentMessages.value.indexOf(matchText);
-
-                if (localIndex !== -1) {
-                    // YES: DeepChat already drew the blue bubble when we clicked Send.
-                    // Remove it from our tracker and abort so it doesn't duplicate.
-                    locallySentMessages.value.splice(localIndex, 1);
-
-                    // Update the sidebar timestamp with the real server time
-                    updateSidebar(roomId, matchText, e.timestamp);
-                    return; // ABORT INJECTING INTO DEEP CHAT
-                }
-            }
-
-            // --- INJECT THE MESSAGE ---
-            // If we made it here, it's either from the Customer (ai) 
-            // OR it's an Outbound message from your Cell Phone (user).
-            if (deepChatSignals) {
-                console.log('Injecting via Signals...');
-                // Run it through our normalizer to get the Image/Timestamp HTML
-                const formattedMessage = normalizeMessageForDeepChat(e);
-                deepChatSignals.onResponse(formattedMessage);
-            } else {
-                console.error('❌ DeepChat Signals not initialized yet');
-            }
-
-            // Update Sidebar List
-            updateSidebar(roomId, matchText, e.timestamp);
-        })
-        .error((error) => {
-            console.error('Reverb Subscription Error:', error);
+    window.Echo.private(`room.${props.domainUuid}.${channelId}`)
+        .subscribed(() => fetchMessages(roomId))
+        .listen('.message.new', () => {
+            if (activeRoomId.value === roomId) fetchMessages(roomId);
         });
 }
 
@@ -688,16 +861,25 @@ const joinExtensionChannel = (extUuid) => {
 
     // 2. Subscribe
     window.Echo.private(`extension.${extUuid}`)
+        .subscribed(() => fetchRooms())
         .listen('.conversation.updated', (e) => {
             console.log('🔔 Global Update:', e);
-            handleGlobalUpdate(e);
+            if (e.deleted_for_user_uuid === props.currentUserUuid && e.roomId === activeRoomId.value) {
+                ++historyRequest;
+                leaveChannel(activeRoomId.value);
+                activeRoomId.value = null;
+                currentHistory.value = [];
+                showContactPanel.value = false;
+                contactData.value = null;
+            }
+            fetchRooms();
         });
 };
 
 function leaveChannel(roomId) {
     if (window.Echo && roomId) {
         const channelId = roomId.replace(/\+/g, '');
-        window.Echo.leave(`room.${channelId}`);
+        window.Echo.leave(`room.${props.domainUuid}.${channelId}`);
     }
 }
 
@@ -710,25 +892,19 @@ async function selectRoom(id) {
     if (activeRoomId.value) leaveChannel(activeRoomId.value);
 
     activeRoomId.value = id;
-
-    // Clear Unread Badge Immediately ---
-    const room = rooms.value.find(r => r.id === id);
-    if (room) {
-        room.unread = 0;
+    selectedGroupParticipant.value = null;
+    if (currentRoom.value?.message_group_uuid) {
+        showContactPanel.value = false;
+        contactData.value = null;
+        selectedGroupParticipant.value = null;
     }
-
-    //Backend Update: Mark messages as read in DB
-    try {
-        await axios.post(props.routes.markRead, { roomId: id });
-    } catch (e) {
-        console.error("Failed to mark as read", e);
-    }
+    currentHistory.value = [];
+    joinChannel(id);
 
     // Load history via API (Rest)
     await fetchMessages(id);
 
-    // Listen for new messages (Reverb)
-    joinChannel(id);
+    if (activeRoomId.value !== id) return;
 
     // Always switch back to "View Mode" (clean profile) when changing users
     isEditingContact.value = false;
@@ -741,35 +917,83 @@ async function selectRoom(id) {
 
 // --- API: Fetch Messages ---
 async function fetchMessages(roomId) {
-    // Clear history temporarily while loading
-    currentHistory.value = [];
+    const requestId = ++historyRequest;
+    const extension = currentExtensionUuid.value;
 
     if (!roomId) return;
 
     const url = props.routes.roomMessages.replace(':roomId', roomId);
 
     try {
-        const { data } = await axios.get(url, { params: { 'page[size]': 50 } });
+        const { data } = await axios.get(url, { params: { 'page[size]': MESSAGE_PAGE_SIZE, extension_uuid: extension } });
+        if (requestId !== historyRequest || activeRoomId.value !== roomId || extension !== currentExtensionUuid.value) return;
         const rawMessages = data.messages || [];
 
-        // DeepChat expects: { text: '...', role: 'user' | 'ai' }
-        // We need to reverse because API usually sends Newest -> Oldest, 
-        // but Chat UI needs Oldest -> Newest (top to bottom)
-        currentHistory.value = rawMessages.map(m => normalizeMessageForDeepChat(m)).reverse();
+        // Merge the newest page into what is already loaded so earlier pages the
+        // reader scrolled to stay in place when a new message arrives.
+        if (!loadedRows.size) hasOlderMessages = !!data.has_more;
+        rawMessages.forEach(row => loadedRows.set(row.id, row));
+        currentHistory.value = loadedHistory();
+        await nextTick();
+        if (requestId === historyRequest && activeRoomId.value === roomId
+            && extension === currentExtensionUuid.value
+            && document.visibilityState === 'visible' && document.hasFocus()) {
+            const incomingIds = rawMessages.filter(m => m.role === 'ai' || m.direction === 'in').map(m => m.id);
+            if (incomingIds.length) {
+                await axios.post(props.routes.markRead, { roomId, extension_uuid: extension, message_uuids: incomingIds });
+                await fetchRooms();
+            }
+        }
 
     } catch (e) {
         console.error("Error fetching messages:", e);
-        currentHistory.value = [{ text: "Error loading history.", role: "ai" }];
+        if (requestId === historyRequest && activeRoomId.value === roomId) {
+            currentHistory.value = [{ text: "Error loading history.", role: "ai" }];
+        }
     }
+}
+
+// Loaded rows oldest -> newest, matching the API's created_at + message_uuid order
+function loadedRowsOldestFirst() {
+    const compare = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
+    return [...loadedRows.values()].sort((a, b) =>
+        compare(String(a.timestamp), String(b.timestamp)) || compare(String(a.id), String(b.id)));
+}
+
+function loadedHistory() {
+    return loadedRowsOldestFirst().map(normalizeMessageForDeepChat);
+}
+
+// --- API: Fetch the page before the oldest loaded message ---
+async function loadOlderMessages() {
+    const roomId = activeRoomId.value;
+    const oldest = loadedRowsOldestFirst()[0];
+    if (!roomId || !oldest || !hasOlderMessages || loadingOlderMessages) return;
+
+    const generation = historyGeneration;
+    loadingOlderMessages = true;
+    try {
+        const { data } = await axios.get(props.routes.roomMessages.replace(':roomId', roomId), {
+            params: { 'page[size]': MESSAGE_PAGE_SIZE, before: oldest.id, extension_uuid: currentExtensionUuid.value },
+        });
+        if (generation !== historyGeneration) return;
+        (data.messages || []).forEach(row => loadedRows.set(row.id, row));
+        hasOlderMessages = !!data.has_more;
+    } catch (e) {
+        console.error("Error loading earlier messages:", e);
+        if (generation !== historyGeneration) return;
+        hasOlderMessages = false;
+    } finally {
+        if (generation === historyGeneration) loadingOlderMessages = false;
+    }
+    keepPlaceOnRender = 'prepend';
+    currentHistory.value = loadedHistory();
 }
 
 // --- DeepChat Configuration ---
 const connectConfig = {
     websocket: true, // Enable async mode
     handler: (body, signals) => {
-        // CAPTURE SIGNALS HERE
-        deepChatSignals = signals;
-
         signals.onOpen(); // Mark connection as open immediately
 
         // Handle User Sending Message
@@ -784,9 +1008,6 @@ const connectConfig = {
 
             if (!currentId) return;
 
-            // ADD TO OUR TRACKER to prevent WebSocket duplication
-            // Fallback to '📷 Image' if there is no text
-            locallySentMessages.value.push(text || '📷 Image');
 
             // Parse ID (source_dest)
             const parts = currentId.split('_');
@@ -796,7 +1017,11 @@ const connectConfig = {
                 // 2. BUILD FORMDATA (Required for file uploads)
                 const formData = new FormData();
                 formData.append('source', parts[0]);
-                formData.append('destination', parts[1]);
+                if (currentRoom.value?.message_group_uuid) {
+                    formData.append('message_group_uuid', currentRoom.value.message_group_uuid);
+                } else {
+                    formData.append('destination', parts[1]);
+                }
                 formData.append('extension_uuid', currentExtensionUuid.value);
 
                 // Append text if it exists
@@ -807,7 +1032,7 @@ const connectConfig = {
                 // 3. APPEND FILES (if any exist)
                 if (files.length > 0) {
                     for (const fileObj of files) {
-                        let fileToUpload = fileObj.file;
+                        let fileToUpload = fileObj.ref instanceof File ? fileObj.ref : fileObj.file;
                         
                         // If DeepChat only gave us a preview URL (base64 or blob), convert it to a real File
                         if (!fileToUpload && fileObj.src) {
@@ -824,7 +1049,20 @@ const connectConfig = {
                 }
 
                 // 4. FIRE AND FORGET WITH FORMDATA
-                await axios.post(props.routes.sendMessage, formData);
+                const response = await axios.post(props.routes.sendMessage, formData);
+                const saved = response.data.message;
+                const canonicalRoom = response.data.room_id || `${saved.source}_${saved.destination}`;
+                const draft = rooms.value.find(r => r.id === currentId);
+                if (draft) draft.draft = false;
+                if (activeRoomId.value === currentId) {
+                    if (canonicalRoom !== currentId) {
+                        leaveChannel(currentId);
+                        activeRoomId.value = canonicalRoom;
+                        joinChannel(canonicalRoom);
+                    }
+                    await fetchMessages(canonicalRoom);
+                }
+                await fetchRooms();
 
                 // Update Sidebar immediately
                 updateSidebar(currentId, text || '📷 Image', new Date().toISOString());
@@ -866,6 +1104,40 @@ function formatMessageTimestamp(isoString) {
 }
 
 // --- Helper: Normalize Data ---
+function escapeMessageHtml(value) {
+    return String(value).replace(/[&<>"']/g, char => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[char]));
+}
+
+// Media paths are app routes or provider URLs; only allow http(s) into src/href.
+function safeMediaUrl(value) {
+    try {
+        const url = new URL(String(value || ''), window.location.origin);
+        return ['http:', 'https:'].includes(url.protocol) ? url.href : null;
+    } catch {
+        return null;
+    }
+}
+
+// Formats every browser can show inline. Others (HEIC, TIFF, video) become a link, because
+// browsers that cannot decode them abort the download midway and show a broken image.
+const INLINE_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif', 'image/bmp'];
+
+// Cap photo height and let width follow the aspect ratio; clicking opens the full image.
+function renderMessageMedia(mediaItem) {
+    const src = safeMediaUrl(mediaItem?.access_path);
+    if (!src) return '';
+    const href = escapeMessageHtml(src);
+    const mimeType = String(mediaItem.mime_type || '').toLowerCase();
+    if (mimeType && !INLINE_IMAGE_TYPES.includes(mimeType)) {
+        const fileName = escapeMessageHtml(mediaItem.original_name || 'attachment');
+        return `<a href="${href}" target="_blank" rel="noopener" style="color: inherit; text-decoration: underline; word-break: break-all;">📎 ${fileName}</a>`;
+    }
+    const name = escapeMessageHtml(mediaItem.original_name || 'image');
+    return `<a href="${href}" target="_blank" rel="noopener" style="display: block;"><img src="${href}" alt="${name}" style="display: block; max-width: 100%; max-height: 320px; border-radius: 8px;"></a>`;
+}
+
 function normalizeMessageForDeepChat(row) {
     // 1. Calculate Role
     let role = row.role;
@@ -877,41 +1149,27 @@ function normalizeMessageForDeepChat(row) {
 
     // 2. Format Timestamp using our new Smart Formatter
     const rawTime = row.timestamp || row.created_at;
-    const timeString = formatMessageTimestamp(rawTime);
+    const senderName = row.show_sender_name ? row.sender_name : null;
+    const timeString = [senderName, formatMessageTimestamp(rawTime)].filter(Boolean).map(escapeMessageHtml).join(' · ');
 
     // 3. Handle Images
-    let filesArray = undefined;
-
-    if (row.media && Array.isArray(row.media) && row.media.length > 0) {
-        // Map over the media items and extract the access_path
-        filesArray = row.media.map(mediaItem => {
-            return {
-                src: mediaItem.access_path, // This maps to your MessageMediaController route
-                type: 'image',
-                name: mediaItem.original_name || 'image.png'
-            };
-        });
-    }
+    // Deep Chat always draws file bubbles after the HTML bubble, which put the timestamp
+    // above the photo. Render photos inside the HTML bubble instead.
+    const photos = Array.isArray(row.media) ? row.media.map(renderMessageMedia).join('') : '';
 
     // 4. Handle Text Content
-    const content = row.text || row.message || '';
+    const content = escapeMessageHtml(row.text || row.message || '');
+    const sendError = row.send_error
+        ? `<div role="alert" style="background: #fef2f2; color: #991b1b; border-radius: 6px; padding: 4px 8px; font-size: 12px; line-height: 1.4; margin-top: 6px;">${escapeMessageHtml(row.send_error)}</div>` : '';
 
-    // If there is an image but NO text, return just the image with the timestamp under it
-    if (filesArray && !content) {
-        return {
-            role: role,
-            files: filesArray,
-            html: timeString ? `<div style="font-size: 10px; opacity: 0.7; text-align: right; margin-top: 4px; white-space: nowrap;">${timeString}</div>` : ''
-        };
-    }
-
-    // If there is Text, construct an HTML bubble with the text and the smart date
+    // One bubble: photos, then text, then any send error, then the smart date
     return {
         role: role,
-        files: filesArray,
         html: `
             <div style="display: flex; flex-direction: column;">
-                <div style="white-space: pre-wrap; line-height: 1.4;">${content}</div>
+                ${photos ? `<div style="display: flex; flex-direction: column; gap: 6px;">${photos}</div>` : ''}
+                ${content ? `<div style="white-space: pre-wrap; line-height: 1.4;${photos ? ' margin-top: 8px;' : ''}">${content}</div>` : ''}
+                ${sendError}
                 ${timeString ? `<div style="font-size: 10px; opacity: 0.7; text-align: right; margin-top: 6px; white-space: nowrap;">${timeString}</div>` : ''}
             </div>
         `
@@ -919,30 +1177,29 @@ function normalizeMessageForDeepChat(row) {
 }
 
 // --- Action: Handle Form Submit ---
-const handleCreateRoom = (form$) => {
-    const data = form$.requestData;
-
-    const source = data.source;
-    let dest = data.destination.replace(/\D/g, ''); // Strip non-digits
-
-    // 1. Construct Composite ID
-    const newCompositeId = `${source}_${dest}`;
-
-    // 2. Optimistic UI Update
-    const newRoom = {
-        id: newCompositeId,
-        name: dest,
-        my_number: source,
-        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(dest)}&background=random`,
-        unread: 0,
-        lastMessage: 'Draft'
-    };
-
-    rooms.value.unshift(newRoom);
-    selectRoom(newRoom.id);
-
-    // 3. Reset & Close
-    showCreateModal.value = false;
+const handleCreateRoom = async (form$) => {
+    if (creatingConversation.value) return;
+    clearServerFormErrors(form$);
+    creatingConversation.value = true;
+    const extension = currentExtensionUuid.value;
+    try {
+        const response = await axios.post(props.routes.prepareConversation, {
+            ...form$.requestData, extension_uuid: extension,
+        });
+        if (extension !== currentExtensionUuid.value) return;
+        const room = response.data.room;
+        if (!rooms.value.some(r => r.id === room.id)) rooms.value.unshift(room);
+        showCreateModal.value = false;
+        await selectRoom(room.id);
+    } catch (error) {
+        if (error.response?.status === 422 && error.response.data?.errors) {
+            showServerFormErrors(error.response, form$);
+        } else {
+            handleErrorResponse(error);
+        }
+    } finally {
+        creatingConversation.value = false;
+    }
 }
 
 const handleGlobalUpdate = (e) => {
@@ -992,31 +1249,36 @@ const createRoomSchema = computed(() => {
     return {
         source: {
             type: 'select',
-            label: 'From',
+            label: trans('From'),
             items: myDids.value.map(did => ({
                 value: did.number,
                 label: [did.number, did.label].filter(Boolean).join(' - ')
             })),
-            rules: ['required'],
             default: myDids.value.length > 0 ? myDids.value[0].number : null,
+            onChange: (value) => { newConversationSource.value = value; },
             search: true,
             native: false, // Use custom select UI
         },
-        destination: {
-            type: 'text',
-            inputType: 'tel',
-            label: 'To (Customer)',
-            placeholder: '+15550000000',
-            floating: false
+        recipients: {
+            type: 'tags',
+            label: newConversationRecipientLimit.value > 1 ? trans('Recipients') : trans('Recipient'),
+            placeholder: trans('Enter a phone number and press Enter'),
+            description: newConversationRecipientLimit.value > 1
+                ? trans('Add up to :count recipients. Everyone in the group sees replies.', { count: newConversationRecipientLimit.value })
+                : trans('This sending number supports one recipient per conversation.'),
+            items: [], create: true, search: true, native: false,
+            max: newConversationRecipientLimit.value,
+            closeOnSelect: true, inputType: 'search', autocomplete: 'off',
+            floating: false,
         },
         submit: {
             type: 'button',
             submits: true,
-            buttonLabel: 'Start Chat',
+            buttonLabel: trans('Start Chat'),
             align: 'center',
             buttonClass: 'bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded mt-2',
 
-            disabled: myDids.value.length === 0,
+            disabled: myDids.value.length === 0 || creatingConversation.value,
         }
 
     }
@@ -1159,6 +1421,8 @@ const extensionSelectSchema = ref({
         type: 'select',
         search: true,
         native: false,
+        inputType: 'search',
+        autocomplete: 'off',
         placeholder: 'Select Extension',
         items: [], // Starts empty, we will fill it manually after API loads
         onChange: (newValue) => {
@@ -1189,12 +1453,43 @@ const toggleContactPanel = async () => {
     showContactPanel.value = !showContactPanel.value;
     isEditingContact.value = false; // Reset to View Mode
     if (showContactPanel.value && activeRoomId.value) {
+        if (currentRoom.value?.message_group_uuid) {
+            selectedGroupParticipant.value = null;
+            return;
+        }
         await loadContactData();
     }
 };
 
+const groupParticipants = computed(() => {
+    const participants = currentRoom.value?.recipient_contacts || [];
+    if (participants.length) return participants;
 
-const loadContactData = async () => {
+    return (currentRoom.value?.recipients || []).map(number => ({ number, name: null }));
+});
+
+const showGroupParticipants = () => {
+    selectedGroupParticipant.value = null;
+    isEditingContact.value = false;
+    contactData.value = null;
+};
+
+const openGroupParticipant = async (participant) => {
+    selectedGroupParticipant.value = participant.number;
+    isEditingContact.value = false;
+    await loadContactData(participant.number);
+};
+
+const addGroupParticipant = async (number) => {
+    selectedGroupParticipant.value = number;
+    contactData.value = { phone_number: number };
+    isEditingContact.value = true;
+    await nextTick();
+    contactForm$.value?.update(contactData.value);
+};
+
+
+const loadContactData = async (phoneNumber = null) => {
     // 1. Safety check: Do we have a room selected?
     if (!activeRoomId.value) return;
 
@@ -1202,7 +1497,7 @@ const loadContactData = async () => {
     const parts = activeRoomId.value.split('_');
     if (parts.length < 2) return;
 
-    const customerNumber = parts[1];
+    const customerNumber = phoneNumber || parts[1];
 
     try {
         contactData.value = null
@@ -1242,6 +1537,12 @@ const loadContactData = async () => {
 const toggleContactEditForm = async () => {
     isEditingContact.value = !isEditingContact.value
 
+    if (!isEditingContact.value && currentRoom.value?.message_group_uuid
+        && selectedGroupParticipant.value && !contactData.value?.contact_uuid) {
+        showGroupParticipants();
+        return;
+    }
+
     if (isEditingContact.value) {
         await nextTick();
         contactForm$.value.update(contactData.value);
@@ -1251,7 +1552,12 @@ const toggleContactEditForm = async () => {
 }
 
 const submitContactForm = async (FormData, form$) => {
-    const requestData = form$.requestData
+    form$.messageBag.clear()
+    Object.values(form$.elements$).forEach(el$ => clearErrorsRecursive(el$))
+    const requestData = {
+        ...form$.requestData,
+        contact_uuid: contactData.value?.contact_uuid ?? null,
+    }
     return await form$.$vueform.services.axios.post(props.routes.contactStore, requestData)
 }
 
@@ -1267,7 +1573,7 @@ const contactInitials = computed(() => {
 const contactFullName = computed(() => {
     const first = contactData.value?.first_name ?? '';
     const last = contactData.value?.last_name ?? '';
-    return `${first} ${last}`.trim() || 'Unknown Contact';
+    return `${first} ${last}`.trim() || contactData.value?.name || 'Unknown Contact';
 });
 
 // --- Action: Delete Contact ---
@@ -1341,16 +1647,20 @@ const handleContactResponse = (response, contactForm$) => {
     }
 }
 
-const handleContactSuccess = (response, contactForm$) => {
+const handleContactSuccess = async (response, contactForm$) => {
     // emit('success', 'success', response.data.messages)
 
     showNotification('success', response.data.messages);
 
-    // Refresh rooms to update the name in the sidebar if it changed
-    fetchRooms();
+    // Refresh rooms to update names in the list and group participant panel.
+    await fetchRooms();
+
+    if (currentRoom.value?.message_group_uuid && selectedGroupParticipant.value) {
+        showGroupParticipants();
+        return;
+    }
 
     loadContactData(); // Reload data to reflect changes
-
     isEditingContact.value = false; // Switch back to View Mode
 }
 

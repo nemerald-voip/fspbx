@@ -39,14 +39,6 @@ class RecommendedSettingsSeeder extends Seeder
                 'default_setting_description'   => "Options: default, dynamic",
             ],
             [
-                'default_setting_category'      => 'dialplan',
-                'default_setting_subcategory'   => 'destination',
-                'default_setting_name'          => 'text',
-                'default_setting_value'         => '${sip_req_user}',
-                'default_setting_enabled'       => true,
-                'default_setting_description'   => 'Options: destination_number, ${sip_to_user}, ${sip_req_user}',
-            ],
-            [
                 'default_setting_category'      => 'email',
                 'default_setting_subcategory'   => 'email_company_address',
                 'default_setting_name'          => 'text',

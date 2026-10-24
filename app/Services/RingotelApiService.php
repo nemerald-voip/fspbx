@@ -374,6 +374,7 @@ class RingotelApiService
                     'beta_updates' => $params['beta_updates'] ?? false,
                     'vmail' => [
                         'ext' => $params['voicemail_extension'] ?? '',
+                        'unsolicited' => (bool) $params['voicemail_allow_unsolicited_notifications'],
                         'name' => 'Voicemail',
                         'mess' => 'You have a new message',
                         'off' => '',
@@ -571,6 +572,7 @@ class RingotelApiService
                     'beta_updates' => $params['beta_updates'] ?? false,
                     'vmail' => [
                         'ext' => $params['voicemail_extension'] ?? '',
+                        'unsolicited' => (bool) $params['voicemail_allow_unsolicited_notifications'],
                         'name' => 'Voicemail',
                         'mess' => 'You have a new message',
                         'off' => '',
@@ -1330,11 +1332,25 @@ class RingotelApiService
         return $staleUsers;
     }
 
+    public function markConversationRead(string $orgId, string $sessionId): array
+    {
+        $this->ensureApiTokenExists();
+        $response = Http::ringotel_api()->connectTimeout(5)->timeout($this->timeout)
+            ->post('/', ['method' => 'read', 'params' => ['orgid' => $orgId, 'sessionid' => $sessionId]])
+            ->throw()->json();
+        if (!is_array($response) || isset($response['error'])) {
+            throw new \RuntimeException($response['error']['message'] ?? 'Invalid Ringotel read response.');
+        }
+        return $response;
+    }
+
     public function message($params)
     {
         $this->ensureApiTokenExists();
 
         $response = Http::ringotel_api()
+        ->connectTimeout(5)
+        ->timeout($this->timeout)
         ->withBody(json_encode([
             'method' => 'message',
             'params' => $params,

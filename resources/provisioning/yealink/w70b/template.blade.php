@@ -1,4 +1,4 @@
-{{-- version: 1.0.5 --}}
+{{-- version: 1.0.15 --}}
 
 @switch($flavor)
 
@@ -34,6 +34,8 @@
         account.{{ $n }}.sip_server.2.transport_type = {{ strtolower($line['sip_transport'] ?? '0') }}
         account.{{ $n }}.sip_server.2.expires = {{ $line['register_expires'] ?? '3600' }}
         account.{{ $n }}.sip_server.1.failback_subscribe.enable = 1
+    @else
+        account.{{ $n }}.sip_server.2.address = %NULL%
     @endif
     
     account.{{ $n }}.cp_source = {{ $settings['yealink_cp_source'] ?? '0' }}
@@ -42,13 +44,27 @@
     account.{{ $n }}.subscribe_mwi = 1
     account.{{ $n }}.subscribe_mwi_to_vm = {{ isset($settings['yealink_subscribe_mwi_to_vm']) ? '1' : '0' }}
     
-    @if (!empty($line['outbound_proxy_primary']))
+    @if (!empty($line['outbound_proxy_primary']) || !empty($line['outbound_proxy_secondary']))
         account.{{ $n }}.outbound_proxy_enable = {{ $settings['yealink_outbound_proxy_enable'] ?? '0' }}
-        account.{{ $n }}.outbound_proxy.1.address = {{ $line['outbound_proxy_primary'] ?? '' }}
-        account.{{ $n }}.outbound_proxy.2.address = {{ $line['outbound_proxy_secondary'] ?? ''}}
-        account.{{ $n }}.outbound_proxy.1.port = {{ $line['sip_port'] ?? '5060' }}
-        account.{{ $n }}.outbound_proxy.2.port = {{ $line['sip_port'] ?? '5060' }}
         account.{{ $n }}.outbound_proxy_fallback_interval = {{ $settings['yealink_outbound_proxy_fallback_interval'] ?? '3600' }}
+    @else
+        account.{{ $n }}.outbound_proxy_enable = 0
+    @endif
+
+    @if (!empty($line['outbound_proxy_primary']))
+        account.{{ $n }}.outbound_proxy.1.address = {{ $line['outbound_proxy_primary'] ?? '' }}
+        account.{{ $n }}.outbound_proxy.1.port = {{ $line['sip_port'] ?? '5060' }}
+    @else
+        account.{{ $n }}.outbound_proxy.1.address = %NULL%
+        account.{{ $n }}.outbound_proxy.1.port = %NULL%
+    @endif
+
+    @if (!empty($line['outbound_proxy_secondary']))
+        account.{{ $n }}.outbound_proxy.2.address = {{ $line['outbound_proxy_secondary'] ?? '' }}
+        account.{{ $n }}.outbound_proxy.2.port = {{ $line['sip_port'] ?? '5060' }}
+    @else
+        account.{{ $n }}.outbound_proxy.2.address = %NULL%
+        account.{{ $n }}.outbound_proxy.2.port = %NULL%
     @endif
     
     @if (!empty($line['shared_line']))
@@ -168,7 +184,7 @@
       $label = trim($base . ' ' . $sfx);
   }
 
-  $value = isset($k['value']) ? (string)$k['value'] : '';
+  $value = ($type === '15') ? '%NULL%' : (isset($k['value']) ? (string)$k['value'] : '');
   $ext   = array_key_exists('extension', $k) ? (string)($k['extension'] ?? '') : null;
 @endphp
 linekey.{{ $slot }}.type = {{ $k['type'] }}
@@ -237,7 +253,7 @@ ringtone.url = {{ $settings['yealink_ringtone_url'] ?? '' }}
 ringtone.delete = {{ $settings['yealink_ringtone_delete'] ?? 0 }}
 phone_setting.ring_type = {{ $settings['yealink_ring_type'] ?? 1 }}
 phone_setting.inter_digit_time = {{ $settings['yealink_inter_digit_time'] ?? 4 }}
-lang.gui = "{{ $settings['yealink_language_gui'] ?? 'English' }}"
+lang.gui = {{ $settings['yealink_language_gui'] ?? 'English' }}
 features.blf_active_backlight.enable = {{ $settings['yealink_blf_active_backlight'] ?? 1 }}
 screensaver.wait_time = {{ $settings['yealink_screensaver_wait'] ?? 600 }}
 features.blf_led_mode = {{ $settings['yealink_blf_led_mode'] ?? 0 }}
@@ -269,6 +285,13 @@ local_time.ntp_server1 = {{ $settings['ntp_server_primary'] ?? 'pool.ntp.org' }}
 local_time.ntp_server2 = {{ $settings['ntp_server_secondary'] ?? '' }}
 local_time.time_zone = {{ $settings['yealink_time_zone'] ?? 'GMT+0' }}
 local_time.time_zone_name = {{ $settings['yealink_time_zone_name'] ?? 'UTC' }}
+
+################################################################
+##                          Tones                             ##
+################################################################
+@if (isset($settings['yealink_voice_tone_country']))
+voice.tone.country = {{ $settings['yealink_voice_tone_country'] }}
+@endif
 
 ################################################################
 ##                      Rings Settings                        ##
@@ -319,10 +342,34 @@ static.auto_provision.server.url = {{ $settings['provision_base_url'] ?? '' }}
 static.auto_provision.server.username = {{ $settings['http_auth_username'] ?? '' }}
 static.auto_provision.server.password = {{ $settings['http_auth_password'] ?? '' }}
 
+################################################################
+##                  Auto Provisioning Schedule                ##
+################################################################
+@if (isset($settings['yealink_auto_provision_repeat_enable']))
+static.auto_provision.repeat.enable = {{ $settings['yealink_auto_provision_repeat_enable'] }}
+@endif
+@if (isset($settings['yealink_auto_provision_power_on']))
+static.auto_provision.power_on = {{ $settings['yealink_auto_provision_power_on'] }}
+@endif
+@if (isset($settings['yealink_auto_provision_flexible_enable']))
+static.auto_provision.flexible.enable = {{ $settings['yealink_auto_provision_flexible_enable'] }}
+@endif
+@if (isset($settings['yealink_auto_provision_flexible_interval']))
+static.auto_provision.flexible.interval = {{ $settings['yealink_auto_provision_flexible_interval'] }}
+@endif
+@if (isset($settings['yealink_auto_provision_flexible_begin_time']))
+static.auto_provision.flexible.begin_time = {{ $settings['yealink_auto_provision_flexible_begin_time'] }}
+@endif
+@if (isset($settings['yealink_auto_provision_flexible_end_time']))
+static.auto_provision.flexible.end_time = {{ $settings['yealink_auto_provision_flexible_end_time'] }}
+@endif
+
 #################################################################
 ##                      Firmware Update                        ##
 #################################################################
-static.firmware.url = {{ $settings['yealink_firmware_t46u'] ?? '' }} 
+@if (isset($settings['yealink_w70b_firmware']))
+static.firmware.url = {{ $settings['yealink_w70b_firmware'] }}
+@endif
 
 #################################################################
 ##                      Security                               ##
@@ -343,6 +390,12 @@ static.security.trust_certificates = {{ $settings['yealink_trust_certificates'] 
 @endif
 sip.trust_ctrl = {{ $settings['yealink_trust_ctrl'] ?? '1' }}
 sip.listen_port = {{ $settings['yealink_sip_listen_port'] ?? '5060' }}
+@if (isset($settings['yealink_sip_notify_reboot_enable']))
+sip.notify_reboot_enable = {{ $settings['yealink_sip_notify_reboot_enable'] }}
+@endif
+@if (isset($settings['yealink_sip_mac_in_ua']))
+sip.mac_in_ua = {{ $settings['yealink_sip_mac_in_ua'] }}
+@endif
 phone_setting.called_party_info_display.enable = 0
 
 #################################################################
@@ -485,6 +538,13 @@ programablekey.2.label = Intercom
 ##                      Remote Phonebook                      ##
 ################################################################
 @if (!empty($phonebooks))
+@if (isset($settings['yealink_remote_phonebook_display_name']))
+remote_phonebook.display_name = {{ $settings['yealink_remote_phonebook_display_name'] }}
+@endif
+directory_setting.remote_phone_book.enable = {{ $settings['yealink_directory_remote_phone_book_enable'] ?? 0 }}
+directory_setting.remote_phone_book.priority = {{ $settings['yealink_directory_remote_phone_book_priority'] ?? 4 }}
+search_in_dialing.remote_phone_book.enable = {{ $settings['yealink_search_in_dialing_remote_phone_book_enable'] ?? 0 }}
+search_in_dialing.remote_phone_book.priority = {{ $settings['yealink_search_in_dialing_remote_phone_book_priority'] ?? 3 }}
 features.remote_phonebook.enable = 1
 features.remote_phonebook.flash_time = 3600
 @foreach ($phonebooks as $pb)

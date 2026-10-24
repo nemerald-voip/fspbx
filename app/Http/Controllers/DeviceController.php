@@ -383,10 +383,10 @@ class DeviceController extends Controller
                             'outbound_proxy_secondary' => $line['outbound_proxy_secondary'] ?? get_domain_setting('outbound_proxy_secondary'),
                             'server_address_primary' => $line['server_address_primary'] ?? get_domain_setting('server_address_primary'),
                             'server_address_secondary' => $line['server_address_secondary'] ?? get_domain_setting('server_address_secondary'),
-                            'display_name' => $line['display_name'],
+                            'display_name' => $line['display_name'] ?? null,
                             'user_id' => $extension->extension,
                             'auth_id' => $extension->extension,
-                            'label' => $extension->extension,
+                            'label' => $line['display_name'] ?? null,
                             'password' => $extension->password,
                             'sip_port' => $line['sip_port'] ?? get_domain_setting('line_sip_port'),
                             'sip_transport' => $line['sip_transport'] ?? get_domain_setting('line_sip_transport'),
@@ -397,6 +397,11 @@ class DeviceController extends Controller
                         ];
 
                         if ($deviceLine) {
+                            // Reassigning the same extension keeps a name typed on the line.
+                            if ((string) $deviceLine->auth_id === (string) $extension->extension && blank($line['display_name'] ?? null)) {
+                                unset($deviceLineData['display_name'], $deviceLineData['label']);
+                            }
+
                             // Update existing line
                             $deviceLine->fill($deviceLineData)->save();
                         } else {
@@ -611,6 +616,8 @@ class DeviceController extends Controller
                     'extension_uuid',
                     'extension',
                     'effective_caller_id_name',
+                    'directory_first_name',
+                    'directory_last_name',
                 ]);
 
             $extensionOptions = [];
@@ -619,8 +626,21 @@ class DeviceController extends Controller
                 $extensionOptions[] = [
                     'value' => $extension->extension,
                     'name' => $extension->name_formatted,
+                    // Used for automatic line display name and key label placeholders.
+                    'caller_id_name' => $extension->effective_caller_id_name,
+                    'first_name' => $extension->directory_first_name,
+                    'last_name' => $extension->directory_last_name,
                 ];
             }
+
+            // Label formats for placeholders. Same precedence as provisioning:
+            // device setting, then account, then default.
+            $labelFormat = fn (string $subcategory) => ($itemUuid
+                ? \App\Models\DeviceSettings::where('device_uuid', $itemUuid)
+                    ->where('device_setting_subcategory', $subcategory)
+                    ->where('device_setting_enabled', 'true')
+                    ->value('device_setting_value')
+                : null) ?? get_domain_setting($subcategory, $domain_uuid);
 
             $domainOptions = [];
             // Loop through each domain and create an option
@@ -735,6 +755,8 @@ class DeviceController extends Controller
                 'line_key_types' => $lineKeyTypes,
                 'sip_transport_types' => $sipTransportTypes,
                 'default_line_options' => $defaultLineOptions,
+                'line_display_name_format' => $labelFormat('line_display_name_format'),
+                'blf_label_format' => $labelFormat('blf_label_format'),
                 'cloud_providers' => $cloudProviders,
                 'routes' => $routes,
                 'permissions' => $this->getUserPermissions(),

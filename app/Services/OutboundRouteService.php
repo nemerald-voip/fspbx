@@ -304,6 +304,23 @@ class OutboundRouteService
             }
         }
 
+        if ($isEmergency) {
+            // Keep the optional headers in this route. A blank location must
+            // still reach the normal routing group and its number capture.
+            $headers = array_values(array_filter($details, fn ($detail) => $detail['dialplan_detail_tag'] === 'condition'));
+            $headerOrder = end($headers)['dialplan_detail_order'] + 10;
+            $presence = $this->detail('condition', '${emergency_caller_id_location}', '^.+$', $headerOrder);
+            $presence['dialplan_detail_break'] = 'never';
+            $headers[] = $presence;
+            $headers[] = $this->detail('action', 'export', 'sip_h_Geolocation-Routing=yes', $headerOrder + 10);
+            $headers[] = $this->detail('action', 'export', 'sip_geolocation=<https://location.somewhere.com/?loc=${url_encode(${emergency_caller_id_location})}>', $headerOrder + 20);
+            foreach ($details as &$detail) {
+                $detail['dialplan_detail_group'] = 1;
+            }
+            unset($detail);
+            $details = [...$headers, ...$details];
+        }
+
         return $details;
     }
 

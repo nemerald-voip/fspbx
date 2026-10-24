@@ -11,7 +11,7 @@ class VendorRouter
      * Extract a lookup token from a filename/path or stem.
      * Accepts:
      * - Polycom "phone<MAC>.cfg" → "<mac>" (e.g., phone0004f2abcdef.cfg → 0004f2abcdef)
-     * - Polycom "[MODEL]-<MAC>.cfg" where MODEL is SPIP/VVX/SSIP + 3–4 digits (or SSDuo)
+     * - Polycom "[MODEL]-<MAC>.cfg" where MODEL is SPIP/VVX/SSIP/EdgeE + 3–4 digits, Trio8800, or SSDuo
      *   e.g., VVX600-0004f27a9446.cfg → 0004f27a9446
      * - Bare MACs in any common format (00:04:F2:AB:CD:EF, 00-04-..., 0004.f2ab.cdef, 0004f2abcdef)
      * - Other IDs with digits (e.g., "y000000000065") → returns normalized token
@@ -23,8 +23,8 @@ class VendorRouter
         $base = strtolower(basename($id));
         $stem = preg_replace('/\.[^.]+$/', '', $base); // remove last extension, if any
 
-        // 2) Polycom model-MAC (e.g., vvx600-0004f27a9446, spip321-<mac>, ssip7000-<mac>, ssduo-<mac>)
-        if (preg_match('/^(?:spip|vvx|ssip|edgee)\d{3,4}-([0-9a-f]{12})$/', $stem, $m) || preg_match('/^ssduo-([0-9a-f]{12})$/', $stem, $m)) {
+        // 2) Polycom model-MAC, including the Trio 8800 conference phone.
+        if (preg_match('/^(?:(?:spip|vvx|ssip|edgee)\d{3,4}|trio8800|ssduo)-([0-9a-f]{12})$/', $stem, $m)) {
             return $m[1];
         }
 

@@ -3,7 +3,6 @@
 namespace App\Services\Messaging;
 
 use App\Jobs\DeliverMessageToEmail;
-use App\Jobs\DeliverMessageToRingotel;
 use App\Services\Messaging\Data\DeliveryStatusEventData;
 use App\Services\Messaging\Data\InboundMessageEventData;
 use App\Services\Messaging\Providers\MessagingWebhookParser;
@@ -31,7 +30,7 @@ class InboundMessagePipeline
 
     protected function handleInbound(InboundMessageEventData $event, MessagingWebhookParser $parser): void
     {
-        if ($event->providerReferenceId
+        if (!app(MessageCarrierCapabilities::class)->supportsGroups($event->provider) && $event->providerReferenceId
             && $this->messages->inboundReferenceExists($event->provider, $event->providerReferenceId)) {
             messaging_webhook_debug('Inbound message event already processed', [
                 'provider' => $event->provider,
@@ -74,12 +73,27 @@ class InboundMessagePipeline
             'provider_reference_id' => $event->providerReferenceId,
         ]);
 
-        foreach (array_filter($event->to) as $destination) {
+        $supportsGroups = app(MessageCarrierCapabilities::class)->supportsGroups($event->provider);
+        foreach (array_unique(array_filter($event->localRecipients ?? $event->to)) as $destination) {
+            // A group's participant list also contains external numbers we must not route locally.
+            if ($supportsGroups && !$this->resolver->isLocal($destination)) continue;
             messaging_webhook_debug('Resolving destination', [
                 'destination' => $destination,
             ]);
 
             $route = $this->resolver->resolve($destination);
+            $local = app(MessageParticipantService::class)->normalize($route->domainUuid, $route->destination);
+            if ($event->providerReferenceId && \App\Models\Messages::where('domain_uuid', $route->domainUuid)
+                ->where('direction', 'in')->where('destination', $local)
+                ->where('reference_id', $event->providerReferenceId)
+                ->where('delivery_meta->provider->name', $event->provider)->exists()) continue;
+            $group = null;
+            if ($supportsGroups) {
+                $groups = app(MessageGroupService::class);
+                $recipients = $groups->recipients(array_merge([$event->from], $event->to), $local,
+                    get_domain_setting('country', $route->domainUuid) ?? 'US');
+                if (count($recipients) > 1) $group = $groups->findOrCreate($route->domainUuid, $local, $recipients);
+            }
 
             messaging_webhook_debug('Destination resolved', [
                 'domain_uuid' => $route->domainUuid,
@@ -90,6 +104,12 @@ class InboundMessagePipeline
                 'org_id' => $route->orgId,
             ]);
 
+            // Count before ingestion: failed downloads must not look like an
+            // MMS that legitimately contained only a text part.
+            $expectedMediaCount = $event->storedMedia === []
+                ? count($event->mediaUrls)
+                : (array_key_exists($route->destination, $event->storedMedia)
+                    ? count($event->storedMedia[$route->destination]) : null);
             $storedMedia = $storeMedia($route);
 
             messaging_webhook_debug('Media ingested', [
@@ -102,23 +122,20 @@ class InboundMessagePipeline
                 source: $event->from,
                 destination: $route->destination,
                 text: $event->text,
-                type: $isMms ? 'mms' : 'sms',
+                type: $group || $isMms ? 'mms' : 'sms',
                 providerName: $event->provider,
                 providerReferenceId: $event->providerReferenceId,
                 media: $storedMedia,
                 providerEvent: $event->providerEvent,
+                messageGroupUuid: $group?->message_group_uuid,
+                expectedMediaCount: $expectedMediaCount,
             );
 
             messaging_webhook_debug('Message saved', [
                 'message_uuid' => $message->message_uuid,
             ]);
 
-            if ($route->hasMobileApp && $route->orgId && $route->extension) {
-                DeliverMessageToRingotel::dispatch(
-                    $message->message_uuid,
-                    $route->orgId,
-                    $route->extension,
-                )->onQueue('messages');
+            if (app(RingotelSyncDispatcher::class)->dispatch($message)) {
 
                 messaging_webhook_debug('Ringotel delivery queued', [
                     'message_uuid' => $message->message_uuid,
@@ -155,6 +172,8 @@ class InboundMessagePipeline
             status: $event->status,
             description: $event->description,
             providerEvent: $event->providerEvent,
+            recipient: $event->recipient,
+            occurredAt: $event->occurredAt,
         );
     }
 }

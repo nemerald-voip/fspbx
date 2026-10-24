@@ -9,6 +9,8 @@
 --      If not => BLF LED OFF
 --
 -- BLF AoR format: vm<mailbox>@domain  (e.g. vm200@fspbx.domain.com)
+-- MESSAGE_QUERY answers startup MWI queries and explicit MWI subscriptions.
+-- Registration queries are answered once per registration Call-ID, not on renewals.
 
 local VM_PREFIX = "vm"  -- user part starts with "vm"
 
@@ -19,6 +21,7 @@ local function log(level, msg)
 end
 
 local api = freeswitch.API()
+local answered_registrations = {}
 
 ---------------------------------------------------------
 -- Normalize To: header or MWI account → user@domain
@@ -27,17 +30,18 @@ local api = freeswitch.API()
 local function normalize_to_uri(to)
     if not to or to == "" then return "", "" end
 
+    to = to:match("^%s*(.-)%s*$")
     -- trim angle brackets
     to = to:gsub("^%s*<", ""):gsub(">%s*$", "")
 
-    -- strip leading sip:
-    to = to:gsub("^sip:", "")
+    -- strip leading sip: or sips:
+    to = to:gsub("^sips?:", "")
 
     -- drop any ;params
     to = (to:match("([^;]+)")) or to
 
     -- now split user@domain
-    local user, domain = to:match("^(.-)@(.-)$")
+    local user, domain = to:match("^([^@%s<>]+)@([^@%s<>]+)$")
     return user or "", domain or ""
 end
 
@@ -45,10 +49,10 @@ end
 -- Look up voicemail message count for mailbox@domain
 --
 -- Returns:
---   count (number)  -- NEW messages for that mailbox
+--   new_count, saved_count, mailbox_found
 --   nil             -- if mailbox/domain not found or DB error
 ---------------------------------------------------------
-local function get_voicemail_message_count(mailbox_id, domain_name)
+local function get_voicemail_message_counts(mailbox_id, domain_name)
     local dbh = Database.new('system')
     if not (dbh and dbh:connected()) then
         log("ERR", "DB connect failed (system)")
@@ -101,30 +105,82 @@ local function get_voicemail_message_count(mailbox_id, domain_name)
             tostring(mailbox_id), tostring(domain_name)
         ))
         dbh:release()
-        return 0
+        -- Keep clearing BLF for a removed mailbox, but do not answer MWI queries
+        -- for missing or disabled mailboxes as though they were empty.
+        return 0, 0, false
     end
 
     -----------------------------------------------------
-    -- 3) Count NEW messages for this voicemail_uuid
-    --    Only messages with:
-    --        message_status is NULL  OR  message_status = 'new'
+    -- 3) Count unread and saved messages. NULL/blank are the voicemail app's
+    -- unread values; retain support for the BLF daemon's existing 'new' value.
     -----------------------------------------------------
-    local count_str, err3 = dbh:first_value([[
-        select count(*)
+    local counts, err3 = dbh:first_row([[
+        select count(case when message_status is null or message_status in ('', 'new')
+                          then 1 end) as new_messages,
+               count(case when message_status = 'saved' then 1 end) as saved_messages
         from v_voicemail_messages
         where voicemail_uuid = :uuid
-          and (message_status is null or message_status = 'new')
-    ]], { uuid = voicemail_uuid })
+          and domain_uuid = :domain_uuid
+    ]], { uuid = voicemail_uuid, domain_uuid = domain_uuid })
 
     dbh:release()
 
-    if err3 then
+    if err3 or not counts then
         log("ERR", "DB error (message count): " .. tostring(err3))
         return nil
     end
 
-    local count = tonumber(count_str or "0") or 0
-    return count
+    return tonumber(counts.new_messages) or 0, tonumber(counts.saved_messages) or 0, true
+end
+
+---------------------------------------------------------
+-- Answer MWI queries with the current mailbox counts.
+---------------------------------------------------------
+local function handle_message_query(event)
+    local account = event:getHeader("Message-Account") or ""
+    if not account:match("^sips?:") then return end
+    local user, domain = normalize_to_uri(account)
+    if user == "" or domain == "" then return end
+
+    local profile = event:getHeader("VM-Sofia-Profile") or ""
+    local call_id = event:getHeader("VM-Call-ID") or ""
+    local sub_call_id = event:getHeader("VM-sub-call-id") or ""
+    local registration_key
+    if profile ~= "" and call_id ~= "" and sub_call_id == "" then
+        registration_key = profile .. "\0" .. call_id
+        local answered = answered_registrations[registration_key]
+        if answered and answered[user .. "@" .. domain] then return end
+    end
+
+    local new_count, saved_count, found = get_voicemail_message_counts(user, domain)
+    if not found then return end
+
+    local reply = freeswitch.Event("MESSAGE_WAITING")
+    reply:addHeader("MWI-Message-Account", "sip:" .. user .. "@" .. domain)
+    reply:addHeader("MWI-Messages-Waiting", new_count > 0 and "yes" or "no")
+    reply:addHeader("MWI-Voice-Message", string.format("%d/%d (0/0)", new_count, saved_count))
+    if profile ~= "" then reply:addHeader("sofia-profile", profile) end
+    -- Let Sofia target the original subscription or registration dialog.
+    if sub_call_id ~= "" then
+        reply:addHeader("sub-call-id", sub_call_id)
+    elseif call_id ~= "" then
+        reply:addHeader("call-id", call_id)
+    end
+    reply:fire()
+
+    if registration_key then
+        answered_registrations[registration_key] = answered_registrations[registration_key] or {}
+        answered_registrations[registration_key][user .. "@" .. domain] = true
+    end
+    log("NOTICE", string.format("MESSAGE_QUERY for %s@%s new=%d saved=%d", user, domain, new_count, saved_count))
+end
+
+local function forget_registration(event)
+    local profile = event:getHeader("profile-name") or ""
+    local call_id = event:getHeader("call-id") or ""
+    if profile ~= "" and call_id ~= "" then
+        answered_registrations[profile .. "\0" .. call_id] = nil
+    end
 end
 
 ---------------------------------------------------------
@@ -214,15 +270,13 @@ end
 ---------------------------------------------------------
 local function handle_probe(event)
     local to = event:getHeader("to") or ""
-    local expires = tonumber(event:getHeader("expires") or "0")
-
-    local user, domain = to:match("^(.-)@(.-)$")
+    local user, domain = normalize_to_uri(to)
     if user == "" or domain == "" then
         log("DEBUG", "Ignoring PRESENCE_PROBE with unexpected To=: " .. to)
         return
     end
 
-    -- Only handle AoRs  "vm+<ext>@domain"
+    -- Only handle AoRs "vm<ext>@domain".
     if user:sub(1, #VM_PREFIX) ~= VM_PREFIX then
         return
     end
@@ -231,7 +285,7 @@ local function handle_probe(event)
 
     log("NOTICE", string.format("PRESENCE_PROBE Voicemail: to=%s ext=%s domain=%s", to, ext, domain))
 
-    local count = get_voicemail_message_count(ext, domain)
+    local count = get_voicemail_message_counts(ext, domain)
     if count == nil then
         -- DB or lookup error already logged
         return
@@ -251,9 +305,28 @@ local function main()
     local consumer_probe = freeswitch.EventConsumer("PRESENCE_PROBE")
     -- One consumer for voicemail state changes (MESSAGE_WAITING)
     local consumer_mwi   = freeswitch.EventConsumer("MESSAGE_WAITING")
+    local consumer_query = freeswitch.EventConsumer("MESSAGE_QUERY")
+    local consumer_registration = freeswitch.EventConsumer("CUSTOM", "sofia::unregister")
+    consumer_registration:bind("CUSTOM", "sofia::expire")
 
     while true do
         local did_something = false
+
+        -- Discard ended registration sessions so this cache follows live phones.
+        while true do
+            local ev = consumer_registration:pop(0)
+            if not ev then break end
+            forget_registration(ev)
+            did_something = true
+        end
+
+        while true do
+            local ev = consumer_query:pop(0)
+            if not ev then break end
+            local ok, err = pcall(handle_message_query, ev)
+            if not ok then log("ERR", "MESSAGE_QUERY failed: " .. tostring(err)) end
+            did_something = true
+        end
 
         -- handle all probes waiting
         while true do

@@ -58,6 +58,27 @@ class UploadCallRecordingsToS3Storage extends Command
         $failed = [];
         $success = [];
 
+        // Recover interrupted deletion using timestamp-bounded CDR checks.
+        foreach ($this->archiver->receipts() as $path => $receipt) {
+            $settings = $this->s3StorageConfigService->getSettingsForDomain($receipt['domain_uuid']);
+            if (! $settings || $this->isManagedQueueAudio(rtrim($receipt['record_path'], '/').'/'.$receipt['record_name'])) {
+                continue;
+            }
+            try {
+                if (! $this->runSelected(
+                    $this->recordingKey($receipt['domain_uuid'], $receipt['record_path'], $receipt['record_name']),
+                    fn ($authorize) => $this->archiver->cleanup($path, $receipt, $settings, $authorize),
+                    $coordinated,
+                    $scheduled,
+                )) {
+                    return;
+                }
+            } catch (Throwable $exception) {
+                $failed[] = ['name' => $receipt['record_name'], 'msg' => $exception->getMessage()];
+                report($exception);
+            }
+        }
+
         $recordingIds = $this->getCallRecordingIds($this->getUploadLimit());
         if (empty($recordingIds)) {
             $this->info('No recordings found for upload.');

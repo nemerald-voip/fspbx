@@ -117,6 +117,7 @@ class DeviceKeyTemplateController extends Controller
         return response()->json([
             'item' => $item,
             'extensions' => $this->extensionOptions(),
+            'blf_label_format' => get_domain_setting('blf_label_format', session('domain_uuid')),
             'park_key_count' => fspbx_park_key_count(session('domain_uuid')),
             'permissions' => [
                 'is_superadmin' => isSuperAdmin(),
@@ -407,11 +408,15 @@ class DeviceKeyTemplateController extends Controller
         return \App\Models\Extensions::query()
             ->where('domain_uuid', session('domain_uuid'))
             ->orderBy('extension')
-            ->get(['extension_uuid', 'extension', 'effective_caller_id_name'])
+            ->get(['extension_uuid', 'extension', 'effective_caller_id_name', 'directory_first_name', 'directory_last_name'])
             ->map(fn ($extension) => [
                 'value' => $extension->extension,
                 'extension' => $extension->extension,
                 'name' => $extension->name_formatted,
+                // Used for automatic key label placeholders.
+                'caller_id_name' => $extension->effective_caller_id_name,
+                'first_name' => $extension->directory_first_name,
+                'last_name' => $extension->directory_last_name,
             ])
             ->all();
     }

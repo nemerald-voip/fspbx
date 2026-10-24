@@ -111,9 +111,11 @@
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
                         <div v-if="row.speed_dial_user.length" class="flex flex-wrap gap-1">
-                            <Badge v-for="user in row.speed_dial_user" :key="user.user_uuid" :text="user.username"
-                                backgroundColor="bg-gray-100" textColor="text-gray-700" ringColor="ring-gray-400/20"
-                                class="px-2 py-1 text-xs font-semibold" />
+                            <template v-for="user in row.speed_dial_user" :key="user.user_uuid">
+                                <Badge v-if="user.user?.username" :text="user.user.username"
+                                    backgroundColor="bg-gray-100" textColor="text-gray-700" ringColor="ring-gray-400/20"
+                                    class="px-2 py-1 text-xs font-semibold" />
+                            </template>
                         </div>
                     </TableField>
 
@@ -170,17 +172,16 @@
     <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="createModalTrigger" :header="$t('Create New Speed Dial')"
         :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <CreateSpeedDialForm :options="itemOptions" :errors="formErrors" :is-submitting="createFormSubmiting"
-                @submit="handleCreateRequest" @cancel="handleModalClose" />
+            <SpeedDialForm :options="itemOptions" :errors="formErrors" :is-submitting="createFormSubmiting"
+                @submit="handleCreateRequest" />
         </template>
     </AddEditItemModal>
 
     <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="editModalTrigger" :header="$t('Edit Speed Dial Details')"
         :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <UpdateSpeedDialForm :options="itemOptions" :errors="formErrors" :is-submitting="updateFormSubmiting"
-                @submit="handleUpdateRequest" @cancel="handleModalClose" @error="handleErrorResponse"
-                @success="showNotification('success', { request: [$event] })" />
+            <SpeedDialForm :options="itemOptions" :errors="formErrors" :is-submitting="updateFormSubmiting"
+                @submit="handleUpdateRequest" />
         </template>
     </AddEditItemModal>
 
@@ -211,8 +212,7 @@ import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
-import CreateSpeedDialForm from "./components/forms/CreateSpeedDialForm.vue";
-import UpdateSpeedDialForm from "./components/forms/UpdateSpeedDialForm.vue";
+import SpeedDialForm from "./components/forms/SpeedDialForm.vue";
 import Notification from "./components/notifications/Notification.vue";
 import Badge from "@generalComponents/Badge.vue";
 import { DocumentArrowUpIcon, DocumentArrowDownIcon } from "@heroicons/vue/24/outline";
@@ -229,8 +229,8 @@ const editModalTrigger = ref(false);
 const bulkUpdateModalTrigger = ref(false);
 const confirmationModalTrigger = ref(false);
 const showUploadModal = ref(false);
-const createFormSubmiting = ref(null);
-const updateFormSubmiting = ref(null);
+const createFormSubmiting = ref(false);
+const updateFormSubmiting = ref(false);
 const isUploadingFile = ref(null);
 const confirmDeleteAction = ref(null);
 const bulkUpdateFormSubmiting = ref(null);

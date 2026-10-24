@@ -11,6 +11,7 @@ use App\Http\Controllers\AppsCredentialsController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\BusinessHoursController;
 use App\Http\Controllers\FlagsController;
+use App\Http\Controllers\PagingGroupsController;
 use App\Http\Controllers\BridgeController;
 use App\Http\Controllers\BasicDialerController;
 use App\Http\Controllers\BasicQueueController;
@@ -133,11 +134,12 @@ Route::put('/email-challenge', [App\Http\Controllers\Auth\EmailChallengeControll
     ->name('email-challenge.new-code');
 Route::post('/email-challenge', [App\Http\Controllers\Auth\EmailChallengeController::class, 'store']);
 
-// Message media URL for MMS
+// Message media URL for MMS. Carriers fetch it without a session. Skipping the web stack
+// keeps the legacy PHP session's no-store headers and file lock off, so browsers cache photos.
 Route::get(
     '/messages/media/{message_uuid}/{index}/{file_name?}',
     [MessageMediaController::class, 'show']
-)->name('messages.media.show');
+)->withoutMiddleware('web')->name('messages.media.show');
 
 // Csrf token
 Route::get('/csrf-token/refresh', [CsrfTokenController::class, 'store']);
@@ -292,6 +294,8 @@ Route::group(['middleware' => 'auth'], function () {
 
     // Flags
     Route::get('flags', [FlagsController::class, 'index'])->name('flags.index');
+    // Paging groups
+    Route::get('paging-groups', [PagingGroupsController::class, 'index'])->name('paging-groups.index');
 
     // Bridges
     Route::get('bridges', [BridgeController::class, 'index'])->name('bridges.index');

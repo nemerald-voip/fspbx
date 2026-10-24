@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Storage;
 use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\QueryBuilder;
 
@@ -55,7 +56,6 @@ class EmailLogsController extends Controller
                 'provider_message_id',
                 'provider_message_stream',
                 'created_at',
-                'sent_debug_info'
             ])
             ->with(['domain:domain_uuid,domain_name,domain_description'])
             ->when(
@@ -101,6 +101,112 @@ class EmailLogsController extends Controller
 
 
         return response()->json($data);
+    }
+
+    public function show(string $uuid)
+    {
+        if (! userCheckPermission('logs_list_view')) {
+            return response()->json([
+                'messages' => ['error' => [__('Permission denied.')]]
+            ], 403);
+        }
+
+        $log = EmailLog::query()
+            ->with(['domain:domain_uuid,domain_name,domain_description'])
+            ->where('uuid', $uuid)
+            ->where(function ($query) {
+                $query->whereIn('domain_uuid', $this->allowedDomainUuids())
+                    ->orWhereNull('domain_uuid');
+            })
+            ->first();
+
+        if (! $log) {
+            return response()->json([
+                'messages' => ['error' => [__('Email log not found.')]]
+            ], 404);
+        }
+
+        return response()->json([
+            'uuid' => $log->uuid,
+            'domain_label' => $log->domain_uuid
+                ? ($log->domain?->domain_description ?: $log->domain?->domain_name)
+                : null,
+            'from' => $log->from,
+            'to' => $log->to,
+            'cc' => $log->cc,
+            'bcc' => $log->bcc,
+            'subject' => $log->subject,
+            'status' => $log->status,
+            'provider' => $log->provider,
+            'provider_message_id' => $log->provider_message_id,
+            'provider_message_stream' => $log->provider_message_stream,
+            'created_at_formatted' => $log->created_at_formatted,
+            'updated_at_formatted' => $log->updated_at_formatted,
+            'text_body' => $log->text_body,
+            'html_body' => $log->html_body,
+            'attachments' => $this->describeAttachments($log->attachments),
+            'sent_debug_info' => $log->sent_debug_info,
+        ]);
+    }
+
+    /**
+     * Summarize stored attachment references without exposing file paths or contents.
+     */
+    protected function describeAttachments($attachments): array
+    {
+        if (! is_array($attachments)) {
+            return [];
+        }
+
+        $described = [];
+
+        foreach ($attachments as $attachment) {
+            if (is_string($attachment)) {
+                $attachment = ['path' => $attachment];
+            }
+
+            if (! is_array($attachment)) {
+                continue;
+            }
+
+            $path = $attachment['path']
+                ?? $attachment['file_path']
+                ?? $attachment['storage_path']
+                ?? null;
+            $disk = $attachment['disk'] ?? null;
+            $size = null;
+            $available = false;
+
+            if (! empty($attachment['content'])) {
+                $decoded = base64_decode($attachment['content'], true);
+                $available = $decoded !== false;
+                $size = $available ? strlen($decoded) : null;
+            } elseif ($path) {
+                try {
+                    if ($disk) {
+                        $available = Storage::disk($disk)->exists($path);
+                        $size = $available ? Storage::disk($disk)->size($path) : null;
+                    } else {
+                        $available = is_file($path);
+                        $size = $available ? filesize($path) : null;
+                    }
+                } catch (\Throwable $e) {
+                    $available = false;
+                }
+            }
+
+            $described[] = [
+                'name' => $attachment['name']
+                    ?? $attachment['filename']
+                    ?? $attachment['original_name']
+                    ?? ($path ? basename($path) : __('Attachment')),
+                'mime' => $attachment['mime'] ?? $attachment['content_type'] ?? null,
+                'size' => $size === false ? null : $size,
+                'available' => $available,
+            ];
+        }
+
+        return $described;
     }
 
     public function deliveryDetails(string $uuid, EmailProviderDetailsService $providerDetails)

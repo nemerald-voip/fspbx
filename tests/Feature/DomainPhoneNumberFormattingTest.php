@@ -8,6 +8,7 @@ use App\Http\Requests\Api\V1\StoreExtensionRequest as ApiStoreExtensionRequest;
 use App\Http\Requests\Api\V1\UpdateExtensionRequest as ApiUpdateExtensionRequest;
 use App\Http\Requests\BulkUpdateExtensionRequest;
 use App\Http\Requests\UpdateExtensionRequest;
+use App\Models\CDR;
 use App\Models\Destinations;
 use App\Models\Extensions;
 use Illuminate\Database\Schema\Blueprint;
@@ -90,6 +91,70 @@ class DomainPhoneNumberFormattingTest extends TestCase
             ->filter(fn (array $query) => str_contains($query['query'], 'v_domain_settings'));
 
         $this->assertCount(1, $countryQueries, 'The domain country should be resolved once per request.');
+    }
+
+    public function test_cdr_formatting_uses_each_records_country_with_or_without_a_session(): void
+    {
+        $italianDomain = (string) Str::uuid();
+        DB::table('v_domain_settings')->insert([
+            'domain_setting_uuid' => (string) Str::uuid(),
+            'domain_uuid' => $italianDomain,
+            'domain_setting_subcategory' => 'country',
+            'domain_setting_value' => 'IT',
+            'domain_setting_enabled' => 'true',
+        ]);
+        $defaultDomain = (string) Str::uuid();
+        $fields = ['caller_id_number', 'caller_id_name', 'caller_destination', 'destination_number'];
+
+        DB::enableQueryLog();
+
+        // The session starts in the UK; exports also need to work without it.
+        foreach ([true, false] as $withSession) {
+            if (!$withSession) {
+                session()->forget('domain_uuid');
+            }
+
+            foreach ([
+                [$this->domainUuid, '2079460958', '020 7946 0958'],
+                [$italianDomain, '3512345678', '351 234 5678'],
+                [$defaultDomain, '3512345678', '(351) 234-5678'],
+                [$italianDomain, '3511234567', '351 123 4567'],
+                [$defaultDomain, '+393512345678', '351 234 5678'],
+            ] as [$domain, $number, $expected]) {
+                $cdr = new CDR();
+                $attributes = ['domain_uuid' => $domain] + array_fill_keys($fields, $number);
+                $cdr->setRawAttributes($attributes);
+
+                foreach ($fields as $field) {
+                    // Array access is also used by the CSV export.
+                    $this->assertSame($expected, $cdr[$field . '_formatted']);
+                }
+                $this->assertSame($attributes, $cdr->getAttributes());
+            }
+        }
+
+        $countryQueries = collect(DB::getQueryLog())
+            ->filter(fn (array $query) => str_contains($query['query'], 'v_domain_settings'));
+
+        $this->assertCount(3, $countryQueries, 'Resolve the country once per account, not per field or row.');
+    }
+
+    public function test_cdr_formatting_preserves_caller_names_and_non_phone_values(): void
+    {
+        $cdr = new CDR();
+        $cdr->domain_uuid = $this->domainUuid;
+
+        foreach ([null, '', 'Alice Smith', '1800FLOWERS', '3512345678 Support', 'anonymous'] as $name) {
+            $cdr->caller_id_name = $name;
+            $this->assertSame($name, $cdr->caller_id_name_formatted);
+        }
+
+        foreach ([null, '', '100', '*99100', 'not-a-number'] as $number) {
+            foreach (['caller_id_number', 'caller_destination', 'destination_number'] as $field) {
+                $cdr->{$field} = $number;
+                $this->assertSame($number === '' ? null : $number, $cdr[$field . '_formatted']);
+            }
+        }
     }
 
     public function test_extension_form_requests_normalize_caller_ids_to_domain_e164(): void

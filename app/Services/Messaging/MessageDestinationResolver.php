@@ -10,6 +10,12 @@ use libphonenumber\PhoneNumberFormat;
 
 class MessageDestinationResolver
 {
+    public function isLocal(string $destination): bool
+    {
+        return SmsDestinations::whereIn('destination', $this->buildPhoneLookupValues($destination))
+            ->where('enabled', 'true')->exists();
+    }
+
     public function resolve(string $destination): MessageRouteData
     {
         messaging_webhook_debug('MessageDestinationResolver resolve()', [

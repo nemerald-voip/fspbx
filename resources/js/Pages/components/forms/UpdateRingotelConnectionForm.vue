@@ -10,7 +10,7 @@
                         aria-hidden="true" />
                     <span class="truncate">{{ item.name }}</span>
                     <ExclamationCircleIcon
-                        v-if="((errors?.connection_name || errors?.domain || errors?.registration_ttl || errors?.max_registrations) && item.slug === 'settings')"
+                        v-if="((errors?.connection_name || errors?.domain || errors?.multitenant || errors?.registration_ttl || errors?.max_registrations) && item.slug === 'settings')"
                         class="ml-2 h-5 w-5 text-red-500" aria-hidden="true" />
 
                 </a>
@@ -80,6 +80,15 @@
 
                                     <Toggle :label="$t('Disable SRTP')" description="" v-model="form.disable_srtp"
                                         customClass="py-4" />
+
+                                    <div>
+                                        <Toggle :label="$t('Multi-tenant mode')"
+                                            :description="$t('Route calls using the Ringotel organization domain.')"
+                                            v-model="form.multitenant" customClass="py-4" />
+                                        <div v-if="errors?.multitenant" class="mb-4 text-xs text-red-600">
+                                            {{ errors.multitenant[0] }}
+                                        </div>
+                                    </div>
 
                                 </div>
                             </div>
@@ -684,6 +693,12 @@
                                 <div class="divide-y divide-gray-200 col-span-6">
                                     <Toggle :label="$t('Do not log calls answered elsewhere')" description=""
                                         v-model="form.nologae" customClass="py-4" />
+                                    <Toggle :label="$t('Allow unsolicited notifications')"
+                                        :description="$t('Allow unsolicited voicemail notifications from the PBX.')"
+                                        v-model="form.voicemail_allow_unsolicited_notifications" customClass="py-4" />
+                                    <div v-if="errors?.voicemail_allow_unsolicited_notifications" class="mt-2 text-xs text-red-600">
+                                        {{ errors.voicemail_allow_unsolicited_notifications[0] }}
+                                    </div>
                                     <Toggle :label="$t('Don\'t log Missed calls')" description=""
                                         v-model="form.nologmc" customClass="py-4" />
                                     <Toggle :label="$t('Allow users to block contacts')" description=""
@@ -923,12 +938,13 @@ const form = reactive({
     dont_verify_server_certificate: props.selectedConnection?.provision?.noverify ?? false,
     disable_srtp: props.selectedConnection?.provision?.nosrtp ?? false,
     proxy: props.selectedConnection?.provision?.proxy?.paddr ?? '',
-    multitenant: props.options?.settings?.multitenant_mode === "true",
+    multitenant: parseBoolean(props.selectedConnection?.provision?.multitenant),
     codecs: initialCodecs,
     registration_ttl: String(props.selectedConnection?.provision?.regexpires ?? ''),
     max_registrations: String(props.selectedConnection?.provision?.maxregs ?? ''),
     app_opus_codec: !props.selectedConnection?.provision?.app?.g711 ?? false,
     one_push: props.selectedConnection?.provision?.["1push"] ?? false,
+    voicemail_allow_unsolicited_notifications: props.selectedConnection?.provision?.vmail?.unsolicited ?? ((props.options?.settings?.voicemail_allow_unsolicited_notifications ?? 'true') === 'true'),
     show_call_settings: props.selectedConnection?.provision?.noptions === false, // Assuming inverse of `noptions`
     allow_call_recording: !props.selectedConnection?.provision?.norec ?? false, // Inverse of `norec`
     allow_state_change: props.selectedConnection?.provision?.nostates === false, // Assuming `nostates` indicates restriction

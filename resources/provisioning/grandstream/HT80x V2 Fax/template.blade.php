@@ -1,4 +1,4 @@
-{{-- version: 1.0.2 --}}
+{{-- version: 1.0.4 --}}
 
 @switch($flavor)
 
@@ -48,6 +48,11 @@
     <!-- ###################################################################### -->
     <!-- ## System Settings / Security Settings / User Info Management        ## -->
     <!-- ###################################################################### -->
+
+    <!-- Allow lowercase, uppercase, numbers, and special characters (1 + 2 + 4 + 8). -->
+    <!-- The firmware default of 7 rejects passwords containing special characters. -->
+    <!-- Keep strict password rules, minimum length, and required classes unchanged. -->
+    <P28792>15</P28792>
 
     <!-- New Admin Password. Uses the same admin_password setting as other Grandstream templates. -->
     <!-- String: 4 to 30 characters -->
@@ -636,6 +641,11 @@
 <!-- Number: 0, 1, 2 -->
 <!-- Mandatory -->
 <P132>2</P132>
+
+<!-- Enable Line Echo Canceller (LEC). 0 - Yes, 1 - No. Default is 0. -->
+<!-- Number: 0, 1 -->
+<!-- Mandatory -->
+<P825>1</P825>
 
 <!-- ################ -->
 <!-- ##  General   ## -->

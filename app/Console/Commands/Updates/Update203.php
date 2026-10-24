@@ -169,16 +169,20 @@ class Update203
             }
         } catch (Throwable $exception) {
             echo "Ringotel DND repair failed: {$exception->getMessage()}\n";
-            return false;
+            $counts['failed']++;
         }
 
         echo "Ringotel DND repair: {$counts['updated']} repaired, {$counts['would_update']} would repair, "
             ."{$counts['correct']} already correct, {$counts['preserved']} preserved, "
             ."{$counts['skipped']} organization(s) skipped, {$counts['failed']} failed.\n";
 
-        // API failures other than missing organizations must not mark the version complete. Successful repairs
-        // are skipped on retry, including when a prior response was lost.
-        return $counts['failed'] === 0;
+        // Ringotel is optional; account, API, and repair failures must not block PBX updates.
+        if ($counts['failed'] > 0) {
+            echo "WARNING: Ringotel DND repair is incomplete. Continuing the application update.\n";
+            echo "Review the failures above and repair affected connections when Ringotel access is available.\n";
+        }
+
+        return true;
     }
 
     private function updateGrandstreamSystemRing(bool $dryRun): bool

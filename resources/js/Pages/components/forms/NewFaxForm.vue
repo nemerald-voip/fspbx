@@ -44,7 +44,8 @@
 
 
                             <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
-                                @error="handleError" @response="handleResponse" :display-errors="false" :default="{
+                                @error="handleError" @response="handleResponse" :display-errors="false"
+                                validate-on="" @mounted="(form) => form.disableValidation()" :default="{
                                     send_confirmation: options.send_confirmation_default ?? false,
                                 }">
 
@@ -54,7 +55,7 @@
                                     autocomplete="off" />
                                 <!-- Kept flat (no GroupElement): form$.el$() only resolves top-level names. -->
                                 <TextElement name="recipient" :label="$t('Fax recipient')" :floating="false"
-                                    input-type="tel" autocomplete="off" :rules="['required']"
+                                    input-type="tel" autocomplete="off"
                                     :placeholder="$t('Enter a fax number')"
                                     :columns="{ default: { container: 12 }, sm: { container: 9 } }"
                                     @change="handleRecipientChange" />
@@ -109,10 +110,11 @@
                                     -->
                                     <ContactPickerModal :show="showContactPicker"
                                         :route="options?.routes?.contact_options_route"
-                                        :destroy-route="options?.routes?.contact_destroy_route" channel="fax"
+                                        :destroy-route="options?.routes?.contact_destroy_route"
+                                        :editable="!!options?.routes?.contact_update_route" channel="fax"
                                         @close="showContactPicker = false" @select="applyContact"
-                                        @create="handleCreateFromPicker" @deleted="handleContactDeleted"
-                                        @error="emit('error', $event)" />
+                                        @create="handleCreateFromPicker" @edit="openEditContact"
+                                        @deleted="handleContactDeleted" @error="emit('error', $event)" />
                                 </StaticElement>
 
                                 <!--
@@ -122,9 +124,10 @@
                                     here sends Headless UI's Dialog into a recursive update loop.
                                 -->
                                 <GroupElement name="new_contact">
-                                    <FormChildModal :show="showAddContact" :header="$t('Add to phone book')"
-                                        :loading="false" @close="showAddContact = false">
-                                        <p class="mb-4 text-sm text-gray-500">
+                                    <FormChildModal :show="showAddContact"
+                                        :header="editingContact ? $t('Edit contact') : $t('Add to phone book')"
+                                        :loading="false" @close="closeContactModal">
+                                        <p v-if="!editingContact" class="mb-4 text-sm text-gray-500">
                                             {{ $t('Save this recipient to reuse it on your next fax') }}
                                         </p>
 
@@ -134,35 +137,53 @@
                                         -->
                                         <GroupElement name="new_contact_fields">
                                             <!-- Defaults apply on mount, and the modal remounts on every open. -->
-                                            <TextElement name="new_contact_number" :label="$t('Fax number')"
+                                            <TextElement name="new_contact_number"
+                                                :label="editingContact && editingContact.phone_type !== 'fax'
+                                                    ? $t('Phone number') : $t('Fax number')"
                                                 :floating="false" :submit="false" autocomplete="off" input-type="tel"
                                                 :default="newContact.number" @change="newContact.number = $event" />
 
                                             <TextElement name="new_contact_first_name" :label="$t('First name')"
                                                 :floating="false" :submit="false" autocomplete="off"
                                                 :columns="{ default: { container: 12 }, sm: { container: 6 } }"
+                                                :default="newContact.first_name"
                                                 @change="newContact.first_name = $event" />
 
                                             <TextElement name="new_contact_last_name" :label="$t('Last name')"
                                                 :floating="false" :submit="false" autocomplete="off"
                                                 :columns="{ default: { container: 12 }, sm: { container: 6 } }"
+                                                :default="newContact.last_name"
                                                 @change="newContact.last_name = $event" />
 
+                                            <!-- allow-absent lets an edit show the saved company by name before options load. -->
                                             <SelectElement name="new_contact_company" :label="$t('Company')"
                                                 :items="searchOrganizations" :search="true" :native="false"
                                                 :create="true" input-type="search" autocomplete="off"
                                                 :floating="false" :strict="false" allow-absent :submit="false"
                                                 :placeholder="$t('Search or add a company (optional)')"
-                                                :description="canSaveContact ? null : $t('Enter a first name or choose a company.')"
+                                                :description="$t('Enter a first name or choose a company.')"
+                                                :default="newContact.company"
                                                 @change="newContact.company = $event" />
+
+                                            <!-- Un-sharing makes the contact private to whoever saves it. -->
+                                            <ToggleElement name="new_contact_is_shared"
+                                                :text="$t('Share with everyone in this account')"
+                                                :description="newContact.is_shared
+                                                    ? $t('Everyone in this account can view, edit, and delete this contact.')
+                                                    : (editingContact?.shared
+                                                        ? $t('Only you will see this contact. Everyone else in this account loses access.')
+                                                        : null)"
+                                                :submit="false" :default="newContact.is_shared"
+                                                :disabled="savingContact"
+                                                @change="newContact.is_shared = $event" />
 
                                             <ButtonElement name="new_contact_cancel" :button-label="$t('Cancel')"
                                                 :secondary="true" :columns="{ container: 6 }" :full="true"
-                                                @click="showAddContact = false" />
+                                                @click="closeContactModal" />
 
                                             <ButtonElement name="new_contact_save" :button-label="$t('Save contact')"
                                                 :columns="{ container: 6 }" align="right" :full="true"
-                                                :disabled="!canSaveContact" :loading="savingContact"
+                                                :disabled="savingContact" :loading="savingContact"
                                                 @click="saveNewContact" />
                                         </GroupElement>
                                     </FormChildModal>
@@ -178,9 +199,7 @@
                                 <MultifileElement name="files" :label="$t('Upload files')" :upload-temp-endpoint="false"
                                     :description="$t('Supported file types: .pdf, .doc, .docx, .rtf, .xls, .xlsx, .csv, .txt, .jpg')"
                                     :urls="{}" :drop="true"
-                                    accept=".pdf,.doc,.docx,.rtf,.xls,.xlsx,.csv,.txt,.jpeg,.jpg" :rules="[
-                                        'max:5',
-                                    ]" :add-classes="{
+                                    accept=".pdf,.doc,.docx,.rtf,.xls,.xlsx,.csv,.txt,.jpeg,.jpg" :add-classes="{
                                         MultifileElement: {
                                             listItem: '!bg-teal-50 !border !border-teal-200 rounded-md !p-2 mt-2 shadow-sm !text-teal-700 font-semibold [&_.form-bg-passive]:!bg-teal-200 hover:[&_.form-bg-passive]:!bg-teal-300 [&_.form-bg-passive>span]:!bg-teal-800'
                                         }
@@ -205,7 +224,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from "vue";
+import { ref, watch } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { XMarkIcon } from "@heroicons/vue/24/solid";
 import { BookOpenIcon, CheckCircleIcon, UserPlusIcon } from "@heroicons/vue/24/outline";
@@ -233,9 +252,12 @@ const matchedContact = ref(null)
 const lookupState = ref('idle')
 
 // Mirrors the new_contact_* elements shown inside the add-to-phone-book modal.
-const emptyNewContact = () => ({ number: '', first_name: '', last_name: '', company: null })
+const emptyNewContact = () => ({ number: '', first_name: '', last_name: '', company: null, is_shared: false })
 const newContact = ref(emptyNewContact())
 const savingContact = ref(false)
+// Set when that modal opens to edit an existing phone book row instead of adding
+// one. Only the next open resets it, so the modal's copy can't change as it closes.
+const editingContact = ref(null)
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -245,13 +267,6 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
  * the server, which knows the domain's country.
  */
 const digitCount = (value) => String(value ?? '').replace(/\D+/g, '').length
-
-const canSaveContact = computed(() => {
-    const hasNumber = digitCount(newContact.value.number) >= 7
-    const hasIdentity = !!String(newContact.value.first_name ?? '').trim() || !!newContact.value.company
-
-    return hasNumber && hasIdentity
-})
 
 let lookupTimer = null
 let lookupRequest = 0
@@ -339,9 +354,39 @@ const openAddContact = (number = null) => {
     // Set the state first: the modal's elements read it as their default on mount.
     // Whatever shape it is in, the server stores it as E.164.
     newContact.value = { ...emptyNewContact(), number: String(number ?? recipient.value ?? '').trim() }
+    editingContact.value = null
 
     showContactPicker.value = false
     showAddContact.value = true
+}
+
+const openEditContact = (contact) => {
+    editingContact.value = {
+        contact_uuid: contact.contact_uuid,
+        phone_uuid: contact.phone_uuid,
+        phone_type: String(contact.phone_type ?? '').toLowerCase(),
+        shared: contact.visibility === 'shared',
+        organization_uuid: contact.organization_uuid ?? null,
+        organization_name: contact.organization_name ?? null,
+    }
+    newContact.value = {
+        number: contact.number_formatted || contact.value,
+        first_name: contact.first_name ?? '',
+        last_name: contact.last_name ?? '',
+        // By name rather than uuid, so the select can show it before its options load.
+        company: contact.organization_name ?? null,
+        is_shared: contact.visibility === 'shared',
+    }
+
+    showContactPicker.value = false
+    showAddContact.value = true
+}
+
+const closeContactModal = () => {
+    showAddContact.value = false
+
+    // An edit started from the phone book, so go back to it.
+    if (editingContact.value) showContactPicker.value = true
 }
 
 const handleCreateFromPicker = (query) => {
@@ -367,31 +412,64 @@ const searchOrganizations = async (query) => {
 }
 
 const saveNewContact = async () => {
-    const route = props.options?.routes?.contact_store_route
+    const editing = editingContact.value
+    const route = editing
+        ? props.options?.routes?.contact_update_route?.replace(':contact', editing.contact_uuid)
+        : props.options?.routes?.contact_store_route
 
-    if (!route || !canSaveContact.value || savingContact.value) return
+    if (!route || savingContact.value) return
+
+    const fields = form$.value?.el$('new_contact.new_contact_fields')
+    if (fields) clearErrorsRecursive(fields)
 
     // The company select holds a uuid when an existing company was picked, and the
-    // raw text when a new one was typed - the server creates the latter.
+    // raw text when a new one was typed - the server creates the latter. An edit's
+    // untouched company is still shown by name, so map it back to its uuid.
     const company = newContact.value.company
+    const isUnchanged = !!editing?.organization_uuid && !!company && company === editing.organization_name
     const isExisting = typeof company === 'string' && UUID_PATTERN.test(company)
+    const organizationUuid = isUnchanged ? editing.organization_uuid : (isExisting ? company : null)
+
+    const payload = {
+        phone_number: newContact.value.number,
+        first_name: String(newContact.value.first_name ?? '').trim() || null,
+        last_name: String(newContact.value.last_name ?? '').trim() || null,
+        organization_uuid: organizationUuid,
+        organization_name: !organizationUuid && company ? String(company).trim() : null,
+        is_shared: newContact.value.is_shared,
+    }
 
     savingContact.value = true
 
     try {
-        const response = await axios.post(route, {
-            phone_number: newContact.value.number,
-            first_name: String(newContact.value.first_name ?? '').trim() || null,
-            last_name: String(newContact.value.last_name ?? '').trim() || null,
-            organization_uuid: isExisting ? company : null,
-            organization_name: !isExisting && company ? String(company).trim() : null,
-            phone_label: 'fax',
-        })
+        if (editing) {
+            await axios.put(route, { ...payload, phone_uuid: editing.phone_uuid })
+            handleContactUpdated(editing.contact_uuid)
+        } else {
+            const response = await axios.post(route, { ...payload, phone_label: 'fax' })
 
-        showAddContact.value = false
-        handleContactSaved(response.data?.contact ?? null)
+            showAddContact.value = false
+            handleContactSaved(response.data?.contact ?? null)
+        }
     } catch (error) {
-        emit('error', error)
+        const errors = error.response?.status === 422 ? error.response.data?.errors : null
+        const fieldNames = {
+            phone_number: 'new_contact_number',
+            first_name: 'new_contact_first_name',
+            last_name: 'new_contact_last_name',
+            organization_uuid: 'new_contact_company',
+            organization_name: 'new_contact_company',
+            is_shared: 'new_contact_is_shared',
+        }
+        let unmappedError = !errors
+
+        for (const [name, messages] of Object.entries(errors ?? {})) {
+            const field = fields?.children$?.[fieldNames[name]]
+            if (field) field.messageBag.append(messages[0])
+            else unmappedError = true
+        }
+
+        if (unmappedError) emit('error', error)
     } finally {
         savingContact.value = false
     }
@@ -417,6 +495,20 @@ const handleContactSaved = (contact) => {
     emit('success', 'success', { success: [trans('Contact saved to your phone book.')] })
 }
 
+const handleContactUpdated = (contactUuid) => {
+    // Back to the phone book, which reloads and shows the change.
+    closeContactModal()
+
+    // If the number being faxed belongs to this contact, check it again so the
+    // confirmation shows the new name - or that the number is no longer saved.
+    if (matchedContact.value?.contact_uuid === contactUuid) {
+        matchedContact.value = null
+        handleRecipientChange(recipient.value)
+    }
+
+    emit('success', 'success', { success: [trans('Contact updated.')] })
+}
+
 const handleContactDeleted = (contact) => {
     // If the number in the field belonged to that contact, it is no longer saved.
     if (matchedContact.value?.contact_uuid === contact.contact_uuid) {
@@ -435,6 +527,7 @@ const resetRecipientState = () => {
     lookupState.value = 'idle'
     newContact.value = emptyNewContact()
     savingContact.value = false
+    editingContact.value = null
     showContactPicker.value = false
     showAddContact.value = false
 }
@@ -444,6 +537,9 @@ watch(() => props.show, (show) => {
 })
 
 const submitForm = async (FormData, form$) => {
+    form$.messageBag.clear()
+    Object.values(form$.elements$).forEach(clearErrorsRecursive)
+
     // Using FormData will EXCLUDE conditional elements and it
     // will submit the form as "Content-Type: multipart/form-data".
     const formData = FormData

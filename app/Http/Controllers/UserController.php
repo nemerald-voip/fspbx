@@ -119,7 +119,9 @@ class UserController extends Controller
             ->allowedSorts(['username', 'add_date'])
             ->allowedIncludes(['user_groups'])
             ->with([
-                'user_groups:user_uuid,user_group_uuid,group_uuid,group_name',
+                'user_groups' => fn ($query) => $query
+                    ->whereHas('group')
+                    ->select(['user_uuid', 'user_group_uuid', 'group_uuid', 'group_name']),
             ])
             ->with([
                 'extension:extension_uuid,extension,effective_caller_id_name',
@@ -177,7 +179,7 @@ class UserController extends Controller
                 ->where('domain_uuid', $domain_uuid)
                 ->with([
                     'user_groups' => function ($q) {
-                        $q->select([
+                        $q->whereHas('group')->select([
                             'user_group_uuid',
                             'domain_uuid',
                             'user_uuid',

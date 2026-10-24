@@ -102,6 +102,8 @@
                             class="h-4 w-4 text-gray-500" />
                     </div>
                 </TableColumnHeader>
+                <TableColumnHeader :header="$t('Routing To')"
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none"
                         @click="handleSortRequest('call_flow_group')">
@@ -180,6 +182,16 @@
                             <Badge :text="row.call_flow_status_label" v-bind="statusBadgeProps(row.call_flow_status)" />
                         </button>
                         <Badge v-else :text="row.call_flow_status_label" v-bind="statusBadgeProps(row.call_flow_status)" />
+                    </TableField>
+
+                    <TableField class="px-2 py-2 text-sm text-gray-500">
+                        <template v-if="row.routing_to_name || row.routing_to_type">
+                            <div class="text-gray-900">{{ row.routing_to_name || row.routing_to_type }}</div>
+                            <div v-if="row.routing_to_name && row.routing_to_type" class="text-xs text-gray-500">
+                                {{ row.routing_to_type }}
+                            </div>
+                        </template>
+                        <span v-else>-</span>
                     </TableField>
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
@@ -335,7 +347,7 @@ const bulkActions = computed(() => {
 });
 
 const selectionColspan = computed(() => {
-    let count = 8;
+    let count = 9;
     if (filterData.value.showGlobal) count += 1;
     return count;
 });

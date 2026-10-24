@@ -57,6 +57,7 @@ class LogsController extends Controller
                     'dashboard_route' => route('dashboard'),
                     'email_logs' => route('email-logs.index'),
                     'email_retry' => route('email-logs.retry'),
+                    'email_log_details' => route('email-logs.show', ['email_log' => '__UUID__']),
                     'email_delivery_details' => $postmarkDeliveryDetailsEnabled
                         ? route('email-logs.delivery-details', ['uuid' => '__UUID__'])
                         : null,

@@ -21,7 +21,7 @@ class MessageSent implements ShouldBroadcastNow
      * @param array $payload  Data for DeepChat: ['text' => '...', 'role' => 'ai']
      * @param string $roomId  The normalized phone number (e.g., 16467052267)
      */
-    public function __construct($payload, $roomId)
+    public function __construct($payload, $roomId, public string $domainUuid)
     {
         $this->payload = $payload;
         $this->roomId = $roomId;
@@ -36,7 +36,7 @@ class MessageSent implements ShouldBroadcastNow
         $cleanId = str_replace('+', '', $this->roomId);
 
         return [
-            new PrivateChannel('room.' . $cleanId),
+            new PrivateChannel('room.' . $this->domainUuid . '.' . $cleanId),
         ];
     }
 
@@ -49,6 +49,8 @@ class MessageSent implements ShouldBroadcastNow
     // 3. Data to send: We only send the payload DeepChat needs
     public function broadcastWith(): array
     {
-        return $this->payload;
+        // Clients reload through the authorized history endpoint. A browser that
+        // was subscribed before membership removal must not receive new content.
+        return ['id' => $this->payload['id'] ?? null];
     }
 }

@@ -41,6 +41,7 @@
                                                 <a :href="child.menu_item_link"
                                                     :class="[active ? 'bg-gray-100' : '', 'block px-5 py-2 text-sm text-gray-600 whitespace-nowrap cursor-pointer no-underline']">
                                                     {{ child.menu_item_title }}
+                                                    <span v-if="child.menu_item_link === '/messages' && messageUnreadCount" class="ml-2 rounded-full bg-blue-100 px-2 text-blue-700">{{ messageUnreadCount }}</span>
                                                 </a>
                                             </MenuItem>
                                         </div>
@@ -126,7 +127,9 @@
                             <li v-for="child in item.child_menu" :key="child.menu_item_uuid">
                                 <DisclosureButton as="a" :href="child.menu_item_link"
                                     :class="'hover:bg-gray-50 block rounded-md py-2 pr-2 pl-9 text-sm leading-6 text-gray-700'">
-                                    {{ child.menu_item_title }}</DisclosureButton>
+                                    {{ child.menu_item_title }}
+                                    <span v-if="child.menu_item_link === '/messages' && messageUnreadCount" class="ml-2 rounded-full bg-blue-100 px-2 text-blue-700">{{ messageUnreadCount }}</span>
+                                </DisclosureButton>
                             </li>
         </DisclosurePanel>
     </Disclosure>
@@ -213,6 +216,7 @@ import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/vue/20/solid'
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot, } from '@headlessui/vue'
 
 const page = usePage()
+defineProps({ messageUnreadCount: { type: Number, default: 0 } });
 
 // Logged-in user info (shown in the top-right user menu)
 const userName = computed(() => page.props.auth?.user?.name ?? '')

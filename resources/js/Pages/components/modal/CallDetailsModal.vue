@@ -32,7 +32,7 @@
                                     <main class="">
                                         <!-- Page header -->
                                         <!-- <div class="mx-auto max-w-3xl px-4 sm:px-6 md:flex md:items-center md:justify-between md:space-x-5 lg:max-w-7xl lg:px-8"> -->
-                                        <div class="flex items-center space-x-5">
+                                        <div class="flex flex-wrap items-center gap-5 pr-6">
                                             <div class="flex-shrink-0">
                                                 <!-- <div class="relative">
                                                         <img class="h-16 w-16 rounded-full"
@@ -46,6 +46,9 @@
                                                 <h1 class="text-2xl font-bold text-gray-900">{{
                                                     directionHeading(item.direction) }}</h1>
                                                 <p class="text-sm font-medium text-gray-500">{{ $t('On :date at :time', { date: item.start_date, time: item.start_time }) }}</p>
+                                            </div>
+                                            <div v-if="show && canViewPcap && item?.xml_cdr_uuid" class="ml-auto shrink-0">
+                                                <SipTracePanel :key="item.xml_cdr_uuid" :cdr-uuid="item.xml_cdr_uuid" :route="pcapRoute" :call="item" />
                                             </div>
                                         </div>
                                         <!-- <div
@@ -837,6 +840,7 @@ import Loading from "../general/Loading.vue";
 
 import PhoneOutgoingIcon from "../icons/PhoneOutgoingIcon.vue"
 import PhoneIncomingIcon from "../icons/PhoneIncomingIcon.vue"
+import SipTracePanel from "../SipTracePanel.vue"
 import PhoneLocalIcon from "../icons/PhoneLocalIcon.vue"
 import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
 
@@ -860,6 +864,8 @@ const emit = defineEmits(['close', 'success', 'error'])
 
 const props = defineProps({
     item: Object,
+    canViewPcap: { type: Boolean, default: false },
+    pcapRoute: String,
     show: Boolean,
     header: String,
     loading: Boolean,

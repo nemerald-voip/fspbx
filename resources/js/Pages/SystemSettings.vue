@@ -3,6 +3,13 @@
         :initial-menu-option="initialMenuOption" @update-selected-menu-option="handleUpdateSelectedMenuOption">
 
         <template #default="{ selectedMenuOption }">
+            <section v-if="permissions?.default_setting_view && messagingSettings" v-show="selectedMenuOption === 'messaging'">
+                <MessagingSettingsForm :settings="messagingSettings" :route="routes.messaging_update" system
+                    :can-manage="permissions?.default_setting_edit"
+                    @success="messages => showNotification('success', messages)"
+                    @error="messages => showNotification('error', messages)" />
+            </section>
+
             <!-- GENERAL: system-wide default settings (default_settings) -->
             <section v-show="selectedMenuOption === 'general'">
                 <Vueform ref="generalForm$" :endpoint="submitForm" @success="handleSuccess" @error="handleError"
@@ -29,7 +36,7 @@
                                                 :columns="{ sm: { container: 6 } }" />
                                             <TextElement v-else-if="field.type === 'text'" :name="field.key"
                                                 :label="field.label" :placeholder="field.placeholder" :floating="false"
-                                                :info="field.info || undefined"
+                                                :info="field.info || undefined" :description="field.description || undefined"
                                                 :disabled="!permissions?.default_setting_edit"
                                                 :columns="{ sm: { container: 6 } }" />
                                             <ToggleElement v-else-if="field.type === 'toggle'" :name="field.key"
@@ -99,9 +106,21 @@
             </section>
 
             <section v-if="selectedMenuOption === 'sip_capture'">
-                <SipCaptureSettingsForm :route="routes.sip_capture_update" :settings="sip_capture"
+                <fieldset :disabled="savingSipSettings" :aria-busy="savingSipSettings" class="min-w-0">
+                <SipCaptureSettingsForm ref="sipCaptureForm" v-if="permissions?.sip_capture_view" :route="routes.sip_capture_update" :settings="sip_capture"
                     :can-edit="permissions?.sip_capture_edit" @error="handleErrorResponse"
                     @success="showNotification" />
+                <HomerApiSettingsForm ref="homerApiForm" v-if="permissions?.homer_api_manage && homer_api" :settings="homer_api"
+                    :save-route="routes.homer_api_update" :test-route="routes.homer_api_test"
+                    @error="handleErrorResponse" @success="showNotification" />
+                <div v-if="permissions?.sip_capture_edit || (permissions?.homer_api_manage && homer_api)"
+                    class="flex justify-end bg-gray-50 px-4 pb-6 sm:px-6">
+                    <button type="button" :disabled="savingSipSettings" @click="saveSipSettings"
+                        class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:cursor-wait disabled:opacity-50">
+                        {{ savingSipSettings ? $t('Saving…') : $t('Save') }}
+                    </button>
+                </div>
+                </fieldset>
             </section>
 
             <section v-if="selectedMenuOption === 'number_translations' && permissions?.number_translation_view">
@@ -150,12 +169,14 @@ import PageWithSideMenu from '../Layouts/PageWithSideMenu.vue'
 import Notification from "./components/notifications/Notification.vue";
 import UpdateStripeSettingsModal from "./components/modal/UpdateStripeSettingsModal.vue";
 import Badge from "@generalComponents/Badge.vue";
-import { CreditCardIcon, Cog6ToothIcon, ServerStackIcon } from '@heroicons/vue/24/outline'
+import { CreditCardIcon, Cog6ToothIcon, ServerStackIcon, ChatBubbleLeftRightIcon } from '@heroicons/vue/24/outline'
 import ScheduledJobServerControl from './components/ScheduledJobServerControl.vue'
 import GraphicEqIcon from "@icons/GraphicEqIcon.vue"
 import AssemblyAiForm from "./components/forms/AssemblyAiForm.vue"
+import MessagingSettingsForm from "./components/forms/MessagingSettingsForm.vue"
 import CallTranscriptionOptionsForm from "./components/forms/CallTranscriptionOptionsForm.vue"
 import SipCaptureSettingsForm from "./components/forms/SipCaptureSettingsForm.vue"
+import HomerApiSettingsForm from "./components/forms/HomerApiSettingsForm.vue"
 import NumberTranslations from './components/NumberTranslations.vue'
 import { ArrowsRightLeftIcon } from '@heroicons/vue/24/outline'
 import { AdjustmentsVerticalIcon, SignalIcon } from "@heroicons/vue/24/outline";
@@ -164,6 +185,8 @@ import { AdjustmentsVerticalIcon, SignalIcon } from "@heroicons/vue/24/outline";
 const props = defineProps({
     routes: Object,
     permissions: Object,
+    homer_api: { type: Object, default: null },
+    messagingSettings: { type: Object, default: null },
     scheduled_jobs: { type: Object, default: null },
     // Declarative system-default fields (SystemSettingsSchema), the option
     // lists they reference, and the current global default values. The
@@ -185,6 +208,39 @@ const props = defineProps({
         default: () => ({}),
     },
 })
+
+const sipCaptureForm = ref(null)
+const homerApiForm = ref(null)
+const savingSipSettings = ref(false)
+
+const saveSipSettings = async () => {
+    if (savingSipSettings.value) return
+    savingSipSettings.value = true
+    try {
+        const forms = []
+        if (props.permissions?.sip_capture_edit && sipCaptureForm.value) forms.push(sipCaptureForm.value)
+        if (props.permissions?.homer_api_manage && homerApiForm.value) forms.push(homerApiForm.value)
+        const results = await Promise.allSettled(forms.map(form => form.save()))
+        const messages = {}
+        let failed = false
+        results.forEach((result, index) => {
+            if (result.status === 'rejected') {
+                failed = true
+                const errors = result.reason?.response?.data?.errors
+                    ?? { request: [trans('Could not submit the SIP capture settings.')] }
+                Object.entries(errors).forEach(([key, value]) => { messages[`${index}_${key}`] = value })
+            } else if (result.value) {
+                if (result.value.runtime_synchronized === false) failed = true
+                Object.entries(result.value.messages ?? {}).forEach(([key, value]) => {
+                    messages[`${index}_${key}`] = value
+                })
+            }
+        })
+        if (results.length) showNotification(failed ? 'error' : 'success', messages)
+    } finally {
+        savingSipSettings.value = false
+    }
+}
 
 const form$ = ref(null)
 const generalForm$ = ref(null)
@@ -223,13 +279,14 @@ onMounted(() => {
 
     if (props.permissions?.default_setting_view) {
         navigation.value.push({ key: 'general', name: trans('General'), icon: Cog6ToothIcon })
+        navigation.value.push({ key: 'messaging', name: trans('Messaging'), icon: ChatBubbleLeftRightIcon })
     }
 
     if (props.permissions?.payment_gateways_view) {
         navigation.value.push({ key: 'payment_gateways', name: trans('Payment Gateways'), icon: CreditCardIcon })
     }
 
-    if (props.permissions?.sip_capture_view) {
+    if (props.permissions?.sip_capture_view || props.permissions?.homer_api_manage) {
         navigation.value.push({ key: 'sip_capture', name: trans('SIP Capture'), icon: SignalIcon })
     }
 

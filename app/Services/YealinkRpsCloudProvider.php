@@ -237,7 +237,17 @@ class YealinkRpsCloudProvider implements CloudProviderInterface
         }
 
         $result = $this->requestJson('POST', '/v2/rps/delServers', ['serverIds' => [$id]]);
-        $this->throwIfBatchFailed($result, 'Unable to delete the Yealink RPS server.');
+
+        // YMCS reports an already-deleted server as a failed batch item.
+        $errors = $result['errors'] ?? [];
+        $alreadyDeleted = (int) ($result['failureCount'] ?? 0) === 1
+            && count($errors) === 1
+            && ($errors[0]['field'] ?? null) === $id
+            && ($errors[0]['msg'] ?? null) === 'The resource does not exist or has been deleted';
+
+        if (! $alreadyDeleted) {
+            $this->throwIfBatchFailed($result, 'Unable to delete the Yealink RPS server.');
+        }
 
         DomainSettings::query()
             ->where('domain_uuid', session('domain_uuid'))

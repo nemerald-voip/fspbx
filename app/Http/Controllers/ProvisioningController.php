@@ -511,6 +511,10 @@ class ProvisioningController extends Controller
         }
 
         $template = strtoupper((string) ($device->device_template ?: $tpl?->name ?: ''));
+        if (str_contains($template, 'TRIO') && str_contains($template, '8800')) {
+            return 'Trio8800';
+        }
+
         if (str_contains($template, 'EDGE')) {
             $edgeModel = preg_replace('/[^A-Za-z0-9]/', '', (string) ($tpl?->name ?: $device->device_template));
             return $edgeModel !== '' ? $edgeModel : 'EdgeE350';
@@ -619,6 +623,7 @@ class ProvisioningController extends Controller
                     'sip_transport',
                     'register_expires',
                     'shared_line',
+                    'external_line',
                     'domain_uuid',
                 ]);
             },
@@ -704,6 +709,13 @@ class ProvisioningController extends Controller
             'has_profile' => (bool) $device->profile,
         ]);
 
+        $settings = $this->getProvisionSettings(
+            (string) $device->domain_uuid,
+            (string) $device->device_uuid
+        );
+
+        $this->applyAutomaticLineDisplayNames($device, $settings['line_display_name_format'] ?? null);
+
         $lines = [];
         foreach ($device->lines as $line) {
             $isSharedLine = $this->isSharedLineValue($line->shared_line ?? null);
@@ -732,11 +744,6 @@ class ProvisioningController extends Controller
             'line_numbers' => array_keys($lines),
             'shared_line_count' => collect($lines)->where('shared_line', true)->count(),
         ]);
-
-        $settings = $this->getProvisionSettings(
-            (string) $device->domain_uuid,
-            (string) $device->device_uuid
-        );
 
         $phonebooks = $this->resolvePhonebooksForDevice($device, $settings);
 
@@ -816,6 +823,47 @@ class ProvisioningController extends Controller
      *
      * @return array<int, array{uuid:string,name:string,slot:int,url:string,server_path:string}>
      */
+    /**
+     * Blank line display names follow the account's line_display_name_format.
+     * Values are set on the loaded line models in memory only, so the template
+     * variables and line-key labels below see the same name. Lines are never
+     * saved here.
+     */
+    private function applyAutomaticLineDisplayNames(Devices $device, mixed $format): void
+    {
+        $automaticLines = $device->lines->filter(
+            fn ($line) => fspbx_line_display_name_is_automatic(
+                $line->only(['display_name', 'auth_id', 'external_line'])
+            )
+        );
+
+        if ($automaticLines->isEmpty() || empty($device->domain_uuid)) {
+            return;
+        }
+
+        $extensions = Extensions::without('advSettings')
+            ->where('domain_uuid', $device->domain_uuid)
+            ->whereIn('extension', $automaticLines->map(fn ($line) => trim((string) $line->auth_id))->unique()->values())
+            ->get(['extension', 'effective_caller_id_name', 'directory_first_name', 'directory_last_name'])
+            ->keyBy(fn ($extension) => (string) $extension->extension);
+
+        foreach ($automaticLines as $line) {
+            $extension = $extensions->get(trim((string) $line->auth_id));
+
+            if ($extension) {
+                $line->display_name = fspbx_format_extension_label(
+                    is_string($format) ? $format : null,
+                    $extension->only(['extension', 'effective_caller_id_name', 'directory_first_name', 'directory_last_name'])
+                );
+            }
+        }
+
+        provisioning_debug('ProvisioningController: applied automatic line display names', [
+            'device_uuid' => (string) $device->device_uuid,
+            'line_numbers' => $automaticLines->pluck('line_number')->values()->all(),
+        ]);
+    }
+
     private function resolvePhonebooksForDevice(Devices $device, array $settings): array
     {
         $vendor = strtolower((string) $device->device_vendor);
@@ -1013,11 +1061,11 @@ class ProvisioningController extends Controller
             ];
         }
 
-        // Polycom model-MAC (3–4 digit models, e.g., VVX600-, SPIP321-, SSIP7000-; also SSDuo)
+        // Polycom model-MAC (desk phones and the Trio 8800 conference phone).
         if (
             $vendor === 'polycom' &&
             $extLower === 'cfg' &&
-            preg_match('#(^|/)(?:(?:SPIP|VVX|SSIP|EdgeE)\d{3,4}|SSDuo)-[0-9a-f]{12}\.cfg$#i', $raw)
+            preg_match('#(^|/)(?:(?:SPIP|VVX|SSIP|EdgeE)\d{3,4}|Trio8800|SSDuo)-[0-9a-f]{12}\.cfg$#i', $raw)
         ) {
             provisioning_debug('ProvisioningController: matched Polycom model MAC flavor', [
                 'device_uuid' => (string) $device->device_uuid,
@@ -1695,7 +1743,8 @@ class ProvisioningController extends Controller
             unset($k);
         }
 
-        // Fill labels from Extensions.effective_caller_id_name (domain-scoped)
+        // Fill blank labels from the target extension (domain-scoped), formatted
+        // with blf_label_format. A label typed on the key always wins.
         $blfTargets = collect($keys)
             ->filter(fn($k) => (empty($k['label']) || $k['label'] === null) && !empty($k['value']))
             ->map(fn($k) => (string) ($k['value'] ?? ''))
@@ -1704,12 +1753,18 @@ class ProvisioningController extends Controller
             ->values();
 
         if ($blfTargets->isNotEmpty()) {
-            $extLabels = Extensions::query()
+            $labelFormat = $settings['blf_label_format'] ?? null;
+            $extLabels = Extensions::without('advSettings')
                 ->where('domain_uuid', $device->domain_uuid)
                 ->whereIn('extension', $blfTargets->all())
-                ->get(['extension', 'effective_caller_id_name'])
-                ->keyBy('extension')
-                ->map(fn($r) => $r->effective_caller_id_name)
+                ->get(['extension', 'effective_caller_id_name', 'directory_first_name', 'directory_last_name'])
+                ->mapWithKeys(fn ($r) => [
+                    (string) $r->extension => fspbx_format_extension_label(
+                        is_string($labelFormat) ? $labelFormat : null,
+                        $r->only(['extension', 'effective_caller_id_name', 'directory_first_name', 'directory_last_name']),
+                        '{name}'
+                    ),
+                ])
                 ->toArray();
 
             $labelsFilled = 0;

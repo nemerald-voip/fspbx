@@ -19,6 +19,8 @@ class MessageRepository
         ?string $providerReferenceId,
         array $media = [],
         ?string $providerEvent = null,
+        ?string $messageGroupUuid = null,
+        ?int $expectedMediaCount = null,
     ): Messages {
         $countryCode = get_domain_setting('country', $domainUuid) ?? 'US';
 
@@ -39,6 +41,7 @@ class MessageRepository
         ]);
 
         $message = Messages::create([
+            'message_group_uuid' => $messageGroupUuid,
             'domain_uuid'    => $domainUuid,
             'extension_uuid' => $extensionUuid,
             'source'         => $normalizedSource,
@@ -50,12 +53,14 @@ class MessageRepository
             'status'         => 'received',
             'media'          => $media,
             'delivery_meta'  => [
+                'ringotel_tracking' => 1,
                 'provider' => [
                     'name'         => $providerName,
                     'reference_id' => $providerReferenceId,
                     'status'       => 'received',
                     'received_at'  => now()->toIso8601String(),
                     'last_event'   => $providerEvent,
+                    'expected_media_count' => $expectedMediaCount,
                     'error'        => null,
                 ],
             ],
@@ -97,6 +102,8 @@ class MessageRepository
         string $status,
         ?string $description = null,
         ?string $providerEvent = null,
+        ?string $recipient = null,
+        ?string $occurredAt = null,
     ): void {
         messaging_webhook_debug('applyProviderStatus called', [
             'provider' => $provider,
@@ -104,6 +111,11 @@ class MessageRepository
             'status' => $status,
             'provider_event' => $providerEvent,
         ]);
+
+        if ($provider === 'bandwidth' && $recipient !== null
+            && $this->applyBandwidthGroupRecipientStatus($referenceId, $recipient, $status, $description, $providerEvent, $occurredAt)) {
+            return;
+        }
 
         $message = Messages::where('reference_id', $referenceId)->first();
 
@@ -132,6 +144,62 @@ class MessageRepository
         ]);
     }
 
+    private function applyBandwidthGroupRecipientStatus(
+        string $referenceId,
+        string $recipient,
+        string $status,
+        ?string $description,
+        ?string $providerEvent,
+        ?string $occurredAt,
+    ): bool {
+        // Different recipients can report concurrently. Keep their outcomes together.
+        return (new Messages())->getConnection()->transaction(function () use ($referenceId, $recipient, $status, $description, $providerEvent, $occurredAt) {
+            $message = Messages::where('reference_id', $referenceId)->where('direction', 'out')
+                ->whereNotNull('message_group_uuid')
+                ->where('delivery_meta->outbound->provider->name', 'bandwidth')->lockForUpdate()->first();
+            if (!$message) {
+                return false;
+            }
+
+            $recipients = $message->group->recipients;
+            if (!in_array($recipient, $recipients, true)) {
+                return true;
+            }
+            $meta = $message->delivery_meta ?? [];
+            $outcomes = data_get($meta, 'outbound.provider.recipients', []);
+            $previousTime = $outcomes[$recipient]['occurred_at'] ?? null;
+            if ($previousTime && $occurredAt && strtotime($occurredAt) < strtotime($previousTime)) {
+                return true;
+            }
+            $outcomes[$recipient] = [
+                'status' => $status,
+                'error' => $status === 'failed' ? $description : null,
+                'last_event' => $providerEvent,
+                'occurred_at' => $occurredAt,
+            ];
+            $failed = array_values(array_filter($recipients, fn ($number) => ($outcomes[$number]['status'] ?? null) === 'failed'));
+            $delivered = array_filter($recipients, fn ($number) => ($outcomes[$number]['status'] ?? null) === 'delivered');
+            $overall = $failed ? 'failed' : (count($delivered) === count($recipients) ? 'delivered' : 'sent');
+            $error = $failed ? __('Delivery failed for :recipients.', ['recipients' => implode(', ', $failed)]) : null;
+
+            data_set($meta, 'outbound.provider.recipients', $outcomes);
+            data_set($meta, 'outbound.provider.status', $overall);
+            data_set($meta, 'outbound.provider.error', $error);
+            // A delivery callback proves carrier acceptance. Retrying must not resend to the group.
+            data_set($meta, 'outbound.provider.accepted_at', data_get($meta, 'outbound.provider.accepted_at') ?: now()->toIso8601String());
+            foreach ([
+                'name' => 'bandwidth', 'reference_id' => $referenceId, 'status' => $overall,
+                'last_event' => $providerEvent, 'error' => $error, 'updated_at' => now()->toIso8601String(),
+            ] as $key => $value) {
+                data_set($meta, 'provider.'.$key, $value);
+            }
+            $message->delivery_meta = $meta;
+            $message->status = $overall;
+            $message->save();
+            return true;
+        });
+    }
+
     public function storeOutbound(
         string $domainUuid,
         ?string $extensionUuid,
@@ -144,6 +212,7 @@ class MessageRepository
         ?string $providerReferenceId = null,
         array $media = [],
         array $meta = [],
+        ?string $messageGroupUuid = null,
     ): Messages {
         messaging_webhook_debug('storeOutbound called', [
             'domain_uuid' => $domainUuid,
@@ -171,8 +240,10 @@ class MessageRepository
             'type'           => $type,
             'reference_id'   => $providerReferenceId,
             'status'         => 'queued',
+            'message_group_uuid' => $messageGroupUuid,
             'media'          => $media,
             'delivery_meta'  => [
+                'ringotel_tracking' => 1,
                 'outbound' => [
                     'origin' => $origin,
                     'provider' => [
@@ -230,6 +301,10 @@ class MessageRepository
         data_set($meta, 'outbound.provider.response', $result->providerResponse);
         data_set($meta, 'outbound.provider.updated_at', now()->toIso8601String());
 
+        if ($result->success) {
+            data_set($meta, 'outbound.provider.accepted_at', now()->toIso8601String());
+        }
+
         $message->delivery_meta = $meta;
         $message->status = $result->status;
 
@@ -246,6 +321,9 @@ class MessageRepository
             'provider_reference_id' => $result->providerReferenceId,
             'error' => $result->error,
         ]);
+        if ($result->success) {
+            app(MessageReadService::class)->notify($message->domain_uuid, $message->source);
+        }
     }
 
 
@@ -265,14 +343,14 @@ class MessageRepository
             return;
         }
 
-        $meta = $message->delivery_meta ?? [];
-
-        data_set($meta, 'ringotel.status', $status);
-        data_set($meta, 'ringotel.attempted_at', now()->toIso8601String());
-        data_set($meta, 'ringotel.error', $error);
-
-        $message->delivery_meta = $meta;
-        $message->save();
+        // Separate workers also update provider status: do not replace their metadata.
+        Messages::whereKey($messageUuid)->update([
+            'delivery_meta->ringotel' => [
+                'status' => $status,
+                'attempted_at' => now()->toIso8601String(),
+                'error' => $error,
+            ],
+        ]);
     }
 
     public function markEmailStatus(string $messageUuid, string $status, ?string $to = null, ?string $error = null): void

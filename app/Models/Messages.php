@@ -22,6 +22,7 @@ class Messages extends Model
 
     protected $fillable = [
         'message_uuid',
+        'message_group_uuid',
         'extension_uuid',
         'domain_uuid',
         'source',
@@ -84,6 +85,49 @@ class Messages extends Model
     public function domain()
     {
         return $this->belongsTo(Domain::class, 'domain_uuid', 'domain_uuid');
+    }
+
+    public function group()
+    {
+        return $this->belongsTo(MessageGroup::class, 'message_group_uuid', 'message_group_uuid');
+    }
+
+    public function roomId(): string
+    {
+        $local = $this->direction === 'in' ? $this->destination : $this->source;
+        $remote = $this->message_group_uuid ?: ($this->direction === 'in' ? $this->source : $this->destination);
+        return $local.'_'.$remote;
+    }
+
+    /**
+     * Read legacy JSON/URL attachments without changing the stored media.
+     * Preserve original indexes because stored attachment URLs use them.
+     */
+    public function mediaItems(): array
+    {
+        $media = $this->media;
+        if (is_string($media)) {
+            $media = json_decode($media, true);
+        }
+        if (!is_array($media)) {
+            return [];
+        }
+
+        $items = [];
+        foreach ($media as $index => $item) {
+            if (is_string($item)) {
+                if (!filter_var($item, FILTER_VALIDATE_URL)
+                    || !in_array(strtolower(parse_url($item, PHP_URL_SCHEME) ?? ''), ['http', 'https'], true)) {
+                    continue;
+                }
+                $item = ['url' => $item, 'access_path' => $item];
+            }
+            if (is_array($item) && $item !== []) {
+                $items[$index] = $item;
+            }
+        }
+
+        return $items;
     }
 
     public function updateDeliveryMeta(string $path, mixed $value): void

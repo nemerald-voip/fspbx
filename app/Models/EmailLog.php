@@ -45,11 +45,21 @@ class EmailLog extends Model
 
     public function getCreatedAtFormattedAttribute()
     {
-        if (!$this->created_at) {
+        return $this->formatLogTimestamp($this->created_at);
+    }
+
+    public function getUpdatedAtFormattedAttribute()
+    {
+        return $this->formatLogTimestamp($this->updated_at);
+    }
+
+    private function formatLogTimestamp($value): ?string
+    {
+        if (!$value) {
             return null;
         }
         $timeZone = auth()->user()->time_zone;
-        return Carbon::parse($this->created_at)->setTimezone($timeZone)->format('g:i:s A M d, Y');
+        return Carbon::parse($value)->setTimezone($timeZone)->format('g:i:s A M d, Y');
     }
 
     public function domain(): BelongsTo

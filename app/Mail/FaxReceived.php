@@ -4,7 +4,6 @@ namespace App\Mail;
 
 use App\Models\DomainSettings;
 use App\Models\DefaultSettings;
-use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 
 class FaxReceived extends BaseMailable
@@ -100,13 +99,13 @@ class FaxReceived extends BaseMailable
         $path = $this->attributes['attachment_path'] ?? null;
 
         if (!$path || !is_file($path)) {
-            return [];
+            return $this->attachmentsFromReferences([]);
         }
 
-        return [
-            Attachment::fromPath($path)
-                ->as($this->attributes['attachment_name'] ?? basename($path))
-                ->withMime($this->attributes['attachment_mime'] ?? 'application/octet-stream'),
-        ];
+        return $this->attachmentsFromReferences([[
+            'path' => $path,
+            'name' => $this->attributes['attachment_name'] ?? basename($path),
+            'mime' => $this->attributes['attachment_mime'] ?? 'application/octet-stream',
+        ]]);
     }
 }

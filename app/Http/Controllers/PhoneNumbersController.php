@@ -253,6 +253,8 @@ class PhoneNumbersController extends Controller
                 'destination_actions',
                 'destination_enabled',
                 'destination_description',
+                'destination_record',
+                'fax_uuid',
                 'domain_uuid',
             ])
             // allow ?filter[username]=foo or ?filter[user_email]=bar
@@ -311,7 +313,22 @@ class PhoneNumbersController extends Controller
                 }),
             ])
             ->defaultSort('destination_number')
-            ->paginate($perPage);
+            ->paginate($perPage)
+            ->through(function (Destinations $destination) {
+                $extras = array_values(array_filter([
+                    filled($destination->fax_uuid) ? __('Fax detection') : null,
+                    $destination->destination_record === 'true' ? __('Recorded') : null,
+                ]));
+
+                // The list shows routing_summary instead of the edit form's routing_options.
+                return $destination
+                    ->setAppends(['destination_number_formatted'])
+                    ->makeHidden(['destination_record', 'fax_uuid'])
+                    ->toArray() + [
+                        'routing_summary' => $destination->routingSummary(),
+                        'routing_extras' => $extras,
+                    ];
+            });
 
         return $data;
     }

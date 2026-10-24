@@ -69,13 +69,7 @@
                 <TableColumnHeader v-if="filterData.showGlobal" :header="$t('Domain')"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader v-if="!filterData.showGlobal" :header="$t('Call Routing')"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
-                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('destination_actions')">
-                        <span class="mr-2">{{ $t('Call Routing') }}</span>
-                        <ChevronUpIcon v-if="sortData.name === 'destination_actions' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
-                        <ChevronDownIcon v-else-if="sortData.name === 'destination_actions' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
-                    </div>
-                </TableColumnHeader>
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('destination_description')">
                         <span class="mr-2">{{ $t('Description') }}</span>
@@ -145,19 +139,30 @@
                     </TableField>
 
                     <TableField v-if="!filterData.showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
-                        <ul v-if="row.routing_options">
-                            <li v-for="(action, index) in row.routing_options" :key="index">
-                                <span v-if="action && action.type && action.extension">
-                                    {{ $t('Type: :type, Extension: :extension', { type: action.type, extension: action.extension }) }}
+                        <div :class="{ 'cursor-pointer': permissions.update }"
+                            @click="permissions.update && handleEditRequest(row.destination_uuid)">
+                            <div class="flex items-center gap-2">
+                                <Badge v-if="!row.routing_summary?.length" :text="$t('Not routed')"
+                                    backgroundColor="bg-amber-50" textColor="text-amber-700"
+                                    ringColor="ring-amber-600/20" class="px-2 py-1 text-xs" />
+                                <Badge v-else-if="row.routing_summary[0].invalid" :text="$t('Invalid destination')"
+                                    backgroundColor="bg-rose-50" textColor="text-rose-700"
+                                    ringColor="ring-rose-600/20" class="px-2 py-1 text-xs" />
+                                <span v-else class="text-gray-900"
+                                    :class="{ 'hover:text-indigo-600': permissions.update }">
+                                    {{ row.routing_summary[0].name || row.routing_summary[0].type }}
                                 </span>
-                                <span v-else-if="action && action.type === 'hangup'">
-                                    {{ $t('Type: :type', { type: action.type }) }}
+
+                                <span v-if="row.routing_summary?.length > 1"
+                                    class="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600"
+                                    :title="routingSummaryTitle(row.routing_summary)">
+                                    {{ $t('+:count more', { count: row.routing_summary.length - 1 }) }}
                                 </span>
-                                <span v-else>
-                                    {{ $t('Invalid action data') }}
-                                </span>
-                            </li>
-                        </ul>
+                            </div>
+                            <div v-if="routingDetails(row)" class="text-xs text-gray-500">
+                                {{ routingDetails(row) }}
+                            </div>
+                        </div>
                     </TableField>
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
@@ -471,6 +476,29 @@ const bulkActions = computed(() => {
     return actions;
 });
 
+const routingActionText = (action) => {
+    if (action.invalid) {
+        return trans('Invalid destination');
+    }
+
+    return action.name && action.type ? `${action.name} (${action.type})` : (action.name || action.type);
+};
+
+const routingSummaryTitle = (summary) => summary.map(routingActionText).join('\n');
+
+// Second line under the routing cell: the destination type or a fix hint, plus fax/recording tags.
+const routingDetails = (row) => {
+    const first = row.routing_summary?.[0];
+    let detail = null;
+
+    if (first?.invalid) {
+        detail = trans('Edit this number to choose a new one.');
+    } else if (first?.name) {
+        detail = first.type;
+    }
+
+    return [detail, ...(row.routing_extras ?? [])].filter(Boolean).join(' · ');
+};
 
 const handleEditRequest = (itemUuid) => {
     showUpdateModal.value = true

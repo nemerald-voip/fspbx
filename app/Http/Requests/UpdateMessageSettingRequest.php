@@ -17,7 +17,7 @@ class UpdateMessageSettingRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return Auth::check();
+        return \App\Services\Messaging\MessageSettingsAccess::canManage($this->route('setting')?->domain_uuid);
     }
 
     /**
@@ -38,7 +38,10 @@ class UpdateMessageSettingRequest extends FormRequest
             ],
             'chatplan_detail_data' => [
                 'nullable',
+                Rule::exists('v_extensions', 'extension')->where('domain_uuid', $this->route('setting')?->domain_uuid),
             ],
+            'allowed_extension_uuids' => ['sometimes', 'array'],
+            'allowed_extension_uuids.*' => ['uuid', 'distinct', Rule::exists('v_extensions', 'extension_uuid')->where('domain_uuid', $this->route('setting')?->domain_uuid)],
             'email' => [
                 'nullable',
                 'email:rfc,dns'
@@ -65,10 +68,6 @@ class UpdateMessageSettingRequest extends FormRequest
     protected function prepareForValidation()
     {
         $merge = [];
-
-        if (!$this->has('enabled')) {
-            $merge['enabled'] = "true";
-        }
 
         if ($this->has('destination')) {
             $merge['destination'] = formatPhoneNumber($this->input('destination'),'US', PhoneNumberFormat::E164);

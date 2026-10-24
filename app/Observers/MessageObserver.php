@@ -9,10 +9,21 @@ use App\Events\ConversationUpdated;
 
 class MessageObserver
 {
+    public function updated(Messages $message): void
+    {
+        if ($message->wasChanged(['status', 'media'])) $this->broadcast($message);
+
+    }
+
     /**
      * Handle the Messages "created" event.
      */
     public function created(Messages $message): void
+    {
+        $this->broadcast($message);
+    }
+
+    private function broadcast(Messages $message): void
     {
         try {
             // logger("Observer Fired for Message: {$message->message_uuid}");
@@ -25,7 +36,7 @@ class MessageObserver
             $remote = $isOutbound ? $message->destination : $message->source;
 
             // 2. Active Chat Window
-            $roomId = "{$local}_{$remote}";
+            $roomId = $message->roomId();
 
             $mediaPayload = $message->media;
             
@@ -41,6 +52,9 @@ class MessageObserver
             }
 
             $payload = [
+                'id' => $message->message_uuid,
+                'sender_name' => $message->message_group_uuid && !$isOutbound ? $message->source
+                    : app(\App\Services\Messaging\MessageParticipantService::class)->sender($message),
                 'text' => $message->message,
                 'role' => $role,
                 'timestamp' => $message->created_at->toIsoString(),
@@ -51,7 +65,7 @@ class MessageObserver
 
             // 3. Broadcast message update
             try {
-                broadcast(new MessageSent($payload, $roomId));
+                broadcast(new MessageSent($payload, $roomId, $message->domain_uuid));
             } catch (Throwable $e) {
                 logger('Error broadcasting MessageSent: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             }
@@ -68,7 +82,9 @@ class MessageObserver
             ];
 
             try {
-                broadcast(new ConversationUpdated($sidebarPayload, $message->extension_uuid));
+                foreach (app(\App\Services\Messaging\MessageParticipantService::class)->members($message->domain_uuid, $local) as $member) {
+                    broadcast(new ConversationUpdated($sidebarPayload, $member->extension_uuid));
+                }
             } catch (Throwable $e) {
                 logger('Error broadcasting ConversationUpdated: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             }

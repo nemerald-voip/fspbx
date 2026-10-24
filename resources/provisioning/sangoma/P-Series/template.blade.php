@@ -1,4 +1,4 @@
-{{-- version: 1.2.0 --}}
+{{-- version: 1.2.1 --}}
 {{-- Sangoma P-series XML reference: https://sangomakb.atlassian.net/wiki/spaces/Phones/pages/732790785 --}}
 
 @php
@@ -123,6 +123,19 @@
         @endif
     @endfor
     </accounts>
+
+    <!-- Show Voicemail in the application menu and dial the account's voicemail number. -->
+    <appconfig id="appscreen">
+        <application id="call_log" />
+        <application id="voicemail" />
+        <application id="contacts" />
+        <application id="favorites" />
+        <application id="forward_calls" />
+        <auto_start />
+    </appconfig>
+    <appconfig id="voicemail">
+        <disabled />
+    </appconfig>
 </config>
 @break
 @case('mac-contacts.xml')

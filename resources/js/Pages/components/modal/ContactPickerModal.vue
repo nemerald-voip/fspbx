@@ -96,14 +96,30 @@
                                     <span class="text-sm tabular-nums text-gray-700">
                                         {{ contact.number_formatted || contact.value }}
                                     </span>
-                                    <span v-if="contact.phone_type"
-                                        class="rounded-md px-1.5 py-0.5 text-[11px] font-medium capitalize"
-                                        :class="contact.phone_type.toLowerCase() === 'fax'
-                                            ? 'bg-teal-50 text-teal-700 ring-1 ring-inset ring-teal-600/20'
-                                            : 'bg-gray-100 text-gray-600'">
-                                        {{ phoneTypeLabel(contact.phone_type) }}
+                                    <span class="flex flex-wrap justify-end gap-1">
+                                        <span v-if="contact.phone_type"
+                                            class="rounded-md px-1.5 py-0.5 text-[11px] font-medium capitalize"
+                                            :class="contact.phone_type.toLowerCase() === 'fax'
+                                                ? 'bg-teal-50 text-teal-700 ring-1 ring-inset ring-teal-600/20'
+                                                : 'bg-gray-100 text-gray-600'">
+                                            {{ phoneTypeLabel(contact.phone_type) }}
+                                        </span>
+                                        <span v-if="contact.visibility === 'shared' || contact.visibility === 'private'"
+                                            class="rounded-md px-1.5 py-0.5 text-[11px] font-medium ring-1 ring-inset"
+                                            :class="contact.visibility === 'shared'
+                                                ? 'bg-gray-100 text-gray-600 ring-gray-500/20'
+                                                : 'bg-indigo-50 text-indigo-700 ring-indigo-600/20'">
+                                            {{ contact.visibility === 'shared' ? $t('Shared') : $t('Private') }}
+                                        </span>
                                     </span>
                                 </span>
+                            </button>
+
+                            <button v-if="editable && contact.contact_uuid && contact.phone_uuid" type="button"
+                                class="flex-none rounded-lg p-2 text-gray-400 transition hover:bg-indigo-50 hover:text-indigo-600"
+                                @click="emit('edit', contact)">
+                                <span class="sr-only">{{ $t('Edit contact') }}</span>
+                                <PencilSquareIcon class="h-4 w-4" aria-hidden="true" />
                             </button>
 
                             <button v-if="destroyRoute && contact.contact_uuid" type="button"
@@ -151,17 +167,19 @@
 import { nextTick, ref, watch } from 'vue'
 import axios from 'axios'
 import { trans } from '@i18n'
-import { BookOpenIcon, InformationCircleIcon, MagnifyingGlassIcon, TrashIcon, UserPlusIcon, XMarkIcon } from '@heroicons/vue/24/outline'
+import { BookOpenIcon, InformationCircleIcon, MagnifyingGlassIcon, PencilSquareIcon, TrashIcon, UserPlusIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import FormChildModal from '../FormChildModal.vue'
 import Loading from '../general/Loading.vue'
 
-const emit = defineEmits(['close', 'select', 'create', 'deleted', 'error'])
+const emit = defineEmits(['close', 'select', 'create', 'edit', 'deleted', 'error'])
 
 const props = defineProps({
     show: Boolean,
     route: String,
     // Contains a ":contact" placeholder, as built by route('contacts.destroy').
     destroyRoute: String,
+    // Shows an edit button per row; the parent handles the 'edit' event.
+    editable: Boolean,
     channel: {
         type: String,
         default: 'fax',

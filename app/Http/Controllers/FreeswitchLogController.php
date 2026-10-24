@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\CDR;
 use App\Models\DefaultSettings;
 use App\Services\FreeswitchEslService;
+use App\Services\FreeswitchLogCallGraph;
 use App\Services\OpenSearchFreeswitchLogService;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\JsonResponse;
@@ -161,7 +162,7 @@ class FreeswitchLogController extends Controller
             'correlation_padding_minutes' => ['nullable', 'integer', 'min:1', 'max:' . self::MAX_CORRELATION_PADDING_MINUTES],
         ]);
 
-        $selectedFile = $validated['log_file'] ?? 'freeswitch.log';
+        $selectedFile = $validated['log_file'] ?? 'all';
         $filesToSearch = $this->selectedFiles($approvedFiles, $selectedFile);
 
         if ($filesToSearch->isEmpty()) {
@@ -197,7 +198,11 @@ class FreeswitchLogController extends Controller
             sizeKb: (int) ($validated['size_kb'] ?? self::DEFAULT_SIZE_KB),
             maxLines: (int) ($validated['max_lines'] ?? self::DEFAULT_MAX_LINES),
             sort: $validated['sort'] ?? 'asc',
+            discoverLegs: $wholeCall && $seed !== '',
         );
+
+        $correlation['uuids'] = array_values(array_unique(array_merge($correlation['uuids'], $result['discovered']['uuids'])));
+        $correlation['sip_call_ids'] = array_values(array_unique(array_merge($correlation['sip_call_ids'], $result['discovered']['sip_call_ids'])));
 
         return response()->json([
             'files' => $this->fileOptions($approvedFiles),
@@ -577,6 +582,7 @@ class FreeswitchLogController extends Controller
         int $sizeKb,
         int $maxLines,
         string $sort,
+        bool $discoverLegs = false,
     ): array {
         $limitBytes = min(max($sizeKb, 1), self::MAX_SIZE_KB) * 1024;
         $maxLines = min(max($maxLines, 1), self::MAX_LINES);
@@ -584,6 +590,20 @@ class FreeswitchLogController extends Controller
         $errors = [];
         $bytesRead = 0;
         $matchedLines = 0;
+        $discovered = ['uuids' => [], 'sip_call_ids' => []];
+
+        if ($discoverLegs && $searchTerms->isNotEmpty()) {
+            $graph = new FreeswitchLogCallGraph();
+            // Discover before filtering, across rotations, so later links also
+            // recover the first INVITE and all earlier messages for a leg.
+            foreach ($files as $file) {
+                $entries = $this->readLogEntries($file, $limitBytes) ?? [];
+                $graph->addEntries($entries, $this->sipTraceBlocks($entries));
+            }
+            $discovered = $graph->discover($searchTerms);
+            $searchTerms = $searchTerms->merge($discovered['uuids'])->merge($discovered['sip_call_ids'])->unique()->values();
+            unset($entries, $graph);
+        }
 
         foreach ($files as $file) {
             if (! $file['readable']) {
@@ -591,40 +611,13 @@ class FreeswitchLogController extends Controller
                 continue;
             }
 
-            $handle = @fopen($file['path'], 'rb');
-            if (! $handle) {
+            $entries = $this->readLogEntries($file, $limitBytes);
+            if ($entries === null) {
                 $errors[] = __('Unable to open :file.', ['file' => $file['basename']]);
                 continue;
             }
 
-            $fileSize = $file['size'];
-            $offset = max($fileSize - $limitBytes, 0);
-
-            if ($offset > 0) {
-                fseek($handle, $offset);
-                fgets($handle);
-            }
-
-            $lineNumber = 0;
-            $entries = [];
-
-            while (($line = fgets($handle)) !== false) {
-                $lineNumber++;
-                $bytesRead += strlen($line);
-                $line = rtrim($line, "\r\n");
-
-                $parsed = $this->parseLine($line);
-                $entries[] = [
-                    'file' => $file['basename'],
-                    'line_number' => $lineNumber,
-                    'timestamp' => $parsed['timestamp'],
-                    'level' => $parsed['level'],
-                    'message' => $line,
-                    'matched_terms' => [],
-                ];
-            }
-
-            fclose($handle);
+            $bytesRead += min($file['size'], $limitBytes);
 
             $sipTraceBlocks = $this->sipTraceBlocks($entries);
             $included = [];
@@ -670,7 +663,40 @@ class FreeswitchLogController extends Controller
             'matched_lines' => $matchedLines,
             'truncated_matches' => $truncated,
             'errors' => $errors,
+            'discovered' => $discovered,
         ];
+    }
+
+    private function readLogEntries(array $file, int $limitBytes): ?array
+    {
+        $handle = $file['readable'] ? @fopen($file['path'], 'rb') : false;
+        if (! $handle) {
+            return null;
+        }
+
+        $offset = max($file['size'] - $limitBytes, 0);
+        if ($offset > 0) {
+            fseek($handle, $offset);
+            fgets($handle);
+        }
+
+        $entries = [];
+        // Stop at the snapshotted size even if the live log keeps growing.
+        while (ftell($handle) < $file['size'] && ($line = fgets($handle)) !== false) {
+            $line = rtrim($line, "\r\n");
+            $parsed = $this->parseLine($line);
+            $entries[] = [
+                'file' => $file['basename'],
+                'line_number' => count($entries) + 1,
+                'timestamp' => $parsed['timestamp'],
+                'level' => $parsed['level'],
+                'message' => $line,
+                'matched_terms' => [],
+            ];
+        }
+        fclose($handle);
+
+        return $entries;
     }
 
     private function sipTraceBlocks(array $entries): array
@@ -731,7 +757,8 @@ class FreeswitchLogController extends Controller
 
     private function isTimestampedLogLine(string $line): bool
     {
-        return (bool) preg_match('/^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}(?:\.\d+)?\s+\[[A-Z]+\]/', $line);
+        return $this->parseLine($line)['timestamp'] !== null
+            || (bool) preg_match('/^(?:[0-9a-fA-F-]{36}\s+)?(?:EXECUTE\b|Dialplan:)/', $line);
     }
 
     private function eslResponseFailed($response): bool
@@ -746,7 +773,7 @@ class FreeswitchLogController extends Controller
 
     private function parseLine(string $line): array
     {
-        preg_match('/^(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}(?:\.\d+)?)/', $line, $timestampMatch);
+        preg_match('/^(?:[0-9a-fA-F-]{36}\s+)?(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}(?:\.\d+)?)/', $line, $timestampMatch);
         preg_match('/\[(DEBUG|INFO|NOTICE|WARNING|ERR|CRIT|ALERT)\]/i', $line, $levelMatch);
 
         return [

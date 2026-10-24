@@ -45,7 +45,8 @@
                                                 :columns="{ sm: { container: 6 } }" />
                                             <TextElement v-else-if="field.type === 'text'" :name="field.key"
                                                 :label="field.label" :placeholder="field.placeholder" :floating="false"
-                                                :info="field.info || undefined" :columns="{ sm: { container: 6 } }" />
+                                                :info="field.info || undefined" :description="field.description || undefined"
+                                                :columns="{ sm: { container: 6 } }" />
                                             <ToggleElement v-else-if="field.type === 'toggle'" :name="field.key"
                                                 :text="field.label" />
                                         </template>
@@ -61,6 +62,15 @@
                         </div>
                     </template>
                 </Vueform>
+            </section>
+
+            <!-- MESSAGING -->
+            <section v-show="selectedMenuOption === 'messaging'">
+                <MessagingSettingsForm :settings="messagingSettings" :route="routes.messaging_update"
+                    :reset-route="routes.messaging_reset"
+                    :can-manage="permissions?.messaging_manage"
+                    @success="messages => showNotification('success', messages)"
+                    @error="messages => showNotification('error', messages)" />
             </section>
 
             <!-- LOCATIONS -->
@@ -224,6 +234,7 @@ import CallTranscriptionOptionsForm from "./components/forms/CallTranscriptionOp
 import AssemblyAiForm from "./components/forms/AssemblyAiForm.vue"
 import CallWebhookSettingsForm from "./components/forms/CallWebhookSettingsForm.vue"
 import LdapDirectorySettings from "./components/LdapDirectorySettings.vue"
+import MessagingSettingsForm from "./components/forms/MessagingSettingsForm.vue"
 import {
     Cog6ToothIcon,
     MapPinIcon,
@@ -236,6 +247,7 @@ import {
     AdjustmentsVerticalIcon,
     ArrowPathRoundedSquareIcon,
     ServerStackIcon,
+    ChatBubbleLeftRightIcon,
 } from '@heroicons/vue/24/outline'
 
 const props = defineProps({
@@ -245,6 +257,7 @@ const props = defineProps({
     },
     routes: Object,
     permissions: Object,
+    messagingSettings: { type: Object, default: () => ({ enabled: false, available: false }) },
     pms_provider_options: {
         type: Array,
         default: () => [],
@@ -331,6 +344,7 @@ const handleUpdateSelectedMenuOption = (key) => {
 
 const navigation = [
     { key: 'general', name: trans('General'), icon: Cog6ToothIcon },
+    { key: 'messaging', name: trans('Messaging'), icon: ChatBubbleLeftRightIcon },
     { key: 'locations', name: trans('Locations'), icon: MapPinIcon },
     ...(props.ldapDirectorySettings && props.permissions?.ldap_directory_view
         ? [{ key: 'active_directory', name: trans('Directory Services'), icon: ServerStackIcon }]
