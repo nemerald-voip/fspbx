@@ -97,6 +97,12 @@
                                                     'container_advanced',
                                                     'submit_advanced',
                                                 ]" />
+
+                                                <FormTab name="flag_override" :label="$t('Flag Overrides')" :elements="[
+                                                    'flag_title',
+                                                    'flag_overrides',
+                                                    'submit_flag',
+                                                ]" :conditions="[() => !!options?.item?.ivr_menu_uuid]" />
                                             </FormTabs>
                                         </div>
 
@@ -393,6 +399,63 @@
                                                 <ButtonElement name="submit_advanced" :button-label="$t('Save')"
                                                     :submits="true" align="right" />
 
+                                                <StaticElement name="flag_title" tag="h4" :content="$t('Flag Overrides')"
+                                                    :description="$t('Send calls somewhere else while a flag is active or inactive. The first matching row wins; drag rows to change the order. When no row matches, callers hear the menu as normal.')" />
+
+                                                <ListElement name="flag_overrides" :sort="true" :add-text="$t('+ Add flag override')"
+                                                    :add-classes="{ ListElement: { listItem: 'bg-white p-3 sm:p-4 mb-4 rounded-lg shadow-md' } }">
+                                                    <template #default="{ index }">
+                                                        <ObjectElement :name="index">
+                                                            <SelectElement name="flag_uuid" :items="options.flag_options ?? []" :search="true"
+                                                                :native="false" :label="$t('Flag')" input-type="search" autocomplete="off"
+                                                                :placeholder="$t('Choose Flag')" :floating="false" :strict="false" size="sm"
+                                                                :columns="{ default: { container: 12 }, sm: { container: 3 } }" />
+                                                            <SelectElement name="match_state" :items="[
+                                                                    { value: 'active', label: $t('Active') },
+                                                                    { value: 'inactive', label: $t('Inactive') },
+                                                                ]" :native="false" :label="$t('When the Flag Is')" :floating="false" :can-clear="false"
+                                                                :can-deselect="false" default="active" size="sm"
+                                                                :columns="{ default: { container: 12 }, sm: { container: 2 } }" />
+                                                            <SelectElement name="action" :items="options.routing_types" label-prop="name" :search="true"
+                                                                :native="false" :label="$t('Send Calls To')" input-type="search"
+                                                                autocomplete="off" :placeholder="$t('Choose Action')" :floating="false" :strict="false"
+                                                                size="sm" :columns="{ default: { container: 12 }, sm: { container: 3 } }"
+                                                                @change="(newValue, oldValue, el$) => {
+                                                                    let target = el$.form$.el$('flag_overrides').children$[index].children$['target']
+                                                                    if (oldValue !== null && oldValue !== undefined) {
+                                                                        target.clear();
+                                                                    }
+                                                                    target.updateItems()
+                                                                }" />
+                                                            <SelectElement name="target" :items="async (query, input) => {
+                                                                let action = input.$parent.el$.form$.el$('flag_overrides').children$[index].children$['action'];
+                                                                if (!action?.value || ['check_voicemail', 'company_directory', 'hangup'].includes(action.value)) {
+                                                                    return [];
+                                                                }
+                                                                try {
+                                                                    let response = await action.$vueform.services.axios.post(
+                                                                        options.routes.get_routing_options,
+                                                                        { category: action.value }
+                                                                    );
+                                                                    return response.data.options;
+                                                                } catch (error) {
+                                                                    emit('error', error);
+                                                                    return [];
+                                                                }
+                                                            }" :search="true" label-prop="name" :native="false" :label="$t('Target')" input-type="search"
+                                                                allow-absent :object="true" :format-data="formatTarget" autocomplete="off"
+                                                                :placeholder="$t('Choose Target')" :floating="false" :strict="false" size="sm"
+                                                                :columns="{ default: { container: 12 }, sm: { container: 4 } }" :conditions="[
+                                                                    ['flag_overrides.*.action', 'not_empty'],
+                                                                    ['flag_overrides.*.action', 'not_in', ['check_voicemail', 'company_directory', 'hangup']]
+                                                                ]" />
+                                                        </ObjectElement>
+                                                    </template>
+                                                </ListElement>
+
+                                                <ButtonElement name="submit_flag" :button-label="$t('Save')" :submits="true"
+                                                    align="right" />
+
 
                                                 <NewGreetingForm :header="$t('New Greeting Message')"
                                                     :show="showNewGreetingModal" @close="showNewGreetingModal = false"
@@ -531,6 +594,7 @@ const defaultFormData = computed(() => ({
             name: props.options?.item?.exit_target_name ?? null,
         }
         : null,
+    flag_overrides: props.options?.flag_overrides ?? [],
 }));
 
 const millisecondsToSeconds = (milliseconds) => {

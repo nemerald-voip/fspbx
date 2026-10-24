@@ -204,4 +204,15 @@ class RingGroups extends Model
     {
         return $this->firstAvailableExtensionInRange(9000, 9099);
     }
+
+    /**
+     * Flag overrides, first active flag wins.
+     */
+    public function flagOverrides()
+    {
+        return $this->hasMany(FlagOverride::class, 'owner_uuid', 'ring_group_uuid')
+            ->where('owner_type', FlagOverride::OWNER_RING_GROUP)
+            ->where('domain_uuid', $this->domain_uuid)
+            ->orderBy('sort_order');
+    }
 }

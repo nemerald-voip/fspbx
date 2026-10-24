@@ -268,6 +268,14 @@ class CallRoutingOptionsService
         return $this->reverseEngineerApplicationAction($action, 'Call Flow');
     }
 
+    /**
+     * Reverse engineer a Flag override destination (ring groups and virtual receptionists).
+     */
+    public function reverseEngineerFlagAction($action)
+    {
+        return $this->reverseEngineerApplicationAction($action, 'Flag');
+    }
+
     protected function reverseEngineerApplicationAction($action, string $label)
     {
         try {
