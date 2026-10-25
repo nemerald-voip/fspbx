@@ -145,7 +145,7 @@
         :confirm-button-label="confirmationButtonLabel" :cancel-button-label="$t('Cancel')" />
 
     <AccessControlForm :show="showForm" :options="itemOptions" :mode="formMode" :loading="loadingForm"
-        :header="formHeader" @close="handleFormClose" @error="handleErrorResponse" @success="showNotification"
+        :can-import-nodes="permissions.import_nodes" :header="formHeader" @close="handleFormClose" @error="handleErrorResponse" @success="showNotification"
         @refresh-data="refreshCurrentPage" />
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"

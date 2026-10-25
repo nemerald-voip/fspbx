@@ -11,6 +11,7 @@ use Illuminate\Support\Collection;
 class AccessControlService
 {
     public const PROVIDERS_LIST = 'providers';
+    public const NODE_IMPORT_MAX_ROWS = 500;
 
     public function saveAccessControl(AccessControl $accessControl, array $validated): AccessControl
     {
@@ -286,6 +287,85 @@ class AccessControlService
         }
 
         return (string) $service->executeCommand('reloadacl');
+    }
+
+    /**
+     * Validate CSV rows for the IP rules of one access control list. Nothing is saved:
+     * the rows are returned to the form, which saves them with the list. The heading row is line 1.
+     *
+     * @return array{rows: array<int, array{node_type: string, node_cidr: string, node_description: ?string}>, errors: array<int, string>}
+     */
+    public function parseNodeRows(iterable $rows): array
+    {
+        $rows = collect($rows)->map(fn ($row) => collect($row)->all())->values();
+
+        if ($rows->isEmpty()) {
+            return ['rows' => [], 'errors' => [__('The file has no data rows.')]];
+        }
+
+        if (! array_key_exists('node_cidr', $rows->first())) {
+            return ['rows' => [], 'errors' => [__('Missing required column(s): :columns', ['columns' => 'node_cidr'])]];
+        }
+
+        if ($rows->count() > self::NODE_IMPORT_MAX_ROWS) {
+            return ['rows' => [], 'errors' => [__('A file can contain at most :max IP rules.', ['max' => self::NODE_IMPORT_MAX_ROWS])]];
+        }
+
+        $clean = [];
+        $errors = [];
+        $seen = [];
+
+        foreach ($rows as $index => $row) {
+            $line = $index + 2;
+            $type = strtolower($this->cell($row, 'node_type'));
+            $cidr = $this->cell($row, 'node_cidr');
+            $description = $this->cell($row, 'node_description');
+            $problems = [];
+
+            if ($type === '') {
+                $type = 'allow';
+            }
+
+            if (! in_array($type, ['allow', 'deny'], true)) {
+                $problems[] = __('node_type must be allow or deny.');
+            }
+
+            $normalized = $this->normalizeCidr($cidr);
+
+            if ($normalized === null) {
+                $problems[] = $cidr === ''
+                    ? __('node_cidr is required.')
+                    : __(':value is not a valid IP address or CIDR range.', ['value' => $cidr]);
+            }
+
+            if (mb_strlen($description) > 255) {
+                $problems[] = __('node_description may not be longer than 255 characters.');
+            } elseif (preg_match('/[\x00-\x1F\x7F<>"]/', $description)) {
+                $problems[] = __('node_description contains characters that are not allowed.');
+            }
+
+            foreach ($problems as $problem) {
+                $errors[] = __('Row :line: :message', ['line' => $line, 'message' => $problem]);
+            }
+
+            if ($problems === [] && ! isset($seen[$type . ' ' . $normalized])) {
+                $seen[$type . ' ' . $normalized] = true;
+                $clean[] = [
+                    'node_type' => $type,
+                    'node_cidr' => $normalized,
+                    'node_description' => $description === '' ? null : $description,
+                ];
+            }
+        }
+
+        return ['rows' => $errors === [] ? $clean : [], 'errors' => $errors];
+    }
+
+    private function cell(array $row, string $column): string
+    {
+        $value = $row[$column] ?? null;
+
+        return is_scalar($value) && ! is_bool($value) ? trim((string) $value) : '';
     }
 
     public function normalizeCidrs(mixed $value): Collection
