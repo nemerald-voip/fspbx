@@ -52,6 +52,8 @@ class GatewayController extends Controller
                 'domain' => userCheckPermission('gateway_domain'),
                 'channels' => userCheckPermission('gateway_channels'),
             ],
+            // ?edit=<uuid> opens that gateway's form on load (used by the SIP Status page).
+            'editUuid' => userCheckPermission('gateway_edit') ? fspbx_requested_uuid() : null,
         ]);
     }
 

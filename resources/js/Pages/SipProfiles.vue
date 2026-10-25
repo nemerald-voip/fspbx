@@ -300,6 +300,7 @@ import {
 const props = defineProps({
     routes: Object,
     permissions: Object,
+    editUuid: String,
 });
 
 const data = ref({ data: [], current_page: 1, last_page: 1, links: [], from: 0, to: 0, total: 0 });
@@ -353,7 +354,14 @@ const bulkActions = computed(() => {
 });
 
 watch(() => data.value.current_page, () => { selectAll.value = false; });
-onMounted(() => fetchData());
+onMounted(() => {
+    fetchData();
+
+    // Opened with ?edit=<uuid> (for example from the SIP Status page).
+    if (props.editUuid && permissions.value.update) {
+        openEditModal({ sip_profile_uuid: props.editUuid });
+    }
+});
 
 function queryParams(page = 1) {
     const params = { page };

@@ -2619,6 +2619,20 @@ if (!function_exists('buildDestinationAction')) {
         }
     }
 
+    if (!function_exists('fspbx_requested_uuid')) {
+        /**
+         * A UUID passed in the query string (for example ?edit=<uuid>), lower-cased,
+         * or null when the parameter is missing or is not a UUID.
+         */
+        function fspbx_requested_uuid(string $key = 'edit', ?\Illuminate\Http\Request $request = null): ?string
+        {
+            $request ??= request();
+            $value = $request->query($key);
+
+            return is_string($value) && \Illuminate\Support\Str::isUuid($value) ? strtolower($value) : null;
+        }
+    }
+
     if (!function_exists('fspbx_paginate_collection')) {
         function fspbx_paginate_collection($items, ?int $perPage = null, ?int $page = null, array $options = []): \Illuminate\Pagination\LengthAwarePaginator
         {
