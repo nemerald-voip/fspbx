@@ -311,7 +311,10 @@ onMounted(() => {
     }
 
     if (navigation.value.length) {
-        initialMenuOption.value = navigation.value[0].key
+        // ?tab=<key> opens that tab when the user can see it, as on the Logs page.
+        const requestedOption = new URLSearchParams(window.location.search).get('tab')
+        const visibleKeys = navigation.value.flatMap((item) => [item.key, ...(item.children ?? []).map((child) => child.key)])
+        initialMenuOption.value = visibleKeys.includes(requestedOption) ? requestedOption : navigation.value[0].key
         // handleUpdateSelectedMenuOption(navigation.value[0].key)
     }
 
