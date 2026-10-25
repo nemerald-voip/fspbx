@@ -35,6 +35,8 @@ class SipProfileController extends Controller
                 'bulk_toggle' => route('sip-profiles.bulk.toggle'),
             ],
             'permissions' => $this->permissions(),
+            // ?edit=<uuid> opens that profile's form on load (used by the SIP Status page).
+            'editUuid' => userCheckPermission('sip_profile_edit') ? fspbx_requested_uuid() : null,
         ]);
     }
 

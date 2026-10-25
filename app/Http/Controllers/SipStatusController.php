@@ -190,9 +190,7 @@ class SipStatusController extends Controller
                     'data' => (string) $row->data,
                     'state' => (string) $row->state,
                     'action' => null,
-                    'edit_url' => $profile && $this->canEditSipProfiles()
-                        ? url('/app/sip_profiles/sip_profile_edit.php?id='.$profile['sip_profile_uuid'])
-                        : null,
+                    'edit_url' => $profile ? $this->sipProfileEditUrl($profile['sip_profile_uuid']) : null,
                 ];
             }
         }
@@ -218,9 +216,7 @@ class SipStatusController extends Controller
                         'profile' => (string) $row->profile,
                         'gateway' => $gateway['gateway_uuid'] ?? null,
                     ] : null,
-                    'edit_url' => $sameDomain
-                        ? url('/app/gateways/gateway_edit.php?id='.$gatewayUuid)
-                        : null,
+                    'edit_url' => $sameDomain ? $this->gatewayEditUrl($gatewayUuid) : null,
                 ];
             }
         }
@@ -471,6 +467,31 @@ class SipStatusController extends Controller
     protected function canViewSwitchStatus(): bool
     {
         return userCheckPermission('sip_status_switch_status') || isSuperAdmin();
+    }
+
+    /**
+     * Link to the SIP Profiles page with this profile's edit form open.
+     * Only offered when the user can open that page and edit the profile.
+     */
+    protected function sipProfileEditUrl(string $sipProfileUuid): ?string
+    {
+        if (! userCheckPermission('sip_profile_view') || ! userCheckPermission('sip_profile_edit')) {
+            return null;
+        }
+
+        return route('sip-profiles.index', ['edit' => $sipProfileUuid]);
+    }
+
+    /**
+     * Link to the Gateways page with this gateway's edit form open.
+     */
+    protected function gatewayEditUrl(string $gatewayUuid): ?string
+    {
+        if (! userCheckPermission('gateway_view') || ! userCheckPermission('gateway_edit')) {
+            return null;
+        }
+
+        return route('gateways.index', ['edit' => $gatewayUuid]);
     }
 
     protected function canEditSipProfiles(): bool

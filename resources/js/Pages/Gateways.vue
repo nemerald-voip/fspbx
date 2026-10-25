@@ -245,6 +245,7 @@ const props = defineProps({
     routes: Object,
     permissions: Object,
     pagination: Object,
+    editUuid: String,
 });
 
 const perPage = ref(props.pagination?.per_page);
@@ -348,6 +349,11 @@ const isGatewayStatusPending = (uuid) => pendingGatewayStatusItems.value.include
 
 onMounted(() => {
     getData();
+
+    // Opened with ?edit=<uuid> (for example from the SIP Status page).
+    if (props.editUuid && permissions.update) {
+        handleEditButtonClick(props.editUuid);
+    }
 });
 
 const handleSortRequest = (column) => {
