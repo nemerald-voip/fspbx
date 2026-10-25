@@ -673,6 +673,8 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/bridges/bulk-copy', [BridgeController::class, 'bulkCopy'])->name('bridges.bulk.copy');
     Route::post('/bridges/bulk-delete', [BridgeController::class, 'bulkDelete'])->name('bridges.bulk.delete');
     Route::post('/bridges/bulk-toggle', [BridgeController::class, 'bulkToggle'])->name('bridges.bulk.toggle');
+    Route::post('/bridges/import', [BridgeController::class, 'import'])->name('bridges.import');
+    Route::get('/bridges/template/download', [BridgeController::class, 'downloadTemplate'])->name('bridges.template.download');
 
     // PIN Numbers
     Route::post('pin-numbers', [PinNumberController::class, 'store'])->name('pin-numbers.store');

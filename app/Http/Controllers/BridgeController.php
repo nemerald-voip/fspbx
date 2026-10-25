@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\BridgesTemplate;
 use App\Http\Requests\StoreBridgeRequest;
 use App\Http\Requests\UpdateBridgeRequest;
+use App\Imports\BridgesImport;
 use App\Models\Bridge;
 use App\Models\Gateways;
 use App\Services\BridgeService;
@@ -12,6 +14,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use Maatwebsite\Excel\Excel as ExcelWriter;
+use Maatwebsite\Excel\Facades\Excel;
 use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\QueryBuilder;
 
@@ -35,9 +39,65 @@ class BridgeController extends Controller
                 'bulk_toggle' => route('bridges.bulk.toggle'),
                 'store' => route('bridges.store'),
                 'item_options' => route('bridges.item.options'),
+                'import' => route('bridges.import'),
+                'download_template' => route('bridges.template.download'),
             ],
             'permissions' => $this->permissions(),
         ]);
+    }
+
+    public function import(Request $request, BridgeService $service): JsonResponse
+    {
+        if (! userCheckPermission('bridge_import')) {
+            return response()->json([
+                'messages' => ['error' => [__('Access denied.')]],
+            ], 403);
+        }
+
+        $request->validate([
+            'file' => ['required', 'file', 'mimes:csv,txt', 'max:2048'],
+        ]);
+
+        $import = new BridgesImport();
+
+        try {
+            Excel::import($import, $request->file('file'));
+        } catch (\Throwable $e) {
+            logger('BridgeController@import read error: ' . $e->getMessage());
+
+            return response()->json([
+                'errors' => ['file' => [__('The file could not be read. Upload a CSV file with a header row.')]],
+            ], 422);
+        }
+
+        $result = $service->validateImportRows($import->rows, $service->selectableGatewayUuids());
+
+        if ($result['errors'] !== []) {
+            return response()->json([
+                'errors' => collect($result['errors'])->take(20)->map(fn ($message) => [$message])->values()->all(),
+            ], 422);
+        }
+
+        try {
+            $count = $service->importRows($result['rows']);
+        } catch (\Throwable $e) {
+            logger('BridgeController@import error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+
+            return response()->json([
+                'errors' => ['server' => [__('Failed to import bridges. No bridges were added.')]],
+            ], 500);
+        }
+
+        return response()->json([
+            'messages' => ['success' => [__(':count bridges imported successfully.', ['count' => $count])]],
+        ]);
+    }
+
+    public function downloadTemplate()
+    {
+        abort_unless(userCheckPermission('bridge_import'), 403);
+
+        return Excel::download(new BridgesTemplate(), 'bridges-template.csv', ExcelWriter::CSV);
     }
 
     public function store(StoreBridgeRequest $request, BridgeService $service): JsonResponse
@@ -377,6 +437,7 @@ class BridgeController extends Controller
             'update' => userCheckPermission('bridge_edit'),
             'destroy' => userCheckPermission('bridge_delete'),
             'copy' => userCheckPermission('bridge_add'),
+            'import' => userCheckPermission('bridge_import'),
             'view_global' => userCheckPermission('bridge_all'),
         ];
     }

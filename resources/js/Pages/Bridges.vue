@@ -31,6 +31,12 @@
                     {{ $t('Create') }}
                 </button>
 
+                <button v-if="permissions.import" type="button" @click.prevent="handleImportButtonClick"
+                    class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    <DocumentArrowUpIcon class="h-5 w-5" aria-hidden="true" />
+                    {{ $t('Import CSV') }}
+                </button>
+
                 <!-- <button v-if="!filterData.showGlobal && permissions.view_global" type="button"
                     @click.prevent="handleShowGlobal"
                     class="ml-2 sm:ml-4 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
@@ -168,6 +174,10 @@
         :header="formHeader" @close="handleFormClose" @error="handleErrorResponse" @success="showNotification"
         @refresh-data="refreshCurrentPage" />
 
+    <UploadModal :show="showUploadModal" :header="$t('Import Bridges')" :is-submitting="isUploadingFile"
+        :errors="uploadErrors" @close="showUploadModal = false" @upload="uploadFile"
+        @download-template="downloadTemplateFile" />
+
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
 </template>
@@ -184,9 +194,10 @@ import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import Loading from "./components/general/Loading.vue";
 import Notification from "./components/notifications/Notification.vue";
 import BridgeForm from "./components/forms/BridgeForm.vue";
+import UploadModal from "./components/modal/UploadModal.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
 import Badge from "@generalComponents/Badge.vue";
-import { ChevronDownIcon, ChevronUpIcon, MagnifyingGlassIcon, PencilSquareIcon, TrashIcon } from "@heroicons/vue/24/solid";
+import { ChevronDownIcon, ChevronUpIcon, DocumentArrowUpIcon, MagnifyingGlassIcon, PencilSquareIcon, TrashIcon } from "@heroicons/vue/24/solid";
 
 const props = defineProps({
     routes: Object,
@@ -209,6 +220,9 @@ const notificationShow = ref(false);
 const showForm = ref(false);
 const formMode = ref("create");
 const loadingForm = ref(false);
+const showUploadModal = ref(false);
+const isUploadingFile = ref(false);
+const uploadErrors = ref(null);
 const itemOptions = ref({
     item: {},
     form: {},
@@ -495,6 +509,54 @@ const executeToggle = (items) => {
             handleClearSelection();
             handleErrorResponse(error);
         });
+};
+
+const handleImportButtonClick = () => {
+    uploadErrors.value = null;
+    showUploadModal.value = true;
+};
+
+const uploadFile = (file) => {
+    if (!file) {
+        uploadErrors.value = { file: [trans("Choose a CSV file first.")] };
+        return;
+    }
+
+    isUploadingFile.value = true;
+    uploadErrors.value = null;
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    axios.post(routes.import, formData)
+        .then((response) => {
+            showUploadModal.value = false;
+            showNotification("success", response.data.messages);
+            refreshCurrentPage();
+        })
+        .catch((error) => {
+            uploadErrors.value = error.response?.data?.errors
+                ?? error.response?.data?.messages
+                ?? { request: [error.message] };
+        })
+        .finally(() => {
+            isUploadingFile.value = false;
+        });
+};
+
+const downloadTemplateFile = () => {
+    axios.get(routes.download_template, { responseType: "blob" })
+        .then((response) => {
+            const fileURL = window.URL.createObjectURL(new Blob([response.data], { type: "text/csv" }));
+            const link = document.createElement("a");
+            link.href = fileURL;
+            link.setAttribute("download", "bridges-template.csv");
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(fileURL);
+        })
+        .catch(handleErrorResponse);
 };
 
 const handleModalClose = () => {
