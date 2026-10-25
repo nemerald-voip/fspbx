@@ -631,6 +631,8 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/access-controls/bulk-delete', [AccessControlController::class, 'bulkDelete'])->name('access-controls.bulk.delete');
     Route::post('/access-controls/bulk-copy', [AccessControlController::class, 'bulkCopy'])->name('access-controls.bulk.copy');
     Route::post('/access-controls/reload', [AccessControlController::class, 'reload'])->name('access-controls.reload');
+    Route::post('/access-controls/nodes/import', [AccessControlController::class, 'importNodes'])->name('access-controls.nodes.import');
+    Route::get('/access-controls/nodes/template/download', [AccessControlController::class, 'downloadNodesTemplate'])->name('access-controls.nodes.template.download');
 
     // Dialplans
     Route::post('dialplans', [DialplanController::class, 'store'])->name('dialplans.store');
