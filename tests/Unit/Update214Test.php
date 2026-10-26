@@ -137,6 +137,8 @@ NGINX;
         $this->assertLessThan(strpos($updated, '#REST api'), strpos($updated, 'location ~ ^/app/fax/'));
         $this->assertLessThan(strpos($updated, '#algo'), strpos($updated, 'location ~ ^/app/call_centers/'));
         $this->assertStringContainsString('return 301 https://$host/basic-queues/agent-status;', $updated);
+        $this->assertTrue($this->anyLocationMatches($updated, '/app/dialplan_outbound/dialplan_outbound_add.php'));
+        $this->assertFalse($this->anyLocationMatches($updated, '/app/dialplan_inbound/dialplan_inbound_add.php'));
 
         foreach (['fax/fax_edit.php', 'fax/fax_outbox.php', 'call_centers/call_center_agents.php', 'call_centers/call_center_agent_status.php'] as $page) {
             $this->assertTrue($this->anyLocationMatches($updated, '/app/'.$page), $page.' should be redirected');

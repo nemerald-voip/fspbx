@@ -22,6 +22,7 @@ class Update214
     private const BEFORE_POLYCOM_COREFILES = "        #Implement Polycom core files upload\n";
     private const BEFORE_REST_API = "        #REST api\n";
     private const BEFORE_ALGO = "        #algo\n";
+    private const BEFORE_MITEL = "        #mitel\n";
 
     // Path after /app/ (a regular expression) => FS PBX page that replaced it. The sets
     // mirror the redirect blocks in install/nginx_site_config.conf, one set per
@@ -77,6 +78,13 @@ class Update214
             'redirects' => [
                 'call_centers/(call_center_queues|call_center_queue_edit|call_center_agents|call_center_agent_edit)\\.php$' => 'basic-queues',
                 'call_centers/call_center_agent_status\\.php$' => 'basic-queues/agent-status',
+            ],
+        ],
+        [
+            'marker' => 'Legacy FusionPBX outbound route wizard (retired, redirected to /dialplans)',
+            'anchor' => self::BEFORE_MITEL,
+            'redirects' => [
+                'dialplan_outbound/dialplan_outbound_add\\.php$' => 'dialplans',
             ],
         ],
     ];
