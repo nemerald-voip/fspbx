@@ -589,9 +589,6 @@ class DashboardController extends Controller
         if (userCheckPermission("business_hours_list_view")) {
             $apps[] = ['name' => __('Business Hours'), 'href' => '/business-hours', 'icon' => 'CalendarDaysIcon', 'slug' => 'business_hours'];
         }
-        if (userCheckPermission("time_condition_view")) {
-            $apps[] = ['name' => __('Schedules'), 'href' => '/app/time_conditions/time_conditions.php', 'icon' => 'CalendarDaysIcon', 'slug' => 'schedules'];
-        }
         if (userCheckPermission("xml_cdr_view")) {
             $apps[] = ['name' => __('Call History (CDRs)'), 'href' => route('cdrs.index'), 'icon' => 'CallHistoryIcon', 'slug' => 'cdrs'];
         }
