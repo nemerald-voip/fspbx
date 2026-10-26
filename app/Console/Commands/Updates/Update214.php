@@ -13,13 +13,15 @@ class Update214
         '/etc/nginx/sites-enabled/fspbx.conf',
     ];
 
-    // Where each set of redirect locations goes: just before one of the Polycom upload
-    // comments. The install template has each comment once in each of its two server
-    // blocks, so a site file has two of each.
+    // Where each set of redirect locations goes: just before one of these comment lines.
+    // The install template has each comment once in each of its two server blocks, so a
+    // site file has two of each.
     private const BEFORE_POLYCOM_PHONECONFIGS = "        #Implement Polycom Phone Configurations upload\n";
     private const BEFORE_POLYCOM_CALLS = "        #Implement Polycom call logs upload\n";
     private const BEFORE_POLYCOM_DIRECTORIES = "        #Implement Polycom directory upload\n";
     private const BEFORE_POLYCOM_COREFILES = "        #Implement Polycom core files upload\n";
+    private const BEFORE_REST_API = "        #REST api\n";
+    private const BEFORE_ALGO = "        #algo\n";
 
     // Path after /app/ (a regular expression) => FS PBX page that replaced it. The sets
     // mirror the redirect blocks in install/nginx_site_config.conf, one set per
@@ -60,6 +62,21 @@ class Update214
                 'dialplans/(dialplans|dialplan_add|dialplan_edit|dialplan_xml)\\.php$' => 'dialplans',
                 'voicemails/(voicemails|voicemail_edit|voicemail_messages|voicemail_message_toggle)\\.php$' => 'voicemails',
                 'xml_cdr/(xml_cdr|xml_cdr_details|xml_cdr_search|xml_cdr_export)\\.php$' => 'call-detail-records',
+            ],
+        ],
+        [
+            'marker' => 'Legacy FusionPBX fax pages (retired, redirected to /faxes)',
+            'anchor' => self::BEFORE_REST_API,
+            'redirects' => [
+                'fax/(fax|fax_edit|fax_copy|fax_send|fax_files|fax_logs|fax_log_view|fax_outbox)\\.php$' => 'faxes',
+            ],
+        ],
+        [
+            'marker' => 'Legacy FusionPBX call center pages (retired, redirected to /basic-queues)',
+            'anchor' => self::BEFORE_ALGO,
+            'redirects' => [
+                'call_centers/(call_center_queues|call_center_queue_edit|call_center_agents|call_center_agent_edit)\\.php$' => 'basic-queues',
+                'call_centers/call_center_agent_status\\.php$' => 'basic-queues/agent-status',
             ],
         ],
     ];

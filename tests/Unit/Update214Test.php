@@ -45,6 +45,13 @@ server {
         location /app/provision/corefiles {
         }
 
+        #REST api
+        # if ($uri ~* ^.*/api/.*$) {
+        # }
+
+        #algo
+        #mitel
+
         location ~ \.php$ {
                 fastcgi_pass unix:/var/run/php/php8.4-fpm.sock;
         }
@@ -121,6 +128,23 @@ NGINX;
             strpos($updated, 'location ~ ^/app/dialplans/'),
             'redirects must come before the .php handler'
         );
+    }
+
+    public function test_fax_and_call_center_sets_redirect_only_their_page_files(): void
+    {
+        $updated = $this->update(self::SERVER);
+
+        $this->assertLessThan(strpos($updated, '#REST api'), strpos($updated, 'location ~ ^/app/fax/'));
+        $this->assertLessThan(strpos($updated, '#algo'), strpos($updated, 'location ~ ^/app/call_centers/'));
+        $this->assertStringContainsString('return 301 https://$host/basic-queues/agent-status;', $updated);
+
+        foreach (['fax/fax_edit.php', 'fax/fax_outbox.php', 'call_centers/call_center_agents.php', 'call_centers/call_center_agent_status.php'] as $page) {
+            $this->assertTrue($this->anyLocationMatches($updated, '/app/'.$page), $page.' should be redirected');
+        }
+
+        foreach (['fax/fax_emails.php', 'fax/fax_files_remote.php', 'fax_queue/fax_queue.php', 'call_centers/cmd.php'] as $page) {
+            $this->assertFalse($this->anyLocationMatches($updated, '/app/'.$page), $page.' should not be redirected');
+        }
     }
 
     public function test_is_idempotent(): void
