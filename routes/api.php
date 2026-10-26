@@ -89,6 +89,7 @@ use App\Http\Controllers\RegistrationsController;
 use App\Http\Controllers\RecordingsManagerController;
 use App\Http\Controllers\RingGroupsController;
 use App\Http\Controllers\LetsEncryptController;
+use App\Http\Controllers\NginxHttpsController;
 use App\Http\Controllers\SipStatusController;
 use App\Http\Controllers\SpeedDialController;
 use App\Http\Controllers\SwitchModuleController;
@@ -947,6 +948,8 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     // System Settings
     Route::put('system-settings/update', [SystemSettingsController::class, 'update'])->name('system-settings.update');
     Route::put('system-settings/messaging', [SystemSettingsController::class, 'updateMessaging'])->name('system-settings.messaging.update');
+    Route::get('system-settings/https', [NginxHttpsController::class, 'show'])->name('system-settings.https.show');
+    Route::put('system-settings/https', [NginxHttpsController::class, 'update'])->middleware('throttle:6,1')->name('system-settings.https.update');
     Route::get('system-settings/number-translations', [NumberTranslationController::class, 'index'])->name('number-translations.index');
     Route::post('system-settings/number-translations', [NumberTranslationController::class, 'store'])->name('number-translations.store');
     Route::post('system-settings/number-translations/sync', [NumberTranslationController::class, 'sync'])->name('number-translations.sync');

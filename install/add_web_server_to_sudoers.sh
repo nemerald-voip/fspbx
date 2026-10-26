@@ -28,6 +28,7 @@ IPTABLES_PERMISSION="www-data ALL=(ALL) NOPASSWD: /sbin/iptables"
 FAIL2BAN_PERMISSION="www-data ALL=(ALL) NOPASSWD: /usr/bin/fail2ban-client"
 IPTABLES_SAVE_PERMISSION="www-data ALL=(ALL) NOPASSWD: /sbin/iptables-save"
 SUPERVISORCTL_PERMISSION="www-data ALL=(ALL) NOPASSWD: /usr/bin/supervisorctl"
+NGINX_HTTPS_PERMISSION="www-data ALL=(ALL) NOPASSWD: /usr/local/sbin/fspbx-apply-nginx-https"
 
 
 if [ -f "$SUDOERS_FILE" ]; then
@@ -67,8 +68,9 @@ add_permission "$IPTABLES_PERMISSION"
 add_permission "$FAIL2BAN_PERMISSION"
 add_permission "$IPTABLES_SAVE_PERMISSION"
 add_permission "$SUPERVISORCTL_PERMISSION"
+add_permission "$NGINX_HTTPS_PERMISSION"
 
 # Cleanup temporary files
 rm "$SUDOERS_TEMP"
 
-print_success "Web server user now allowed to execute iptables, iptables-save, fail2ban-client, and supervisorctl commands without a password!"
+print_success "Web server user now allowed to execute iptables, iptables-save, fail2ban-client, supervisorctl and the HTTPS setting helper without a password!"

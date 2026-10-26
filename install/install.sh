@@ -299,6 +299,17 @@ else
     exit 1
 fi
 
+# Install the helper that turns the HTTPS hardening on and off, and write its default (off) snippet
+cp install/fspbx-apply-nginx-https.sh /usr/local/sbin/fspbx-apply-nginx-https
+chmod 755 /usr/local/sbin/fspbx-apply-nginx-https
+/usr/local/sbin/fspbx-apply-nginx-https init
+if [ $? -eq 0 ]; then
+    print_success "Installed the HTTPS setting helper and default Nginx snippet."
+else
+    print_error "Error occurred while installing the HTTPS setting helper."
+    exit 1
+fi
+
 # FS PBX internal vhost (new in 1.0.2)
 cp install/nginx_fspbx_internal.conf /etc/nginx/sites-available/fspbx_internal.conf
 if [ $? -eq 0 ]; then

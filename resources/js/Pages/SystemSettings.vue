@@ -128,6 +128,11 @@
                     @error="handleErrorResponse" @success="showNotification" />
             </section>
 
+            <section v-if="selectedMenuOption === 'web_server' && permissions?.https_manage && https_settings">
+                <WebServerSettings :routes="{ update: routes.https_update }" :settings="https_settings"
+                    @error="handleErrorResponse" @success="showNotification" />
+            </section>
+
             <section v-if="selectedMenuOption === 'scheduled_jobs' && permissions?.scheduled_jobs_manage && scheduled_jobs">
                 <ScheduledJobServerControl :initial-state="scheduled_jobs.active_node" :routes="scheduled_jobs.routes"
                     :manage="scheduled_jobs.manage" @success="messages => showNotification('success', messages)"
@@ -178,7 +183,8 @@ import CallTranscriptionOptionsForm from "./components/forms/CallTranscriptionOp
 import SipCaptureSettingsForm from "./components/forms/SipCaptureSettingsForm.vue"
 import HomerApiSettingsForm from "./components/forms/HomerApiSettingsForm.vue"
 import NumberTranslations from './components/NumberTranslations.vue'
-import { ArrowsRightLeftIcon } from '@heroicons/vue/24/outline'
+import WebServerSettings from './components/WebServerSettings.vue'
+import { ArrowsRightLeftIcon, GlobeAltIcon } from '@heroicons/vue/24/outline'
 import { AdjustmentsVerticalIcon, SignalIcon } from "@heroicons/vue/24/outline";
 
 
@@ -188,6 +194,7 @@ const props = defineProps({
     homer_api: { type: Object, default: null },
     messagingSettings: { type: Object, default: null },
     scheduled_jobs: { type: Object, default: null },
+    https_settings: { type: Object, default: null },
     // Declarative system-default fields (SystemSettingsSchema), the option
     // lists they reference, and the current global default values. The
     // General tab renders and saves from these.
@@ -292,6 +299,10 @@ onMounted(() => {
 
     if (props.permissions?.number_translation_view) {
         navigation.value.push({ key: 'number_translations', name: trans('Number Translations'), icon: ArrowsRightLeftIcon })
+    }
+
+    if (props.permissions?.https_manage) {
+        navigation.value.push({ key: 'web_server', name: trans('Web Server'), icon: GlobeAltIcon })
     }
 
     if (props.permissions?.scheduled_jobs_manage) {

@@ -20,6 +20,7 @@ use App\Services\Messaging\PhotoCompressionSettings;
 use App\Services\Messaging\PhotoCompressionService;
 use App\Services\Settings\SettingsManagementService;
 use App\Services\Settings\SystemSettingsSchema;
+use App\Services\NginxHttpsService;
 use App\Services\SipCaptureService;
 
 class SystemSettingsController extends Controller
@@ -53,6 +54,7 @@ class SystemSettingsController extends Controller
                     'dashboard_route' => route('dashboard'),
                     'settings_update' => route('system-settings.update'),
                     'messaging_update' => route('system-settings.messaging.update'),
+                    'https_update' => route('system-settings.https.update'),
                     'number_translations' => [
                         'index' => route('number-translations.index'),
                         'store' => route('number-translations.store'),
@@ -95,6 +97,7 @@ class SystemSettingsController extends Controller
                         'available' => app(PhotoCompressionService::class)->available(),
                     ] : null;
                 },
+                'https_settings' => fn () => isSuperAdmin() ? app(NginxHttpsService::class)->status() : null,
                 'scheduled_jobs' => function () {
                     return userCheckPermission('scheduled_jobs_manage')
                         ? app(ScheduledJobCoordinationController::class)->controlProps()
@@ -269,6 +272,7 @@ class SystemSettingsController extends Controller
         $permissions['sip_capture_view'] = $this->canViewSipCapture();
         $permissions['sip_capture_edit'] = $this->canEditSipCapture();
         $permissions['homer_api_manage'] = \App\Services\HomerApiService::canManage();
+        $permissions['https_manage'] = isSuperAdmin();
 
         return $permissions;
     }
