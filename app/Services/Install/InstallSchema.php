@@ -24,6 +24,7 @@ class InstallSchema
         $this->ensureFollowMeSchema();
         $this->ensureBridgesSchema();
         $this->ensureCallBlockSchema();
+        $this->ensureCallFlowsSchema();
         $this->ensureEmailTemplatesSchema();
     }
 
@@ -80,6 +81,39 @@ class InstallSchema
             $table->text('date_added')->nullable();
             $table->text('call_block_enabled')->nullable();
             $table->text('call_block_description')->nullable();
+            $table->timestampTz('insert_date')->nullable();
+            $table->uuid('insert_user')->nullable();
+            $table->timestampTz('update_date')->nullable();
+            $table->uuid('update_user')->nullable();
+        });
+    }
+
+    public function ensureCallFlowsSchema(): void
+    {
+        if (Schema::hasTable('v_call_flows')) {
+            return;
+        }
+
+        Schema::create('v_call_flows', function (Blueprint $table) {
+            $table->uuid('call_flow_uuid')->primary();
+            $table->uuid('domain_uuid')->nullable()->index();
+            $table->uuid('dialplan_uuid')->nullable()->index();
+            $table->text('call_flow_name')->nullable()->index();
+            $table->text('call_flow_extension')->nullable()->index();
+            $table->text('call_flow_feature_code')->nullable()->index();
+            $table->text('call_flow_context')->nullable()->index();
+            $table->text('call_flow_status')->nullable();
+            $table->text('call_flow_pin_number')->nullable()->index();
+            $table->text('call_flow_label')->nullable()->index();
+            $table->text('call_flow_sound')->nullable();
+            $table->text('call_flow_app')->nullable();
+            $table->text('call_flow_data')->nullable();
+            $table->text('call_flow_alternate_label')->nullable()->index();
+            $table->text('call_flow_alternate_sound')->nullable();
+            $table->text('call_flow_alternate_app')->nullable();
+            $table->text('call_flow_alternate_data')->nullable();
+            $table->text('call_flow_enabled')->nullable()->index();
+            $table->text('call_flow_description')->nullable()->index();
             $table->timestampTz('insert_date')->nullable();
             $table->uuid('insert_user')->nullable();
             $table->timestampTz('update_date')->nullable();

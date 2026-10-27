@@ -44,7 +44,6 @@ class CallFlowController extends Controller
                 'update' => userCheckPermission('call_flow_edit'),
                 'destroy' => userCheckPermission('call_flow_delete'),
                 'view_global' => userCheckPermission('call_flow_all'),
-                'context' => userCheckPermission('call_flow_context'),
             ],
         ]);
     }

@@ -112,6 +112,11 @@ class DatabaseSeeder extends Seeder
             ['application_name' => 'Bridges', 'permission_name' => 'bridge_delete'],
             ['application_name' => 'Bridges', 'permission_name' => 'bridge_all'],
             ['application_name' => 'Bridges', 'permission_name' => 'bridge_destinations'],
+            ['application_name' => 'Call Flows', 'permission_name' => 'call_flow_view'],
+            ['application_name' => 'Call Flows', 'permission_name' => 'call_flow_add'],
+            ['application_name' => 'Call Flows', 'permission_name' => 'call_flow_edit'],
+            ['application_name' => 'Call Flows', 'permission_name' => 'call_flow_delete'],
+            ['application_name' => 'Call Flows', 'permission_name' => 'call_flow_all'],
             ['application_name' => 'Message Settings', 'permission_name' => 'message_settings_list_view'],
             ['application_name' => 'Message Settings', 'permission_name' => 'message_settings_manage'],
             ['application_name' => 'Extensions', 'permission_name' => 'extension_suspended'],
@@ -302,6 +307,11 @@ class DatabaseSeeder extends Seeder
     {
         $permissionsByGroup = [
             'superadmin' => [
+                'call_flow_view',
+                'call_flow_add',
+                'call_flow_edit',
+                'call_flow_delete',
+                'call_flow_all',
                 'call_block_view',
                 'call_block_add',
                 'call_block_edit',
@@ -461,6 +471,10 @@ class DatabaseSeeder extends Seeder
                 'dynamic_route_delete',
             ],
             'admin' => [
+                'call_flow_view',
+                'call_flow_add',
+                'call_flow_edit',
+                'call_flow_delete',
                 'call_block_view',
                 'call_block_add',
                 'call_block_edit',
