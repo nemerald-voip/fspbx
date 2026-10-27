@@ -11,6 +11,9 @@ use App\Models\FusionCache;
 use Illuminate\Support\Str;
 use App\Traits\ChecksLimits;
 use Illuminate\Http\Request;
+use App\Models\FlagOverride;
+use App\Observers\RingGroupObserver;
+use App\Services\FlagService;
 use App\Services\RingGroupService;
 use Illuminate\Support\Facades\DB;
 use Spatie\QueryBuilder\QueryBuilder;
@@ -354,6 +357,10 @@ class RingGroupsController extends Controller
                 'greetings' => $greetingsArray,
                 'ring_back_tones' => $ring_back_tones,
                 'default_ring_time' => get_domain_setting('ring_group_ring_time', session('domain_uuid')) ?? '25',
+                'flag_options' => app(FlagService::class)->flagOptions($domain_uuid),
+                'flag_overrides' => $item->exists
+                    ? app(FlagService::class)->overrideFormRows($item->flagOverrides()->get(), $domain_uuid)
+                    : [],
                 // Define options for other fields as needed
             ];
             // logger($itemOptions);
@@ -463,6 +470,16 @@ class RingGroupsController extends Controller
                 // Build model update payload (includes derived fields)
                 $updateData = app(RingGroupService::class)->buildUpdateData($validated, $domain_name);
 
+                if (array_key_exists('flag_overrides', $validated)) {
+                    app(FlagService::class)->syncOverrides(
+                        FlagOverride::OWNER_RING_GROUP,
+                        $ringGroup->ring_group_uuid,
+                        $domain_uuid,
+                        $validated['flag_overrides'] ?? [],
+                        $domain_name
+                    );
+                }
+
                 $ringGroup->update($updateData);
 
                 /**
@@ -506,6 +523,11 @@ class RingGroupsController extends Controller
                     }
                 }
             });
+
+            if (array_key_exists('flag_overrides', $validated)) {
+                // A flag-only change leaves the ring group row clean, so the observer would not run.
+                (new RingGroupObserver())->generateDialPlanXML($ringGroup->fresh());
+            }
 
             return response()->json([
                 'messages' => ['success' => [__('Ring group updated')]]
@@ -553,6 +575,8 @@ class RingGroupsController extends Controller
                 if ($ringGroup->dialplan_uuid) {
                     Dialplans::where('dialplan_uuid', $ringGroup->dialplan_uuid)->delete();
                 }
+
+                app(FlagService::class)->deleteOverrides(FlagOverride::OWNER_RING_GROUP, [$ringGroup->ring_group_uuid], $domain_uuid);
 
                 // Delete ring group itself
                 $ringGroup->delete();
@@ -650,6 +674,14 @@ class RingGroupsController extends Controller
                 $newDestination->ring_group_uuid = $newRingGroup->ring_group_uuid;
                 $newDestination->save();
             }
+
+            app(FlagService::class)->copyOverrides(
+                FlagOverride::OWNER_RING_GROUP,
+                $original->ring_group_uuid,
+                $newRingGroup->ring_group_uuid,
+                session('domain_uuid')
+            );
+            (new RingGroupObserver())->generateDialPlanXML($newRingGroup->fresh());
 
             DB::commit();
 

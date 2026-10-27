@@ -59,6 +59,9 @@ class RingGroupService
             $updateData['ring_group_timeout_data'] = $timeout['data'] ?? null;
         }
 
+        // Flag overrides live in their own table; the controller syncs them.
+        unset($updateData['flag_overrides']);
+
         // --- Normalize booleans for logic (but store as strings) ---
         $forwardEnabledBool = $this->toBool($validated['ring_group_forward_enabled'] ?? false);
 

@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\DB;
 use Spatie\QueryBuilder\QueryBuilder;
 use Spatie\QueryBuilder\AllowedFilter;
 use App\Services\CallRoutingOptionsService;
+use App\Services\FlagService;
+use App\Models\FlagOverride;
 use App\Http\Requests\StoreVirtualReceptionistRequest;
 use App\Http\Requests\UpdateVirtualReceptionistRequest;
 use App\Http\Requests\CreateVirtualReceptionistKeyRequest;
@@ -184,6 +186,16 @@ class VirtualReceptionistController extends Controller
             // Save the updated IVR menu
             $instance->save();
 
+            if (array_key_exists('flag_overrides', $inputs)) {
+                app(FlagService::class)->syncOverrides(
+                    FlagOverride::OWNER_IVR_MENU,
+                    $instance->ivr_menu_uuid,
+                    $instance->domain_uuid,
+                    $inputs['flag_overrides'] ?? [],
+                    session('domain_name')
+                );
+            }
+
             $this->generateDialPlanXML($instance);
 
             // Return a JSON response indicating success
@@ -214,7 +226,7 @@ class VirtualReceptionistController extends Controller
 
             // Retrieve all items at once
             $items = $this->model::whereIn('ivr_menu_uuid', request('items'))
-                ->get(['ivr_menu_uuid', 'dialplan_uuid']);
+                ->get(['ivr_menu_uuid', 'dialplan_uuid', 'domain_uuid']);
 
             foreach ($items as $item) {
                 // Delete related IVR menu options (keys)
@@ -225,6 +237,8 @@ class VirtualReceptionistController extends Controller
 
                 // Clear cache
                 $this->clearCache($item);
+
+                app(FlagService::class)->deleteOverrides(FlagOverride::OWNER_IVR_MENU, [$item->ivr_menu_uuid], $item->domain_uuid);
 
                 // Delete the item itself
                 $item->delete();
@@ -287,6 +301,13 @@ class VirtualReceptionistController extends Controller
                 $newOption->ivr_menu_uuid = $newIvr->ivr_menu_uuid;
                 $newOption->save();
             }
+
+            app(FlagService::class)->copyOverrides(
+                FlagOverride::OWNER_IVR_MENU,
+                $original->ivr_menu_uuid,
+                $newIvr->ivr_menu_uuid,
+                $original->domain_uuid
+            );
 
             $this->generateDialPlanXML($newIvr);
 
@@ -500,6 +521,10 @@ class VirtualReceptionistController extends Controller
                 'prompt_repeat_options' => $promptRepeatOptions,
                 'ring_back_tones' => $ringBackTones,
                 'sounds' => $sounds,
+                'flag_options' => app(FlagService::class)->flagOptions($domainUuid),
+                'flag_overrides' => $itemUuid
+                    ? app(FlagService::class)->overrideFormRows($ivr->flagOverrides()->get(), $domainUuid)
+                    : [],
             ]);
         } catch (\Throwable $e) {
             logger('Error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());

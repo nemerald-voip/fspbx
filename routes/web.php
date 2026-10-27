@@ -10,6 +10,7 @@ use App\Http\Controllers\AppsController;
 use App\Http\Controllers\AppsCredentialsController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\BusinessHoursController;
+use App\Http\Controllers\FlagsController;
 use App\Http\Controllers\PagingGroupsController;
 use App\Http\Controllers\BridgeController;
 use App\Http\Controllers\BasicDialerController;
@@ -291,6 +292,8 @@ Route::group(['middleware' => 'auth'], function () {
     // Business hours
     Route::get('business-hours', [BusinessHoursController::class, 'index'])->name('business-hours.index');
 
+    // Flags
+    Route::get('flags', [FlagsController::class, 'index'])->name('flags.index');
     // Paging groups
     Route::get('paging-groups', [PagingGroupsController::class, 'index'])->name('paging-groups.index');
 
