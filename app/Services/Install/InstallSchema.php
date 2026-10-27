@@ -23,6 +23,7 @@ class InstallSchema
         $this->ensureIvrMenusSchema();
         $this->ensureFollowMeSchema();
         $this->ensureBridgesSchema();
+        $this->ensureCallBlockSchema();
         $this->ensureEmailTemplatesSchema();
     }
 
@@ -51,6 +52,34 @@ class InstallSchema
             $table->text('bridge_destination')->nullable();
             $table->text('bridge_enabled')->nullable();
             $table->text('bridge_description')->nullable();
+            $table->timestampTz('insert_date')->nullable();
+            $table->uuid('insert_user')->nullable();
+            $table->timestampTz('update_date')->nullable();
+            $table->uuid('update_user')->nullable();
+        });
+    }
+
+    public function ensureCallBlockSchema(): void
+    {
+        if (Schema::hasTable('v_call_block')) {
+            return;
+        }
+
+        Schema::create('v_call_block', function (Blueprint $table) {
+            $table->uuid('call_block_uuid')->primary();
+            $table->uuid('domain_uuid')->nullable()->index();
+            $table->text('call_block_direction')->nullable();
+            $table->uuid('extension_uuid')->nullable()->index();
+            $table->text('call_block_name')->nullable()->index();
+            $table->decimal('call_block_country_code', 20, 0)->nullable();
+            $table->text('call_block_number')->nullable()->index();
+            $table->decimal('call_block_count', 20, 0)->nullable();
+            $table->text('call_block_action')->nullable();
+            $table->text('call_block_app')->nullable();
+            $table->text('call_block_data')->nullable();
+            $table->text('date_added')->nullable();
+            $table->text('call_block_enabled')->nullable();
+            $table->text('call_block_description')->nullable();
             $table->timestampTz('insert_date')->nullable();
             $table->uuid('insert_user')->nullable();
             $table->timestampTz('update_date')->nullable();

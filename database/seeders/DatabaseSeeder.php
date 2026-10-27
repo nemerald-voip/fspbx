@@ -242,6 +242,11 @@ class DatabaseSeeder extends Seeder
             ['application_name' => 'XML CDR', 'permission_name' => 'xml_cdr_view_all_records'],
             ['application_name' => 'Call Block', 'permission_name' => 'call_block_view_self_records'],
             ['application_name' => 'Call Block', 'permission_name' => 'call_block_view_all_records'],
+            ['application_name' => 'Call Block', 'permission_name' => 'call_block_view'],
+            ['application_name' => 'Call Block', 'permission_name' => 'call_block_add'],
+            ['application_name' => 'Call Block', 'permission_name' => 'call_block_edit'],
+            ['application_name' => 'Call Block', 'permission_name' => 'call_block_delete'],
+            ['application_name' => 'Call Block', 'permission_name' => 'call_block_voicemail'],
             ['application_name' => 'Messages', 'permission_name' => 'messages_view'],
             ['application_name' => 'Messages', 'permission_name' => 'messages_view_as'],
             ['application_name' => 'Messages', 'permission_name' => 'messages_delete'],
@@ -297,6 +302,11 @@ class DatabaseSeeder extends Seeder
     {
         $permissionsByGroup = [
             'superadmin' => [
+                'call_block_view',
+                'call_block_add',
+                'call_block_edit',
+                'call_block_delete',
+                'call_block_voicemail',
                 'bridge_view',
                 'bridge_add',
                 'bridge_edit',
@@ -451,6 +461,11 @@ class DatabaseSeeder extends Seeder
                 'dynamic_route_delete',
             ],
             'admin' => [
+                'call_block_view',
+                'call_block_add',
+                'call_block_edit',
+                'call_block_delete',
+                'call_block_voicemail',
                 'bridge_destinations',
                 'call_webhook_view',
                 'call_webhook_create',
@@ -534,6 +549,10 @@ class DatabaseSeeder extends Seeder
                 'domain_select',
             ],
             'user' => [
+                'call_block_view',
+                'call_block_add',
+                'call_block_edit',
+                'call_block_delete',
                 'phone_control_view',
                 'phone_control_call',
                 'xml_cdr_view_self_records',
