@@ -168,6 +168,28 @@
                             </li>
                                                                         </ul>
                             </ul>
+                    <ul id="tocify-header-message-settings" class="tocify-header">
+                <li class="tocify-item level-1" data-unique="message-settings">
+                    <a href="#message-settings">Message Settings</a>
+                </li>
+                                    <ul id="tocify-subheader-message-settings" class="tocify-subheader">
+                                                    <li class="tocify-item level-2" data-unique="message-settings-GETapi-v1-domains--domain_uuid--message-settings">
+                                <a href="#message-settings-GETapi-v1-domains--domain_uuid--message-settings">List message settings</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="message-settings-GETapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-">
+                                <a href="#message-settings-GETapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-">Retrieve message settings</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="message-settings-POSTapi-v1-domains--domain_uuid--message-settings">
+                                <a href="#message-settings-POSTapi-v1-domains--domain_uuid--message-settings">Create message settings</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="message-settings-PATCHapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-">
+                                <a href="#message-settings-PATCHapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-">Update message settings</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="message-settings-DELETEapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-">
+                                <a href="#message-settings-DELETEapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-">Delete message settings</a>
+                            </li>
+                                                                        </ul>
+                            </ul>
                     <ul id="tocify-header-phone-control" class="tocify-header">
                 <li class="tocify-item level-1" data-unique="phone-control">
                     <a href="#phone-control">Phone Control</a>
@@ -341,7 +363,7 @@
     </ul>
 
     <ul class="toc-footer" id="last-updated">
-        <li>Last updated: October 19, 2026</li>
+        <li>Last updated: October 27, 2026</li>
     </ul>
 </div>
 
@@ -2531,11 +2553,11 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"device_template\": \"Yealink T46U\",
     \"device_template_uuid\": \"a6cf59ba-4b2b-4bdd-b870-35cc55bca146\",
     \"device_keys\": [
-        \"ad\"
+        \"voluptatem\"
     ],
     \"phonebook_mode\": \"default\",
     \"phonebook_uuids\": [
-        \"6fca1bbb-0318-337e-9a4b-3fe5f2443ac8\"
+        \"8567f09f-e965-36c4-b74b-429e8463bc5b\"
     ],
     \"device_description\": \"Reception desk device\",
     \"device_lines\": [
@@ -2563,11 +2585,11 @@ let body = {
     "device_template": "Yealink T46U",
     "device_template_uuid": "a6cf59ba-4b2b-4bdd-b870-35cc55bca146",
     "device_keys": [
-        "ad"
+        "voluptatem"
     ],
     "phonebook_mode": "default",
     "phonebook_uuids": [
-        "6fca1bbb-0318-337e-9a4b-3fe5f2443ac8"
+        "8567f09f-e965-36c4-b74b-429e8463bc5b"
     ],
     "device_description": "Reception desk device",
     "device_lines": [
@@ -2816,10 +2838,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="device_keys.0.key_index"                data-endpoint="POSTapi-v1-domains--domain_uuid--devices"
-               value="16"
+               value="4"
                data-component="body">
     <br>
-<p>Example: <code>16</code></p>
+<p>Example: <code>4</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>key_area</code></b>&nbsp;&nbsp;
@@ -2827,10 +2849,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="device_keys.0.key_area"                data-endpoint="POSTapi-v1-domains--domain_uuid--devices"
-               value="expansion"
+               value="multi_purpose"
                data-component="body">
     <br>
-<p>Example: <code>expansion</code></p>
+<p>Example: <code>multi_purpose</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>main</code></li> <li><code>side</code></li> <li><code>multi_purpose</code></li> <li><code>expansion</code></li></ul>
                     </div>
@@ -2840,10 +2862,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="device_keys.0.key_type"                data-endpoint="POSTapi-v1-domains--domain_uuid--devices"
-               value="vwkj"
+               value="ojmhbzebihblhhny"
                data-component="body">
     <br>
-<p>Must not be greater than 50 characters. Example: <code>vwkj</code></p>
+<p>Must not be greater than 50 characters. Example: <code>ojmhbzebihblhhny</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>key_value</code></b>&nbsp;&nbsp;
@@ -2851,10 +2873,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="device_keys.0.key_value"                data-endpoint="POSTapi-v1-domains--domain_uuid--devices"
-               value="dhce"
+               value="eepmmlpibindrbjiawigk"
                data-component="body">
     <br>
-<p>Must not be greater than 64 characters. Example: <code>dhce</code></p>
+<p>Must not be greater than 64 characters. Example: <code>eepmmlpibindrbjiawigk</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>key_label</code></b>&nbsp;&nbsp;
@@ -2862,10 +2884,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="device_keys.0.key_label"                data-endpoint="POSTapi-v1-domains--domain_uuid--devices"
-               value="yjqaix"
+               value="hjxzbpdcfpqnxxt"
                data-component="body">
     <br>
-<p>Must not be greater than 80 characters. Example: <code>yjqaix</code></p>
+<p>Must not be greater than 80 characters. Example: <code>hjxzbpdcfpqnxxt</code></p>
                     </div>
                                     </details>
         </div>
@@ -7278,6 +7300,1414 @@ You can check the Dev Tools console for debugging information.</code></pre>
             </div>
                     </form>
 
+                <h1 id="message-settings">Message Settings</h1>
+
+    
+
+                                <h2 id="message-settings-GETapi-v1-domains--domain_uuid--message-settings">List message settings</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Lists messaging phone numbers in an account, including their provider,
+allowed extensions, email recipient, description, and enabled status.
+Search by phone number, provider, email, or description.</p>
+<p>When <code>has_more</code> is true, pass the last result's <code>sms_destination_uuid</code>
+as <code>starting_after</code> to retrieve the next page.
+Requires account access and <code>message_settings_list_view</code>.</p>
+
+<span id="example-requests-GETapi-v1-domains--domain_uuid--message-settings">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/message-settings?limit=25&amp;search=support&amp;carrier=voipms&amp;enabled=1" \
+    --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json" \
+    --data "{
+    \"limit\": 10,
+    \"starting_after\": \"095e485c-a63d-3d18-a775-9190fded966a\",
+    \"search\": \"jspqe\",
+    \"carrier\": \"sit\",
+    \"enabled\": false
+}"
+</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/message-settings"
+);
+
+const params = {
+    "limit": "25",
+    "search": "support",
+    "carrier": "voipms",
+    "enabled": "1",
+};
+Object.keys(params)
+    .forEach(key =&gt; url.searchParams.append(key, params[key]));
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+let body = {
+    "limit": 10,
+    "starting_after": "095e485c-a63d-3d18-a775-9190fded966a",
+    "search": "jspqe",
+    "carrier": "sit",
+    "enabled": false
+};
+
+fetch(url, {
+    method: "GET",
+    headers,
+    body: JSON.stringify(body),
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-v1-domains--domain_uuid--message-settings">
+            <blockquote>
+            <p>Example response (200):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;object&quot;: &quot;list&quot;,
+    &quot;url&quot;: &quot;/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/message-settings&quot;,
+    &quot;has_more&quot;: false,
+    &quot;data&quot;: [
+        {
+            &quot;sms_destination_uuid&quot;: &quot;c9a76140-0ca4-4ea3-95af-7e12c2ff0df5&quot;,
+            &quot;object&quot;: &quot;message_setting&quot;,
+            &quot;domain_uuid&quot;: &quot;4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b&quot;,
+            &quot;destination&quot;: &quot;+12125550123&quot;,
+            &quot;carrier&quot;: &quot;voipms&quot;,
+            &quot;allowed_extension_uuids&quot;: [
+                &quot;d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b&quot;
+            ],
+            &quot;email&quot;: &quot;messages@example.com&quot;,
+            &quot;description&quot;: &quot;Customer support&quot;,
+            &quot;enabled&quot;: true
+        }
+    ]
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;The limit must not be greater than 100.&quot;,
+        &quot;code&quot;: &quot;invalid_parameter&quot;,
+        &quot;param&quot;: &quot;limit&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;You do not have access to this domain.&quot;,
+        &quot;code&quot;: &quot;forbidden_domain&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Domain not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-v1-domains--domain_uuid--message-settings" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-v1-domains--domain_uuid--message-settings"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-v1-domains--domain_uuid--message-settings"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-v1-domains--domain_uuid--message-settings" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-v1-domains--domain_uuid--message-settings">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-v1-domains--domain_uuid--message-settings" data-method="GET"
+      data-path="api/v1/domains/{domain_uuid}/message-settings"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-v1-domains--domain_uuid--message-settings', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/v1/domains/{domain_uuid}/message-settings</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-domains--domain_uuid--message-settings"
+               value="Bearer {YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-v1-domains--domain_uuid--message-settings"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-v1-domains--domain_uuid--message-settings"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>domain_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_uuid"                data-endpoint="GETapi-v1-domains--domain_uuid--message-settings"
+               value="4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
+               data-component="url">
+    <br>
+<p>The account UUID. Example: <code>4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>Query Parameters</b></h4>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>limit</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="limit"                data-endpoint="GETapi-v1-domains--domain_uuid--message-settings"
+               value="25"
+               data-component="query">
+    <br>
+<p>Results per page (1-100). Defaults to 25. Example: <code>25</code></p>
+            </div>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>starting_after</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="starting_after"                data-endpoint="GETapi-v1-domains--domain_uuid--message-settings"
+               value=""
+               data-component="query">
+    <br>
+<p>Return results after this message setting UUID.</p>
+            </div>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>search</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="search"                data-endpoint="GETapi-v1-domains--domain_uuid--message-settings"
+               value="support"
+               data-component="query">
+    <br>
+<p>Search phone number, provider, email, or description. Example: <code>support</code></p>
+            </div>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>carrier</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="carrier"                data-endpoint="GETapi-v1-domains--domain_uuid--message-settings"
+               value="voipms"
+               data-component="query">
+    <br>
+<p>Filter by message provider identifier. Example: <code>voipms</code></p>
+            </div>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>enabled</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="GETapi-v1-domains--domain_uuid--message-settings" style="display: none">
+            <input type="radio" name="enabled"
+                   value="1"
+                   data-endpoint="GETapi-v1-domains--domain_uuid--message-settings"
+                   data-component="query"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="GETapi-v1-domains--domain_uuid--message-settings" style="display: none">
+            <input type="radio" name="enabled"
+                   value="0"
+                   data-endpoint="GETapi-v1-domains--domain_uuid--message-settings"
+                   data-component="query"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Filter by enabled status. Example: <code>true</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
+        <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>limit</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="limit"                data-endpoint="GETapi-v1-domains--domain_uuid--message-settings"
+               value="10"
+               data-component="body">
+    <br>
+<p>Must be at least 1. Must not be greater than 100. Example: <code>10</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>starting_after</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="starting_after"                data-endpoint="GETapi-v1-domains--domain_uuid--message-settings"
+               value="095e485c-a63d-3d18-a775-9190fded966a"
+               data-component="body">
+    <br>
+<p>Must be a valid UUID. Example: <code>095e485c-a63d-3d18-a775-9190fded966a</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>search</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="search"                data-endpoint="GETapi-v1-domains--domain_uuid--message-settings"
+               value="jspqe"
+               data-component="body">
+    <br>
+<p>Must not be greater than 255 characters. Example: <code>jspqe</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>carrier</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="carrier"                data-endpoint="GETapi-v1-domains--domain_uuid--message-settings"
+               value="sit"
+               data-component="body">
+    <br>
+<p>Example: <code>sit</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>enabled</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="GETapi-v1-domains--domain_uuid--message-settings" style="display: none">
+            <input type="radio" name="enabled"
+                   value="true"
+                   data-endpoint="GETapi-v1-domains--domain_uuid--message-settings"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="GETapi-v1-domains--domain_uuid--message-settings" style="display: none">
+            <input type="radio" name="enabled"
+                   value="false"
+                   data-endpoint="GETapi-v1-domains--domain_uuid--message-settings"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Example: <code>false</code></p>
+        </div>
+        </form>
+
+                    <h2 id="message-settings-GETapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-">Retrieve message settings</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Returns one messaging phone number's configuration. <code>allowed_extension_uuids</code>
+contains the extensions permitted to share this number. Use the Extensions
+API to retrieve their names and extension numbers.
+Requires account access and <code>message_settings_list_view</code>.</p>
+
+<span id="example-requests-GETapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/message-settings/c9a76140-0ca4-4ea3-95af-7e12c2ff0df5" \
+    --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/message-settings/c9a76140-0ca4-4ea3-95af-7e12c2ff0df5"
+);
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-">
+            <blockquote>
+            <p>Example response (200):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;sms_destination_uuid&quot;: &quot;c9a76140-0ca4-4ea3-95af-7e12c2ff0df5&quot;,
+    &quot;object&quot;: &quot;message_setting&quot;,
+    &quot;domain_uuid&quot;: &quot;4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b&quot;,
+    &quot;destination&quot;: &quot;+12125550123&quot;,
+    &quot;carrier&quot;: &quot;voipms&quot;,
+    &quot;allowed_extension_uuids&quot;: [
+        &quot;d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b&quot;
+    ],
+    &quot;email&quot;: &quot;messages@example.com&quot;,
+    &quot;description&quot;: &quot;Customer support&quot;,
+    &quot;enabled&quot;: true
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Invalid message setting UUID.&quot;,
+        &quot;code&quot;: &quot;invalid_request&quot;,
+        &quot;param&quot;: &quot;sms_destination_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;You do not have access to this domain.&quot;,
+        &quot;code&quot;: &quot;forbidden_domain&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Message setting not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;sms_destination_uuid&quot;
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-" data-method="GET"
+      data-path="api/v1/domains/{domain_uuid}/message-settings/{sms_destination_uuid}"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/v1/domains/{domain_uuid}/message-settings/{sms_destination_uuid}</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-"
+               value="Bearer {YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>domain_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_uuid"                data-endpoint="GETapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-"
+               value="4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
+               data-component="url">
+    <br>
+<p>The account UUID. Example: <code>4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b</code></p>
+            </div>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>sms_destination_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="sms_destination_uuid"                data-endpoint="GETapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-"
+               value="c9a76140-0ca4-4ea3-95af-7e12c2ff0df5"
+               data-component="url">
+    <br>
+<p>The message setting UUID. Example: <code>c9a76140-0ca4-4ea3-95af-7e12c2ff0df5</code></p>
+            </div>
+                    </form>
+
+                    <h2 id="message-settings-POSTapi-v1-domains--domain_uuid--message-settings">Create message settings</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Configures a messaging phone number for an account. Supply the phone number,
+its message provider, and any extensions that should share it. National numbers
+are automatically converted to E.164 using the account country or the country
+in Default Settings. If neither is configured, US is used. Numbers starting
+with + use their supplied country code.
+Allowed extensions can send and receive messages using the number and see
+each other's replies. An empty or omitted extension list grants no extension access.</p>
+<p>The number is enabled by default. An optional email address receives incoming
+messages. This endpoint saves the configuration in FS PBX; it does not purchase
+a number or configure your provider's account.
+Requires account access and <code>message_settings_manage</code>.</p>
+
+<span id="example-requests-POSTapi-v1-domains--domain_uuid--message-settings">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request POST \
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/message-settings" \
+    --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json" \
+    --data "{
+    \"destination\": \"+12125550123\",
+    \"carrier\": \"voipms\",
+    \"allowed_extension_uuids\": [
+        \"d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b\"
+    ],
+    \"email\": \"messages@example.com\",
+    \"description\": \"Customer support\",
+    \"enabled\": false
+}"
+</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/message-settings"
+);
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+let body = {
+    "destination": "+12125550123",
+    "carrier": "voipms",
+    "allowed_extension_uuids": [
+        "d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b"
+    ],
+    "email": "messages@example.com",
+    "description": "Customer support",
+    "enabled": false
+};
+
+fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-POSTapi-v1-domains--domain_uuid--message-settings">
+            <blockquote>
+            <p>Example response (201):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;sms_destination_uuid&quot;: &quot;c9a76140-0ca4-4ea3-95af-7e12c2ff0df5&quot;,
+    &quot;object&quot;: &quot;message_setting&quot;,
+    &quot;domain_uuid&quot;: &quot;4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b&quot;,
+    &quot;destination&quot;: &quot;+12125550123&quot;,
+    &quot;carrier&quot;: &quot;voipms&quot;,
+    &quot;allowed_extension_uuids&quot;: [
+        &quot;d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b&quot;
+    ],
+    &quot;email&quot;: &quot;messages@example.com&quot;,
+    &quot;description&quot;: &quot;Customer support&quot;,
+    &quot;enabled&quot;: true
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Enter a valid phone number for the configured country, or include + and the country code.&quot;,
+        &quot;code&quot;: &quot;invalid_parameter&quot;,
+        &quot;param&quot;: &quot;destination&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Invalid JSON):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Invalid JSON request body. Remove trailing commas and check the JSON syntax.&quot;,
+        &quot;code&quot;: &quot;invalid_json&quot;,
+        &quot;param&quot;: null
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;success&quot;: false,
+    &quot;message&quot;: &quot;Forbidden (missing permission).&quot;,
+    &quot;error&quot;: {
+        &quot;code&quot;: &quot;forbidden_permission&quot;,
+        &quot;permission&quot;: &quot;message_settings_manage&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Domain not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-POSTapi-v1-domains--domain_uuid--message-settings" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-POSTapi-v1-domains--domain_uuid--message-settings"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-POSTapi-v1-domains--domain_uuid--message-settings"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-POSTapi-v1-domains--domain_uuid--message-settings" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-POSTapi-v1-domains--domain_uuid--message-settings">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-POSTapi-v1-domains--domain_uuid--message-settings" data-method="POST"
+      data-path="api/v1/domains/{domain_uuid}/message-settings"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('POSTapi-v1-domains--domain_uuid--message-settings', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+            </h3>
+            <p>
+            <small class="badge badge-black">POST</small>
+            <b><code>api/v1/domains/{domain_uuid}/message-settings</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="POSTapi-v1-domains--domain_uuid--message-settings"
+               value="Bearer {YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="POSTapi-v1-domains--domain_uuid--message-settings"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="POSTapi-v1-domains--domain_uuid--message-settings"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>domain_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_uuid"                data-endpoint="POSTapi-v1-domains--domain_uuid--message-settings"
+               value="4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
+               data-component="url">
+    <br>
+<p>The account UUID. Example: <code>4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b</code></p>
+            </div>
+                            <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
+        <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>destination</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="destination"                data-endpoint="POSTapi-v1-domains--domain_uuid--message-settings"
+               value="+12125550123"
+               data-component="body">
+    <br>
+<p>The messaging phone number, automatically converted to E.164 using the account country or the country in Default Settings. If neither is configured, US is used. Numbers starting with + use their supplied country code. Required on creation; omit on update to keep the current number. Must match the regex /^+[1-9][0-9]{1,14}$/D. Example: <code>+12125550123</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>carrier</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="carrier"                data-endpoint="POSTapi-v1-domains--domain_uuid--message-settings"
+               value="voipms"
+               data-component="body">
+    <br>
+<p>Message provider identifier. Use thinq for Commio (ThinQ) and voipms for VoIP.MS. May be null. Omit on update to preserve the provider. Example: <code>voipms</code></p>
+Must be one of:
+<ul style="list-style-type: square;"><li><code>apidaze</code></li> <li><code>bandwidth</code></li> <li><code>bulkvs</code></li> <li><code>clicksend</code></li> <li><code>thinq</code></li> <li><code>fibernetics</code></li> <li><code>sinch</code></li> <li><code>telnyx</code></li> <li><code>twilio</code></li> <li><code>voipms</code></li> <li><code>voxutel</code></li></ul>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>allowed_extension_uuids</code></b>&nbsp;&nbsp;
+<small>string[]</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="allowed_extension_uuids[0]"                data-endpoint="POSTapi-v1-domains--domain_uuid--message-settings"
+               data-component="body">
+        <input type="text" style="display: none"
+               name="allowed_extension_uuids[1]"                data-endpoint="POSTapi-v1-domains--domain_uuid--message-settings"
+               data-component="body">
+    <br>
+<p>Optional extension UUIDs from this account. Defaults to []; on update, omit to preserve access.</p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>email</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="email"                data-endpoint="POSTapi-v1-domains--domain_uuid--message-settings"
+               value="messages@example.com"
+               data-component="body">
+    <br>
+<p>Optional email address for incoming messages. Omit on update to preserve it; send null to clear it. Must be a valid email address. Must not be greater than 255 characters. Example: <code>messages@example.com</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>description</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="description"                data-endpoint="POSTapi-v1-domains--domain_uuid--message-settings"
+               value="Customer support"
+               data-component="body">
+    <br>
+<p>Optional description for administrators. Omit on update to preserve it; send null to clear it. Example: <code>Customer support</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>enabled</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="POSTapi-v1-domains--domain_uuid--message-settings" style="display: none">
+            <input type="radio" name="enabled"
+                   value="true"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--message-settings"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="POSTapi-v1-domains--domain_uuid--message-settings" style="display: none">
+            <input type="radio" name="enabled"
+                   value="false"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--message-settings"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Whether messaging is enabled for this number. Defaults to true on creation. Omit on update to preserve its status. Example: <code>false</code></p>
+        </div>
+        </form>
+
+                    <h2 id="message-settings-PATCHapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-">Update message settings</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Changes a messaging phone number's configuration. All fields are optional;
+omitted fields retain their current values. When supplied, <code>allowed_extension_uuids</code>
+replaces the entire access list. Send [] to remove all extension access.
+Send null to clear the email recipient, description, or provider.
+Requires account access and <code>message_settings_manage</code>.</p>
+
+<span id="example-requests-PATCHapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request PATCH \
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/message-settings/c9a76140-0ca4-4ea3-95af-7e12c2ff0df5" \
+    --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json" \
+    --data "{
+    \"destination\": \"+12125550123\",
+    \"carrier\": \"voipms\",
+    \"allowed_extension_uuids\": [
+        \"d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b\"
+    ],
+    \"email\": \"messages@example.com\",
+    \"description\": \"Customer support\",
+    \"enabled\": false
+}"
+</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/message-settings/c9a76140-0ca4-4ea3-95af-7e12c2ff0df5"
+);
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+let body = {
+    "destination": "+12125550123",
+    "carrier": "voipms",
+    "allowed_extension_uuids": [
+        "d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b"
+    ],
+    "email": "messages@example.com",
+    "description": "Customer support",
+    "enabled": false
+};
+
+fetch(url, {
+    method: "PATCH",
+    headers,
+    body: JSON.stringify(body),
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-PATCHapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-">
+            <blockquote>
+            <p>Example response (200):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;sms_destination_uuid&quot;: &quot;c9a76140-0ca4-4ea3-95af-7e12c2ff0df5&quot;,
+    &quot;object&quot;: &quot;message_setting&quot;,
+    &quot;domain_uuid&quot;: &quot;4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b&quot;,
+    &quot;destination&quot;: &quot;+12125550123&quot;,
+    &quot;carrier&quot;: &quot;voipms&quot;,
+    &quot;allowed_extension_uuids&quot;: [],
+    &quot;email&quot;: null,
+    &quot;description&quot;: &quot;Customer support&quot;,
+    &quot;enabled&quot;: true
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;The selected allowed_extension_uuids.0 is invalid.&quot;,
+        &quot;code&quot;: &quot;invalid_parameter&quot;,
+        &quot;param&quot;: &quot;allowed_extension_uuids.0&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Invalid JSON):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Invalid JSON request body. Remove trailing commas and check the JSON syntax.&quot;,
+        &quot;code&quot;: &quot;invalid_json&quot;,
+        &quot;param&quot;: null
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;success&quot;: false,
+    &quot;message&quot;: &quot;Forbidden (missing permission).&quot;,
+    &quot;error&quot;: {
+        &quot;code&quot;: &quot;forbidden_permission&quot;,
+        &quot;permission&quot;: &quot;message_settings_manage&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Message setting not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;sms_destination_uuid&quot;
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-PATCHapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-PATCHapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-PATCHapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-PATCHapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-PATCHapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-PATCHapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-" data-method="PATCH"
+      data-path="api/v1/domains/{domain_uuid}/message-settings/{sms_destination_uuid}"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('PATCHapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+            </h3>
+            <p>
+            <small class="badge badge-purple">PATCH</small>
+            <b><code>api/v1/domains/{domain_uuid}/message-settings/{sms_destination_uuid}</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="PATCHapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-"
+               value="Bearer {YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="PATCHapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="PATCHapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>domain_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_uuid"                data-endpoint="PATCHapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-"
+               value="4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
+               data-component="url">
+    <br>
+<p>The account UUID. Example: <code>4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b</code></p>
+            </div>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>sms_destination_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="sms_destination_uuid"                data-endpoint="PATCHapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-"
+               value="c9a76140-0ca4-4ea3-95af-7e12c2ff0df5"
+               data-component="url">
+    <br>
+<p>The message setting UUID. Example: <code>c9a76140-0ca4-4ea3-95af-7e12c2ff0df5</code></p>
+            </div>
+                            <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
+        <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>destination</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="destination"                data-endpoint="PATCHapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-"
+               value="+12125550123"
+               data-component="body">
+    <br>
+<p>Optional messaging phone number, automatically converted to E.164 using the account country or the country in Default Settings. If neither is configured, US is used. Numbers starting with + use their supplied country code. Omit to preserve the current number; cannot be null or empty. Example: <code>+12125550123</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>carrier</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="carrier"                data-endpoint="PATCHapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-"
+               value="voipms"
+               data-component="body">
+    <br>
+<p>Message provider identifier. Use thinq for Commio (ThinQ) and voipms for VoIP.MS. May be null. Omit on update to preserve the provider. Example: <code>voipms</code></p>
+Must be one of:
+<ul style="list-style-type: square;"><li><code>apidaze</code></li> <li><code>bandwidth</code></li> <li><code>bulkvs</code></li> <li><code>clicksend</code></li> <li><code>thinq</code></li> <li><code>fibernetics</code></li> <li><code>sinch</code></li> <li><code>telnyx</code></li> <li><code>twilio</code></li> <li><code>voipms</code></li> <li><code>voxutel</code></li></ul>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>allowed_extension_uuids</code></b>&nbsp;&nbsp;
+<small>string[]</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="allowed_extension_uuids[0]"                data-endpoint="PATCHapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-"
+               data-component="body">
+        <input type="text" style="display: none"
+               name="allowed_extension_uuids[1]"                data-endpoint="PATCHapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-"
+               data-component="body">
+    <br>
+<p>Optional extension UUIDs from this account. Replaces the full access list; omit to preserve access or send [] to remove all extension access.</p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>email</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="email"                data-endpoint="PATCHapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-"
+               value="messages@example.com"
+               data-component="body">
+    <br>
+<p>Optional email address for incoming messages. Omit on update to preserve it; send null to clear it. Must be a valid email address. Must not be greater than 255 characters. Example: <code>messages@example.com</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>description</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="description"                data-endpoint="PATCHapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-"
+               value="Customer support"
+               data-component="body">
+    <br>
+<p>Optional description for administrators. Omit on update to preserve it; send null to clear it. Example: <code>Customer support</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>enabled</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="PATCHapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-" style="display: none">
+            <input type="radio" name="enabled"
+                   value="true"
+                   data-endpoint="PATCHapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="PATCHapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-" style="display: none">
+            <input type="radio" name="enabled"
+                   value="false"
+                   data-endpoint="PATCHapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Whether messaging is enabled for this number. Defaults to true on creation. Omit on update to preserve its status. Example: <code>false</code></p>
+        </div>
+        </form>
+
+                    <h2 id="message-settings-DELETEapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-">Delete message settings</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Removes a messaging phone number's configuration and its extension access
+list from the account. Existing message history is retained. This does not
+cancel the phone number with your provider.
+Requires account access and <code>message_settings_manage</code>.</p>
+
+<span id="example-requests-DELETEapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request DELETE \
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/message-settings/c9a76140-0ca4-4ea3-95af-7e12c2ff0df5" \
+    --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/message-settings/c9a76140-0ca4-4ea3-95af-7e12c2ff0df5"
+);
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "DELETE",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-DELETEapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-">
+            <blockquote>
+            <p>Example response (200):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;uuid&quot;: &quot;c9a76140-0ca4-4ea3-95af-7e12c2ff0df5&quot;,
+    &quot;object&quot;: &quot;message_setting&quot;,
+    &quot;deleted&quot;: true
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Invalid message setting UUID.&quot;,
+        &quot;code&quot;: &quot;invalid_request&quot;,
+        &quot;param&quot;: &quot;sms_destination_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;success&quot;: false,
+    &quot;message&quot;: &quot;Forbidden (missing permission).&quot;,
+    &quot;error&quot;: {
+        &quot;code&quot;: &quot;forbidden_permission&quot;,
+        &quot;permission&quot;: &quot;message_settings_manage&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Message setting not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;sms_destination_uuid&quot;
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-DELETEapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-DELETEapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-DELETEapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-DELETEapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-DELETEapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-DELETEapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-" data-method="DELETE"
+      data-path="api/v1/domains/{domain_uuid}/message-settings/{sms_destination_uuid}"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('DELETEapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+            </h3>
+            <p>
+            <small class="badge badge-red">DELETE</small>
+            <b><code>api/v1/domains/{domain_uuid}/message-settings/{sms_destination_uuid}</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="DELETEapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-"
+               value="Bearer {YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="DELETEapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="DELETEapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>domain_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_uuid"                data-endpoint="DELETEapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-"
+               value="4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
+               data-component="url">
+    <br>
+<p>The account UUID. Example: <code>4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b</code></p>
+            </div>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>sms_destination_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="sms_destination_uuid"                data-endpoint="DELETEapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-"
+               value="c9a76140-0ca4-4ea3-95af-7e12c2ff0df5"
+               data-component="url">
+    <br>
+<p>The message setting UUID. Example: <code>c9a76140-0ca4-4ea3-95af-7e12c2ff0df5</code></p>
+            </div>
+                    </form>
+
                 <h1 id="phone-control">Phone Control</h1>
 
     
@@ -10765,7 +12195,7 @@ to mono, 16 kHz, 16-bit PCM WAV for FreeSWITCH playback.</p>
     --header "Accept: application/json" \
     --form "recording_name=Main Menu Greeting"\
     --form "recording_description=Primary virtual receptionist greeting"\
-    --form "file=@/tmp/phpfkvifbhpa20gavpe4wF" </code></pre></div>
+    --form "file=@/tmp/php0n8v3jun9kub7FERPB3" </code></pre></div>
 
 
 <div class="javascript-example">
@@ -11015,7 +12445,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value=""
                data-component="body">
     <br>
-<p>WAV, MP3, or M4A audio file. Maximum size: 50 MB. Example: <code>/tmp/phpfkvifbhpa20gavpe4wF</code></p>
+<p>WAV, MP3, or M4A audio file. Maximum size: 50 MB. Example: <code>/tmp/php0n8v3jun9kub7FERPB3</code></p>
         </div>
         </form>
 
@@ -11285,7 +12715,7 @@ At least one update field is required.</p>
     --form "recording_name=Updated Main Menu Greeting"\
     --form "recording_description=Updated automatically"\
     --form "_method=PATCH"\
-    --form "file=@/tmp/phpchvi6sqkovvd1IjfJaB" </code></pre></div>
+    --form "file=@/tmp/phpvtnvch0u1omceA9s3K5" </code></pre></div>
 
 
 <div class="javascript-example">
@@ -11592,7 +13022,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value=""
                data-component="body">
     <br>
-<p>Optional WAV, MP3, or M4A audio file. Maximum size: 50 MB. Example: <code>/tmp/phpchvi6sqkovvd1IjfJaB</code></p>
+<p>Optional WAV, MP3, or M4A audio file. Maximum size: 50 MB. Example: <code>/tmp/phpvtnvch0u1omceA9s3K5</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>_method</code></b>&nbsp;&nbsp;
@@ -14233,10 +15663,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="members.0.destination_number"                data-endpoint="POSTapi-v1-domains--domain_uuid--ring-groups"
-               value="794"
+               value="186963"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present.  Must match the regex /^+?\d+$/. Example: <code>794</code></p>
+<p>This field is required when <code>members</code> is present.  Must match the regex /^+?\d+$/. Example: <code>186963</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_delay</code></b>&nbsp;&nbsp;
@@ -14244,10 +15674,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="members.0.destination_delay"                data-endpoint="POSTapi-v1-domains--domain_uuid--ring-groups"
-               value="48"
+               value="6"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>48</code></p>
+<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>6</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_timeout</code></b>&nbsp;&nbsp;
@@ -14255,10 +15685,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="members.0.destination_timeout"                data-endpoint="POSTapi-v1-domains--domain_uuid--ring-groups"
-               value="3"
+               value="32"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>3</code></p>
+<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>32</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_prompt</code></b>&nbsp;&nbsp;
@@ -14279,7 +15709,7 @@ Must be one of:
             <code>false</code>
         </label>
     <br>
-<p>This field is required when <code>members</code> is present. Example: <code>false</code></p>
+<p>This field is required when <code>members</code> is present. Example: <code>true</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_enabled</code></b>&nbsp;&nbsp;
@@ -14894,10 +16324,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="members.0.destination_number"                data-endpoint="PATCHapi-v1-domains--domain_uuid--ring-groups--ring_group_uuid-"
-               value="+71"
+               value="19"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present.  Must match the regex /^+?\d+$/. Example: <code>+71</code></p>
+<p>This field is required when <code>members</code> is present.  Must match the regex /^+?\d+$/. Example: <code>19</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_delay</code></b>&nbsp;&nbsp;
@@ -14905,10 +16335,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="members.0.destination_delay"                data-endpoint="PATCHapi-v1-domains--domain_uuid--ring-groups--ring_group_uuid-"
-               value="21"
+               value="72"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>21</code></p>
+<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>72</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_timeout</code></b>&nbsp;&nbsp;
@@ -14916,10 +16346,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="members.0.destination_timeout"                data-endpoint="PATCHapi-v1-domains--domain_uuid--ring-groups--ring_group_uuid-"
-               value="39"
+               value="86"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>39</code></p>
+<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>86</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_prompt</code></b>&nbsp;&nbsp;
@@ -14961,7 +16391,7 @@ Must be one of:
             <code>false</code>
         </label>
     <br>
-<p>This field is required when <code>members</code> is present. Example: <code>false</code></p>
+<p>This field is required when <code>members</code> is present. Example: <code>true</code></p>
                     </div>
                                     </details>
         </div>
@@ -15138,9 +16568,9 @@ and two-factor secrets are never returned.</p>
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
-    \"limit\": 22,
-    \"starting_after\": \"90dbaa5a-e53b-3754-8f24-3acc14e4b3d5\",
-    \"search\": \"gslusmpcqtgbgytchdm\",
+    \"limit\": 6,
+    \"starting_after\": \"9faa8ec4-63b9-35a6-a425-6c452a8afb76\",
+    \"search\": \"oejjivgpbhyeztwxxwm\",
     \"user_enabled\": true
 }"
 </code></pre></div>
@@ -15166,9 +16596,9 @@ const headers = {
 };
 
 let body = {
-    "limit": 22,
-    "starting_after": "90dbaa5a-e53b-3754-8f24-3acc14e4b3d5",
-    "search": "gslusmpcqtgbgytchdm",
+    "limit": 6,
+    "starting_after": "9faa8ec4-63b9-35a6-a425-6c452a8afb76",
+    "search": "oejjivgpbhyeztwxxwm",
     "user_enabled": true
 };
 
@@ -15399,10 +16829,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="limit"                data-endpoint="GETapi-v1-domains--domain_uuid--users"
-               value="22"
+               value="6"
                data-component="body">
     <br>
-<p>Must be at least 1. Must not be greater than 100. Example: <code>22</code></p>
+<p>Must be at least 1. Must not be greater than 100. Example: <code>6</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>starting_after</code></b>&nbsp;&nbsp;
@@ -15410,10 +16840,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="starting_after"                data-endpoint="GETapi-v1-domains--domain_uuid--users"
-               value="90dbaa5a-e53b-3754-8f24-3acc14e4b3d5"
+               value="9faa8ec4-63b9-35a6-a425-6c452a8afb76"
                data-component="body">
     <br>
-<p>Must be a valid UUID. Example: <code>90dbaa5a-e53b-3754-8f24-3acc14e4b3d5</code></p>
+<p>Must be a valid UUID. Example: <code>9faa8ec4-63b9-35a6-a425-6c452a8afb76</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>search</code></b>&nbsp;&nbsp;
@@ -15421,10 +16851,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="search"                data-endpoint="GETapi-v1-domains--domain_uuid--users"
-               value="gslusmpcqtgbgytchdm"
+               value="oejjivgpbhyeztwxxwm"
                data-component="body">
     <br>
-<p>Must not be greater than 255 characters. Example: <code>gslusmpcqtgbgytchdm</code></p>
+<p>Must not be greater than 255 characters. Example: <code>oejjivgpbhyeztwxxwm</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>user_enabled</code></b>&nbsp;&nbsp;

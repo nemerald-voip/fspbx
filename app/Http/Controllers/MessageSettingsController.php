@@ -7,7 +7,6 @@ use Inertia\Inertia;
 use App\Models\Extensions;
 use Illuminate\Http\Request;
 use App\Models\MessageSetting;
-use Illuminate\Support\Facades\DB;
 use Spatie\QueryBuilder\QueryBuilder;
 use Spatie\QueryBuilder\AllowedFilter;
 use Illuminate\Support\Facades\Session;
@@ -16,6 +15,7 @@ use App\Http\Requests\UpdateMessageSettingRequest;
 use App\Http\Requests\BulkUpdateMessageSettingRequest;
 use App\Services\Messaging\MessageParticipantService;
 use App\Services\Messaging\MessageSettingsAccess;
+use App\Services\Messaging\MessageSettingsService;
 
 class MessageSettingsController extends Controller
 {
@@ -26,7 +26,7 @@ class MessageSettingsController extends Controller
     protected $viewName = 'MessageSettings';
     protected $searchable = ['destination', 'carrier', 'description', 'chatplan_detail_data', 'email'];
 
-    public function __construct()
+    public function __construct(private MessageSettingsService $settings)
     {
         $this->model = new MessageSetting();
     }
@@ -93,19 +93,8 @@ class MessageSettingsController extends Controller
             }
 
             // Define the options for the 'carrier' field
-            $carrierOptions = [
-                ['value' => 'apidaze', 'label' => 'Apidaze'],
-                ['value' => 'bandwidth', 'label' => 'Bandwidth'],
-                ['value' => 'bulkvs', 'label' => 'BulkVS'],
-                ['value' => 'clicksend', 'label' => 'ClickSend'],
-                ['value' => 'thinq', 'label' => 'Commio (ThinQ)'],
-                ['value' => 'fibernetics', 'label' => 'Fibernetics'],
-                ['value' => 'sinch', 'label' => 'Sinch'],
-                ['value' => 'telnyx', 'label' => 'Telnyx'],
-                ['value' => 'twilio', 'label' => 'Twilio'],
-                ['value' => 'voipms', 'label' => 'VoIP.MS'],
-                ['value' => 'voxutel', 'label' => 'Voxutel'],
-            ];
+            $carrierOptions = collect(MessageSettingsService::carriers())
+                ->map(fn ($label, $value) => ['value' => $value, 'label' => $label])->values()->all();
 
             // Define the options for the 'chatplan_detail_data' field
             $extensions = Extensions::where('domain_uuid', $item->domain_uuid ?? session('domain_uuid'))
@@ -262,18 +251,14 @@ class MessageSettingsController extends Controller
         }
 
         try {
-            DB::beginTransaction();
-
-            $setting = MessageSetting::whereKey($setting->getKey())->lockForUpdate()->firstOrFail();
-            $this->saveSetting($setting, $inputs);
-
-            DB::commit();
+            $this->settings->update($setting, $inputs);
 
             return response()->json([
                 'messages' => ['success' => [__('Settings updated successfully.')]]
             ], 200);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
-            DB::rollBack();
             logger('MesssageSettingsController@update error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json([
                 'success' => false,
@@ -293,19 +278,15 @@ class MessageSettingsController extends Controller
         $data = $request->validated();
 
         try {
-            DB::beginTransaction();
-
-            $newSetting = new MessageSetting();
-            $this->saveSetting($newSetting, $data);
-
-            DB::commit();
+            $this->settings->create($data['domain_uuid'], $data);
 
             return response()->json([
                 'messages' => ['success' => [__('Request processed successfully.')]]
             ], 201);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
-            DB::rollBack();
-            logger('DeviceController@store error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            logger('MessageSettingsController@store error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json([
                 'success' => false,
                 'errors' => ['server' => [__('Failed to create message settings.')]]
@@ -356,35 +337,26 @@ class MessageSettingsController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function BulkDelete()
+    public function destroy(MessageSetting $setting)
+    {
+        abort_unless(MessageSettingsAccess::canManage($setting->domain_uuid), 403);
+        $this->settings->delete([$setting->domain_uuid], [$setting->sms_destination_uuid]);
+
+        return response()->json([
+            'messages' => ['success' => [__('All selected items have been deleted successfully.')]],
+        ]);
+    }
+
+    public function bulkDelete()
     {
         abort_unless(MessageSettingsAccess::canManage(), 403);
         try {
-            // Begin Transaction
-            DB::beginTransaction();
-
-            // Retrieve all items
-            $items = $this->model::whereIn('domain_uuid', MessageSettingsAccess::domains())
-                ->whereIn('sms_destination_uuid', request('items', []))->lockForUpdate()->get();
-
-            foreach ($items as $item) {
-
-                // Delete the item itself
-                DB::table('sms_destination_members')->where('domain_uuid', $item->domain_uuid)
-                    ->where('sms_destination_uuid', $item->sms_destination_uuid)->delete();
-                $item->delete();
-            }
-
-            // Commit Transaction
-            DB::commit();
+            $this->settings->delete(MessageSettingsAccess::domains(), request('items', []));
 
             return response()->json([
                 'messages' => ['server' => [__('All selected items have been deleted successfully.')]],
             ], 200);
         } catch (\Exception $e) {
-            // Rollback Transaction if any error occurs
-            DB::rollBack();
-
             logger('MessageSettingsControler@bulkDelete error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
@@ -415,13 +387,7 @@ class MessageSettingsController extends Controller
                 return $value !== null;
             })->toArray();
 
-            DB::transaction(function () use ($request, $updateData) {
-                $items = MessageSetting::whereIn('domain_uuid', MessageSettingsAccess::domains())
-                    ->whereIn('sms_destination_uuid', $request->validated('items'))->lockForUpdate()->get();
-                foreach ($items as $item) {
-                    $this->saveSetting($item, $updateData);
-                }
-            });
+            $this->settings->bulkUpdate(MessageSettingsAccess::domains(), $request->validated('items'), $updateData);
 
             // Return a JSON response indicating success
             return response()->json([
@@ -442,21 +408,5 @@ class MessageSettingsController extends Controller
             'success' => false,
             'errors' => ['server' => [__('Failed to update selected items')]]
         ], 500); // 500 Internal Server Error for any other errors
-    }
-    private function saveSetting(MessageSetting $setting, array $data): void
-    {
-        $hasMembers = array_key_exists('allowed_extension_uuids', $data);
-        $members = $data['allowed_extension_uuids'] ?? [];
-        unset($data['allowed_extension_uuids']);
-        $legacyAssignment = array_key_exists('chatplan_detail_data', $data);
-        $setting->fill($data);
-        $setting->save();
-        if (!$hasMembers && $legacyAssignment) {
-            $members = Extensions::where('domain_uuid', $setting->domain_uuid)
-                ->where('extension', $setting->chatplan_detail_data)->pluck('extension_uuid')->all();
-        }
-        if ($hasMembers || $legacyAssignment) {
-            app(MessageParticipantService::class)->assign($setting, $members);
-        }
     }
 }

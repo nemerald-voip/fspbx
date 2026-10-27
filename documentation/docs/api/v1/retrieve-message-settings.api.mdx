@@ -1,0 +1,75 @@
+---
+id: retrieve-message-settings
+title: "Retrieve message settings"
+description: "Returns one messaging phone number's configuration. `allowed_extension_uuids`"
+sidebar_label: "Retrieve message settings"
+hide_title: true
+hide_table_of_contents: true
+api: eJztWG1v2zYQ/isEv6zFJNty7DoRimLt1pd8KBrkBWiRGA4lnSw2EqnyKCeGoP8+UJJt2VIMZ1uHDJi/GDZ5p7vnee7IU05lCoppLsVpQF2qQCsOC/gMiGwOF6A1F3OkFg0AfcVTs5O69Bx0pgQSKYAk5V4u5iSNzG+RJR6oX5D4UoR8nlXue+SWxbG8h2AGDxoEcilmWcYDvL0RvhSacYFER0DWy0hSUAnXGgKiJcGIKSA64lg/okeuEEqT92uTG/H27NTsXmVi1rkigiWAhIlg4772gr0bcQ4/Mq7MBt+XmdDmG7Daf1vlBzOswZjFHPVsweH+tkctmjLFEtCgkLrXOeUGnpTpiFrUPJS6NJAJ41WyLSAvI1g/9Orq9A/jER5YksbGcjRwjsMJO7KPYcDs0cTz7JNwFNqDkeccOUcwAMejFlVV+AF1tcrAouhHkDDq5lQvU+MHteJiTovC6gwQE5wFgJqLkqrHI62hIDUUHRH7J2zyyhkN7IHPRvYI2JF9MmahPQFn6A/DcBCE4ydFPDWbMZUCAc36cDAwX9uxUYsaCYHQZo2lacz9MpX+dzQb8vYDpPcdfN2MPe/G4eCcao8u3RGMQbKhgINZbURCXfqrM3SG4/F44AyPTLpMKQ6KunQheZqYCn2kvKh7TYOhP/GciW8fe4PAHoWD0PbGYWgP/dB7FUzYKBx5dGpRSBiPNxngbzU4PV8mLUH8nqGWCSiCWZpKVWIpmBevWC0smirTXjSvqOuGd5fyJ6up2EC/z9cuK8UOLftsD2Ks2KFsn8MtNosGnfuMaqaLPVSvzZlSbNm0PlwEXEOCnc1jpY8DYN6WTrGjnX0OWrIqGrpaG3pSxsBE07LUXPmx6OgndglQSjaZ4mLBYh7MTE8D1LNq3VohQV16Wu14tH36MuhwtDpbHmvQRavAdiNbR7+9rVrdx0F3SkUjp33W+9MtVvk+IQBjVGOxz+oRmDaicP41UbBMRyB07atDE1eisQWChgyy7ZWfyXNnlIfS3MrgIGbb2W3oOXpGNftNZiSQREhNIraA1Y1Qy+oGWh0dDdZCqTweBCBm1VKjepvHzLMt2gPzPYjjFhaHle82ThtZjJ6RLD7v9DSDVygz0SxgBSgz5cMs4YhVkv/NRr4n2YN00ALiH2jjhUU1m5e32lV46yl1avLSkTSX7DlUB6iOqEv7LOX9hdOvFIb9vCG1ol9jYa8GvH7eFUFBLYqgFqtBL1PmphxpnaLb7+eRRF207sgfLsjZu6/EzKSVLbXogilurjMlhcasknfIsthMD9++XJ3bHy7O3n21P325uGy5/CRRm7mN3EeggNRP4EhUJoRh6UWNpEtCTL2H3lJmyq7rV4B+aaCcmlz8THG9LJNZP/562ly7MEVUBbresWbOpE7r0a28kgFTZYLb8ZrG4jOxGchNPETLOxDEW5IFR16Kq/w7YBh5kqmgHL39mPt3Zu219+YjCPOiAkg139+BeN333vTK4uEilGVgXJcC2qDeisbgDwqrHwunVKREnbCyadTz8Pkq1J0bTOs9SL7pQv+/Etm8EqkFouFB99O4PgDKesnrirymLOWGC2c9HRtw3e1XJbuFaXZ0NoepVRfSNc1zjyFcqbgozN8/MlBG4tNN3VWC51iPFCGLEfbw+qJGInhJul7WdOa6ugSKZVnvcQaV9O5guXvOWX8jlsfmib8QU3fPnRYWjYAFZjK9zuutb30fUt1w0jp+i2Yj/vj+khbFn34nFs0=
+sidebar_class_name: "get api-method"
+info_path: docs/api/v1/fs-pbx-api
+custom_edit_url: null
+hide_send_button: true
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Retrieve message settings"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/api/v1/domains/{domain_uuid}/message-settings/{sms_destination_uuid}"}
+  context={"endpoint"}
+>
+  
+</MethodEndpoint>
+
+
+
+Returns one messaging phone number's configuration. `allowed_extension_uuids`
+contains the extensions permitted to share this number. Use the Extensions
+API to retrieve their names and extension numbers.
+Requires account access and `message_settings_list_view`.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"in":"path","name":"domain_uuid","description":"The account UUID.","example":"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b","required":true,"schema":{"type":"string"}},{"in":"path","name":"sms_destination_uuid","description":"The message setting UUID.","example":"c9a76140-0ca4-4ea3-95af-7e12c2ff0df5","required":true,"schema":{"type":"string"}}]}
+>
+  
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+  
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"","content":{"application/json":{"schema":{"type":"object","example":{"sms_destination_uuid":"c9a76140-0ca4-4ea3-95af-7e12c2ff0df5","object":"message_setting","domain_uuid":"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b","destination":"+12125550123","carrier":"voipms","allowed_extension_uuids":["d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b"],"email":"messages@example.com","description":"Customer support","enabled":true},"properties":{"sms_destination_uuid":{"type":"string","example":"c9a76140-0ca4-4ea3-95af-7e12c2ff0df5"},"object":{"type":"string","example":"message_setting"},"domain_uuid":{"type":"string","example":"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"},"destination":{"type":"string","example":"+12125550123"},"carrier":{"type":"string","example":"voipms"},"allowed_extension_uuids":{"type":"array","example":["d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b"],"items":{"type":"string"}},"email":{"type":"string","example":"messages@example.com"},"description":{"type":"string","example":"Customer support"},"enabled":{"type":"boolean","example":true}}}}}},"400":{"description":"","content":{"application/json":{"schema":{"type":"object","example":{"error":{"type":"invalid_request_error","message":"Invalid message setting UUID.","code":"invalid_request","param":"sms_destination_uuid"}},"properties":{"error":{"type":"object","properties":{"type":{"type":"string","example":"invalid_request_error"},"message":{"type":"string","example":"Invalid message setting UUID."},"code":{"type":"string","example":"invalid_request"},"param":{"type":"string","example":"sms_destination_uuid"}}}}}}}},"401":{"description":"","content":{"application/json":{"schema":{"type":"object","example":{"error":{"type":"authentication_error","message":"Unauthenticated.","code":"unauthenticated"}},"properties":{"error":{"type":"object","properties":{"type":{"type":"string","example":"authentication_error"},"message":{"type":"string","example":"Unauthenticated."},"code":{"type":"string","example":"unauthenticated"}}}}}}}},"403":{"description":"","content":{"application/json":{"schema":{"type":"object","example":{"error":{"type":"invalid_request_error","message":"You do not have access to this domain.","code":"forbidden_domain","param":"domain_uuid"}},"properties":{"error":{"type":"object","properties":{"type":{"type":"string","example":"invalid_request_error"},"message":{"type":"string","example":"You do not have access to this domain."},"code":{"type":"string","example":"forbidden_domain"},"param":{"type":"string","example":"domain_uuid"}}}}}}}},"404":{"description":"","content":{"application/json":{"schema":{"type":"object","example":{"error":{"type":"invalid_request_error","message":"Message setting not found.","code":"resource_missing","param":"sms_destination_uuid"}},"properties":{"error":{"type":"object","properties":{"type":{"type":"string","example":"invalid_request_error"},"message":{"type":"string","example":"Message setting not found."},"code":{"type":"string","example":"resource_missing"},"param":{"type":"string","example":"sms_destination_uuid"}}}}}}}}}}
+>
+  
+</StatusCodes>
+
+
+      

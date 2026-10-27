@@ -10,7 +10,7 @@
     ],
     "info": {
         "name": "FS PBX",
-        "_postman_id": "f782a43e-d4b8-43b7-b3df-6705019d7615",
+        "_postman_id": "9a0b4b3b-d634-467d-a613-258e4e4f06d0",
         "description": "",
         "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
     },
@@ -780,7 +780,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"device_address\":\"0004f23a5bc7\",\"serial_number\":\"8603123456789\",\"device_profile_uuid\":\"51759db8-c8bf-4b2f-b48a-6577d7ad6a1a\",\"device_template\":\"Yealink T46U\",\"device_template_uuid\":\"a6cf59ba-4b2b-4bdd-b870-35cc55bca146\",\"device_keys\":[\"ad\"],\"phonebook_mode\":\"default\",\"phonebook_uuids\":[\"6fca1bbb-0318-337e-9a4b-3fe5f2443ac8\"],\"device_description\":\"Reception desk device\",\"device_lines\":[[]]}"
+                            "raw": "{\"device_address\":\"0004f23a5bc7\",\"serial_number\":\"8603123456789\",\"device_profile_uuid\":\"51759db8-c8bf-4b2f-b48a-6577d7ad6a1a\",\"device_template\":\"Yealink T46U\",\"device_template_uuid\":\"a6cf59ba-4b2b-4bdd-b870-35cc55bca146\",\"device_keys\":[\"voluptatem\"],\"phonebook_mode\":\"default\",\"phonebook_uuids\":[\"8567f09f-e965-36c4-b74b-429e8463bc5b\"],\"device_description\":\"Reception desk device\",\"device_lines\":[[]]}"
                         },
                         "description": "Creates a new device in the specified domain.\n\nNotes:\n- `device_template` is deprecated and retained for backward compatibility.\n- Use `device_template_uuid` as its successor."
                     },
@@ -1744,6 +1744,402 @@
                             "code": 404,
                             "body": "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"message\": \"Extension not found.\",\n    \"code\": \"resource_missing\",\n    \"param\": \"extension_uuid\"\n  }\n}",
                             "name": "Extension not found"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Message Settings",
+            "description": "",
+            "item": [
+                {
+                    "name": "List message settings",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/message-settings",
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "25",
+                                    "description": "Results per page (1-100). Defaults to 25.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "starting_after",
+                                    "value": "",
+                                    "description": "Return results after this message setting UUID.",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "search",
+                                    "value": "support",
+                                    "description": "Search phone number, provider, email, or description.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "carrier",
+                                    "value": "voipms",
+                                    "description": "Filter by message provider identifier.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "enabled",
+                                    "value": "1",
+                                    "description": "Filter by enabled status.",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/message-settings?limit=25&starting_after=&search=support&carrier=voipms&enabled=1",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The account UUID."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"limit\":10,\"starting_after\":\"095e485c-a63d-3d18-a775-9190fded966a\",\"search\":\"jspqe\",\"carrier\":\"sit\",\"enabled\":false}"
+                        },
+                        "description": "Lists messaging phone numbers in an account, including their provider,\nallowed extensions, email recipient, description, and enabled status.\nSearch by phone number, provider, email, or description.\n\nWhen `has_more` is true, pass the last result's `sms_destination_uuid`\nas `starting_after` to retrieve the next page.\nRequires account access and `message_settings_list_view`."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"object\":\"list\",\"url\":\"\/api\/v1\/domains\/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\/message-settings\",\"has_more\":false,\"data\":[{\"sms_destination_uuid\":\"c9a76140-0ca4-4ea3-95af-7e12c2ff0df5\",\"object\":\"message_setting\",\"domain_uuid\":\"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\"destination\":\"+12125550123\",\"carrier\":\"voipms\",\"allowed_extension_uuids\":[\"d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b\"],\"email\":\"messages@example.com\",\"description\":\"Customer support\",\"enabled\":true}]}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"The limit must not be greater than 100.\",\"code\":\"invalid_parameter\",\"param\":\"limit\"}}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\"}}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"You do not have access to this domain.\",\"code\":\"forbidden_domain\",\"param\":\"domain_uuid\"}}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Domain not found.\",\"code\":\"resource_missing\",\"param\":\"domain_uuid\"}}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Retrieve message settings",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/message-settings\/:sms_destination_uuid",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/message-settings\/:sms_destination_uuid",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The account UUID."
+                                },
+                                {
+                                    "id": "sms_destination_uuid",
+                                    "key": "sms_destination_uuid",
+                                    "value": "c9a76140-0ca4-4ea3-95af-7e12c2ff0df5",
+                                    "description": "The message setting UUID."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Returns one messaging phone number's configuration. `allowed_extension_uuids`\ncontains the extensions permitted to share this number. Use the Extensions\nAPI to retrieve their names and extension numbers.\nRequires account access and `message_settings_list_view`."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"sms_destination_uuid\":\"c9a76140-0ca4-4ea3-95af-7e12c2ff0df5\",\"object\":\"message_setting\",\"domain_uuid\":\"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\"destination\":\"+12125550123\",\"carrier\":\"voipms\",\"allowed_extension_uuids\":[\"d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b\"],\"email\":\"messages@example.com\",\"description\":\"Customer support\",\"enabled\":true}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid message setting UUID.\",\"code\":\"invalid_request\",\"param\":\"sms_destination_uuid\"}}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\"}}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"You do not have access to this domain.\",\"code\":\"forbidden_domain\",\"param\":\"domain_uuid\"}}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Message setting not found.\",\"code\":\"resource_missing\",\"param\":\"sms_destination_uuid\"}}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Create message settings",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/message-settings",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/message-settings",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The account UUID."
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"destination\":\"+12125550123\",\"carrier\":\"voipms\",\"allowed_extension_uuids\":[\"d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b\"],\"email\":\"messages@example.com\",\"description\":\"Customer support\",\"enabled\":false}"
+                        },
+                        "description": "Configures a messaging phone number for an account. Supply the phone number,\nits message provider, and any extensions that should share it. National numbers\nare automatically converted to E.164 using the account country or the country\nin Default Settings. If neither is configured, US is used. Numbers starting\nwith + use their supplied country code.\nAllowed extensions can send and receive messages using the number and see\neach other's replies. An empty or omitted extension list grants no extension access.\n\nThe number is enabled by default. An optional email address receives incoming\nmessages. This endpoint saves the configuration in FS PBX; it does not purchase\na number or configure your provider's account.\nRequires account access and `message_settings_manage`."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 201,
+                            "body": "{\"sms_destination_uuid\":\"c9a76140-0ca4-4ea3-95af-7e12c2ff0df5\",\"object\":\"message_setting\",\"domain_uuid\":\"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\"destination\":\"+12125550123\",\"carrier\":\"voipms\",\"allowed_extension_uuids\":[\"d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b\"],\"email\":\"messages@example.com\",\"description\":\"Customer support\",\"enabled\":true}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Enter a valid phone number for the configured country, or include + and the country code.\",\"code\":\"invalid_parameter\",\"param\":\"destination\"}}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid JSON request body. Remove trailing commas and check the JSON syntax.\",\"code\":\"invalid_json\",\"param\":null}}",
+                            "name": "Invalid JSON"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\"}}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\"success\":false,\"message\":\"Forbidden (missing permission).\",\"error\":{\"code\":\"forbidden_permission\",\"permission\":\"message_settings_manage\"}}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Domain not found.\",\"code\":\"resource_missing\",\"param\":\"domain_uuid\"}}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Update message settings",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/message-settings\/:sms_destination_uuid",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/message-settings\/:sms_destination_uuid",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The account UUID."
+                                },
+                                {
+                                    "id": "sms_destination_uuid",
+                                    "key": "sms_destination_uuid",
+                                    "value": "c9a76140-0ca4-4ea3-95af-7e12c2ff0df5",
+                                    "description": "The message setting UUID."
+                                }
+                            ]
+                        },
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"destination\":\"+12125550123\",\"carrier\":\"voipms\",\"allowed_extension_uuids\":[\"d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b\"],\"email\":\"messages@example.com\",\"description\":\"Customer support\",\"enabled\":false}"
+                        },
+                        "description": "Changes a messaging phone number's configuration. All fields are optional;\nomitted fields retain their current values. When supplied, `allowed_extension_uuids`\nreplaces the entire access list. Send [] to remove all extension access.\nSend null to clear the email recipient, description, or provider.\nRequires account access and `message_settings_manage`."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"sms_destination_uuid\":\"c9a76140-0ca4-4ea3-95af-7e12c2ff0df5\",\"object\":\"message_setting\",\"domain_uuid\":\"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\"destination\":\"+12125550123\",\"carrier\":\"voipms\",\"allowed_extension_uuids\":[],\"email\":null,\"description\":\"Customer support\",\"enabled\":true}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"The selected allowed_extension_uuids.0 is invalid.\",\"code\":\"invalid_parameter\",\"param\":\"allowed_extension_uuids.0\"}}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid JSON request body. Remove trailing commas and check the JSON syntax.\",\"code\":\"invalid_json\",\"param\":null}}",
+                            "name": "Invalid JSON"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\"}}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\"success\":false,\"message\":\"Forbidden (missing permission).\",\"error\":{\"code\":\"forbidden_permission\",\"permission\":\"message_settings_manage\"}}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Message setting not found.\",\"code\":\"resource_missing\",\"param\":\"sms_destination_uuid\"}}",
+                            "name": ""
+                        }
+                    ]
+                },
+                {
+                    "name": "Delete message settings",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/message-settings\/:sms_destination_uuid",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/message-settings\/:sms_destination_uuid",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The account UUID."
+                                },
+                                {
+                                    "id": "sms_destination_uuid",
+                                    "key": "sms_destination_uuid",
+                                    "value": "c9a76140-0ca4-4ea3-95af-7e12c2ff0df5",
+                                    "description": "The message setting UUID."
+                                }
+                            ]
+                        },
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Removes a messaging phone number's configuration and its extension access\nlist from the account. Existing message history is retained. This does not\ncancel the phone number with your provider.\nRequires account access and `message_settings_manage`."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"uuid\":\"c9a76140-0ca4-4ea3-95af-7e12c2ff0df5\",\"object\":\"message_setting\",\"deleted\":true}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid message setting UUID.\",\"code\":\"invalid_request\",\"param\":\"sms_destination_uuid\"}}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\"}}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\"success\":false,\"message\":\"Forbidden (missing permission).\",\"error\":{\"code\":\"forbidden_permission\",\"permission\":\"message_settings_manage\"}}",
+                            "name": ""
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Message setting not found.\",\"code\":\"resource_missing\",\"param\":\"sms_destination_uuid\"}}",
+                            "name": ""
                         }
                     ]
                 }
@@ -3977,7 +4373,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"limit\":22,\"starting_after\":\"90dbaa5a-e53b-3754-8f24-3acc14e4b3d5\",\"search\":\"gslusmpcqtgbgytchdm\",\"user_enabled\":true}"
+                            "raw": "{\"limit\":6,\"starting_after\":\"9faa8ec4-63b9-35a6-a425-6c452a8afb76\",\"search\":\"oejjivgpbhyeztwxxwm\",\"user_enabled\":true}"
                         },
                         "description": "Lists FS PBX users in the specified account. Use this endpoint to browse user\nprofiles or find a user to retrieve, update, or delete. Each result includes\nthe user's UUID, name, email, enabled status, assigned extension, roles,\nand whether the user is directory-managed. Use Retrieve a user for the\ntime zone, managed accounts, account groups, and locations.\n\nSearch by name or email, or filter by enabled status. Results are paginated;\nwhen `has_more` is true, pass the last result's `user_uuid` as `starting_after`\nto fetch the next page.\n\nRequires access to the domain in the URL and `user_view`. Passwords, API tokens,\nand two-factor secrets are never returned."
                     },

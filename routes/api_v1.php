@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\V1\ClickToDialController;
 use App\Http\Controllers\Api\V1\PhoneControlController;
 use App\Http\Controllers\Api\V1\RecordingController;
 use App\Http\Controllers\Api\V1\UserController;
+use App\Http\Controllers\Api\V1\MessageSettingsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -64,6 +65,22 @@ Route::middleware(['auth:sanctum', 'api.token.auth', 'throttle:api'])->group(fun
         ->middleware('user.authorize:user_edit');
     Route::delete('/domains/{domain_uuid}/users/{user_uuid}', [UserController::class, 'destroy'])
         ->middleware('user.authorize:user_delete');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Message Settings (domain-scoped)
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/domains/{domain_uuid}/message-settings', [MessageSettingsController::class, 'index'])
+        ->middleware('user.authorize:message_settings_list_view');
+    Route::get('/domains/{domain_uuid}/message-settings/{sms_destination_uuid}', [MessageSettingsController::class, 'show'])
+        ->middleware('user.authorize:message_settings_list_view');
+    Route::post('/domains/{domain_uuid}/message-settings', [MessageSettingsController::class, 'store'])
+        ->middleware('user.authorize:message_settings_manage');
+    Route::patch('/domains/{domain_uuid}/message-settings/{sms_destination_uuid}', [MessageSettingsController::class, 'update'])
+        ->middleware('user.authorize:message_settings_manage');
+    Route::delete('/domains/{domain_uuid}/message-settings/{sms_destination_uuid}', [MessageSettingsController::class, 'destroy'])
+        ->middleware('user.authorize:message_settings_manage');
 
     /*
     |--------------------------------------------------------------------------
