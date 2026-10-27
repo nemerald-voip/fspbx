@@ -22,6 +22,7 @@ class InstallSchema
         $this->ensureRingGroupsSchema();
         $this->ensureIvrMenusSchema();
         $this->ensureFollowMeSchema();
+        $this->ensureBridgesSchema();
         $this->ensureEmailTemplatesSchema();
     }
 
@@ -35,6 +36,26 @@ class InstallSchema
         $this->seedIvrMenuDefaultSettings();
         $this->seedFollowMeDefaultSettings();
         $this->seedActiveCallPermissions();
+    }
+
+    public function ensureBridgesSchema(): void
+    {
+        if (Schema::hasTable('v_bridges')) {
+            return;
+        }
+
+        Schema::create('v_bridges', function (Blueprint $table) {
+            $table->uuid('bridge_uuid')->primary();
+            $table->uuid('domain_uuid')->nullable()->index();
+            $table->text('bridge_name')->nullable()->index();
+            $table->text('bridge_destination')->nullable();
+            $table->text('bridge_enabled')->nullable();
+            $table->text('bridge_description')->nullable();
+            $table->timestampTz('insert_date')->nullable();
+            $table->uuid('insert_user')->nullable();
+            $table->timestampTz('update_date')->nullable();
+            $table->uuid('update_user')->nullable();
+        });
     }
 
     public function ensureEmailTemplatesSchema(): void

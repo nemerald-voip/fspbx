@@ -106,6 +106,12 @@ class DatabaseSeeder extends Seeder
     private function createPermissions()
     {
         $permissions = [
+            ['application_name' => 'Bridges', 'permission_name' => 'bridge_view'],
+            ['application_name' => 'Bridges', 'permission_name' => 'bridge_add'],
+            ['application_name' => 'Bridges', 'permission_name' => 'bridge_edit'],
+            ['application_name' => 'Bridges', 'permission_name' => 'bridge_delete'],
+            ['application_name' => 'Bridges', 'permission_name' => 'bridge_all'],
+            ['application_name' => 'Bridges', 'permission_name' => 'bridge_destinations'],
             ['application_name' => 'Message Settings', 'permission_name' => 'message_settings_list_view'],
             ['application_name' => 'Message Settings', 'permission_name' => 'message_settings_manage'],
             ['application_name' => 'Extensions', 'permission_name' => 'extension_suspended'],
@@ -291,6 +297,12 @@ class DatabaseSeeder extends Seeder
     {
         $permissionsByGroup = [
             'superadmin' => [
+                'bridge_view',
+                'bridge_add',
+                'bridge_edit',
+                'bridge_delete',
+                'bridge_all',
+                'bridge_destinations',
                 'homer_api_manage',
                 'xml_cdr_pcap',
                 'messages_delete',
@@ -439,6 +451,7 @@ class DatabaseSeeder extends Seeder
                 'dynamic_route_delete',
             ],
             'admin' => [
+                'bridge_destinations',
                 'call_webhook_view',
                 'call_webhook_create',
                 'call_webhook_update',

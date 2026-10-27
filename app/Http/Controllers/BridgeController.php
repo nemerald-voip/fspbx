@@ -116,7 +116,6 @@ class BridgeController extends Controller
             'item' => $item,
             'form' => $form,
             'actions' => $this->bridgeActions(),
-            'variables' => $this->bridgeVariables($form['bridge_variables'] ?? []),
             'gateways' => $gatewayOptions,
             'profiles' => $this->sipProfiles(),
             'routes' => [
@@ -288,37 +287,12 @@ class BridgeController extends Controller
 
     private function bridgeActions(): array
     {
-        return collect(session('bridge.action', ['user', 'gateway', 'profile', 'loopback']))
-            ->filter()
-            ->map(fn ($action) => [
-                'value' => $action,
-                'label' => match ($action) {
-                    'user' => __('User'),
-                    'gateway' => __('Gateway'),
-                    'profile' => __('Profile'),
-                    'loopback' => __('Loopback'),
-                    default => ucfirst($action),
-                },
-            ])
-            ->values()
-            ->all();
-    }
-
-    private function bridgeVariables(array $currentValues): array
-    {
-        return collect(session('bridge.variable', []))
-            ->map(function ($variable) use ($currentValues) {
-                [$name, $default] = array_pad(explode('=', (string) $variable, 2), 2, '');
-
-                return [
-                    'name' => $name,
-                    'label' => ucwords(str_replace('_', ' ', $name)),
-                    'value' => $currentValues[$name] ?? $default,
-                ];
-            })
-            ->filter(fn ($variable) => $variable['name'] !== '')
-            ->values()
-            ->all();
+        return [
+            ['value' => 'user', 'label' => __('User')],
+            ['value' => 'gateway', 'label' => __('Gateway')],
+            ['value' => 'profile', 'label' => __('Profile')],
+            ['value' => 'loopback', 'label' => __('Loopback')],
+        ];
     }
 
     private function gatewayOptions(): array
