@@ -106,6 +106,17 @@ class DatabaseSeeder extends Seeder
     private function createPermissions()
     {
         $permissions = [
+            ['application_name' => 'Fax Server', 'permission_name' => 'fax_view'],
+            ['application_name' => 'Fax Server', 'permission_name' => 'fax_add'],
+            ['application_name' => 'Fax Server', 'permission_name' => 'fax_edit'],
+            ['application_name' => 'Fax Server', 'permission_name' => 'fax_delete'],
+            ['application_name' => 'Fax Server', 'permission_name' => 'fax_send'],
+            ['application_name' => 'Fax Server', 'permission_name' => 'fax_inbox_view'],
+            ['application_name' => 'Fax Server', 'permission_name' => 'fax_inbox_delete'],
+            ['application_name' => 'Fax Server', 'permission_name' => 'fax_sent_view'],
+            ['application_name' => 'Fax Server', 'permission_name' => 'fax_sent_delete'],
+            ['application_name' => 'Fax Server', 'permission_name' => 'fax_log_view'],
+            ['application_name' => 'Fax Server', 'permission_name' => 'fax_log_delete'],
             ['application_name' => 'Bridges', 'permission_name' => 'bridge_view'],
             ['application_name' => 'Bridges', 'permission_name' => 'bridge_add'],
             ['application_name' => 'Bridges', 'permission_name' => 'bridge_edit'],
@@ -307,6 +318,17 @@ class DatabaseSeeder extends Seeder
     {
         $permissionsByGroup = [
             'superadmin' => [
+                'fax_view',
+                'fax_add',
+                'fax_edit',
+                'fax_delete',
+                'fax_send',
+                'fax_inbox_view',
+                'fax_inbox_delete',
+                'fax_sent_view',
+                'fax_sent_delete',
+                'fax_log_view',
+                'fax_log_delete',
                 'call_flow_view',
                 'call_flow_add',
                 'call_flow_edit',
@@ -471,6 +493,17 @@ class DatabaseSeeder extends Seeder
                 'dynamic_route_delete',
             ],
             'admin' => [
+                'fax_view',
+                'fax_add',
+                'fax_edit',
+                'fax_delete',
+                'fax_send',
+                'fax_inbox_view',
+                'fax_inbox_delete',
+                'fax_sent_view',
+                'fax_sent_delete',
+                'fax_log_view',
+                'fax_log_delete',
                 'call_flow_view',
                 'call_flow_add',
                 'call_flow_edit',
@@ -563,6 +596,12 @@ class DatabaseSeeder extends Seeder
                 'domain_select',
             ],
             'user' => [
+                'fax_view',
+                'fax_send',
+                'fax_inbox_view',
+                'fax_inbox_delete',
+                'fax_sent_view',
+                'fax_sent_delete',
                 'call_block_view',
                 'call_block_add',
                 'call_block_edit',
@@ -579,6 +618,14 @@ class DatabaseSeeder extends Seeder
                 'extension_forward_not_registered',
                 'extension_voicemail_settings',
                 'extension_call_sequence',
+            ],
+            'fax' => [
+                'fax_view',
+                'fax_send',
+                'fax_inbox_view',
+                'fax_inbox_delete',
+                'fax_sent_view',
+                'fax_sent_delete',
             ],
         ];
 
@@ -2081,6 +2128,46 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'default_setting_category'      => 'fax',
+                'default_setting_subcategory'   => 'cover_footer',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => 'The information contained in this facsimile is intended for the sole confidential use of the recipient(s) designated above, and may contain confidential and legally privileged information. If you are not the intended recipient, you are hereby notified that the review, disclosure, dissemination, distribution, copying, duplication in any form, and taking of any action in regards to the contents of this document - except with respect to its direct delivery to the intended recipient - is strictly prohibited.  Please notify the sender immediately and destroy this cover sheet and all attachments.  If stored or viewed electronically, please permanently delete it from your system.',
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => 'Notice displayed in the footer of the cover sheet.',
+            ],
+            [
+                'default_setting_category'      => 'fax',
+                'default_setting_subcategory'   => 'resolution',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => 'fine',
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => 'Set the default transmission quality of new faxes.',
+            ],
+            [
+                'default_setting_category'      => 'fax',
+                'default_setting_subcategory'   => 'variable',
+                'default_setting_name'          => 'array',
+                'default_setting_value'         => 'fax_enable_t38=true',
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => 'Enable T.38.',
+            ],
+            [
+                'default_setting_category'      => 'fax',
+                'default_setting_subcategory'   => 'variable',
+                'default_setting_name'          => 'array',
+                'default_setting_value'         => 'fax_enable_t38_request=true',
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => 'Send a T.38 reinvite when a fax tone is detected.',
+            ],
+            [
+                'default_setting_category'      => 'fax',
+                'default_setting_subcategory'   => 'variable',
+                'default_setting_name'          => 'array',
+                'default_setting_value'         => 'ignore_early_media=true',
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => 'Ignore ringing to improve fax success rate.',
+            ],
+            [
+                'default_setting_category'      => 'fax',
                 'default_setting_subcategory'   => 'send_confirmation',
                 'default_setting_name'          => 'boolean',
                 'default_setting_value'         => 'false',
@@ -2273,6 +2360,8 @@ class DatabaseSeeder extends Seeder
         }
 
         // Build an OR-of-ANDs to match the exact (category, subcategory, name) triples we care about
+        // Preserve existing array lists as a whole. If absent, all catalog
+        // entries for that list are inserted below.
         $existingTriples = DefaultSettings::query()
             ->where(function ($q) use ($settings) {
                 foreach ($settings as $s) {

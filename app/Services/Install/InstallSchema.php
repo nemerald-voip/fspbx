@@ -25,6 +25,8 @@ class InstallSchema
         $this->ensureBridgesSchema();
         $this->ensureCallBlockSchema();
         $this->ensureCallFlowsSchema();
+        $this->ensureCnamSchema();
+        $this->ensureFaxSchema();
         $this->ensureEmailTemplatesSchema();
     }
 
@@ -119,6 +121,113 @@ class InstallSchema
             $table->timestampTz('update_date')->nullable();
             $table->uuid('update_user')->nullable();
         });
+    }
+
+    public function ensureCnamSchema(): void
+    {
+        if (Schema::hasTable('v_cnam')) {
+            return;
+        }
+
+        Schema::create('v_cnam', function (Blueprint $table) {
+            $table->uuid('cnam_uuid')->primary();
+            $table->text('phone_number')->nullable();
+            $table->text('cnam')->nullable();
+            $table->timestampTz('date')->nullable();
+        });
+    }
+
+    public function ensureFaxSchema(): void
+    {
+        if (! Schema::hasTable('v_fax')) {
+            Schema::create('v_fax', function (Blueprint $table) {
+                $table->uuid('fax_uuid')->primary();
+                $table->uuid('domain_uuid')->nullable()->index();
+                $table->uuid('dialplan_uuid')->nullable()->index();
+                $table->text('v_id')->nullable();
+                $table->text('fax_extension')->nullable()->index();
+                $table->text('fax_destination_number')->nullable()->index();
+                $table->text('fax_prefix')->nullable();
+                $table->text('fax_name')->nullable()->index();
+                $table->text('fax_email')->nullable()->index();
+                $table->text('fax_email_connection_type')->nullable();
+                $table->text('fax_email_connection_host')->nullable();
+                $table->text('fax_email_connection_port')->nullable();
+                $table->text('fax_email_connection_security')->nullable();
+                $table->text('fax_email_connection_validate')->nullable();
+                $table->text('fax_email_connection_username')->nullable();
+                $table->text('fax_email_connection_password')->nullable();
+                $table->text('fax_email_connection_mailbox')->nullable();
+                $table->text('fax_email_inbound_subject_tag')->nullable();
+                $table->text('fax_email_outbound_subject_tag')->nullable();
+                $table->text('fax_email_outbound_authorized_senders')->nullable();
+                $table->text('fax_pin_number')->nullable();
+                $table->text('fax_caller_id_name')->nullable()->index();
+                $table->text('fax_caller_id_number')->nullable()->index();
+                $table->text('fax_toll_allow')->nullable();
+                $table->text('fax_user_list')->nullable();
+                $table->text('fax_forward_number')->nullable()->index();
+                $table->decimal('fax_send_channels', 20, 0)->nullable();
+                $table->text('fax_description')->nullable()->index();
+                $table->text('accountcode')->nullable();
+                $table->timestampTz('insert_date')->nullable();
+                $table->uuid('insert_user')->nullable();
+                $table->timestampTz('update_date')->nullable();
+                $table->uuid('update_user')->nullable();
+            });
+        }
+
+        if (! Schema::hasTable('v_fax_files')) {
+            Schema::create('v_fax_files', function (Blueprint $table) {
+                $table->uuid('fax_file_uuid')->primary();
+                $table->uuid('domain_uuid')->nullable()->index();
+                $table->uuid('fax_uuid')->nullable();
+                $table->text('fax_mode')->nullable();
+                $table->text('fax_destination')->nullable();
+                $table->text('fax_file_type')->nullable();
+                $table->text('fax_file_path')->nullable();
+                $table->text('fax_caller_id_name')->nullable();
+                $table->text('fax_caller_id_number')->nullable();
+                $table->timestampTz('fax_date')->nullable();
+                $table->decimal('fax_epoch', 20, 0)->nullable();
+                $table->text('fax_base64')->nullable();
+                $table->timestampTz('insert_date')->nullable();
+                $table->uuid('insert_user')->nullable();
+                $table->timestampTz('update_date')->nullable();
+                $table->uuid('update_user')->nullable();
+            });
+        }
+
+        if (! Schema::hasTable('v_fax_logs')) {
+            Schema::create('v_fax_logs', function (Blueprint $table) {
+                $table->uuid('fax_log_uuid')->primary();
+                $table->uuid('domain_uuid')->nullable()->index();
+                $table->uuid('fax_uuid')->nullable()->index();
+                $table->text('fax_success')->nullable();
+                $table->decimal('fax_result_code', 20, 0)->nullable();
+                $table->text('fax_result_text')->nullable();
+                $table->text('fax_file')->nullable();
+                $table->text('fax_ecm_used')->nullable();
+                $table->text('fax_local_station_id')->nullable();
+                $table->decimal('fax_document_transferred_pages', 20, 0)->nullable();
+                $table->decimal('fax_document_total_pages', 20, 0)->nullable();
+                $table->text('fax_image_resolution')->nullable();
+                $table->decimal('fax_image_size', 20, 0)->nullable();
+                $table->decimal('fax_bad_rows', 20, 0)->nullable();
+                $table->decimal('fax_transfer_rate', 20, 0)->nullable();
+                $table->decimal('fax_retry_attempts', 20, 0)->nullable();
+                $table->decimal('fax_retry_limit', 20, 0)->nullable();
+                $table->decimal('fax_retry_sleep', 20, 0)->nullable();
+                $table->text('fax_uri')->nullable();
+                $table->decimal('fax_duration', 20, 0)->nullable();
+                $table->timestampTz('fax_date')->nullable();
+                $table->decimal('fax_epoch', 20, 0)->nullable();
+                $table->timestampTz('insert_date')->nullable();
+                $table->uuid('insert_user')->nullable();
+                $table->timestampTz('update_date')->nullable();
+                $table->uuid('update_user')->nullable();
+            });
+        }
     }
 
     public function ensureEmailTemplatesSchema(): void
