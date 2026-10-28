@@ -106,6 +106,13 @@ class DatabaseSeeder extends Seeder
     private function createPermissions()
     {
         $permissions = [
+            ['application_name' => 'Music on Hold', 'permission_name' => 'music_on_hold_view'],
+            ['application_name' => 'Music on Hold', 'permission_name' => 'music_on_hold_add'],
+            ['application_name' => 'Music on Hold', 'permission_name' => 'music_on_hold_edit'],
+            ['application_name' => 'Music on Hold', 'permission_name' => 'music_on_hold_delete'],
+            ['application_name' => 'Music on Hold', 'permission_name' => 'music_on_hold_all'],
+            ['application_name' => 'Music on Hold', 'permission_name' => 'music_on_hold_domain'],
+            ['application_name' => 'Music on Hold', 'permission_name' => 'music_on_hold_path'],
             ['application_name' => 'Modules', 'permission_name' => 'module_view'],
             ['application_name' => 'Modules', 'permission_name' => 'module_add'],
             ['application_name' => 'Modules', 'permission_name' => 'module_edit'],
@@ -321,6 +328,13 @@ class DatabaseSeeder extends Seeder
     {
         $permissionsByGroup = [
             'superadmin' => [
+                'music_on_hold_view',
+                'music_on_hold_add',
+                'music_on_hold_edit',
+                'music_on_hold_delete',
+                'music_on_hold_all',
+                'music_on_hold_domain',
+                'music_on_hold_path',
                 'module_view',
                 'module_add',
                 'module_edit',

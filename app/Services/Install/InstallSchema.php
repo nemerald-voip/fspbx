@@ -28,6 +28,7 @@ class InstallSchema
         $this->ensureCnamSchema();
         $this->ensureFaxSchema();
         $this->ensureModulesSchema();
+        $this->ensureMusicOnHoldSchema();
         $this->ensureEmailTemplatesSchema();
     }
 
@@ -246,6 +247,32 @@ class InstallSchema
             $table->text('module_enabled')->nullable();
             $table->text('module_default_enabled')->nullable();
             $table->text('module_description')->nullable();
+            $table->timestampTz('insert_date')->nullable();
+            $table->uuid('insert_user')->nullable();
+            $table->timestampTz('update_date')->nullable();
+            $table->uuid('update_user')->nullable();
+        });
+    }
+
+    public function ensureMusicOnHoldSchema(): void
+    {
+        if (Schema::hasTable('v_music_on_hold')) {
+            return;
+        }
+
+        Schema::create('v_music_on_hold', function (Blueprint $table) {
+            $table->uuid('music_on_hold_uuid')->primary();
+            $table->uuid('domain_uuid')->nullable()->index();
+            $table->text('music_on_hold_name')->nullable();
+            $table->text('music_on_hold_path')->nullable();
+            $table->decimal('music_on_hold_rate', 20, 0)->nullable();
+            $table->text('music_on_hold_shuffle')->nullable();
+            $table->decimal('music_on_hold_channels', 20, 0)->nullable();
+            $table->decimal('music_on_hold_interval', 20, 0)->nullable();
+            $table->text('music_on_hold_timer_name')->nullable();
+            $table->text('music_on_hold_chime_list')->nullable();
+            $table->decimal('music_on_hold_chime_freq', 20, 0)->nullable();
+            $table->decimal('music_on_hold_chime_max', 20, 0)->nullable();
             $table->timestampTz('insert_date')->nullable();
             $table->uuid('insert_user')->nullable();
             $table->timestampTz('update_date')->nullable();
