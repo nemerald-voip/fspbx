@@ -241,8 +241,6 @@ class LogsController extends Controller
         $permissions['fax_log_delete'] = userCheckPermission('fax_log_delete');
         $permissions['fax_send'] = userCheckPermission('fax_send');
         $permissions['log_view'] = userCheckPermission('log_view');
-        $permissions['log_download'] = userCheckPermission('log_download');
-        $permissions['log_path_view'] = userCheckPermission('log_path_view');
         $permissions['email_test_send'] = userCheckPermission('email_test_send');
         $permissions['ai_agent_view'] = userCheckPermission('ai_agent_view');
 
