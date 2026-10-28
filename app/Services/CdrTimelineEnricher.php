@@ -4,6 +4,9 @@ namespace App\Services;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use libphonenumber\NumberParseException;
+use libphonenumber\PhoneNumberFormat;
+use libphonenumber\PhoneNumberUtil;
 
 class CdrTimelineEnricher
 {
@@ -18,7 +21,7 @@ class CdrTimelineEnricher
         $extensionNumbers = [];
         foreach ($rows as $row) {
             $number = (string) $row['destination_number'];
-            $aliases[$number] ??= $this->numberAliases($number);
+            $aliases[$number] ??= $this->numberAliases($number, $domainUuid);
             $extensionNumbers[] = $number;
             if (preg_match('/^\*97\d+\^(.+)$/', $number, $match)) {
                 $extensionNumbers[] = $match[1];
@@ -141,15 +144,22 @@ class CdrTimelineEnricher
         });
     }
 
-    private function numberAliases(string $number): array
+    private function numberAliases(string $number, string $domainUuid): array
     {
-        $formatted = (string) formatPhoneNumber($number, 'US', 0);
-        if (str_starts_with($formatted, '+1')) {
-            $bare = substr($formatted, 2);
-            return array_values(array_unique([$number, $formatted, $bare, '1'.$bare]));
+        $util = PhoneNumberUtil::getInstance();
+        try {
+            $parsed = $util->parse($number, app(PhoneNumberService::class)->countryCodeForDomain($domainUuid));
+            if ($util->isValidNumber($parsed)) {
+                $e164 = $util->format($parsed, PhoneNumberFormat::E164);
+                return array_values(array_unique([
+                    $number, $e164, ltrim($e164, '+'), $util->getNationalSignificantNumber($parsed),
+                    preg_replace('/\D+/', '', $util->format($parsed, PhoneNumberFormat::NATIONAL)),
+                ]));
+            }
+        } catch (NumberParseException) {
+            // Internal destinations retain their exact identifier.
         }
-        // Short extensions and non-NANP numbers do not have a US country-code alias.
-        return array_values(array_unique([$number, $formatted]));
+        return [$number];
     }
 
     public static function savedApplication(array $profile): ?array

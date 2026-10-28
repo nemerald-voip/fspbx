@@ -77,7 +77,7 @@ class StoreVoicemailRequest extends FormRequest
         }
 
         if ($this->has('voicemail_sms_to') && !blank($this->input('voicemail_sms_to'))) {
-            $countryCode = get_domain_setting('country', session('domain_uuid')) ?? 'US';
+            $countryCode = app(\App\Services\PhoneNumberService::class)->countryCodeForDomain(session('domain_uuid'));
 
             try {
                 $this->merge([

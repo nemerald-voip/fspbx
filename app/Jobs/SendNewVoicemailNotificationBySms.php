@@ -69,7 +69,7 @@ class SendNewVoicemailNotificationBySms implements ShouldQueue
                 return;
             }
 
-            $countryCode = get_domain_setting('country', $domainUuid) ?? 'US';
+            $countryCode = app(\App\Services\PhoneNumberService::class)->countryCodeForDomain($domainUuid);
 
             $source = get_domain_setting('sms_notification_from_number', $domainUuid);
 

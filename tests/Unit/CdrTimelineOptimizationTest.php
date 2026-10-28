@@ -4,6 +4,7 @@ namespace Tests\Unit;
 
 use App\Models\CDR;
 use App\Services\CdrDataService;
+use App\Services\PhoneNumberService;
 use Illuminate\Config\Repository;
 use Illuminate\Database\Capsule\Manager;
 use Illuminate\Database\Eloquent\Model;
@@ -27,6 +28,12 @@ class CdrTimelineOptimizationTest extends TestCase
         $app = new Application(dirname(__DIR__, 2));
         $app->instance('config', new Repository());
         $app->instance('translator', new Translator(new ArrayLoader(), 'en'));
+        $app->instance(PhoneNumberService::class, new class extends PhoneNumberService {
+            public function countryCodeForDomain(?string $domainUuid = null): string
+            {
+                return 'US';
+            }
+        });
         Facade::clearResolvedInstances();
         Facade::setFacadeApplication($app);
         $db = new Manager($app);
@@ -170,6 +177,20 @@ class CdrTimelineOptimizationTest extends TestCase
         $this->assertSame('9400', $step['dialplan_name']);
         DB::table('v_dialplans')->delete();
         $this->assertSame($step, (new CdrDataService())->buildCallFlowSummary($this->cdr([$profile]))->first());
+    }
+
+    public function test_country_specific_national_number_resolves_an_international_dialplan(): void
+    {
+        app()->instance(PhoneNumberService::class, new class extends PhoneNumberService {
+            public function countryCodeForDomain(?string $domainUuid = null): string
+            {
+                return 'GB';
+            }
+        });
+        $this->dialplan('+442079460958', 'call_flow_uuid='.self::ATTEMPT, self::DOMAIN, 'London');
+        $step = (new CdrDataService())->buildCallFlowSummary($this->cdr([$this->profile('02079460958')]))->first();
+        $this->assertSame('London', $step['dialplan_name']);
+        $this->assertSame('call_flow', $step['dialplan_app_type']);
     }
 
     public function test_only_the_uniquely_identified_final_queue_gets_the_cdr_outcome(): void

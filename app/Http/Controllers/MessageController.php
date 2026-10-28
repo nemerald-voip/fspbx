@@ -535,7 +535,7 @@ class MessageController extends Controller
         $domain = $this->currentDomainUuid();
         $local = app(MessageParticipantService::class)->normalize($domain, $data['source']);
         $this->authorizeNumber($local);
-        $recipients = $groups->recipients($data['recipients'], $local, get_domain_setting('country', $domain) ?? 'US');
+        $recipients = $groups->recipients($data['recipients'], $local, app(\App\Services\PhoneNumberService::class)->countryCodeForDomain($domain));
         if (!$recipients) throw \Illuminate\Validation\ValidationException::withMessages(['recipients' => [__('Enter at least one other phone number.')]]);
         $group = null;
         if (count($recipients) > 1) {
@@ -569,7 +569,7 @@ class MessageController extends Controller
                 ->findOrFail($this->authorizedExtension($data['extension_uuid']));
             $domainUuid = session('domain_uuid');
 
-            $countryCode = get_domain_setting('country', $domainUuid) ?? 'US';
+            $countryCode = app(\App\Services\PhoneNumberService::class)->countryCodeForDomain($domainUuid);
 
             $normalizedSource = formatPhoneNumber($data['source'], $countryCode, PhoneNumberFormat::E164);
             $group = !empty($data['message_group_uuid']) ? MessageGroup::where('domain_uuid', $domainUuid)

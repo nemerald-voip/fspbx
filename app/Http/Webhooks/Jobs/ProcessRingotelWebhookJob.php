@@ -111,10 +111,9 @@ class ProcessRingotelWebhookJob extends SpatieProcessWebhookJob
         if ($this->alreadyProcessed()) {
             return response()->json(['status' => 'Already processed']);
         }
-        $this->validateMessage();
-
         $this->mobileAppDomainConfig = $this->getMobileAppDomainConfig($this->message['params']['orgid']);
         $this->domain_uuid = $this->mobileAppDomainConfig->domain_uuid;
+        $this->validateMessage();
         $this->extension_uuid = $this->getExtensionUuid();
 
         $phoneNumberSmsConfig = $this->getPhoneNumberSmsConfig(
@@ -124,7 +123,7 @@ class ProcessRingotelWebhookJob extends SpatieProcessWebhookJob
 
         $this->carrier = $phoneNumberSmsConfig->carrier;
 
-        $countryCode = get_domain_setting('country', $this->domain_uuid) ?? 'US';
+        $countryCode = app(\App\Services\PhoneNumberService::class)->countryCodeForDomain($this->domain_uuid);
 
         $source = formatPhoneNumber(
             $phoneNumberSmsConfig->destination,
@@ -253,17 +252,18 @@ class ProcessRingotelWebhookJob extends SpatieProcessWebhookJob
         $phoneNumberUtil = PhoneNumberUtil::getInstance();
 
         try {
-            $phoneNumberObject = $phoneNumberUtil->parse($this->message['params']['to'], 'US');
+            $phoneNumberObject = $phoneNumberUtil->parse($this->message['params']['to'],
+                app(\App\Services\PhoneNumberService::class)->countryCodeForDomain($this->domain_uuid));
 
             if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
                 $this->currentDestination = $phoneNumberUtil->format($phoneNumberObject, PhoneNumberFormat::E164);
             } else {
                 $this->currentDestination = $this->message['params']['to'];
-                throw new \Exception("Destination phone number *{$this->message['params']['to']}* is not a valid US number");
+                throw new \Exception("Destination phone number *{$this->message['params']['to']}* is not a valid phone number");
             }
         } catch (NumberParseException $e) {
             $this->currentDestination = $this->message['params']['to'];
-            throw new \Exception("Destination phone number *{$this->message['params']['to']}* is not a valid US number");
+            throw new \Exception("Destination phone number *{$this->message['params']['to']}* is not a valid phone number");
         }
 
         if ($this->messageType === 'mms' && !$this->isValidMmsContent($this->message['params']['content'])) {
@@ -300,7 +300,7 @@ class ProcessRingotelWebhookJob extends SpatieProcessWebhookJob
             if ($local->count() !== 1) {
                 throw new \RuntimeException('Multiple SMS numbers are assigned to this extension and its Ringotel session does not identify one number.');
             }
-            $country = get_domain_setting('country', $domainUuid) ?? 'US';
+            $country = app(\App\Services\PhoneNumberService::class)->countryCodeForDomain($domainUuid);
             $configs = $configs->filter(fn ($config) => formatPhoneNumber($config->destination, $country, PhoneNumberFormat::E164) === $local->first());
         }
         $phoneNumberSmsConfig = $configs->first();

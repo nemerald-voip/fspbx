@@ -124,7 +124,7 @@ class MessageSettingsController extends Controller
      * Configures a messaging phone number for an account. Supply the phone number,
      * its message provider, and any extensions that should share it. National numbers
      * are automatically converted to E.164 using the account country or the country
-     * in Default Settings. If neither is configured, US is used. Numbers starting
+     * in Default Settings. If neither is configured, supply an international number with + and its country code. Numbers starting
      * with + use their supplied country code.
      * Allowed extensions can send and receive messages using the number and see
      * each other's replies. An empty or omitted extension list grants no extension access.
@@ -160,7 +160,7 @@ class MessageSettingsController extends Controller
      * Send null to clear the email recipient, description, or provider.
      * Requires account access and `message_settings_manage`.
      *
-     * @bodyParam destination string Optional messaging phone number, automatically converted to E.164 using the account country or the country in Default Settings. If neither is configured, US is used. Numbers starting with + use their supplied country code. Omit to preserve the current number; cannot be null or empty. Example: +12125550123
+     * @bodyParam destination string Optional messaging phone number, automatically converted to E.164 using the account country or the country in Default Settings. If neither is configured, supply an international number with + and its country code. Numbers starting with + use their supplied country code. Omit to preserve the current number; cannot be null or empty. Example: +12125550123
      * @bodyParam allowed_extension_uuids string[] Optional extension UUIDs from this account. Replaces the full access list; omit to preserve access or send [] to remove all extension access. Example: ["d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b"]
      * @urlParam domain_uuid string required The account UUID. Example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
      * @urlParam sms_destination_uuid string required The message setting UUID. Example: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5

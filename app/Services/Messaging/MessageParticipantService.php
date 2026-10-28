@@ -64,7 +64,7 @@ class MessageParticipantService
 
     public function normalize(string $domainUuid, string $number): string
     {
-        return formatPhoneNumber($number, get_domain_setting('country', $domainUuid) ?? 'US', PhoneNumberFormat::E164);
+        return formatPhoneNumber($number, app(\App\Services\PhoneNumberService::class)->countryCodeForDomain($domainUuid), PhoneNumberFormat::E164);
     }
 
     public function numbers(string $domainUuid, string $extensionUuid): array

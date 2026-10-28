@@ -171,6 +171,7 @@ class MessageSettingsCrudTest extends TestCase
     /** @dataProvider phoneNumbers */
     public function test_api_create_and_update_normalize_phone_numbers(string $input, string $expected): void
     {
+        $this->seedCountry('US');
         $uuid = $this->postJson($this->endpoint(), [
             'destination' => $input, 'carrier' => 'bandwidth', 'description' => 'API test',
         ])->assertCreated()->assertJsonPath('destination', $expected)->json('sms_destination_uuid');
@@ -184,6 +185,7 @@ class MessageSettingsCrudTest extends TestCase
 
     public function test_shared_service_normalizes_numbers_without_request_preparation(): void
     {
+        $this->seedCountry('US');
         $service = app(MessageSettingsService::class);
         $setting = $service->create(self::DOMAIN, ['destination' => '6505556500']);
         $this->assertSame('+16505556500', $setting->destination);
@@ -241,10 +243,12 @@ class MessageSettingsCrudTest extends TestCase
             ->assertCreated()->assertJsonPath('destination', '+442079460123');
     }
 
-    public function test_disabled_default_country_uses_us_fallback(): void
+    public function test_disabled_default_country_requires_an_explicit_international_number(): void
     {
         $this->seedCountry('GB', enabled: false);
         $this->postJson($this->endpoint(), ['destination' => '6505556500'])
+            ->assertStatus(400)->assertJsonPath('error.param', 'destination');
+        $this->postJson($this->endpoint(), ['destination' => '+16505556500'])
             ->assertCreated()->assertJsonPath('destination', '+16505556500');
     }
 
@@ -433,6 +437,7 @@ class MessageSettingsCrudTest extends TestCase
 
     public function test_web_create_update_bulk_and_delete_share_the_service(): void
     {
+        $this->seedCountry('US');
         session(['domain_uuid' => self::DOMAIN, 'user.groups' => [['group_uuid' => self::ROLE]]]);
         Route::post('/test-message-settings', [WebMessageSettingsController::class, 'store']);
         Route::put('/test-message-settings/{setting}', [WebMessageSettingsController::class, 'update'])->middleware('api');

@@ -124,7 +124,8 @@ class DialplanBuilderService
                 $dialPlanDetails->dialplan_uuid = $dialPlan->dialplan_uuid;
                 $dialPlanDetails->dialplan_detail_tag = "regex";
                 $dialPlanDetails->dialplan_detail_type = $condition->condition_field;
-                $dialPlanDetails->dialplan_detail_data = '^\+?' . $phoneNumber->destination_prefix . '?' . $condition->condition_expression . '$';
+                $dialPlanDetails->dialplan_detail_data = app(PhoneNumberService::class)
+                    ->dialplanMatchForDomain($condition->condition_expression, $phoneNumber->domain_uuid)['expression'];
                 $dialPlanDetails->dialplan_detail_group = $detailGroup;
                 $dialPlanDetails->dialplan_detail_order = $detailOrder;
                 $dialPlanDetails->save();
@@ -134,7 +135,7 @@ class DialplanBuilderService
                 $dialPlanDetails = new DialplanDetails();
                 $dialPlanDetails->domain_uuid = $dialPlan->domain_uuid;
                 $dialPlanDetails->dialplan_uuid = $dialPlan->dialplan_uuid;
-                $this->addOriginalDidDetails($phoneNumber, $dialPlan, $originalDid, $domainName, $detailGroup, $detailOrder);
+                $this->addInboundContextDetails($phoneNumber, $dialPlan, $originalDid, $domainName, $detailGroup, $detailOrder);
                 $dialPlanDetails->dialplan_detail_tag = "action";
                 $dialPlanDetails->dialplan_detail_type = $condition->condition_app;
                 $dialPlanDetails->dialplan_detail_data = $condition->condition_data;
@@ -161,7 +162,7 @@ class DialplanBuilderService
 
         $detailOrder += 10;
 
-        $this->addOriginalDidDetails($phoneNumber, $dialPlan, $originalDid, $domainName, $detailGroup, $detailOrder);
+        $this->addInboundContextDetails($phoneNumber, $dialPlan, $originalDid, $domainName, $detailGroup, $detailOrder);
 
         if (!empty($phoneNumber->destination_cid_name_prefix)) {
             $dialPlanDetails = new DialplanDetails();
@@ -458,20 +459,20 @@ class DialplanBuilderService
         return 'original_did=' . $did;
     }
 
-    private function addOriginalDidDetails(Destinations $phoneNumber, Dialplans $dialPlan, ?string $did, ?string $domainName, int $group, int &$order): void
+    private function addInboundContextDetails(Destinations $phoneNumber, Dialplans $dialPlan, ?string $did, ?string $domainName, int $group, int &$order): void
     {
-        if ($did === null) {
-            return;
-        }
-
-        // Keep the editable details consistent with the template's account
-        // context, so a subsequent dialplan save still captures the DID.
-        foreach ([
+        // Account context is required even for patterns or short identifiers
+        // that cannot supply a literal original DID.
+        $actions = [
             ['export', 'call_direction=inbound', 'true'],
             ['set', 'domain_uuid=' . $phoneNumber->domain_uuid, 'true'],
             ['set', 'domain_name=' . $domainName, 'true'],
-            ['export', self::originalDidExport($did), 'false'],
-        ] as [$application, $data, $inline]) {
+        ];
+        if ($did !== null) {
+            $actions[] = ['export', self::originalDidExport($did), 'false'];
+        }
+
+        foreach ($actions as [$application, $data, $inline]) {
             DialplanDetails::create([
                 'domain_uuid' => $phoneNumber->domain_uuid,
                 'dialplan_uuid' => $dialPlan->dialplan_uuid,

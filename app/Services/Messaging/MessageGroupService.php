@@ -12,8 +12,9 @@ use Ramsey\Uuid\Uuid;
 
 class MessageGroupService
 {
-    public function recipients(array $numbers, string $local, string $country = 'US'): array
+    public function recipients(array $numbers, string $local, ?string $country = null): array
     {
+        $country ??= app(\App\Services\PhoneNumberService::class)->countryCodeForDomain();
         $phone = PhoneNumberUtil::getInstance();
         $normalized = [];
         foreach ($numbers as $number) {

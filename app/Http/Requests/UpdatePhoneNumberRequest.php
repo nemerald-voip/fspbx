@@ -7,11 +7,13 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
-use libphonenumber\NumberParseException;
-use Propaganistas\LaravelPhone\PhoneNumber;
+use App\Http\Requests\Concerns\NormalizesPhoneNumberConditions;
+use App\Rules\ValidPhoneNumber;
 
 class UpdatePhoneNumberRequest extends FormRequest
 {
+    use NormalizesPhoneNumberConditions;
+
     /**
      * Determine if the user is authorized to make this request.
      *
@@ -47,6 +49,7 @@ class UpdatePhoneNumberRequest extends FormRequest
             ],
             'destination_conditions.*.condition_expression' => [
                 'required_if:destination_conditions.*.condition_field,!=,""',
+                new ValidPhoneNumber($this->input('domain_uuid')),
             ],
             'destination_conditions.*.condition_target.targetValue' => [
                 'required_if:destination_conditions.*.condition_field,!=,""',
@@ -115,7 +118,7 @@ class UpdatePhoneNumberRequest extends FormRequest
         foreach ($errors as $field => $message) {
             if (preg_match('/destination_conditions\.(\d+)\.condition_expression/', $field, $matches)) {
                 $index = (int) $matches[1]; // Add 1 to make it 1-indexed
-                $customMessages[$field][] = "Please use valid US phone number on condition " . ($index + 1);
+                $customMessages[$field][] = "Please use a valid phone number on condition " . ($index + 1);
             }
             if (preg_match('/destination_conditions\.(\d+)\.condition_target.targetValue/', $field, $matches)) {
                 $index = (int) $matches[1]; // Add 1 to make it 1-indexed
@@ -133,7 +136,7 @@ class UpdatePhoneNumberRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'destination_conditions.*.condition_expression' => __('Please use valid US phone number on condition'),
+            'destination_conditions.*.condition_expression' => __('Please use a valid phone number on condition'),
             'destination_conditions.*.condition_target.targetValue' => __('Please select action on condition'),
             'domain_uuid.required' => __('Acccount must be selected.')
         ];
@@ -141,28 +144,15 @@ class UpdatePhoneNumberRequest extends FormRequest
 
     public function prepareForValidation(): void
     {
-        if ($this->has('destination_conditions')) {
-            $destinationConditions = [];
-            foreach ($this->get('destination_conditions') as $condition) {
-                try {
-                    $condition['condition_expression'] = (new PhoneNumber($condition['condition_expression'], "US"))->formatE164();
-                } catch (NumberParseException $e) {
-                    //
-                }
-                $condition['condition_expression'] = str_replace('+1', '', $condition['condition_expression']);
-                $destinationConditions[] = $condition;
-            }
-            $this->merge(['destination_conditions' => $destinationConditions]);
+        if (!$this->has('domain_uuid')) {
+            $this->merge(['domain_uuid' => session('domain_uuid')]);
         }
+        $this->normalizePhoneNumberConditions();
 
         if ($this->has('destination_type_fax')) {
             $this->merge([
                 'destination_type_fax' => $this->destination_type_fax =='1' ? 1 : null,
             ]);
-        }
-
-        if (!$this->has('domain_uuid')) {
-            $this->merge(['domain_uuid' => session('domain_uuid')]);
         }
 
         // Sanitize description

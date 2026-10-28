@@ -10,11 +10,49 @@ use App\Services\Messaging\MessageDestinationResolver;
 use App\Services\Messaging\MessageMediaIngestor;
 use App\Services\Messaging\MessageRepository;
 use App\Services\Messaging\Providers\MessagingWebhookParser;
+use App\Services\Messaging\RingotelSyncDispatcher;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Mockery;
 use Tests\TestCase;
 
 class FiberneticsMmsWebhookPipelineTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        config([
+            'database.default' => 'sqlite',
+            'database.connections.sqlite.database' => ':memory:',
+            'logging.default' => 'null',
+        ]);
+        DB::purge('sqlite');
+        Schema::create('v_domain_settings', function (Blueprint $table) {
+            foreach (['domain_uuid', 'domain_setting_subcategory', 'domain_setting_value', 'domain_setting_enabled'] as $column) {
+                $table->string($column);
+            }
+        });
+        DB::table('v_domain_settings')->insert([
+            'domain_uuid' => 'domain-uuid',
+            'domain_setting_subcategory' => 'country',
+            'domain_setting_value' => 'US',
+            'domain_setting_enabled' => 'true',
+        ]);
+        Schema::create('messages', function (Blueprint $table) {
+            foreach (['domain_uuid', 'direction', 'destination', 'reference_id'] as $column) {
+                $table->string($column);
+            }
+            $table->json('delivery_meta')->nullable();
+        });
+    }
+
+    protected function tearDown(): void
+    {
+        DB::purge('sqlite');
+        parent::tearDown();
+    }
+
     public function test_pipeline_saves_staged_mm7_media_without_downloading_it_again(): void
     {
         $storedMedia = [[
@@ -52,6 +90,9 @@ class FiberneticsMmsWebhookPipelineTest extends TestCase
 
         $message = new Messages();
         $message->message_uuid = 'message-uuid';
+        $ringotel = Mockery::mock(RingotelSyncDispatcher::class);
+        $ringotel->shouldReceive('dispatch')->once()->with($message)->andReturnFalse();
+        $this->app->instance(RingotelSyncDispatcher::class, $ringotel);
         $messages = Mockery::mock(MessageRepository::class);
         $messages->shouldReceive('inboundReferenceExists')
             ->once()

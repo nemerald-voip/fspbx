@@ -22,7 +22,7 @@ class MessageRepository
         ?string $messageGroupUuid = null,
         ?int $expectedMediaCount = null,
     ): Messages {
-        $countryCode = get_domain_setting('country', $domainUuid) ?? 'US';
+        $countryCode = app(\App\Services\PhoneNumberService::class)->countryCodeForDomain($domainUuid);
 
         $normalizedSource = $this->normalizePhoneNumberForStorage($source, $countryCode);
         $normalizedDestination = $this->normalizePhoneNumberForStorage($destination, $countryCode);
@@ -225,7 +225,7 @@ class MessageRepository
             'media_count' => count($media),
         ]);
 
-        $countryCode = get_domain_setting('country', $domainUuid) ?? 'US';
+        $countryCode = app(\App\Services\PhoneNumberService::class)->countryCodeForDomain($domainUuid);
 
         $normalizedSource = $this->normalizePhoneNumberForStorage($source, $countryCode);
         $normalizedDestination = $this->normalizePhoneNumberForStorage($destination, $countryCode);

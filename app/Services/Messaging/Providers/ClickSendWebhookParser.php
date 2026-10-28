@@ -299,7 +299,7 @@ class ClickSendWebhookParser implements MessagingWebhookParser
         }
 
         $number = trim((string) $number);
-        $countryCode = get_domain_setting('country', $domain_uuid = null) ?? 'US';
+        $countryCode = app(\App\Services\PhoneNumberService::class)->countryCodeForDomain();
 
         try {
             return formatPhoneNumber($number, $countryCode, PhoneNumberFormat::E164);

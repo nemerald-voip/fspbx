@@ -964,7 +964,7 @@ class ExtensionsController extends Controller
             ->sortBy('destination_description')
             ->values();
 
-        $countryCode = get_domain_setting('country', $appUser->domain_uuid) ?? 'US';
+        $countryCode = app(\App\Services\PhoneNumberService::class)->countryCodeForDomain($appUser->domain_uuid);
 
         $currentCallerIdE164 = null;
 
@@ -1033,7 +1033,7 @@ class ExtensionsController extends Controller
         CauserResolver::setCauser($extension);
 
         try {
-            $countryCode = get_domain_setting('country', $extension->domain_uuid) ?? 'US';
+            $countryCode = app(\App\Services\PhoneNumberService::class)->countryCodeForDomain($extension->domain_uuid);
 
             if ($request->set === true || $request->set === 'true') {
                 $extension->outbound_caller_id_number = formatPhoneNumber(

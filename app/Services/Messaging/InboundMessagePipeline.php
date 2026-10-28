@@ -91,7 +91,7 @@ class InboundMessagePipeline
             if ($supportsGroups) {
                 $groups = app(MessageGroupService::class);
                 $recipients = $groups->recipients(array_merge([$event->from], $event->to), $local,
-                    get_domain_setting('country', $route->domainUuid) ?? 'US');
+                    app(\App\Services\PhoneNumberService::class)->countryCodeForDomain($route->domainUuid));
                 if (count($recipients) > 1) $group = $groups->findOrCreate($route->domainUuid, $local, $recipients);
             }
 

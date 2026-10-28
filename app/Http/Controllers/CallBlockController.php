@@ -265,13 +265,9 @@ class CallBlockController extends Controller
                         return;
                     }
 
-                    // Numeric-only: remove all non-digits
-                    $digits = preg_replace('/\D+/', '', $s);
-
-                    // If 11 digits and starts with 1 (covers +1 once stripped), drop leading 1
-                    if (strlen($digits) === 11 && str_starts_with($digits, '1')) {
-                        $digits = substr($digits, 1);
-                    }
+                    // Resolve the national digits using the account or explicit country code.
+                    $parts = app(\App\Services\PhoneNumberService::class)->destinationParts($s, null, session('domain_uuid'));
+                    $digits = preg_replace('/\D+/', '', $parts['destination_number']);
 
                     if ($digits === '') {
                         return;

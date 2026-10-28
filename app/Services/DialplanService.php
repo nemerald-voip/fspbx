@@ -466,10 +466,10 @@ class DialplanService
             return;
         }
 
-        $lines[] = "\t\t<action application=\"export\" data=\"call_direction=inbound\" inline=\"true\"/>";
+        $defaults = [['export', 'call_direction=inbound']];
 
         if (filled($dialplan->domain_uuid)) {
-            $lines[] = "\t\t<action application=\"set\" data=\"domain_uuid={$this->xml($dialplan->domain_uuid)}\" inline=\"true\"/>";
+            $defaults[] = ['set', 'domain_uuid=' . $dialplan->domain_uuid];
         }
 
         $domainName = filled($dialplan->domain_uuid)
@@ -477,7 +477,28 @@ class DialplanService
             : null;
 
         if (filled($domainName)) {
-            $lines[] = "\t\t<action application=\"set\" data=\"domain_name={$this->xml($domainName)}\" inline=\"true\"/>";
+            $defaults[] = ['set', 'domain_name=' . $domainName];
+        }
+
+        // Phone-number rules already start with these actions. Preserve that
+        // preamble on an editor save instead of adding it a second time.
+        $hasDefaults = true;
+        foreach ($defaults as $index => [$application, $data]) {
+            $detail = $actions->get($index);
+            if (($detail['dialplan_detail_tag'] ?? null) !== 'action'
+                || ($detail['dialplan_detail_type'] ?? null) !== $application
+                || ($detail['dialplan_detail_data'] ?? null) !== $data
+                || !$this->booleanValue($detail['dialplan_detail_inline'] ?? null, false)) {
+                $hasDefaults = false;
+                break;
+            }
+        }
+        if ($hasDefaults) {
+            return;
+        }
+
+        foreach ($defaults as [$application, $data]) {
+            $lines[] = "\t\t<action application=\"{$application}\" data=\"{$this->xml($data)}\" inline=\"true\"/>";
         }
     }
 

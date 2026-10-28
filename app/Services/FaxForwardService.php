@@ -34,7 +34,7 @@ class FaxForwardService
         // Match FaxSendService normalization; SendFaxJob owns route discovery.
         $destination = formatPhoneNumber(
             $destination,
-            get_domain_setting('country', $fax->domain_uuid) ?? 'US',
+            app(\App\Services\PhoneNumberService::class)->countryCodeForDomain($fax->domain_uuid),
             \libphonenumber\PhoneNumberFormat::E164
         );
 

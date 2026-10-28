@@ -7879,7 +7879,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <p>Configures a messaging phone number for an account. Supply the phone number,
 its message provider, and any extensions that should share it. National numbers
 are automatically converted to E.164 using the account country or the country
-in Default Settings. If neither is configured, US is used. Numbers starting
+in Default Settings. If neither is configured, supply an international number with + and its country code. Numbers starting
 with + use their supplied country code.
 Allowed extensions can send and receive messages using the number and see
 each other's replies. An empty or omitted extension list grants no extension access.</p>
@@ -8116,7 +8116,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value="+12125550123"
                data-component="body">
     <br>
-<p>The messaging phone number, automatically converted to E.164 using the account country or the country in Default Settings. If neither is configured, US is used. Numbers starting with + use their supplied country code. Required on creation; omit on update to keep the current number. Must match the regex /^+[1-9][0-9]{1,14}$/D. Example: <code>+12125550123</code></p>
+<p>The messaging phone number, automatically converted to E.164 using the account country or the country in Default Settings. If neither is configured, supply an international number with + and its country code. Numbers starting with + use their supplied country code. Required on creation; omit on update to keep the current number. Must match the regex /^+[1-9][0-9]{1,14}$/D. Example: <code>+12125550123</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>carrier</code></b>&nbsp;&nbsp;
@@ -8438,7 +8438,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value="+12125550123"
                data-component="body">
     <br>
-<p>Optional messaging phone number, automatically converted to E.164 using the account country or the country in Default Settings. If neither is configured, US is used. Numbers starting with + use their supplied country code. Omit to preserve the current number; cannot be null or empty. Example: <code>+12125550123</code></p>
+<p>Optional messaging phone number, automatically converted to E.164 using the account country or the country in Default Settings. If neither is configured, supply an international number with + and its country code. Numbers starting with + use their supplied country code. Omit to preserve the current number; cannot be null or empty. Example: <code>+12125550123</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>carrier</code></b>&nbsp;&nbsp;

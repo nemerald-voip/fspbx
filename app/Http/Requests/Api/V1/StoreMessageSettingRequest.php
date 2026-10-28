@@ -71,7 +71,7 @@ class StoreMessageSettingRequest extends FormRequest
     public function bodyParameters(): array
     {
         return [
-            'destination' => ['description' => 'The messaging phone number, automatically converted to E.164 using the account country or the country in Default Settings. If neither is configured, US is used. Numbers starting with + use their supplied country code. Required on creation; omit on update to keep the current number.', 'example' => '+12125550123'],
+            'destination' => ['description' => 'The messaging phone number, automatically converted to E.164 using the account country or the country in Default Settings. If neither is configured, supply an international number with + and its country code. Numbers starting with + use their supplied country code. Required on creation; omit on update to keep the current number.', 'example' => '+12125550123'],
             'carrier' => ['description' => 'Message provider identifier. Use thinq for Commio (ThinQ) and voipms for VoIP.MS. May be null. Omit on update to preserve the provider.', 'example' => 'voipms'],
             'allowed_extension_uuids' => ['description' => 'Extensions in this account that may send and receive messages using this number and see each other\'s replies. Defaults to an empty list. On update, replaces the entire list; omit to preserve access or send [] to remove all extension access.', 'example' => ['d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b']],
             'allowed_extension_uuids.*' => ['description' => 'An extension UUID from this account. Use the Extensions API to find extension UUIDs.', 'example' => 'd2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b'],

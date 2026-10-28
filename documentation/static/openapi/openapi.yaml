@@ -4803,7 +4803,7 @@ paths:
     post:
       summary: 'Create message settings'
       operationId: createMessageSettings
-      description: "Configures a messaging phone number for an account. Supply the phone number,\nits message provider, and any extensions that should share it. National numbers\nare automatically converted to E.164 using the account country or the country\nin Default Settings. If neither is configured, US is used. Numbers starting\nwith + use their supplied country code.\nAllowed extensions can send and receive messages using the number and see\neach other's replies. An empty or omitted extension list grants no extension access.\n\nThe number is enabled by default. An optional email address receives incoming\nmessages. This endpoint saves the configuration in FS PBX; it does not purchase\na number or configure your provider's account.\nRequires account access and `message_settings_manage`."
+      description: "Configures a messaging phone number for an account. Supply the phone number,\nits message provider, and any extensions that should share it. National numbers\nare automatically converted to E.164 using the account country or the country\nin Default Settings. If neither is configured, supply an international number with + and its country code. Numbers starting\nwith + use their supplied country code.\nAllowed extensions can send and receive messages using the number and see\neach other's replies. An empty or omitted extension list grants no extension access.\n\nThe number is enabled by default. An optional email address receives incoming\nmessages. This endpoint saves the configuration in FS PBX; it does not purchase\na number or configure your provider's account.\nRequires account access and `message_settings_manage`."
       parameters: []
       responses:
         201:
@@ -4973,7 +4973,7 @@ paths:
               properties:
                 destination:
                   type: string
-                  description: 'The messaging phone number, automatically converted to E.164 using the account country or the country in Default Settings. If neither is configured, US is used. Numbers starting with + use their supplied country code. Required on creation; omit on update to keep the current number. Must match the regex /^\+[1-9][0-9]{1,14}$/D.'
+                  description: 'The messaging phone number, automatically converted to E.164 using the account country or the country in Default Settings. If neither is configured, supply an international number with + and its country code. Numbers starting with + use their supplied country code. Required on creation; omit on update to keep the current number. Must match the regex /^\+[1-9][0-9]{1,14}$/D.'
                   example: '+12125550123'
                 carrier:
                   type: string
@@ -5355,7 +5355,7 @@ paths:
               properties:
                 destination:
                   type: string
-                  description: 'Optional messaging phone number, automatically converted to E.164 using the account country or the country in Default Settings. If neither is configured, US is used. Numbers starting with + use their supplied country code. Omit to preserve the current number; cannot be null or empty.'
+                  description: 'Optional messaging phone number, automatically converted to E.164 using the account country or the country in Default Settings. If neither is configured, supply an international number with + and its country code. Numbers starting with + use their supplied country code. Omit to preserve the current number; cannot be null or empty.'
                   example: '+12125550123'
                 carrier:
                   type: string

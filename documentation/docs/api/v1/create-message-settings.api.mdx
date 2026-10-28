@@ -40,7 +40,7 @@ import Heading from "@theme/Heading";
 Configures a messaging phone number for an account. Supply the phone number,
 its message provider, and any extensions that should share it. National numbers
 are automatically converted to E.164 using the account country or the country
-in Default Settings. If neither is configured, US is used. Numbers starting
+in Default Settings. If neither is configured, supply an international number with + and its country code. Numbers starting
 with + use their supplied country code.
 Allowed extensions can send and receive messages using the number and see
 each other's replies. An empty or omitted extension list grants no extension access.
@@ -66,7 +66,7 @@ Requires account access and `message_settings_manage`.
 
 <RequestSchema
   title={"Body"}
-  body={{"required":true,"content":{"application/json":{"schema":{"type":"object","properties":{"destination":{"type":"string","description":"The messaging phone number, automatically converted to E.164 using the account country or the country in Default Settings. If neither is configured, US is used. Numbers starting with + use their supplied country code. Required on creation; omit on update to keep the current number. Must match the regex /^\\+[1-9][0-9]{1,14}$/D.","example":"+12125550123"},"carrier":{"type":"string","description":"Message provider identifier. Use thinq for Commio (ThinQ) and voipms for VoIP.MS. May be null. Omit on update to preserve the provider.","example":"voipms","enum":["apidaze","bandwidth","bulkvs","clicksend","thinq","fibernetics","sinch","telnyx","twilio","voipms","voxutel"]},"allowed_extension_uuids":{"type":"array","description":"Optional extension UUIDs from this account. Defaults to []; on update, omit to preserve access.","example":["d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b"],"items":{"type":"string"}},"email":{"type":"string","description":"Optional email address for incoming messages. Omit on update to preserve it; send null to clear it. Must be a valid email address. Must not be greater than 255 characters.","example":"messages@example.com"},"description":{"type":"string","description":"Optional description for administrators. Omit on update to preserve it; send null to clear it.","example":"Customer support"},"enabled":{"type":"boolean","description":"Whether messaging is enabled for this number. Defaults to true on creation. Omit on update to preserve its status.","example":false}},"required":["destination"]}}}}}
+  body={{"required":true,"content":{"application/json":{"schema":{"type":"object","properties":{"destination":{"type":"string","description":"The messaging phone number, automatically converted to E.164 using the account country or the country in Default Settings. If neither is configured, supply an international number with + and its country code. Numbers starting with + use their supplied country code. Required on creation; omit on update to keep the current number. Must match the regex /^\\+[1-9][0-9]{1,14}$/D.","example":"+12125550123"},"carrier":{"type":"string","description":"Message provider identifier. Use thinq for Commio (ThinQ) and voipms for VoIP.MS. May be null. Omit on update to preserve the provider.","example":"voipms","enum":["apidaze","bandwidth","bulkvs","clicksend","thinq","fibernetics","sinch","telnyx","twilio","voipms","voxutel"]},"allowed_extension_uuids":{"type":"array","description":"Optional extension UUIDs from this account. Defaults to []; on update, omit to preserve access.","example":["d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b"],"items":{"type":"string"}},"email":{"type":"string","description":"Optional email address for incoming messages. Omit on update to preserve it; send null to clear it. Must be a valid email address. Must not be greater than 255 characters.","example":"messages@example.com"},"description":{"type":"string","description":"Optional description for administrators. Omit on update to preserve it; send null to clear it.","example":"Customer support"},"enabled":{"type":"boolean","description":"Whether messaging is enabled for this number. Defaults to true on creation. Omit on update to preserve its status.","example":false}},"required":["destination"]}}}}}
 >
   
 </RequestSchema>
@@ -80,4 +80,3 @@ Requires account access and `message_settings_manage`.
 </StatusCodes>
 
 
-      
