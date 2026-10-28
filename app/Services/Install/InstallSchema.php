@@ -27,6 +27,7 @@ class InstallSchema
         $this->ensureCallFlowsSchema();
         $this->ensureCnamSchema();
         $this->ensureFaxSchema();
+        $this->ensureModulesSchema();
         $this->ensureEmailTemplatesSchema();
     }
 
@@ -228,6 +229,28 @@ class InstallSchema
                 $table->uuid('update_user')->nullable();
             });
         }
+    }
+
+    public function ensureModulesSchema(): void
+    {
+        if (Schema::hasTable('v_modules')) {
+            return;
+        }
+
+        Schema::create('v_modules', function (Blueprint $table) {
+            $table->uuid('module_uuid')->primary();
+            $table->text('module_label')->nullable();
+            $table->text('module_name')->nullable();
+            $table->text('module_category')->nullable();
+            $table->decimal('module_order', 20, 0)->nullable();
+            $table->text('module_enabled')->nullable();
+            $table->text('module_default_enabled')->nullable();
+            $table->text('module_description')->nullable();
+            $table->timestampTz('insert_date')->nullable();
+            $table->uuid('insert_user')->nullable();
+            $table->timestampTz('update_date')->nullable();
+            $table->uuid('update_user')->nullable();
+        });
     }
 
     public function ensureEmailTemplatesSchema(): void

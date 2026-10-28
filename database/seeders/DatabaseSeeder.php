@@ -106,6 +106,10 @@ class DatabaseSeeder extends Seeder
     private function createPermissions()
     {
         $permissions = [
+            ['application_name' => 'Modules', 'permission_name' => 'module_view'],
+            ['application_name' => 'Modules', 'permission_name' => 'module_add'],
+            ['application_name' => 'Modules', 'permission_name' => 'module_edit'],
+            ['application_name' => 'Modules', 'permission_name' => 'module_delete'],
             ['application_name' => 'Fax Server', 'permission_name' => 'fax_view'],
             ['application_name' => 'Fax Server', 'permission_name' => 'fax_add'],
             ['application_name' => 'Fax Server', 'permission_name' => 'fax_edit'],
@@ -318,6 +322,10 @@ class DatabaseSeeder extends Seeder
     {
         $permissionsByGroup = [
             'superadmin' => [
+                'module_view',
+                'module_add',
+                'module_edit',
+                'module_delete',
                 'fax_view',
                 'fax_add',
                 'fax_edit',
