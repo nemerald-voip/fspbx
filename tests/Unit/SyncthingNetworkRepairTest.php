@@ -73,6 +73,8 @@ class SyncthingRepairHarness extends Repair
     public bool $overrideDetection = false;
     public ?array $conflict = null;
     public array $processes = [];
+    public int $lookupPauses = 0;
+    public ?Closure $onLookupPause = null;
 
     protected function assertRoot(): void {}
 
@@ -101,6 +103,14 @@ class SyncthingRepairHarness extends Repair
     }
 
     public function checkLocalCertificate(SyncthingApi $api, string $id): void {}
+
+    protected function pauseBeforePeerLookup(): void
+    {
+        $this->lookupPauses++;
+        if ($this->onLookupPause !== null) {
+            ($this->onLookupPause)();
+        }
+    }
 }
 
 class SyncthingNetworkRepairTest extends TestCase
@@ -312,16 +322,9 @@ class SyncthingNetworkRepairTest extends TestCase
         $this->repair->peerPlan($api->request('config'), 'SELF', [], [], $discovery);
     }
 
-    /** @dataProvider preparationCases */
-    public function test_prepare_and_configure_work_without_a_live_connection(bool $cacheUnavailable): void
+    private function preparationFixture(): FakeSyncthingApi
     {
         [$api] = $this->fixture();
-        $api->discoveryUnavailable = $cacheUnavailable;
-        if ($cacheUnavailable) {
-            $api->devices[0]['addresses'] = ['tcp://'.self::IP.':22000', 'dynamic'];
-        } else {
-            $api->discovery = ['PEER' => ['addresses' => ['tcp://'.self::IP.':22000', 'tcp://172.30.10.11:22000']]];
-        }
         $this->repair->fakeApi = $api;
         $this->repair->overrideDetection = true;
         $this->repair->conflict = ['pid' => 123];
@@ -343,6 +346,19 @@ class SyncthingNetworkRepairTest extends TestCase
             $this->assertContains($args[0], ['iptables-restore', 'iptables']);
             return self::result('', ($args[3] ?? '') === '-C' ? 1 : 0);
         };
+        return $api;
+    }
+
+    /** @dataProvider preparationCases */
+    public function test_prepare_and_configure_work_without_a_live_connection(bool $cacheUnavailable): void
+    {
+        $api = $this->preparationFixture();
+        $api->discoveryUnavailable = $cacheUnavailable;
+        if ($cacheUnavailable) {
+            $api->devices[0]['addresses'] = ['tcp://'.self::IP.':22000', 'dynamic'];
+        } else {
+            $api->discovery = ['PEER' => ['addresses' => ['tcp://'.self::IP.':22000', 'tcp://172.30.10.11:22000']]];
+        }
         $this->repair->repair();
         $this->assertSame('complete', $this->repair->load()['phase']);
         $this->assertFalse($api->options['localAnnounceEnabled']);
@@ -352,9 +368,59 @@ class SyncthingNetworkRepairTest extends TestCase
         $this->assertStringContainsString('-s '.self::IP.'/32', $rules);
         $this->assertSame($cacheUnavailable ? 1 : 2, substr_count($rules, '--dport 22000'));
         $this->assertSame(1, count(array_filter($api->calls, fn ($call) => $call[0] === 'system/connections')));
+        $this->assertSame(0, $this->repair->lookupPauses);
     }
 
     public static function preparationCases(): array { return [[false], [true]]; }
+
+    /** @dataProvider delayedPeerAddresses */
+    public function test_temporary_address_gap_is_retried_before_any_changes(string $source, int $delay): void
+    {
+        $api = $this->preparationFixture();
+        $rulesBefore = file_get_contents($this->repair->rulesDir.'/rules.v4');
+        $this->repair->onLookupPause = function () use ($api, $rulesBefore, $source, $delay) {
+            $this->assertSame(self::XML, file_get_contents($api->config));
+            $this->assertSame($rulesBefore, file_get_contents($this->repair->rulesDir.'/rules.v4'));
+            $this->assertSame([['ss', '-H', '-t', '-l', '-n', '-p']], $this->repair->commands);
+            if ($this->repair->lookupPauses !== $delay) {
+                return;
+            }
+            if ($source === 'connection') {
+                $api->connections = ['PEER' => ['connected' => true, 'type' => 'tcp-server',
+                    'address' => '10.80.0.19:22000', 'isLocal' => false]];
+            } else {
+                $api->discovery = ['PEER' => ['addresses' => ['tcp://10.80.0.19:22000',
+                    'quic://10.80.0.19:22000', 'relay://192.0.2.44:22067/?id=RELAY']]];
+            }
+        };
+
+        $this->repair->repair();
+
+        $this->assertSame($delay, $this->repair->lookupPauses);
+        $this->assertSame('complete', $this->repair->load()['phase']);
+        $this->assertSame(['tcp://10.80.0.19:22000', 'dynamic'], $api->devices[0]['addresses']);
+        $this->assertFalse($api->options['localAnnounceEnabled']);
+        $this->assertSame($delay + 1, count(array_filter($api->calls, fn ($call) => $call[0] === 'system/connections')));
+        $this->assertSame(1, substr_count(ob_get_contents(), 'retrying lookup'));
+    }
+
+    public static function delayedPeerAddresses(): array
+    {
+        return [['connection', 1], ['discovery', 3]];
+    }
+
+    public function test_paused_peer_is_not_retried_or_changed_during_preparation(): void
+    {
+        $api = $this->preparationFixture();
+        $api->devices[0]['paused'] = true;
+
+        $this->assertTrue($this->repair->apply());
+
+        $this->assertSame(0, $this->repair->lookupPauses);
+        $this->assertStringContainsString('Paused/restricted', ob_get_contents());
+        $this->assertSame(self::XML, file_get_contents($api->config));
+        $this->assertSame([['ss', '-H', '-t', '-l', '-n', '-p']], $this->repair->commands);
+    }
 
     public function test_unknown_peer_warns_without_changes_or_failing_the_main_update(): void
     {
@@ -372,6 +438,9 @@ class SyncthingNetworkRepairTest extends TestCase
         $this->assertSame(self::XML, file_get_contents($api->config));
         $this->assertCount(1, $this->repair->commands);
         $this->assertSame([], array_filter($api->calls, fn ($call) => $call[1] !== null));
+        $this->assertSame(3, $this->repair->lookupPauses);
+        $this->assertSame(4, count(array_filter($api->calls, fn ($call) => $call[0] === 'system/connections')));
+        $this->assertSame(1, substr_count(ob_get_contents(), 'retrying lookup'));
     }
 
     public function test_paused_devices_require_review(): void

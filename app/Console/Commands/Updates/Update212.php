@@ -483,7 +483,7 @@ class Update212
                 }
             }
             if (!$ips) {
-                throw new RuntimeException('No usable peer IP in Syncthing connections, configuration or discovery cache for '.substr($id, 0, 7));
+                throw new Update212PeerAddressUnavailable('No usable peer IP in Syncthing connections, configuration or discovery cache for '.substr($id, 0, 7));
             }
             $peers[$id] = array_values(array_unique($ips));
             sort($peers[$id]);
@@ -492,6 +492,11 @@ class Update212
             throw new RuntimeException('No configured Syncthing peers');
         }
         return $peers;
+    }
+
+    protected function pauseBeforePeerLookup(): void
+    {
+        sleep(5);
     }
 
     public function checkLocalCertificate(Update212SyncthingApi $api, string $id): void
@@ -595,15 +600,31 @@ class Update212
         self::listenersWithoutQuic($config['options']);
         $myId = $api->request('system/status')['myID'];
         $this->checkLocalCertificate($api, $myId);
-        try {
-            $discovery = $api->request('system/discovery');
-        } catch (Throwable) {
-            // Discovery is a fallback. An unavailable cache must not prevent
-            // using a live connection or an explicitly configured peer IP.
-            $discovery = [];
+        for ($attempt = 0; ; $attempt++) {
+            try {
+                $discovery = $api->request('system/discovery');
+            } catch (Throwable) {
+                // Discovery is a fallback. An unavailable cache must not prevent
+                // using a live connection or an explicitly configured peer IP.
+                $discovery = [];
+            }
+            try {
+                $peers = $this->peerPlan($config, $myId, $api->request('system/connections')['connections'], $hints,
+                    is_array($discovery) ? $discovery : []);
+                break;
+            } catch (Update212PeerAddressUnavailable $error) {
+                // A dynamic-only peer can briefly have neither a connection nor
+                // a cached address. Refresh before any host/config changes, with
+                // at most three retries. Other validation failures stop at once.
+                if ($attempt >= 3) {
+                    throw $error;
+                }
+                if ($attempt === 0) {
+                    echo "Syncthing: peer address unavailable; retrying lookup up to 3 times, 5 seconds apart.\n";
+                }
+                $this->pauseBeforePeerLookup();
+            }
         }
-        $peers = $this->peerPlan($config, $myId, $api->request('system/connections')['connections'], $hints,
-            is_array($discovery) ? $discovery : []);
         $status = $this->command(['supervisorctl', 'status', 'syncthing'])['stdout'];
         $this->assertSupervisorOwnsProcess($status, $owners[0]);
         if (is_link($this->stateDir)) {
@@ -750,6 +771,8 @@ class Update212
         }
     }
 }
+
+class Update212PeerAddressUnavailable extends RuntimeException {}
 
 class Update212SyncthingApi
 {
