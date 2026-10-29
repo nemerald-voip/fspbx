@@ -26,6 +26,7 @@ class ModuleLifecycleTest extends TestCase
         mkdir($this->directory);
         $this->app = new Application($this->directory);
         $this->app->instance('config', new Repository());
+        $this->app->instance('translator', new \Illuminate\Translation\Translator(new \Illuminate\Translation\ArrayLoader(), 'en-us'));
         $this->app->singleton(Factory::class, fn () => new Factory());
         Facade::clearResolvedInstances(); Facade::setFacadeApplication($this->app);
         Module::swap(\Mockery::mock());

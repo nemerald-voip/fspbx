@@ -250,8 +250,17 @@ class UpdateApp extends Command
         // Cache config and routes
         $this->executeCommand('php artisan config:cache');
 
-        // Refresh enabled modules using the DB license
-        $this->runArtisanCommand('modules:refresh');
+        // Optional module updates must never block the application update.
+        try {
+            $moduleRefreshExitCode = $this->call('modules:refresh');
+        } catch (\Throwable $exception) {
+            $moduleRefreshExitCode = 1;
+            $this->warn('Module refresh failed: '.$exception->getMessage());
+        }
+
+        if ($moduleRefreshExitCode !== 0) {
+            $this->warn('Module updates were skipped or incomplete. Continuing the application update. Retry with php artisan modules:refresh after resolving the warning.');
+        }
 
         $this->executeCommand('php artisan route:cache');
         $this->executeCommand('php artisan queue:restart');
