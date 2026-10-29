@@ -64,6 +64,7 @@ use App\Console\Commands\Updates\Update208;
 use App\Console\Commands\Updates\Update209;
 use App\Console\Commands\Updates\Update210;
 use App\Console\Commands\Updates\Update211;
+use App\Console\Commands\Updates\Update212;
 use App\Console\Commands\Updates\Update0917;
 use App\Console\Commands\Updates\Update0918;
 use App\Console\Commands\Updates\Update0924;
@@ -205,6 +206,7 @@ class UpdateApp extends Command
             '2.0.9' => Update209::class,
             '2.1.0' => Update210::class,
             '2.1.1' => Update211::class,
+            '2.1.2' => Update212::class,
             // Add more versions as needed
         ];
 
@@ -214,7 +216,7 @@ class UpdateApp extends Command
             if (version_compare($currentVersion, $version, '<')) {
                 $this->info("Applying update steps for version $version...");
                 // Create instance of the class and call the apply() method
-                $updateInstance = new $updateClass();
+                $updateInstance = app($updateClass);
                 if (!$updateInstance->apply()) {
                     // If the update fails, stop further updates and exit with failure
                     $this->error("Update to version $version failed. Stopping further updates.");
@@ -299,7 +301,6 @@ class UpdateApp extends Command
 
         $this->info('Update completed successfully!');
     }
-
 
     protected function executeCommand($command, $timeout = 60, $failOnError = true)
     {

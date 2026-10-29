@@ -114,6 +114,299 @@ ensure_pkg(){
   dpkg -s "$1" >/dev/null 2>&1 || { apt-get update -y; apt-get install -y "$1"; }
 }
 xml_replace(){ [[ -f "$1" ]] && grep -Fq "$2" "$1" && sed -i "s#${2//\//\\/}#${3//\//\\/}#" "$1" || true; }
+# Fresh-install networking is embedded here; no application update code is loaded.
+syncthing_network_setup(){
+  sudo php /dev/stdin "$@" <<'SYNCTHING_SETUP_PHP'
+<?php
+
+declare(strict_types=1);
+
+class SyncthingNetworkSetup
+{
+    public const RELAY = 'dynamic+https://relays.syncthing.net/endpoint';
+
+    public function __construct(public string $rulesDir = '/etc/iptables') {}
+
+    /** Configure a newly generated file before Syncthing is first started. */
+    public function initializeConfig(string $path): void
+    {
+        $document = self::xml(self::read($path));
+        $xpath = new DOMXPath($document);
+        $matches = $xpath->query('/configuration/options');
+        if ($matches->length !== 1) {
+            throw new RuntimeException('Cannot identify Syncthing options');
+        }
+        $options = $matches->item(0);
+        foreach ([
+            'listenAddress' => ['tcp://0.0.0.0:22000', self::RELAY],
+            'localAnnounceEnabled' => ['false'],
+            'globalAnnounceEnabled' => ['true'],
+            'relaysEnabled' => ['true'],
+        ] as $name => $values) {
+            foreach (iterator_to_array($xpath->query('./'.$name, $options)) as $node) {
+                $options->removeChild($node);
+            }
+            foreach ($values as $value) {
+                $node = $document->createElement($name);
+                $node->appendChild($document->createTextNode($value));
+                $options->appendChild($node);
+            }
+        }
+        $meta = stat($path);
+        self::atomicWrite($path, $document->saveXML(), $meta['mode'] & 0777, [$meta['uid'], $meta['gid']]);
+    }
+
+    public function command(array $args, ?string $input = null, int $timeout = 15, bool $check = true): array
+    {
+        // Files avoid pipe deadlocks with large saved firewalls. Array arguments
+        // bypass the shell, and errors never include credentials or config bodies.
+        $streams = [tmpfile(), tmpfile(), tmpfile()];
+        if (in_array(false, $streams, true)) {
+            foreach ($streams as $stream) {
+                if (is_resource($stream)) {
+                    fclose($stream);
+                }
+            }
+            throw new RuntimeException('Cannot allocate command streams');
+        }
+        $process = null;
+        try {
+            self::writeStream($streams[0], $input ?? '');
+            rewind($streams[0]);
+            $process = proc_open($args, $streams, $pipes);
+            if (!is_resource($process)) {
+                throw new RuntimeException('Cannot run '.basename($args[0]));
+            }
+            $deadline = hrtime(true) + $timeout * 1_000_000_000;
+            do {
+                $status = proc_get_status($process);
+                if (!$status['running']) {
+                    break;
+                }
+                if (hrtime(true) >= $deadline) {
+                    throw new RuntimeException(basename($args[0]).' timed out');
+                }
+                usleep(20_000);
+            } while (true);
+            rewind($streams[1]);
+            rewind($streams[2]);
+            $result = ['code' => $status['exitcode'], 'stdout' => stream_get_contents($streams[1]),
+                'stderr' => stream_get_contents($streams[2])];
+            if ($check && $result['code'] !== 0) {
+                throw new RuntimeException(basename($args[0]).' failed (exit '.$result['code'].')');
+            }
+            return $result;
+        } finally {
+            if (is_resource($process)) {
+                if (proc_get_status($process)['running']) {
+                    proc_terminate($process, 9);
+                }
+                proc_close($process);
+            }
+            foreach ($streams as $stream) {
+                fclose($stream);
+            }
+        }
+    }
+
+    private static function writeStream($stream, string $data): void
+    {
+        for ($offset = 0, $length = strlen($data); $offset < $length; $offset += $written) {
+            $written = fwrite($stream, substr($data, $offset));
+            if ($written === false || $written === 0) {
+                throw new RuntimeException('Cannot write configuration data');
+            }
+        }
+    }
+
+    public static function read(string $path): string
+    {
+        $data = @file_get_contents($path);
+        if ($data === false) {
+            throw new RuntimeException('Cannot read '.$path);
+        }
+        return $data;
+    }
+
+    public static function atomicWrite(string $path, string $data, int $mode = 0600, ?array $owner = null): void
+    {
+        if (is_link($path)) {
+            throw new RuntimeException('Refusing symlink: '.$path);
+        }
+        $temporary = tempnam(dirname($path), '.'.basename($path));
+        if ($temporary === false || dirname($temporary) !== realpath(dirname($path))) {
+            if ($temporary !== false) {
+                unlink($temporary);
+            }
+            throw new RuntimeException('Cannot create temporary configuration file');
+        }
+        try {
+            if (!chmod($temporary, $mode) || ($owner !== null &&
+                (!chown($temporary, $owner[0]) || !chgrp($temporary, $owner[1])))) {
+                throw new RuntimeException('Cannot preserve file permissions');
+            }
+            $stream = fopen($temporary, 'wb');
+            if ($stream === false) {
+                throw new RuntimeException('Cannot open temporary configuration file');
+            }
+            try {
+                self::writeStream($stream, $data);
+                if (!fflush($stream) || !fsync($stream)) {
+                    throw new RuntimeException('Cannot persist configuration file');
+                }
+            } finally {
+                fclose($stream);
+            }
+            if (!rename($temporary, $path)) {
+                throw new RuntimeException('Cannot replace '.$path);
+            }
+        } finally {
+            if (file_exists($temporary)) {
+                unlink($temporary);
+            }
+        }
+    }
+
+    public static function xml(string $xml): DOMDocument
+    {
+        $previous = libxml_use_internal_errors(true);
+        try {
+            $document = new DOMDocument();
+            if (!$document->loadXML($xml, LIBXML_NONET) || $document->doctype !== null) {
+                throw new RuntimeException('Invalid or unsupported XML configuration');
+            }
+            return $document;
+        } finally {
+            libxml_clear_errors();
+            libxml_use_internal_errors($previous);
+        }
+    }
+
+    public function address(string $value): string
+    {
+        $packed = @inet_pton($value);
+        if ($packed === false) {
+            throw new RuntimeException('Peer address is not a usable server IP');
+        }
+        if (strlen($packed) === 16 && substr($packed, 0, 12) === str_repeat("\0", 10)."\xff\xff") {
+            $packed = substr($packed, 12);
+        }
+        $ip = inet_ntop($packed);
+        $first = ord($packed[0]);
+        $unsafe = strlen($packed) === 4
+            ? ($ip === '0.0.0.0' || $first === 127 || ($first >= 224 && $first <= 239)
+                || ($first === 169 && ord($packed[1]) === 254))
+            : ($ip === '::' || $ip === '::1' || $first === 255
+                || ($first === 254 && (ord($packed[1]) & 0xc0) === 0x80));
+        if ($unsafe) {
+            throw new RuntimeException('Peer address is not a usable server IP');
+        }
+        return $ip;
+    }
+
+    public function firewallRule(string $ip): array
+    {
+        $ip = $this->address($ip);
+        return ['-s', $ip.(str_contains($ip, ':') ? '/128' : '/32'), '-p', 'tcp', '-m', 'tcp',
+            '--dport', '22000', '-m', 'comment', '--comment', 'fspbx-syncthing', '-j', 'ACCEPT'];
+    }
+
+    public static function addPersistentRule(string $contents, array $rule): string
+    {
+        $lines = explode("\n", rtrim($contents, "\n"));
+        $starts = array_keys($lines, '*filter', true);
+        if (count($starts) !== 1) {
+            throw new RuntimeException('Cannot identify the saved iptables filter table');
+        }
+        $start = $starts[0];
+        $end = null;
+        for ($i = $start + 1; $i < count($lines); $i++) {
+            if ($lines[$i] === 'COMMIT') {
+                $end = $i;
+                break;
+            }
+        }
+        if ($end === null) {
+            throw new RuntimeException('Incomplete saved iptables filter table');
+        }
+        // Tokens here are fixed flags and validated IPs; no shell escaping is
+        // needed in iptables-save syntax. Accept its quoted comment form too.
+        $full = '-A INPUT '.implode(' ', $rule);
+        foreach (array_slice($lines, $start + 1, $end - $start - 1) as $line) {
+            $normalized = str_replace(['"fspbx-syncthing"', "'fspbx-syncthing'"], 'fspbx-syncthing', $line);
+            if (preg_replace('/\s+/', ' ', trim($normalized)) === $full) {
+                return $contents;
+            }
+        }
+        $position = $start + 1;
+        while ($position < $end && ($lines[$position] === '' || str_starts_with($lines[$position], ':')
+            || str_starts_with($lines[$position], '#'))) {
+            $position++;
+        }
+        array_splice($lines, $position, 0, [$full]);
+        return implode("\n", $lines)."\n";
+    }
+
+    public function allowPeers(array $peers): void
+    {
+        if (trim($this->command(['systemctl', 'is-enabled', 'netfilter-persistent'], check: false)['stdout']) !== 'enabled') {
+            throw new RuntimeException('Enabled netfilter-persistent is required to preserve the TCP rule after reboot');
+        }
+        foreach (['ufw', 'firewalld', 'nftables'] as $service) {
+            if ($this->command(['systemctl', 'is-active', $service], check: false)['code'] === 0) {
+                throw new RuntimeException($service.' manages this firewall; manual review required');
+            }
+        }
+        $changes = [];
+        foreach ([4, 6] as $family) {
+            $ips = array_unique(array_filter($peers, fn ($ip) => str_contains($ip, ':') === ($family === 6)));
+            if (!$ips) {
+                continue;
+            }
+            sort($ips);
+            $binary = $family === 4 ? 'iptables' : 'ip6tables';
+            $path = $this->rulesDir.'/rules.v'.$family;
+            $original = $updated = self::read($path);
+            foreach ($ips as $ip) {
+                $updated = self::addPersistentRule($updated, $this->firewallRule($ip));
+            }
+            $this->command([$binary.'-restore', '--test'], input: $updated);
+            $changes[] = compact('binary', 'path', 'original', 'updated', 'ips');
+        }
+        // Validate every file/family before changing any persisted or live rule.
+        foreach ($changes as $change) {
+            ['binary' => $binary, 'path' => $path, 'original' => $original, 'updated' => $updated, 'ips' => $ips] = $change;
+            if ($updated !== $original) {
+                $meta = stat($path);
+                self::atomicWrite($path, $updated, $meta['mode'] & 0777, [$meta['uid'], $meta['gid']]);
+            }
+            foreach ($ips as $ip) {
+                $rule = $this->firewallRule($ip);
+                if ($this->command(array_merge([$binary, '-w', '5', '-C', 'INPUT'], $rule), check: false)['code'] !== 0) {
+                    $this->command(array_merge([$binary, '-w', '5', '-I', 'INPUT', '1'], $rule));
+                }
+            }
+        }
+    }
+}
+
+try {
+    if (count($argv) !== 3 || !in_array($argv[1], ['--initialize-config', '--allow-peer'], true)) {
+        throw new RuntimeException('Use --initialize-config CONFIG_PATH or --allow-peer PEER_IP');
+    }
+    $setup = new SyncthingNetworkSetup();
+    if ($argv[1] === '--initialize-config') {
+        $setup->initializeConfig($argv[2]);
+    } else {
+        $setup->allowPeers([$setup->address($argv[2])]);
+    }
+} catch (Throwable $error) {
+    fwrite(STDERR, 'Syncthing setup failed: '.$error->getMessage()."\n");
+    exit(1);
+}
+SYNCTHING_SETUP_PHP
+}
+
 ensure_supervisor(){ systemctl enable supervisor >/dev/null 2>&1 || true; systemctl start supervisor >/dev/null 2>&1 || true; }
 write_supervisor(){
   [[ -f "$SUPERVISOR_CONF" ]] || cat > "$SUPERVISOR_CONF" <<EOF
@@ -134,11 +427,11 @@ EOF
 first_boot_config(){
   if [[ ! -f "$ST_CONFIG_XML" ]]; then
     mkdir -p "$ST_HOME"; chown -R "$ST_USER:$ST_USER" "$ST_HOME"
-    # one-time launch to generate config.xml
-    sudo -u "$ST_USER" bash -lc "${SYNCTHING_BIN} --no-browser --home='${ST_STATE_DIR}' >/tmp/st-first.log 2>&1 & echo \$! > /tmp/st-first.pid"
-    for _ in {1..20}; do [[ -f "$ST_CONFIG_XML" ]] && break; sleep 1; done
-    [[ -f /tmp/st-first.pid ]] && { kill "$(cat /tmp/st-first.pid)" >/dev/null 2>&1 || true; rm -f /tmp/st-first.pid; }
+    [[ ! -f "$ST_HOME/.config/syncthing/config.xml" ]] || die "Existing legacy Syncthing configuration found. Use app:update for existing-server network changes."
+    # Generate files offline, then set the network defaults before first start.
+    sudo -u "$ST_USER" "$SYNCTHING_BIN" generate --home="$ST_STATE_DIR"
     [[ -f "$ST_CONFIG_XML" ]] || die "Failed to generate Syncthing config."
+    syncthing_network_setup --initialize-config "$ST_CONFIG_XML"
   fi
 }
 disable_crash(){ xml_replace "$ST_CONFIG_XML" "<crashReportingEnabled>true</crashReportingEnabled>" "<crashReportingEnabled>false</crashReportingEnabled>"; }
@@ -157,7 +450,7 @@ accept_eula_xml(){ # set <urAccepted>-1</urAccepted> in config.xml
   fi
 }
 bind_any(){ xml_replace "$ST_CONFIG_XML" "$ST_ADDR_FROM" "$ST_ADDR_TO"; }
-restart_st(){ supervisorctl restart syncthing >/dev/null 2>&1 || true; sleep 2; }
+restart_st(){ supervisorctl restart syncthing >/dev/null; sleep 2; }
 my_id(){ sudo -u "$ST_USER" "$SYNCTHING_BIN" cli --home="$ST_STATE_DIR" show system | jq -r .myID; }
 
 fid(){ # stable ID from path
@@ -261,6 +554,7 @@ ssh_run(){ ssh -o BatchMode=yes -o ConnectTimeout=3 -o StrictHostKeyChecking=acc
 
 remote_bootstrap(){
   ssh_run "set -euo pipefail
+    $(declare -f syncthing_network_setup)
     for p in curl ca-certificates jq supervisor gnupg; do dpkg -s \$p >/dev/null 2>&1 || sudo apt-get install -y \$p; done
     sudo mkdir -p /etc/apt/keyrings
     if [ ! -s /etc/apt/keyrings/syncthing-archive-keyring.gpg ]; then
@@ -274,7 +568,12 @@ remote_bootstrap(){
     dpkg -s syncthing >/dev/null 2>&1 || sudo apt-get install -y syncthing
     sudo mkdir -p '${ST_HOME}'; sudo chown -R ${ST_USER}:${ST_USER} '${ST_HOME}'
     if [[ ! -f '${ST_CONFIG_XML}' ]]; then
-      sudo -u ${ST_USER} ${SYNCTHING_BIN} --no-browser --home='${ST_STATE_DIR}' >/dev/null 2>&1 & sleep 3; pkill -u ${ST_USER} syncthing || true
+      if sudo test -f '${ST_HOME}/.config/syncthing/config.xml'; then
+        echo 'Existing legacy Syncthing configuration found. Use app:update for existing-server network changes.' >&2
+        exit 1
+      fi
+      sudo -u ${ST_USER} ${SYNCTHING_BIN} generate --home='${ST_STATE_DIR}'
+      syncthing_network_setup --initialize-config '${ST_CONFIG_XML}'
     fi
     sudo sed -i \"s#${ST_ADDR_FROM//\//\\/}#${ST_ADDR_TO//\//\\/}#\" '${ST_CONFIG_XML}' || true
     # Set EULA and disable crash reporting in XML (defensive)
@@ -286,6 +585,8 @@ remote_bootstrap(){
       fi
       sudo sed -i 's#<crashReportingEnabled>true</crashReportingEnabled>#<crashReportingEnabled>false</crashReportingEnabled>#' '${ST_CONFIG_XML}' || true
     fi
+    # Allow the paired server before starting the synchronization service.
+    syncthing_network_setup --allow-peer '${LOCAL_SYNC_IP}'
     # Supervisor
     sudo bash -lc 'cat >/etc/supervisor/conf.d/syncthing.conf <<EOF
 [program:syncthing]
@@ -379,6 +680,27 @@ prompt_peer
 check_connectivity_fast
 api_need
 
+# Determine the paired addresses for firewall rules and initial device setup.
+ssh_connection="$(ssh_run 'printf "%s\n" "$SSH_CONNECTION"')"
+read -r LOCAL_SYNC_IP _ _ _ <<< "$ssh_connection"
+PEER_SYNC_IP="$(php -r '
+$host = trim($argv[1], "[]");
+$ip = filter_var($host, FILTER_VALIDATE_IP) ? $host : (gethostbynamel($host)[0] ?? null);
+if ($ip === null) {
+    $ip = dns_get_record($host, DNS_AAAA)[0]["ipv6"] ?? null;
+}
+if ($ip === null) {
+    fwrite(STDERR, "Cannot resolve the peer IP.\n");
+    exit(1);
+}
+echo $ip;
+' "$PEER_HOST")"
+[[ "$LOCAL_SYNC_IP" =~ ^[0-9a-fA-F:.]+$ && "$PEER_SYNC_IP" =~ ^[0-9a-fA-F:.]+$ ]] || die "Cannot determine peer IPs."
+LOCAL_TCP_ADDRESS="tcp://${LOCAL_SYNC_IP}:22000"
+PEER_TCP_ADDRESS="tcp://${PEER_SYNC_IP}:22000"
+[[ "$LOCAL_SYNC_IP" == *:* ]] && LOCAL_TCP_ADDRESS="tcp://[${LOCAL_SYNC_IP}]:22000"
+[[ "$PEER_SYNC_IP" == *:* ]] && PEER_TCP_ADDRESS="tcp://[${PEER_SYNC_IP}]:22000"
+
 green "Setting up Syncthing locally and on ${PEER_ADDR}..."
 
 # Local install
@@ -397,6 +719,7 @@ first_boot_config
 disable_crash
 accept_eula_xml
 bind_any
+syncthing_network_setup --allow-peer "$PEER_SYNC_IP"
 write_supervisor
 restart_st
 
@@ -420,13 +743,13 @@ KEY_REMOTE="$(remote_api_key)"; [[ -n "$KEY_REMOTE" ]] || { stop_remote_tunnel; 
 # Add remote device to local
 dev_local="$(api_get 'config/devices' "$KEY_LOCAL" || echo '[]')"
 if ! echo "$dev_local" | jq -e --arg id "$PEER_ID" 'any(.[]?; .deviceID?==$id)' >/dev/null; then
-  api_put "config/devices/$PEER_ID" "$(jq -n --arg id "$PEER_ID" '{deviceID:$id,name:$id,addresses:["dynamic"]}')" "$KEY_LOCAL" >/dev/null
+  api_put "config/devices/$PEER_ID" "$(jq -n --arg id "$PEER_ID" --arg address "$PEER_TCP_ADDRESS" '{deviceID:$id,name:$id,addresses:[$address,"dynamic"]}')" "$KEY_LOCAL" >/dev/null
 fi
 
 # Add local device to remote
 dev_remote="$(r_api_get 'config/devices' "$KEY_REMOTE" || echo '[]')"
 if ! echo "$dev_remote" | jq -e --arg id "$LOCAL_ID" 'any(.[]?; .deviceID?==$id)' >/dev/null; then
-  r_api_put "config/devices/$LOCAL_ID" "$(jq -n --arg id "$LOCAL_ID" '{deviceID:$id,name:$id,addresses:["dynamic"]}')" "$KEY_REMOTE" >/dev/null
+  r_api_put "config/devices/$LOCAL_ID" "$(jq -n --arg id "$LOCAL_ID" --arg address "$LOCAL_TCP_ADDRESS" '{deviceID:$id,name:$id,addresses:[$address,"dynamic"]}')" "$KEY_REMOTE" >/dev/null
 fi
 
 # Create & share folders both ways
@@ -458,20 +781,14 @@ done
 spin_stop
 echo
 
-# Restart and quick connect checks
+# Load the final configuration.
 info "Restarting Syncthing..."
 restart_st
-ssh_run "sudo supervisorctl restart syncthing >/dev/null 2>&1 || true"
-
-# Connectivity wait with spinner
-spin_start "Waiting for devices to connect..."
-# best-effort: just sleep a few seconds; Syncthing connects on its own
-sleep 5
-spin_stop
+ssh_run "sudo supervisorctl restart syncthing >/dev/null"
 
 stop_remote_tunnel || true
 
-green "Done. Syncthing installed and paired successfully!"
+green "Syncthing installed; devices and folders configured."
 echo "Folders are now shared on both servers."
 echo "Check:  supervisorctl status syncthing"
 echo "GUI:    http://<local-ip>:8384. Make sure to set up a tunnel if you are accesing from a remote location."

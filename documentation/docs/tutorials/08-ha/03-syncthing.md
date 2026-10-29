@@ -12,7 +12,7 @@ This guide uses an **automated script** to install & pair Syncthing between two 
 ## What It Does
 
 - Installs Syncthing on **both** servers
-- Configured Syncthing
+- Configures Syncthing
 - Pairs devices automatically using REST + CLI
 - Creates and shares these folders on **both** sides:
 
