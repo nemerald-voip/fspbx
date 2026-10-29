@@ -125,7 +125,10 @@ class SyncthingNetworkSetup
 {
     public const RELAY = 'dynamic+https://relays.syncthing.net/endpoint';
 
-    public function __construct(public string $rulesDir = '/etc/iptables') {}
+    public function __construct(
+        public string $rulesDir = '/etc/iptables',
+        public string $ufwConfigPath = '/etc/ufw/ufw.conf',
+    ) {}
 
     /** Configure a newly generated file before Syncthing is first started. */
     public function initializeConfig(string $path): void
@@ -352,7 +355,15 @@ class SyncthingNetworkSetup
         if (trim($this->command(['systemctl', 'is-enabled', 'netfilter-persistent'], check: false)['stdout']) !== 'enabled') {
             throw new RuntimeException('Enabled netfilter-persistent is required to preserve the TCP rule after reboot');
         }
-        foreach (['ufw', 'firewalld', 'nftables'] as $service) {
+        // UFW's oneshot unit can remain active after UFW is disabled or
+        // removed. Check its boot configuration and actual chains instead.
+        if (file_exists($this->ufwConfigPath)) {
+            $count = preg_match_all('/^\h*ENABLED\h*=(.*)$/m', self::read($this->ufwConfigPath), $matches);
+            if ($count !== 1 || !preg_match('/^(?:no|"no"|\'no\')\h*(?:#.*)?$/', trim($matches[1][0]))) {
+                throw new RuntimeException('UFW is enabled or its configuration is unclear; manual review required');
+            }
+        }
+        foreach (['firewalld', 'nftables'] as $service) {
             if ($this->command(['systemctl', 'is-active', $service], check: false)['code'] === 0) {
                 throw new RuntimeException($service.' manages this firewall; manual review required');
             }
@@ -367,6 +378,10 @@ class SyncthingNetworkSetup
             $binary = $family === 4 ? 'iptables' : 'ip6tables';
             $path = $this->rulesDir.'/rules.v'.$family;
             $original = $updated = self::read($path);
+            $live = $this->command([$binary, '-w', '5', '-S'])['stdout'];
+            if (preg_match('/^(?:-N |:)ufw-/m', $original."\n".$live)) {
+                throw new RuntimeException('UFW chains exist in the live or saved firewall; manual review required');
+            }
             foreach ($ips as $ip) {
                 $updated = self::addPersistentRule($updated, $this->firewallRule($ip));
             }

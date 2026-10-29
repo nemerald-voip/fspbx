@@ -126,7 +126,8 @@ class SyncthingNetworkRepairTest extends TestCase
     {
         $this->root = sys_get_temp_dir().'/syncthing-php-test-'.bin2hex(random_bytes(8));
         mkdir($this->root, 0700);
-        $this->repair = new SyncthingRepairHarness($this->root.'/state', $this->root.'/rules', [$this->root.'/config.xml'], $this->root.'/update.lock');
+        $this->repair = new SyncthingRepairHarness($this->root.'/state', $this->root.'/rules', [$this->root.'/config.xml'],
+            $this->root.'/update.lock', $this->root.'/ufw.conf');
         ob_start();
     }
 
@@ -512,6 +513,8 @@ class SyncthingNetworkRepairTest extends TestCase
                 if ($fail) {
                     throw new RuntimeException('Invalid saved rules');
                 }
+            } elseif ($args[0] === 'iptables' && $args[3] === '-S') {
+                return self::result('-P INPUT DROP');
             } elseif ($args[0] === 'iptables' && $args[3] === '-C') {
                 return self::result('', $live ? 0 : 1);
             } elseif ($args[0] === 'iptables' && $args[3] === '-I') {
@@ -541,6 +544,148 @@ class SyncthingNetworkRepairTest extends TestCase
     }
 
     public static function firewallCases(): array { return [[false], [true]]; }
+
+    private function firewallHarness(bool $installer): object
+    {
+        if (!$installer) {
+            return $this->repair;
+        }
+        if (!class_exists('SyncthingNetworkSetup', false)) {
+            $source = file_get_contents(__DIR__.'/../../install/install_syncthing.sh');
+            preg_match("/<<'SYNCTHING_SETUP_PHP'\\n(.*?)\\nSYNCTHING_SETUP_PHP/s", $source, $matches);
+            $this->assertArrayHasKey(1, $matches);
+            $start = strpos($matches[1], 'class SyncthingNetworkSetup');
+            $end = strpos($matches[1], "\ntry {");
+            $this->assertNotFalse($start);
+            $this->assertNotFalse($end);
+            // Load only the shipped class; never execute the installer entry
+            // point. The harness below replaces every host command.
+            eval('namespace {'.substr($matches[1], $start, $end - $start).'}');
+        }
+        return new class($this->root.'/rules', $this->root.'/ufw.conf') extends \SyncthingNetworkSetup
+        {
+            public ?Closure $run = null;
+            public array $commands = [];
+
+            public function command(array $args, ?string $input = null, int $timeout = 15, bool $check = true): array
+            {
+                $this->commands[] = $args;
+                if ($this->run === null) {
+                    throw new RuntimeException('Unexpected host command');
+                }
+                return ($this->run)($args, $input, $timeout, $check);
+            }
+        };
+    }
+
+    /** @dataProvider ufwStates */
+    public function test_ufw_detection_uses_configuration_and_rules_not_a_stale_service(
+        bool $installer, ?string $config, string $chains, ?string $error,
+    ): void {
+        $firewall = $this->firewallHarness($installer);
+        mkdir($firewall->rulesDir);
+        if ($config !== null) {
+            file_put_contents($firewall->ufwConfigPath, $config);
+        }
+        $originals = [];
+        foreach ([4, 6] as $family) {
+            $rules = "*filter\n:INPUT DROP [0:0]\n"
+                .($chains === 'saved'.$family ? ":ufw-user-input - [0:0]\n" : '')
+                ."-A INPUT -p tcp --dport 22 -j ACCEPT\nCOMMIT\n";
+            $originals[$family] = $rules;
+            file_put_contents($firewall->rulesDir.'/rules.v'.$family, $rules);
+        }
+        $inserted = [];
+        $firewall->run = function ($args) use ($chains, &$inserted) {
+            if ($args[0] === 'systemctl') {
+                // Model fspbx02: netfilter-persistent enabled, UFW's unit
+                // active/exited, and no UFW executable. Never run ufw itself.
+                if ($args === ['systemctl', 'is-enabled', 'netfilter-persistent']) {
+                    return self::result('enabled');
+                }
+                $this->assertSame('is-active', $args[1]);
+                return self::result($args[2] === 'ufw' ? 'active' : 'inactive', $args[2] === 'ufw' ? 0 : 3);
+            }
+            if (in_array($args[0], ['iptables-restore', 'ip6tables-restore'], true)) {
+                $this->assertSame('--test', $args[1]);
+                return self::result();
+            }
+            $this->assertContains($args[0], ['iptables', 'ip6tables']);
+            if ($args[3] === '-S') {
+                $family = $args[0] === 'iptables' ? 4 : 6;
+                return self::result("-P INPUT DROP\n".($chains === 'live'.$family ? "-N ufw-user-input\n" : ''));
+            }
+            if ($args[3] === '-C') {
+                return self::result('', isset($inserted[$args[0]]) ? 0 : 1);
+            }
+            $this->assertSame('-I', $args[3]);
+            $inserted[$args[0]] = true;
+            return self::result();
+        };
+        $failure = null;
+        try {
+            $firewall->allowPeers([self::IP, '2001:db8::12']);
+            $firewall->allowPeers([self::IP, '2001:db8::12']);
+        } catch (RuntimeException $caught) {
+            $failure = $caught;
+        }
+        if ($error !== null) {
+            $this->assertNotNull($failure);
+            $this->assertStringContainsString($error, $failure->getMessage());
+            $this->assertSame([], $inserted);
+            foreach ($originals as $family => $original) {
+                $this->assertSame($original, file_get_contents($firewall->rulesDir.'/rules.v'.$family));
+            }
+        } else {
+            $this->assertNull($failure, $failure?->getMessage() ?? '');
+            $this->assertSame(['iptables' => true, 'ip6tables' => true], $inserted);
+            foreach ([4, 6] as $family) {
+                $saved = file_get_contents($firewall->rulesDir.'/rules.v'.$family);
+                $this->assertSame(1, substr_count($saved, '--dport 22000'));
+                $this->assertStringContainsString('-A INPUT -p tcp --dport 22 -j ACCEPT', $saved);
+            }
+            $this->assertCount(2, array_filter($firewall->commands, fn ($args) => ($args[3] ?? '') === '-I'));
+        }
+    }
+
+    public static function ufwStates(): array
+    {
+        $cases = [
+            'disabled' => ["ENABLED=no\n", '', null],
+            'removed' => [null, '', null],
+            'quoted disabled' => ["# Disabled\nENABLED=\"no\" # Leftover config\n", '', null],
+            'enabled' => ["ENABLED=yes\n", '', 'UFW is enabled'],
+            'ambiguous config' => ["ENABLED=no\nENABLED=yes\n", '', 'configuration is unclear'],
+            'live IPv4' => ["ENABLED=no\n", 'live4', 'UFW chains'],
+            'live IPv6' => ["ENABLED=no\n", 'live6', 'UFW chains'],
+            'saved IPv4' => ["ENABLED=no\n", 'saved4', 'UFW chains'],
+            'saved IPv6' => ["ENABLED=no\n", 'saved6', 'UFW chains'],
+            'removed with live rules' => [null, 'live4', 'UFW chains'],
+        ];
+        $result = [];
+        foreach ([false, true] as $installer) {
+            foreach ($cases as $name => $values) {
+                $result[($installer ? 'installer ' : 'update ').$name] = [$installer, ...$values];
+            }
+        }
+        return $result;
+    }
+
+    public function test_enabled_ufw_warns_without_reconfiguring_syncthing_or_failing_the_update(): void
+    {
+        $api = $this->preparationFixture();
+        $api->devices[0]['addresses'] = ['tcp://'.self::IP.':22000', 'dynamic'];
+        file_put_contents($this->repair->ufwConfigPath, "ENABLED=yes\n");
+        $rules = file_get_contents($this->repair->rulesDir.'/rules.v4');
+
+        $this->assertTrue($this->repair->apply());
+
+        $this->assertStringContainsString('UFW is enabled', ob_get_contents());
+        $this->assertStringContainsString('Continuing the application update', ob_get_contents());
+        $this->assertFalse($api->afterRestart);
+        $this->assertSame(self::XML, file_get_contents($api->config));
+        $this->assertSame($rules, file_get_contents($this->repair->rulesDir.'/rules.v4'));
+    }
 
     public function test_repair_returns_after_local_restart_without_reconnection_checks(): void
     {

@@ -23,6 +23,7 @@ class Update212
             '/home/www-data/.config/syncthing/config.xml',
         ],
         private string $lockPath = '/run/lock/fspbx-update-2.1.2.lock',
+        public string $ufwConfigPath = '/etc/ufw/ufw.conf',
     ) {}
 
     public function apply(): bool
@@ -256,7 +257,15 @@ class Update212
         if (trim($this->command(['systemctl', 'is-enabled', 'netfilter-persistent'], check: false)['stdout']) !== 'enabled') {
             throw new RuntimeException('Enabled netfilter-persistent is required to preserve the TCP rule after reboot');
         }
-        foreach (['ufw', 'firewalld', 'nftables'] as $service) {
+        // UFW's oneshot unit can remain active after UFW is disabled or
+        // removed. Check its boot configuration and actual chains instead.
+        if (file_exists($this->ufwConfigPath)) {
+            $count = preg_match_all('/^\h*ENABLED\h*=(.*)$/m', self::read($this->ufwConfigPath), $matches);
+            if ($count !== 1 || !preg_match('/^(?:no|"no"|\'no\')\h*(?:#.*)?$/', trim($matches[1][0]))) {
+                throw new RuntimeException('UFW is enabled or its configuration is unclear; manual review required');
+            }
+        }
+        foreach (['firewalld', 'nftables'] as $service) {
             if ($this->command(['systemctl', 'is-active', $service], check: false)['code'] === 0) {
                 throw new RuntimeException($service.' manages this firewall; manual review required');
             }
@@ -271,6 +280,10 @@ class Update212
             $binary = $family === 4 ? 'iptables' : 'ip6tables';
             $path = $this->rulesDir.'/rules.v'.$family;
             $original = $updated = self::read($path);
+            $live = $this->command([$binary, '-w', '5', '-S'])['stdout'];
+            if (preg_match('/^(?:-N |:)ufw-/m', $original."\n".$live)) {
+                throw new RuntimeException('UFW chains exist in the live or saved firewall; manual review required');
+            }
             foreach ($ips as $ip) {
                 $updated = self::addPersistentRule($updated, $this->firewallRule($ip));
             }
