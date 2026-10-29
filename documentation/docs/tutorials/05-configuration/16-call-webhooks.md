@@ -108,11 +108,44 @@ Use `interaction_id`, `target.type`, and the target UUID as the screen-pop lifec
 
 ## Verify requests
 
-Requests include these headers:
+By default, requests include these headers:
 
 - `Signature`: lowercase HMAC-SHA256 of the exact JSON request body using the signing secret.
 - `Timestamp`: Unix timestamp generated for the delivery attempt.
 - `X-FS-PBX-Event-ID`: the event UUID.
 - `X-FS-PBX-Event-Type`: the event type.
+- `User-Agent`: `FS-PBX-Call-Webhooks/1.0`.
 
 Reject stale timestamps according to your security policy and compare signatures with a constant-time comparison. Deduplicate requests by the event ID because a retry can deliver the same event more than once. Strict delivery order is not guaranteed.
+
+## Customize header branding
+
+Set one environment variable to replace `FS-PBX` in both event header names and the User-Agent value for every account on the server:
+
+```dotenv
+CALL_WEBHOOK_BRAND=Acme
+```
+
+Use letters, numbers, and hyphens without spaces. Unset or blank values keep the default `FS-PBX` branding. With `Acme`, requests use:
+
+```text
+X-Acme-Event-ID: <event UUID>
+X-Acme-Event-Type: call.ended
+User-Agent: Acme-Call-Webhooks/1.0
+```
+
+The event values, JSON payload, `Signature`, and `Timestamp` stay the same. Update receivers that read the old event header names before switching.
+
+After editing `.env`, refresh Laravel configuration:
+
+```bash
+php artisan config:cache
+```
+
+If the call webhook listener is running, restart it to load the new configuration:
+
+```bash
+sudo supervisorctl restart fs-esl-listener-call-webhooks
+```
+
+Already queued deliveries and their retries retain the headers captured when they were queued. Use **Test Webhook** to check the new headers at your endpoint.
