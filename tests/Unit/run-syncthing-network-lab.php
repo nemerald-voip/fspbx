@@ -61,7 +61,9 @@ class SyncthingLabNode
         mkdir($directory, 0700, true);
         check(is_file($binary) && is_executable($binary), 'Pass existing executable Syncthing binaries');
         $this->binary = $directory.'/syncthing';
-        symlink(realpath($binary), $this->binary);
+        // The monitor launches its resolved executable path. Use the installed
+        // basename for both processes, rather than the versioned download name.
+        check(copy($binary, $this->binary) && chmod($this->binary, 0700), 'Cannot prepare the lab executable');
         $this->home = $directory.'/config';
         $this->data = $directory.'/data';
         mkdir($this->data, 0700);
@@ -115,6 +117,15 @@ class SyncthingLabNode
     public function pid(): int
     {
         return proc_get_status($this->process)['pid'];
+    }
+
+    public function workerPid(): int
+    {
+        $sockets = Repair::udpSockets((new Repair())->command(['ss', '-H', '-u', '-a', '-n', '-p'])['stdout']);
+        $owners = array_values(array_unique(array_column(array_filter($sockets,
+            fn ($socket) => $socket[0] === $this->ip && $socket[1] === $this->udp), 2)));
+        check(count($owners) === 1, 'Cannot identify the lab socket owner');
+        return $owners[0];
     }
 
     public function stop(): void
@@ -185,7 +196,10 @@ class SyncthingLabRepair extends Repair
 
     public function prepare(array $hints): ?array
     {
-        // Skip real firewall/FreeSWITCH preparation, covered by unit tests.
+        // Exercise real monitor/worker ownership; only the Supervisor response
+        // is simulated. Skip host firewall/FreeSWITCH preparation in this lab.
+        $this->assertSupervisorOwnsProcess('syncthing RUNNING pid '.$this->node->pid().', uptime 0:00:01',
+            $this->node->workerPid());
         return [$this->node->api, ['phase' => 'preparing', 'my_id' => $this->node->id,
             'peers' => [$this->peer->id => $this->peer->ip], 'config' => $this->node->api->config]];
     }

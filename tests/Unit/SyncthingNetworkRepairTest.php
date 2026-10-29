@@ -67,6 +67,7 @@ class SyncthingRepairHarness extends Repair
     public ?SyncthingApi $fakeApi = null;
     public bool $overrideDetection = false;
     public ?array $conflict = null;
+    public array $processes = [];
 
     public function command(array $args, ?string $input = null, int $timeout = 15, bool $check = true): array
     {
@@ -85,6 +86,11 @@ class SyncthingRepairHarness extends Repair
     protected function api(string $path): SyncthingApi
     {
         return $this->fakeApi ?? parent::api($path);
+    }
+
+    protected function processIdentity(int $pid): array
+    {
+        return $this->processes[$pid] ?? throw new RuntimeException('Cannot identify Syncthing process '.$pid);
     }
 
     public function checkLocalCertificate(SyncthingApi $api, string $id): void {}
@@ -424,6 +430,10 @@ class SyncthingNetworkRepairTest extends TestCase
         $this->repair->fakeApi = $api;
         $this->repair->overrideDetection = true;
         $this->repair->conflict = ['pid' => 123];
+        $this->repair->processes = [
+            123 => ['name' => 'syncthing', 'parent' => 1, 'uid' => 33, 'binary' => [8, 1234]],
+            456 => ['name' => 'syncthing', 'parent' => 1, 'uid' => 33, 'binary' => [8, 1234]],
+        ];
         $this->repair->run = fn ($args) => self::result(match ($args[0]) {
             'ss' => 'LISTEN 0 4096 *:8384 *:* users:(("syncthing",pid=123,fd=34))',
             'supervisorctl' => 'syncthing RUNNING pid 456, uptime 1:00:00',
@@ -431,6 +441,50 @@ class SyncthingNetworkRepairTest extends TestCase
         });
         $this->expectExceptionMessage('Supervisor does not own');
         $this->repair->repair(['PEER' => self::IP]);
+    }
+
+    public function test_supervisor_can_manage_the_socket_owner_directly(): void
+    {
+        $this->repair->assertSupervisorOwnsProcess('syncthing RUNNING pid 970, uptime 12 days', 970);
+        $this->assertSame([], $this->repair->commands);
+    }
+
+    public function test_tx01_monitor_and_worker_layout_is_accepted(): void
+    {
+        $this->repair->processes = [
+            958 => ['name' => 'syncthing', 'parent' => 849, 'uid' => 33, 'binary' => [8, 1234]],
+            970 => ['name' => 'syncthing', 'parent' => 958, 'uid' => 33, 'binary' => [8, 1234]],
+        ];
+        $this->repair->assertSupervisorOwnsProcess('syncthing RUNNING pid 958, uptime 12 days, 20:10:06', 970);
+        $this->assertSame([], $this->repair->commands);
+    }
+
+    /** @dataProvider unrelatedWorkers */
+    public function test_unrelated_or_different_worker_process_is_rejected(array $changes): void
+    {
+        $this->repair->processes = [
+            958 => ['name' => 'syncthing', 'parent' => 849, 'uid' => 33, 'binary' => [8, 1234]],
+            970 => array_replace(['name' => 'syncthing', 'parent' => 958, 'uid' => 33, 'binary' => [8, 1234]], $changes),
+        ];
+        $this->expectExceptionMessage('Supervisor does not own');
+        $this->repair->assertSupervisorOwnsProcess('syncthing RUNNING pid 958, uptime 12 days', 970);
+    }
+
+    public static function unrelatedWorkers(): array
+    {
+        return [[['parent' => 999]], [['uid' => 0]], [['binary' => [8, 5678]]], [['name' => 'php']]];
+    }
+
+    public function test_missing_worker_metadata_is_not_assumed_to_match(): void
+    {
+        $this->expectExceptionMessage('Cannot identify Syncthing process 970');
+        $this->repair->assertSupervisorOwnsProcess('syncthing RUNNING pid 958, uptime 12 days', 970);
+    }
+
+    public function test_stopped_supervisor_program_is_rejected(): void
+    {
+        $this->expectExceptionMessage('Supervisor is not running');
+        $this->repair->assertSupervisorOwnsProcess('syncthing STOPPED Not started', 970);
     }
 
     public function test_existing_restart_requirement_is_preserved(): void

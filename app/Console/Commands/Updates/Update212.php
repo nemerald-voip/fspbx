@@ -480,6 +480,43 @@ class Update212
         return new Update212SyncthingApi($path);
     }
 
+    protected function processIdentity(int $pid): array
+    {
+        $status = self::read('/proc/'.$pid.'/status');
+        $binary = @stat('/proc/'.$pid.'/exe');
+        if (!preg_match('/^Name:\s+(\S+)$/m', $status, $name)
+            || !preg_match('/^PPid:\s+(\d+)$/m', $status, $parent)
+            || !preg_match('/^Uid:\s+\d+\s+(\d+)/m', $status, $uid)
+            || $binary === false) {
+            throw new RuntimeException('Cannot identify Syncthing process '.$pid);
+        }
+
+        return ['name' => $name[1], 'parent' => (int) $parent[1], 'uid' => (int) $uid[1],
+            'binary' => [$binary['dev'], $binary['ino']]];
+    }
+
+    public function assertSupervisorOwnsProcess(string $status, int $socketPid): void
+    {
+        if (!preg_match('/^syncthing\s+RUNNING\s+pid (\d+),/', trim($status), $supervised)) {
+            throw new RuntimeException('Supervisor is not running the Syncthing program');
+        }
+        $supervisorPid = (int) $supervised[1];
+        if ($supervisorPid === $socketPid) {
+            return;
+        }
+
+        // Syncthing keeps a monitor process even with STNORESTART=1. Supervisor
+        // manages that parent while its worker owns the API and sync sockets.
+        $worker = $this->processIdentity($socketPid);
+        $monitor = $this->processIdentity($supervisorPid);
+        if ($worker['parent'] !== $supervisorPid || $worker['name'] !== 'syncthing'
+            || $monitor['name'] !== 'syncthing' || $worker['uid'] !== $monitor['uid']
+            || $worker['binary'] !== $monitor['binary']) {
+            throw new RuntimeException('Supervisor does not own the Syncthing process being repaired'
+                .' (Supervisor PID '.$supervisorPid.', socket PID '.$socketPid.')');
+        }
+    }
+
     public function prepare(array $hints): ?array
     {
         if (in_array($this->load()['phase'] ?? '', ['applying', 'rollback-failed'], true)) {
@@ -516,9 +553,7 @@ class Update212
         $this->checkLocalCertificate($api, $myId);
         $peers = $this->peerPlan($config, $myId, $api->request('system/connections')['connections'], $hints);
         $status = $this->command(['supervisorctl', 'status', 'syncthing'])['stdout'];
-        if (!preg_match('/^syncthing\s+RUNNING\s+pid (\d+),/', $status, $supervised) || (int) $supervised[1] !== $owners[0]) {
-            throw new RuntimeException('Supervisor does not own the Syncthing process being repaired');
-        }
+        $this->assertSupervisorOwnsProcess($status, $owners[0]);
         if (is_link($this->stateDir)) {
             throw new RuntimeException('Repair directory must not be a symlink');
         }
