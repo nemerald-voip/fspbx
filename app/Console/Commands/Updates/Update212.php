@@ -301,7 +301,11 @@ class Update212
 
     public function prepareFirewall(array $peers): void
     {
-        $this->allowPeers($peers, $this->stateDir.'/backup');
+        $ips = [];
+        foreach ($peers as $addresses) {
+            array_push($ips, ...(array) $addresses);
+        }
+        $this->allowPeers($ips, $this->stateDir.'/backup');
     }
 
     public function load(): array
@@ -416,7 +420,24 @@ class Update212
         return array_values(array_unique($listeners));
     }
 
-    public function peerPlan(array $config, string $myId, array $connections, array $hints): array
+    protected function peerIp(string $endpoint, bool $defaultPortOnly = true): ?string
+    {
+        // Older discovery responses contain bare IP:port endpoints.
+        $url = @parse_url(str_contains($endpoint, '://') ? $endpoint : 'tcp://'.$endpoint);
+        if (!is_array($url) || !in_array($url['scheme'] ?? '', ['tcp', 'tcp4', 'tcp6', 'quic', 'quic4', 'quic6'], true)
+            || !isset($url['host']) || array_diff(array_keys($url), ['scheme', 'host', 'port'])
+            || ($url['port'] ?? 22000) < 1 || ($defaultPortOnly && ($url['port'] ?? 22000) !== 22000)) {
+            return null;
+        }
+        try {
+            return $this->address(trim($url['host'], '[]'));
+        } catch (RuntimeException) {
+            return null;
+        }
+    }
+
+    /** @return array<string, list<string>> Peer device IDs mapped to server IPs. */
+    public function peerPlan(array $config, string $myId, array $connections, array $hints, array $discovery = []): array
     {
         $peers = [];
         foreach ($config['devices'] as $device) {
@@ -433,16 +454,39 @@ class Update212
                 }
             }
             $connection = $connections[$id] ?? [];
-            $detail = $connection['primary'] ?? $connection;
+            $ips = [];
             // Relay addresses identify the relay, never the paired server.
-            if (!empty($connection['connected']) && preg_match('/^(tcp|quic)-/', $detail['type'] ?? '')) {
-                $endpoint = $detail['address'];
-                $peers[$id] = $this->address(trim(substr($endpoint, 0, strrpos($endpoint, ':')), '[]'));
-            } elseif (isset($hints[$id])) {
-                $peers[$id] = $this->address($hints[$id]);
-            } else {
-                throw new RuntimeException('No authenticated direct address for peer '.substr($id, 0, 7));
+            if (!empty($connection['connected'])) {
+                $details = array_merge([$connection['primary'] ?? [], $connection], $connection['secondary'] ?? []);
+                foreach ($details as $detail) {
+                    if (preg_match('/^(tcp|quic)-(client|server)$/', $detail['type'] ?? '')
+                        && ($ip = $this->peerIp($detail['address'] ?? '', false)) !== null) {
+                        $ips = [$ip];
+                        break;
+                    }
+                }
             }
+            if (!$ips && isset($hints[$id])) {
+                $ips = array_map($this->address(...), (array) $hints[$id]);
+            }
+            if (!$ips) {
+                $cached = in_array('dynamic', $device['addresses'], true) ? ($discovery[$id] ?? []) : [];
+                $cached = $cached['addresses'] ?? $cached;
+                // These are address candidates, not proof of a live connection.
+                // Use only this configured device's known endpoints; Syncthing
+                // still authenticates its device ID when it connects. Keep all
+                // usable candidates instead of guessing which interface works.
+                foreach (array_merge($device['addresses'], is_array($cached) ? $cached : []) as $endpoint) {
+                    if (is_string($endpoint) && ($ip = $this->peerIp($endpoint)) !== null) {
+                        $ips[] = $ip;
+                    }
+                }
+            }
+            if (!$ips) {
+                throw new RuntimeException('No usable peer IP in Syncthing connections, configuration or discovery cache for '.substr($id, 0, 7));
+            }
+            $peers[$id] = array_values(array_unique($ips));
+            sort($peers[$id]);
         }
         if (!$peers) {
             throw new RuntimeException('No configured Syncthing peers');
@@ -551,7 +595,15 @@ class Update212
         self::listenersWithoutQuic($config['options']);
         $myId = $api->request('system/status')['myID'];
         $this->checkLocalCertificate($api, $myId);
-        $peers = $this->peerPlan($config, $myId, $api->request('system/connections')['connections'], $hints);
+        try {
+            $discovery = $api->request('system/discovery');
+        } catch (Throwable) {
+            // Discovery is a fallback. An unavailable cache must not prevent
+            // using a live connection or an explicitly configured peer IP.
+            $discovery = [];
+        }
+        $peers = $this->peerPlan($config, $myId, $api->request('system/connections')['connections'], $hints,
+            is_array($discovery) ? $discovery : []);
         $status = $this->command(['supervisorctl', 'status', 'syncthing'])['stdout'];
         $this->assertSupervisorOwnsProcess($status, $owners[0]);
         if (is_link($this->stateDir)) {
@@ -571,7 +623,7 @@ class Update212
             'my_id' => $myId, 'peers' => $peers, 'conflict' => $conflict];
         $this->save($state);
         $this->prepareFirewall($peers);
-        echo 'Syncthing: TCP 22000 allowed from '.implode(', ', $peers).".\n";
+        echo 'Syncthing: TCP 22000 allowed from '.implode(', ', array_unique(array_merge(...array_values($peers)))).".\n";
         return [$api, $state];
     }
 
@@ -642,8 +694,12 @@ class Update212
             throw new RuntimeException('Unrelated Syncthing changes are awaiting restart');
         }
         $config = $api->request('config');
-        if ($this->peerPlan($config, $state['my_id'], $api->request('system/connections')['connections'], $state['peers']) != $state['peers']) {
-            throw new RuntimeException('Peer membership or address changed during repair');
+        // Accept backups from the original update, which stored one IP per
+        // peer. Use the prepared addresses even if a connection changes while
+        // the firewall is being saved; no second live connection is required.
+        $state['peers'] = array_map(fn ($ips) => (array) $ips, $state['peers']);
+        if ($this->peerPlan($config, $state['my_id'], [], $state['peers']) != $state['peers']) {
+            throw new RuntimeException('Peer membership changed during repair');
         }
         $target = ['listenAddresses' => self::listenersWithoutQuic($config['options']), 'localAnnounceEnabled' => false];
         $addresses = [];
@@ -657,8 +713,8 @@ class Update212
         $state['phase'] = 'applying';
         $this->save($state); // Journal precedes every configuration mutation.
         try {
-            foreach ($state['peers'] as $id => $ip) {
-                $api->request('config/devices/'.$id, ['addresses' => array_values(array_unique(array_merge([self::tcpUrl($ip)], $addresses[$id])))]);
+            foreach ($state['peers'] as $id => $ips) {
+                $api->request('config/devices/'.$id, ['addresses' => array_values(array_unique(array_merge(array_map(self::tcpUrl(...), $ips), $addresses[$id])))]);
             }
             $api->request('config/options', $target);
             $this->command(['supervisorctl', 'restart', 'syncthing'], timeout: 45);

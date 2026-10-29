@@ -200,8 +200,11 @@ class SyncthingLabRepair extends Repair
         // is simulated. Skip host firewall/FreeSWITCH preparation in this lab.
         $this->assertSupervisorOwnsProcess('syncthing RUNNING pid '.$this->node->pid().', uptime 0:00:01',
             $this->node->workerPid());
+        // Resolve the real configuration without a live connection snapshot,
+        // exercising the same fallback used while production peers reconnect.
+        $peers = $this->peerPlan($this->node->api->request('config'), $this->node->id, [], []);
         return [$this->node->api, ['phase' => 'preparing', 'my_id' => $this->node->id,
-            'peers' => [$this->peer->id => $this->peer->ip], 'config' => $this->node->api->config]];
+            'peers' => $peers, 'config' => $this->node->api->config]];
     }
 
     public function command(array $args, ?string $input = null, int $timeout = 15, bool $check = true): array

@@ -23,6 +23,9 @@ class FakeSyncthingApi extends SyncthingApi
     public bool $afterRestart = false;
     public bool $failPatch = false;
     public bool $restartRequired = false;
+    public array $connections = ['PEER' => ['connected' => false]];
+    public array $discovery = [];
+    public bool $discoveryUnavailable = false;
 
     public function __construct(public string $config)
     {
@@ -54,7 +57,9 @@ class FakeSyncthingApi extends SyncthingApi
             'config' => ['options' => $this->options, 'devices' => $this->devices],
             // A disconnected peer is intentional: the retained address hint is
             // enough once preparation has identified it. No reconnect wait.
-            'system/connections' => ['connections' => ['PEER' => ['connected' => false]]],
+            'system/connections' => ['connections' => $this->connections],
+            'system/discovery' => $this->discoveryUnavailable
+                ? throw new RuntimeException('Discovery unavailable') : $this->discovery,
             default => throw new RuntimeException('Unexpected API read: '.$path),
         };
     }
@@ -68,6 +73,8 @@ class SyncthingRepairHarness extends Repair
     public bool $overrideDetection = false;
     public ?array $conflict = null;
     public array $processes = [];
+
+    protected function assertRoot(): void {}
 
     public function command(array $args, ?string $input = null, int $timeout = 15, bool $check = true): array
     {
@@ -109,7 +116,7 @@ class SyncthingNetworkRepairTest extends TestCase
     {
         $this->root = sys_get_temp_dir().'/syncthing-php-test-'.bin2hex(random_bytes(8));
         mkdir($this->root, 0700);
-        $this->repair = new SyncthingRepairHarness($this->root.'/state', $this->root.'/rules', [$this->root.'/config.xml']);
+        $this->repair = new SyncthingRepairHarness($this->root.'/state', $this->root.'/rules', [$this->root.'/config.xml'], $this->root.'/update.lock');
         ob_start();
     }
 
@@ -234,7 +241,7 @@ class SyncthingNetworkRepairTest extends TestCase
         [$api] = $this->fixture();
         $connection = ['connected' => true, 'type' => 'tcp-server', 'address' => self::IP.':50001'];
         foreach ([$connection, ['connected' => true, 'primary' => $connection]] as $value) {
-            $this->assertSame(['PEER' => self::IP], $this->repair->peerPlan($api->request('config'), 'SELF', ['PEER' => $value], ['PEER' => '198.51.100.1']));
+            $this->assertSame(['PEER' => [self::IP]], $this->repair->peerPlan($api->request('config'), 'SELF', ['PEER' => $value], ['PEER' => '198.51.100.1']));
         }
     }
 
@@ -242,9 +249,129 @@ class SyncthingNetworkRepairTest extends TestCase
     {
         [$api] = $this->fixture();
         $connection = ['connected' => true, 'type' => 'relay-client', 'address' => '192.0.2.44:443'];
-        $this->assertSame(['PEER' => self::IP], $this->repair->peerPlan($api->request('config'), 'SELF', ['PEER' => $connection], ['PEER' => self::IP]));
-        $this->expectExceptionMessage('No authenticated direct address');
+        $this->assertSame(['PEER' => [self::IP]], $this->repair->peerPlan($api->request('config'), 'SELF', ['PEER' => $connection], ['PEER' => self::IP]));
+        $this->expectExceptionMessage('No usable peer IP');
         $this->repair->peerPlan($api->request('config'), 'SELF', ['PEER' => $connection], []);
+    }
+
+    public function test_direct_secondary_connection_is_used_when_primary_is_a_relay(): void
+    {
+        [$api] = $this->fixture();
+        $connection = ['connected' => true,
+            'primary' => ['type' => 'relay-client', 'address' => '192.0.2.44:22067'],
+            'secondary' => [['type' => 'tcp-server', 'address' => self::IP.':50001']]];
+        $this->assertSame(['PEER' => [self::IP]],
+            $this->repair->peerPlan($api->request('config'), 'SELF', ['PEER' => $connection], []));
+    }
+
+    /** @dataProvider cachedConnections */
+    public function test_disconnected_and_relayed_peers_use_their_known_addresses(array $connection, bool $legacyCache): void
+    {
+        [$api] = $this->fixture();
+        $cached = ['tcp://172.30.10.11:22000', 'quic://172.30.10.11:22000',
+            'tcp://[2001:db8::11]:22000', '172.30.10.11:22000', 'relay://192.0.2.44:22067/?id=RELAY'];
+        $discovery = ['PEER' => $legacyCache ? $cached : ['addresses' => $cached],
+            'UNCONFIGURED' => ['addresses' => ['tcp://192.0.2.99:22000']]];
+        $this->assertSame(['PEER' => ['172.30.10.11', '2001:db8::11']],
+            $this->repair->peerPlan($api->request('config'), 'SELF', ['PEER' => $connection], [], $discovery));
+    }
+
+    public static function cachedConnections(): array
+    {
+        return [[['connected' => false], false], [['connected' => false], true],
+            [['connected' => true, 'primary' => ['type' => 'relay-client', 'address' => '192.0.2.44:22067']], false]];
+    }
+
+    public function test_explicit_peer_ip_does_not_require_a_connection_or_discovery(): void
+    {
+        [$api] = $this->fixture();
+        $api->devices[0]['addresses'] = ['tcp://172.30.10.11:22000', 'dynamic'];
+        $this->assertSame(['PEER' => ['172.30.10.11']],
+            $this->repair->peerPlan($api->request('config'), 'SELF', [], []));
+    }
+
+    public function test_static_only_peer_does_not_gain_discovery_addresses(): void
+    {
+        [$api] = $this->fixture();
+        $api->devices[0]['addresses'] = ['tcp://172.30.10.11:22000'];
+        $this->assertSame(['PEER' => ['172.30.10.11']], $this->repair->peerPlan($api->request('config'), 'SELF', [], [],
+            ['PEER' => ['addresses' => ['tcp://192.0.2.99:22000']]]));
+    }
+
+    public function test_unusable_or_relay_cache_entries_never_become_firewall_sources(): void
+    {
+        [$api] = $this->fixture();
+        $discovery = ['PEER' => ['addresses' => ['tcp://0.0.0.0:22000', 'tcp://[::]:22000',
+            'tcp://127.0.0.1:22000', 'tcp://[fe80::1]:22000', 'tcp://224.0.0.1:22000',
+            'tcp://169.254.1.1:22000', 'relay://192.0.2.44:22067', 'https://192.0.2.44:22000',
+            'tcp://192.0.2.44:443', 'tcp://user@192.0.2.44:22000', 'tcp://192.0.2.44:22000/path',
+            'tcp://192.0.2.44:22000?x=y', 'tcp://192.0.2.44:0', 'tcp://192.0.2.44:999999',
+            'tcp://some-host:22000', null]],
+            'UNCONFIGURED' => ['addresses' => ['tcp://192.0.2.99:22000']]];
+        $this->expectExceptionMessage('No usable peer IP');
+        $this->repair->peerPlan($api->request('config'), 'SELF', [], [], $discovery);
+    }
+
+    /** @dataProvider preparationCases */
+    public function test_prepare_and_configure_work_without_a_live_connection(bool $cacheUnavailable): void
+    {
+        [$api] = $this->fixture();
+        $api->discoveryUnavailable = $cacheUnavailable;
+        if ($cacheUnavailable) {
+            $api->devices[0]['addresses'] = ['tcp://'.self::IP.':22000', 'dynamic'];
+        } else {
+            $api->discovery = ['PEER' => ['addresses' => ['tcp://'.self::IP.':22000', 'tcp://172.30.10.11:22000']]];
+        }
+        $this->repair->fakeApi = $api;
+        $this->repair->overrideDetection = true;
+        $this->repair->conflict = ['pid' => 123];
+        mkdir($this->repair->rulesDir);
+        file_put_contents($this->repair->rulesDir.'/rules.v4', "*filter\n:INPUT DROP [0:0]\nCOMMIT\n");
+        $this->repair->run = function ($args) use ($api) {
+            if ($args[0] === 'ss') {
+                return self::result('LISTEN 0 4096 *:8384 *:* users:(("syncthing",pid=123,fd=34))');
+            }
+            if ($args[0] === 'supervisorctl') {
+                if ($args[1] === 'restart') {
+                    $api->afterRestart = true;
+                }
+                return self::result('syncthing RUNNING pid 123, uptime 1:00:00');
+            }
+            if ($args[0] === 'systemctl') {
+                return self::result($args[1] === 'is-enabled' ? 'enabled' : '', $args[1] === 'is-enabled' ? 0 : 3);
+            }
+            $this->assertContains($args[0], ['iptables-restore', 'iptables']);
+            return self::result('', ($args[3] ?? '') === '-C' ? 1 : 0);
+        };
+        $this->repair->repair();
+        $this->assertSame('complete', $this->repair->load()['phase']);
+        $this->assertFalse($api->options['localAnnounceEnabled']);
+        $this->assertSame($cacheUnavailable ? ['tcp://'.self::IP.':22000', 'dynamic']
+            : ['tcp://172.30.10.11:22000', 'tcp://'.self::IP.':22000', 'dynamic'], $api->devices[0]['addresses']);
+        $rules = file_get_contents($this->repair->rulesDir.'/rules.v4');
+        $this->assertStringContainsString('-s '.self::IP.'/32', $rules);
+        $this->assertSame($cacheUnavailable ? 1 : 2, substr_count($rules, '--dport 22000'));
+        $this->assertSame(1, count(array_filter($api->calls, fn ($call) => $call[0] === 'system/connections')));
+    }
+
+    public static function preparationCases(): array { return [[false], [true]]; }
+
+    public function test_unknown_peer_warns_without_changes_or_failing_the_main_update(): void
+    {
+        [$api] = $this->fixture();
+        $this->repair->fakeApi = $api;
+        $this->repair->overrideDetection = true;
+        $this->repair->conflict = ['pid' => 123];
+        $this->repair->run = function ($args) {
+            $this->assertSame(['ss', '-H', '-t', '-l', '-n', '-p'], $args);
+            return self::result('LISTEN 0 4096 *:8384 *:* users:(("syncthing",pid=123,fd=34))');
+        };
+        $this->assertTrue($this->repair->apply());
+        $this->assertStringContainsString('No usable peer IP', ob_get_contents());
+        $this->assertStringContainsString('Continuing the application update', ob_get_contents());
+        $this->assertSame(self::XML, file_get_contents($api->config));
+        $this->assertCount(1, $this->repair->commands);
+        $this->assertSame([], array_filter($api->calls, fn ($call) => $call[1] !== null));
     }
 
     public function test_paused_devices_require_review(): void
