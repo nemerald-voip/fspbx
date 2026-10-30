@@ -216,6 +216,7 @@ class ProFeaturesService
                         if ($mode === 'all_entitled') {
                             $this->enableInstalledModule($moduleName);
                         }
+                        $this->publishModuleAssets($moduleName, $installedVersion);
 
                         $result['skipped'][] = "{$moduleName}: already latest ({$installedVersion})";
                         continue;
@@ -263,6 +264,7 @@ class ProFeaturesService
 
     protected function downloadAndDeployModule(string $licenseKey, string $moduleName, string $version, string $artifactName): bool|string
     {
+        $backup = null;
         try {
             // Don't overwrite a git-managed module folder
             if ($this->isGitManagedModule($moduleName)) {
@@ -274,12 +276,20 @@ class ProFeaturesService
                 return __('Failed to download :artifact', ['artifact' => $artifactName]);
             }
 
-            $this->saveAndExtract($artifactName, $content, $moduleName);
+            $backup = $this->saveAndExtract($artifactName, $content, $moduleName);
             $this->enableInstalledModule($moduleName);
             $this->recordInstalledModuleVersion($moduleName, $version);
+            $this->publishModuleAssets($moduleName, $version);
+            if ($backup) $this->deleteDirectory($backup);
 
             return true;
         } catch (\Throwable $e) {
+            if ($backup && is_dir($backup)) {
+                $this->deleteDirectory(base_path("Modules/{$moduleName}"));
+                if (!rename($backup, base_path("Modules/{$moduleName}"))) {
+                    return __('Deployment failed: :error', ['error' => $e->getMessage().' Previous module source remains at '.$backup]);
+                }
+            }
             return __('Deployment failed: :error', ['error' => $e->getMessage()]);
         }
     }
@@ -295,6 +305,15 @@ class ProFeaturesService
         $version = is_array($data) ? ($data['version'] ?? null) : null;
 
         return is_string($version) && $version !== '' ? $version : null;
+    }
+
+    protected function publishModuleAssets(string $name, string $version): void
+    {
+        $directory = base_path("Modules/{$name}/Resources/dist");
+        if (!is_dir($directory)) return;
+        $assets = app(FrontendAssets::class);
+        $assets->validateModule($directory, $name, $version);
+        $assets->publish([$directory]);
     }
 
     protected function normalizeVersion(string $version): string
@@ -451,7 +470,7 @@ class ProFeaturesService
 
     // --- move your existing extraction helpers here (same as you already have) ---
 
-    protected function saveAndExtract(string $artifactName, string $artifactContent, string $moduleName): void
+    protected function saveAndExtract(string $artifactName, string $artifactContent, string $moduleName): ?string
     {
         $modulesPath = base_path('Modules');
         $filePath = "{$modulesPath}/{$artifactName}";
@@ -507,16 +526,29 @@ class ProFeaturesService
             if (! is_array($manifest)) {
                 throw new \RuntimeException("artifact {$artifactName} contains invalid module.json");
             }
+            // Reject missing/incompatible assets before replacing installed code.
+            if (is_dir($tmpExtractPath.'/Resources/assets/js/Pages')) {
+                $assets = app(FrontendAssets::class);
+                $metadata = $assets->validateModule(
+                    $tmpExtractPath.'/Resources/dist', $moduleName, $manifest['version'] ?? ''
+                );
+                $assets->verifyModuleSource($tmpExtractPath, $metadata);
+            }
             $manifest['version'] = $this->installedModuleVersion($moduleName) ?? '0.0.0';
             if (file_put_contents($manifestPath, json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES).PHP_EOL) === false) {
                 throw new \RuntimeException('Unable to prepare module version.');
             }
 
-            if (file_exists($extractPath)) {
-                $this->deleteDirectory($extractPath);
+            $backup = null;
+            if (is_dir($extractPath)) {
+                $backup = $modulesPath.'/.'.$moduleName.'-previous-'.bin2hex(random_bytes(8));
+                if (!rename($extractPath, $backup)) throw new \RuntimeException('Unable to preserve previous module source.');
             }
-
-            rename($tmpExtractPath, $extractPath);
+            if (!rename($tmpExtractPath, $extractPath)) {
+                if ($backup) rename($backup, $extractPath);
+                throw new \RuntimeException('Unable to activate module source.');
+            }
+            return $backup;
         } finally {
             if (file_exists($filePath)) {
                 unlink($filePath);
@@ -539,7 +571,7 @@ class ProFeaturesService
         $files = array_diff(scandir($dirPath), ['.', '..']);
         foreach ($files as $file) {
             $filePath = "{$dirPath}/{$file}";
-            is_dir($filePath) ? $this->deleteDirectory($filePath) : @unlink($filePath);
+            is_dir($filePath) && !is_link($filePath) ? $this->deleteDirectory($filePath) : @unlink($filePath);
         }
         @rmdir($dirPath);
     }

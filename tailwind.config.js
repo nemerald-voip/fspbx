@@ -4,7 +4,9 @@ export default {
         "./resources/**/*.blade.php",
         "./resources/**/*.js",
         "./resources/**/*.vue",
-        "./Modules/**/Resources/assets/js/**/*.vue", // Include module Vue files
+        ...(process.env.FSPBX_BUILD_MODULE
+            ? [`./Modules/${process.env.FSPBX_BUILD_MODULE}/Resources/assets/js/**/*.vue`]
+            : process.env.FSPBX_FRONTEND_BUILD ? [] : ["./Modules/**/Resources/assets/js/**/*.vue"]),
         './resources/js/vueform.config.js', // or where `vueform.config.js` is located. Change `.js` to `.ts` if required.
         './node_modules/@vueform/vueform/themes/tailwind/**/*.vue',
         './node_modules/@vueform/vueform/themes/tailwind/**/*.js',

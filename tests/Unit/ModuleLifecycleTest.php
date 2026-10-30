@@ -75,6 +75,7 @@ class ModuleLifecycleTest extends TestCase
     {
         mkdir(base_path('Modules/ContactCenter'), 0755, true);
         file_put_contents(base_path('Modules/ContactCenter/module.json'), '{"name":"ContactCenter","version":"1.0.57"}');
+        file_put_contents(base_path('Modules/ContactCenter/previous-source.php'), '<?php // old source');
         $tar = new \PharData($this->directory.'/release.tar');
         $tar->addFromString('module.json', '{"name":"ContactCenter","version":"1.0.58"}');
         $tar->compress(\Phar::GZ);
@@ -88,12 +89,33 @@ class ModuleLifecycleTest extends TestCase
         Process::fake(fn ($process) => in_array('modules:configure', $process->command)
             ? Process::result(exitCode: 1, errorOutput: 'Supervisor failed') : Process::result());
         $this->assertStringContainsString('Supervisor failed', $service->deploy());
+        $this->assertFileExists(base_path('Modules/ContactCenter/previous-source.php'));
         $this->assertSame('1.0.57', json_decode(file_get_contents(base_path('Modules/ContactCenter/module.json')), true)['version']);
         Process::fake();
         // Phar retains archive paths within one PHP process; a real retry boots
         // a new process. Use another fixture filename for this second extraction.
         $this->assertTrue($service->deploy('retry.tar.gz'));
         $this->assertSame('1.0.58', json_decode(file_get_contents(base_path('Modules/ContactCenter/module.json')), true)['version']);
+    }
+
+    public function test_missing_module_assets_are_rejected_before_existing_source_is_replaced(): void
+    {
+        mkdir(base_path('Modules/ContactCenter'), 0755, true);
+        file_put_contents(base_path('Modules/ContactCenter/module.json'), '{"name":"ContactCenter","version":"1.0.57"}');
+        file_put_contents(base_path('Modules/ContactCenter/existing.php'), '<?php // keep');
+        $tar = new \PharData($this->directory.'/missing-assets.tar');
+        $tar->addFromString('module.json', '{"name":"ContactCenter","version":"1.0.58"}');
+        $tar->addFromString('Resources/assets/js/Pages/Dashboard.vue', '<template>Dashboard</template>');
+        $tar->compress(\Phar::GZ);
+        $keygen = \Mockery::mock(KeygenAPIService::class);
+        $keygen->shouldReceive('downloadArtifact')->once()->andReturn(file_get_contents($this->directory.'/missing-assets.tar.gz'));
+        $service = new class($keygen) extends ProFeaturesService {
+            public function deploy(): bool|string { return $this->downloadAndDeployModule('test', 'ContactCenter', '1.0.58', 'module.tar.gz'); }
+        };
+        $this->assertStringContainsString('frontend.json', $service->deploy());
+        $this->assertFileExists(base_path('Modules/ContactCenter/existing.php'));
+        $this->assertSame('1.0.57', json_decode(file_get_contents(base_path('Modules/ContactCenter/module.json')), true)['version']);
+        Process::assertNothingRan();
     }
 
     private function configurationCommand(bool $automatic, array $failures = [], array $hooks = ['install', 'update', 'uninstall']): array

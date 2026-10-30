@@ -126,6 +126,10 @@ class UpdateApp extends Command
         $downloadedVersionArray = include($versionConfigFile);
         $downloadedVersion = $downloadedVersionArray['release'] ?? null;
 
+        // Verify the release before update hooks, seeders, or service changes.
+        // Never turn a missing artifact into an automatic production build.
+        $this->executeCommand('php artisan frontend:install --prepare', 240);
+
         // Define version-specific steps using an array
         $updateSteps = [
             '0.9.7' => Update097::class,
@@ -279,9 +283,8 @@ class UpdateApp extends Command
         // Create storage link
         $this->runArtisanCommand('storage:link', ['--force' => true]);
 
-        // Update Vue files
-        $this->executeCommand('npm install');
-        $this->executeCommand('npm run build', 300);
+        // Module refresh installs its own licensed, prebuilt assets.
+        $this->executeCommand('php artisan frontend:install --activate', 60);
 
         // Output the current working directory
         $currentDirectory = $this->getCurrentDirectory();

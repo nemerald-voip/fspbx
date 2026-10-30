@@ -1,0 +1,85 @@
+name: Build frontend release assets
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Existing release tag to build (for example v2.1.3)
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: frontend-release-${{ github.event.release.tag_name || inputs.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name || inputs.ref }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Verify release version
+        id: version
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name || inputs.ref }}
+        run: |
+          set -euo pipefail
+          version=$(php -r 'echo (require "config/version.php")["release"];')
+          test "$RELEASE_TAG" = "v$version"
+          echo "value=$version" >> "$GITHUB_OUTPUT"
+      - name: Check whether assets were prepared before publication
+        id: existing
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          VERSION: ${{ steps.version.outputs.value }}
+        run: |
+          set -euo pipefail
+          names=$(gh release view "v$VERSION" --json assets --jq '.assets[].name')
+          name="fspbx-frontend-$VERSION.tar.gz"
+          if grep -Fxq "$name" <<< "$names" && grep -Fxq "$name.sha256" <<< "$names"; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+            echo 'Release frontend assets are already attached.'
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+      - run: npm ci
+        if: steps.existing.outputs.ready != 'true'
+      - name: Build core assets without optional modules
+        if: steps.existing.outputs.ready != 'true'
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+        run: npm run build -- --release --outDir "$RUNNER_TEMP/fspbx-frontend"
+      - name: Validate and package
+        if: steps.existing.outputs.ready != 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.value }}
+        run: |
+          set -euo pipefail
+          php -r 'require "app/Services/FrontendAssets.php"; $a = new App\Services\FrontendAssets(getcwd()); $m = $a->validate(getenv("RUNNER_TEMP")."/fspbx-frontend", "core", "fspbx", getenv("VERSION")); $a->verifyCoreSource($m);'
+          node --experimental-vm-modules .github/scripts/test-frontend-bundles.mjs "$RUNNER_TEMP/fspbx-frontend"
+          name="fspbx-frontend-$VERSION.tar.gz"
+          tar --sort=name --mtime='@0' --owner=0 --group=0 --numeric-owner --format=gnu -C "$RUNNER_TEMP/fspbx-frontend" -czf "$name" assets manifest.json frontend.json
+          sha256sum "$name" > "$name.sha256"
+      - name: Attach assets to the matching release
+        if: steps.existing.outputs.ready != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          VERSION: ${{ steps.version.outputs.value }}
+        run: |
+          # Published packages are immutable. A retry must not overwrite a
+          # package already downloaded by customers.
+          gh release upload "v$VERSION" "fspbx-frontend-$VERSION.tar.gz" "fspbx-frontend-$VERSION.tar.gz.sha256"

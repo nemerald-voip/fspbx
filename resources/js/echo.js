@@ -17,7 +17,7 @@ const port = window.location.port
 
 window.Echo = new Echo({
     broadcaster: 'reverb',
-    key: import.meta.env.VITE_REVERB_APP_KEY,
+    key: window.fspbxFrontend?.reverbKey,
 
     wsHost: host,
     wsPort: port,

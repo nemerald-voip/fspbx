@@ -138,7 +138,10 @@ class UpdateAppModuleRefreshTest extends TestCase
         $this->assertStringContainsString('Update completed successfully!', $output);
         $this->assertContains('php artisan route:cache', $command->shellCommands);
         $this->assertContains('php artisan db:seed --force', $command->shellCommands);
-        $this->assertContains('npm run build', $command->shellCommands);
+        $this->assertSame('php artisan frontend:install --prepare', $command->shellCommands[0]);
+        $this->assertContains('php artisan frontend:install --activate', $command->shellCommands);
+        $this->assertNotContains('npm run build', $command->shellCommands);
+        $this->assertNotContains('npm install', $command->shellCommands);
         $this->assertContains('horizon:terminate', $command->artisanCommands);
         Process::assertNothingRan();
     }
@@ -174,7 +177,8 @@ class UpdateAppModuleRefreshTest extends TestCase
 
         $output = $this->output->fetch();
         $this->assertStringContainsString('Update completed successfully!', $output);
-        $this->assertContains('npm run build', $command->shellCommands);
+        $this->assertContains('php artisan frontend:install --activate', $command->shellCommands);
+        $this->assertNotContains('npm run build', $command->shellCommands);
         if ($errors || $exception) {
             $this->assertStringContainsString('Continuing the application update', $output);
             $this->assertStringContainsString($exception ? $exception->getMessage() : $errors[0], $output);

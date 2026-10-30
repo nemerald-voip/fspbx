@@ -160,7 +160,7 @@ class FSPBXInitialDBSeed extends Command
         $this->info("Email templates seeded successfully.");
 
         // Step 13: Install & Build Frontend (NPM)
-        $this->installAndBuildNpm();
+        $this->installFrontendAssets();
 
         // Step 14: Set Correct Permissions
         $this->updatePermissions();
@@ -377,40 +377,12 @@ class FSPBXInitialDBSeed extends Command
         $this->info("Upgrade domains executed successfully.");
     }
 
-    private function installAndBuildNpm()
+    private function installFrontendAssets()
     {
-        $this->info("Installing NPM dependencies...");
-        $installProcess = new Process(['npm', 'install'], base_path());
-        $installProcess->setTimeout(300);
-        $installProcess->run();
-
-        if (!$installProcess->isSuccessful()) {
-            throw new ProcessFailedException($installProcess);
+        $this->info('Installing prebuilt frontend assets...');
+        if ($this->call('frontend:install') !== 0) {
+            throw new \RuntimeException('Frontend assets could not be installed. No npm build was started.');
         }
-
-        $this->info("✅ NPM dependencies installed successfully.\n");
-
-        // Start the spinner for progress indication
-        $this->info("🚀 Building frontend assets... (This may take a while)");
-
-        $spinnerChars = ['-', '\\', '|', '/']; // Spinner animation characters
-        $index = 0;
-
-        $buildProcess = new Process(['npm', 'run', 'build'], base_path());
-        $buildProcess->setTimeout(300);
-        $buildProcess->start();
-
-        while ($buildProcess->isRunning()) {
-            echo "\r\e[36m" . $spinnerChars[$index % 4] . " Building frontend assets... \e[0m";
-            usleep(250000); // Update every 250ms
-            $index++;
-        }
-
-        if (!$buildProcess->isSuccessful()) {
-            throw new ProcessFailedException($buildProcess);
-        }
-
-        echo "\r✅ Frontend assets built successfully!          \n";
     }
 
     private function updatePermissions()

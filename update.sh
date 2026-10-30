@@ -28,22 +28,13 @@ else
     exit 1
 fi
 
-# Run NPM Install
-npm install
+# Install matching prebuilt frontend assets
+php artisan frontend:install
 if [ $? -eq 0 ]; then
-    print_success "NPM install completed successfully."
+    print_success "Frontend assets installed successfully."
 else
-    print_error "Error occurred during 'npm install'."
+    print_error "Frontend installation failed. No npm build was started."
     exit 1
 fi
 
-# Run NPM Run Build
-npm run build
-if [ $? -eq 0 ]; then
-    print_success "NPM run build completed successfully."
-else
-    print_error "Error occurred during 'npm run build'."
-    exit 1
-fi
-
-echo "All build tasks completed successfully!"
+echo "Update tasks completed successfully!"

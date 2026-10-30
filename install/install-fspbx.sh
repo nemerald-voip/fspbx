@@ -67,6 +67,17 @@ print_success "Latest FusionPBX version: $FUSIONPBX_VERSION"
 # Construct the download URL
 FUSIONPBX_RELEASE="https://github.com/nemerald-voip/fusionpbx/archive/refs/tags/${FUSIONPBX_VERSION}.tar.gz"
 
+# Install source matching a published frontend package, rather than an
+# unreleased main-branch snapshot. Check availability before moving anything.
+FSPBX_RELEASE_TAG=$(curl -fsSL https://api.github.com/repos/nemerald-voip/fspbx/releases/latest | grep '"tag_name"' | cut -d '"' -f 4)
+if [[ ! "$FSPBX_RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    print_error "Unable to resolve a stable FS PBX release."
+    exit 1
+fi
+FSPBX_ASSET_VERSION="${FSPBX_RELEASE_TAG#v}"
+curl --fail --silent --show-error --location --head \
+    "https://github.com/nemerald-voip/fspbx/releases/download/${FSPBX_RELEASE_TAG}/fspbx-frontend-${FSPBX_ASSET_VERSION}.tar.gz.sha256" > /dev/null
+
 # Backup existing installation if the directory is not empty
 if [ -d "$INSTALL_DIR" ] && [ "$(ls -A $INSTALL_DIR 2>/dev/null)" ]; then
     print_success "Backing up existing installation to $BACKUP_DIR..."
@@ -76,7 +87,12 @@ fi
 
 # Clone FS PBX repository
 print_success "Cloning FS PBX repository..."
-git clone --depth 1 https://github.com/nemerald-voip/fspbx.git $INSTALL_DIR
+git clone --depth 1 --branch "$FSPBX_RELEASE_TAG" https://github.com/nemerald-voip/fspbx.git "$INSTALL_DIR"
+# Start from the released tag while retaining the usual git pull workflow.
+git -C "$INSTALL_DIR" switch -c main
+git -C "$INSTALL_DIR" remote set-branches origin main
+git -C "$INSTALL_DIR" config branch.main.remote origin
+git -C "$INSTALL_DIR" config branch.main.merge refs/heads/main
 print_success "FS PBX repository cloned successfully."
 
 # Ensure public directory exists

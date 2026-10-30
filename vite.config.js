@@ -3,7 +3,7 @@ import { defineConfig } from 'vite';
 import path from 'path';
 import vue from '@vitejs/plugin-vue';
 import i18n from 'laravel-vue-i18n/vite';
-import collectModuleAssetsPaths from './vite-module-loader.js';
+import { contract, moduleAssets } from './build/module-assets.mjs';
 import fs from 'fs';
 import deepChatImageLoadFix from './build/deep-chat-image-load-fix.mjs';
 
@@ -11,7 +11,8 @@ const VITE_HOST = process.env.VITE_HOST || 'localhost';
 const VITE_PORT = process.env.VITE_PORT || 3000;
 const VITE_ORIGIN = process.env.VITE_ORIGIN;
 
-async function getConfig() {
+async function getConfig({ command }) {
+    const moduleName = process.env.FSPBX_BUILD_MODULE;
     console.log('Vite configured host:', VITE_HOST);
     console.log('Vite configured port:', VITE_PORT);
     console.log('Vite configured CORS origin:', VITE_ORIGIN);
@@ -22,7 +23,7 @@ async function getConfig() {
         'resources/scss/tailwind.css',
     ];
 
-    const allPaths = await collectModuleAssetsPaths(paths, 'Modules');
+    const allPaths = moduleName ? ['virtual:fspbx-module-entry'] : [...paths, ...Object.values(contract.shared)];
 
 
     const keyPath = '/etc/nginx/ssl/private/privkey.pem'
@@ -30,7 +31,7 @@ async function getConfig() {
 
     let httpsConfig = null
 
-    if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
+    if (command === 'serve' && fs.existsSync(keyPath) && fs.existsSync(certPath)) {
         httpsConfig = {
             key: fs.readFileSync(keyPath),
             cert: fs.readFileSync(certPath),
@@ -40,6 +41,8 @@ async function getConfig() {
     }
 
     return defineConfig({
+        base: command === 'build' ? './' : undefined,
+        publicDir: false,
         server: {
             host: VITE_HOST,
             port: VITE_PORT,
@@ -64,8 +67,9 @@ async function getConfig() {
 
         },
         plugins: [
+            moduleAssets({ root: process.cwd(), serve: command === 'serve', moduleName }),
             deepChatImageLoadFix(),
-            laravel({
+            !moduleName && laravel({
                 hotFile: 'storage/vite.hot', // Customize the "hot" file...
                 buildDirectory: 'storage/vite', // Customize the build directory...
                 input: allPaths,
@@ -96,7 +100,7 @@ async function getConfig() {
             // Laravel's own validation.php) to Vue alongside the *.json
             // catalogs the app loads directly via i18nVue's resolve().
             i18n('resources/lang'),
-        ],
+        ].filter(Boolean),
         // Apply the image-load fix in development as well as production builds.
         optimizeDeps: { exclude: ['deep-chat'] },
         build: {
@@ -107,6 +111,11 @@ async function getConfig() {
             minify: 'esbuild',
             cssMinify: 'esbuild',
             chunkSizeWarningLimit: 1500,
+            manifest: true,
+            rollupOptions: {
+                input: allPaths,
+                preserveEntrySignatures: 'strict',
+            },
         },
         css: {
             preprocessorOptions: {
@@ -128,4 +137,4 @@ async function getConfig() {
     });
 }
 
-export default getConfig();
+export default defineConfig(getConfig);
