@@ -4,7 +4,7 @@ namespace Tests\Unit;
 
 use App\Console\Commands\{ConfigureModule, RefreshModules};
 use App\Models\ProFeatures;
-use App\Services\{KeygenAPIService, ProFeaturesService};
+use App\Services\{GitModuleUpdater, KeygenAPIService, ProFeaturesService};
 use Illuminate\Config\Repository;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Foundation\Application;
@@ -32,6 +32,11 @@ class ModuleLifecycleTest extends TestCase
         Facade::clearResolvedInstances(); Facade::setFacadeApplication($this->app);
         Module::swap(\Mockery::mock());
         Process::fake(); Process::preventStrayProcesses();
+        // Real Git transport and asset validation are covered with disposable
+        // repositories in GitModuleUpdaterTest. These tests cover dispatch/hooks.
+        $updater = \Mockery::mock(GitModuleUpdater::class);
+        $updater->shouldReceive('update')->andReturnUsing(fn ($name, $configure) => $configure());
+        $this->app->instance(GitModuleUpdater::class, $updater);
     }
 
     protected function tearDown(): void
@@ -285,9 +290,9 @@ class ModuleLifecycleTest extends TestCase
 
         $result = $service->refreshModules();
 
-        $updated = ['Billing: local update completed (Git checkout)'];
+        $updated = ['Billing: Git source, frontend assets, and update hooks refreshed'];
         if ($contactCenterEnabled && $hookExitCode === 0) {
-            $updated[] = 'ContactCenter: local update completed (Git checkout)';
+            $updated[] = 'ContactCenter: Git source, frontend assets, and update hooks refreshed';
         }
         $skipped = ['StirShaken: already latest (1.0.23)'];
         if (! $contactCenterEnabled) {

@@ -8,7 +8,7 @@ use App\Services\ProFeaturesService;
 class RefreshModules extends Command
 {
     protected $signature = 'modules:refresh';
-    protected $description = 'Refresh enabled modules using the FS PBX Pro Feature license';
+    protected $description = 'Refresh enabled modules from their Git upstream or FS PBX Pro Feature license';
 
     public function handle(ProFeaturesService $svc)
     {

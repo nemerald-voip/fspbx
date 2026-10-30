@@ -12,7 +12,7 @@ FS PBX installs compiled frontend files during application updates. Node and npm
 
 `php artisan app:update` downloads the frontend package matching `config/version.php`, verifies its checksum and frontend source files before running update steps, and activates it after module refreshes complete. A missing or mismatched package stops the update before those steps. It never falls back to running npm.
 
-The source checkout happens separately, before `app:update`. Asset preflight does not undo a previous `git pull`. Use source from the matching published release; unbuilt frontend changes on `main` cannot use an older release's assets just because the version number is unchanged.
+The core application source checkout happens separately, before `app:update`. Asset preflight does not undo a previous `git pull`. Use source from the matching published release; unbuilt frontend changes on `main` cannot use an older release's assets just because the version number is unchanged. Enabled Git-managed modules are updated automatically as described below.
 
 For an unpublished development checkout, an already completed local build can be reused if its frontend source files still match exactly. Run `npm run build` yourself first. A compatible published package takes precedence over a local build, and the updater reports when it replaces local assets.
 
@@ -54,11 +54,21 @@ Rollback requires the same application and module versions. It changes frontend 
 
 ## Licensed modules
 
-The core package contains no optional module pages. Modules with a frontend ship their compiled assets in `Resources/dist` inside the existing licensed module archive. The normal license and entitlement checks still control downloads. Git-managed module checkouts remain under developer control and can be included by `npm run build`.
+The core package contains no optional module pages. Modules with a frontend ship their compiled assets in `Resources/dist` inside the existing licensed module archive. The normal license and entitlement checks still control downloads.
 
 Core and module packages share a frontend API version and dependency fingerprint. Compatible installed module assets survive a skipped module update. Missing or incompatible module assets are reported; they are not loaded into an incompatible runtime. Publish compatible module packages before rolling out a change to the shared runtime. License/API failures remain optional-module failures and do not invoke a local build or abort the core update.
 
 Module packages include their own CSS. They use the core Vue, Inertia, VueForm, and translation instances, so installing a module does not require rebuilding the core. Site-specific public settings such as the Reverb key are supplied by Laravel at page load. Private keys are never supplied to the browser.
+
+## Modules installed through Git
+
+During `app:update` or `modules:refresh`, enabled module repositories fetch their configured upstream branch and advance it with a fast-forward pull. Before advancing source, the updater downloads and validates the frontend package for that exact commit and the prepared core runtime. A compatible existing package can be reused when its frontend sources still match exactly.
+
+Code and compiled assets use the same Git remote and its existing SSH key or HTTPS credentials. No GitHub API token, license download, or environment mode switch is needed for this path. Compiled assets live in separate immutable Git refs; they are never added to the checked-out source branch. Each node installs its own assets.
+
+Local edits, untracked files, detached checkouts, missing upstreams, diverged branches, and missing or incompatible packages produce a module warning before source is advanced. The updater does not stash, reset, merge local commits, or start npm. The core update continues, so check module warnings before considering the deployment complete. The updater still runs module update hooks when source is already current; a failed hook can be retried with `php artisan modules:refresh`.
+
+For development or a production patch, edit and run `npm run build` as before. Resolve local Git work before resuming automatic module pulls. New module commits need a completed asset publication before production can pull them. A source-only push whose frontend has changed will be held back until its asset package is ready.
 
 ## Preparing releases
 
@@ -71,6 +81,8 @@ For release preparation, create the tag and a draft GitHub release, dispatch the
 
 Contact Center's release workflow builds its frontend before creating a release and includes it in the archive sent through Keygen. Its `FSPBX_FRONTEND_CORE_REF` GitHub repository variable may pin the build-tool checkout to a compatible core tag or commit; without it the workflow uses `main`. This is release preparation configuration, not a customer-server mode switch. Publish the core build tooling before running the updated module workflow.
 
+The workflow also publishes the compiled frontend at `refs/tags/frontend/<module-commit>/<runtime-fingerprint>` using `.github/scripts/publish-module-frontend.sh` from that core checkout. Choose a core ref containing this script. These refs contain only compiled assets and metadata, with no source-branch parent; retries never overwrite an existing package. Retain refs needed by deployed commits. Publishing to private module repositories preserves their normal Git access controls.
+
 For other module release pipelines, check out the matching core build tools, put the module source under `Modules/NAME`, install the core lockfile's dependencies, and build:
 
 ```bash
@@ -79,6 +91,14 @@ npm run build -- --release --module NAME --outDir /tmp/NAME-frontend
 ```
 
 Copy that output into the module archive as `Resources/dist`, alongside its source. Never publish a module version's PHP and frontend separately. Bump the module version whenever its packaged frontend changes. A module release must be rebuilt when its shared runtime fingerprint changes.
+
+To support automatic Git updates for another module, run the shared publisher from its source repository after building and validating its assets:
+
+```bash
+bash /path/to/fspbx/.github/scripts/publish-module-frontend.sh HEAD /tmp/NAME-frontend /path/to/fspbx
+```
+
+The publisher pushes only the immutable frontend ref to `origin` (or the optional fourth-argument remote). It preserves the source branch and working index. Existing licensed installations need a newly versioned module archive to receive newly packaged assets; republishing an already installed version does not trigger a download.
 
 To prepare core assets without activating them:
 

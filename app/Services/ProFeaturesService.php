@@ -29,11 +29,13 @@ class ProFeaturesService
                 continue;
             }
 
-            // Git supplies these modules' code. Apply their local update hooks
-            // independently of artifact versions and the release download API.
+            // Pull through the configured remote, preserving local work. Assets
+            // travel over the same Git credentials, independently of licensing.
             try {
-                $this->runModuleCommand(['modules:configure', $moduleName, '--update-only']);
-                $result['updated'][] = "{$moduleName}: local update completed (Git checkout)";
+                app(GitModuleUpdater::class)->update($moduleName, function () use ($moduleName) {
+                    $this->runModuleCommand(['modules:configure', $moduleName, '--update-only']);
+                });
+                $result['updated'][] = "{$moduleName}: Git source, frontend assets, and update hooks refreshed";
             } catch (\Throwable $error) {
                 $result['errors'][] = "{$moduleName}: local update failed: {$error->getMessage()}";
             }
