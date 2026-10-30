@@ -1,5 +1,7 @@
 <?php
 
+require_once dirname(__DIR__, 2).'/Support/CdrPickupHistory.php';
+
 /**
  * xml_cdr class provides methods for adding cdr records to the database
  *
@@ -356,8 +358,11 @@ if (!class_exists('cdr_import')) {
 		}
 
 		/** Preserve the native parent, or recover it from a loopback B leg. */
-		public static function originating_leg_uuid(SimpleXMLElement $variables): string {
+		public static function originating_leg_uuid(SimpleXMLElement $variables, array $pickupEvents = []): string {
 			$parent = urldecode((string) $variables->originating_leg_uuid);
+			if ($parent === '') {
+				$parent = \App\Support\CdrPickupHistory::parent(urldecode((string) $variables->uuid), $pickupEvents);
+			}
 			if ($parent !== ''
 				|| (string) $variables->loopback_leg !== 'B'
 				|| !str_starts_with(urldecode((string) $variables->channel_name), 'loopback/')) {
@@ -464,12 +469,20 @@ if (!class_exists('cdr_import')) {
 			//process data if the call detail record is not a duplicate
 				if ($duplicate_uuid == false && is_uuid($uuid)) {
 
+					// Confirm pickup before selecting identity: intercept reverses
+					// the saved caller profiles, including the original profile.
+						$pickupDetails = json_decode(json_encode($xml), true);
+						$pickupProfiles = $pickupDetails['callflow'] ?? [];
+						if (isset($pickupProfiles['caller_profile'])) { $pickupProfiles = [$pickupProfiles]; }
+						$pickupEvents = \App\Support\CdrPickupHistory::events($pickupDetails['variables'] ?? [], $pickupProfiles);
+						$pickupCaller = \App\Support\CdrPickupHistory::originalCaller($pickupDetails['variables'] ?? [], $pickupEvents);
+
 					//get the caller ID from call flow caller profile
 						$i = 0;
 						foreach ($xml->callflow as $row) {
 							if ($i == 0) {
-								$caller_id_name = urldecode($row->caller_profile->caller_id_name);
-								$caller_id_number = urldecode($row->caller_profile->caller_id_number);
+								$caller_id_name = $pickupCaller['caller_id_name'] ?? urldecode($row->caller_profile->caller_id_name);
+								$caller_id_number = $pickupCaller['caller_id_number'] ?? urldecode($row->caller_profile->caller_id_number);
 							}
 							$i++;
 						}
@@ -781,7 +794,7 @@ if (!class_exists('cdr_import')) {
 							&& urldecode($xml->variables->call_direction) === 'outbound') {
 							$this->array[$key]['originating_leg_uuid'] = null;
 						} else {
-							$this->array[$key]['originating_leg_uuid'] = self::originating_leg_uuid($xml->variables);
+							$this->array[$key]['originating_leg_uuid'] = self::originating_leg_uuid($xml->variables, $pickupEvents);
 						}
 
 					//store post dial delay, in milliseconds
@@ -946,6 +959,13 @@ if (!class_exists('cdr_import')) {
 								}
 							}
 						}
+
+					// An unrecorded original channel may still advertise its default
+					// filename. Permit the existing bridge-recording fallback after pickup.
+						if ($pickupEvents !== [] && !empty($record_name)
+							&& !file_exists(($record_path ?? '').'/'.$record_name)) {
+							unset($record_path, $record_name);
+							}
 
 					//check to see if file exists with the default file name and path
 						if (empty($record_name)) {
@@ -1175,6 +1195,11 @@ if (!class_exists('cdr_import')) {
 						}
 					}
 					$i++;
+				}
+
+				$events = \App\Support\CdrPickupHistory::events($this->call_details['variables'] ?? [], $call_flow_array);
+				if ($events !== [] && isset($call_flow_array[0])) {
+					$call_flow_array[0]['pickup_events'] = $events;
 				}
 
 				//add the call_flow to the array

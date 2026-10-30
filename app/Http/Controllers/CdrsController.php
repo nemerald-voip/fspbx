@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use App\Models\CallCenterQueues;
 use App\Services\CdrDataService;
+use App\Services\PhoneNumberService;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
 use App\Services\CallRecordingUrlService;
@@ -142,6 +143,8 @@ class CdrsController extends Controller
                     'cc_agent_bridged',
                     'sip_hangup_disposition',
                     'status',
+                    'record_name',
+                    'record_path',
                     ...$this->cdrDataService->timelineSelectColumns(),
 
                 ])
@@ -157,7 +160,20 @@ class CdrsController extends Controller
             $this->item_domain_uuid = $item->domain_uuid;
 
             $item->callback_timeline = $this->cdrDataService->isCallbackCdr($item);
-            $item->call_flow = $this->cdrDataService->buildCallFlowSummary($item);
+
+            $item->append(['answer_time', 'end_time']);
+
+            // Phone-number steps show the dialed number in the account's national format.
+            $item->call_flow = $this->cdrDataService->buildCallFlowSummary($item)
+                ->map(function ($row) use ($item) {
+                    if (in_array($row['dialplan_app_type'] ?? null, ['inbound_call', 'outbound_call', 'misc_destination'], true)) {
+                        $row['destination_number_formatted'] = app(PhoneNumberService::class)->formatForDomain(
+                            (string) $row['destination_number'],
+                            $item->domain_uuid
+                        );
+                    }
+                    return $row;
+                });
 
             // logger($callFlowSummary->all());
 

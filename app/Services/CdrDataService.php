@@ -713,11 +713,18 @@ class CdrDataService
 
         // A channel may have both parent references. A single OR query returns
         // it once, without collapsing distinct transfers/profiles on that channel.
-        $relatedCalls = CDR::query()
+        $pickupIds = $mainProfiles->flatMap(fn ($profile) => $profile['pickup_events'] ?? [])
+            ->filter(fn ($event) => is_array($event) && \App\Support\CdrPickupHistory::valid($event, (string) $cdr->domain_uuid)
+                && isset($event['connected_at']) && $event['target_uuid'] === $cdr->xml_cdr_uuid)
+            ->pluck('picker_uuid')->unique()->values()->all();
+        $relatedQuery = CDR::query()
             ->where('domain_uuid', $cdr->domain_uuid)
             ->where('xml_cdr_uuid', '!=', $cdr->xml_cdr_uuid)
-            ->where(function ($query) use ($cdr) {
+            ->where(function ($query) use ($cdr, $pickupIds) {
                 $query->where('originating_leg_uuid', $cdr->xml_cdr_uuid);
+                if ($pickupIds) {
+                    $query->orWhereIn('xml_cdr_uuid', $pickupIds);
+                }
                 if (! empty($cdr->call_center_queue_uuid)) {
                     $query->orWhere('cc_member_session_uuid', $cdr->xml_cdr_uuid);
                 }
@@ -726,11 +733,29 @@ class CdrDataService
                 max(0, $start - self::RELATED_CALL_WINDOW_PADDING_SECONDS),
                 $end + self::RELATED_CALL_WINDOW_PADDING_SECONDS,
             ]))
-            ->select(['xml_cdr_uuid', 'call_flow', 'direction', 'hangup_cause',
+            ->select(['xml_cdr_uuid', 'domain_uuid', 'originating_leg_uuid', 'call_flow', 'direction', 'hangup_cause',
                 'sip_hangup_disposition', 'call_center_queue_uuid', 'cc_cause', 'cc_cancel_reason',
                 'cc_side', 'cc_agent_bridged', 'missed_call', 'voicemail_message', 'status'])
-            ->orderBy('start_epoch')->orderBy('xml_cdr_uuid')
-            ->get();
+            ->orderBy('start_epoch')->orderBy('xml_cdr_uuid');
+        $relatedCalls = $relatedQuery->when($pickupIds !== [], fn ($query) => $query->limit(128))->get();
+
+        // Pickup forwarding can retain a native parent between the endpoint
+        // and this call. Expand only pickup histories, within the same account
+        // and time window, with explicit cycle/size/depth bounds.
+        if ($pickupIds) {
+            $seen = [$cdr->xml_cdr_uuid => true];
+            $frontier = $relatedCalls->pluck('xml_cdr_uuid')->all();
+            for ($depth = 0; $frontier && $depth < 8 && count($seen) < 128; $depth++) {
+                foreach ($frontier as $id) { $seen[$id] = true; }
+                $children = CDR::query()->where('domain_uuid', $cdr->domain_uuid)
+                    ->whereIn('originating_leg_uuid', $frontier)->whereNotIn('xml_cdr_uuid', array_keys($seen))
+                    ->whereBetween('start_epoch', [max(0, $start - self::RELATED_CALL_WINDOW_PADDING_SECONDS), $end + self::RELATED_CALL_WINDOW_PADDING_SECONDS])
+                    ->select($relatedQuery->getQuery()->columns)->orderBy('start_epoch')->orderBy('xml_cdr_uuid')
+                    ->limit(max(0, 128 - count($seen)))->get();
+                $relatedCalls = $relatedCalls->concat($children);
+                $frontier = $children->pluck('xml_cdr_uuid')->all();
+            }
+        }
 
         foreach ($relatedCalls as $relatedCall) {
             foreach ($this->attributeCallFlow($this->decodeCallFlow($relatedCall), $relatedCall, true) as $profile) {
@@ -738,6 +763,7 @@ class CdrDataService
             }
         }
 
+        $profiles = $this->applyPickupHistory($profiles, (string) $cdr->domain_uuid);
         $summary = $this->handleCallFlowSteps($profiles)
             ->map(fn ($row) => $this->buildSummaryItem($row))
             ->sortBy(fn ($row) => $row['profile_created_time'] ?: PHP_INT_MAX)
@@ -767,6 +793,48 @@ class CdrDataService
                 return $profile;
             })
             ->values();
+    }
+
+    private function applyPickupHistory(Collection $profiles, string $domain): Collection
+    {
+        $events = $profiles->flatMap(fn ($profile) => $profile['pickup_events'] ?? [])
+            ->filter(fn ($event) => is_array($event) && \App\Support\CdrPickupHistory::valid($event, $domain)
+                && is_numeric($event['connected_at'] ?? null) && $event['connected_at'] >= $event['at'])
+            ->unique(fn ($event) => $event['picker_uuid'].':'.$event['at'])->sortBy('connected_at');
+        if ($events->isEmpty()) {
+            return $profiles;
+        }
+        $channelIds = $profiles->pluck('_cdr_uuid')->all();
+        return $profiles->filter(function ($profile) use ($events, $channelIds) {
+            foreach ($events as $event) {
+                if ($profile['_cdr_uuid'] === $event['picker_uuid'] && in_array($event['target_uuid'], $channelIds, true)
+                    && in_array($profile['caller_profile']['destination_number'], [$event['code'], '*8', '**'], true)) {
+                    return false; // Its connected interval is shown on the original caller.
+                }
+            }
+            return true;
+        })->map(function ($profile) use ($events) {
+            foreach ($events as $event) {
+                if ($profile['_cdr_uuid'] !== $event['target_uuid']) {
+                    continue;
+                }
+                $start = (int) $profile['times']['profile_created_time'];
+                $end = (int) $profile['times']['profile_end_time'];
+                if (\App\Support\CdrPickupHistory::hasPartner($profile['caller_profile'], $event['picker_uuid'])
+                    && $start >= $event['at']) {
+                    $profile['caller_profile']['callee_id_number'] = $event['pickup_extension'];
+                    $profile['_pickup'] = $event;
+                    unset($profile['_ringing']);
+                } elseif ($end <= $event['connected_at'] && $end >= ($event['ringing_started'] ?? $event['at'])
+                    && $profile['caller_profile']['destination_number'] === $event['ringing_extension']) {
+                    $profile['caller_profile']['callee_id_number'] = $event['ringing_extension'];
+                    $profile['times']['answered_time'] = 0;
+                    $profile['times']['bridged_time'] = 0;
+                    $profile['_ringing'] = true;
+                }
+            }
+            return $profile;
+        })->values();
     }
 
     private function attributeCallFlow(Collection $profiles, CDR $cdr, bool $related = false): Collection
@@ -1118,6 +1186,8 @@ class CdrDataService
             '_queue_result' => $row['_queue_result'] ?? null,
             '_queue_reason' => $row['_queue_reason'] ?? null,
             '_voicemail_message' => $row['_voicemail_message'] ?? null,
+            '_pickup' => $row['_pickup'] ?? null,
+            '_ringing' => $row['_ringing'] ?? false,
         ];
     }
 

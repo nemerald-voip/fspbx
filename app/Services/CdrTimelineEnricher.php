@@ -23,6 +23,9 @@ class CdrTimelineEnricher
             $number = (string) $row['destination_number'];
             $aliases[$number] ??= $this->numberAliases($number, $domainUuid);
             $extensionNumbers[] = $number;
+            if (!empty($row['_pickup']['pickup_extension'])) {
+                $extensionNumbers[] = $row['_pickup']['pickup_extension'];
+            }
             if (preg_match('/^\*97\d+\^(.+)$/', $number, $match)) {
                 $extensionNumbers[] = $match[1];
             }
@@ -60,6 +63,28 @@ class CdrTimelineEnricher
             // when the two spell a phone number differently.
             $candidates = collect($candidates)->sortBy(fn ($candidate) => $candidate->domain_uuid === $domainUuid ? 0 : 1);
             $type = $row['_saved_type'] ?? null;
+            if (!empty($row['_pickup'])) {
+                $event = $row['_pickup'];
+                $row['destination_number'] = $event['pickup_extension'];
+                $row['dialplan_app_type'] = 'call_intercept';
+                $row['dialplan_app'] = __('Call Pickup');
+                $name = $extensions->get($event['pickup_extension'])->effective_caller_id_name ?? '';
+                // The intercept timeline renders this label directly, unlike
+                // extension steps which append destination_number in the UI.
+                $row['dialplan_name'] = $name !== '' && $name !== $event['pickup_extension']
+                    ? $name.' ('.$event['pickup_extension'].')' : $event['pickup_extension'];
+                $row['dialplan_description'] = __('Picked up :extension by dialing :code', [
+                    'extension' => $event['ringing_extension'], 'code' => $event['code'],
+                ]);
+                return $row;
+            }
+            if (!empty($row['_ringing'])) {
+                $row['dialplan_app_type'] = 'extension';
+                $row['dialplan_app'] = __('Ringing');
+                $row['dialplan_name'] = $extensions->get($number)->effective_caller_id_name ?? $number;
+                $row['dialplan_description'] = null;
+                return $row;
+            }
             $uuid = $row['_saved_uuid'] ?? null;
             $dialplan = $candidates->first(function ($candidate) use ($type, $uuid) {
                 return ! $type || (($candidate->application['type'] ?? null) === $type

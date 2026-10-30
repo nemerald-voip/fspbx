@@ -65,6 +65,7 @@ use App\Console\Commands\Updates\Update209;
 use App\Console\Commands\Updates\Update210;
 use App\Console\Commands\Updates\Update211;
 use App\Console\Commands\Updates\Update212;
+use App\Console\Commands\Updates\Update213;
 use App\Console\Commands\Updates\Update0917;
 use App\Console\Commands\Updates\Update0918;
 use App\Console\Commands\Updates\Update0924;
@@ -207,6 +208,7 @@ class UpdateApp extends Command
             '2.1.0' => Update210::class,
             '2.1.1' => Update211::class,
             '2.1.2' => Update212::class,
+            '2.1.3' => Update213::class,
             // Add more versions as needed
         ];
 
@@ -428,10 +430,10 @@ class UpdateApp extends Command
                 });
 
                 if ($result->failed()) {
-                    $this->warn("Could not restart Supervisor program {$program}; continuing the update.");
+                    $this->warn("Could not restart Supervisor program {$program}; continuing the update. Retry: supervisorctl restart {$program}");
                 }
             } catch (\Throwable $exception) {
-                $this->warn("Could not restart Supervisor program {$program}; continuing the update: ".$exception->getMessage());
+                $this->warn("Could not restart Supervisor program {$program}; continuing the update: ".$exception->getMessage().". Retry: supervisorctl restart {$program}");
             }
         }
     }

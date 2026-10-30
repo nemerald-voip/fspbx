@@ -55,6 +55,7 @@ class CdrTimelineOptimizationTest extends TestCase
                 $table->integer($field)->nullable();
             }
             $table->text('call_flow')->nullable();
+            $table->dateTime('start_stamp')->nullable();
         });
         Schema::create('v_extensions', function (Blueprint $table) {
             $table->string('extension_uuid')->nullable();
@@ -394,6 +395,100 @@ class CdrTimelineOptimizationTest extends TestCase
             $method->invoke(new CdrDataService(), $query, $filter);
             $this->assertSame($expected, $query->pluck('xml_cdr_uuid')->all());
         }
+    }
+
+    public function test_pickup_shows_ringing_then_picker_once_and_preserves_later_transfer(): void
+    {
+        DB::table('v_extensions')->insert([
+            ['domain_uuid' => self::DOMAIN, 'extension' => '304', 'effective_caller_id_name' => 'David Duck'],
+            ['domain_uuid' => self::OTHER_DOMAIN, 'extension' => '304', 'effective_caller_id_name' => 'Wrong account'],
+        ]);
+        foreach (['**302', '*97302', '*8'] as $code) {
+            DB::table('v_xml_cdr')->delete();
+            $ring = $this->profile('302', 1000, 1003);
+            $ring['caller_profile']['callee_id_number'] = '3008'; // FreeSWITCH reverses this identity.
+            $connected = $this->profile('302', 1003, 1010);
+            $connected['caller_profile']['originator']['originator_caller_profile'] = [
+                'uuid' => self::ATTEMPT, 'destination_number' => $code, 'caller_id_number' => '304',
+            ];
+            $event = ['domain_uuid' => self::DOMAIN, 'target_uuid' => $this->cdr([])->getKey(),
+                'picker_uuid' => self::ATTEMPT, 'ringing_extension' => '302', 'pickup_extension' => '304',
+                'code' => $code, 'at' => 1002900000, 'connected_at' => 1003000000, 'ringing_started' => 1000000000];
+            $ring['pickup_events'] = [$event];
+            $root = $this->cdr([$ring, $connected, $this->profile('305', 1010, 1015)]);
+            $child = $this->cdr([$this->profile($code, 1002, 1010)], [
+                'xml_cdr_uuid' => self::ATTEMPT, 'originating_leg_uuid' => self::OTHER_DOMAIN,
+            ]); // Native parent must not stop discovery through the confirmed event.
+            DB::table('v_xml_cdr')->insert($child->getAttributes());
+            $steps = (new CdrDataService())->buildCallFlowSummary($root);
+            $this->assertSame(['302', '304', '305'], $steps->pluck('destination_number')->all());
+            $this->assertSame([3, 7, 5], $steps->pluck('duration_seconds')->all());
+            $this->assertSame('Ringing', $steps[0]['dialplan_app']);
+            $this->assertSame('Call Pickup', $steps[1]['dialplan_app']);
+            $this->assertSame('David Duck (304)', $steps[1]['dialplan_name']);
+            $this->assertSame('Picked up 302 by dialing '.$code, $steps[1]['dialplan_description']);
+        }
+    }
+
+    public function test_bare_97_voicemail_and_unconfirmed_pickup_are_not_successful_pickups(): void
+    {
+        foreach (['*97', '**302'] as $number) {
+            $steps = (new CdrDataService())->buildCallFlowSummary($this->cdr([$this->profile($number)]));
+            $this->assertNotSame('call_intercept', $steps[0]['dialplan_app_type']);
+        }
+        $step = (new CdrDataService())->buildCallFlowSummary($this->cdr([$this->profile('*99302')]))->first();
+        $this->assertSame('voicemail', $step['dialplan_app_type']);
+    }
+
+    public function test_one_visible_call_keeps_both_recordings_in_the_archive_selection(): void
+    {
+        $root = $this->cdr([], ['record_path' => '/recordings/account/archive', 'record_name' => 'caller.wav',
+            'hangup_cause' => 'NORMAL_CLEARING', 'start_stamp' => '2020-01-01 00:00:00']);
+        $child = $this->cdr([], ['xml_cdr_uuid' => self::ATTEMPT, 'originating_leg_uuid' => $root->getKey(),
+            'record_path' => '/recordings/account/archive', 'record_name' => 'pickup.wav',
+            'hangup_cause' => 'NORMAL_CLEARING', 'start_stamp' => '2020-01-01 00:00:03']);
+        DB::table('v_xml_cdr')->insert($root->getAttributes());
+        DB::table('v_xml_cdr')->insert($child->getAttributes());
+        $service = new class extends CdrDataService {
+            public function visible() {
+                return DB::table('v_xml_cdr')->where('domain_uuid', '11111111-1111-4111-8111-111111111111')
+                    ->where(fn ($query) => $this->filterCallLegs($query))->pluck('xml_cdr_uuid')->all();
+            }
+        };
+        $this->assertSame([$root->getKey()], $service->visible());
+        $class = new \ReflectionClass(\App\Console\Commands\UploadCallRecordingsToS3Storage::class);
+        $method = $class->getMethod('getCallRecordingIds');
+        $method->setAccessible(true);
+        $this->assertSame([$root->getKey(), self::ATTEMPT], $method->invoke($class->newInstanceWithoutConstructor(), 10));
+    }
+
+    public function test_successive_pickups_keep_both_events_and_bound_related_history(): void
+    {
+        $rootId = $this->cdr([])->getKey();
+        $first = ['domain_uuid' => self::DOMAIN, 'target_uuid' => $rootId, 'picker_uuid' => self::ATTEMPT,
+            'ringing_extension' => '302', 'pickup_extension' => '304', 'code' => '**302',
+            'at' => 1002900000, 'connected_at' => 1003000000];
+        $second = array_replace($first, ['picker_uuid' => self::OTHER_DOMAIN, 'pickup_extension' => '306',
+            'code' => '*97302', 'at' => 1009900000, 'connected_at' => 1010000000]);
+        $ring = $this->profile('302', 1000, 1003);
+        $ring['pickup_events'] = [$first, $second];
+        $profiles = [$ring];
+        foreach ([[$first, 1003, 1010], [$second, 1010, 1015]] as [$event, $start, $end]) {
+            $profile = $this->profile('302', $start, $end);
+            $profile['caller_profile']['originator']['originator_caller_profile']['uuid'] = $event['picker_uuid'];
+            $profiles[] = $profile;
+        }
+        // Even a saved event UUID must not fetch another account or old call.
+        DB::table('v_xml_cdr')->insert($this->cdr([$this->profile('999')], [
+            'xml_cdr_uuid' => self::ATTEMPT, 'domain_uuid' => self::OTHER_DOMAIN,
+        ])->getAttributes());
+        DB::table('v_xml_cdr')->insert($this->cdr([$this->profile('998')], [
+            'xml_cdr_uuid' => self::OTHER_DOMAIN, 'start_epoch' => 10000,
+        ])->getAttributes());
+        $steps = (new CdrDataService())->buildCallFlowSummary($this->cdr($profiles));
+        $this->assertSame(['302', '304', '306'], $steps->pluck('destination_number')->all());
+        $this->assertSame(['Ringing', 'Call Pickup', 'Call Pickup'], $steps->pluck('dialplan_app')->all());
+        $this->assertSame([3, 7, 5], $steps->pluck('duration_seconds')->all());
     }
 
     private function cdr(array $profiles, array $attributes = []): CDR

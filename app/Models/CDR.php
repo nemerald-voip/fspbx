@@ -114,6 +114,20 @@ class CDR extends Model
         return Carbon::createFromTimestamp($this->start_epoch, 'UTC')->setTimezone($timeZone)->format('g:i:s A');
     }
 
+    public function getAnswerTimeAttribute()
+    {
+        if (!$this->answer_epoch || !$this->domain_uuid) return null;
+        $timeZone = get_local_time_zone($this->domain_uuid);
+        return Carbon::createFromTimestamp($this->answer_epoch, 'UTC')->setTimezone($timeZone)->format('g:i:s A');
+    }
+
+    public function getEndTimeAttribute()
+    {
+        if (!$this->end_epoch || !$this->domain_uuid) return null;
+        $timeZone = get_local_time_zone($this->domain_uuid);
+        return Carbon::createFromTimestamp($this->end_epoch, 'UTC')->setTimezone($timeZone)->format('g:i:s A');
+    }
+
     public function getDurationFormattedAttribute()
     {
         return $this->duration ? $this->getFormattedDuration($this->duration) : null;

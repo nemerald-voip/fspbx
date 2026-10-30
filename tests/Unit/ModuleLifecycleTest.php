@@ -3,12 +3,13 @@
 namespace Tests\Unit;
 
 use App\Console\Commands\{ConfigureModule, RefreshModules};
+use App\Models\ProFeatures;
 use App\Services\{KeygenAPIService, ProFeaturesService};
 use Illuminate\Config\Repository;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Foundation\Application;
 use Illuminate\Process\Factory;
-use Illuminate\Support\Facades\{Facade, Process};
+use Illuminate\Support\Facades\{Cache, Facade, Process};
 use Nwidart\Modules\Facades\Module;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Application as ConsoleApplication;
@@ -191,22 +192,22 @@ class ModuleLifecycleTest extends TestCase
         $this->assertStringContainsString('Supervisor failed', $result['errors'][0]);
     }
 
-    public function test_refresh_separates_git_checkouts_from_release_managed_modules(): void
+    public function test_refresh_merges_local_and_release_results(): void
     {
         mkdir(base_path('Modules/ContactCenter/.git'), 0755, true);
         $git = \Mockery::mock()->shouldReceive('getName')->andReturn('ContactCenter')->getMock();
         $release = \Mockery::mock()->shouldReceive('getName')->andReturn('Billing')->getMock();
         Module::shouldReceive('allEnabled')->once()->andReturn([$git, $release]);
         $service = new class(\Mockery::mock(KeygenAPIService::class)) extends ProFeaturesService {
-            public array $releaseModules = [];
+            public array $enabledModules = [];
             protected function syncModules(string $mode, ?\Illuminate\Support\Collection $enabledModules = null, ?string $licenseOverride = null): array
             {
-                $this->releaseModules = [$mode, $enabledModules->all()];
+                $this->enabledModules = [$mode, $enabledModules->all()];
                 return ['updated' => [], 'skipped' => ['Billing: already latest'], 'errors' => ['Release API error']];
             }
         };
         $result = $service->refreshModules();
-        $this->assertSame(['enabled_only', ['Billing']], $service->releaseModules);
+        $this->assertSame(['enabled_only', ['ContactCenter', 'Billing']], $service->enabledModules);
         $this->assertCount(1, $result['updated']);
         $this->assertSame(['Billing: already latest'], $result['skipped']);
         $this->assertSame(['Release API error'], $result['errors']);
@@ -219,6 +220,70 @@ class ModuleLifecycleTest extends TestCase
         Module::shouldReceive('allEnabled')->once()->andReturn([]);
         $this->assertSame(['updated' => [], 'skipped' => [], 'errors' => []], $this->service()->refreshModules());
         Process::assertNothingRan();
+    }
+
+    /** @dataProvider mixedRefreshOutcomes */
+    public function test_mixed_refresh_reports_each_module_once(bool $contactCenterEnabled, int $hookExitCode): void
+    {
+        mkdir(base_path('Modules/Billing/.git'), 0755, true);
+        mkdir(base_path('Modules/ContactCenter/.git'), 0755, true);
+        mkdir(base_path('Modules/StirShaken'), 0755, true);
+        file_put_contents(base_path('Modules/StirShaken/module.json'), '{"name":"StirShaken","version":"1.0.23"}');
+        $enabled = ['Billing', 'StirShaken'];
+        if ($contactCenterEnabled) {
+            $enabled[] = 'ContactCenter';
+        }
+        Module::shouldReceive('allEnabled')->once()->andReturn(array_map(
+            fn ($name) => \Mockery::mock()->shouldReceive('getName')->andReturn($name)->getMock(),
+            $enabled
+        ));
+        Process::fake(fn ($process) => in_array('ContactCenter', $process->command)
+            ? Process::result(exitCode: $hookExitCode, errorOutput: $hookExitCode ? 'Supervisor failed' : '')
+            : Process::result());
+        Cache::shouldReceive('forget')->times(3);
+
+        $keygen = \Mockery::mock(KeygenAPIService::class);
+        $licenseResponse = ['meta' => ['valid' => true]];
+        $keygen->shouldReceive('validateLicenseKey')->once()->with('test-license')->andReturn($licenseResponse);
+        $keygen->shouldReceive('getEntitlementsByLicense')->once()->with($licenseResponse)->andReturn([
+            ['attributes' => ['code' => 'STIR_SHAKEN_MODULE']],
+            ['attributes' => ['code' => 'CONTACT_CENTER_MODULE']],
+            ['attributes' => ['code' => 'BILLING_MODULE']],
+        ]);
+        $keygen->shouldReceive('getReleases')->once()->with('test-license')->andReturn([
+            ['attributes' => ['name' => 'STIR_SHAKEN_MODULE', 'version' => '1.0.23']],
+        ]);
+        $keygen->shouldNotReceive('downloadArtifact');
+        $service = new class($keygen) extends ProFeaturesService {
+            protected function getProRow(): ?ProFeatures
+            {
+                return new ProFeatures(['license' => 'test-license']);
+            }
+        };
+
+        $result = $service->refreshModules();
+
+        $updated = ['Billing: local update completed (Git checkout)'];
+        if ($contactCenterEnabled && $hookExitCode === 0) {
+            $updated[] = 'ContactCenter: local update completed (Git checkout)';
+        }
+        $skipped = ['StirShaken: already latest (1.0.23)'];
+        if (! $contactCenterEnabled) {
+            $skipped[] = 'ContactCenter: not enabled';
+        }
+        $this->assertSame($updated, $result['updated']);
+        $this->assertSame($skipped, $result['skipped']);
+        $this->assertSame($hookExitCode ? ['ContactCenter: local update failed: modules:configure failed: Supervisor failed'] : [], $result['errors']);
+        Process::assertRanTimes(fn () => true, $contactCenterEnabled ? 2 : 1);
+    }
+
+    public static function mixedRefreshOutcomes(): array
+    {
+        return [
+            'enabled Git module succeeds' => [true, 0],
+            'enabled Git module fails' => [true, 1],
+            'disabled Git module stays skipped' => [false, 0],
+        ];
     }
 
     public function test_hook_failure_makes_configuration_fail(): void

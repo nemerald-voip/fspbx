@@ -40,7 +40,7 @@ class ProFeaturesService
         }
 
         if ($releaseModules->isNotEmpty()) {
-            $releases = $this->syncModules(mode: 'enabled_only', enabledModules: $releaseModules);
+            $releases = $this->syncModules(mode: 'enabled_only', enabledModules: $enabled);
             foreach (array_keys($result) as $key) {
                 $result[$key] = array_merge($result[$key], $releases[$key]);
             }
@@ -190,6 +190,11 @@ class ProFeaturesService
                     if ($mode === 'enabled_only') {
                         if (!$enabledModules || !$enabledModules->contains($moduleName)) {
                             $result['skipped'][] = "{$moduleName}: not enabled";
+                            continue;
+                        }
+
+                        // refreshModules already reported these modules' local update results.
+                        if ($this->isGitManagedModule($moduleName)) {
                             continue;
                         }
                     }

@@ -639,6 +639,7 @@ else
     exit 1
 fi
 
+# Legacy email_queue/fax_queue services are retired; native queues use Horizon.
 # Update settings for event_guard service
 # Copy event_guard service file
 sudo cp /var/www/fspbx/public/app/event_guard/resources/service/debian.service /etc/systemd/system/event_guard.service
