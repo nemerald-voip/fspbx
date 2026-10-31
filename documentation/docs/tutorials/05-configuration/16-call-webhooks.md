@@ -9,12 +9,18 @@ Call webhooks let a CRM react when an inbound call is offered to a specific exte
 
 ## Enable the listener
 
-The call webhook listener is installed but disabled by default. Enable it only on servers that use call webhooks. One listener handles every configured account on the server.
+On new installations, the call webhook listener is installed but disabled by default with `numprocs=0`. It stays off during server restarts and `supervisorctl restart all`. Enable it only on servers that use call webhooks. One listener handles every configured account on the server.
 
-Set `autostart=true` in the Supervisor configuration:
+Edit `/etc/supervisor/conf.d/fs-esl-listener-call-webhooks.conf` and set:
+
+```ini
+numprocs=1
+autostart=true
+```
+
+If an older configuration has no `numprocs` line, add it. Apply the changes:
 
 ```bash
-sudo sed -i 's/^autostart=false$/autostart=true/' /etc/supervisor/conf.d/fs-esl-listener-call-webhooks.conf
 sudo supervisorctl reread
 sudo supervisorctl update
 sudo supervisorctl status fs-esl-listener-call-webhooks
@@ -30,14 +36,23 @@ Enabling a webhook in Account Settings controls event delivery but does not star
 
 The listener caches the enabled account configurations for 24 hours. Saving, enabling, disabling, rotating, or deleting a configuration in Account Settings invalidates that cache immediately. Direct database changes can take up to 24 hours to be detected and should be avoided.
 
-To disable the listener again:
+To disable the listener again, set these values in the same file:
+
+```ini
+numprocs=0
+autostart=true
+```
+
+Then apply the changes:
 
 ```bash
-sudo supervisorctl stop fs-esl-listener-call-webhooks
-sudo sed -i 's/^autostart=true$/autostart=false/' /etc/supervisor/conf.d/fs-esl-listener-call-webhooks.conf
 sudo supervisorctl reread
 sudo supervisorctl update
 ```
+
+This stops the listener and removes its process instance. While disabled, it does not appear in `supervisorctl status`; asking for its status or trying to start it directly reports `no such process`. Set `numprocs=1` and apply the configuration to enable it again.
+
+Use `numprocs=0` for a disabled listener. `autostart=false` alone only prevents automatic startup and still allows `supervisorctl restart all` to start it.
 
 Listener output is available in:
 

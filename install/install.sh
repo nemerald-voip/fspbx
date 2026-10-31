@@ -10,6 +10,16 @@ print_error() {
     echo -e "\e[31m$1 \e[0m"  # Red text
 }
 
+# Install the shipped Supervisor configuration on every fresh-install attempt.
+install_supervisor_config() {
+    local source="$1" destination="/etc/supervisor/conf.d/$(basename -- "$1")"
+    if ! sudo cp -- "$source" "$destination"; then
+        print_error "Unable to install Supervisor configuration: $destination"
+        return 1
+    fi
+    print_success "Supervisor configuration installed: $destination"
+}
+
 # Detect OS codename
 OS_CODENAME=$(lsb_release -sc 2>/dev/null || echo "")
 echo "Detected OS_CODENAME=$OS_CODENAME"
@@ -722,13 +732,7 @@ else
 fi
 
 # Copy Horizon configuration to Supervisor
-sudo cp install/horizon.conf /etc/supervisor/conf.d/
-if [ $? -eq 0 ]; then
-    print_success "Horizon configuration file copied to Supervisor successfully."
-else
-    print_error "Error occurred while copying Horizon configuration file to Supervisor."
-    exit 1
-fi
+install_supervisor_config install/horizon.conf || exit 1
 
 # Publish Horizon's assets
 php artisan vendor:publish --provider="Laravel\Horizon\HorizonServiceProvider"
@@ -740,101 +744,19 @@ else
 fi
 
 # Copy FS PBX CDR Service configuration to Supervisor
-sudo cp install/fs-cdr-service.conf /etc/supervisor/conf.d/
-if [ $? -eq 0 ]; then
-    print_success "FS PBX CDR Service configuration file copied to Supervisor successfully."
-else
-    print_error "Error occurred while copying FS PBX CDR Service configuration file to Supervisor."
-    exit 1
-fi
+install_supervisor_config install/fs-cdr-service.conf || exit 1
 
-# Copy FS ELS Emergency Listener configuration to Supervisor
-sudo cp install/fs-esl-listener-emergency.conf /etc/supervisor/conf.d/
-if [ $? -eq 0 ]; then
-    print_success "FS ELS Emergency Listener configuration file copied to Supervisor successfully."
-else
-    print_error "Error occurred while copying FS ELS Emergency Listener configuration file to Supervisor."
-    exit 1
-fi
+# Copy FS ESL Emergency Listener configuration to Supervisor
+install_supervisor_config install/fs-esl-listener-emergency.conf || exit 1
 
 # Copy FS PBX call webhook listener configuration to Supervisor
-sudo cp install/fs-esl-listener-call-webhooks.conf /etc/supervisor/conf.d/
-if [ $? -eq 0 ]; then
-    print_success "FS PBX call webhook listener configuration installed disabled by default."
-else
-    print_error "Error occurred while copying the call webhook listener configuration to Supervisor."
-    exit 1
-fi
+install_supervisor_config install/fs-esl-listener-call-webhooks.conf || exit 1
 
 # Copy Laravel Reverb configuration to Supervisor
-sudo cp install/reverb.conf /etc/supervisor/conf.d/
-if [ $? -eq 0 ]; then
-    print_success "Laravel Reverb configuration file copied to Supervisor successfully."
-else
-    print_error "Error occurred while copying Laravel Reverb configuration file to Supervisor."
-    exit 1
-fi
+install_supervisor_config install/reverb.conf || exit 1
 
-# Reload Supervisor to read new configuration
-sudo supervisorctl reread
-if [ $? -eq 0 ]; then
-    sleep 6
-    print_success "Supervisor reread configuration successfully."
-else
-    print_error "Error occurred while rereading Supervisor configuration."
-    exit 1
-fi
-
-# Update Supervisor with new configuration
-sudo supervisorctl update
-if [ $? -eq 0 ]; then
-    sleep 6
-    print_success "Supervisor updated with new configuration successfully."
-else
-    print_error "Error occurred while updating Supervisor with new configuration."
-    exit 1
-fi
-
-# Restart Supervisor
-sudo systemctl restart supervisor
-if [ $? -eq 0 ]; then
-    sleep 6
-    print_success "Supervisor restarted successfully."
-else
-    print_error "Error occurred while restarting Supervisor."
-    exit 1
-fi
-
-# Restart Horizon processes under Supervisor
-sudo supervisorctl restart horizon:*
-if [ $? -eq 0 ]; then
-    sleep 6
-    print_success "Horizon processes restarted successfully."
-else
-    print_error "Error occurred while restarting Horizon processes."
-    exit 1
-fi
-
-# Start FS ESL Emergency Listener under Supervisor
-sudo supervisorctl start fs-esl-listener-emergency
-if [ $? -eq 0 ]; then
-    sleep 6
-    print_success "FS ELS Emergency process restarted successfully."
-else
-    print_error "Error occurred while restarting FS ELS Emergency process."
-    exit 1
-fi
-
-# Restart FS PBX CDR Service under Supervisor
-sudo supervisorctl restart fs-cdr-service
-if [ $? -eq 0 ]; then
-    sleep 6
-    print_success "FS PBX CDR Service process restarted successfully."
-else
-    print_error "Error occurred while restarting FS PBX CDR Service process."
-    exit 1
-fi
-
+# Final setup prepares the database, runtime permissions and FreeSWITCH before
+# restarting Supervisor. Do not start listeners or workers before that point.
 print_success "Seeding the database and configuring FS PBX..."
 # Navigate to Laravel project directory
 cd /var/www/fspbx

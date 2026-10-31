@@ -162,9 +162,6 @@ class FSPBXInitialDBSeed extends Command
         // Step 13: Install & Build Frontend (NPM)
         $this->installFrontendAssets();
 
-        // Step 14: Set Correct Permissions
-        $this->updatePermissions();
-
         // Step 16: Set App version
         Artisan::call('version:set', ['version' => config('version.release'), '--force' => true]);
         Artisan::call('config:cache');
@@ -192,6 +189,9 @@ class FSPBXInitialDBSeed extends Command
             return self::FAILURE;
         }
 
+        // Root-run setup can create logs and caches. Hand ownership back only
+        // after all preparation, before services run as www-data.
+        $this->updatePermissions();
         $this->restartFreeSwitch();
         $this->restartSupervisorJobs();
 
@@ -343,14 +343,18 @@ class FSPBXInitialDBSeed extends Command
 
     private function restartSupervisorJobs()
     {
-        $this->info("Restarting Supervisor processes...");
+        $this->info("Loading Supervisor configuration and restarting processes...");
 
-        $process = new Process(['/usr/bin/supervisorctl', 'restart', 'all']);
-        $process->setTimeout(300);
-        $process->run();
+        // Load newly installed configurations after setup is complete. Opt-in
+        // programs use numprocs=0, so restart all cannot activate them.
+        foreach ([['reread'], ['update'], ['restart', 'all']] as $arguments) {
+            $process = new Process(['/usr/bin/supervisorctl', ...$arguments]);
+            $process->setTimeout(300);
+            $process->run();
 
-        if (!$process->isSuccessful()) {
-            throw new ProcessFailedException($process);
+            if (!$process->isSuccessful()) {
+                throw new ProcessFailedException($process);
+            }
         }
 
         $this->info("Supervisor processes restarted successfully.");
@@ -393,7 +397,9 @@ class FSPBXInitialDBSeed extends Command
 
         $this->info("Updating ownership for $directory...");
 
-        shell_exec("chown -R www-data:www-data " . escapeshellarg($directory));
+        $process = new Process(['chown', '-R', 'www-data:www-data', $directory]);
+        $process->setTimeout(300);
+        $process->mustRun();
 
         if (is_dir($scriptsTarget)) {
             shell_exec("chown -R www-data:www-data " . escapeshellarg($scriptsTarget));
