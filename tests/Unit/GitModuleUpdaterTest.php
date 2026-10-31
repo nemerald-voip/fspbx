@@ -71,6 +71,7 @@ class GitModuleUpdaterTest extends TestCase
 
     private function advance(): string
     {
+        $this->git($this->producer, ['pull', '--ff-only']);
         $this->writeSource('1.0.2');
         $this->git($this->producer, ['add', '.']);
         $this->git($this->producer, ['commit', '-m', 'New source']);
@@ -107,10 +108,21 @@ class GitModuleUpdaterTest extends TestCase
         return $directory;
     }
 
-    private function publish(string $package): string
+    private function publish(string $package, string $tag = ''): string
     {
         $repo = dirname(__DIR__, 2);
-        return $this->execute($this->producer, ['bash', $repo.'/.github/scripts/publish-module-frontend.sh', 'HEAD', $package, $repo]);
+        return $this->execute($this->producer, ['bash', $repo.'/.github/scripts/bundle-module-frontend.sh', 'HEAD', $package, $repo, 'main', 'origin', $tag]);
+    }
+
+    private function copyPackage(string $package): void
+    {
+        $destination = $this->checkout.'/Resources/dist';
+        $this->assets->removeDirectory($destination);
+        foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($package, \FilesystemIterator::SKIP_DOTS)) as $file) {
+            $path = $destination.'/'.substr($file->getPathname(), strlen($package) + 1);
+            if (!is_dir(dirname($path))) mkdir(dirname($path), 0755, true);
+            copy($file->getPathname(), $path);
+        }
     }
 
     private function assertRejected(string $message): void
@@ -129,10 +141,10 @@ class GitModuleUpdaterTest extends TestCase
 
     public function test_manual_pull_is_followed_by_exact_asset_installation(): void
     {
-        $target = $this->advance();
+        $this->advance();
         $package = $this->package();
-        $this->publish($package);
-        $this->assertStringContainsString('already published', $this->publish($package));
+        $target = $this->publish($package);
+        $this->assertSame($target, $this->publish($package));
         $this->pullManually();
         $configured = 0;
         $this->updater->update('ContactCenter', function () use (&$configured) { $configured++; });
@@ -141,14 +153,15 @@ class GitModuleUpdaterTest extends TestCase
         $this->assertSame('1.0.2', $this->assets->state()['modules']['ContactCenter']['metadata']['version']);
         $this->assertSame('release', $this->assets->state()['modules']['ContactCenter']['metadata']['origin']);
         $this->assertSame(1, $configured);
-        $this->assertDirectoryDoesNotExist($this->checkout.'/Resources/dist');
+        $this->assertFileExists($this->checkout.'/Resources/dist/frontend.json');
         $this->assets->activatePrepared();
         $this->assertArrayHasKey('ContactCenter', $this->assets->browserConfiguration(['ContactCenter'])['modules']);
     }
 
-    public function test_refresh_downloads_current_commit_assets_without_pulling_newer_source(): void
+    public function test_refresh_installs_bundled_assets_without_pulling_newer_source(): void
     {
         $this->publish($this->package());
+        $this->pullManually();
         $this->advance();
         $this->publish($this->package());
         $this->updater->update('ContactCenter', fn () => null);
@@ -161,12 +174,13 @@ class GitModuleUpdaterTest extends TestCase
     public function test_missing_bundle_leaves_old_checkout_and_assets_untouched(): void
     {
         $this->advance();
-        $this->assertRejected('Could not download frontend assets for checked-out commit');
+        $this->assertRejected('Matching frontend assets are missing or incompatible');
     }
 
     public function test_missing_new_bundle_preserves_an_existing_active_module(): void
     {
         $this->publish($this->package());
+        $this->pullManually();
         $this->updater->update('ContactCenter', fn () => null);
         $this->assets->activatePrepared();
         $before = $this->assets->state();
@@ -176,13 +190,13 @@ class GitModuleUpdaterTest extends TestCase
             $this->updater->update('ContactCenter', fn () => $this->fail('Hooks must not run'));
             $this->fail('Expected missing package rejection');
         } catch (RuntimeException $error) {
-            $this->assertStringContainsString('Could not download frontend assets for checked-out commit', $error->getMessage());
+            $this->assertStringContainsString('Matching frontend assets are missing or incompatible', $error->getMessage());
         }
         $this->assertSame($before, $this->assets->state());
         $this->assertSame($this->before, $this->git($this->checkout, ['rev-parse', 'HEAD']));
     }
 
-    public function test_publisher_preserves_source_index_and_rejects_replacing_a_package(): void
+    public function test_bundler_preserves_source_index_and_published_release(): void
     {
         $this->advance();
         $this->pullManually();
@@ -190,28 +204,132 @@ class GitModuleUpdaterTest extends TestCase
         $this->git($this->producer, ['add', 'staged.php']);
         $before = $this->git($this->producer, ['status', '--porcelain']);
         $package = $this->package();
-        $this->publish($package);
+        $source = $this->git($this->producer, ['rev-parse', 'HEAD']);
+        $bundle = $this->publish($package, 'v1.0.2');
         $this->assertSame($before, $this->git($this->producer, ['status', '--porcelain']));
+        $this->assertSame($source, $this->git($this->producer, ['rev-parse', 'HEAD']));
+        $this->assertSame($source, $this->git($this->producer, ['rev-parse', $bundle.'^']));
+        $this->assertSame('', $this->git($this->producer, ['diff', $source, $bundle, '--', '.', ':(exclude)Resources/dist']));
+        $this->git($this->producer, ['tag', 'v1.0.2', $bundle]);
+        $this->git($this->producer, ['push', 'origin', 'refs/tags/v1.0.2']);
+        $this->assertSame($bundle, $this->publish($package, 'v1.0.2'));
         $meta = json_decode(file_get_contents($package.'/frontend.json'), true);
         file_put_contents($package.'/assets/app.js', 'export const version = 2;');
         $meta['files']['assets/app.js'] = hash_file('sha256', $package.'/assets/app.js');
         file_put_contents($package.'/frontend.json', json_encode($meta));
         try {
-            $this->publish($package);
+            $this->publish($package, 'v1.0.2');
             $this->fail('Expected immutable publication rejection');
         } catch (\Symfony\Component\Process\Exception\ProcessFailedException $error) {
             $this->assertStringContainsString('Refusing to replace', $error->getProcess()->getErrorOutput());
         }
+        $this->pullManually();
         $this->updater->update('ContactCenter', fn () => null);
         $this->assertNotSame($meta['files'], $this->assets->state()['modules']['ContactCenter']['metadata']['files']);
+    }
+
+    public function test_bundler_rejects_a_build_for_source_that_has_advanced(): void
+    {
+        $package = $this->package();
+        $target = $this->advance();
+        $repo = dirname(__DIR__, 2);
+        try {
+            $this->execute($this->checkout, ['bash', $repo.'/.github/scripts/bundle-module-frontend.sh', 'HEAD', $package, $repo]);
+            $this->fail('Expected stale build rejection');
+        } catch (\Symfony\Component\Process\Exception\ProcessFailedException $error) {
+            $this->assertStringContainsString('Module source changed while building', $error->getProcess()->getErrorOutput());
+        }
+        $this->assertSame($target, $this->git($this->remote, ['rev-parse', 'refs/heads/main']));
+        $this->assertSame($this->before, $this->git($this->checkout, ['rev-parse', 'HEAD']));
+    }
+
+    public function test_bundler_checks_committed_source_instead_of_dirty_frontend_files(): void
+    {
+        file_put_contents($this->producer.'/Resources/assets/js/Pages/Dashboard.vue', 'Uncommitted frontend');
+        $package = $this->package();
+        try {
+            $this->publish($package);
+            $this->fail('Expected uncommitted build rejection');
+        } catch (\Symfony\Component\Process\Exception\ProcessFailedException $error) {
+            $this->assertStringContainsString('do not match', $error->getProcess()->getErrorOutput());
+        }
+        $this->assertSame($this->before, $this->git($this->remote, ['rev-parse', 'refs/heads/main']));
+        $this->assertSame('Uncommitted frontend', file_get_contents($this->producer.'/Resources/assets/js/Pages/Dashboard.vue'));
+    }
+
+    public function test_replacing_a_bundle_removes_obsolete_chunks_from_source_and_archives(): void
+    {
+        $package = $this->package();
+        file_put_contents($package.'/assets/obsolete.js', '// old chunk');
+        $meta = json_decode(file_get_contents($package.'/frontend.json'), true);
+        $meta['files']['assets/obsolete.js'] = hash_file('sha256', $package.'/assets/obsolete.js');
+        file_put_contents($package.'/frontend.json', json_encode($meta));
+        $this->publish($package);
+        $this->git($this->producer, ['pull', '--ff-only']);
+        $package = $this->package();
+        $bundle = $this->publish($package, 'v1.0.1');
+        $this->assertSame($bundle, $this->git($this->remote, ['rev-parse', 'refs/tags/v1.0.1']));
+        $this->pullManually();
+        $this->assertFileDoesNotExist($this->checkout.'/Resources/dist/assets/obsolete.js');
+        $archive = $this->temporary.'/release.tar.gz';
+        $this->git($this->producer, ['archive', '--format=tar.gz', '--output='.$archive, $bundle]);
+        $this->assets->extract($archive, $this->temporary.'/release');
+        $meta = $this->assets->validateModule($this->temporary.'/release/Resources/dist', 'ContactCenter', '1.0.1');
+        $this->assets->verifyModuleSource($this->temporary.'/release', $meta);
+        $this->assertSame(file_get_contents($package.'/frontend.json'), file_get_contents($this->temporary.'/release/Resources/dist/frontend.json'));
+        $this->assertFileDoesNotExist($this->temporary.'/release/Resources/dist/assets/obsolete.js');
+    }
+
+    public function test_released_bundle_can_be_retried_after_new_source_is_pushed(): void
+    {
+        $package = $this->package();
+        $source = $this->git($this->producer, ['rev-parse', 'HEAD']);
+        $bundle = $this->publish($package, 'v1.0.1');
+        $latest = $this->advance();
+        // Simulate rerunning the original workflow at its original SHA.
+        $this->git($this->producer, ['checkout', '--detach', $source]);
+        $this->assertSame($bundle, $this->publish($package, 'v1.0.1'));
+        $this->assertSame($latest, $this->git($this->remote, ['rev-parse', 'refs/heads/main']));
+        $this->assertSame($bundle, $this->git($this->remote, ['rev-parse', 'refs/tags/v1.0.1']));
+    }
+
+    public function test_contact_center_version_check_accepts_bundled_tag_on_a_workflow_retry(): void
+    {
+        $workflow = dirname(__DIR__, 2).'/Modules/ContactCenter/.github/workflows/main.yml';
+        if (!is_file($workflow)) $this->markTestSkipped('Contact Center is optional.');
+        $steps = \Symfony\Component\Yaml\Yaml::parseFile($workflow)['jobs']['create-release']['steps'];
+        $script = null;
+        foreach ($steps as $step) {
+            if (($step['id'] ?? null) === 'module_version') $script = $step['run'];
+        }
+        $this->assertNotNull($script);
+        $source = $this->advance();
+        $output = $this->temporary.'/workflow-output';
+        $run = function () use ($script, $source, $output): string {
+            file_put_contents($output, '');
+            (new Process(['bash', '-c', $script], $this->producer, [
+                'GITHUB_SHA' => $source, 'BEFORE_SHA' => $this->before,
+                'GITHUB_OUTPUT' => $output,
+            ], null, 30))->mustRun();
+            return file_get_contents($output);
+        };
+        $this->assertStringContainsString('tag_exists=false', $run());
+        $bundle = $this->publish($this->package(), 'v1.0.2');
+        $this->git($this->producer, ['fetch', '--tags']);
+        $retry = $run();
+        $this->assertStringContainsString('tag_exists=true', $retry);
+        $this->assertStringContainsString('publish_tag=v1.0.2', $retry);
+        $this->assertSame($bundle, $this->git($this->remote, ['rev-parse', 'refs/tags/v1.0.2']));
+        $this->assertSame($bundle, $this->git($this->remote, ['rev-parse', 'refs/heads/main']));
     }
 
     /** @dataProvider localChanges */
     public function test_unbuilt_frontend_changes_are_preserved_and_rejected(string $file): void
     {
         $this->publish($this->package());
+        $this->pullManually();
         file_put_contents($this->checkout.'/'.$file, 'local work');
-        $this->assertRejected('do not match this checkout');
+        $this->assertRejected('For local frontend changes, run npm run build');
         $this->assertSame('local work', file_get_contents($this->checkout.'/'.$file));
     }
 
@@ -223,6 +341,7 @@ class GitModuleUpdaterTest extends TestCase
     public function test_unrelated_local_edits_do_not_block_asset_installation(): void
     {
         $this->publish($this->package());
+        $this->pullManually();
         file_put_contents($this->checkout.'/backend.php', '<?php // local work');
         $this->git($this->checkout, ['add', 'backend.php']);
         file_put_contents($this->checkout.'/notes.txt', 'untracked notes');
@@ -261,13 +380,14 @@ class GitModuleUpdaterTest extends TestCase
         $this->git($this->checkout, ['add', '.']);
         $this->git($this->checkout, ['-c', 'user.name=Fixture', '-c', 'user.email=test@example.invalid', 'commit', '-m', 'Local']);
         $this->before = $this->git($this->checkout, ['rev-parse', 'HEAD']);
-        $this->assertRejected('Could not download frontend assets for checked-out commit');
+        $this->assertRejected('Matching frontend assets are missing or incompatible');
         $this->assertSame('local commit', file_get_contents($this->checkout.'/local.txt'));
     }
 
     public function test_detached_checkout_is_preserved(): void
     {
         $this->publish($this->package());
+        $this->pullManually();
         $this->git($this->checkout, ['checkout', '--detach']);
         $this->updater->update('ContactCenter', fn () => null);
         $this->assertSame('HEAD', $this->git($this->checkout, ['rev-parse', '--abbrev-ref', 'HEAD']));
@@ -275,18 +395,19 @@ class GitModuleUpdaterTest extends TestCase
         $this->assertArrayHasKey('ContactCenter', $this->assets->state()['modules']);
     }
 
-    public function test_checkout_without_upstream_downloads_assets_from_origin(): void
+    public function test_checkout_without_upstream_installs_bundled_assets(): void
     {
         $this->publish($this->package());
+        $this->pullManually();
         $this->git($this->checkout, ['branch', '--unset-upstream']);
         $this->updater->update('ContactCenter', fn () => null);
         $this->assertArrayHasKey('ContactCenter', $this->assets->state()['modules']);
     }
 
-    public function test_missing_remote_is_reported_only_when_assets_need_downloading(): void
+    public function test_missing_bundle_reports_retry_guidance_without_a_remote(): void
     {
         $this->git($this->checkout, ['remote', 'remove', 'origin']);
-        $this->assertRejected('Configure origin or a tracking remote');
+        $this->assertRejected('pull the source including Resources/dist');
     }
 
     public function test_in_progress_git_operation_is_preserved(): void
@@ -296,10 +417,18 @@ class GitModuleUpdaterTest extends TestCase
         $this->assertFileExists($this->checkout.'/.git/MERGE_HEAD');
     }
 
-    public function test_private_remote_access_failure_does_not_expose_remote_credentials(): void
+    public function test_bundled_assets_install_when_the_remote_is_inaccessible(): void
     {
+        $this->publish($this->package());
+        $this->pullManually();
+        $fetchHead = file_get_contents($this->checkout.'/.git/FETCH_HEAD');
         $this->git($this->checkout, ['remote', 'set-url', 'origin', $this->temporary.'/secret-token-missing.git']);
-        $this->assertRejected('Git fetch failed');
+        $configured = false;
+        $this->updater->update('ContactCenter', function () use (&$configured) { $configured = true; });
+        $this->assertTrue($configured);
+        $this->assertSame($fetchHead, file_get_contents($this->checkout.'/.git/FETCH_HEAD'));
+        $this->assertSame($this->before, $this->git($this->checkout, ['rev-parse', 'HEAD']));
+        $this->assertArrayHasKey('ContactCenter', $this->assets->state()['modules']);
     }
 
     /** @dataProvider gitFailureMessages */
@@ -314,71 +443,17 @@ class GitModuleUpdaterTest extends TestCase
     public static function gitFailureMessages(): array
     {
         return [
-            ["connect ECONNREFUSED /run/user/0/vscode-git-private-secret.sock\nfatal: Authentication failed", 'VS Code Git credential bridge'],
-            ['fatal: could not read Username for https://private-secret@github.com: terminal prompts disabled', 'HTTPS authentication'],
-            ['fatal: Authentication failed for https://user:private-secret@github.com/repo', 'HTTPS authentication'],
-            ['git@github.com: Permission denied (publickey). private-secret', 'SSH key authentication'],
-            ['Host key verification failed. private-secret', 'host-key verification'],
-            ["fatal: couldn't find remote ref refs/heads/private-secret", 'reference does not exist'],
             ['fatal: detected dubious ownership in repository private-secret', 'repository ownership'],
-            ["fatal: cannot open '.git/FETCH_HEAD': Permission denied private-secret", 'filesystem permissions'],
-            ['fatal: Could not resolve host: private-secret', 'hostname could not be resolved'],
-            ['fatal: SSL certificate problem: private-secret', 'TLS certificate verification'],
-            ['custom helper printed private-secret', 'unrecognized error'],
-        ];
-    }
-
-    /** @dataProvider editorCredentialFailures */
-    public function test_only_dead_editor_credentials_are_retried_without_overriding_other_authentication(string $firstError, string $secondError, int $attempts): void
-    {
-        $updater = new class($this->assets, $this->root) extends GitModuleUpdater {
-            public array $environments = [];
-            public array $errors = [];
-            protected function runGitProcess(string $directory, array $arguments, array $environment): Process
-            {
-                $this->environments[] = $environment;
-                $error = array_shift($this->errors) ?? '';
-                $process = new Process([PHP_BINARY, '-r', $error === '' ? 'echo "ok";' : 'fwrite(STDERR, $argv[1]); exit(128);', $error]);
-                $process->run();
-                return $process;
-            }
-        };
-        $updater->errors = [$firstError, $secondError];
-        try {
-            $result = (new \ReflectionMethod(GitModuleUpdater::class, 'git'))->invoke($updater, $this->checkout, ['fetch']);
-            $this->assertSame('', $attempts === 1 ? $firstError : $secondError);
-            $this->assertSame('ok', $result);
-        } catch (RuntimeException $error) {
-            $this->assertNotSame('', $attempts === 1 ? $firstError : $secondError);
-            $this->assertStringNotContainsString('private-secret', $error->getMessage());
-        }
-        $this->assertCount($attempts, $updater->environments);
-        $this->assertSame(['GIT_TERMINAL_PROMPT' => '0'], $updater->environments[0]);
-        if ($attempts === 2) {
-            $this->assertFalse($updater->environments[1]['GIT_ASKPASS']);
-            $this->assertFalse($updater->environments[1]['VSCODE_GIT_IPC_HANDLE']);
-            foreach (['SSH_AUTH_SOCK', 'GIT_SSH_COMMAND', 'SSH_ASKPASS', 'HOME', 'GIT_CONFIG_GLOBAL'] as $name) {
-                $this->assertArrayNotHasKey($name, $updater->environments[1]);
-            }
-        }
-    }
-
-    public static function editorCredentialFailures(): array
-    {
-        $stale = 'connect ECONNREFUSED /run/user/0/vscode-git-private-secret.sock';
-        return [
-            'normal configured credentials succeed' => [$stale, '', 2],
-            'no replacement credentials' => [$stale, 'fatal: Authentication failed for https://private-secret@github.com', 2],
-            'editor stays broken' => [$stale, $stale, 2],
-            'working authentication is preserved' => ['', '', 1],
-            'other authentication failure is not retried' => ['fatal: Authentication failed', '', 1],
+            ['fatal: not a git repository private-secret', 'not a Git checkout'],
+            ['fatal: Permission denied private-secret', 'filesystem permissions'],
+            ['custom helper printed private-secret', 'check it with git status'],
         ];
     }
 
     /** @dataProvider invalidBundles */
-    public function test_invalid_bundle_is_rejected_without_changing_the_checkout(string $failure, string $message): void
+    public function test_invalid_bundle_is_rejected_without_changing_the_checkout(string $failure): void
     {
-        $target = $this->advance();
+        $this->advance();
         $this->pullManually();
         $package = $this->package();
         $meta = json_decode(file_get_contents($package.'/frontend.json'), true);
@@ -386,17 +461,14 @@ class GitModuleUpdaterTest extends TestCase
         if ($failure === 'source') $meta['sources']['module.json'] = str_repeat('c', 64);
         if ($failure === 'checksum') file_put_contents($package.'/assets/app.js', 'corrupt');
         file_put_contents($package.'/frontend.json', json_encode($meta));
-        // Deliberately bypass the publisher's validation to model an invalid remote package.
-        $this->git($package, ['init']);
-        $this->git($package, ['add', '.']);
-        $this->git($package, ['-c', 'user.name=Fixture', '-c', 'user.email=test@example.invalid', 'commit', '-m', 'Invalid package']);
-        $this->git($package, ['push', $this->remote, 'HEAD:refs/tags/frontend/'.$target.'/'.str_repeat('a', 64)]);
-        $this->assertRejected($message);
+        // Model missing/corrupt/incompatible files already present in a checkout.
+        $this->copyPackage($package);
+        $this->assertRejected('Matching frontend assets are missing or incompatible');
     }
 
     public static function invalidBundles(): array
     {
-        return [['runtime', 'compatible FS PBX release'], ['source', 'do not match'], ['checksum', 'checksum failed']];
+        return [['runtime'], ['source'], ['checksum']];
     }
 
     public function test_matching_existing_bundle_is_reused_and_hooks_retry(): void
@@ -410,7 +482,8 @@ class GitModuleUpdaterTest extends TestCase
         } catch (RuntimeException $error) { $this->assertSame('Hook failed', $error->getMessage()); }
         $this->assets->activatePrepared();
         $installed = $this->assets->state()['modules']['ContactCenter'];
-        // A PHP-only commit can reuse an exact frontend without another asset ref.
+        // A PHP-only commit can reuse an exact frontend without another build.
+        $this->git($this->producer, ['pull', '--ff-only']);
         file_put_contents($this->producer.'/backend.php', '<?php // changed');
         $this->git($this->producer, ['add', '.']);
         $this->git($this->producer, ['commit', '-m', 'Backend only']);
@@ -424,15 +497,15 @@ class GitModuleUpdaterTest extends TestCase
         $this->assertFileExists($this->checkout.'/backend.php');
     }
 
-    public function test_linked_worktree_uses_its_tracking_remote_for_assets_only(): void
+    public function test_linked_worktree_installs_bundled_assets_without_a_remote(): void
     {
         $clone = $this->temporary.'/clone';
         rename($this->checkout, $clone);
         $this->git($clone, ['worktree', 'add', '-b', 'production', $this->checkout, 'origin/main']);
-        $target = $this->advance();
-        $this->publish($this->package());
+        $this->advance();
+        $target = $this->publish($this->package());
         $this->pullManually();
-        $this->git($this->checkout, ['remote', 'rename', 'origin', 'module-upstream']);
+        $this->git($this->checkout, ['remote', 'remove', 'origin']);
         $this->updater->update('ContactCenter', fn () => null);
         $this->assertFileExists($this->checkout.'/.git');
         $this->assertSame($target, $this->git($this->checkout, ['rev-parse', 'HEAD']));

@@ -29,8 +29,8 @@ class ProFeaturesService
                 continue;
             }
 
-            // Source is pulled manually. Fetch matching frontend assets using
-            // the checkout's Git credentials, independently of licensing.
+            // Manual pulls supply source and Resources/dist together. Install
+            // matching local assets without contacting the module repository.
             try {
                 app(GitModuleUpdater::class)->update($moduleName, function () use ($moduleName) {
                     $this->runModuleCommand(['modules:configure', $moduleName, '--update-only']);

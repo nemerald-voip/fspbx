@@ -69,15 +69,15 @@ git -C Modules/ContactCenter pull --ff-only
 php artisan modules:refresh
 ```
 
-Repeat the manual pull for each Git-managed module you want to update. The refresh downloads and validates frontend assets for each enabled module's currently checked-out commit and the prepared or active core runtime. It never pulls or merges source. A compatible existing package, including a local build, is reused when its version and frontend sources still match exactly. Modules without frontend pages run their update hooks without an asset download.
+Wait for the module's GitHub Actions build to finish, then repeat the manual pull for each Git-managed module you want to update. The pull brings down both source and the compiled files in `Resources/dist`. The refresh validates and activates those local files against the installed module version, frontend source, and prepared or active core runtime. It never fetches, pulls, or merges module code or assets. A compatible existing package, including a local build, can be reused when its version and frontend sources still match exactly. Modules without frontend pages run their update hooks without an asset installation.
 
-Compiled assets use the branch's tracking remote, or `origin` for a checkout without a tracking remote, including a detached release tag. Downloads use its existing SSH key or HTTPS credentials. No GitHub API token, license download, or environment mode switch is needed for this path. Compiled assets live in separate immutable Git refs; they are never added to the checked-out source branch. Each node installs its own assets.
+Only your manual pull requires repository access. The module refresh needs no Git credentials, editor connection, or license download for a Git checkout. Detached release tags and linked worktrees work too. Each node installs its own assets.
 
-Git authentication must work without prompting for the Linux user running the updater, even when source was pulled manually. A VS Code terminal may retain a stale credential socket after disconnecting, producing `ECONNREFUSED ... vscode-git-...sock`. The updater retries once without that broken editor bridge, using the server's configured credentials; it does not create credentials or change Git configuration. Use an SSH key or a persistent HTTPS credential helper for unattended asset downloads. Reconnecting VS Code and opening a fresh terminal can restore editor-provided authentication for an immediate retry. Once access works, retry `php artisan modules:refresh`.
+Older checkouts may not include `Resources/dist`. A matching active local bundle can still be reused; otherwise, pull a module version built by the updated workflow and retry `php artisan modules:refresh`. The updater no longer downloads the old `frontend/...` tags. Existing published tags are not moved or deleted.
 
-Local edits and untracked files are preserved. Backend-only edits do not prevent a matching frontend from being installed. Changed frontend files or module metadata require a matching local build; a published package that does not match the checkout is rejected. An in-progress Git operation, unavailable download, or incompatible package produces a module warning and leaves existing assets intact. The core update continues, so check module warnings before considering the deployment complete. Successfully checked assets are followed by module update hooks; retry a failed hook with `php artisan modules:refresh`. The updater does not stash, reset, merge local commits, or start npm.
+Local edits and untracked files are preserved. Backend-only edits do not prevent a matching frontend from being installed. Changed frontend files or module metadata require a matching local build; a published package that does not match the checkout is rejected. An in-progress Git operation, missing bundle, or incompatible package produces a module warning and leaves existing assets intact. The core update continues, so check module warnings before considering the deployment complete. Successfully checked assets are followed by module update hooks; retry a failed hook with `php artisan modules:refresh`. The updater does not stash, reset, merge local commits, or start npm.
 
-For development or a production patch, edit and run `npm run build` as before. Wait for a module commit's asset publication before pulling it onto production when its frontend has changed. A missing package cannot undo your manual pull; publish the matching package and retry the refresh, or deliberately build the checkout locally.
+For development or a production patch, edit and run `npm run build` as before. Local builds activate files in application storage and do not overwrite the tracked `Resources/dist`. Wait for the module workflow before pulling onto production: the initial source push precedes its generated asset commit. A missing package cannot undo your manual pull; wait for the successful workflow, pull again and retry the refresh, or deliberately build the checkout locally.
 
 ## Preparing releases
 
@@ -88,13 +88,15 @@ The core repository's **Build frontend release assets** workflow builds a publis
 
 For release preparation, create the tag and a draft GitHub release, dispatch the workflow for that tag, and verify the attachments before publishing. The published-release event also builds missing assets; wait for the attachments before directing administrators to upgrade. Existing complete attachments are retained. Fresh installations check for the package and use the matching tag's source.
 
-Contact Center's release workflow builds its frontend before creating a release and includes it in the archive sent through Keygen. It always checks out build tools from `nemerald-voip/fspbx` on `main`; no repository variable is needed. Publish the core build tooling before running the updated module workflow.
+Contact Center's release workflow builds its frontend and appends a commit containing `Resources/dist` to `main`. New version tags point to that bundled commit, and the Keygen archive is created from the same commit. It always checks out build tools from `nemerald-voip/fspbx` on `main`; no repository variable is needed. Publish the core build tooling before running the updated module workflow. For the first release using this workflow, bump the module version so existing published tags remain unchanged.
 
-The workflow also publishes the compiled frontend at `refs/tags/frontend/<module-commit>/<runtime-fingerprint>` using `.github/scripts/publish-module-frontend.sh` from that core checkout. These refs contain only compiled assets and metadata, with no source-branch parent; retries never overwrite an existing package. Retain refs needed by deployed commits. Publishing to private module repositories preserves their normal Git access controls.
+The shared `.github/scripts/bundle-module-frontend.sh` validates assets against committed module source, replaces the generated directory in a separate Git index, and pushes the bundled commit without changing the runner's checkout or index. A new release tag is pushed atomically with the branch. The workflow's existing `contents: write` permission authorizes the push; repository branch rules must permit that workflow to update `main`. It uses the normal `GITHUB_TOKEN`, whose pushes do not start another workflow; generated-only changes are also excluded and the commit carries `[skip ci]`.
 
-The module workflow prints the checked-out core commit and verifies its build tools before installing dependencies. If a run reports `vite build --release` followed by `Unknown option --release`, its core checkout predates the new builder. Push the updated build tools to the core repository's `main` branch, then rerun the workflow. The preflight also checks that the Git asset publisher is present.
+If source changes while a build runs, the publication fails without overwriting it; let the latest commit's workflow finish. Identical retries reuse the existing bundle. A published release tag must keep the exact source and assets it already contains; changed release content requires a new module version. After a workflow finishes, pull its generated commit into your development checkout before making the next source push.
 
-Billing's **Build frontend assets** workflow builds and publishes its Git frontend package on pushes to its `main` branch, and can also be run manually. It uses the same core build tools and immutable frontend refs as Contact Center. This workflow publishes Git assets only; it does not upload a licensed archive to Keygen.
+The module workflow prints the checked-out core commit and verifies its build tools before installing dependencies. If a run reports `vite build --release` followed by `Unknown option --release`, its core checkout predates the new builder. Push the updated build tools to the core repository's `main` branch, then rerun the workflow. The preflight also checks that the bundle script is present.
+
+Billing's **Build frontend assets** workflow builds and commits `Resources/dist` on pushes to its `main` branch, and can also be run manually. It uses the same core build tools and bundle script as Contact Center. This workflow updates the Git checkout distribution only; it does not upload a licensed archive to Keygen.
 
 For other module release pipelines, check out the matching core build tools, put the module source under `Modules/NAME`, install the core lockfile's dependencies, and build:
 
@@ -105,13 +107,13 @@ npm run build -- --release --module NAME --outDir /tmp/NAME-frontend
 
 Copy that output into the module archive as `Resources/dist`, alongside its source. Never publish a module version's PHP and frontend separately. Bump the module version whenever its packaged frontend changes. A module release must be rebuilt when its shared runtime fingerprint changes.
 
-To support automatic frontend downloads for another Git-managed module, run the shared publisher from its source repository after building and validating its assets:
+To bundle assets for another Git-managed module, run the shared script in CI from its source repository after building and validating its assets:
 
 ```bash
-bash /path/to/fspbx/.github/scripts/publish-module-frontend.sh HEAD /tmp/NAME-frontend /path/to/fspbx
+bash /path/to/fspbx/.github/scripts/bundle-module-frontend.sh HEAD /tmp/NAME-frontend /path/to/fspbx
 ```
 
-The publisher pushes only the immutable frontend ref to `origin` (or the optional fourth-argument remote). It preserves the source branch and working index. Existing licensed installations need a newly versioned module archive to receive newly packaged assets; republishing an already installed version does not trigger a download.
+The script prints the bundled commit ID for release tags and archives. Optional arguments are the destination branch (default `main`), remote (default `origin`), and new release tag. This is a publishing step run in CI, never by `app:update`. Existing licensed installations need a newly versioned module archive to receive newly packaged assets; republishing an already installed version does not trigger a download.
 
 To prepare core assets without activating them:
 
