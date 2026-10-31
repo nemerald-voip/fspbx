@@ -1,71 +1,62 @@
-name: Build frontend release assets
+name: Publish release
 
 on:
-  release:
-    types: [published]
+  push:
+    branches: [main]
+    paths: ['config/version.php']
   workflow_dispatch:
     inputs:
       ref:
-        description: Existing release tag to build (for example v2.1.3)
+        description: Main branch commit or release tag to retry
         required: true
+        default: main
         type: string
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
-  group: frontend-release-${{ github.event.release.tag_name || inputs.ref }}
+  group: fspbx-release
+  queue: max
   cancel-in-progress: false
 
 jobs:
-  build:
+  release:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.release.tag_name || inputs.ref }}
+          ref: ${{ inputs.ref || github.sha }}
           fetch-depth: 0
+      - name: Test release automation
+        run: python3 -B .github/scripts/test_release.py
+      - name: Validate version and prepare draft
+        id: prepare
+        run: |
+          php -l config/version.php
+          python3 .github/scripts/release.py prepare
       - uses: actions/setup-node@v4
+        if: steps.prepare.outputs.mode != 'skip'
         with:
           node-version: 20
           cache: npm
-      - name: Verify release version
-        id: version
-        env:
-          RELEASE_TAG: ${{ github.event.release.tag_name || inputs.ref }}
-        run: |
-          set -euo pipefail
-          version=$(php -r 'echo (require "config/version.php")["release"];')
-          test "$RELEASE_TAG" = "v$version"
-          echo "value=$version" >> "$GITHUB_OUTPUT"
-      - name: Check whether assets were prepared before publication
-        id: existing
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-          VERSION: ${{ steps.version.outputs.value }}
-        run: |
-          set -euo pipefail
-          names=$(gh release view "v$VERSION" --json assets --jq '.assets[].name')
-          name="fspbx-frontend-$VERSION.tar.gz"
-          if grep -Fxq "$name" <<< "$names" && grep -Fxq "$name.sha256" <<< "$names"; then
-            echo "ready=true" >> "$GITHUB_OUTPUT"
-            echo 'Release frontend assets are already attached.'
-          else
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-          fi
       - run: npm ci
-        if: steps.existing.outputs.ready != 'true'
+        if: steps.prepare.outputs.mode == 'build'
       - name: Build core assets without optional modules
-        if: steps.existing.outputs.ready != 'true'
+        if: steps.prepare.outputs.mode == 'build'
         env:
           NODE_OPTIONS: --max-old-space-size=4096
         run: npm run build -- --release --outDir "$RUNNER_TEMP/fspbx-frontend"
-      - name: Validate and package
-        if: steps.existing.outputs.ready != 'true'
+      - name: Validate and package frontend
+        if: steps.prepare.outputs.mode == 'build'
         env:
-          VERSION: ${{ steps.version.outputs.value }}
+          VERSION: ${{ steps.prepare.outputs.version }}
         run: |
           set -euo pipefail
           php -r 'require "app/Services/FrontendAssets.php"; $a = new App\Services\FrontendAssets(getcwd()); $m = $a->validate(getenv("RUNNER_TEMP")."/fspbx-frontend", "core", "fspbx", getenv("VERSION")); $a->verifyCoreSource($m);'
@@ -73,13 +64,37 @@ jobs:
           name="fspbx-frontend-$VERSION.tar.gz"
           tar --sort=name --mtime='@0' --owner=0 --group=0 --numeric-owner --format=gnu -C "$RUNNER_TEMP/fspbx-frontend" -czf "$name" assets manifest.json frontend.json
           sha256sum "$name" > "$name.sha256"
-      - name: Attach assets to the matching release
-        if: steps.existing.outputs.ready != 'true'
+      - name: Attach assets to draft
+        if: steps.prepare.outputs.mode == 'build'
+        run: python3 .github/scripts/release.py upload
+      - name: Download and verify uploaded assets
+        if: steps.prepare.outputs.mode != 'skip'
         env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-          VERSION: ${{ steps.version.outputs.value }}
+          VERSION: ${{ steps.prepare.outputs.version }}
+          TAG: ${{ steps.prepare.outputs.tag }}
+          MODE: ${{ steps.prepare.outputs.mode }}
         run: |
-          # Published packages are immutable. A retry must not overwrite a
-          # package already downloaded by customers.
-          gh release upload "v$VERSION" "fspbx-frontend-$VERSION.tar.gz" "fspbx-frontend-$VERSION.tar.gz.sha256"
+          set -euo pipefail
+          name="fspbx-frontend-$VERSION.tar.gz"
+          download="$RUNNER_TEMP/release-download"
+          mkdir -p "$download"
+          gh release download "$TAG" --pattern "$name" --pattern "$name.sha256" --dir "$download"
+          if [ "$MODE" = build ]; then
+            cmp "$name.sha256" "$download/$name.sha256"
+          fi
+          (cd "$download" && sha256sum --check "$name.sha256")
+          php -r 'require "app/Services/FrontendAssets.php"; $a = new App\Services\FrontendAssets(getcwd()); $d = getenv("RUNNER_TEMP")."/release-download"; $a->extract($d."/fspbx-frontend-".getenv("VERSION").".tar.gz", $d."/verified"); $m = $a->validate($d."/verified", "core", "fspbx", getenv("VERSION")); $a->verifyCoreSource($m);'
+          node --experimental-vm-modules .github/scripts/test-frontend-bundles.mjs "$download/verified"
+      - name: Publish verified release
+        if: steps.prepare.outputs.mode != 'skip'
+        id: publish
+        run: python3 .github/scripts/release.py publish
+      - name: Refresh website release list
+        if: steps.prepare.outputs.mode != 'skip'
+        run: gh workflow run deploy.yml --ref main
+      - name: Release summary
+        if: steps.prepare.outputs.mode != 'skip'
+        env:
+          RELEASE_URL: ${{ steps.publish.outputs.url }}
+        run: |
+          printf 'Published release with verified frontend assets: %s\n' "$RELEASE_URL" >> "$GITHUB_STEP_SUMMARY"
