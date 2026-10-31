@@ -55,22 +55,47 @@ class ReleaseTests(unittest.TestCase):
             release.read_version(source(VERSION) + source(VERSION))
 
     def test_new_release_is_created_as_draft_at_exact_commit(self):
-        self.github.api.return_value = None
-        self.github.release.side_effect = [None, metadata()]
+        self.github.api.side_effect = [None, {}, metadata()]
+        # Simulate a lookup that still cannot see the newly created draft.
+        self.github.release.return_value = None
         result = release.prepare(self.github, VERSION, COMMIT, self.root)
         self.github.api.assert_any_call('git/refs', {'ref': f'refs/tags/{TAG}', 'sha': COMMIT})
         self.github.verify_tag.assert_called_once_with(TAG, COMMIT)
-        self.github.cli.assert_called_once_with('create', TAG, '--draft', '--verify-tag',
-                                               '--target', COMMIT, '--title', TAG, '--generate-notes')
+        self.github.api.assert_called_with('releases', {
+            'tag_name': TAG, 'target_commitish': COMMIT, 'name': TAG,
+            'draft': True, 'prerelease': False, 'generate_release_notes': True,
+        })
+        self.github.release.assert_called_once_with(TAG)
+        self.github.cli.assert_not_called()
         self.assertEqual(result['mode'], 'build')
 
     def test_written_notes_are_used_when_present(self):
         notes = self.root / '.github' / 'release-notes' / f'{TAG}.md'
         notes.parent.mkdir(parents=True)
-        notes.write_text('## Improvements and fixes\n')
-        self.github.release.side_effect = [None, metadata()]
+        body = '## Improvements and fixes\n\n- Keep "quotes", `commands`, and café text.\n'
+        notes.write_text(body, encoding='utf-8')
+        self.github.api.side_effect = [{}, metadata()]
+        self.github.release.return_value = None
         release.prepare(self.github, VERSION, COMMIT, self.root)
-        self.assertEqual(self.github.cli.call_args.args[-2:], ('--notes-file', str(notes)))
+        self.github.api.assert_called_with('releases', {
+            'tag_name': TAG, 'target_commitish': COMMIT, 'name': TAG,
+            'draft': True, 'prerelease': False, 'body': body,
+        })
+
+    def test_unexpected_creation_response_stops_before_build(self):
+        self.github.release.return_value = None
+        for response in [None, {}, metadata(draft=False), {**metadata(), 'tag_name': 'v9.9.9'}]:
+            with self.subTest(response=response):
+                self.github.api.side_effect = [{}, response]
+                with self.assertRaisesRegex(RuntimeError, 'expected draft release'):
+                    release.prepare(self.github, VERSION, COMMIT, self.root)
+
+    def test_creation_error_is_not_treated_as_success(self):
+        self.github.api.side_effect = [{}, RuntimeError('gh: Forbidden (HTTP 403)')]
+        self.github.release.return_value = None
+        with self.assertRaisesRegex(RuntimeError, 'HTTP 403'):
+            release.prepare(self.github, VERSION, COMMIT, self.root)
+        self.github.cli.assert_not_called()
 
     def test_tag_collision_does_not_create_release(self):
         self.github.verify_tag.side_effect = ValueError('different commit')

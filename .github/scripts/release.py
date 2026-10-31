@@ -94,12 +94,17 @@ def prepare(github, version, commit, root):
     release = github.release(tag)
     if release is None:
         notes = root / '.github' / 'release-notes' / f'{tag}.md'
-        args = ['create', tag, '--draft', '--verify-tag', '--target', commit, '--title', tag]
-        args += ['--notes-file', str(notes)] if notes.is_file() else ['--generate-notes']
-        github.cli(*args)
-        release = github.release(tag)
-        if release is None or not release['draft']:
-            raise RuntimeError('Could not prepare a draft release')
+        data = {'tag_name': tag, 'target_commitish': commit, 'name': tag,
+                'draft': True, 'prerelease': False}
+        if notes.is_file():
+            data['body'] = notes.read_text(encoding='utf-8')
+        else:
+            data['generate_release_notes'] = True
+        # Use the creation response: a new draft may not appear in a follow-up
+        # release lookup immediately, even though creation succeeded.
+        release = github.api('releases', data)
+        if not release or release.get('draft') is not True or release.get('tag_name') != tag:
+            raise RuntimeError('GitHub did not return the expected draft release')
     return {'version': version, 'tag': tag, 'commit': commit,
             'mode': 'build' if release['draft'] else 'published'}
 

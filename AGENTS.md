@@ -11,6 +11,13 @@ This repo is a Laravel, Vue/Inertia, VueForm, and FreeSWITCH application. Before
 - Keep user-facing copy short and practical.
 - For release notes, write for users first. Avoid implementation details unless they explain visible behavior.
 
+## Release Notes
+
+- When asked to write FS PBX release notes, save them in `.github/release-notes/vX.Y.Z.md` for the requested version (for example, `.github/release-notes/v2.1.6.md`), unless the user explicitly requests another location or a temporary draft.
+- Use adjacent `config/version.php` version-bump commits to determine the release's changes; tags may have been created later. Follow the established published-release format and omit `## Upgrade notes`.
+- Include the matching notes file in the commit that bumps `config/version.php`, before pushing to `main`. The automated release workflow uses that file when creating the draft; if it is missing, GitHub generates the notes automatically. See [.github/RELEASING.md](.github/RELEASING.md).
+- Existing draft and published release descriptions are preserved by the workflow. Adding or changing the Markdown file after draft creation does not automatically update the GitHub release description.
+
 ## Laravel And Vue Pages
 
 - Rebuild legacy `/public/app/.../*.php` admin pages as native Laravel/Vue pages when asked.
