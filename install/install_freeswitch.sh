@@ -7,11 +7,18 @@ set -Eeuo pipefail
 
 source "$(dirname -- "$(readlink -f "$0")")/freeswitch-common.sh"
 FRESH_INSTALL=false
+PREFLIGHT_ARGS=()
 case "${1:-}" in
     --fresh-install) FRESH_INSTALL=true; shift ;;
+    # Only the main FS PBX installer opts into skipping or replacing an
+    # existing installation. Standalone installs retain their original paths.
+    --fspbx-install) FRESH_INSTALL=true; PREFLIGHT_ARGS=(--skip-if-installed); shift ;;
 esac
-[[ $# == 0 ]] || fs_die 'Usage: install_freeswitch.sh [--fresh-install]'
-fs_preflight
+[[ $# == 0 ]] || fs_die 'Usage: install_freeswitch.sh [--fresh-install | --fspbx-install]'
+fs_preflight "${PREFLIGHT_ARGS[@]}"
+if [[ "$FS_ALREADY_INSTALLED" == true ]]; then
+    exit 0
+fi
 fs_protect_services
 
 JOBS=${JOBS:-$(getconf _NPROCESSORS_ONLN)}

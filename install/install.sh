@@ -414,9 +414,9 @@ else
 fi
 
 print_success "Installing FreeSWITCH..."
-bash /var/www/fspbx/install/install_freeswitch.sh --fresh-install
+bash /var/www/fspbx/install/install_freeswitch.sh --fspbx-install
 if [ $? -eq 0 ]; then
-    print_success "FreeSWITCH installed successfully."
+    print_success "FreeSWITCH installation step completed successfully."
 else
     print_error "Error occurred while installing FreeSWITCH."
     exit 1
