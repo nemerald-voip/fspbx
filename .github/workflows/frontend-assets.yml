@@ -35,12 +35,19 @@ jobs:
           ref: ${{ inputs.ref || github.sha }}
           fetch-depth: 0
       - name: Test release automation
-        run: python3 -B .github/scripts/test_release.py
+        env:
+          RELEASE_WORKFLOW_SHA: ${{ github.sha }}
+        run: |
+          # A retry uses current workflow tooling with the original release
+          # source. Fixing automation must not require moving an existing tag.
+          git show "$RELEASE_WORKFLOW_SHA:.github/scripts/release.py" > "$RUNNER_TEMP/release.py"
+          git show "$RELEASE_WORKFLOW_SHA:.github/scripts/test_release.py" > "$RUNNER_TEMP/test_release.py"
+          python3 -B "$RUNNER_TEMP/test_release.py"
       - name: Validate version and prepare draft
         id: prepare
         run: |
           php -l config/version.php
-          python3 .github/scripts/release.py prepare
+          python3 "$RUNNER_TEMP/release.py" prepare
       - uses: actions/setup-node@v4
         if: steps.prepare.outputs.mode != 'skip'
         with:
@@ -66,7 +73,7 @@ jobs:
           sha256sum "$name" > "$name.sha256"
       - name: Attach assets to draft
         if: steps.prepare.outputs.mode == 'build'
-        run: python3 .github/scripts/release.py upload
+        run: python3 "$RUNNER_TEMP/release.py" upload
       - name: Download and verify uploaded assets
         if: steps.prepare.outputs.mode != 'skip'
         env:
@@ -88,7 +95,7 @@ jobs:
       - name: Publish verified release
         if: steps.prepare.outputs.mode != 'skip'
         id: publish
-        run: python3 .github/scripts/release.py publish
+        run: python3 "$RUNNER_TEMP/release.py" publish
       - name: Refresh website release list
         if: steps.prepare.outputs.mode != 'skip'
         run: gh workflow run deploy.yml --ref main

@@ -58,7 +58,20 @@ class GitHub:
         return json.loads(output) if output is not None else None
 
     def release(self, tag):
-        return self.api(f'releases/tags/{tag}', missing_ok=True)
+        published = self.api(f'releases/tags/{tag}', missing_ok=True)
+        if published is not None:
+            return published
+        # The tag endpoint only returns published releases. Authenticated
+        # release listings also include drafts, identified by their pending tag.
+        page = 1
+        while True:
+            releases = self.api(f'releases?per_page=100&page={page}')
+            for candidate in releases:
+                if candidate['tag_name'] == tag:
+                    return candidate
+            if len(releases) < 100:
+                return None
+            page += 1
 
     def verify_tag(self, tag, commit):
         if self.api(f'commits/{tag}')['sha'] != commit:
@@ -116,6 +129,8 @@ def publish(github, version, commit):
         latest = github.api('releases/latest', missing_ok=True)
         make_latest = latest is None or version_tuple(version) > version_tuple(latest['tag_name'].removeprefix('v'))
         github.cli('edit', tag, '--draft=false', '--prerelease=false', f'--latest={str(make_latest).lower()}')
+        # Draft URLs use an untagged identifier; read the final public URL.
+        release = github.release(tag)
     return release['html_url']
 
 

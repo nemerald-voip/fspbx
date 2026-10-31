@@ -13,6 +13,9 @@ A failed build or verification leaves the release as a draft. Retry the failed
 workflow from the Actions tab. Alternatively, run **Publish release** manually
 from `main`, supplying the draft's tag as `ref`.
 
+Manual retries use the workflow tooling from `main` while building the original
+tagged source. Release-tooling fixes can therefore be applied without retagging.
+
 Tags always identify the original commit. If the source needs a fix, increase the
 version again; the workflow will not move an existing tag. Published assets are
 never overwritten. Retrying an older release cannot replace a newer latest

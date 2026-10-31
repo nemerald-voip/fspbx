@@ -24,7 +24,7 @@ def source(version):
 
 
 def metadata(draft=True, assets=True):
-    return {'draft': draft, 'html_url': f'https://github.com/example/fspbx/releases/tag/{TAG}',
+    return {'tag_name': TAG, 'draft': draft, 'html_url': f'https://github.com/example/fspbx/releases/tag/{TAG}',
             'assets': [{'name': name, 'size': 100} for name in release.asset_names(VERSION)] if assets else []}
 
 
@@ -141,6 +141,31 @@ class ReleaseTests(unittest.TestCase):
         with patch.object(github, 'api', return_value={'sha': 'b' * 40}):
             with self.assertRaisesRegex(ValueError, 'different commit'):
                 github.verify_tag(TAG, COMMIT)
+
+    def test_draft_lookup_after_tag_endpoint_returns_404(self):
+        github = release.GitHub('example/fspbx')
+        draft = metadata()
+        with patch.object(github, 'api', side_effect=[None, [draft]]) as api:
+            self.assertEqual(github.release(TAG), draft)
+        self.assertEqual(api.call_args.args, ('releases?per_page=100&page=1',))
+
+    def test_draft_lookup_includes_later_pages(self):
+        github = release.GitHub('example/fspbx')
+        draft = metadata()
+        with patch.object(github, 'api', side_effect=[None, [{'tag_name': 'v1.0.0'}] * 100, [draft]]) as api:
+            self.assertEqual(github.release(TAG), draft)
+        self.assertEqual(api.call_args.args, ('releases?per_page=100&page=2',))
+
+    def test_missing_draft_lookup_finishes_without_creation(self):
+        github = release.GitHub('example/fspbx')
+        with patch.object(github, 'api', side_effect=[None, []]):
+            self.assertIsNone(github.release(TAG))
+
+    def test_publication_returns_public_url_instead_of_draft_url(self):
+        draft = {**metadata(), 'html_url': 'https://github.com/example/fspbx/releases/tag/untagged-example'}
+        published = metadata(draft=False)
+        self.github.release.side_effect = [draft, published]
+        self.assertEqual(release.publish(self.github, VERSION, COMMIT), published['html_url'])
 
     def test_only_404_is_treated_as_missing(self):
         with patch('release.subprocess.run') as command:

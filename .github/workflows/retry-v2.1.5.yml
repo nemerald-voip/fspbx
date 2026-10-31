@@ -1,0 +1,20 @@
+name: Retry initial automated release
+
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/retry-v2.1.5.yml']
+
+permissions:
+  actions: write
+
+jobs:
+  retry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Retry the existing v2.1.5 draft with corrected tooling
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh workflow run frontend-assets.yml --ref main -f ref=v2.1.5
