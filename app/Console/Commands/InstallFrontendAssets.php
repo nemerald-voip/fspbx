@@ -48,7 +48,7 @@ class InstallFrontendAssets extends Command
                     $name = $module->getName();
                     if (!is_dir($module->getPath().'/Resources/assets/js/Pages')) continue;
                     if (!isset($assets->browserConfiguration([$name])['modules'][$name])) {
-                        $this->warn($name.': compatible frontend assets are unavailable. Refresh the licensed module, or run npm run build for a local checkout.');
+                        $this->warn($name.': compatible frontend assets are unavailable. Resolve the module refresh warnings and retry php artisan modules:refresh. For a local build, run npm run build.');
                     }
                 }
                 if (is_file(storage_path('vite.hot'))) {

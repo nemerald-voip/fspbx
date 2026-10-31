@@ -5,10 +5,11 @@ namespace App\Services;
 use RuntimeException;
 use Symfony\Component\Process\Process;
 
-/** Fast-forward module source only after its matching frontend is available. */
+/** Install frontend assets and run hooks for the operator's current checkout. */
 class GitModuleUpdater
 {
     private string $root;
+    private bool $ignoreEditorCredentials = false;
 
     public function __construct(private FrontendAssets $assets, ?string $root = null)
     {
@@ -35,31 +36,18 @@ class GitModuleUpdater
         }
         $temporary = sys_get_temp_dir().'/fspbx-git-module-'.bin2hex(random_bytes(12));
         try {
-            $this->assertClean($directory);
-            $branch = $this->git($directory, ['symbolic-ref', '--quiet', '--short', 'HEAD'], false);
-            if ($branch === null) throw new RuntimeException('Detached Git checkout; select a tracking branch before updating.');
-            $remote = $this->git($directory, ['config', '--get', 'branch.'.$branch.'.remote'], false);
-            $merge = $this->git($directory, ['config', '--get', 'branch.'.$branch.'.merge'], false);
-            if (!$remote || $remote === '.' || str_starts_with($remote, '-') || !$merge || !str_starts_with($merge, 'refs/heads/')) {
-                throw new RuntimeException('Configure an upstream remote branch before updating this module.');
-            }
-            $before = $this->git($directory, ['rev-parse', 'HEAD']);
-            $this->git($directory, ['fetch', '--no-tags', '--no-recurse-submodules', $remote, $merge]);
-            $target = $this->git($directory, ['rev-parse', 'FETCH_HEAD^{commit}']);
-            if ($this->git($directory, ['merge-base', '--is-ancestor', $before, $target], false) === null) {
-                throw new RuntimeException('Local commits cannot be fast-forwarded to the upstream branch. Resolve them manually; no checkout files were changed.');
-            }
-            $manifest = json_decode($this->git($directory, ['show', $target.':module.json']), true, 512, JSON_THROW_ON_ERROR);
+            $this->assertNoGitOperation($directory);
+            $target = $this->git($directory, ['rev-parse', 'HEAD']);
+            if (!is_file($directory.'/module.json')) throw new RuntimeException('Module checkout is missing module.json.');
+            $manifest = json_decode(file_get_contents($directory.'/module.json'), true, 512, JSON_THROW_ON_ERROR);
             if (($manifest['name'] ?? null) !== $name || !is_string($manifest['version'] ?? null) || $manifest['version'] === '') {
-                throw new RuntimeException('Upstream module.json has an invalid name or version.');
+                throw new RuntimeException('Module checkout has an invalid name or version in module.json.');
             }
             if (!mkdir($temporary, 0700)) throw new RuntimeException('Cannot create the module staging directory.');
             $package = null;
-            if ($this->git($directory, ['cat-file', '-e', $target.':Resources/assets/js/Pages'], false) !== null) {
-                // Inspect the incoming frontend without changing the live checkout.
-                $this->git($directory, ['archive', '--format=tar', '--output='.$temporary.'/source.tar', $target, 'module.json', 'Resources/assets']);
-                $this->assets->extract($temporary.'/source.tar', $temporary.'/source');
-                $package = $this->existingPackage($name, $manifest['version'], $temporary.'/source');
+            if (is_dir($directory.'/Resources/assets/js/Pages')
+                || $this->git($directory, ['cat-file', '-e', $target.':Resources/assets/js/Pages'], false) !== null) {
+                $package = $this->existingPackage($name, $manifest['version'], $directory);
                 if ($package === null) {
                     $core = $this->assets->prepared() ?? ($this->assets->state()['core'] ?? null);
                     $runtime = $core['metadata']['runtime'] ?? '';
@@ -68,8 +56,12 @@ class GitModuleUpdater
                     }
                     // Asset refs use the same remote and SSH/HTTPS credentials as code.
                     $ref = 'refs/tags/frontend/'.$target.'/'.$runtime;
-                    if ($this->git($directory, ['fetch', '--no-tags', '--no-recurse-submodules', $remote, $ref], false) === null) {
-                        throw new RuntimeException('Matching frontend assets are unavailable for Git commit '.substr($target, 0, 12).'. Publish the module frontend and retry php artisan modules:refresh. No checkout files were changed.');
+                    $remote = $this->assetRemote($directory);
+                    try {
+                        $this->git($directory, ['fetch', '--no-tags', '--no-recurse-submodules', $remote, $ref]);
+                    } catch (RuntimeException $error) {
+                        throw new RuntimeException('Could not download frontend assets for checked-out commit '.substr($target, 0, 12).'. '
+                            .$error->getMessage().' If the frontend reference is missing, publish matching assets. Retry php artisan modules:refresh.', 0, $error);
                     }
                     $assetCommit = $this->git($directory, ['rev-parse', 'FETCH_HEAD^{commit}']);
                     $this->git($directory, ['archive', '--format=tar', '--output='.$temporary.'/frontend.tar', $assetCommit]);
@@ -77,21 +69,21 @@ class GitModuleUpdater
                     $this->assets->extract($temporary.'/frontend.tar', $package);
                     $meta = $this->assets->validateModule($package, $name, $manifest['version']);
                     if ($meta['origin'] !== 'release') throw new RuntimeException('Git frontend package must be a released build.');
-                    $this->assets->verifyModuleSource($temporary.'/source', $meta);
                 }
             }
             // An operator may have edited the checkout while downloads were running.
-            $this->assertClean($directory);
-            if ($this->git($directory, ['rev-parse', 'HEAD']) !== $before
-                || $this->git($directory, ['symbolic-ref', '--quiet', '--short', 'HEAD'], false) !== $branch) {
+            $this->assertNoGitOperation($directory);
+            if ($this->git($directory, ['rev-parse', 'HEAD']) !== $target) {
                 throw new RuntimeException('Git checkout changed during the update; retry after local work finishes.');
             }
-            // This is the fast-forward part of git pull, using the already verified commit.
-            $this->git($directory, ['-c', 'core.hooksPath=/dev/null', '-c', 'submodule.recurse=false', 'merge', '--ff-only', '--no-edit', $target]);
             if ($package !== null) {
                 $meta = $this->assets->validateModule($package, $name, $manifest['version']);
-                $this->assets->verifyModuleSource($directory, $meta);
-                $this->assets->publish([$package]);
+                try {
+                    $this->assets->verifyModuleSource($directory, $meta);
+                } catch (RuntimeException $error) {
+                    throw new RuntimeException('Module frontend assets do not match this checkout. For local frontend changes, run npm run build.', 0, $error);
+                }
+                $this->assets->publish([$package], true);
             }
             // Retry hooks on subsequent runs even when Git is already up to date.
             $configure();
@@ -121,11 +113,19 @@ class GitModuleUpdater
         return null;
     }
 
-    private function assertClean(string $directory): void
+    private function assetRemote(string $directory): string
     {
-        if ($this->git($directory, ['status', '--porcelain', '--untracked-files=normal']) !== '') {
-            throw new RuntimeException('Local changes or untracked files exist. Commit or stash them before retrying; the module was left unchanged.');
+        $branch = $this->git($directory, ['symbolic-ref', '--quiet', '--short', 'HEAD'], false);
+        $remote = $branch === null ? null : $this->git($directory, ['config', '--get', 'branch.'.$branch.'.remote'], false);
+        if (!$remote || $remote === '.') $remote = 'origin';
+        if (str_starts_with($remote, '-') || !in_array($remote, explode("\n", $this->git($directory, ['remote'])), true)) {
+            throw new RuntimeException('Configure origin or a tracking remote to download frontend assets for this module.');
         }
+        return $remote;
+    }
+
+    private function assertNoGitOperation(string $directory): void
+    {
         foreach (['MERGE_HEAD', 'CHERRY_PICK_HEAD', 'REVERT_HEAD', 'rebase-merge', 'rebase-apply', 'sequencer'] as $operation) {
             $path = $this->git($directory, ['rev-parse', '--git-path', $operation]);
             if (!str_starts_with($path, '/')) $path = $directory.'/'.$path;
@@ -135,13 +135,81 @@ class GitModuleUpdater
 
     private function git(string $directory, array $arguments, bool $required = true): ?string
     {
-        $process = new Process(['git', ...$arguments], $directory, ['GIT_TERMINAL_PROMPT' => '0'], null, 120);
-        $process->run();
+        $process = $this->runGitProcess($directory, $arguments, $this->gitEnvironment());
+        $retriedEditorFailure = false;
+        if (!$process->isSuccessful() && !$this->ignoreEditorCredentials
+            && self::unavailableEditorBridge($process->getErrorOutput())) {
+            // A disconnected VS Code terminal can retain a dead askpass socket.
+            // Retry once using normal configured credentials, preserving SSH agents
+            // and all other Git settings. Never modify the parent shell or Git config.
+            $this->ignoreEditorCredentials = true;
+            $retriedEditorFailure = true;
+            $process = $this->runGitProcess($directory, $arguments, $this->gitEnvironment());
+        }
         if (!$process->isSuccessful()) {
             if (!$required) return null;
-            // Remote URLs and credential helpers can print secrets; keep them out of update logs.
-            throw new RuntimeException('Git '.$arguments[0].' failed. Check repository access and upstream configuration in '.$directory.'.');
+            $reason = ($retriedEditorFailure ? 'The VS Code credential bridge is unavailable. Retrying without it failed: ' : '')
+                .self::failureReason($process->getErrorOutput());
+            throw new RuntimeException('Git '.$arguments[0].' failed: '.$reason
+                .' Check '.$directory.'.');
         }
         return trim($process->getOutput());
+    }
+
+    private function gitEnvironment(): array
+    {
+        $environment = ['GIT_TERMINAL_PROMPT' => '0'];
+        if ($this->ignoreEditorCredentials) {
+            foreach (['GIT_ASKPASS', 'VSCODE_GIT_ASKPASS_NODE', 'VSCODE_GIT_ASKPASS_MAIN',
+                'VSCODE_GIT_ASKPASS_EXTRA_ARGS', 'VSCODE_GIT_IPC_HANDLE'] as $name) {
+                $environment[$name] = false;
+            }
+        }
+        return $environment;
+    }
+
+    protected function runGitProcess(string $directory, array $arguments, array $environment): Process
+    {
+        $process = new Process(['git', ...$arguments], $directory, $environment, null, 120);
+        $process->run();
+        return $process;
+    }
+
+    private static function unavailableEditorBridge(string $error): bool
+    {
+        return preg_match('/vscode-git-[^\s]+\.sock/i', $error)
+            && preg_match('/ECONNREFUSED|ENOENT|EACCES/', $error);
+    }
+
+    /** Report actionable causes without copying credential-bearing Git output. */
+    public static function failureReason(string $error): string
+    {
+        if (self::unavailableEditorBridge($error)) {
+            return 'The VS Code Git credential bridge is unavailable; configure unattended authentication for the user running the update';
+        }
+        $causes = [
+            '/dubious ownership/i' => 'Git rejected the repository ownership for the user running the update',
+            '/Permission denied \(publickey/i' => 'SSH key authentication failed for the user running the update',
+            '/Host key verification failed/i' => 'SSH host-key verification failed',
+            '/could not read (Username|Password)|terminal prompts disabled|Authentication failed|Invalid username or (token|password)|HTTP Basic: Access denied/i'
+                => 'HTTPS authentication is unavailable or was rejected; unattended updates cannot prompt for credentials',
+            '/(cannot run|unable to read).*askpass|credential-.* is not a git command/i' => 'The configured Git credential helper is unavailable',
+            '/couldn.t find remote ref/i' => 'The requested branch or frontend asset reference does not exist on the remote',
+            '/Repository not found|does not appear to be a git repository/i' => 'The remote repository could not be found or accessed',
+            '/Could not resolve proxy/i' => 'The configured proxy could not be resolved',
+            '/Could not resolve host|Could not resolve hostname|Name or service not known|Temporary failure in name resolution/i'
+                => 'The remote hostname could not be resolved',
+            '/SSL certificate problem|server certificate verification failed|certificate verify failed/i' => 'TLS certificate verification failed',
+            '/cannot open .*FETCH_HEAD|Read-only file system|insufficient permission|unable to (create|write)|Permission denied/i'
+                => 'Git could not access or write repository files; check filesystem permissions',
+            '/Connection timed out|Failed to connect|Connection refused|Network is unreachable/i' => 'The remote connection failed or timed out',
+            '/unknown option|unrecognized option/i' => 'The installed Git rejected an updater command option',
+            '/local changes.*overwritten/is' => 'Local changes prevent the checkout from advancing',
+            '/not possible to fast-forward/i' => 'The checkout cannot be fast-forwarded',
+        ];
+        foreach ($causes as $pattern => $reason) {
+            if (preg_match($pattern, $error)) return $reason;
+        }
+        return 'Git returned an unrecognized error; run a manual fetch dry-run to inspect it';
     }
 }

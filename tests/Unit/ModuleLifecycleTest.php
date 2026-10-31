@@ -290,9 +290,9 @@ class ModuleLifecycleTest extends TestCase
 
         $result = $service->refreshModules();
 
-        $updated = ['Billing: Git source, frontend assets, and update hooks refreshed'];
+        $updated = ['Billing: frontend assets checked and update hooks completed; Git source unchanged'];
         if ($contactCenterEnabled && $hookExitCode === 0) {
-            $updated[] = 'ContactCenter: Git source, frontend assets, and update hooks refreshed';
+            $updated[] = 'ContactCenter: frontend assets checked and update hooks completed; Git source unchanged';
         }
         $skipped = ['StirShaken: already latest (1.0.23)'];
         if (! $contactCenterEnabled) {

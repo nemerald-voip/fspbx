@@ -29,13 +29,13 @@ class ProFeaturesService
                 continue;
             }
 
-            // Pull through the configured remote, preserving local work. Assets
-            // travel over the same Git credentials, independently of licensing.
+            // Source is pulled manually. Fetch matching frontend assets using
+            // the checkout's Git credentials, independently of licensing.
             try {
                 app(GitModuleUpdater::class)->update($moduleName, function () use ($moduleName) {
                     $this->runModuleCommand(['modules:configure', $moduleName, '--update-only']);
                 });
-                $result['updated'][] = "{$moduleName}: Git source, frontend assets, and update hooks refreshed";
+                $result['updated'][] = "{$moduleName}: frontend assets checked and update hooks completed; Git source unchanged";
             } catch (\Throwable $error) {
                 $result['errors'][] = "{$moduleName}: local update failed: {$error->getMessage()}";
             }

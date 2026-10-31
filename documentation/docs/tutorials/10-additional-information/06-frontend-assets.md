@@ -12,7 +12,7 @@ FS PBX installs compiled frontend files during application updates. Node and npm
 
 `php artisan app:update` downloads the frontend package matching `config/version.php`, verifies its checksum and frontend source files before running update steps, and activates it after module refreshes complete. A missing or mismatched package stops the update before those steps. It never falls back to running npm.
 
-The core application source checkout happens separately, before `app:update`. Asset preflight does not undo a previous `git pull`. Use source from the matching published release; unbuilt frontend changes on `main` cannot use an older release's assets just because the version number is unchanged. Enabled Git-managed modules are updated automatically as described below.
+Pull the core application and any Git-managed module source manually before `app:update`. Asset preflight does not undo a previous `git pull`. Use source from the matching published release; unbuilt frontend changes on `main` cannot use an older release's assets just because the version number is unchanged. Enabled Git-managed modules receive matching frontend assets and run their update hooks as described below.
 
 For an unpublished development checkout, an already completed local build can be reused if its frontend source files still match exactly. Run `npm run build` yourself first. A compatible published package takes precedence over a local build, and the updater reports when it replaces local assets.
 
@@ -62,13 +62,22 @@ Module packages include their own CSS. They use the core Vue, Inertia, VueForm, 
 
 ## Modules installed through Git
 
-During `app:update` or `modules:refresh`, enabled module repositories fetch their configured upstream branch and advance it with a fast-forward pull. Before advancing source, the updater downloads and validates the frontend package for that exact commit and the prepared core runtime. A compatible existing package can be reused when its frontend sources still match exactly.
+Pull module source yourself, then run `app:update` for a full application update or `modules:refresh` to refresh modules only. For example, from `/var/www/fspbx`:
 
-Code and compiled assets use the same Git remote and its existing SSH key or HTTPS credentials. No GitHub API token, license download, or environment mode switch is needed for this path. Compiled assets live in separate immutable Git refs; they are never added to the checked-out source branch. Each node installs its own assets.
+```bash
+git -C Modules/ContactCenter pull --ff-only
+php artisan modules:refresh
+```
 
-Local edits, untracked files, detached checkouts, missing upstreams, diverged branches, and missing or incompatible packages produce a module warning before source is advanced. The updater does not stash, reset, merge local commits, or start npm. The core update continues, so check module warnings before considering the deployment complete. The updater still runs module update hooks when source is already current; a failed hook can be retried with `php artisan modules:refresh`.
+Repeat the manual pull for each Git-managed module you want to update. The refresh downloads and validates frontend assets for each enabled module's currently checked-out commit and the prepared or active core runtime. It never pulls or merges source. A compatible existing package, including a local build, is reused when its version and frontend sources still match exactly. Modules without frontend pages run their update hooks without an asset download.
 
-For development or a production patch, edit and run `npm run build` as before. Resolve local Git work before resuming automatic module pulls. New module commits need a completed asset publication before production can pull them. A source-only push whose frontend has changed will be held back until its asset package is ready.
+Compiled assets use the branch's tracking remote, or `origin` for a checkout without a tracking remote, including a detached release tag. Downloads use its existing SSH key or HTTPS credentials. No GitHub API token, license download, or environment mode switch is needed for this path. Compiled assets live in separate immutable Git refs; they are never added to the checked-out source branch. Each node installs its own assets.
+
+Git authentication must work without prompting for the Linux user running the updater, even when source was pulled manually. A VS Code terminal may retain a stale credential socket after disconnecting, producing `ECONNREFUSED ... vscode-git-...sock`. The updater retries once without that broken editor bridge, using the server's configured credentials; it does not create credentials or change Git configuration. Use an SSH key or a persistent HTTPS credential helper for unattended asset downloads. Reconnecting VS Code and opening a fresh terminal can restore editor-provided authentication for an immediate retry. Once access works, retry `php artisan modules:refresh`.
+
+Local edits and untracked files are preserved. Backend-only edits do not prevent a matching frontend from being installed. Changed frontend files or module metadata require a matching local build; a published package that does not match the checkout is rejected. An in-progress Git operation, unavailable download, or incompatible package produces a module warning and leaves existing assets intact. The core update continues, so check module warnings before considering the deployment complete. Successfully checked assets are followed by module update hooks; retry a failed hook with `php artisan modules:refresh`. The updater does not stash, reset, merge local commits, or start npm.
+
+For development or a production patch, edit and run `npm run build` as before. Wait for a module commit's asset publication before pulling it onto production when its frontend has changed. A missing package cannot undo your manual pull; publish the matching package and retry the refresh, or deliberately build the checkout locally.
 
 ## Preparing releases
 
@@ -79,9 +88,13 @@ The core repository's **Build frontend release assets** workflow builds a publis
 
 For release preparation, create the tag and a draft GitHub release, dispatch the workflow for that tag, and verify the attachments before publishing. The published-release event also builds missing assets; wait for the attachments before directing administrators to upgrade. Existing complete attachments are retained. Fresh installations check for the package and use the matching tag's source.
 
-Contact Center's release workflow builds its frontend before creating a release and includes it in the archive sent through Keygen. Its `FSPBX_FRONTEND_CORE_REF` GitHub repository variable may pin the build-tool checkout to a compatible core tag or commit; without it the workflow uses `main`. This is release preparation configuration, not a customer-server mode switch. Publish the core build tooling before running the updated module workflow.
+Contact Center's release workflow builds its frontend before creating a release and includes it in the archive sent through Keygen. It always checks out build tools from `nemerald-voip/fspbx` on `main`; no repository variable is needed. Publish the core build tooling before running the updated module workflow.
 
-The workflow also publishes the compiled frontend at `refs/tags/frontend/<module-commit>/<runtime-fingerprint>` using `.github/scripts/publish-module-frontend.sh` from that core checkout. Choose a core ref containing this script. These refs contain only compiled assets and metadata, with no source-branch parent; retries never overwrite an existing package. Retain refs needed by deployed commits. Publishing to private module repositories preserves their normal Git access controls.
+The workflow also publishes the compiled frontend at `refs/tags/frontend/<module-commit>/<runtime-fingerprint>` using `.github/scripts/publish-module-frontend.sh` from that core checkout. These refs contain only compiled assets and metadata, with no source-branch parent; retries never overwrite an existing package. Retain refs needed by deployed commits. Publishing to private module repositories preserves their normal Git access controls.
+
+The module workflow prints the checked-out core commit and verifies its build tools before installing dependencies. If a run reports `vite build --release` followed by `Unknown option --release`, its core checkout predates the new builder. Push the updated build tools to the core repository's `main` branch, then rerun the workflow. The preflight also checks that the Git asset publisher is present.
+
+Billing's **Build frontend assets** workflow builds and publishes its Git frontend package on pushes to its `main` branch, and can also be run manually. It uses the same core build tools and immutable frontend refs as Contact Center. This workflow publishes Git assets only; it does not upload a licensed archive to Keygen.
 
 For other module release pipelines, check out the matching core build tools, put the module source under `Modules/NAME`, install the core lockfile's dependencies, and build:
 
@@ -92,7 +105,7 @@ npm run build -- --release --module NAME --outDir /tmp/NAME-frontend
 
 Copy that output into the module archive as `Resources/dist`, alongside its source. Never publish a module version's PHP and frontend separately. Bump the module version whenever its packaged frontend changes. A module release must be rebuilt when its shared runtime fingerprint changes.
 
-To support automatic Git updates for another module, run the shared publisher from its source repository after building and validating its assets:
+To support automatic frontend downloads for another Git-managed module, run the shared publisher from its source repository after building and validating its assets:
 
 ```bash
 bash /path/to/fspbx/.github/scripts/publish-module-frontend.sh HEAD /tmp/NAME-frontend /path/to/fspbx
