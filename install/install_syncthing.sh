@@ -14,7 +14,7 @@ green(){ echo -e "\033[32m$1\033[0m"; }
 red(){ echo -e "\033[31m$1\033[0m"; }
 info(){ echo -e "\033[36m$1\033[0m"; }
 warn(){ echo -e "\033[33m$1\033[0m"; }
-die(){ red "$1"; exit 1; }
+die(){ red "$1" >&2; exit 1; }
 
 # ========= Spinner =========
 spin_start(){
@@ -517,38 +517,40 @@ add_device_to_folder_json(){ # stdin: folder JSON; $1 = deviceID
 
 # Create/Update folder by REST
 ensure_folder_local(){ # $1 path, $2 rescanSec
-  local path="$1" rescan="$2" id; id="$(fid "$path")"
+  # Explicit checks are required: callers capture the ID in a command substitution,
+  # where Bash normally clears errexit and a final echo can mask earlier failures.
+  local path="$1" rescan="$2" id; id="$(fid "$path")" || die "Failed to identify local folder $path"
   # ========================= MODIFICATION START =========================
   # If the folder path exists, ensure its ownership is correct for the Syncthing user.
   if [[ -d "$path" ]]; then
-    chown -R "$ST_USER:$ST_USER" "$path"
+    chown -R "$ST_USER:$ST_USER" "$path" || die "Failed to set ownership for local folder $path"
   fi
   # ========================== MODIFICATION END ==========================
-  sudo -u "$ST_USER" mkdir -p "$path"
-  local key; key="$(api_key)"; [[ -n "$key" ]] || die "API key not found"
+  sudo -u "$ST_USER" mkdir -p "$path" || die "Failed to create local folder $path"
+  local key; key="$(api_key)" || die "Failed to read local API key"
+  [[ -n "$key" ]] || die "API key not found"
   # get folder or skeleton
   local existing; existing="$(api_get "config/folders/$id" "$key" 2>/dev/null || true)"
   if [[ -n "$existing" ]] && echo "$existing" | jq -e . >/dev/null 2>&1; then
     # update path/label/rescan if changed
-    existing="$(echo "$existing" | jq --arg p "$path" --arg l "$path" --argjson r "$rescan" '
-      .id //= "'$id'";
-      .path=$p | .label=$l | .rescanIntervalS=$r
-    ')"
+    existing="$(echo "$existing" | jq --arg id "$id" --arg p "$path" --arg l "$path" --argjson r "$rescan" '
+      .id //= $id | .path=$p | .label=$l | .rescanIntervalS=$r
+    ')" || die "Failed to prepare local folder $path"
   else
     existing="$(jq -n --arg id "$id" --arg p "$path" --arg l "$path" --argjson r "$rescan" \
-      '{id:$id,label:$l,path:$p,filesystemType:"basic",type:"sendreceive",rescanIntervalS:$r,devices:[]}')"
+      '{id:$id,label:$l,path:$p,filesystemType:"basic",type:"sendreceive",rescanIntervalS:$r,devices:[]}')" || die "Failed to prepare local folder $path"
   fi
-  api_put "config/folders/$id" "$existing" "$key" >/dev/null
+  api_put "config/folders/$id" "$existing" "$key" >/dev/null || die "Failed to save local folder $path"
   echo "$id"
 }
 
 share_folder_to_device_local(){ # $1 folderId, $2 deviceID
   local id="$1" dev="$2"
   local key; key="$(api_key)"
-  local fjson; fjson="$(api_get "config/folders/$id" "$key")"
-  [[ -n "$fjson" ]] && echo "$fjson" | jq -e . >/dev/null 2>&1 || die "Failed to fetch folder $id"
-  fjson="$(echo "$fjson" | add_device_to_folder_json "$dev")"
-  api_put "config/folders/$id" "$fjson" "$key" >/dev/null
+  local fjson; fjson="$(api_get "config/folders/$id" "$key")" || die "Failed to fetch local folder $id"
+  [[ -n "$fjson" ]] && echo "$fjson" | jq -e 'type == "object"' >/dev/null 2>&1 || die "Invalid local folder $id"
+  fjson="$(echo "$fjson" | add_device_to_folder_json "$dev")" || die "Failed to prepare sharing for local folder $id"
+  api_put "config/folders/$id" "$fjson" "$key" >/dev/null || die "Failed to share local folder $id"
 }
 
 rescan_local(){ # $1 folderId
@@ -651,32 +653,33 @@ r_api_post(){ # $1 endpoint, $2 json, $3 key
 }
 
 ensure_folder_remote(){ # $1 path, $2 rescanSec
-  local path="$1" rescan="$2" id; id="$(fid "$path")"
+  local path="$1" rescan="$2" id; id="$(fid "$path")" || die "Failed to identify remote folder $path"
   # ========================= MODIFICATION START =========================
   # If the folder path exists on the remote, ensure its ownership is correct.
-  ssh_run "if [ -d '$path' ]; then sudo chown -R ${ST_USER}:${ST_USER} '$path'; fi"
+  ssh_run "if [ -d '$path' ]; then sudo chown -R ${ST_USER}:${ST_USER} '$path'; fi" || die "Failed to set ownership for remote folder $path"
   # ========================== MODIFICATION END ==========================
-  ssh_run "sudo -u ${ST_USER} mkdir -p '$path'"
-  local key; key="$(remote_api_key)"
+  ssh_run "sudo -u ${ST_USER} mkdir -p '$path'" || die "Failed to create remote folder $path"
+  local key; key="$(remote_api_key)" || die "Failed to read remote API key"
+  [[ -n "$key" ]] || die "Remote API key not found"
   local existing; existing="$(r_api_get "config/folders/$id" "$key" 2>/dev/null || true)"
   if [[ -n "$existing" ]] && echo "$existing" | jq -e . >/dev/null 2>&1; then
-    existing="$(echo "$existing" | jq --arg p "$path" --arg l "$path" --argjson r "$rescan" '
-      .id //= "'$id'"; .path=$p | .label=$l | .rescanIntervalS=$r
-    ')"
+    existing="$(echo "$existing" | jq --arg id "$id" --arg p "$path" --arg l "$path" --argjson r "$rescan" '
+      .id //= $id | .path=$p | .label=$l | .rescanIntervalS=$r
+    ')" || die "Failed to prepare remote folder $path"
   else
     existing="$(jq -n --arg id "$id" --arg p "$path" --arg l "$path" --argjson r "$rescan" \
-      '{id:$id,label:$l,path:$p,filesystemType:"basic",type:"sendreceive",rescanIntervalS:$r,devices:[]}')"
+      '{id:$id,label:$l,path:$p,filesystemType:"basic",type:"sendreceive",rescanIntervalS:$r,devices:[]}')" || die "Failed to prepare remote folder $path"
   fi
-  r_api_put "config/folders/$id" "$existing" "$key" >/dev/null
+  r_api_put "config/folders/$id" "$existing" "$key" >/dev/null || die "Failed to save remote folder $path"
   echo "$id"
 }
 share_folder_to_device_remote(){ # $1 folderId, $2 deviceID
   local id="$1" dev="$2"
   local key; key="$(remote_api_key)"
-  local fjson; fjson="$(r_api_get "config/folders/$id" "$key")"
-  [[ -n "$fjson" ]] && echo "$fjson" | jq -e . >/dev/null 2>&1 || die "Failed to fetch remote folder $id"
-  fjson="$(echo "$fjson" | add_device_to_folder_json "$dev")"
-  r_api_put "config/folders/$id" "$fjson" "$key" >/dev/null
+  local fjson; fjson="$(r_api_get "config/folders/$id" "$key")" || die "Failed to fetch remote folder $id"
+  [[ -n "$fjson" ]] && echo "$fjson" | jq -e 'type == "object"' >/dev/null 2>&1 || die "Invalid remote folder $id"
+  fjson="$(echo "$fjson" | add_device_to_folder_json "$dev")" || die "Failed to prepare sharing for remote folder $id"
+  r_api_put "config/folders/$id" "$fjson" "$key" >/dev/null || die "Failed to share remote folder $id"
 }
 rescan_remote(){ # $1 folderId
   local id="$1" key; key="$(remote_api_key)"
@@ -690,6 +693,7 @@ accept_eula_runtime_remote(){
 }
 
 # ========= Run =========
+trap 'spin_stop; stop_remote_tunnel' EXIT
 require_root
 prompt_peer
 check_connectivity_fast
@@ -776,21 +780,12 @@ for entry in "${SYNC_FOLDERS[@]}"; do
 
   # Local ensure + share to remote
   fid_local="$(ensure_folder_local "$path" "$rescan")"
-  # extra guard: fetch JSON and add device defensively
-  fjson_local="$(api_get "config/folders/$fid_local" "$KEY_LOCAL")"
-  if echo "$fjson_local" | jq -e . >/dev/null 2>&1; then
-    fjson_local="$(echo "$fjson_local" | add_device_to_folder_json "$PEER_ID")"
-    api_put "config/folders/$fid_local" "$fjson_local" "$KEY_LOCAL" >/dev/null
-  fi
+  share_folder_to_device_local "$fid_local" "$PEER_ID"
   rescan_local "$fid_local"
 
   # Remote ensure + share to local
   fid_remote="$(ensure_folder_remote "$path" "$rescan")"
-  fjson_remote="$(r_api_get "config/folders/$fid_remote" "$KEY_REMOTE")"
-  if echo "$fjson_remote" | jq -e . >/dev/null 2>&1; then
-    fjson_remote="$(echo "$fjson_remote" | add_device_to_folder_json "$LOCAL_ID")"
-    r_api_put "config/folders/$fid_remote" "$fjson_remote" "$KEY_REMOTE" >/dev/null
-  fi
+  share_folder_to_device_remote "$fid_remote" "$LOCAL_ID"
   rescan_remote "$fid_remote"
 done
 spin_stop
