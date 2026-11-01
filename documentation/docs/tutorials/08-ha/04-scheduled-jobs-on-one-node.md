@@ -61,10 +61,16 @@ The global control is available under **System Settings > Scheduled Jobs**, **Co
 3. Find the **Scheduled job server** panel above the directory list.
 4. If the peer secret is missing, create it on **one server only** and wait for that setting to replicate. Do not create separate secrets on both nodes.
 5. Open **Manage scheduled-job nodes** (labelled **Add a second server** while the installation is still standalone), then click **Discover servers**. You can also enter a direct HTTPS address for a replacement server.
-6. First-time HA approval requires two reachable, verified identities. Use the server with the lexicographically smaller PostgreSQL identifier for initial approvals. The API identifies the required writer if you use the other server. Approve both nodes there and wait for their registry rows to replicate.
+6. First-time HA approval requires two reachable, verified identities. Approve both nodes from either server. Requests are forwarded to the server with the lexicographically smaller PostgreSQL identifier, which records initial membership. Wait for their registry rows to replicate; a forwarded acknowledgement does not mean the local database has received approval yet.
 7. Select the first owner on that initialization writer. Both signed snapshots must agree on the exact registry and ownership setting rows before initialization succeeds.
 
-After initialization, perform approvals, retirements, secret rotation and legacy confirmation on the current owner. Normal ownership transfers can be requested from either UI node and are sent to that owner. Initial membership is a verified pair, not automatic discovery-based cluster membership.
+After initialization, approvals and normal ownership transfers can be requested from either UI node and are sent to the current owner. Perform retirements, secret rotation and legacy confirmation on the current owner. Both servers must support forwarded approvals; an older receiving server produces an update-required message. Initial membership is a verified pair, not automatic discovery-based cluster membership.
+
+When deploying this change manually, clear the route cache on both servers with `php artisan route:clear` so the signed approval endpoint is registered, and rebuild frontend assets with `npm run build`.
+
+Use direct server addresses for approved endpoints. A shared failover hostname may start answering as the other server and fail the identity check. Discovery can locate a matching direct endpoint; approval forwarding verifies its database and host identity again before using it. To replace a stale saved endpoint, click **Use this address** beside the verified direct address in **Discovered servers**. This updates the existing registration on the membership authority without changing the job owner.
+
+If no verified address reaches the membership authority, approval stops without writing locally. Restore connectivity, or follow the fenced takeover procedure below from an already-approved server. Being unreachable does not authorize automatic takeover or approval on a replacement server. **Not approved** means this server's current database identity has no approved registration; **Identity mismatch** means it has an approved registration but the host fingerprint differs.
 
 The shared control and its API actions require `scheduled_jobs_manage`, assigned to superadmins by default. The panel shows the job owner, this server, the ownership version, a pending transfer, reachability, and where work is actually running.
 

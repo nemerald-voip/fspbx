@@ -615,6 +615,143 @@ class ScheduledJobCoordinatorTest extends TestCase
         $this->assertSame('1001', $resolver->configuredNode());
     }
 
+    public function test_approval_forwards_to_a_verified_direct_owner_address_without_writing_locally(): void
+    {
+        $this->node('1001', 'pbx-a', 'https://shared.example.test');
+        $this->setting('active_node', '1001');
+        $this->setting('active_node_generation', '4', 'numeric');
+        $peer = $this->peer(); // The shared address answers as pbx-b, not the owner.
+        $user = (string) Str::uuid();
+        $approved = [
+            'scheduled_job_node_uuid' => (string) Str::uuid(), 'system_identifier' => '2002',
+            'endpoint' => 'https://pbx-b.example.test', 'status' => 'approved',
+            'host_fingerprint' => hash('sha256', '2002'),
+        ];
+        $peer->shouldReceive('approveNode')->once()->with('https://pbx-a.example.test', [
+            'writer_node_id' => '1001', 'target_node_id' => '2002',
+            'target_endpoint' => 'https://pbx-b.example.test',
+            'target_host_fingerprint' => hash('sha256', '2002'), 'requested_by' => $user,
+        ])->andReturn(['node' => $approved]);
+        $resolver = $this->resolver('2002', ['https://pbx-a.example.test'], [], $peer);
+
+        $result = $resolver->requestNodeApproval('https://pbx-b.example.test', '2002', $user);
+
+        $this->assertSame(['node' => $approved, 'forwarded' => true], $result);
+        $this->assertDatabaseCount('scheduled_job_nodes', 1);
+        $this->assertDatabaseMissing('scheduled_job_nodes', ['system_identifier' => '2002']);
+        $this->assertSame('1001', $resolver->configuredNode());
+        $this->assertSame(4, $resolver->generation());
+    }
+
+    public function test_initial_approval_can_be_requested_on_the_other_server(): void
+    {
+        $peer = $this->peer();
+        $approved = ['system_identifier' => '2002', 'endpoint' => 'https://pbx-b.example.test',
+            'status' => 'approved', 'host_fingerprint' => hash('sha256', '2002')];
+        $peer->shouldReceive('approveNode')->once()->with('https://pbx-a.example.test', Mockery::on(
+            fn ($payload) => $payload['writer_node_id'] === '1001' && $payload['target_node_id'] === '2002'
+        ))->andReturn(['node' => $approved]);
+        $resolver = $this->resolver('2002', ['https://pbx-a.example.test', 'https://pbx-b.example.test'], [], $peer);
+
+        $this->assertTrue($resolver->requestNodeApproval('https://pbx-b.example.test', '2002', null)['forwarded']);
+        $this->assertDatabaseCount('scheduled_job_nodes', 0);
+        $this->assertNull($resolver->configuredNode());
+    }
+
+    public function test_unreachable_owner_never_falls_back_to_a_local_approval(): void
+    {
+        $this->node('1001', 'pbx-a', 'https://pbx-a.example.test');
+        $this->setting('active_node', '1001');
+        $peer = Mockery::mock(ScheduledJobPeerClient::class);
+        $peer->shouldReceive('identify')->with('https://pbx-a.example.test')->andThrow(new RuntimeException('Connection refused'));
+        $peer->shouldReceive('identify')->with('https://pbx-b.example.test')->andReturn([
+            'system_identifier' => '2002', 'host_fingerprint' => hash('sha256', '2002'),
+        ]);
+        $peer->shouldNotReceive('approveNode');
+        $resolver = $this->resolver('2002', [], [], $peer);
+        try {
+            $resolver->requestNodeApproval('https://pbx-b.example.test', '2002', null);
+            $this->fail('An unavailable authority must not be bypassed.');
+        } catch (RuntimeException $error) {
+            $this->assertSame(409, $error->getCode());
+            $this->assertStringContainsString('Cannot reach the approval server pbx-a', $error->getMessage());
+        }
+        $this->assertDatabaseCount('scheduled_job_nodes', 1);
+        $this->assertSame('1001', $resolver->configuredNode());
+    }
+
+    public function test_cached_discovery_cannot_authorize_forwarding_to_a_changed_host(): void
+    {
+        $this->node('1001', 'pbx-a', 'https://pbx-a.example.test');
+        $this->setting('active_node', '1001');
+        Cache::put('scheduled-jobs:peer-identity:'.sha1('https://pbx-a.example.test'), [
+            'endpoint' => 'https://pbx-a.example.test', 'reachable' => true,
+            'system_identifier' => '1001', 'host_fingerprint' => hash('sha256', '1001'),
+        ], 15);
+        $peer = Mockery::mock(ScheduledJobPeerClient::class);
+        $peer->shouldReceive('identify')->with('https://pbx-a.example.test')->once()->andReturn([
+            'system_identifier' => '1001', 'host_fingerprint' => hash('sha256', 'different-host'),
+            'capabilities' => ['node_approval'],
+        ]);
+        $peer->shouldReceive('identify')->with('https://pbx-b.example.test')->andReturn([
+            'system_identifier' => '2002', 'host_fingerprint' => hash('sha256', '2002'),
+        ]);
+        $peer->shouldNotReceive('approveNode');
+        $resolver = $this->resolver('2002', ['https://pbx-b.example.test'], [], $peer);
+        $this->expectExceptionMessage('Cannot reach the approval server');
+        $resolver->requestNodeApproval('https://pbx-b.example.test', '2002', null);
+    }
+
+    public function test_forwarding_to_an_older_owner_reports_that_it_needs_an_update(): void
+    {
+        $this->node('1001', 'pbx-a', 'https://pbx-a.example.test');
+        $this->setting('active_node', '1001');
+        $peer = Mockery::mock(ScheduledJobPeerClient::class);
+        $peer->shouldReceive('identify')->andReturnUsing(fn ($endpoint) => [
+            'system_identifier' => str_contains($endpoint, 'pbx-a') ? '1001' : '2002',
+            'host_fingerprint' => hash('sha256', str_contains($endpoint, 'pbx-a') ? '1001' : '2002'),
+        ]);
+        $peer->shouldNotReceive('approveNode');
+        $resolver = $this->resolver('2002', ['https://pbx-b.example.test'], [], $peer);
+        $this->expectExceptionMessage('Update FS PBX on pbx-a to support forwarded approvals.');
+        $resolver->requestNodeApproval('https://pbx-b.example.test', '2002', null);
+    }
+
+    public function test_approval_retry_and_address_repair_keep_the_existing_registry_uuid_and_owner(): void
+    {
+        $this->configuredPair();
+        $uuid = ScheduledJobNode::where('system_identifier', '1001')->value('scheduled_job_node_uuid');
+        ScheduledJobNode::where('system_identifier', '1001')->update(['endpoint' => 'https://shared.example.test']);
+        $resolver = $this->resolver('1001', ['https://pbx-b.example.test'], [], $this->peer());
+        for ($attempt = 0; $attempt < 2; $attempt++) {
+            $result = $resolver->requestNodeApproval('https://pbx-a.example.test', '1001', null);
+            $this->assertFalse($result['forwarded']);
+            $this->assertSame($uuid, $result['node']['scheduled_job_node_uuid']);
+            $this->assertSame('https://pbx-a.example.test', $result['node']['endpoint']);
+        }
+        $this->assertDatabaseCount('scheduled_job_nodes', 2);
+        $this->assertSame('1001', $resolver->configuredNode());
+        $this->assertSame(4, $resolver->generation());
+    }
+
+    public function test_receiving_writer_rejects_a_target_that_changed_identity_in_transit(): void
+    {
+        $resolver = $this->configuredPair();
+        $this->expectExceptionMessage('The peer identity changed while it was being approved.');
+        $resolver->approveNode('https://pbx-b.example.test', '2002', null, hash('sha256', 'old-host'));
+    }
+
+    public function test_unapproved_replacement_is_not_reported_as_a_host_identity_mismatch(): void
+    {
+        $this->configuredPair();
+        ScheduledJobNode::where('system_identifier', '2002')->update(['status' => 'retired']);
+        $resolver = $this->resolver('3003', [], [], $this->peer('3003'));
+        $decision = $resolver->resolve();
+        $this->assertSame('unapproved', $decision['source']);
+        $this->assertFalse($decision['active']);
+        $this->assertSame('1001', $decision['effective_owner']);
+    }
+
     public function test_stale_queued_ldap_job_does_not_advance_next_due_time(): void
     {
         $this->configuredPair();
@@ -931,7 +1068,7 @@ class ScheduledJobCoordinatorTest extends TestCase
         $peer = Mockery::mock(ScheduledJobPeerClient::class);
         $peer->shouldReceive('identify')->andReturnUsing(function ($endpoint) use ($otherId) {
             $id = str_contains($endpoint, 'pbx-a') ? '1001' : $otherId;
-            return ['system_identifier' => $id, 'hostname' => $id, 'host_fingerprint' => hash('sha256', $id)];
+            return ['system_identifier' => $id, 'hostname' => $id, 'host_fingerprint' => hash('sha256', $id), 'capabilities' => ['node_approval']];
         });
 
         return $peer;

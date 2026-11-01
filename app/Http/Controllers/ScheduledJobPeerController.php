@@ -7,6 +7,7 @@ use App\Services\Ha\ActiveNodeResolver;
 use App\Services\Ha\ScheduledJobPeerAuthenticator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use RuntimeException;
 
 class ScheduledJobPeerController extends Controller
@@ -33,6 +34,7 @@ class ScheduledJobPeerController extends Controller
             'host_fingerprint' => $this->resolver->hostFingerprint(),
             'coordination' => $this->resolver->coordinationSnapshot(),
             'hostname' => $this->resolver->hostname(),
+            'capabilities' => ['node_approval'],
             'version' => (string) config('app.version', ''),
             'challenge' => $values['challenge'],
             'request_nonce' => (string) $request->header(ScheduledJobPeerAuthenticator::NONCE_HEADER),
@@ -40,6 +42,41 @@ class ScheduledJobPeerController extends Controller
         ];
 
         return $this->signedResponse($request, $payload);
+    }
+
+    public function approveNode(Request $request): JsonResponse
+    {
+        if (! $request->isSecure()) {
+            return response()->json(['message' => 'HTTPS is required for scheduled-job coordination.'], 426);
+        }
+        if (! $this->authenticator->verifyRequest($request)) {
+            return response()->json(['message' => 'Invalid scheduled-job peer signature.'], 403);
+        }
+
+        try {
+            $values = $request->validate([
+                'writer_node_id' => ['required', 'string', 'regex:/^\d{1,32}$/'],
+                'target_node_id' => ['required', 'string', 'regex:/^\d{1,32}$/'],
+                'target_endpoint' => ['required', 'string', 'max:2048'],
+                'target_host_fingerprint' => ['required', 'string', 'regex:/^[a-f0-9]{64}$/'],
+                'requested_by' => ['nullable', 'uuid'],
+            ]);
+            if ($values['writer_node_id'] !== $this->resolver->localNodeId()) {
+                throw new RuntimeException(__('The approval request reached a different server. Refresh status and try again.'), 409);
+            }
+            // Never forward a forwarded request. The resolver rechecks authority
+            // under the ownership lock and freshly verifies the target identity.
+            $node = $this->resolver->approveNode(
+                $values['target_endpoint'], $values['target_node_id'],
+                $values['requested_by'] ?? null, $values['target_host_fingerprint']
+            );
+
+            return $this->signedResponse($request, ['node' => $node->toArray()]);
+        } catch (ValidationException $exception) {
+            return $this->signedResponse($request, ['message' => $exception->getMessage(), 'errors' => $exception->errors()], 422);
+        } catch (RuntimeException $exception) {
+            return $this->signedResponse($request, ['message' => $exception->getMessage()], $exception->getCode() === 409 ? 409 : 422);
+        }
     }
 
     public function prepareHandoff(Request $request): JsonResponse

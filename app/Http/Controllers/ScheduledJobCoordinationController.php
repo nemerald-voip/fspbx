@@ -56,14 +56,17 @@ class ScheduledJobCoordinationController extends Controller
             'endpoint' => ['required', 'string', 'max:2048'],
         ]);
         try {
-            $approvedNode = $this->resolver->approveNode($values['endpoint'], $node, session('user_uuid'));
+            $result = $this->resolver->requestNodeApproval($values['endpoint'], $node, session('user_uuid'));
         } catch (RuntimeException $exception) {
             return $this->managementError($exception);
         }
 
         return response()->json([
-            'message' => __('Scheduled-job node approved.'),
-            'node' => $approvedNode,
+            'message' => $result['forwarded']
+                ? __('Approval recorded on the approval server. Use Refresh status to check that it has replicated here.')
+                : __('Scheduled-job node approved.'),
+            'node' => $result['node'],
+            'forwarded' => $result['forwarded'],
             'active_node' => $this->resolver->statusContext(),
         ]);
     }

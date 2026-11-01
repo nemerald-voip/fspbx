@@ -1035,6 +1035,8 @@ Route::post('letsencrypt/receive-certificate', [LetsEncryptController::class, 'r
 // user session; each request and response is authenticated by HMAC.
 Route::post('ha/node/identify', [ScheduledJobPeerController::class, 'identify'])
     ->middleware('throttle:30,1')->name('ha.node.identify');
+Route::post('ha/scheduled-jobs/nodes/approve', [ScheduledJobPeerController::class, 'approveNode'])
+    ->middleware('throttle:30,1')->name('ha.scheduled-jobs.nodes.approve');
 Route::post('ha/scheduled-jobs/handoffs', [ScheduledJobPeerController::class, 'prepareHandoff'])
     ->middleware('throttle:30,1')->name('ha.scheduled-jobs.handoffs.store');
 Route::get('ha/scheduled-jobs/handoffs/{handoff}', [ScheduledJobPeerController::class, 'handoffStatus'])
