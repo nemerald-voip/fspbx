@@ -15,6 +15,11 @@ const sourceRoots = [
     path.join(root, 'resources/js'),
     path.join(root, 'Modules'),
 ];
+// The application wrapper and shared runtime entry deliberately expose the package.
+const directImportAllowedFiles = new Set([
+    path.join(root, 'resources/js/i18n.mjs'),
+    path.join(root, 'resources/js/runtime/laravel-i18n.mjs'),
+]);
 
 const walk = (directory) => {
     if (!fs.existsSync(directory)) {
@@ -44,7 +49,7 @@ assert.equal(trans('Value: :value', { value: false }), 'Value: false');
 assert.equal(transChoice(':count item|:count items', undefined), '0 items');
 
 for (const file of sourceFiles) {
-    if (file.endsWith('resources/js/i18n.mjs')) {
+    if (directImportAllowedFiles.has(file)) {
         continue;
     }
 
