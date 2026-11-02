@@ -13,6 +13,7 @@ use App\Models\VoicemailMessages;
 use App\Models\Extensions;
 use App\Mail\VoicemailNotification;
 use App\Services\VoicemailMessageUrlService;
+use App\Services\EmailDeliveryFailureReporter;
 use App\Support\Localization\LocaleRegistry;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Cache;
@@ -23,6 +24,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 
 class SendNewVoicemailNotificationByEmail implements ShouldQueue
 {
@@ -277,14 +279,21 @@ class SendNewVoicemailNotificationByEmail implements ShouldQueue
 
                     $this->markEmailLogSendFailure($classification);
 
-                    logger()->error('Voicemail email send failed', [
+                    $context = [
+                        'job' => class_basename($this),
                         'uuid' => $uuid,
+                        'log_uuid' => $this->logId,
                         'attempt' => $this->attempts(),
                         'max_tries' => $this->tries,
                         'status' => $classification['status'],
                         'category' => $classification['category'],
-                        'error' => $e->getMessage(),
-                    ]);
+                    ];
+
+                    if ($e instanceof TransportExceptionInterface) {
+                        app(EmailDeliveryFailureReporter::class)->report($e, $context);
+                    } else {
+                        logger()->error('Voicemail email send failed', $context + ['error' => $e->getMessage()]);
+                    }
 
                     if ($classification['stop_retrying']) {
                         $this->fail($e);

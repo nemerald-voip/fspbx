@@ -35,6 +35,7 @@ use App\Observers\MessageObserver;
 use App\Observers\RingGroupObserver;
 use App\Observers\UserDomainGroupPermissionsObserver;
 use App\Observers\UserObserver;
+use App\Services\EmailDeliveryFailureReporter;
 use App\Services\PmsOutboundSyncContext;
 use App\Services\PhoneNumberService;
 use App\Services\PolycomCloudProvider;
@@ -61,6 +62,8 @@ class AppServiceProvider extends ServiceProvider
     public function register()
     {
         Sanctum::ignoreMigrations();
+
+        $this->app->singleton(EmailDeliveryFailureReporter::class);
 
         $this->app->singleton(PmsOutboundSyncContext::class);
 

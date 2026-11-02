@@ -548,6 +548,16 @@ class SendFaxJob implements ShouldQueue
 
         $variables[] = "export_vars='" . implode(',', $exportVariables) . "'";
 
-        return implode(',', $variables);
+        // The originate API removes quotes before parsing channel variables.
+        // A comma delimiter would truncate export_vars and codec lists even
+        // when their values were quoted. Pick a delimiter absent from all values.
+        $contents = implode('', $variables);
+        foreach (['|', ';', '~', '^', '#'] as $delimiter) {
+            if (!str_contains($contents, $delimiter)) {
+                return '^^' . $delimiter . implode($delimiter, $variables);
+            }
+        }
+
+        throw new \RuntimeException('Unable to delimit fax originate variables.');
     }
 }
