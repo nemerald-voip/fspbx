@@ -189,10 +189,10 @@
                         </ul>
                     </div>
 
-                    <div v-if="state.nodes?.length">
+                    <div v-if="registeredNodes.length">
                         <h5 class="text-xs font-semibold uppercase tracking-wide text-gray-500">{{ $t('Registered servers') }}</h5>
                         <ul class="mt-2 divide-y divide-gray-200 rounded-md border border-gray-200 bg-white">
-                            <li v-for="node in state.nodes" :key="node.id" class="flex flex-wrap items-center justify-between gap-3 px-3 py-2.5">
+                            <li v-for="node in registeredNodes" :key="node.id" class="flex flex-wrap items-center justify-between gap-3 px-3 py-2.5">
                                 <div class="min-w-0 text-xs">
                                     <div class="flex flex-wrap items-center gap-2">
                                         <span class="font-medium text-gray-900">{{ node.hostname }}</span>
@@ -210,6 +210,10 @@
                                 <button v-if="node.status === 'approved' && !node.selected" type="button" class="danger-link"
                                     :disabled="working" :title="$t('Stop using this server for scheduled jobs')" @click="retireNode(node)">
                                     {{ $t('Retire') }}
+                                </button>
+                                <button v-else-if="node.status === 'retired'" type="button" class="danger-link"
+                                    :disabled="working" :title="$t('Remove this retired server from the list')" @click="removeNode(node)">
+                                    {{ $t('Remove') }}
                                 </button>
                             </li>
                         </ul>
@@ -274,6 +278,8 @@ const statusLoading = ref(false)
 const discovering = ref(false)
 const manualEndpoint = ref('')
 const candidates = ref([])
+const removedRegistryUuids = ref([])
+const registeredNodes = computed(() => (state.value.nodes || []).filter(node => !removedRegistryUuids.value.includes(node.registry_uuid)))
 const approvalAcknowledgements = ref({})
 const pendingApprovals = computed(() => Object.values(approvalAcknowledgements.value).filter(approval => {
     const node = nodeById(approval.system_identifier)
@@ -466,6 +472,11 @@ async function approveNode(candidate) {
 
 async function retireNode(node) {
     await run(() => axios.post(props.routes.node_retire.replace('__NODE__', node.registry_uuid)))
+}
+
+async function removeNode(node) {
+    const response = await run(() => axios.delete(props.routes.node_remove.replace('__NODE__', node.registry_uuid)))
+    if (response) removedRegistryUuids.value.push(node.registry_uuid)
 }
 
 async function rotateSecret() {

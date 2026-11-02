@@ -39,6 +39,11 @@ class ScheduledJobPeerClient
         return $this->post($endpoint, 'api/ha/scheduled-jobs/nodes/approve', $payload, timeoutSeconds: 20);
     }
 
+    public function removeNode(string $endpoint, array $payload): array
+    {
+        return $this->post($endpoint, 'api/ha/scheduled-jobs/nodes/remove', $payload, timeoutSeconds: 20);
+    }
+
     public function handoffStatus(string $endpoint, string $handoffUuid): array
     {
         return $this->get($endpoint, 'api/ha/scheduled-jobs/handoffs/'.$handoffUuid);

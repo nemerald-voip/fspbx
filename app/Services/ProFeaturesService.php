@@ -115,16 +115,19 @@ class ProFeaturesService
                 && in_array(($licenseResponse['meta']['code'] ?? ''), ['NO_MACHINE', 'NO_MACHINES', 'FINGERPRINT_SCOPE_MISMATCH'], true);
 
             if ($needsActivation) {
-                $machineCount = $licenseResponse['data']['attributes']['machines']['meta']['count'] ?? 0;
-                $maxMachines  = $licenseResponse['data']['attributes']['maxMachines'] ?? 1;
+                $machineCount = $licenseResponse['data']['relationships']['machines']['meta']['count'] ?? 0;
+                $maxMachines = $licenseResponse['data']['attributes']['maxMachines'] ?? null;
 
-                if ($machineCount < $maxMachines) {
-                    $licenseId = $licenseResponse['data']['id'] ?? null;
-                    if ($licenseId) {
-                        $this->keygenApiService->activateMachine($licenseKey, $licenseId);
-                    }
-                } else {
+                if ($maxMachines !== null && $machineCount >= $maxMachines) {
                     $result['errors'][] = __('Max machine limit reached');
+                    return $result;
+                }
+
+                $licenseId = $licenseResponse['data']['id'] ?? null;
+                if (! $licenseId
+                    || ! $this->keygenApiService->activateMachine($licenseKey, $licenseId)
+                    || ! $this->keygenApiService->isLicenseValid($licenseKey)) {
+                    $result['errors'][] = __('The license key has not been activated on this machine');
                     return $result;
                 }
             }

@@ -162,6 +162,39 @@ class ScheduledJobPeerAuthenticatorTest extends TestCase
         $this->assertSame(403, $controller->approveNode(Request::create('https://pbx-a.example.test'.$path, 'POST'))->getStatusCode());
     }
 
+    public function test_forwarded_removal_is_signed_and_preserves_the_target(): void
+    {
+        (require base_path('database/migrations/2026_09_04_000001_create_scheduled_job_coordination_tables.php'))->up();
+        $node = ScheduledJobNode::create([
+            'system_identifier' => '3003', 'endpoint' => 'https://retired.example.test',
+            'hostname' => 'retired', 'registered_on_node_id' => '1001',
+            'status' => 'retired', 'host_fingerprint' => hash('sha256', '3003'),
+        ]);
+        $auth = new ScheduledJobPeerAuthenticator();
+        $resolver = Mockery::mock(ActiveNodeResolver::class);
+        $resolver->shouldReceive('localNodeId')->once()->andReturn('1001');
+        $resolver->shouldReceive('removeNode')->once()->with(Mockery::on(
+            fn ($target) => $target->getKey() === $node->getKey() && $target->system_identifier === '3003'
+        ));
+        $controller = new ScheduledJobPeerController($resolver, $auth);
+        $received = null;
+        Http::fake(function ($outgoing) use ($controller, &$received) {
+            $received = Request::create($outgoing->url(), 'POST', $outgoing->data(), [], [],
+                $this->serverHeaders(collect($outgoing->headers())->map(fn ($values) => $values[0])->all()));
+            $response = $controller->removeNode($received);
+
+            return Http::response($response->getData(true), $response->getStatusCode(), $response->headers->all());
+        });
+
+        $result = (new ScheduledJobPeerClient($auth))->removeNode('https://pbx-a.example.test', [
+            'writer_node_id' => '1001', 'target_node_id' => '3003', 'node_uuid' => $node->getKey(),
+        ]);
+        $this->assertSame(['node_uuid' => $node->getKey(), 'target_node_id' => '3003'], $result);
+        $this->assertSame(403, $controller->removeNode($received)->getStatusCode());
+        $this->assertSame(403, $controller->removeNode(Request::create('https://pbx-a.example.test/api/ha/scheduled-jobs/nodes/remove', 'POST'))->getStatusCode());
+        $this->assertSame(426, $controller->removeNode(Request::create('http://pbx-a.example.test/api/ha/scheduled-jobs/nodes/remove', 'POST'))->getStatusCode());
+    }
+
     public function test_forwarded_approval_rejects_the_wrong_receiver_with_a_signed_error(): void
     {
         $auth = new ScheduledJobPeerAuthenticator();

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ScheduledJobHandoff;
+use App\Models\ScheduledJobNode;
 use App\Services\Ha\ActiveNodeResolver;
 use App\Services\Ha\ScheduledJobPeerAuthenticator;
 use Illuminate\Http\JsonResponse;
@@ -34,7 +35,7 @@ class ScheduledJobPeerController extends Controller
             'host_fingerprint' => $this->resolver->hostFingerprint(),
             'coordination' => $this->resolver->coordinationSnapshot(),
             'hostname' => $this->resolver->hostname(),
-            'capabilities' => ['node_approval'],
+            'capabilities' => ['node_approval', 'node_removal'],
             'version' => (string) config('app.version', ''),
             'challenge' => $values['challenge'],
             'request_nonce' => (string) $request->header(ScheduledJobPeerAuthenticator::NONCE_HEADER),
@@ -72,6 +73,40 @@ class ScheduledJobPeerController extends Controller
             );
 
             return $this->signedResponse($request, ['node' => $node->toArray()]);
+        } catch (ValidationException $exception) {
+            return $this->signedResponse($request, ['message' => $exception->getMessage(), 'errors' => $exception->errors()], 422);
+        } catch (RuntimeException $exception) {
+            return $this->signedResponse($request, ['message' => $exception->getMessage()], $exception->getCode() === 409 ? 409 : 422);
+        }
+    }
+
+    public function removeNode(Request $request): JsonResponse
+    {
+        if (! $request->isSecure()) {
+            return response()->json(['message' => 'HTTPS is required for scheduled-job coordination.'], 426);
+        }
+        if (! $this->authenticator->verifyRequest($request)) {
+            return response()->json(['message' => 'Invalid scheduled-job peer signature.'], 403);
+        }
+
+        try {
+            $values = $request->validate([
+                'writer_node_id' => ['required', 'string', 'regex:/^\d{1,32}$/'],
+                'target_node_id' => ['required', 'string', 'regex:/^\d{1,32}$/'],
+                'node_uuid' => ['required', 'uuid'],
+            ]);
+            if ($values['writer_node_id'] !== $this->resolver->localNodeId()) {
+                throw new RuntimeException(__('The removal request reached a different server. Refresh status and try again.'), 409);
+            }
+            $node = ScheduledJobNode::query()->whereKey($values['node_uuid'])->first();
+            if ($node && $node->system_identifier !== $values['target_node_id']) {
+                throw new RuntimeException(__('The server registration was not found. Refresh status and try again.'), 409);
+            }
+            // Check authority even when retrying a removal that already completed.
+            $target = $node ?? (new ScheduledJobNode())->forceFill(['scheduled_job_node_uuid' => $values['node_uuid']]);
+            $this->resolver->removeNode($target);
+
+            return $this->signedResponse($request, ['node_uuid' => $values['node_uuid'], 'target_node_id' => $values['target_node_id']]);
         } catch (ValidationException $exception) {
             return $this->signedResponse($request, ['message' => $exception->getMessage(), 'errors' => $exception->errors()], 422);
         } catch (RuntimeException $exception) {

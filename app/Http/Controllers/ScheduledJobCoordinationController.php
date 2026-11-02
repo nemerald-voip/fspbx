@@ -35,6 +35,7 @@ class ScheduledJobCoordinationController extends Controller
                 'node_discover' => route('scheduled-jobs.nodes.discover'),
                 'node_approve' => route('scheduled-jobs.nodes.approve', ['node' => '__NODE__']),
                 'node_retire' => route('scheduled-jobs.nodes.retire', ['node' => '__NODE__']),
+                'node_remove' => route('scheduled-jobs.nodes.remove', ['node' => '__NODE__']),
                 'handoff_force' => route('scheduled-jobs.handoffs.force', ['handoff' => '__HANDOFF__']),
                 'coordination_secret_rotate' => route('scheduled-jobs.secret.rotate'),
             ],
@@ -82,6 +83,23 @@ class ScheduledJobCoordinationController extends Controller
 
         return response()->json([
             'message' => __('Scheduled-job node retired.'),
+            'active_node' => $this->resolver->statusContext(),
+        ]);
+    }
+
+    public function remove(ScheduledJobNode $node): JsonResponse
+    {
+        $this->authorizeManagement();
+        try {
+            $result = $this->resolver->requestNodeRemoval($node);
+        } catch (RuntimeException $exception) {
+            return $this->managementError($exception);
+        }
+
+        return response()->json([
+            'message' => $result['forwarded']
+                ? __('Server removed from the list. The change will appear on other servers after replication.')
+                : __('Server removed from the list.'),
             'active_node' => $this->resolver->statusContext(),
         ]);
     }

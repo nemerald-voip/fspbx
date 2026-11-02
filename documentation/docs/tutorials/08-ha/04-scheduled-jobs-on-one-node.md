@@ -172,6 +172,12 @@ Other jobs can adopt the generic coordinator later, but must create an execution
 6. Transfer ownership normally if the replacement should own scheduled jobs.
 7. Rotate the coordination secret and wait for replication.
 
+Retired registrations no longer supply discovery addresses, and discovery omits any identity already marked retired. A replacement at the same address can still be discovered using its new database identity.
+
+Use **Remove** beside a retired server to delete its registration on both nodes. Approved servers must be retired first, and a server involved in a pending ownership transfer cannot be removed. Removal requests can be made from either server and are recorded by the membership authority. Past ownership transfers and execution records remain unchanged.
+
+Removal does not change PostgreSQL subscriptions. If the old server still responds through a replication address or manual discovery, it may appear again as an unapproved candidate. It must be explicitly approved and selected as owner before it can run coordinated jobs. Deploy the updated code on both servers for forwarded removal; no database migration is required. Clear the route cache and rebuild frontend assets when deploying manually.
+
 ## Troubleshooting
 
 ### Synchronization is not running on either server

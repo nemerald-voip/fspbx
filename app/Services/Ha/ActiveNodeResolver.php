@@ -195,14 +195,14 @@ class ActiveNodeResolver
     /** @return array<int, array<string, mixed>> */
     public function discover(?string $manualEndpoint = null): array
     {
+        $registered = $this->nodes()->keyBy('system_identifier');
         $endpoints = collect($this->subscriptionDiscovery()['endpoints'] ?? [])
-            ->merge($this->nodes()->pluck('endpoint'))
+            ->merge($registered->where('status', 'approved')->pluck('endpoint'))
             ->push($this->localEndpoint());
         if (filled($manualEndpoint)) {
             $endpoints->push($this->normalizeEndpoint($manualEndpoint));
         }
 
-        $registered = $this->nodes()->keyBy('system_identifier');
         $results = [];
         foreach ($endpoints->filter()->unique()->values() as $endpoint) {
             $candidate = Cache::remember('scheduled-jobs:peer-identity:'.sha1($endpoint), 15, function () use ($endpoint) {
@@ -214,6 +214,11 @@ class ActiveNodeResolver
             });
             $candidate['registered'] = $registered->get($candidate['system_identifier'] ?? '')?->status;
             $candidate['registered_endpoint'] = $registered->get($candidate['system_identifier'] ?? '')?->endpoint;
+            // Match identities, not addresses: a replacement may reuse a retired
+            // server's endpoint, but the retired identity must not reappear.
+            if ($candidate['registered'] === 'retired') {
+                continue;
+            }
             $results[] = $candidate;
         }
 
@@ -241,6 +246,29 @@ class ActiveNodeResolver
             return ['node' => $this->approveNode($endpoint, $expectedNodeId, $userUuid)->toArray(), 'forwarded' => false];
         }
 
+        $writerEndpoint = $this->managementEndpoint($writer, $candidates, 'node_approval');
+        $targetIdentity = $this->approvalIdentity($endpoint, $expectedNodeId);
+        $result = $this->peerClient->approveNode($writerEndpoint, [
+            'writer_node_id' => $writer,
+            'target_node_id' => $expectedNodeId,
+            'target_endpoint' => $endpoint,
+            'target_host_fingerprint' => $targetIdentity['host_fingerprint'],
+            'requested_by' => $userUuid,
+        ]);
+        $node = $result['node'] ?? [];
+        if (($node['system_identifier'] ?? null) !== $expectedNodeId || ($node['endpoint'] ?? null) !== $endpoint
+            || ($node['status'] ?? null) !== 'approved'
+            || ($node['host_fingerprint'] ?? null) !== $targetIdentity['host_fingerprint']) {
+            throw new RuntimeException(__('The approval server returned an unexpected result. Refresh status before retrying.'), 409);
+        }
+
+        // The acknowledgement is not a local registry write. Replication must
+        // deliver the writer's original row, including its UUID.
+        return ['node' => $node, 'forwarded' => true];
+    }
+
+    private function managementEndpoint(string $writer, Collection $candidates, string $capability): string
+    {
         $registeredWriter = $this->approvedNodes()->firstWhere('system_identifier', $writer);
         $writerCandidates = $candidates->where('system_identifier', $writer)->where('reachable', true);
         if ($writerCandidates->contains(fn ($candidate) => $candidate['duplicate_identity'] ?? true)) {
@@ -263,7 +291,10 @@ class ActiveNodeResolver
             } catch (RuntimeException) {
                 continue;
             }
-            if (! in_array('node_approval', $identity['capabilities'] ?? [], true)) {
+            if (! in_array($capability, $identity['capabilities'] ?? [], true)) {
+                if ($capability === 'node_removal') {
+                    throw new RuntimeException(__('Update FS PBX on :server to support removing retired servers.', ['server' => $writerName]), 409);
+                }
                 throw new RuntimeException(__('Update FS PBX on :server to support forwarded approvals.', ['server' => $writerName]), 409);
             }
             $writerEndpoint = $possibleEndpoint;
@@ -273,24 +304,7 @@ class ActiveNodeResolver
             throw new RuntimeException(__('Cannot reach the approval server :server at a verified address. Restore access before approving. An unreachable owner does not authorize takeover.', ['server' => $writerName]), 409);
         }
 
-        $targetIdentity = $this->approvalIdentity($endpoint, $expectedNodeId);
-        $result = $this->peerClient->approveNode($writerEndpoint, [
-            'writer_node_id' => $writer,
-            'target_node_id' => $expectedNodeId,
-            'target_endpoint' => $endpoint,
-            'target_host_fingerprint' => $targetIdentity['host_fingerprint'],
-            'requested_by' => $userUuid,
-        ]);
-        $node = $result['node'] ?? [];
-        if (($node['system_identifier'] ?? null) !== $expectedNodeId || ($node['endpoint'] ?? null) !== $endpoint
-            || ($node['status'] ?? null) !== 'approved'
-            || ($node['host_fingerprint'] ?? null) !== $targetIdentity['host_fingerprint']) {
-            throw new RuntimeException(__('The approval server returned an unexpected result. Refresh status before retrying.'), 409);
-        }
-
-        // The acknowledgement is not a local registry write. Replication must
-        // deliver the writer's original row, including its UUID.
-        return ['node' => $node, 'forwarded' => true];
+        return $writerEndpoint;
     }
 
     private function approvalIdentity(string $endpoint, string $expectedNodeId, ?string $expectedFingerprint = null): array
@@ -362,6 +376,51 @@ class ActiveNodeResolver
                 throw new RuntimeException('This node is the target of a pending transfer. Complete the transfer before retiring it.', 409);
             }
             $node->forceFill(['status' => 'retired', 'retired_at' => now(), 'retired_by' => $userUuid])->save();
+        });
+    }
+
+    public function requestNodeRemoval(ScheduledJobNode $node): array
+    {
+        if ($node->status !== 'retired') {
+            throw new RuntimeException(__('Only retired servers can be removed from the list.'), 409);
+        }
+        $writer = $this->managementWriter();
+        if ($writer === $this->localNodeId()) {
+            $this->removeNode($node);
+
+            return ['forwarded' => false];
+        }
+
+        $endpoint = $this->managementEndpoint($writer, collect($this->discover()), 'node_removal');
+        $result = $this->peerClient->removeNode($endpoint, [
+            'writer_node_id' => $writer, 'node_uuid' => $node->getKey(),
+            'target_node_id' => $node->system_identifier,
+        ]);
+        if (($result['node_uuid'] ?? null) !== $node->getKey()
+            || ($result['target_node_id'] ?? null) !== $node->system_identifier) {
+            throw new RuntimeException(__('The removal server returned an unexpected result. Refresh status before retrying.'), 409);
+        }
+
+        return ['forwarded' => true];
+    }
+
+    public function removeNode(ScheduledJobNode $node): void
+    {
+        DB::transaction(function () use ($node) {
+            $this->lockOwnershipSettings();
+            $this->assertManagementWriter();
+            $current = ScheduledJobNode::query()->whereKey($node->getKey())->lockForUpdate()->first();
+            if (! $current) {
+                return;
+            }
+            if ($current->status !== 'retired' || $this->configuredNode() === $current->system_identifier) {
+                throw new RuntimeException(__('Only retired servers can be removed from the list.'), 409);
+            }
+            if (ScheduledJobHandoff::query()->whereIn('status', ['requested', 'draining'])
+                ->where(fn ($query) => $query->where('from_node_id', $current->system_identifier)->orWhere('to_node_id', $current->system_identifier))->exists()) {
+                throw new RuntimeException(__('Finish the pending ownership transfer before removing this server.'), 409);
+            }
+            $current->delete();
         });
     }
 
