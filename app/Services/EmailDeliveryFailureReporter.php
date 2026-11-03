@@ -10,12 +10,19 @@ use WeakMap;
 class EmailDeliveryFailureReporter
 {
     private WeakMap $reported;
+    private WeakMap $contexts;
 
     public function __construct(
         private LoggerInterface $logger,
         private Repository $config,
     ) {
         $this->reported = new WeakMap;
+        $this->contexts = new WeakMap;
+    }
+
+    public function rememberContext(TransportExceptionInterface $exception, array $context): void
+    {
+        $this->contexts[$exception] = array_merge($this->contexts[$exception] ?? [], $context);
     }
 
     public function report(TransportExceptionInterface $exception, array $context = []): void
@@ -25,6 +32,8 @@ class EmailDeliveryFailureReporter
         if (isset($this->reported[$exception])) {
             return;
         }
+
+        $context = array_merge($this->contexts[$exception] ?? [], $context);
 
         $message = preg_replace('/\s+/', ' ', trim($exception->getMessage()));
         $normalized = strtolower($message);

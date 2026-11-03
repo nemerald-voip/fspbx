@@ -98,6 +98,29 @@ class EmailDeliveryFailureReporterTest extends TestCase
         $this->assertStringNotContainsString('stacktrace', $output);
     }
 
+    public function test_message_context_is_combined_with_job_context_without_leaking_to_the_next_email(): void
+    {
+        $exception = new TransportException('All transports failed.');
+        $this->reporter->rememberContext($exception, [
+            'log_uuid' => 'email-log-id',
+            'recipient' => 'recipient@example.test',
+            'subject' => 'Credentials notification',
+        ]);
+        $this->reporter->report($exception, ['job' => 'SendAppCredentials', 'attempt' => 2]);
+        $this->handler->report($exception);
+        $this->handler->report(new TransportException('No transports found.'));
+
+        $lines = explode("\n", trim($this->output()));
+        $this->assertCount(2, $lines);
+        $this->assertStringContainsString('email-log-id', $lines[0]);
+        $this->assertStringContainsString('recipient@example.test', $lines[0]);
+        $this->assertStringContainsString('Credentials notification', $lines[0]);
+        $this->assertStringContainsString('SendAppCredentials', $lines[0]);
+        $this->assertStringContainsString('"attempt":2', $lines[0]);
+        $this->assertStringNotContainsString('email-log-id', $lines[1]);
+        $this->assertStringNotContainsString('recipient@example.test', $lines[1]);
+    }
+
     /** @dataProvider transportErrors */
     public function test_unhandled_transport_errors_have_stable_codes(string $message, string $code): void
     {

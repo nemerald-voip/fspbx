@@ -15,6 +15,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Str;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Throwable;
 
@@ -120,6 +121,8 @@ class SendFaxNotificationJob implements ShouldQueue
         $log = $this->notificationLog($fax);
 
         $attributes = [
+            'logId'                  => $this->job?->uuid() ?: (string) Str::uuid(),
+            'domain_uuid'            => $fax->domain_uuid,
             'fax_destination'        => $fax->destination,
             'fax_source'             => $fax->source,
             'from'                   => $fax->email,

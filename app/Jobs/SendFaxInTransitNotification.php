@@ -8,6 +8,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Str;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -91,6 +92,8 @@ class SendFaxInTransitNotification implements ShouldQueue
      */
     public function handle()
     {
+        $this->request['logId'] ??= $this->job?->uuid() ?: (string) Str::uuid();
+
         // Allow only 2 tasks every 1 second
         Redis::throttle('fax')->allow(2)->every(1)->then(function () {
 

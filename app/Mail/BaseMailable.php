@@ -3,6 +3,8 @@
 namespace App\Mail;
 
 use App\Models\DefaultSettings;
+use App\Models\EmailLog;
+use App\Services\EmailDeliveryFailureReporter;
 use App\Services\EmailTemplateService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
@@ -12,6 +14,9 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Mail\Mailables\Headers;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Str;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
+use Throwable;
 
 abstract class BaseMailable extends Mailable
 {
@@ -24,6 +29,50 @@ abstract class BaseMailable extends Mailable
     public function __construct(array $attributes = [])
     {
         $this->attributes = $this->mergeDefaultSettings($attributes);
+    }
+
+    public function send($mailer)
+    {
+        $this->attributes['logId'] ??= (string) Str::uuid();
+
+        try {
+            return parent::send($mailer);
+        } catch (Throwable $exception) {
+            $context = [
+                'log_uuid' => $this->attributes['logId'],
+                'mailable' => static::class,
+                'domain_uuid' => $this->attributes['domain_uuid'] ?? null,
+                'recipient' => implode(', ', array_column($this->to, 'address')),
+                'subject' => $this->subject,
+            ];
+
+            if ($exception instanceof TransportExceptionInterface) {
+                // Let the job add its attempt/source IDs before the exception is reported.
+                app(EmailDeliveryFailureReporter::class)->rememberContext($exception, $context);
+            }
+
+            try {
+                // Do not overwrite a delivered message or a provider's permanent failure.
+                $log = EmailLog::query()->whereKey($this->attributes['logId'])
+                    ->where('status', 'sending')->first();
+
+                if ($log) {
+                    $summary = mb_strimwidth(preg_replace('/\s+/', ' ', trim($exception->getMessage())), 0, 500, '...');
+                    EmailLog::query()->whereKey($log->uuid)->where('status', 'sending')->update([
+                        'status' => 'failed',
+                        'sent_debug_info' => trim(($log->sent_debug_info ? $log->sent_debug_info."\n" : '')
+                            .'Send failed at '.now()->toDateTimeString().': '.$summary),
+                    ]);
+                }
+            } catch (Throwable $loggingException) {
+                logger()->warning('Could not mark email delivery as failed', $context + [
+                    'error' => $loggingException->getMessage(),
+                ]);
+            }
+
+            // Preserve the original exception so the queue keeps its normal retry policy.
+            throw $exception;
+        }
     }
 
     private function mergeDefaultSettings(array $attributes): array

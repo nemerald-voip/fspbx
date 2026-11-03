@@ -8,6 +8,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Str;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -121,6 +122,8 @@ class SendAppCredentials implements ShouldQueue
      */
     public function handle()
     {
+        $this->attributes['logId'] ??= $this->job?->uuid() ?: (string) Str::uuid();
+
         // Allow only 2 emails every 1 second
         Redis::throttle('emails')->allow(2)->every(1)->then(function () {
 
