@@ -9,15 +9,40 @@ FS_CONF_DIR=${FREESWITCH_CONF_DIR:-/etc/freeswitch}
 FS_MOD_DIR=${FREESWITCH_MOD_DIR:-/usr/lib/freeswitch/mod}
 FS_POLICY_PATH=${FS_POLICY_PATH:-/usr/sbin/policy-rc.d}
 FS_SERVICE_PATH=${FS_SERVICE_PATH:-/lib/systemd/system/freeswitch.service}
+FS_BINARY_PATH=${FS_BINARY_PATH:-/usr/bin/freeswitch}
 FS_LOCK_PATH=${FS_LOCK_PATH:-/run/lock/fspbx-freeswitch-install.lock}
 FS_BACKUP_ROOT=${FREESWITCH_BACKUP_ROOT:-/var/backups/fspbx-freeswitch}
 FS_CONFIG_PROTECTED=false
 FS_RESTORE_ARMED=false
 FS_POLICY_ACTIVE=false
 FS_BACKUP_DIR=
+FS_ALREADY_INSTALLED=false
+FS_REINSTALL=false
 
 fs_die() { printf 'Error: %s\n' "$*" >&2; exit 1; }
 fs_info() { printf '%s\n' "$*"; }
+
+fs_check_existing_installation() {
+    local path version
+    for path in "$FS_CONF_DIR/freeswitch.xml" "$FS_CONF_DIR/vars.xml" \
+        "$FS_CONF_DIR/autoload_configs/modules.conf.xml" "$FS_SERVICE_PATH"; do
+        if [[ ! -s "$path" ]]; then
+            printf 'FreeSWITCH installation check failed: missing or empty %s\n' "$path" >&2
+            return 1
+        fi
+    done
+    if [[ -f "$FS_POLICY_PATH" ]] && grep -q 'FS PBX FreeSWITCH install guard' "$FS_POLICY_PATH"; then
+        printf 'A previous FreeSWITCH service guard is still present at %s.\n' "$FS_POLICY_PATH" >&2
+        return 1
+    fi
+    if [[ ! -x "$FS_BINARY_PATH" || ! -x "$(dirname "$FS_BINARY_PATH")/fs_cli" ]] ||
+        ! version=$(LD_BIND_NOW=1 "$FS_BINARY_PATH" -version 2>&1) ||
+        [[ "${version,,}" != *'freeswitch version'* ]]; then
+        printf 'FreeSWITCH installation check failed: executable or runtime libraries are unavailable.\n' >&2
+        return 1
+    fi
+    python3 "$FS_CONFIG_TOOL" check-modules "$FS_CONF_DIR" "$FS_MOD_DIR"
+}
 
 fs_preflight() {
     [[ $(id -u) == 0 ]] || fs_die 'Run this installer as root.'
@@ -33,14 +58,34 @@ fs_preflight() {
     # Keep two source/package installers from changing the same host together.
     exec 9>"$FS_LOCK_PATH"
     flock -n 9 || fs_die 'Another FreeSWITCH installer is running.'
-    if [[ "$FRESH_INSTALL" == true ]]; then
-        [[ ! -e "$FS_CONF_DIR" || ( -d "$FS_CONF_DIR" && -z $(find "$FS_CONF_DIR/" -mindepth 1 -maxdepth 1 -print -quit) ) ]] || fs_die 'Existing FreeSWITCH configuration found. Run without --fresh-install.'
-    else
-        [[ -f "$FS_CONF_DIR/freeswitch.xml" && -f "$FS_CONF_DIR/vars.xml" ]] || fs_die 'Existing configuration not found. Use --fresh-install only for a new server.'
-    fi
     [[ "$FS_CONF_DIR" == /* && "$FS_CONF_DIR" != / ]] || fs_die 'Invalid FreeSWITCH configuration directory.'
     FS_CONF_DIR=$(realpath -m "$FS_CONF_DIR")
     [[ "$FS_CONF_DIR" != / ]] || fs_die 'Invalid FreeSWITCH configuration directory.'
+    if [[ "$FRESH_INSTALL" == true ]]; then
+        if [[ "${1:-}" == --skip-if-installed && ( -e "$FS_BINARY_PATH" || -e "$FS_SERVICE_PATH" ) ]]; then
+            FS_REINSTALL=true
+        fi
+        if [[ "${1:-}" == --skip-if-installed && -f "$FS_POLICY_PATH" ]] &&
+            grep -q 'FS PBX FreeSWITCH install guard' "$FS_POLICY_PATH"; then
+            FS_REINSTALL=true
+        fi
+        if [[ -e "$FS_CONF_DIR" && ! ( -d "$FS_CONF_DIR" && -z $(find "$FS_CONF_DIR/" -mindepth 1 -maxdepth 1 -print -quit) ) ]]; then
+            if [[ "${1:-}" == --skip-if-installed ]]; then
+                if fs_check_existing_installation; then
+                    FS_ALREADY_INSTALLED=true
+                    fs_info 'FreeSWITCH is already installed and verified. Skipping build.'
+                    return 0
+                fi
+                [[ -d "$FS_CONF_DIR" ]] || fs_die 'The FreeSWITCH configuration path is not a directory.'
+                FS_REINSTALL=true
+                fs_info 'Incomplete FreeSWITCH installation detected. Reinstalling with fresh configuration.'
+            else
+                fs_die 'Existing FreeSWITCH configuration found. Run without --fresh-install.'
+            fi
+        fi
+    else
+        [[ -f "$FS_CONF_DIR/freeswitch.xml" && -f "$FS_CONF_DIR/vars.xml" ]] || fs_die 'Existing configuration not found. Use --fresh-install only for a new server.'
+    fi
     umask 077
     mkdir -p "$FS_BACKUP_ROOT"
     chmod 700 "$FS_BACKUP_ROOT"
@@ -63,7 +108,25 @@ fs_preflight() {
 
 fs_protect_services() {
     if [[ -f "$FS_POLICY_PATH" ]] && grep -q 'FS PBX FreeSWITCH install guard' "$FS_POLICY_PATH"; then
-        fs_die "A previous service guard is still present at $FS_POLICY_PATH. Restore its saved policy before retrying."
+        if [[ "$FRESH_INSTALL" == true && "$FS_REINSTALL" == true ]]; then
+            # A killed installer cannot run its EXIT trap. Recover only the
+            # original policy recorded by our guard, after acquiring the lock.
+            local previous_policy previous_backup backup_root
+            previous_policy=$(sed -n 's/^# FS PBX FreeSWITCH install guard\. Original policy: //p' "$FS_POLICY_PATH")
+            [[ "$previous_policy" == /*/policy-rc.d && "$previous_policy" != *$'\n'* ]] || fs_die 'The previous FreeSWITCH service guard has no valid backup reference.'
+            previous_backup=$(realpath -e "$(dirname "$previous_policy")")
+            backup_root=$(realpath -e "$FS_BACKUP_ROOT")
+            [[ "$previous_backup" == "$backup_root/"* && -d "$previous_backup" ]] || fs_die 'The previous FreeSWITCH service guard references an unexpected backup directory.'
+            previous_policy="$previous_backup/policy-rc.d"
+            if [[ -e "$previous_policy" || -L "$previous_policy" ]]; then
+                cp -a --remove-destination "$previous_policy" "$FS_POLICY_PATH"
+            else
+                rm -f -- "$FS_POLICY_PATH"
+            fi
+            fs_info 'Recovered the service policy from the interrupted FreeSWITCH installation.'
+        else
+            fs_die "A previous service guard is still present at $FS_POLICY_PATH. Restore its saved policy before retrying."
+        fi
     fi
     if [[ -e "$FS_POLICY_PATH" || -L "$FS_POLICY_PATH" ]]; then
         cp -a -- "$FS_POLICY_PATH" "$FS_BACKUP_DIR/policy-rc.d"
@@ -319,17 +382,25 @@ fs_build_dependencies() {
 
 fs_seed_configuration() {
     [[ "$FRESH_INSTALL" == true ]] || return 0
-    local source="$FS_APP_DIR/public/app/switch/resources/conf" entry
+    local source="$FS_APP_DIR/public/app/switch/resources/conf" target="$FS_CONF_DIR" entry
     [[ -f "$source/freeswitch.xml" ]] || fs_die 'FS PBX default configuration is missing.'
-    mkdir -p "$FS_CONF_DIR"
+    if [[ "$FS_REINSTALL" == true ]]; then
+        target="$FS_BACKUP_DIR/fresh-config"
+    fi
+    mkdir -p "$target"
     # Include hidden files, but never restore the obsolete legacy autoload tree.
     while IFS= read -r -d '' entry; do
         [[ $(basename "$entry") == autoload_configs ]] && continue
-        cp -a -- "$entry" "$FS_CONF_DIR/"
+        cp -a -- "$entry" "$target/"
     done < <(find "$source" -mindepth 1 -maxdepth 1 -print0)
-    mkdir -p "$FS_CONF_DIR/autoload_configs"
-    cp -a "$FS_APP_DIR/resources/autoload_configs/." "$FS_CONF_DIR/autoload_configs/"
-    chown -R www-data:www-data "$FS_CONF_DIR"
+    mkdir -p "$target/autoload_configs"
+    cp -a "$FS_APP_DIR/resources/autoload_configs/." "$target/autoload_configs/"
+    chown -R www-data:www-data "$target"
+    if [[ "$FS_REINSTALL" == true ]]; then
+        # Replace the whole partial tree, including stale/custom files and
+        # symlinks. The original remains in the verified configuration backup.
+        python3 "$FS_CONFIG_TOOL" restore "$target" "$FS_CONF_DIR"
+    fi
 }
 
 fs_print_completion() {
@@ -360,12 +431,16 @@ fs_print_completion() {
 }
 
 fs_finish() {
-    fs_restore_configuration
+    if [[ "$FS_REINSTALL" == false ]]; then
+        fs_restore_configuration
+    fi
     fs_seed_configuration
     python3 "$FS_CONFIG_TOOL" prune-retired "$FS_CONF_DIR"
     python3 "$FS_CONFIG_TOOL" retire-binaries "$FS_MOD_DIR"
-    FS_CONFIG_PROTECTED=false
-    FS_RESTORE_ARMED=false
+    if [[ "$FS_REINSTALL" == false ]]; then
+        FS_CONFIG_PROTECTED=false
+        FS_RESTORE_ARMED=false
+    fi
     if [[ "$FRESH_INSTALL" == false ]]; then
         sudo -u www-data -- php "$FS_APP_DIR/artisan" freeswitch:prepare-restart --preserve-vars --no-interaction
     fi
@@ -377,5 +452,7 @@ fs_finish() {
             [[ -z "$service" ]] || systemctl restart "$service"
         done < <(systemctl list-units --type=service --state=running --no-legend 'php*-fpm.service')
     fi
+    FS_CONFIG_PROTECTED=false
+    FS_RESTORE_ARMED=false
     fs_print_completion
 }

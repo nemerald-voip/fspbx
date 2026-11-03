@@ -4,7 +4,6 @@ namespace App\Http\Requests;
 
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
-use libphonenumber\PhoneNumberFormat;
 use Illuminate\Foundation\Http\FormRequest;
 use App\Support\Localization\ValidationMessages;
 
@@ -32,6 +31,7 @@ class CreateMessageSettingRequest extends FormRequest
         return [
             'destination' => [
                 'required',
+                'string',
             ],
             'carrier' => [
                 'nullable',
@@ -79,10 +79,6 @@ class CreateMessageSettingRequest extends FormRequest
 
         if (!$this->has('enabled')) {
             $merge['enabled'] = "true";
-        }
-
-        if ($this->has('destination')) {
-            $merge['destination'] = formatPhoneNumber($this->input('destination'),'US', PhoneNumberFormat::E164);
         }
 
         $this->merge($merge);

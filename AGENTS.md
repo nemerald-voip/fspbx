@@ -11,6 +11,13 @@ This repo is a Laravel, Vue/Inertia, VueForm, and FreeSWITCH application. Before
 - Keep user-facing copy short and practical.
 - For release notes, write for users first. Avoid implementation details unless they explain visible behavior.
 
+## Release Notes
+
+- When asked to write FS PBX release notes, save them in `.github/release-notes/vX.Y.Z.md` for the requested version (for example, `.github/release-notes/v2.1.6.md`), unless the user explicitly requests another location or a temporary draft.
+- Use adjacent `config/version.php` version-bump commits to determine the release's changes; tags may have been created later. Follow the established published-release format and omit `## Upgrade notes`.
+- Include the matching notes file in the commit that bumps `config/version.php`, before pushing to `main`. The automated release workflow uses that file when creating the draft; if it is missing, GitHub generates the notes automatically. See [.github/RELEASING.md](.github/RELEASING.md).
+- Existing draft and published release descriptions are preserved by the workflow. Adding or changing the Markdown file after draft creation does not automatically update the GitHub release description.
+
 ## Laravel And Vue Pages
 
 - Rebuild legacy `/public/app/.../*.php` admin pages as native Laravel/Vue pages when asked.
@@ -230,7 +237,7 @@ This repo is a Laravel, Vue/Inertia, VueForm, and FreeSWITCH application. Before
 - Whenever changing the included FusionPBX application in the separate `public/` repository, also increment its release version in `public/version.json`. This is the version used by its release workflow and the installer.
 - If an update version has shipped, do not keep editing it for new behavior. Create the next update.
 - An update should be best-effort when touching host services. App updates should not fail just because a FreeSWITCH module cannot be compiled.
-- Update classes can expose `getSupervisorProgramsToRestart()` for `UpdateApp` to restart long-running processes after code, templates, assets, and ownership are updated. Do not include the opt-in `fs-esl-listener-call-webhooks` program in unconditional restarts because its Supervisor config intentionally uses `autostart=false`; Horizon is already recycled with `horizon:terminate`.
+- Update classes can expose `getSupervisorProgramsToRestart()` for `UpdateApp` to restart long-running processes after code, templates, assets, and ownership are updated. The opt-in `fs-esl-listener-call-webhooks` program ships with `numprocs=0` and `autostart=true`: zero instances keeps it disabled even during `supervisorctl restart all`. Preserve an administrator's configured process count and never enable an opt-in service during an update. Horizon is already recycled with `horizon:terminate`.
 - When updates change generated dialplan XML or dialplan details, clear only the affected dialplan cache contexts.
 - Keep update console output truthful. Do not claim a module, file, or cache was refreshed unless it actually was.
 - When replacing untracked legacy files under `public/app/...`, follow the existing update pattern: download from the canonical GitHub raw URL, ensure the destination directory exists, reject empty downloads, and register the update step in `UpdateApp.php`.
@@ -291,4 +298,20 @@ This repo is a Laravel, Vue/Inertia, VueForm, and FreeSWITCH application. Before
 
 ## Included Legacy Files
 
-- Legacy admin files are included in the `/public` directory. This directory is not tracked. All updates must be made via an update file.
+- Legacy admin files live in `public/`, which is a separate Git repository and is not tracked by the main FS PBX repository. Inspect both working trees and preserve unrelated changes.
+- Deliver changes to legacy files on existing installations through an update file when that deployment work is in scope. Removing a replaced legacy app follows the procedure below; it does not automatically require an existing-system cleanup update.
+
+## Removing a Replaced Legacy App
+
+When asked to delete an old app under `public/app/{app}`, default to removing its source folder and making fresh installations independent of its `app_config.php`. Do not add cleanup for existing systems, an update class, or a main application release bump unless that work is requested.
+
+1. Read the app's `app_config.php`, menu definitions, and other install/runtime hooks before deleting it. Inventory its tables, columns, permissions, default settings, and selectable destinations. Trace the native replacement through its controller, request validation, Vue form, service, and FreeSWITCH consumers; search for callers of the old files.
+2. Move any still-required table creation into `app/Services/Install/InstallSchema.php` and call it from `ensureSchemas()`, which `FSPBXInitialDBSeed` already invokes. Match the required legacy column types, UUID primary keys, nullability, indexes, and audit fields. Guard creation with `Schema::hasTable()` so existing tables and records remain intact. Check install ordering if another setup step needs the table earlier.
+3. Do not add a Laravel migration solely to replace schema creation lost with `app_config.php`. The installer schema handles this fresh-install task; a migration needs a separate schema-change requirement. Never run migrations through `app:update` or an update class.
+4. Add permissions still used by the native feature to `DatabaseSeeder::createPermissions()` and their intended groups to `createGroupPermissions()`. Preserve existing grants and denials. Do not carry over permissions used only by deleted legacy features.
+5. Verify each legacy default setting has an actual consumer before recreating it. Follow the value all the way into the form or runtime: a controller returning a field does not prove the frontend uses it. If the native code already supplies the supported defaults, or the setting is unused, omit its seeding. Put genuinely required defaults through the existing `createDefaultSettings()` procedure; avoid a separate app-specific seeding method. If required array settings need distinct-value matching, handle that in the shared procedure while preserving existing customizations.
+6. Clean up the native controller alongside the removal: delete unused settings readers, helpers, and response fields. Use the supported action list directly when legacy setting overrides are no longer needed, keeping it consistent with request validation. Preserve existing saved destination data and runtime behavior; saved variables are separate from obsolete UI default settings.
+7. Ensure required native navigation, routing destinations, and runtime files remain available, then remove the legacy folder from the `public/` repository. Increment `public/version.json` as required for changes to that repository. Do not delete feature tables, saved records, or existing database settings as part of source removal.
+8. Run PHP lint, focused feature/install tests, and diff checks in both repositories. Where schema ownership changes, verify fresh table creation, repeated setup preserving existing records, and native saves against an isolated test database. Do not run the full installer, live seeders, or migrations merely to verify the change. Report source/test verification separately from deployment or live-call verification.
+
+Bridges is the reference example: `InstallSchema::ensureBridgesSchema()` owns `v_bridges`; native permissions live in `DatabaseSeeder`; no migration or bridge-default seeding is needed. `BridgeController` supplies its four supported actions directly and no longer returns the unused variable-settings response. `BridgeService` still preserves variables embedded in saved destinations. See `tests/Unit/BridgeInstallationTest.php` for the isolated schema and permission checks.

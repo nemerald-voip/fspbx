@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\Api\V1;
 
+use App\Models\Destinations;
+use App\Services\PhoneNumberService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -80,11 +82,14 @@ class UpdatePhoneNumberRequest extends FormRequest
 
     public function prepareForValidation(): void
     {
-        if ($this->has('destination_number')) {
-            $v = preg_replace('/[^\d+]+/', '', (string) $this->input('destination_number'));
-            if (str_starts_with($v, '+1')) $v = substr($v, 2);
-            $v = ltrim($v, '+');
-            $this->merge(['destination_number' => $v]);
+        if (is_string($this->input('destination_number'))) {
+            $domainUuid = (string) $this->route('domain_uuid');
+            $prefix = $this->has('destination_prefix') ? $this->input('destination_prefix')
+                : Destinations::where('domain_uuid', $domainUuid)
+                    ->where('destination_uuid', $this->route('destination_uuid'))->value('destination_prefix');
+            $this->merge(app(PhoneNumberService::class)->destinationParts(
+                $this->input('destination_number'), $prefix, $domainUuid
+            ));
         }
 
         $routing = $this->input('routing_options', null);

@@ -42,7 +42,7 @@ class SpeedDialPhone extends Model
      */
     public function getPhoneNumberFormattedAttribute()
     {
-        return formatPhoneNumber($this->phone_number, "US", PhoneNumberFormat::NATIONAL);
+        return app(\App\Services\PhoneNumberService::class)->formatForDomain($this->phone_number, $this->domain_uuid, PhoneNumberFormat::NATIONAL);
     }
 
     /**

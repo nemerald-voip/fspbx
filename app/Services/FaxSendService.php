@@ -68,7 +68,7 @@ class FaxSendService
             if (is_object($faxServer)) {
                 $payload['fax_destination'] = formatPhoneNumber(
                     $payload['fax_destination'] ?? '',
-                    get_domain_setting('country', $faxServer->domain_uuid) ?? 'US',
+                    app(\App\Services\PhoneNumberService::class)->countryCodeForDomain($faxServer->domain_uuid),
                     \libphonenumber\PhoneNumberFormat::E164
                 );
             }
@@ -265,12 +265,15 @@ class FaxSendService
     {
         // Test if there is a phone number in the subject line
         $subject = $payload['subject'];
-        $re = '/1?\d{10}/m';
+        $re = '/(?<![\w+])\+?\d[\d(). -]{4,}\d(?!\w)/';
+        $domainUuid = isset($payload['fax_uuid'])
+            ? Faxes::where('fax_uuid', $payload['fax_uuid'])->value('domain_uuid') : null;
         if (preg_match($re, $subject, $matches)) {
             // if string of digits that may represent a phone number is found then check if it's a valid phone number
             $phoneNumberUtil = \libphonenumber\PhoneNumberUtil::getInstance();
            try {
-                $phoneNumberObject = $phoneNumberUtil->parse($matches[0], 'US');
+                $phoneNumberObject = $phoneNumberUtil->parse($matches[0],
+                    app(PhoneNumberService::class)->countryCodeForDomain($domainUuid));
                 if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
                     $fax_caller_id_number = $phoneNumberUtil
                         ->format($phoneNumberObject, \libphonenumber\PhoneNumberFormat::E164);

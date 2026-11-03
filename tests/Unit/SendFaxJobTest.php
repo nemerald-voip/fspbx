@@ -24,5 +24,21 @@ class SendFaxJobTest extends TestCase
             $block
         );
         $this->assertSame(1, substr_count($block, 'export_vars='));
+        $this->assertStringStartsWith('^^|', $block);
+        $this->assertStringContainsString('|export_vars=', $block);
+    }
+
+    public function test_originate_delimiter_does_not_split_values_with_commas_or_pipes(): void
+    {
+        $job = new SendFaxJob('00000000-0000-0000-0000-000000000001');
+        $method = new ReflectionMethod($job, 'buildOriginateVariableBlock');
+
+        $block = $method->invoke($job, [
+            "fax_header='Office | Fax, West'",
+            "absolute_codec_string='PCMU,PCMA'",
+        ]);
+
+        $this->assertStringStartsWith('^^;', $block);
+        $this->assertStringContainsString("fax_header='Office | Fax, West';absolute_codec_string='PCMU,PCMA';", $block);
     }
 }

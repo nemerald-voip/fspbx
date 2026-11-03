@@ -49,6 +49,7 @@ class CallWebhookDeliveryService
         $eventId = (string) $payload['id'];
         $eventType = (string) $payload['type'];
         $target = data_get($payload, 'data.target', []);
+        $brand = config('webhook-server.brand', 'FS-PBX');
 
         return WebhookCall::create()
             ->url($subscription->endpoint_url)
@@ -57,8 +58,8 @@ class CallWebhookDeliveryService
             ->useTimestamp()
             ->uuid($eventId)
             ->withHeaders([
-                'X-FS-PBX-Event-ID' => $eventId,
-                'X-FS-PBX-Event-Type' => $eventType,
+                "X-{$brand}-Event-ID" => $eventId,
+                "X-{$brand}-Event-Type" => $eventType,
             ])
             ->meta([
                 'is_test' => $isTest,

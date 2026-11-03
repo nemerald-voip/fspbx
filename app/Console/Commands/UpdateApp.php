@@ -64,6 +64,8 @@ use App\Console\Commands\Updates\Update208;
 use App\Console\Commands\Updates\Update209;
 use App\Console\Commands\Updates\Update210;
 use App\Console\Commands\Updates\Update211;
+use App\Console\Commands\Updates\Update212;
+use App\Console\Commands\Updates\Update213;
 use App\Console\Commands\Updates\Update0917;
 use App\Console\Commands\Updates\Update0918;
 use App\Console\Commands\Updates\Update0924;
@@ -123,6 +125,10 @@ class UpdateApp extends Command
         $versionConfigFile = base_path('config/version.php');
         $downloadedVersionArray = include($versionConfigFile);
         $downloadedVersion = $downloadedVersionArray['release'] ?? null;
+
+        // Verify the release before update hooks, seeders, or service changes.
+        // Never turn a missing artifact into an automatic production build.
+        $this->executeCommand('php artisan frontend:install --prepare', 240);
 
         // Define version-specific steps using an array
         $updateSteps = [
@@ -205,6 +211,8 @@ class UpdateApp extends Command
             '2.0.9' => Update209::class,
             '2.1.0' => Update210::class,
             '2.1.1' => Update211::class,
+            '2.1.2' => Update212::class,
+            '2.1.3' => Update213::class,
             // Add more versions as needed
         ];
 
@@ -214,7 +222,7 @@ class UpdateApp extends Command
             if (version_compare($currentVersion, $version, '<')) {
                 $this->info("Applying update steps for version $version...");
                 // Create instance of the class and call the apply() method
-                $updateInstance = new $updateClass();
+                $updateInstance = app($updateClass);
                 if (!$updateInstance->apply()) {
                     // If the update fails, stop further updates and exit with failure
                     $this->error("Update to version $version failed. Stopping further updates.");
@@ -248,8 +256,17 @@ class UpdateApp extends Command
         // Cache config and routes
         $this->executeCommand('php artisan config:cache');
 
-        // Refresh enabled modules using the DB license
-        $this->runArtisanCommand('modules:refresh');
+        // Optional module updates must never block the application update.
+        try {
+            $moduleRefreshExitCode = $this->call('modules:refresh');
+        } catch (\Throwable $exception) {
+            $moduleRefreshExitCode = 1;
+            $this->warn('Module refresh failed: '.$exception->getMessage());
+        }
+
+        if ($moduleRefreshExitCode !== 0) {
+            $this->warn('Module updates were skipped or incomplete. Continuing the application update. Retry with php artisan modules:refresh after resolving the warning.');
+        }
 
         $this->executeCommand('php artisan route:cache');
         $this->executeCommand('php artisan queue:restart');
@@ -266,9 +283,8 @@ class UpdateApp extends Command
         // Create storage link
         $this->runArtisanCommand('storage:link', ['--force' => true]);
 
-        // Update Vue files
-        $this->executeCommand('npm install');
-        $this->executeCommand('npm run build', 300);
+        // Module refresh installs its own licensed, prebuilt assets.
+        $this->executeCommand('php artisan frontend:install --activate', 60);
 
         // Output the current working directory
         $currentDirectory = $this->getCurrentDirectory();
@@ -299,7 +315,6 @@ class UpdateApp extends Command
 
         $this->info('Update completed successfully!');
     }
-
 
     protected function executeCommand($command, $timeout = 60, $failOnError = true)
     {
@@ -418,10 +433,10 @@ class UpdateApp extends Command
                 });
 
                 if ($result->failed()) {
-                    $this->warn("Could not restart Supervisor program {$program}; continuing the update.");
+                    $this->warn("Could not restart Supervisor program {$program}; continuing the update. Retry: supervisorctl restart {$program}");
                 }
             } catch (\Throwable $exception) {
-                $this->warn("Could not restart Supervisor program {$program}; continuing the update: ".$exception->getMessage());
+                $this->warn("Could not restart Supervisor program {$program}; continuing the update: ".$exception->getMessage().". Retry: supervisorctl restart {$program}");
             }
         }
     }

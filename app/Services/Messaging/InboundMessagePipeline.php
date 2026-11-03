@@ -90,9 +90,16 @@ class InboundMessagePipeline
             $group = null;
             if ($supportsGroups) {
                 $groups = app(MessageGroupService::class);
-                $recipients = $groups->recipients(array_merge([$event->from], $event->to), $local,
-                    get_domain_setting('country', $route->domainUuid) ?? 'US');
-                if (count($recipients) > 1) $group = $groups->findOrCreate($route->domainUuid, $local, $recipients);
+                $country = app(\App\Services\PhoneNumberService::class)->countryCodeForDomain($route->domainUuid);
+                // A short-code sender is not an E.164 group participant. Only exempt it
+                // when the full, validated recipient list contains this local number alone.
+                $shortCodeDirectMessage = preg_match('/\A[0-9]{5,6}\z/', $event->from) === 1
+                    && $event->to !== []
+                    && $groups->recipients($event->to, $local, $country) === [];
+                if (!$shortCodeDirectMessage) {
+                    $recipients = $groups->recipients(array_merge([$event->from], $event->to), $local, $country);
+                    if (count($recipients) > 1) $group = $groups->findOrCreate($route->domainUuid, $local, $recipients);
+                }
             }
 
             messaging_webhook_debug('Destination resolved', [

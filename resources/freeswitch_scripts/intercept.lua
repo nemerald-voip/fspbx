@@ -43,6 +43,13 @@
 
 --Get intercept logger
 	local log = require "resources.functions.log".intercept
+	local pickup_history = require "resources.functions.pickup_history"
+	local ringing_extension
+	local function intercept(target)
+		if pickup_history.prepare(session, api, target, ringing_extension, log.warning) then
+			session:execute("intercept", target)
+		end
+	end
 
 --include database class
 	local Database = require "resources.functions.database"
@@ -58,6 +65,14 @@
 
 -- redirect call to another box
 	local function make_proxy_call(destination, call_hostname)
+		local code = session:getVariable("sip_h_X-FSPBX-Pickup-Code") or session:getVariable("destination_number") or ""
+		if code:match('^%*%*%d+$') or code:match('^%*97%d+$') or code == '*8' or code == '**' then
+			session:execute("export", "sip_h_X-FSPBX-Pickup-Code=" .. code)
+		end
+		local ringing = ringing_extension or session:getVariable("sip_h_X-FSPBX-Pickup-Ringing")
+		if ringing and ringing:match('^%d+$') then
+			session:execute("export", "sip_h_X-FSPBX-Pickup-Ringing=" .. ringing)
+		end
 		destination = destination .. "@" .. domain_name
 		local profile, proxy = "internal", call_hostname;
 
@@ -110,7 +125,7 @@
 
 			if intercept_uuid and #intercept_uuid > 0 then
 				log.notice("Get intercept_uuid from sip header. Do intercept....")
-				session:execute("intercept", intercept_uuid)
+				intercept(intercept_uuid)
 				return true
 			end
 
@@ -130,7 +145,7 @@
 
 			if parent_uuid == child_intercept_uuid then
 				log.notice("Can not found parent call. Try intercept child.")
-				session:execute("intercept", child_intercept_uuid)
+				intercept(child_intercept_uuid)
 				return true
 			end
 
@@ -151,7 +166,7 @@
 
 			if hostname == call_hostname then
 				log.notice("Found parent call on local machine. Do intercept....")
-				session:execute("intercept", parent_uuid);
+				intercept(parent_uuid);
 				return true
 			end
 
@@ -259,7 +274,7 @@
 
 		--check the database to get the uuid of a ringing call
 			call_hostname = "";
-			sql = "SELECT uuid, call_uuid, hostname FROM channels ";
+			sql = "SELECT uuid, call_uuid, hostname, presence_id FROM channels ";
 			sql = sql .. "WHERE callstate IN ('RINGING', 'EARLY') ";
 			-- next check should prevent pickup call from extension
 			-- e.g. if extension 100 dial some cell phone and some one else dial *8
@@ -300,6 +315,7 @@
 				is_child = (row.uuid == row.call_uuid)
 				uuid = row.call_uuid;
 				call_hostname = row.hostname;
+				ringing_extension = row.presence_id and row.presence_id:match('^([^@]+)@') or extension
 			end);
 			--log.notice("uuid: "..uuid);
 			--log.notice("call_hostname: "..call_hostname);
@@ -348,7 +364,7 @@
 	if (uuid ~= nil) then
 		if (session:getVariable("billmsec") == nil) then
 			if (hostname == call_hostname) then
-				session:execute("intercept", uuid);
+				intercept(uuid);
 			else
 				session:execute("export", "sip_h_X-intercept_uuid="..uuid);
 				make_proxy_call(pickup_number, call_hostname)

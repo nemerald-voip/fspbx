@@ -11,6 +11,9 @@ use App\Http\Requests\UpdateExtensionRequest;
 use App\Models\CDR;
 use App\Models\Destinations;
 use App\Models\Extensions;
+use App\Rules\ValidPhoneNumber;
+use App\Services\PhoneNumberService;
+use libphonenumber\PhoneNumberFormat;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -41,6 +44,13 @@ class DomainPhoneNumberFormattingTest extends TestCase
 
         $this->createSchema();
 
+        DB::table('v_default_settings')->insert([
+            'default_setting_uuid' => (string) Str::uuid(),
+            'default_setting_subcategory' => 'country',
+            'default_setting_value' => 'US',
+            'default_setting_enabled' => 'true',
+        ]);
+
         $this->domainUuid = (string) Str::uuid();
         session()->put('domain_uuid', $this->domainUuid);
 
@@ -62,6 +72,127 @@ class DomainPhoneNumberFormattingTest extends TestCase
         }
 
         parent::tearDown();
+    }
+
+    public function test_phone_validation_uses_account_country_and_accepts_explicit_international_numbers(): void
+    {
+        $defaultDomain = (string) Str::uuid();
+        $this->assertTrue(validator(['number' => '7282396453'], ['number' => new ValidPhoneNumber($defaultDomain)])->passes());
+        $this->assertTrue(validator(['number' => '02079460958'], ['number' => new ValidPhoneNumber($this->domainUuid)])->passes());
+        $this->assertTrue(validator(['number' => '+39066982'], ['number' => new ValidPhoneNumber($this->domainUuid)])->passes());
+        $this->assertFalse(validator(['number' => '02079460958'], ['number' => new ValidPhoneNumber($defaultDomain)])->passes());
+        foreach (['1001', 'not-a-number', '72823964XX', []] as $value) {
+            $this->assertFalse(validator(['number' => $value], ['number' => new ValidPhoneNumber($defaultDomain)])->passes());
+        }
+    }
+
+    public function test_missing_country_does_not_assume_a_country(): void
+    {
+        DB::table('v_default_settings')->delete();
+        $domain = (string) Str::uuid();
+        $numbers = app(PhoneNumberService::class);
+        $this->assertSame('ZZ', $numbers->countryCodeForDomain($domain));
+        $this->assertSame('7282396453', $numbers->formatForDomain('7282396453', $domain, PhoneNumberFormat::E164));
+        $this->assertSame('+17282396453', $numbers->formatForDomain('+17282396453', $domain, PhoneNumberFormat::E164));
+        $this->assertFalse($numbers->isValidForDomain('7282396453', $domain));
+        $this->assertTrue($numbers->isValidForDomain('+442079460958', $domain));
+    }
+
+    /** @dataProvider internationalNumbers */
+    public function test_phone_requests_use_target_account_and_keep_international_conditions(string $country, string $national, string $prefix, string $significant): void
+    {
+        $domain = (string) Str::uuid();
+        DB::table('v_domain_settings')->insert([
+            'domain_setting_uuid' => (string) Str::uuid(), 'domain_uuid' => $domain,
+            'domain_setting_subcategory' => 'country', 'domain_setting_value' => $country,
+            'domain_setting_enabled' => 'true',
+        ]);
+        $route = new class($domain) {
+            public function __construct(private string $domain) {}
+            public function parameter(string $key, mixed $default = null): mixed {
+                return $key === 'domain_uuid' ? $this->domain : $default;
+            }
+        };
+        foreach ([
+            \App\Http\Requests\StorePhoneNumberRequest::class,
+            \App\Http\Requests\Api\V1\StorePhoneNumberRequest::class,
+            \App\Http\Requests\Api\V1\UpdatePhoneNumberRequest::class,
+        ] as $requestClass) {
+            $request = $requestClass::create('/numbers', 'POST', [
+                'domain_uuid' => $domain, 'destination_number' => $national,
+                'destination_conditions' => [['condition_expression' => $national]],
+            ]);
+            $request->setContainer(app());
+            $request->setRouteResolver(fn () => $route);
+            $request->prepareForValidation();
+            $this->assertSame($significant, $request->input('destination_number'));
+            $this->assertSame($prefix, $request->input('destination_prefix'));
+            if ($request instanceof \App\Http\Requests\StorePhoneNumberRequest) {
+                $this->assertSame('+'.$prefix.$significant, $request->input('destination_conditions.0.condition_expression'));
+            }
+        }
+
+        $update = \App\Http\Requests\UpdatePhoneNumberRequest::create('/numbers', 'PUT', [
+            'domain_uuid' => $domain, 'destination_conditions' => [['condition_expression' => $national]],
+        ]);
+        $update->setContainer(app());
+        $update->prepareForValidation();
+        $this->assertSame('+'.$prefix.$significant, $update->input('destination_conditions.0.condition_expression'));
+        $this->assertFalse($update->has('destination_number'));
+    }
+
+    public static function internationalNumbers(): array
+    {
+        return [
+            'US' => ['US', '(728) 239-6453', '1', '7282396453'],
+            'UK' => ['GB', '020 7946 0958', '44', '2079460958'],
+            'Italy' => ['IT', '06 6982', '39', '066982'],
+            'Russia' => ['RU', '8 910 858 34 58', '7', '9108583458'],
+            'Australia' => ['AU', '02 9374 4000', '61', '293744000'],
+            'Japan' => ['JP', '03-1234-5678', '81', '312345678'],
+            'Brazil' => ['BR', '11 91234-5678', '55', '11912345678'],
+            'explicit international overrides account' => ['GB', '+81 3-1234-5678', '81', '312345678'],
+        ];
+    }
+
+    public function test_phone_creation_preserves_patterns_and_explicit_country_prefixes(): void
+    {
+        $numbers = app(PhoneNumberService::class);
+        foreach (['72823964XX', '(1001|1002)', '1001'] as $value) {
+            $this->assertSame(['destination_number' => $value, 'destination_prefix' => null],
+                $numbers->destinationParts($value, null, $this->domainUuid));
+        }
+        $this->assertSame(['destination_number' => '7282396453', 'destination_prefix' => '1'],
+            $numbers->destinationParts('7282396453', '1', $this->domainUuid));
+        $this->assertSame(['destination_number' => '066982', 'destination_prefix' => '39'],
+            $numbers->destinationParts('+39 06 6982', '44', $this->domainUuid));
+    }
+
+    public function test_phone_api_patch_does_not_add_omitted_number_fields(): void
+    {
+        $request = \App\Http\Requests\Api\V1\UpdatePhoneNumberRequest::create('/numbers', 'PATCH', [
+            'destination_description' => 'Updated label',
+        ]);
+        $request->setContainer(app());
+        $request->prepareForValidation();
+        $this->assertSame(['destination_description' => 'Updated label'], $request->all());
+    }
+
+    public function test_fax_message_and_speed_dial_display_use_the_records_account(): void
+    {
+        foreach ([
+            [\App\Models\Faxes::class, 'fax_caller_id_number', 'fax_caller_id_number_formatted'],
+            [\App\Models\FaxFiles::class, 'fax_destination', 'fax_destination_formatted'],
+            [\App\Models\FaxQueues::class, 'fax_number', 'fax_number_formatted'],
+            [\App\Models\Messages::class, 'source', 'source_formatted'],
+            [\App\Models\MessageSetting::class, 'destination', 'destination_formatted'],
+            [\App\Models\SpeedDialPhone::class, 'phone_number', 'phone_number_formatted'],
+        ] as [$class, $field, $formatted]) {
+            session()->put('domain_uuid', (string) Str::uuid());
+            $model = new $class();
+            $model->setRawAttributes(['domain_uuid' => $this->domainUuid, $field => '2079460958']);
+            $this->assertSame('020 7946 0958', $model->{$formatted}, $class);
+        }
     }
 
     public function test_extension_and_destination_accessors_use_the_domain_country(): void

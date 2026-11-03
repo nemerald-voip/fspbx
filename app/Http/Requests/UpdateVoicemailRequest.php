@@ -101,7 +101,7 @@ class UpdateVoicemailRequest extends FormRequest
         }
 
         if ($this->has('voicemail_sms_to') && !blank($this->input('voicemail_sms_to'))) {
-            $countryCode = get_domain_setting('country', $domain_uuid) ?? 'US';
+            $countryCode = app(\App\Services\PhoneNumberService::class)->countryCodeForDomain($domain_uuid);
 
             try {
                 $merge['voicemail_sms_to'] = formatPhoneNumber(
@@ -134,7 +134,7 @@ class UpdateVoicemailRequest extends FormRequest
             }
 
             if (array_key_exists('caller_id_number', $profile) && !blank($profile['caller_id_number'])) {
-                $countryCode = get_domain_setting('country', $domain_uuid) ?? 'US';
+                $countryCode = app(\App\Services\PhoneNumberService::class)->countryCodeForDomain($domain_uuid);
 
                 try {
                     $profile['caller_id_number'] = formatPhoneNumber(
@@ -158,7 +158,7 @@ class UpdateVoicemailRequest extends FormRequest
             }
 
             if (array_key_exists('recipients', $profile) && is_array($profile['recipients'])) {
-                $countryCode = get_domain_setting('country', $domain_uuid) ?? 'US';
+                $countryCode = app(\App\Services\PhoneNumberService::class)->countryCodeForDomain($domain_uuid);
 
                 $profile['recipients'] = collect($profile['recipients'])
                     ->map(function ($recipient, $index) use ($countryCode) {

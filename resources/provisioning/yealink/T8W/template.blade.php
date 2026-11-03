@@ -1,4 +1,4 @@
-{{-- version: 1.0.17 --}}
+{{-- version: 1.0.18 --}}
 
 @switch($flavor)
 
@@ -374,8 +374,8 @@ distinctive_ring_tones.alert_info.{{ $i }}.ringer = {{ $settings["yealink_ring_f
 ################################################################
 ##                      Backgrounds  Settings                 ##
 ################################################################
-wallpaper_upload.url = {{ $settings['yealink_t8_wallpaper'] ?? '' }}
-phone_setting.backgrounds = Config:{{ $settings['yealink_t8_wallpaper_filename'] ?? '' }}
+wallpaper_upload.url = {{ $settings['yealink_t8w_wallpaper'] ?? '' }}
+phone_setting.backgrounds = Config:{{ $settings['yealink_t8w_wallpaper_filename'] ?? '' }}
 
 ################################################################
 ##                      Network Basic                         ##

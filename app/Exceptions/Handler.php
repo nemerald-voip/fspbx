@@ -7,6 +7,7 @@ use App\Http\Middleware\SetApplicationLocale;
 use Illuminate\Http\Request;
 use App\Data\Api\V1\ErrorData;
 use App\Data\Api\V1\ErrorResponseData;
+use App\Services\EmailDeliveryFailureReporter;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Validation\ValidationException;
 
@@ -17,11 +18,20 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 
 class Handler extends ExceptionHandler
 {
     public function register(): void
     {
+        // Keep the original exception for queue retries and Horizon, but log
+        // expected mail delivery errors once without Laravel's stack trace.
+        $this->reportable(function (TransportExceptionInterface $e) {
+            $this->container->make(EmailDeliveryFailureReporter::class)->report($e);
+
+            return false;
+        });
+
         // CSRF and throttling can stop a web request before locale middleware runs.
         // Keep Laravel's response/status/headers; only resolve its display language.
         $this->renderable(function (HttpExceptionInterface $e, Request $request) {
@@ -154,7 +164,9 @@ class Handler extends ExceptionHandler
         $this->renderable(function (Throwable $e, Request $request) {
             if (! $request->is('api/v1/*')) return null;
 
-            logger()->error('Unhandled API exception', ['exception' => $e]);
+            if (! $e instanceof TransportExceptionInterface) {
+                logger()->error('Unhandled API exception', ['exception' => $e]);
+            }
 
             $payload = ErrorResponseData::from([
                 'error' => ErrorData::from([

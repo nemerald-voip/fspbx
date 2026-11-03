@@ -9,8 +9,6 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
-use libphonenumber\NumberParseException;
-use Propaganistas\LaravelPhone\PhoneNumber;
 
 class BulkUpdatePhoneNumberRequest extends FormRequest
 {
@@ -103,7 +101,7 @@ class BulkUpdatePhoneNumberRequest extends FormRequest
         foreach ($errors as $field => $message) {
             if (preg_match('/destination_conditions\.(\d+)\.condition_expression/', $field, $matches)) {
                 $index = (int) $matches[1]; // Add 1 to make it 1-indexed
-                $customMessages[$field][] = "Please use valid US phone number on condition ".($index + 1);
+                $customMessages[$field][] = "Please use a valid phone number on condition ".($index + 1);
             }
             if (preg_match('/destination_conditions\.(\d+)\.value.value/', $field, $matches)) {
                 $index = (int) $matches[1]; // Add 1 to make it 1-indexed
@@ -121,7 +119,7 @@ class BulkUpdatePhoneNumberRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'destination_conditions.*.condition_expression' => __('Please use valid US phone number on condition'),
+            'destination_conditions.*.condition_expression' => __('Please use a valid phone number on condition'),
             'destination_conditions.*.value.value' => __('Please select action on condition'),
             'domain_uuid.required' => __('Acccount must be selected.')
 

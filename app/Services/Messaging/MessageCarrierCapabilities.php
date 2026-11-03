@@ -22,7 +22,7 @@ class MessageCarrierCapabilities
         if ($carrier === 'bandwidth') {
             try {
                 $phone = PhoneNumberUtil::getInstance();
-                $number = $phone->parse($source, 'US');
+                $number = $phone->parse($source);
                 // Bandwidth group MMS is available on local numbers, not toll-free.
                 if ($phone->isValidNumber($number) && $number->getCountryCode() === 1
                     && $phone->getNumberType($number) !== PhoneNumberType::TOLL_FREE) {

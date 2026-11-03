@@ -1,7 +1,5 @@
 <?php
 
-use Illuminate\Support\Str;
-
 return [
 
     /*
@@ -48,16 +46,12 @@ return [
     | Horizon Redis Prefix
     |--------------------------------------------------------------------------
     |
-    | This prefix will be used when storing all Horizon data in Redis. You
-    | may modify the prefix when you are running multiple installations
-    | of Horizon on the same server so that they don't have problems.
+    | This fixed prefix keeps Horizon data and worker discovery independent
+    | of the application name and environment prefix settings.
     |
     */
 
-    'prefix' => env(
-        'HORIZON_PREFIX',
-        Str::slug(env('APP_NAME', 'laravel'), '_').'_horizon:'
-    ),
+    'prefix' => 'fs_pbx_horizon:',
 
     /*
     |--------------------------------------------------------------------------

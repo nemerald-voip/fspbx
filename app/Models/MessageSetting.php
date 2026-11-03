@@ -38,7 +38,7 @@ class MessageSetting extends Model
 
     public function getDestinationFormattedAttribute()
     {
-        return $this->destination ? formatPhoneNumber($this->destination) : null;
+        return $this->destination ? app(\App\Services\PhoneNumberService::class)->formatForDomain($this->destination, $this->domain_uuid) : null;
     }
 
     /**

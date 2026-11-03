@@ -25,6 +25,17 @@ class PhoneNumberPermissionsTest extends TestCase
         DB::purge('phone_number_permissions_test');
         session(['domain_uuid' => 'account-a']);
 
+        Schema::create('v_domain_settings', function (Blueprint $table) {
+            foreach (['domain_uuid', 'domain_setting_subcategory', 'domain_setting_value', 'domain_setting_enabled'] as $column) {
+                $table->string($column)->nullable();
+            }
+        });
+        Schema::create('v_default_settings', function (Blueprint $table) {
+            foreach (['default_setting_subcategory', 'default_setting_value', 'default_setting_enabled'] as $column) {
+                $table->string($column)->nullable();
+            }
+        });
+
         Schema::create('v_destinations', function (Blueprint $table) {
             foreach ([
                 'destination_uuid', 'domain_uuid', 'destination_number', 'destination_prefix',

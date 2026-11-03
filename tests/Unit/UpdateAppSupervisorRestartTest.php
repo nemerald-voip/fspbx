@@ -32,9 +32,10 @@ class UpdateAppSupervisorRestartTest extends TestCase
         $this->previousFacadeApplication = Facade::getFacadeApplication();
         $this->directory = sys_get_temp_dir().'/fspbx-supervisor-update-'.bin2hex(random_bytes(8));
         mkdir($this->directory.'/config', 0777, true);
-        file_put_contents($this->directory.'/config/version.php', '<?php return ["release" => "2.1.0"];');
+        // Skip version-specific deployment steps in this isolated fixture.
+        file_put_contents($this->directory.'/config/version.php', '<?php return ["release" => "99.0.0"];');
         $this->app = new Application($this->directory);
-        $this->app->instance('config', new Repository(['app' => ['version' => '2.1.0']]));
+        $this->app->instance('config', new Repository(['app' => ['version' => '99.0.0']]));
         Facade::clearResolvedInstances();
         Facade::setFacadeApplication($this->app);
         Process::fake();

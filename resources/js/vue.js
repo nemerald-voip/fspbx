@@ -7,6 +7,7 @@ import { i18nVue, loadLanguageAsync, getActiveLanguage } from '@i18n';
 
 
 import './bootstrap';
+import { resolveModulePage } from 'virtual:fspbx-module-pages';
 
 const appName = window.document.getElementsByTagName('title')[0]?.innerText || 'Laravel';
 
@@ -21,13 +22,11 @@ const syncAxiosCsrfToken = (page) => {
 function resolvePage(name) {
     const [page, module] = name.split('::');
 
-    const pagePath = module
-        ? `../../Modules/${module}/Resources/assets/js/Pages/${page}.vue`
-        : `./Pages/${page}.vue`;
+    if (module) return resolveModulePage(module, page);
 
-    const pages = module
-        ? import.meta.glob('../../Modules/**/Resources/assets/js/Pages/**/*.vue')
-        : import.meta.glob(['./Pages/**/*.vue', '!./Pages/components/**/*.vue']);
+    const pagePath = `./Pages/${page}.vue`;
+
+    const pages = import.meta.glob(['./Pages/**/*.vue', '!./Pages/components/**/*.vue']);
 
     if (!pages[pagePath]) {
         const errorMessage = `Page not found: ${pagePath}`;

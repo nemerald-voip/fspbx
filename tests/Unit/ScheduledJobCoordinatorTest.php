@@ -615,6 +615,273 @@ class ScheduledJobCoordinatorTest extends TestCase
         $this->assertSame('1001', $resolver->configuredNode());
     }
 
+    public function test_approval_forwards_to_a_verified_direct_owner_address_without_writing_locally(): void
+    {
+        $this->node('1001', 'pbx-a', 'https://shared.example.test');
+        $this->setting('active_node', '1001');
+        $this->setting('active_node_generation', '4', 'numeric');
+        $peer = $this->peer(); // The shared address answers as pbx-b, not the owner.
+        $user = (string) Str::uuid();
+        $approved = [
+            'scheduled_job_node_uuid' => (string) Str::uuid(), 'system_identifier' => '2002',
+            'endpoint' => 'https://pbx-b.example.test', 'status' => 'approved',
+            'host_fingerprint' => hash('sha256', '2002'),
+        ];
+        $peer->shouldReceive('approveNode')->once()->with('https://pbx-a.example.test', [
+            'writer_node_id' => '1001', 'target_node_id' => '2002',
+            'target_endpoint' => 'https://pbx-b.example.test',
+            'target_host_fingerprint' => hash('sha256', '2002'), 'requested_by' => $user,
+        ])->andReturn(['node' => $approved]);
+        $resolver = $this->resolver('2002', ['https://pbx-a.example.test'], [], $peer);
+
+        $result = $resolver->requestNodeApproval('https://pbx-b.example.test', '2002', $user);
+
+        $this->assertSame(['node' => $approved, 'forwarded' => true], $result);
+        $this->assertDatabaseCount('scheduled_job_nodes', 1);
+        $this->assertDatabaseMissing('scheduled_job_nodes', ['system_identifier' => '2002']);
+        $this->assertSame('1001', $resolver->configuredNode());
+        $this->assertSame(4, $resolver->generation());
+    }
+
+    public function test_initial_approval_can_be_requested_on_the_other_server(): void
+    {
+        $peer = $this->peer();
+        $approved = ['system_identifier' => '2002', 'endpoint' => 'https://pbx-b.example.test',
+            'status' => 'approved', 'host_fingerprint' => hash('sha256', '2002')];
+        $peer->shouldReceive('approveNode')->once()->with('https://pbx-a.example.test', Mockery::on(
+            fn ($payload) => $payload['writer_node_id'] === '1001' && $payload['target_node_id'] === '2002'
+        ))->andReturn(['node' => $approved]);
+        $resolver = $this->resolver('2002', ['https://pbx-a.example.test', 'https://pbx-b.example.test'], [], $peer);
+
+        $this->assertTrue($resolver->requestNodeApproval('https://pbx-b.example.test', '2002', null)['forwarded']);
+        $this->assertDatabaseCount('scheduled_job_nodes', 0);
+        $this->assertNull($resolver->configuredNode());
+    }
+
+    public function test_unreachable_owner_never_falls_back_to_a_local_approval(): void
+    {
+        $this->node('1001', 'pbx-a', 'https://pbx-a.example.test');
+        $this->setting('active_node', '1001');
+        $peer = Mockery::mock(ScheduledJobPeerClient::class);
+        $peer->shouldReceive('identify')->with('https://pbx-a.example.test')->andThrow(new RuntimeException('Connection refused'));
+        $peer->shouldReceive('identify')->with('https://pbx-b.example.test')->andReturn([
+            'system_identifier' => '2002', 'host_fingerprint' => hash('sha256', '2002'),
+        ]);
+        $peer->shouldNotReceive('approveNode');
+        $resolver = $this->resolver('2002', [], [], $peer);
+        try {
+            $resolver->requestNodeApproval('https://pbx-b.example.test', '2002', null);
+            $this->fail('An unavailable authority must not be bypassed.');
+        } catch (RuntimeException $error) {
+            $this->assertSame(409, $error->getCode());
+            $this->assertStringContainsString('Cannot reach the approval server pbx-a', $error->getMessage());
+        }
+        $this->assertDatabaseCount('scheduled_job_nodes', 1);
+        $this->assertSame('1001', $resolver->configuredNode());
+    }
+
+    public function test_cached_discovery_cannot_authorize_forwarding_to_a_changed_host(): void
+    {
+        $this->node('1001', 'pbx-a', 'https://pbx-a.example.test');
+        $this->setting('active_node', '1001');
+        Cache::put('scheduled-jobs:peer-identity:'.sha1('https://pbx-a.example.test'), [
+            'endpoint' => 'https://pbx-a.example.test', 'reachable' => true,
+            'system_identifier' => '1001', 'host_fingerprint' => hash('sha256', '1001'),
+        ], 15);
+        $peer = Mockery::mock(ScheduledJobPeerClient::class);
+        $peer->shouldReceive('identify')->with('https://pbx-a.example.test')->once()->andReturn([
+            'system_identifier' => '1001', 'host_fingerprint' => hash('sha256', 'different-host'),
+            'capabilities' => ['node_approval'],
+        ]);
+        $peer->shouldReceive('identify')->with('https://pbx-b.example.test')->andReturn([
+            'system_identifier' => '2002', 'host_fingerprint' => hash('sha256', '2002'),
+        ]);
+        $peer->shouldNotReceive('approveNode');
+        $resolver = $this->resolver('2002', ['https://pbx-b.example.test'], [], $peer);
+        $this->expectExceptionMessage('Cannot reach the approval server');
+        $resolver->requestNodeApproval('https://pbx-b.example.test', '2002', null);
+    }
+
+    public function test_forwarding_to_an_older_owner_reports_that_it_needs_an_update(): void
+    {
+        $this->node('1001', 'pbx-a', 'https://pbx-a.example.test');
+        $this->setting('active_node', '1001');
+        $peer = Mockery::mock(ScheduledJobPeerClient::class);
+        $peer->shouldReceive('identify')->andReturnUsing(fn ($endpoint) => [
+            'system_identifier' => str_contains($endpoint, 'pbx-a') ? '1001' : '2002',
+            'host_fingerprint' => hash('sha256', str_contains($endpoint, 'pbx-a') ? '1001' : '2002'),
+        ]);
+        $peer->shouldNotReceive('approveNode');
+        $resolver = $this->resolver('2002', ['https://pbx-b.example.test'], [], $peer);
+        $this->expectExceptionMessage('Update FS PBX on pbx-a to support forwarded approvals.');
+        $resolver->requestNodeApproval('https://pbx-b.example.test', '2002', null);
+    }
+
+    public function test_approval_retry_and_address_repair_keep_the_existing_registry_uuid_and_owner(): void
+    {
+        $this->configuredPair();
+        $uuid = ScheduledJobNode::where('system_identifier', '1001')->value('scheduled_job_node_uuid');
+        ScheduledJobNode::where('system_identifier', '1001')->update(['endpoint' => 'https://shared.example.test']);
+        $resolver = $this->resolver('1001', ['https://pbx-b.example.test'], [], $this->peer());
+        for ($attempt = 0; $attempt < 2; $attempt++) {
+            $result = $resolver->requestNodeApproval('https://pbx-a.example.test', '1001', null);
+            $this->assertFalse($result['forwarded']);
+            $this->assertSame($uuid, $result['node']['scheduled_job_node_uuid']);
+            $this->assertSame('https://pbx-a.example.test', $result['node']['endpoint']);
+        }
+        $this->assertDatabaseCount('scheduled_job_nodes', 2);
+        $this->assertSame('1001', $resolver->configuredNode());
+        $this->assertSame(4, $resolver->generation());
+    }
+
+    public function test_receiving_writer_rejects_a_target_that_changed_identity_in_transit(): void
+    {
+        $resolver = $this->configuredPair();
+        $this->expectExceptionMessage('The peer identity changed while it was being approved.');
+        $resolver->approveNode('https://pbx-b.example.test', '2002', null, hash('sha256', 'old-host'));
+    }
+
+    public function test_unapproved_replacement_is_not_reported_as_a_host_identity_mismatch(): void
+    {
+        $this->configuredPair();
+        ScheduledJobNode::where('system_identifier', '2002')->update(['status' => 'retired']);
+        $resolver = $this->resolver('3003', [], [], $this->peer('3003'));
+        $decision = $resolver->resolve();
+        $this->assertSame('unapproved', $decision['source']);
+        $this->assertFalse($decision['active']);
+        $this->assertSame('1001', $decision['effective_owner']);
+    }
+
+    public function test_removing_a_retired_registration_keeps_ownership_and_transfer_history(): void
+    {
+        $resolver = $this->configuredPair();
+        $node = ScheduledJobNode::where('system_identifier', '2002')->firstOrFail();
+        $resolver->retireNode($node, null);
+        $handoff = ScheduledJobHandoff::query()->create([
+            'idempotency_key' => (string) Str::uuid(), 'from_node_id' => '2002', 'to_node_id' => '1001',
+            'expected_generation' => 3, 'status' => 'completed', 'requested_at' => now(), 'completed_at' => now(),
+        ]);
+
+        $this->assertFalse($resolver->requestNodeRemoval($node)['forwarded']);
+        $resolver->requestNodeRemoval($node); // Lost-response retry.
+
+        $this->assertDatabaseMissing('scheduled_job_nodes', ['system_identifier' => '2002']);
+        $this->assertNotNull($handoff->fresh());
+        $this->assertSame(['1001'], array_column($resolver->statusContext()['nodes'], 'id'));
+        $this->assertSame('1001', $resolver->configuredNode());
+        $this->assertSame(4, $resolver->generation());
+        $this->assertDatabaseCount('scheduled_job_nodes', 1);
+        // A remaining subscription can still find the server, but cannot approve it.
+        $candidate = collect($resolver->discover())->firstWhere('system_identifier', '2002');
+        $this->assertNotNull($candidate);
+        $this->assertNull($candidate['registered']);
+        $this->assertFalse($this->resolver('2002', [], [], $this->peer())->isActive());
+    }
+
+    public function test_retired_registration_does_not_trigger_a_discovery_probe(): void
+    {
+        $this->node('2002', 'old-server', 'https://retired.example.test', 'retired');
+        $peer = Mockery::mock(ScheduledJobPeerClient::class);
+        $peer->shouldReceive('identify')->once()->with('https://pbx-a.example.test')->andReturn([
+            'system_identifier' => '1001', 'host_fingerprint' => hash('sha256', '1001'),
+        ]);
+        $resolver = $this->resolver('1001', [], [], $peer);
+
+        $this->assertSame(['1001'], array_column($resolver->discover(), 'system_identifier'));
+    }
+
+    public function test_replacement_can_be_discovered_at_a_removed_servers_address(): void
+    {
+        $resolver = $this->configuredPair();
+        $old = ScheduledJobNode::where('system_identifier', '2002')->firstOrFail();
+        $resolver->retireNode($old, null);
+        $resolver->removeNode($old);
+        Cache::flush();
+        $replacement = $this->resolver('1001', ['https://pbx-b.example.test'], [], $this->peer('3003'));
+
+        $candidate = collect($replacement->discover())->firstWhere('system_identifier', '3003');
+        $this->assertNotNull($candidate);
+        $this->assertNull($candidate['registered']);
+        $approved = $replacement->approveNode('https://pbx-b.example.test', '3003', null);
+        $this->assertSame('approved', $approved->status);
+        $this->assertNull($old->fresh());
+    }
+
+    public function test_approved_server_cannot_be_removed_even_with_a_stale_retired_model(): void
+    {
+        $resolver = $this->configuredPair();
+        $stale = ScheduledJobNode::where('system_identifier', '2002')->firstOrFail();
+        $stale->status = 'retired';
+        $this->expectExceptionMessage('Only retired servers can be removed from the list.');
+        $resolver->removeNode($stale);
+    }
+
+    public function test_retired_target_of_a_pending_transfer_cannot_be_removed(): void
+    {
+        $resolver = $this->configuredPair();
+        $node = ScheduledJobNode::where('system_identifier', '2002')->firstOrFail();
+        $resolver->retireNode($node, null);
+        ScheduledJobHandoff::query()->create([
+            'idempotency_key' => (string) Str::uuid(), 'from_node_id' => '1001', 'to_node_id' => '2002',
+            'expected_generation' => 4, 'status' => 'draining', 'requested_at' => now(),
+        ]);
+        $this->expectExceptionMessage('Finish the pending ownership transfer before removing this server.');
+        $resolver->removeNode($node);
+    }
+
+    public function test_removal_from_another_server_is_forwarded_without_a_local_write(): void
+    {
+        $this->configuredPair();
+        $this->node('3003', 'old-server', 'https://old.example.test', 'retired');
+        $node = ScheduledJobNode::where('system_identifier', '3003')->firstOrFail();
+        $peer = $this->peer();
+        $peer->shouldReceive('removeNode')->once()->with('https://pbx-a.example.test', [
+            'writer_node_id' => '1001', 'node_uuid' => $node->getKey(),
+            'target_node_id' => '3003',
+        ])->andReturn(['node_uuid' => $node->getKey(), 'target_node_id' => '3003']);
+        $resolver = $this->resolver('2002', [], [], $peer);
+
+        $this->assertTrue($resolver->requestNodeRemoval($node)['forwarded']);
+        $this->assertSame('retired', $node->fresh()->status);
+        $this->assertSame('1001', $resolver->configuredNode());
+    }
+
+    public function test_forwarded_removal_requires_a_receiver_that_supports_it(): void
+    {
+        $this->configuredPair();
+        $this->node('3003', 'old-server', 'https://old.example.test', 'retired');
+        $node = ScheduledJobNode::where('system_identifier', '3003')->firstOrFail();
+        $peer = Mockery::mock(ScheduledJobPeerClient::class);
+        $peer->shouldReceive('identify')->andReturnUsing(fn ($endpoint) => [
+            'system_identifier' => str_contains($endpoint, 'pbx-a') ? '1001' : '2002',
+            'host_fingerprint' => hash('sha256', str_contains($endpoint, 'pbx-a') ? '1001' : '2002'),
+            'capabilities' => ['node_approval'],
+        ]);
+        $resolver = $this->resolver('2002', [], [], $peer);
+        try {
+            $resolver->requestNodeRemoval($node);
+            $this->fail('The receiver must support forwarded removal.');
+        } catch (RuntimeException $error) {
+            $this->assertSame(409, $error->getCode());
+            $this->assertStringContainsString('to support removing retired servers', $error->getMessage());
+        }
+        $this->assertNotNull($node->fresh());
+    }
+
+    public function test_remove_endpoint_requires_the_scheduled_jobs_permission(): void
+    {
+        session()->put('permissions', []);
+        $resolver = Mockery::mock(ActiveNodeResolver::class);
+        $resolver->shouldNotReceive('requestNodeRemoval');
+        $controller = new \App\Http\Controllers\ScheduledJobCoordinationController($resolver);
+        try {
+            $controller->remove(new ScheduledJobNode());
+            $this->fail('Removal must require the scheduled jobs management permission.');
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $error) {
+            $this->assertSame(403, $error->getStatusCode());
+        }
+    }
+
     public function test_stale_queued_ldap_job_does_not_advance_next_due_time(): void
     {
         $this->configuredPair();
@@ -931,7 +1198,7 @@ class ScheduledJobCoordinatorTest extends TestCase
         $peer = Mockery::mock(ScheduledJobPeerClient::class);
         $peer->shouldReceive('identify')->andReturnUsing(function ($endpoint) use ($otherId) {
             $id = str_contains($endpoint, 'pbx-a') ? '1001' : $otherId;
-            return ['system_identifier' => $id, 'hostname' => $id, 'host_fingerprint' => hash('sha256', $id)];
+            return ['system_identifier' => $id, 'hostname' => $id, 'host_fingerprint' => hash('sha256', $id), 'capabilities' => ['node_approval', 'node_removal']];
         });
 
         return $peer;

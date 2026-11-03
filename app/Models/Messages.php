@@ -3,10 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Support\Carbon;
-use libphonenumber\PhoneNumberUtil;
 use libphonenumber\PhoneNumberFormat;
 use Illuminate\Database\Eloquent\Model;
-use libphonenumber\NumberParseException;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 
@@ -139,17 +137,6 @@ class Messages extends Model
 
     public function formatPhoneNumber($value)
     {
-        $phoneNumberUtil = PhoneNumberUtil::getInstance();
-
-        try {
-            $phoneNumberObject = $phoneNumberUtil->parse($value, 'US');
-
-            if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-                return $phoneNumberUtil->format($phoneNumberObject, PhoneNumberFormat::NATIONAL);
-            }
-        } catch (NumberParseException $e) {
-        }
-
-        return $value;
+        return app(\App\Services\PhoneNumberService::class)->formatForDomain($value, $this->domain_uuid, PhoneNumberFormat::NATIONAL);
     }
 }

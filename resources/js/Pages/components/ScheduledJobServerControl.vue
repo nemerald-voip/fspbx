@@ -129,6 +129,12 @@
                     <p class="text-xs text-gray-600">
                         {{ $t('Discovery only lists candidates. Every server must pass a signed identity check over HTTPS and be approved by a super administrator before it can run scheduled jobs.') }}
                     </p>
+                    <p class="text-xs text-gray-600">
+                        {{ $t('You can approve from either server. Requests are sent to the server responsible for membership. Use a direct address for each server; a shared failover hostname can reach the wrong server.') }}
+                    </p>
+                    <p v-if="pendingApprovals.length" class="text-xs text-blue-700" role="status">
+                        {{ $t('Approval recorded. Waiting for database replication. Use Refresh status to check again.') }}
+                    </p>
 
                     <div v-if="!state.secret_configured" class="rounded-md border border-gray-200 bg-white p-3">
                         <p class="text-xs font-medium text-gray-900">{{ $t('Step 1: create the shared coordination secret') }}</p>
@@ -174,18 +180,19 @@
                                     <p v-if="candidate.system_identifier" class="mt-0.5 truncate font-mono text-gray-400">{{ candidate.system_identifier }}</p>
                                     <p v-if="candidate.message" class="mt-1 text-amber-700">{{ candidate.message }}</p>
                                 </div>
-                                <button v-if="candidate.reachable && !candidate.duplicate_identity && !candidate.registered"
+                                <button v-if="candidate.reachable && !candidate.duplicate_identity && !approvalPending(candidate)
+                                    && (!candidateRegistration(candidate) || candidateNeedsAddressUpdate(candidate))"
                                     type="button" class="secondary-button" :disabled="working" @click="approveNode(candidate)">
-                                    {{ $t('Approve') }}
+                                    {{ candidateNeedsAddressUpdate(candidate) ? $t('Use this address') : $t('Approve') }}
                                 </button>
                             </li>
                         </ul>
                     </div>
 
-                    <div v-if="state.nodes?.length">
+                    <div v-if="registeredNodes.length">
                         <h5 class="text-xs font-semibold uppercase tracking-wide text-gray-500">{{ $t('Registered servers') }}</h5>
                         <ul class="mt-2 divide-y divide-gray-200 rounded-md border border-gray-200 bg-white">
-                            <li v-for="node in state.nodes" :key="node.id" class="flex flex-wrap items-center justify-between gap-3 px-3 py-2.5">
+                            <li v-for="node in registeredNodes" :key="node.id" class="flex flex-wrap items-center justify-between gap-3 px-3 py-2.5">
                                 <div class="min-w-0 text-xs">
                                     <div class="flex flex-wrap items-center gap-2">
                                         <span class="font-medium text-gray-900">{{ node.hostname }}</span>
@@ -203,6 +210,10 @@
                                 <button v-if="node.status === 'approved' && !node.selected" type="button" class="danger-link"
                                     :disabled="working" :title="$t('Stop using this server for scheduled jobs')" @click="retireNode(node)">
                                     {{ $t('Retire') }}
+                                </button>
+                                <button v-else-if="node.status === 'retired'" type="button" class="danger-link"
+                                    :disabled="working" :title="$t('Remove this retired server from the list')" @click="removeNode(node)">
+                                    {{ $t('Remove') }}
                                 </button>
                             </li>
                         </ul>
@@ -257,7 +268,7 @@ const props = defineProps({
 })
 const emit = defineEmits(['success', 'error'])
 
-const attentionSources = ['inconsistent', 'database', 'unrecognized', 'retired', 'legacy', 'identity_mismatch']
+const attentionSources = ['inconsistent', 'database', 'unrecognized', 'retired', 'legacy', 'unapproved', 'identity_mismatch']
 
 const state = ref({ ...props.initialState })
 const selectedOwner = ref(props.initialState?.effective_owner || '')
@@ -267,6 +278,13 @@ const statusLoading = ref(false)
 const discovering = ref(false)
 const manualEndpoint = ref('')
 const candidates = ref([])
+const removedRegistryUuids = ref([])
+const registeredNodes = computed(() => (state.value.nodes || []).filter(node => !removedRegistryUuids.value.includes(node.registry_uuid)))
+const approvalAcknowledgements = ref({})
+const pendingApprovals = computed(() => Object.values(approvalAcknowledgements.value).filter(approval => {
+    const node = nodeById(approval.system_identifier)
+    return node?.status !== 'approved' || node?.endpoint !== approval.endpoint
+}))
 const fencedEndpoint = ref('')
 const fenceConfirmed = ref(false)
 const transferRequest = ref(null)
@@ -298,6 +316,8 @@ const compact = computed(() => state.value.source === 'standalone' && !needsAtte
 const statusLabel = computed(() => {
     if (state.value.status === 'draining') return trans('Draining')
     if (state.value.handoff) return trans('Transfer in progress')
+    if (state.value.source === 'unapproved') return trans('Not approved')
+    if (state.value.source === 'identity_mismatch') return trans('Identity mismatch')
     if (ownerNode.value && !ownerNode.value.reachable) return trans('Unreachable')
     if (compact.value) return trans('Single server')
     if (state.value.active) return trans('Active on this server')
@@ -306,12 +326,14 @@ const statusLabel = computed(() => {
 })
 const statusDotClass = computed(() => state.value.status === 'draining'
     ? 'bg-blue-500'
+    : ['unapproved', 'identity_mismatch'].includes(state.value.source) ? 'bg-amber-500'
     : ownerNode.value && !ownerNode.value.reachable ? 'bg-rose-500'
     : state.value.active ? 'bg-green-500' : state.value.status === 'standby' ? 'bg-gray-400' : 'bg-amber-500')
 const statusBadgeClass = computed(() => [
     'inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset',
     state.value.active ? 'bg-green-50 text-green-700 ring-green-600/20'
         : state.value.status === 'draining' ? 'bg-blue-50 text-blue-700 ring-blue-600/20'
+            : ['unapproved', 'identity_mismatch'].includes(state.value.source) ? 'bg-amber-50 text-amber-700 ring-amber-600/20'
             : ownerNode.value && !ownerNode.value.reachable ? 'bg-rose-50 text-rose-700 ring-rose-600/20'
             : 'bg-gray-50 text-gray-700 ring-gray-300',
 ])
@@ -336,11 +358,26 @@ function nodeOptionLabel(node) {
     return marks.length ? `${node.hostname} (${marks.join(', ')})` : node.hostname
 }
 
+function approvalPending(candidate) {
+    return pendingApprovals.value.some(approval => approval.system_identifier === candidate.system_identifier)
+}
+
+function candidateRegistration(candidate) {
+    const node = nodeById(candidate.system_identifier)
+    return node && node.status !== 'unapproved' ? node.status : candidate.registered
+}
+
+function candidateNeedsAddressUpdate(candidate) {
+    const endpoint = nodeById(candidate.system_identifier)?.endpoint || candidate.registered_endpoint
+    return candidateRegistration(candidate) === 'approved' && endpoint && endpoint !== candidate.endpoint
+}
+
 function candidateStatus(candidate) {
     if (candidate.duplicate_identity) return trans('Duplicate identity')
     if (!candidate.reachable) return trans('Unreachable')
-    if (candidate.registered === 'approved') return trans('Approved')
-    if (candidate.registered === 'retired') return trans('Retired')
+    if (approvalPending(candidate)) return trans('Awaiting replication')
+    if (candidateRegistration(candidate) === 'approved') return trans('Approved')
+    if (candidateRegistration(candidate) === 'retired') return trans('Retired')
     return trans('Verified')
 }
 
@@ -426,11 +463,20 @@ async function approveNode(candidate) {
     const response = await run(() => axios.post(props.routes.node_approve.replace('__NODE__', candidate.system_identifier), {
         endpoint: candidate.endpoint,
     }))
-    if (response) await discoverNodes()
+    if (response) {
+        const node = response.data.node
+        if (node && response.data.forwarded) approvalAcknowledgements.value[node.system_identifier] = node
+        await discoverNodes()
+    }
 }
 
 async function retireNode(node) {
     await run(() => axios.post(props.routes.node_retire.replace('__NODE__', node.registry_uuid)))
+}
+
+async function removeNode(node) {
+    const response = await run(() => axios.delete(props.routes.node_remove.replace('__NODE__', node.registry_uuid)))
+    if (response) removedRegistryUuids.value.push(node.registry_uuid)
 }
 
 async function rotateSecret() {

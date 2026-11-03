@@ -27,6 +27,8 @@ class HandleInertiaRequests extends Middleware
      */
     public function version(Request $request): ?string
     {
+        $assets = storage_path('app/frontend/active.json');
+        if (is_file($assets)) return hash_file('sha256', $assets);
         return parent::version($request);
     }
 

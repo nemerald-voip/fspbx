@@ -86,7 +86,7 @@ class MessageDestinationResolver
 
     protected function buildPhoneLookupValues(string $number): array
     {
-        $countryCode = get_domain_setting('country', null) ?? 'US';
+        $countryCode = app(\App\Services\PhoneNumberService::class)->countryCodeForDomain();
 
         $e164 = formatPhoneNumber($number, $countryCode, PhoneNumberFormat::E164);
         $digitsOnly = preg_replace('/\D+/', '', $number ?? '');
