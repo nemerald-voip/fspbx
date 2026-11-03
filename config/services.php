@@ -22,6 +22,8 @@ return [
 
     'postmark' => [
         'token' => env('POSTMARK_TOKEN'),
+        'webhook_username' => env('POSTMARK_WEBHOOK_USERNAME'),
+        'webhook_password' => env('POSTMARK_WEBHOOK_PASSWORD'),
     ],
 
     'ses' => [

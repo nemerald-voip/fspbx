@@ -38,6 +38,11 @@ class FaxSendService
     {
         $instance = new self();
         $payload['fax_instance_uuid'] = (string) Str::uuid();
+        // Email-to-fax submissions carry a fax UUID, not a web session's account.
+        // Resolve it before even early preparation failures queue an email.
+        $payload['domain_uuid'] = isset($payload['fax_uuid'])
+            ? Faxes::whereKey($payload['fax_uuid'])->value('domain_uuid')
+            : null;
 
         $payload['slack_message'] = "*EmailToFax Notification*\n";
         $payload['slack_message'] .= "*From:* {$payload['from']}\n";
@@ -66,6 +71,8 @@ class FaxSendService
             // but the dashboard / future API callers may pass a raw number.
             // formatPhoneNumber is idempotent on already-E.164 input.
             if (is_object($faxServer)) {
+                $payload['fax_uuid'] = $faxServer->fax_uuid;
+                $payload['domain_uuid'] = $faxServer->domain_uuid;
                 $payload['fax_destination'] = formatPhoneNumber(
                     $payload['fax_destination'] ?? '',
                     app(\App\Services\PhoneNumberService::class)->countryCodeForDomain($faxServer->domain_uuid),
@@ -562,6 +569,10 @@ class FaxSendService
             $message = "Couldn't process any of the attached files. Supported types: .pdf, .tif, .tiff";
             Log::alert($message);
             SendFaxFailedNotification::dispatch([
+                'domain_uuid' => $faxServer->domain_uuid,
+                'fax_uuid' => $faxServer->fax_uuid,
+                'from' => $payload['from'] ?? '',
+                'fax_destination' => $payload['fax_destination'] ?? '',
                 'email_message' => $message,
                 'slack_message' => $message,
             ])->onQueue('emails');
