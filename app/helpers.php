@@ -1050,13 +1050,15 @@ if (!function_exists('debugEloquentSqlWithBindings')) {
  * ]
  */
 if (!function_exists('getVendorTemplateCollection')) {
-    function getVendorTemplateCollection(bool $includeDefaultTemplates = true, bool $includeCustomTemplates = true): array
+    function getVendorTemplateCollection(bool $includeDefaultTemplates = true, bool $includeCustomTemplates = true, ?bool $includeLegacyTemplates = null): array
     {
+        // Preserve existing callers while allowing legacy files independently of Blade defaults.
+        $includeLegacyTemplates ??= $includeDefaultTemplates;
         $vendors = DeviceVendor::where('enabled', 'true')->orderBy('name')->get();
         $templates = [];
 
         // 1) Legacy filesystem 
-        if ($includeDefaultTemplates) {
+        if ($includeLegacyTemplates) {
             $legacyBase = public_path('resources/templates/provision');
             foreach ($vendors as $vendor) {
                 $vname = $vendor->name;
