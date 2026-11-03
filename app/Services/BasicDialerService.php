@@ -477,7 +477,13 @@ class BasicDialerService
             return $destination['destination_data'];
         }
 
-        return sprintf('&%s(%s)', $destination['destination_app'], $destination['destination_data']);
+        $application = sprintf(
+            '&%s(%s)',
+            $destination['destination_app'],
+            $destination['destination_data']
+        );
+
+        return "'" . str_replace(["\\", "'"], ["\\\\", "\\'"], $application) . "'";
     }
 
     private function defaultDestinationTarget(?string $destinationType, ?string $target): ?string
