@@ -11,7 +11,7 @@ If you are evaluating **FreePBX, FusionPBX, 3CX, Asterisk-based platforms, or ot
 ## Links
 
 - **Website:** https://www.fspbx.com/
-- **Documentation:** https://www.fspbx.com/docs/
+- **Documentation:** https://www.fspbx.com/docs/intro
 - **Issues / Bug reports:** https://github.com/nemerald-voip/fspbx/issues
 - **GitHub repository:** https://github.com/nemerald-voip/fspbx
 
