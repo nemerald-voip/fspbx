@@ -11,7 +11,7 @@ class MessageConversationVisibility
 {
     public function visible(Builder $query, string $userUuid): Builder
     {
-        return $query->whereNotExists(function ($q) use ($userUuid) {
+        return $query->forInbox()->whereNotExists(function ($q) use ($userUuid) {
             $q->selectRaw('1')->from('message_user_hides as hides')
                 ->whereColumn('hides.message_uuid', 'messages.message_uuid')
                 ->whereColumn('hides.domain_uuid', 'messages.domain_uuid')
@@ -31,7 +31,7 @@ class MessageConversationVisibility
 
     public function history(Builder $query, string $userUuid): Builder
     {
-        return $query->whereNotExists(function ($q) use ($userUuid) {
+        return $query->forInbox()->whereNotExists(function ($q) use ($userUuid) {
             $q->selectRaw('1')->from('message_user_hides as hides')
                 ->whereColumn('hides.message_uuid', 'messages.message_uuid')
                 ->whereColumn('hides.domain_uuid', 'messages.domain_uuid')

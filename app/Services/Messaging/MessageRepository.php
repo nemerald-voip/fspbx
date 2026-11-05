@@ -21,6 +21,7 @@ class MessageRepository
         ?string $providerEvent = null,
         ?string $messageGroupUuid = null,
         ?int $expectedMediaCount = null,
+        array $inboundDelivery = ['method' => 'members'],
     ): Messages {
         $countryCode = app(\App\Services\PhoneNumberService::class)->countryCodeForDomain($domainUuid);
 
@@ -53,6 +54,12 @@ class MessageRepository
             'status'         => 'received',
             'media'          => $media,
             'delivery_meta'  => [
+                'inbound' => $inboundDelivery,
+                ...(($inboundDelivery['method'] ?? null) === 'webhook' ? ['webhook' => [
+                    'event_id' => (string) \Illuminate\Support\Str::uuid(),
+                    'status' => 'pending',
+                    'attempts' => 0,
+                ]] : []),
                 'ringotel_tracking' => 1,
                 'provider' => [
                     'name'         => $providerName,

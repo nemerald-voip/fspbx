@@ -5,8 +5,10 @@ namespace Tests\Feature\Api\V1;
 use App\Http\Controllers\Api\V1\MessageSettingsController;
 use App\Http\Controllers\MessageSettingsController as WebMessageSettingsController;
 use App\Models\MessageSetting;
+use App\Models\MessageWebhookSetting;
 use App\Models\User;
 use App\Services\Messaging\MessageSettingsService;
+use App\Services\Messaging\MessageWebhookSettings;
 use Illuminate\Cache\RateLimiter;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\Request;
@@ -32,6 +34,7 @@ class MessageSettingsCrudTest extends TestCase
     private const EXTENSION = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
     private const SECOND = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
     private const FOREIGN_EXTENSION = 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee';
+    private ?string $postgresSchema = null;
 
     protected function setUp(): void
     {
@@ -40,7 +43,24 @@ class MessageSettingsCrudTest extends TestCase
         config()->set('database.default', 'message_settings_test');
         config()->set('cache.default', 'array');
         config()->set('data.structure_caching.cache.store', 'array');
+        $lab = getenv('FSPBX_MESSAGE_SETTINGS_LAB');
+        if ($lab) {
+            if (! str_starts_with(realpath($lab) ?: '', '/tmp/fspbx-message-settings.')) {
+                throw new \RuntimeException('Use the disposable Message Settings PostgreSQL runner.');
+            }
+            $schema = 'message_settings_'.bin2hex(random_bytes(8));
+            config()->set('database.connections.message_settings_test', [
+                'driver' => 'pgsql', 'host' => $lab, 'port' => 16551, 'database' => 'postgres',
+                'username' => 'postgres', 'password' => '', 'charset' => 'utf8',
+                'prefix' => '', 'search_path' => $schema, 'sslmode' => 'disable',
+            ]);
+        }
         DB::purge('message_settings_test');
+        if ($lab) {
+            $this->assertSame($lab.'/data', DB::selectOne('show data_directory')->data_directory);
+            DB::statement('CREATE SCHEMA '.$schema);
+            $this->postgresSchema = $schema;
+        }
         Log::spy()->shouldReceive('channel')->andReturnSelf();
         $limiter = new RateLimiter(Cache::store('array'));
         $limiter->for('api', app(RateLimiter::class)->limiter('api'));
@@ -74,6 +94,7 @@ class MessageSettingsCrudTest extends TestCase
                 }
             });
         }
+        (require base_path('database/migrations/2026_11_04_000001_add_inbound_message_webhooks.php'))->up();
         DB::table('v_domains')->insert([
             ['domain_uuid' => self::DOMAIN, 'domain_name' => 'local.example.com'],
             ['domain_uuid' => self::FOREIGN, 'domain_name' => 'foreign.example.com'],
@@ -95,6 +116,9 @@ class MessageSettingsCrudTest extends TestCase
 
     protected function tearDown(): void
     {
+        if ($this->postgresSchema) {
+            DB::statement('DROP SCHEMA '.$this->postgresSchema.' CASCADE');
+        }
         DB::disconnect('message_settings_test');
         parent::tearDown();
     }
@@ -148,12 +172,92 @@ class MessageSettingsCrudTest extends TestCase
     public function test_create_defaults_and_single_member_assignments(): void
     {
         $this->postJson($this->endpoint(), ['destination' => '+442079460123'])
-            ->assertCreated()->assertJsonPath('allowed_extension_uuids', [])->assertJsonPath('enabled', true)->assertJsonPath('carrier', null);
+            ->assertCreated()->assertJsonPath('allowed_extension_uuids', [])->assertJsonPath('enabled', true)->assertJsonPath('carrier', null)
+            ->assertJsonPath('inbound_delivery', 'inherit')->assertJsonPath('inbound_webhook_url', null);
         $response = $this->postJson($this->endpoint(), [
             'destination' => '+12125550124', 'allowed_extension_uuids' => [self::SECOND], 'enabled' => false,
         ])->assertCreated()->assertJsonPath('enabled', false)->assertJsonPath('allowed_extension_uuids', [self::SECOND]);
         $this->assertDatabaseHas('sms_destination_members', ['sms_destination_uuid' => $response->json('sms_destination_uuid'), 'extension_uuid' => self::SECOND]);
         $this->assertDatabaseHas('v_sms_destinations', ['sms_destination_uuid' => $response->json('sms_destination_uuid'), 'enabled' => 'false']);
+    }
+
+    public function test_switching_members_to_webhook_uses_the_account_secret_without_exposing_it(): void
+    {
+        $account = app(MessageWebhookSettings::class)->save(self::DOMAIN, 'https://93.184.216.34/default');
+        $secret = $account->signing_secret;
+        session(['domain_uuid' => self::FOREIGN]);
+        $uuid = $this->postJson($this->endpoint(), [
+            'destination' => '+12125550123', 'inbound_delivery' => 'members',
+            'allowed_extension_uuids' => [self::EXTENSION, self::SECOND], 'email' => 'messages@example.com',
+        ])->assertCreated()->assertJsonPath('inbound_delivery', 'members')->json('sms_destination_uuid');
+        $response = $this->patchJson($this->endpoint($uuid), [
+            'inbound_delivery' => 'webhook', 'inbound_webhook_url' => 'https://93.184.216.34/custom',
+            'allowed_extension_uuids' => [self::EXTENSION], 'signing_secret' => 'must-not-replace-the-account-secret',
+        ])->assertOk()->assertJsonPath('inbound_delivery', 'webhook')
+            ->assertJsonPath('inbound_webhook_url', 'https://93.184.216.34/custom')
+            ->assertJsonPath('allowed_extension_uuids', [])->assertJsonPath('email', null);
+        $this->assertDatabaseMissing('sms_destination_members', ['sms_destination_uuid' => $uuid]);
+        $this->assertDatabaseHas('v_sms_destinations', ['sms_destination_uuid' => $uuid, 'chatplan_detail_data' => null]);
+        foreach ([$response, $this->getJson($this->endpoint($uuid))->assertOk(), $this->getJson($this->endpoint())->assertOk()] as $response) {
+            $this->assertStringNotContainsString('signing_secret', $response->getContent());
+            $this->assertStringNotContainsString($secret, $response->getContent());
+        }
+        $this->assertSame($secret, $account->refresh()->signing_secret);
+        $this->assertNotSame($secret, DB::table('message_webhook_settings')->where('domain_uuid', self::DOMAIN)->value('signing_secret'));
+        $this->assertDatabaseMissing('message_webhook_settings', ['domain_uuid' => self::FOREIGN]);
+        $this->assertSame('https://93.184.216.34/default', $account->endpoint_url);
+    }
+
+    public function test_create_webhook_provisions_a_secret_and_clears_supplied_members(): void
+    {
+        $response = $this->postJson($this->endpoint(), [
+            'destination' => '+12125550123', 'inbound_delivery' => 'webhook',
+            'inbound_webhook_url' => 'https://93.184.216.34/custom',
+            'allowed_extension_uuids' => [self::EXTENSION], 'email' => 'messages@example.com',
+        ])->assertCreated()->assertJsonPath('allowed_extension_uuids', [])->assertJsonPath('email', null)
+            ->assertJsonPath('inbound_delivery', 'webhook');
+        $this->assertArrayNotHasKey('signing_secret', $response->json());
+        $this->assertNotEmpty(MessageWebhookSetting::sole()->signing_secret);
+        $this->assertSame(self::DOMAIN, MessageWebhookSetting::sole()->domain_uuid);
+    }
+
+    public function test_webhook_patch_preserves_omitted_values_and_can_return_to_members_or_inheritance(): void
+    {
+        $uuid = $this->postJson($this->endpoint(), [
+            'destination' => '+12125550123', 'inbound_delivery' => 'webhook',
+            'inbound_webhook_url' => 'https://93.184.216.34/original',
+        ])->assertCreated()->json('sms_destination_uuid');
+        $this->patchJson($this->endpoint($uuid), ['description' => 'Keep route'])->assertOk()
+            ->assertJsonPath('inbound_delivery', 'webhook')->assertJsonPath('inbound_webhook_url', 'https://93.184.216.34/original');
+        $this->patchJson($this->endpoint($uuid), ['inbound_delivery' => 'webhook'])->assertOk()
+            ->assertJsonPath('inbound_webhook_url', 'https://93.184.216.34/original');
+        $this->patchJson($this->endpoint($uuid), ['inbound_webhook_url' => 'https://93.184.216.34/changed'])->assertOk()
+            ->assertJsonPath('inbound_delivery', 'webhook')->assertJsonPath('inbound_webhook_url', 'https://93.184.216.34/changed');
+        foreach ([null, '', 'http://93.184.216.34/insecure', 'https://127.0.0.1/private'] as $url) {
+            $this->patchJson($this->endpoint($uuid), ['inbound_webhook_url' => $url])->assertStatus(400)
+                ->assertJsonPath('error.param', 'inbound_webhook_url');
+        }
+        $this->assertDatabaseHas('v_sms_destinations', ['sms_destination_uuid' => $uuid, 'inbound_webhook_url' => 'https://93.184.216.34/changed']);
+        $this->patchJson($this->endpoint($uuid), ['inbound_delivery' => 'members', 'allowed_extension_uuids' => [self::SECOND]])
+            ->assertOk()->assertJsonPath('allowed_extension_uuids', [self::SECOND])->assertJsonPath('inbound_delivery', 'members');
+        // Reusing the saved URL is valid even when switching back from members.
+        $this->patchJson($this->endpoint($uuid), ['inbound_delivery' => 'webhook'])->assertOk()
+            ->assertJsonPath('allowed_extension_uuids', [])->assertJsonPath('inbound_webhook_url', 'https://93.184.216.34/changed');
+        $account = app(MessageWebhookSettings::class)->save(self::DOMAIN, 'https://93.184.216.34/account');
+        $this->patchJson($this->endpoint($uuid), [
+            'inbound_delivery' => 'inherit', 'inbound_webhook_url' => null, 'allowed_extension_uuids' => [self::EXTENSION],
+        ])->assertOk()->assertJsonPath('inbound_delivery', 'inherit')->assertJsonPath('inbound_webhook_url', null)
+            ->assertJsonPath('allowed_extension_uuids', [self::EXTENSION]);
+        $this->assertSame(['method' => 'webhook', 'endpoint_url' => $account->endpoint_url],
+            app(MessageWebhookSettings::class)->resolve(MessageSetting::findOrFail($uuid)));
+    }
+
+    public function test_url_only_patch_does_not_enable_webhook_delivery(): void
+    {
+        $uuid = $this->seedSetting(['inbound_delivery' => 'members']);
+        $this->patchJson($this->endpoint($uuid), ['inbound_webhook_url' => 'https://93.184.216.34/saved'])
+            ->assertOk()->assertJsonPath('inbound_delivery', 'members')->assertJsonPath('inbound_webhook_url', 'https://93.184.216.34/saved');
+        $this->assertDatabaseCount('message_webhook_settings', 0);
     }
 
     public static function phoneNumbers(): array
@@ -345,6 +449,13 @@ class MessageSettingsCrudTest extends TestCase
             [['allowed_extension_uuids' => [null]], 'allowed_extension_uuids.0'],
             [['email' => 'bad-email'], 'email'],
             [['enabled' => null], 'enabled'],
+            [['inbound_delivery' => 'existing'], 'inbound_delivery'],
+            [['inbound_delivery' => null], 'inbound_delivery'],
+            [['inbound_delivery' => 'webhook'], 'inbound_webhook_url'],
+            [['inbound_delivery' => 'webhook', 'inbound_webhook_url' => null], 'inbound_webhook_url'],
+            [['inbound_delivery' => 'webhook', 'inbound_webhook_url' => 'http://93.184.216.34/insecure'], 'inbound_webhook_url'],
+            [['inbound_delivery' => 'webhook', 'inbound_webhook_url' => 'https://127.0.0.1/private'], 'inbound_webhook_url'],
+            [['inbound_delivery' => 'webhook', 'inbound_webhook_url' => ['https://example.com']], 'inbound_webhook_url'],
             [['enabled' => 'invalid'], 'enabled'],
         ];
     }
@@ -484,6 +595,20 @@ class MessageSettingsCrudTest extends TestCase
                 $this->assertFalse($endpoint->bodyParameters['allowed_extension_uuids']->required);
                 $this->assertSame('string[]', $endpoint->bodyParameters['allowed_extension_uuids']->type);
                 $this->assertStringContainsString('omit to preserve', $endpoint->bodyParameters['allowed_extension_uuids']->description);
+                $this->assertFalse($endpoint->bodyParameters['inbound_delivery']->required);
+                $this->assertFalse($endpoint->bodyParameters['inbound_webhook_url']->required);
+                $this->assertStringContainsString('members', $endpoint->bodyParameters['inbound_delivery']->description);
+                $this->assertStringContainsString('HTTPS', $endpoint->bodyParameters['inbound_webhook_url']->description);
+                $this->assertArrayNotHasKey('signing_secret', $endpoint->bodyParameters);
+                $this->assertStringContainsString('secret', $endpoint->metadata->description);
+            }
+            foreach ($endpoint->responses as $response) {
+                if (! in_array($response->status, [200, 201]) || $action === 'destroy') continue;
+                $body = json_decode($response->content, true, flags: JSON_THROW_ON_ERROR);
+                $setting = $action === 'index' ? $body['data'][0] : $body;
+                $this->assertArrayHasKey('inbound_delivery', $setting);
+                $this->assertArrayHasKey('inbound_webhook_url', $setting);
+                $this->assertArrayNotHasKey('signing_secret', $setting);
             }
         }
     }

@@ -16,6 +16,7 @@ use App\Http\Requests\BulkUpdateMessageSettingRequest;
 use App\Services\Messaging\MessageParticipantService;
 use App\Services\Messaging\MessageSettingsAccess;
 use App\Services\Messaging\MessageSettingsService;
+use App\Services\Messaging\MessageWebhookSettings;
 
 class MessageSettingsController extends Controller
 {
@@ -47,6 +48,7 @@ class MessageSettingsController extends Controller
             $this->viewName,
             [
                 'permissions' => ['manage' => MessageSettingsAccess::canManage()],
+                'webhook_available' => app(MessageWebhookSettings::class)->available(),
                 'routes' => [
                     'current_page' => route('messages.settings'),
                     'data_route' => route('messages.settings.data'),
@@ -80,6 +82,8 @@ class MessageSettingsController extends Controller
                         'chatplan_detail_data',
                         'email',
                     ])
+                    ->when(app(MessageWebhookSettings::class)->available(),
+                        fn ($query) => $query->addSelect(['inbound_delivery', 'inbound_webhook_url']))
                     ->whereKey($itemUuid)
                     ->whereIn('domain_uuid', MessageSettingsAccess::domains())
                     ->firstOrFail();
@@ -120,6 +124,14 @@ class MessageSettingsController extends Controller
 
             // Construct the itemOptions object
             $itemOptions = [
+                'webhook' => [
+                    ...app(MessageWebhookSettings::class)
+                        ->props($webhookDomain = (string) ($item->domain_uuid ?? session('domain_uuid'))),
+                    // The secret itself is fetched on demand, and only by users who may manage this number.
+                    'secret_route' => MessageSettingsAccess::canManage($webhookDomain)
+                        ? route('account-settings.message-webhook.secret') : null,
+                    'domain_uuid' => $webhookDomain,
+                ],
                 'item' => $item ?? null,
                 'carrier' => $carrierOptions,
                 'chatplan_detail_data' => $chatplanDetailDataOptions,
@@ -169,6 +181,8 @@ class MessageSettingsController extends Controller
                 'domain_uuid',
 
             ])
+            ->when(app(MessageWebhookSettings::class)->available(),
+                fn ($query) => $query->addSelect(['inbound_delivery', 'inbound_webhook_url']))
             ->with('domain:domain_uuid,domain_name,domain_description')
             ->allowedFilters([
                 AllowedFilter::callback('search', function ($query, $value) {
@@ -218,6 +232,8 @@ class MessageSettingsController extends Controller
             $destination->allowed_extensions = app(MessageParticipantService::class)->assigned($destination)
                 ->map(fn ($ext) => ['value' => $ext->extension_uuid, 'label' => $ext->name_formatted])->values();
         }
+
+        app(MessageWebhookSettings::class)->describe($rows);
 
         // Set modified collection back into paginator
         $data->setCollection($rows);

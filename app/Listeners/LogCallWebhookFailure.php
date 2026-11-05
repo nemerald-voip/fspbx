@@ -10,7 +10,7 @@ class LogCallWebhookFailure
 {
     public function handle(WebhookCallFailedEvent|FinalWebhookCallFailedEvent $event): void
     {
-        if (($event->meta['is_test'] ?? false) === true) {
+        if (($event->meta['is_test'] ?? false) === true || ($event->meta['webhook_type'] ?? null) === 'message') {
             return;
         }
 

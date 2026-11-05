@@ -99,14 +99,24 @@ class MessageSettingsService
         $hasMembers = array_key_exists('allowed_extension_uuids', $data);
         $members = $data['allowed_extension_uuids'] ?? [];
         $legacyAssignment = array_key_exists('chatplan_detail_data', $data);
-        $attributes = Arr::only($data, ['destination', 'carrier', 'enabled', 'email', 'description', 'chatplan_detail_data']);
+        $attributes = Arr::only($data, ['destination', 'carrier', 'enabled', 'email', 'description', 'chatplan_detail_data', 'inbound_delivery', 'inbound_webhook_url']);
+        if (($attributes['inbound_delivery'] ?? null) === 'webhook') {
+            app(MessageWebhookSettings::class)->ensureSecret($setting->domain_uuid);
+        }
         if (isset($attributes['destination']) && is_string($attributes['destination'])) {
             $attributes['destination'] = $this->normalizeDestination($attributes['destination'], $setting->domain_uuid);
         }
         if (isset($attributes['enabled']) && is_bool($attributes['enabled'])) {
             $attributes['enabled'] = $attributes['enabled'] ? 'true' : 'false';
         }
-        $setting->fill($attributes)->save();
+        $setting->fill($attributes);
+        if ($setting->inbound_delivery === 'webhook') {
+            // A custom webhook replaces extension and email delivery entirely, so the
+            // number keeps no recipients that could still send or receive from it.
+            $setting->email = null;
+            [$hasMembers, $members, $legacyAssignment] = [true, [], false];
+        }
+        $setting->save();
 
         if (! $hasMembers && $legacyAssignment) {
             $members = Extensions::without('advSettings')->where('domain_uuid', $setting->domain_uuid)

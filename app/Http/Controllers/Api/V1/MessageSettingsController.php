@@ -31,7 +31,8 @@ class MessageSettingsController extends Controller
      * List message settings
      *
      * Lists messaging phone numbers in an account, including their provider,
-     * allowed extensions, email recipient, description, and enabled status.
+     * allowed extensions, email recipient, inbound delivery mode, custom webhook URL,
+     * description, and enabled status. Signing secrets are omitted from all responses.
      * Search by phone number, provider, email, or description.
      *
      * When `has_more` is true, pass the last result's `sms_destination_uuid`
@@ -44,7 +45,7 @@ class MessageSettingsController extends Controller
      * @queryParam search string Search phone number, provider, email, or description. Example: support
      * @queryParam carrier string Filter by message provider identifier. Example: voipms
      * @queryParam enabled boolean Filter by enabled status. Example: true
-     * @response 200 {"object":"list","url":"/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/message-settings","has_more":false,"data":[{"sms_destination_uuid":"c9a76140-0ca4-4ea3-95af-7e12c2ff0df5","object":"message_setting","domain_uuid":"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b","destination":"+12125550123","carrier":"voipms","allowed_extension_uuids":["d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b"],"email":"messages@example.com","description":"Customer support","enabled":true}]}
+     * @response 200 {"object":"list","url":"/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/message-settings","has_more":false,"data":[{"sms_destination_uuid":"c9a76140-0ca4-4ea3-95af-7e12c2ff0df5","object":"message_setting","domain_uuid":"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b","destination":"+12125550123","carrier":"voipms","allowed_extension_uuids":["d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b"],"email":"messages@example.com","description":"Customer support","enabled":true,"inbound_delivery":"inherit","inbound_webhook_url":null}]}
      * @response 400 {"error":{"type":"invalid_request_error","message":"The limit must not be greater than 100.","code":"invalid_parameter","param":"limit"}}
      * @response 401 {"error":{"type":"authentication_error","message":"Unauthenticated.","code":"unauthenticated"}}
      * @response 403 {"error":{"type":"invalid_request_error","message":"You do not have access to this domain.","code":"forbidden_domain","param":"domain_uuid"}}
@@ -101,11 +102,16 @@ class MessageSettingsController extends Controller
      * Returns one messaging phone number's configuration. `allowed_extension_uuids`
      * contains the extensions permitted to share this number. Use the Extensions
      * API to retrieve their names and extension numbers.
+     * `inbound_delivery` is `inherit`, `members`, or `webhook`. `inbound_webhook_url`
+     * is the saved custom URL, used only in `webhook` mode; it does not contain
+     * the inherited account URL. An unset delivery mode is returned as `inherit`.
+     * Signing secrets are omitted. Authorized administrators can retrieve the account
+     * secret in Account Settings > Messaging or the number's Message Settings form.
      * Requires account access and `message_settings_list_view`.
      *
      * @urlParam domain_uuid string required The account UUID. Example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
      * @urlParam sms_destination_uuid string required The message setting UUID. Example: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5
-     * @response 200 {"sms_destination_uuid":"c9a76140-0ca4-4ea3-95af-7e12c2ff0df5","object":"message_setting","domain_uuid":"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b","destination":"+12125550123","carrier":"voipms","allowed_extension_uuids":["d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b"],"email":"messages@example.com","description":"Customer support","enabled":true}
+     * @response 200 {"sms_destination_uuid":"c9a76140-0ca4-4ea3-95af-7e12c2ff0df5","object":"message_setting","domain_uuid":"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b","destination":"+12125550123","carrier":"voipms","allowed_extension_uuids":[],"email":null,"description":"Customer support","enabled":true,"inbound_delivery":"webhook","inbound_webhook_url":"https://example.com/messages"}
      * @response 400 {"error":{"type":"invalid_request_error","message":"Invalid message setting UUID.","code":"invalid_request","param":"sms_destination_uuid"}}
      * @response 401 {"error":{"type":"authentication_error","message":"Unauthenticated.","code":"unauthenticated"}}
      * @response 403 {"error":{"type":"invalid_request_error","message":"You do not have access to this domain.","code":"forbidden_domain","param":"domain_uuid"}}
@@ -129,14 +135,29 @@ class MessageSettingsController extends Controller
      * Allowed extensions can send and receive messages using the number and see
      * each other's replies. An empty or omitted extension list grants no extension access.
      *
-     * The number is enabled by default. An optional email address receives incoming
-     * messages. This endpoint saves the configuration in FS PBX; it does not purchase
+     * Incoming delivery defaults to `inherit`: use the account webhook when configured,
+     * otherwise use the number's members and email. Choose `members` to use local
+     * members and email regardless of the account webhook, or `webhook` with a public
+     * HTTPS `inbound_webhook_url` to forward only to that URL. Custom webhook delivery
+     * clears local members and email, including values supplied in this request.
+     *
+     * Webhooks use the account's shared HMAC-SHA256 signing secret, generated if absent.
+     * This API does not return or accept changes to the secret. Authorized administrators
+     * can retrieve it in Account Settings > Messaging or the number's Message Settings form.
+     * Receivers verify the Signature header against the raw JSON request body and return
+     * HTTP 2xx. Webhook-routed SMS/MMS remain in administrative logs and bypass local
+     * conversations, Ringotel, and email. Changes affect newly received messages.
+     *
+     * The number is enabled by default. This endpoint saves the configuration in FS PBX; it does not purchase
      * a number or configure your provider's account.
      * Requires account access and `message_settings_manage`.
      *
-     * @bodyParam allowed_extension_uuids string[] Optional extension UUIDs from this account. Defaults to []; on update, omit to preserve access. Example: ["d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b"]
+     * @bodyParam allowed_extension_uuids string[] Optional extension UUIDs from this account. Defaults to []; on update, omit to preserve access. Custom webhook delivery clears all members. Example: ["d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b"]
+     * @bodyParam inbound_delivery string Incoming delivery mode: inherit, members, or webhook. Defaults to inherit. Custom webhook delivery clears local members and email. Example: members
+     * @bodyParam inbound_webhook_url string Public HTTPS URL, required only when inbound_delivery is webhook. Uses the account signing secret, which is omitted from API responses. Example: https://example.com/messages
      * @urlParam domain_uuid string required The account UUID. Example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
-     * @response 201 {"sms_destination_uuid":"c9a76140-0ca4-4ea3-95af-7e12c2ff0df5","object":"message_setting","domain_uuid":"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b","destination":"+12125550123","carrier":"voipms","allowed_extension_uuids":["d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b"],"email":"messages@example.com","description":"Customer support","enabled":true}
+     * @response 201 {"sms_destination_uuid":"c9a76140-0ca4-4ea3-95af-7e12c2ff0df5","object":"message_setting","domain_uuid":"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b","destination":"+12125550123","carrier":"voipms","allowed_extension_uuids":["d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b"],"email":"messages@example.com","description":"Customer support","enabled":true,"inbound_delivery":"members","inbound_webhook_url":null}
+     * @response 400 scenario="Missing webhook URL" {"error":{"type":"invalid_request_error","message":"The inbound webhook url field is required when inbound delivery is webhook.","code":"invalid_parameter","param":"inbound_webhook_url"}}
      * @response 400 {"error":{"type":"invalid_request_error","message":"Enter a valid phone number for the configured country, or include + and the country code.","code":"invalid_parameter","param":"destination"}}
      * @response 400 scenario="Invalid JSON" {"error":{"type":"invalid_request_error","message":"Invalid JSON request body. Remove trailing commas and check the JSON syntax.","code":"invalid_json","param":null}}
      * @response 401 {"error":{"type":"authentication_error","message":"Unauthenticated.","code":"unauthenticated"}}
@@ -155,16 +176,37 @@ class MessageSettingsController extends Controller
      * Update message settings
      *
      * Changes a messaging phone number's configuration. All fields are optional;
-     * omitted fields retain their current values. When supplied, `allowed_extension_uuids`
+     * omitted fields retain their current values except that custom webhook delivery
+     * clears local members and email. When supplied, `allowed_extension_uuids`
      * replaces the entire access list. Send [] to remove all extension access.
      * Send null to clear the email recipient, description, or provider.
+     *
+     * To switch from local members to a webhook, send `inbound_delivery: "webhook"`
+     * and `inbound_webhook_url: "https://example.com/messages"`. This removes existing
+     * members and email. To switch back, send `inbound_delivery: "members"` and the
+     * desired members/email; removed assignments are not restored automatically.
+     * Choose `inherit` to follow the account webhook, or members/email when none is set.
+     *
+     * Omit the URL to keep the saved custom URL, including when reselecting webhook mode.
+     * A URL-only update keeps the delivery mode. The URL cannot be cleared while the
+     * resulting mode is `webhook`; select `members` or `inherit` to clear it with null.
+     * All supplied URLs must use HTTPS and resolve to public IP addresses.
+     *
+     * The account signing secret is reused, or generated if none exists. It is omitted
+     * from every API response and cannot be changed here. Retrieve it through Account
+     * Settings > Messaging or the number's Message Settings form with messaging management
+     * permission. Webhooks sign the raw JSON body with HMAC-SHA256 in the Signature header.
+     * Delivery changes apply to new messages; previously received messages keep their route.
      * Requires account access and `message_settings_manage`.
      *
      * @bodyParam destination string Optional messaging phone number, automatically converted to E.164 using the account country or the country in Default Settings. If neither is configured, supply an international number with + and its country code. Numbers starting with + use their supplied country code. Omit to preserve the current number; cannot be null or empty. Example: +12125550123
-     * @bodyParam allowed_extension_uuids string[] Optional extension UUIDs from this account. Replaces the full access list; omit to preserve access or send [] to remove all extension access. Example: ["d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b"]
+     * @bodyParam allowed_extension_uuids string[] Optional extension UUIDs from this account. Replaces the full access list; omit to preserve access or send [] to remove all extension access. Custom webhook delivery clears all members. Example: []
+     * @bodyParam inbound_delivery string Incoming delivery mode: inherit, members, or webhook. Omit to preserve the mode. Custom webhook delivery clears local members and email. Example: webhook
+     * @bodyParam inbound_webhook_url string Public HTTPS URL for custom webhook delivery. Omit to keep the saved URL. Required for webhook mode if no URL is saved. May be null only when the resulting mode is members or inherit. Example: https://example.com/messages
      * @urlParam domain_uuid string required The account UUID. Example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
      * @urlParam sms_destination_uuid string required The message setting UUID. Example: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5
-     * @response 200 {"sms_destination_uuid":"c9a76140-0ca4-4ea3-95af-7e12c2ff0df5","object":"message_setting","domain_uuid":"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b","destination":"+12125550123","carrier":"voipms","allowed_extension_uuids":[],"email":null,"description":"Customer support","enabled":true}
+     * @response 200 {"sms_destination_uuid":"c9a76140-0ca4-4ea3-95af-7e12c2ff0df5","object":"message_setting","domain_uuid":"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b","destination":"+12125550123","carrier":"voipms","allowed_extension_uuids":[],"email":null,"description":"Customer support","enabled":true,"inbound_delivery":"webhook","inbound_webhook_url":"https://example.com/messages"}
+     * @response 400 scenario="Missing webhook URL" {"error":{"type":"invalid_request_error","message":"The inbound webhook url field is required.","code":"invalid_parameter","param":"inbound_webhook_url"}}
      * @response 400 {"error":{"type":"invalid_request_error","message":"The selected allowed_extension_uuids.0 is invalid.","code":"invalid_parameter","param":"allowed_extension_uuids.0"}}
      * @response 400 scenario="Invalid JSON" {"error":{"type":"invalid_request_error","message":"Invalid JSON request body. Remove trailing commas and check the JSON syntax.","code":"invalid_json","param":null}}
      * @response 401 {"error":{"type":"authentication_error","message":"Unauthenticated.","code":"unauthenticated"}}
@@ -238,6 +280,8 @@ class MessageSettingsController extends Controller
             email: $setting->email,
             description: $setting->description,
             enabled: filter_var($setting->enabled, FILTER_VALIDATE_BOOLEAN),
+            inbound_delivery: $setting->inbound_delivery ?? 'inherit',
+            inbound_webhook_url: $setting->inbound_webhook_url,
         );
     }
 }

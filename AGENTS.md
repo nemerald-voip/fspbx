@@ -14,7 +14,8 @@ This repo is a Laravel, Vue/Inertia, VueForm, and FreeSWITCH application. Before
 ## Release Notes
 
 - When asked to write FS PBX release notes, save them in `.github/release-notes/vX.Y.Z.md` for the requested version (for example, `.github/release-notes/v2.1.6.md`), unless the user explicitly requests another location or a temporary draft.
-- Use adjacent `config/version.php` version-bump commits to determine the release's changes; tags may have been created later. Follow the established published-release format and omit `## Upgrade notes`.
+- Use adjacent `config/version.php` version-bump commits to determine the release's changes; tags may have been created later.
+- Use the published [v2.1.2 release](https://github.com/nemerald-voip/fspbx/releases/tag/v2.1.2) as the format reference for all future release notes: start with `## What's new`, give each major topic a `###` heading and a short user-facing introduction, then a `**Highlights**` label and practical bullet points. Add any necessary usage or compatibility note under that topic. Finish with `## Improvements and fixes`. Scale the number of topics to the actual changes; do not reduce the entire release to a flat fixes list. Omit `## Upgrade notes`.
 - Include the matching notes file in the commit that bumps `config/version.php`, before pushing to `main`. The automated release workflow uses that file when creating the draft; if it is missing, GitHub generates the notes automatically. See [.github/RELEASING.md](.github/RELEASING.md).
 - Existing draft and published release descriptions are preserved by the workflow. Adding or changing the Markdown file after draft creation does not automatically update the GitHub release description.
 

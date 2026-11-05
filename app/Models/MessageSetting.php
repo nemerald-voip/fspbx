@@ -30,6 +30,8 @@ class MessageSetting extends Model
         'chatplan_detail_data',
         'email',
         'enabled',
+        'inbound_delivery',
+        'inbound_webhook_url',
     ];
 
     protected $appends = [

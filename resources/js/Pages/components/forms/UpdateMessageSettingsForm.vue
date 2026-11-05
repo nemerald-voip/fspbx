@@ -50,6 +50,7 @@
                                     allowed_extension_uuids: options.item.allowed_extension_uuids || [],
                                     email: options.item.email,
                                     description: options.item.description,
+                                    ...messageDeliveryDefaults(options.item, options.webhook),
 
                                 }" @mounted="(form) => form.disableValidation()" @submit="clearServerFormErrors">
 
@@ -58,6 +59,24 @@
                                     <FormElements>
 
                                         <StaticElement name="h4" tag="h4" :content="$t('Update Settings')" />
+
+                                        <StaticElement name="uuid_clean">
+                                            <div class="mb-1">
+                                                <div class="mb-1 text-sm font-medium text-gray-600">
+                                                    {{ $t('Unique ID') }}
+                                                </div>
+                                                <div class="flex items-center">
+                                                    <span class="text-sm font-normal text-gray-900 select-all break-all">
+                                                        {{ options.item.sms_destination_uuid }}
+                                                    </span>
+                                                    <button type="button" @click="handleCopyToClipboard"
+                                                        class="ml-2 shrink-0 rounded-full p-1 text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
+                                                        :title="$t('Copy to clipboard')" :aria-label="$t('Copy to clipboard')">
+                                                        <ClipboardDocumentIcon class="h-4 w-4" aria-hidden="true" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </StaticElement>
 
                                         <TextElement name="destination" :label="$t('Phone Number')"
                                             :placeholder="$t('Enter Phone Number')" :floating="false" :columns="{
@@ -76,18 +95,7 @@
                                                 },
                                             }" />
 
-                                        <TagsElement name="allowed_extension_uuids" :items="options.extensions" :close-on-select="false"
-                                            :search="true" :native="false" :floating="false"
-                                            :label="$t('Allowed extensions')" :placeholder="$t('Choose extensions')"
-                                            :description="$t('Selected extensions can send and receive messages using this number and see each other’s replies. Leave empty for no extension access.')"
-                                            :columns="{ sm: { container: 12 } }" />
-
-                                        <TextElement name="email" :label="$t('Email')" :placeholder="$t('Optional')" :floating="false"
-                                            :columns="{
-                                                sm: {
-                                                    container: 6,
-                                                },
-                                            }" />
+                                        <MessageDeliveryFields :settings="options.webhook" :extensions="options.extensions" />
 
                                         <TextareaElement :label="$t('Description')" name="description" :rows="2" />
 
@@ -114,8 +122,11 @@
 import { clearServerFormErrors } from '../../../composables/serverFormErrors.js';
 import { trans } from '@i18n';
 import { ref } from "vue";
+import MessageDeliveryFields from './MessageDeliveryFields.vue';
+import { messageDeliveryDefaults, messageDeliveryRequest } from '../../../composables/messageDelivery.js';
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { XMarkIcon } from "@heroicons/vue/24/solid";
+import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
 
 
 const emit = defineEmits(['close', 'error', 'success', 'refresh-data', 'open-edit-form'])
@@ -129,11 +140,19 @@ const props = defineProps({
 
 const form$ = ref(null)
 
+const handleCopyToClipboard = async () => {
+    try {
+        await navigator.clipboard.writeText(props.options.item.sms_destination_uuid);
+        emit('success', 'success', { message: [trans('Copied to clipboard.')] });
+    } catch {
+        emit('error', { response: { data: { errors: { request: [trans('Failed to copy to clipboard.')] } } } });
+    }
+};
+
 const submitForm = async (FormData, form$) => {
     // Using form$.requestData will EXCLUDE conditional elements and it 
     // will submit the form as Content-Type: application/json . 
-    const requestData = form$.requestData
-    // console.log(requestData);
+    const requestData = messageDeliveryRequest(form$.requestData, props.options.item, props.options.webhook)
 
     return await form$.$vueform.services.axios.put(props.options.routes.update_route, requestData)
 };

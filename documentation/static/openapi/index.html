@@ -363,7 +363,7 @@
     </ul>
 
     <ul class="toc-footer" id="last-updated">
-        <li>Last updated: October 27, 2026</li>
+        <li>Last updated: November 5, 2026</li>
     </ul>
 </div>
 
@@ -2553,11 +2553,11 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"device_template\": \"Yealink T46U\",
     \"device_template_uuid\": \"a6cf59ba-4b2b-4bdd-b870-35cc55bca146\",
     \"device_keys\": [
-        \"voluptatem\"
+        \"ipsum\"
     ],
-    \"phonebook_mode\": \"default\",
+    \"phonebook_mode\": \"custom\",
     \"phonebook_uuids\": [
-        \"8567f09f-e965-36c4-b74b-429e8463bc5b\"
+        \"f5c64b32-4af4-317d-879e-8928547d362d\"
     ],
     \"device_description\": \"Reception desk device\",
     \"device_lines\": [
@@ -2585,11 +2585,11 @@ let body = {
     "device_template": "Yealink T46U",
     "device_template_uuid": "a6cf59ba-4b2b-4bdd-b870-35cc55bca146",
     "device_keys": [
-        "voluptatem"
+        "ipsum"
     ],
-    "phonebook_mode": "default",
+    "phonebook_mode": "custom",
     "phonebook_uuids": [
-        "8567f09f-e965-36c4-b74b-429e8463bc5b"
+        "f5c64b32-4af4-317d-879e-8928547d362d"
     ],
     "device_description": "Reception desk device",
     "device_lines": [
@@ -2838,10 +2838,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="device_keys.0.key_index"                data-endpoint="POSTapi-v1-domains--domain_uuid--devices"
-               value="4"
+               value="15"
                data-component="body">
     <br>
-<p>Example: <code>4</code></p>
+<p>Example: <code>15</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>key_area</code></b>&nbsp;&nbsp;
@@ -2849,10 +2849,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="device_keys.0.key_area"                data-endpoint="POSTapi-v1-domains--domain_uuid--devices"
-               value="multi_purpose"
+               value="main"
                data-component="body">
     <br>
-<p>Example: <code>multi_purpose</code></p>
+<p>Example: <code>main</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>main</code></li> <li><code>side</code></li> <li><code>multi_purpose</code></li> <li><code>expansion</code></li></ul>
                     </div>
@@ -2862,10 +2862,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="device_keys.0.key_type"                data-endpoint="POSTapi-v1-domains--domain_uuid--devices"
-               value="ojmhbzebihblhhny"
+               value="oipigtjiqcin"
                data-component="body">
     <br>
-<p>Must not be greater than 50 characters. Example: <code>ojmhbzebihblhhny</code></p>
+<p>Must not be greater than 50 characters. Example: <code>oipigtjiqcin</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>key_value</code></b>&nbsp;&nbsp;
@@ -2873,10 +2873,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="device_keys.0.key_value"                data-endpoint="POSTapi-v1-domains--domain_uuid--devices"
-               value="eepmmlpibindrbjiawigk"
+               value="tvwgqrvszyyljyubohw"
                data-component="body">
     <br>
-<p>Must not be greater than 64 characters. Example: <code>eepmmlpibindrbjiawigk</code></p>
+<p>Must not be greater than 64 characters. Example: <code>tvwgqrvszyyljyubohw</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>key_label</code></b>&nbsp;&nbsp;
@@ -2884,10 +2884,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="device_keys.0.key_label"                data-endpoint="POSTapi-v1-domains--domain_uuid--devices"
-               value="hjxzbpdcfpqnxxt"
+               value="megrpbzliupsrwjimjrp"
                data-component="body">
     <br>
-<p>Must not be greater than 80 characters. Example: <code>hjxzbpdcfpqnxxt</code></p>
+<p>Must not be greater than 80 characters. Example: <code>megrpbzliupsrwjimjrp</code></p>
                     </div>
                                     </details>
         </div>
@@ -2897,10 +2897,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="phonebook_mode"                data-endpoint="POSTapi-v1-domains--domain_uuid--devices"
-               value="default"
+               value="custom"
                data-component="body">
     <br>
-<p>Example: <code>default</code></p>
+<p>Example: <code>custom</code></p>
 Must be one of:
 <ul style="list-style-type: square;"><li><code>default</code></li> <li><code>custom</code></li></ul>
         </div>
@@ -7311,7 +7311,8 @@ You can check the Dev Tools console for debugging information.</code></pre>
 </p>
 
 <p>Lists messaging phone numbers in an account, including their provider,
-allowed extensions, email recipient, description, and enabled status.
+allowed extensions, email recipient, inbound delivery mode, custom webhook URL,
+description, and enabled status. Signing secrets are omitted from all responses.
 Search by phone number, provider, email, or description.</p>
 <p>When <code>has_more</code> is true, pass the last result's <code>sms_destination_uuid</code>
 as <code>starting_after</code> to retrieve the next page.
@@ -7328,11 +7329,11 @@ Requires account access and <code>message_settings_list_view</code>.</p>
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
-    \"limit\": 10,
-    \"starting_after\": \"095e485c-a63d-3d18-a775-9190fded966a\",
-    \"search\": \"jspqe\",
-    \"carrier\": \"sit\",
-    \"enabled\": false
+    \"limit\": 13,
+    \"starting_after\": \"1270a73a-b5ee-3955-96d4-f44b31d96b7c\",
+    \"search\": \"yrdivfmlxmiagllrykcx\",
+    \"carrier\": \"praesentium\",
+    \"enabled\": true
 }"
 </code></pre></div>
 
@@ -7358,11 +7359,11 @@ const headers = {
 };
 
 let body = {
-    "limit": 10,
-    "starting_after": "095e485c-a63d-3d18-a775-9190fded966a",
-    "search": "jspqe",
-    "carrier": "sit",
-    "enabled": false
+    "limit": 13,
+    "starting_after": "1270a73a-b5ee-3955-96d4-f44b31d96b7c",
+    "search": "yrdivfmlxmiagllrykcx",
+    "carrier": "praesentium",
+    "enabled": true
 };
 
 fetch(url, {
@@ -7395,7 +7396,9 @@ fetch(url, {
             ],
             &quot;email&quot;: &quot;messages@example.com&quot;,
             &quot;description&quot;: &quot;Customer support&quot;,
-            &quot;enabled&quot;: true
+            &quot;enabled&quot;: true,
+            &quot;inbound_delivery&quot;: &quot;inherit&quot;,
+            &quot;inbound_webhook_url&quot;: null
         }
     ]
 }</code>
@@ -7604,10 +7607,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="limit"                data-endpoint="GETapi-v1-domains--domain_uuid--message-settings"
-               value="10"
+               value="13"
                data-component="body">
     <br>
-<p>Must be at least 1. Must not be greater than 100. Example: <code>10</code></p>
+<p>Must be at least 1. Must not be greater than 100. Example: <code>13</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>starting_after</code></b>&nbsp;&nbsp;
@@ -7615,10 +7618,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="starting_after"                data-endpoint="GETapi-v1-domains--domain_uuid--message-settings"
-               value="095e485c-a63d-3d18-a775-9190fded966a"
+               value="1270a73a-b5ee-3955-96d4-f44b31d96b7c"
                data-component="body">
     <br>
-<p>Must be a valid UUID. Example: <code>095e485c-a63d-3d18-a775-9190fded966a</code></p>
+<p>Must be a valid UUID. Example: <code>1270a73a-b5ee-3955-96d4-f44b31d96b7c</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>search</code></b>&nbsp;&nbsp;
@@ -7626,10 +7629,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="search"                data-endpoint="GETapi-v1-domains--domain_uuid--message-settings"
-               value="jspqe"
+               value="yrdivfmlxmiagllrykcx"
                data-component="body">
     <br>
-<p>Must not be greater than 255 characters. Example: <code>jspqe</code></p>
+<p>Must not be greater than 255 characters. Example: <code>yrdivfmlxmiagllrykcx</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>carrier</code></b>&nbsp;&nbsp;
@@ -7637,10 +7640,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="carrier"                data-endpoint="GETapi-v1-domains--domain_uuid--message-settings"
-               value="sit"
+               value="praesentium"
                data-component="body">
     <br>
-<p>Example: <code>sit</code></p>
+<p>Example: <code>praesentium</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>enabled</code></b>&nbsp;&nbsp;
@@ -7661,7 +7664,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <code>false</code>
         </label>
     <br>
-<p>Example: <code>false</code></p>
+<p>Example: <code>true</code></p>
         </div>
         </form>
 
@@ -7674,6 +7677,11 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <p>Returns one messaging phone number's configuration. <code>allowed_extension_uuids</code>
 contains the extensions permitted to share this number. Use the Extensions
 API to retrieve their names and extension numbers.
+<code>inbound_delivery</code> is <code>inherit</code>, <code>members</code>, or <code>webhook</code>. <code>inbound_webhook_url</code>
+is the saved custom URL, used only in <code>webhook</code> mode; it does not contain
+the inherited account URL. An unset delivery mode is returned as <code>inherit</code>.
+Signing secrets are omitted. Authorized administrators can retrieve the account
+secret in Account Settings &gt; Messaging or the number's Message Settings form.
 Requires account access and <code>message_settings_list_view</code>.</p>
 
 <span id="example-requests-GETapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-">
@@ -7718,12 +7726,12 @@ fetch(url, {
     &quot;domain_uuid&quot;: &quot;4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b&quot;,
     &quot;destination&quot;: &quot;+12125550123&quot;,
     &quot;carrier&quot;: &quot;voipms&quot;,
-    &quot;allowed_extension_uuids&quot;: [
-        &quot;d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b&quot;
-    ],
-    &quot;email&quot;: &quot;messages@example.com&quot;,
+    &quot;allowed_extension_uuids&quot;: [],
+    &quot;email&quot;: null,
     &quot;description&quot;: &quot;Customer support&quot;,
-    &quot;enabled&quot;: true
+    &quot;enabled&quot;: true,
+    &quot;inbound_delivery&quot;: &quot;webhook&quot;,
+    &quot;inbound_webhook_url&quot;: &quot;https://example.com/messages&quot;
 }</code>
  </pre>
             <blockquote>
@@ -7883,8 +7891,18 @@ in Default Settings. If neither is configured, supply an international number wi
 with + use their supplied country code.
 Allowed extensions can send and receive messages using the number and see
 each other's replies. An empty or omitted extension list grants no extension access.</p>
-<p>The number is enabled by default. An optional email address receives incoming
-messages. This endpoint saves the configuration in FS PBX; it does not purchase
+<p>Incoming delivery defaults to <code>inherit</code>: use the account webhook when configured,
+otherwise use the number's members and email. Choose <code>members</code> to use local
+members and email regardless of the account webhook, or <code>webhook</code> with a public
+HTTPS <code>inbound_webhook_url</code> to forward only to that URL. Custom webhook delivery
+clears local members and email, including values supplied in this request.</p>
+<p>Webhooks use the account's shared HMAC-SHA256 signing secret, generated if absent.
+This API does not return or accept changes to the secret. Authorized administrators
+can retrieve it in Account Settings &gt; Messaging or the number's Message Settings form.
+Receivers verify the Signature header against the raw JSON request body and return
+HTTP 2xx. Webhook-routed SMS/MMS remain in administrative logs and bypass local
+conversations, Ringotel, and email. Changes affect newly received messages.</p>
+<p>The number is enabled by default. This endpoint saves the configuration in FS PBX; it does not purchase
 a number or configure your provider's account.
 Requires account access and <code>message_settings_manage</code>.</p>
 
@@ -7899,6 +7917,8 @@ Requires account access and <code>message_settings_manage</code>.</p>
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
+    \"inbound_delivery\": \"members\",
+    \"inbound_webhook_url\": \"https:\\/\\/example.com\\/messages\",
     \"destination\": \"+12125550123\",
     \"carrier\": \"voipms\",
     \"allowed_extension_uuids\": [
@@ -7923,6 +7943,8 @@ const headers = {
 };
 
 let body = {
+    "inbound_delivery": "members",
+    "inbound_webhook_url": "https:\/\/example.com\/messages",
     "destination": "+12125550123",
     "carrier": "voipms",
     "allowed_extension_uuids": [
@@ -7958,7 +7980,23 @@ fetch(url, {
     ],
     &quot;email&quot;: &quot;messages@example.com&quot;,
     &quot;description&quot;: &quot;Customer support&quot;,
-    &quot;enabled&quot;: true
+    &quot;enabled&quot;: true,
+    &quot;inbound_delivery&quot;: &quot;members&quot;,
+    &quot;inbound_webhook_url&quot;: null
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Missing webhook URL):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;The inbound webhook url field is required when inbound delivery is webhook.&quot;,
+        &quot;code&quot;: &quot;invalid_parameter&quot;,
+        &quot;param&quot;: &quot;inbound_webhook_url&quot;
+    }
 }</code>
  </pre>
             <blockquote>
@@ -8108,6 +8146,28 @@ You can check the Dev Tools console for debugging information.</code></pre>
             </div>
                             <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
         <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>inbound_delivery</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="inbound_delivery"                data-endpoint="POSTapi-v1-domains--domain_uuid--message-settings"
+               value="members"
+               data-component="body">
+    <br>
+<p>Incoming delivery mode: inherit, members, or webhook. Defaults to inherit. Custom webhook delivery clears local members and email. Example: <code>members</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>inbound_webhook_url</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="inbound_webhook_url"                data-endpoint="POSTapi-v1-domains--domain_uuid--message-settings"
+               value="https://example.com/messages"
+               data-component="body">
+    <br>
+<p>Public HTTPS URL, required only when inbound_delivery is webhook. Uses the account signing secret, which is omitted from API responses. Example: <code>https://example.com/messages</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>destination</code></b>&nbsp;&nbsp;
 <small>string</small>&nbsp;
  &nbsp;
@@ -8142,7 +8202,7 @@ Must be one of:
                name="allowed_extension_uuids[1]"                data-endpoint="POSTapi-v1-domains--domain_uuid--message-settings"
                data-component="body">
     <br>
-<p>Optional extension UUIDs from this account. Defaults to []; on update, omit to preserve access.</p>
+<p>Optional extension UUIDs from this account. Defaults to []; on update, omit to preserve access. Custom webhook delivery clears all members.</p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>email</code></b>&nbsp;&nbsp;
@@ -8153,7 +8213,7 @@ Must be one of:
                value="messages@example.com"
                data-component="body">
     <br>
-<p>Optional email address for incoming messages. Omit on update to preserve it; send null to clear it. Must be a valid email address. Must not be greater than 255 characters. Example: <code>messages@example.com</code></p>
+<p>Optional email address for incoming messages. Omit on update to preserve it; send null to clear it. Custom webhook delivery clears this address, including one supplied in the request. Must be a valid email address. Must not be greater than 255 characters. Example: <code>messages@example.com</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>description</code></b>&nbsp;&nbsp;
@@ -8196,9 +8256,24 @@ Must be one of:
 </p>
 
 <p>Changes a messaging phone number's configuration. All fields are optional;
-omitted fields retain their current values. When supplied, <code>allowed_extension_uuids</code>
+omitted fields retain their current values except that custom webhook delivery
+clears local members and email. When supplied, <code>allowed_extension_uuids</code>
 replaces the entire access list. Send [] to remove all extension access.
-Send null to clear the email recipient, description, or provider.
+Send null to clear the email recipient, description, or provider.</p>
+<p>To switch from local members to a webhook, send <code>inbound_delivery: "webhook"</code>
+and <code>inbound_webhook_url: "https://example.com/messages"</code>. This removes existing
+members and email. To switch back, send <code>inbound_delivery: "members"</code> and the
+desired members/email; removed assignments are not restored automatically.
+Choose <code>inherit</code> to follow the account webhook, or members/email when none is set.</p>
+<p>Omit the URL to keep the saved custom URL, including when reselecting webhook mode.
+A URL-only update keeps the delivery mode. The URL cannot be cleared while the
+resulting mode is <code>webhook</code>; select <code>members</code> or <code>inherit</code> to clear it with null.
+All supplied URLs must use HTTPS and resolve to public IP addresses.</p>
+<p>The account signing secret is reused, or generated if none exists. It is omitted
+from every API response and cannot be changed here. Retrieve it through Account
+Settings &gt; Messaging or the number's Message Settings form with messaging management
+permission. Webhooks sign the raw JSON body with HMAC-SHA256 in the Signature header.
+Delivery changes apply to new messages; previously received messages keep their route.
 Requires account access and <code>message_settings_manage</code>.</p>
 
 <span id="example-requests-PATCHapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-">
@@ -8212,11 +8287,11 @@ Requires account access and <code>message_settings_manage</code>.</p>
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
+    \"inbound_delivery\": \"webhook\",
+    \"inbound_webhook_url\": \"https:\\/\\/example.com\\/messages\",
     \"destination\": \"+12125550123\",
     \"carrier\": \"voipms\",
-    \"allowed_extension_uuids\": [
-        \"d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b\"
-    ],
+    \"allowed_extension_uuids\": [],
     \"email\": \"messages@example.com\",
     \"description\": \"Customer support\",
     \"enabled\": false
@@ -8236,11 +8311,11 @@ const headers = {
 };
 
 let body = {
+    "inbound_delivery": "webhook",
+    "inbound_webhook_url": "https:\/\/example.com\/messages",
     "destination": "+12125550123",
     "carrier": "voipms",
-    "allowed_extension_uuids": [
-        "d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b"
-    ],
+    "allowed_extension_uuids": [],
     "email": "messages@example.com",
     "description": "Customer support",
     "enabled": false
@@ -8269,7 +8344,23 @@ fetch(url, {
     &quot;allowed_extension_uuids&quot;: [],
     &quot;email&quot;: null,
     &quot;description&quot;: &quot;Customer support&quot;,
-    &quot;enabled&quot;: true
+    &quot;enabled&quot;: true,
+    &quot;inbound_delivery&quot;: &quot;webhook&quot;,
+    &quot;inbound_webhook_url&quot;: &quot;https://example.com/messages&quot;
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Missing webhook URL):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;The inbound webhook url field is required.&quot;,
+        &quot;code&quot;: &quot;invalid_parameter&quot;,
+        &quot;param&quot;: &quot;inbound_webhook_url&quot;
+    }
 }</code>
  </pre>
             <blockquote>
@@ -8430,6 +8521,28 @@ You can check the Dev Tools console for debugging information.</code></pre>
             </div>
                             <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
         <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>inbound_delivery</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="inbound_delivery"                data-endpoint="PATCHapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-"
+               value="webhook"
+               data-component="body">
+    <br>
+<p>Incoming delivery mode: inherit, members, or webhook. Omit to preserve the mode. Custom webhook delivery clears local members and email. Example: <code>webhook</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>inbound_webhook_url</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="inbound_webhook_url"                data-endpoint="PATCHapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-"
+               value="https://example.com/messages"
+               data-component="body">
+    <br>
+<p>Public HTTPS URL for custom webhook delivery. Omit to keep the saved URL. Required for webhook mode if no URL is saved. May be null only when the resulting mode is members or inherit. Example: <code>https://example.com/messages</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>destination</code></b>&nbsp;&nbsp;
 <small>string</small>&nbsp;
 <i>optional</i> &nbsp;
@@ -8464,7 +8577,7 @@ Must be one of:
                name="allowed_extension_uuids[1]"                data-endpoint="PATCHapi-v1-domains--domain_uuid--message-settings--sms_destination_uuid-"
                data-component="body">
     <br>
-<p>Optional extension UUIDs from this account. Replaces the full access list; omit to preserve access or send [] to remove all extension access.</p>
+<p>Optional extension UUIDs from this account. Replaces the full access list; omit to preserve access or send [] to remove all extension access. Custom webhook delivery clears all members.</p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>email</code></b>&nbsp;&nbsp;
@@ -8475,7 +8588,7 @@ Must be one of:
                value="messages@example.com"
                data-component="body">
     <br>
-<p>Optional email address for incoming messages. Omit on update to preserve it; send null to clear it. Must be a valid email address. Must not be greater than 255 characters. Example: <code>messages@example.com</code></p>
+<p>Optional email address for incoming messages. Omit on update to preserve it; send null to clear it. Custom webhook delivery clears this address, including one supplied in the request. Must be a valid email address. Must not be greater than 255 characters. Example: <code>messages@example.com</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>description</code></b>&nbsp;&nbsp;
@@ -12195,7 +12308,7 @@ to mono, 16 kHz, 16-bit PCM WAV for FreeSWITCH playback.</p>
     --header "Accept: application/json" \
     --form "recording_name=Main Menu Greeting"\
     --form "recording_description=Primary virtual receptionist greeting"\
-    --form "file=@/tmp/php0n8v3jun9kub7FERPB3" </code></pre></div>
+    --form "file=@/tmp/phpgsf13bceuocf2Uhx5zp" </code></pre></div>
 
 
 <div class="javascript-example">
@@ -12445,7 +12558,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value=""
                data-component="body">
     <br>
-<p>WAV, MP3, or M4A audio file. Maximum size: 50 MB. Example: <code>/tmp/php0n8v3jun9kub7FERPB3</code></p>
+<p>WAV, MP3, or M4A audio file. Maximum size: 50 MB. Example: <code>/tmp/phpgsf13bceuocf2Uhx5zp</code></p>
         </div>
         </form>
 
@@ -12715,7 +12828,7 @@ At least one update field is required.</p>
     --form "recording_name=Updated Main Menu Greeting"\
     --form "recording_description=Updated automatically"\
     --form "_method=PATCH"\
-    --form "file=@/tmp/phpvtnvch0u1omceA9s3K5" </code></pre></div>
+    --form "file=@/tmp/phph5pf3eep18pfan4Edg8" </code></pre></div>
 
 
 <div class="javascript-example">
@@ -13022,7 +13135,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value=""
                data-component="body">
     <br>
-<p>Optional WAV, MP3, or M4A audio file. Maximum size: 50 MB. Example: <code>/tmp/phpvtnvch0u1omceA9s3K5</code></p>
+<p>Optional WAV, MP3, or M4A audio file. Maximum size: 50 MB. Example: <code>/tmp/phph5pf3eep18pfan4Edg8</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>_method</code></b>&nbsp;&nbsp;
@@ -15663,10 +15776,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="members.0.destination_number"                data-endpoint="POSTapi-v1-domains--domain_uuid--ring-groups"
-               value="186963"
+               value="+06018"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present.  Must match the regex /^+?\d+$/. Example: <code>186963</code></p>
+<p>This field is required when <code>members</code> is present.  Must match the regex /^+?\d+$/. Example: <code>+06018</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_delay</code></b>&nbsp;&nbsp;
@@ -15674,10 +15787,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="members.0.destination_delay"                data-endpoint="POSTapi-v1-domains--domain_uuid--ring-groups"
-               value="6"
+               value="77"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>6</code></p>
+<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>77</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_timeout</code></b>&nbsp;&nbsp;
@@ -15685,10 +15798,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="members.0.destination_timeout"                data-endpoint="POSTapi-v1-domains--domain_uuid--ring-groups"
-               value="32"
+               value="85"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>32</code></p>
+<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>85</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_prompt</code></b>&nbsp;&nbsp;
@@ -15730,7 +15843,7 @@ Must be one of:
             <code>false</code>
         </label>
     <br>
-<p>This field is required when <code>members</code> is present. Example: <code>false</code></p>
+<p>This field is required when <code>members</code> is present. Example: <code>true</code></p>
                     </div>
                                     </details>
         </div>
@@ -16324,10 +16437,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="members.0.destination_number"                data-endpoint="PATCHapi-v1-domains--domain_uuid--ring-groups--ring_group_uuid-"
-               value="19"
+               value="0"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present.  Must match the regex /^+?\d+$/. Example: <code>19</code></p>
+<p>This field is required when <code>members</code> is present.  Must match the regex /^+?\d+$/. Example: <code>0</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_delay</code></b>&nbsp;&nbsp;
@@ -16335,10 +16448,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="members.0.destination_delay"                data-endpoint="PATCHapi-v1-domains--domain_uuid--ring-groups--ring_group_uuid-"
-               value="72"
+               value="74"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>72</code></p>
+<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>74</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_timeout</code></b>&nbsp;&nbsp;
@@ -16346,10 +16459,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="members.0.destination_timeout"                data-endpoint="PATCHapi-v1-domains--domain_uuid--ring-groups--ring_group_uuid-"
-               value="86"
+               value="6"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>86</code></p>
+<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>6</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_prompt</code></b>&nbsp;&nbsp;
@@ -16391,7 +16504,7 @@ Must be one of:
             <code>false</code>
         </label>
     <br>
-<p>This field is required when <code>members</code> is present. Example: <code>true</code></p>
+<p>This field is required when <code>members</code> is present. Example: <code>false</code></p>
                     </div>
                                     </details>
         </div>
@@ -16568,9 +16681,9 @@ and two-factor secrets are never returned.</p>
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
-    \"limit\": 6,
-    \"starting_after\": \"9faa8ec4-63b9-35a6-a425-6c452a8afb76\",
-    \"search\": \"oejjivgpbhyeztwxxwm\",
+    \"limit\": 8,
+    \"starting_after\": \"140934f7-9559-3eaf-aa7c-a156f5cb9ed3\",
+    \"search\": \"hh\",
     \"user_enabled\": true
 }"
 </code></pre></div>
@@ -16596,9 +16709,9 @@ const headers = {
 };
 
 let body = {
-    "limit": 6,
-    "starting_after": "9faa8ec4-63b9-35a6-a425-6c452a8afb76",
-    "search": "oejjivgpbhyeztwxxwm",
+    "limit": 8,
+    "starting_after": "140934f7-9559-3eaf-aa7c-a156f5cb9ed3",
+    "search": "hh",
     "user_enabled": true
 };
 
@@ -16829,10 +16942,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="limit"                data-endpoint="GETapi-v1-domains--domain_uuid--users"
-               value="6"
+               value="8"
                data-component="body">
     <br>
-<p>Must be at least 1. Must not be greater than 100. Example: <code>6</code></p>
+<p>Must be at least 1. Must not be greater than 100. Example: <code>8</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>starting_after</code></b>&nbsp;&nbsp;
@@ -16840,10 +16953,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="starting_after"                data-endpoint="GETapi-v1-domains--domain_uuid--users"
-               value="9faa8ec4-63b9-35a6-a425-6c452a8afb76"
+               value="140934f7-9559-3eaf-aa7c-a156f5cb9ed3"
                data-component="body">
     <br>
-<p>Must be a valid UUID. Example: <code>9faa8ec4-63b9-35a6-a425-6c452a8afb76</code></p>
+<p>Must be a valid UUID. Example: <code>140934f7-9559-3eaf-aa7c-a156f5cb9ed3</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>search</code></b>&nbsp;&nbsp;
@@ -16851,10 +16964,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="search"                data-endpoint="GETapi-v1-domains--domain_uuid--users"
-               value="oejjivgpbhyeztwxxwm"
+               value="hh"
                data-component="body">
     <br>
-<p>Must not be greater than 255 characters. Example: <code>oejjivgpbhyeztwxxwm</code></p>
+<p>Must not be greater than 255 characters. Example: <code>hh</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>user_enabled</code></b>&nbsp;&nbsp;

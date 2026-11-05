@@ -890,6 +890,10 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::put('account-settings/pms-provider', [AccountSettingsController::class, 'updatePmsProvider'])->name('account-settings.pms-provider.update');
     Route::put('account-settings/update', [AccountSettingsController::class, 'update'])->name('account-settings.update');
     Route::put('account-settings/messaging', [AccountSettingsController::class, 'updateMessaging'])->name('account-settings.messaging.update');
+    Route::put('account-settings/message-webhook', [\App\Http\Controllers\MessageWebhookSettingsController::class, 'update'])
+        ->name('account-settings.message-webhook.update');
+    Route::post('account-settings/message-webhook/secret', [\App\Http\Controllers\MessageWebhookSettingsController::class, 'secret'])
+        ->name('account-settings.message-webhook.secret');
     Route::delete('account-settings/messaging', [AccountSettingsController::class, 'destroyMessaging'])->name('account-settings.messaging.destroy');
 
     // Default Settings

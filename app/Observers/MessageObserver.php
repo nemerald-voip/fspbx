@@ -25,6 +25,8 @@ class MessageObserver
 
     private function broadcast(Messages $message): void
     {
+        if ($message->isWebhookInbound()) return;
+
         try {
             // logger("Observer Fired for Message: {$message->message_uuid}");
 

@@ -19,7 +19,7 @@ class InboundMessageEmailService
     {
         $message = Messages::find($messageUuid);
 
-        if (!$message) {
+        if (!$message || $message->isWebhookInbound()) {
             return false;
         }
 

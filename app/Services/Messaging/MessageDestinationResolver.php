@@ -81,6 +81,8 @@ class MessageDestinationResolver
             'hasMobileApp' => $extension?->mobile_app !== null,
             'email' => $config->email ?: null,
             'orgId' => $orgId,
+            'inboundDelivery' => app(MessageWebhookSettings::class)->resolve($config),
+            'smsDestinationUuid' => $config->sms_destination_uuid,
         ]);
     }
 

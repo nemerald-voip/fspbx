@@ -21,7 +21,7 @@
 
 <script setup>
 import { computed } from 'vue';
-import { trans } from 'laravel-vue-i18n';
+import { trans } from '@i18n';
 import Badge from '@generalComponents/Badge.vue';
 
 const props = defineProps({

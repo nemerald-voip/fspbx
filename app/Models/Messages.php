@@ -85,6 +85,18 @@ class Messages extends Model
         return $this->belongsTo(Domain::class, 'domain_uuid', 'domain_uuid');
     }
 
+    public function isWebhookInbound(): bool
+    {
+        return $this->direction === 'in' && data_get($this->delivery_meta, 'inbound.method') === 'webhook';
+    }
+
+    public function scopeForInbox(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    {
+        return $query->where(fn ($query) => $query->where('messages.direction', '!=', 'in')
+            ->orWhereNull('messages.delivery_meta->inbound->method')
+            ->orWhere('messages.delivery_meta->inbound->method', '!=', 'webhook'));
+    }
+
     public function group()
     {
         return $this->belongsTo(MessageGroup::class, 'message_group_uuid', 'message_group_uuid');

@@ -94,10 +94,6 @@ class FiberneticsMmsWebhookPipelineTest extends TestCase
         $ringotel->shouldReceive('dispatch')->once()->with($message)->andReturnFalse();
         $this->app->instance(RingotelSyncDispatcher::class, $ringotel);
         $messages = Mockery::mock(MessageRepository::class);
-        $messages->shouldReceive('inboundReferenceExists')
-            ->once()
-            ->with('fibernetics', 'mms-inbound-123')
-            ->andReturnFalse();
         $messages->shouldReceive('storeInbound')
             ->once()
             ->withArgs(fn (...$arguments): bool =>

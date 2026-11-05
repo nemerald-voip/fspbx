@@ -69,11 +69,6 @@ return [
             'root' => '/var/lib/freeswitch/storage/fax',
         ],
 
-        'polycom_log_directory' => [
-            'driver' => 'local',
-            'root' => env('POLYCOM_LOG_DIRECTORY'),
-        ],
-
         'polycom_provisioning_uploads' => [
             'driver' => 'local',
             'root' => env('POLYCOM_PROVISIONING_UPLOAD_DIRECTORY') ?: storage_path('app/private/polycom'),

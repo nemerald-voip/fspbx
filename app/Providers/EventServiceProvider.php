@@ -60,13 +60,16 @@ class EventServiceProvider extends ServiceProvider
             \App\Listeners\EmailSentLogger::class,
         ],
         \Spatie\WebhookServer\Events\WebhookCallSucceededEvent::class => [
+            \App\Listeners\RecordMessageWebhookResult::class,
             \App\Listeners\RecordCallWebhookTestResult::class,
         ],
         \Spatie\WebhookServer\Events\WebhookCallFailedEvent::class => [
+            \App\Listeners\RecordMessageWebhookResult::class,
             \App\Listeners\LogCallWebhookFailure::class,
             \App\Listeners\RecordCallWebhookTestResult::class,
         ],
         \Spatie\WebhookServer\Events\FinalWebhookCallFailedEvent::class => [
+            \App\Listeners\RecordMessageWebhookResult::class,
             \App\Listeners\LogCallWebhookFailure::class,
             \App\Listeners\RecordCallWebhookTestResult::class,
         ],

@@ -17,5 +17,7 @@ class MessageSettingData extends Data
         public ?string $email,
         public ?string $description,
         public bool $enabled,
+        public string $inbound_delivery,
+        public ?string $inbound_webhook_url,
     ) {}
 }

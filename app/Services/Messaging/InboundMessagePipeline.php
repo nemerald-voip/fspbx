@@ -6,6 +6,8 @@ use App\Jobs\DeliverMessageToEmail;
 use App\Services\Messaging\Data\DeliveryStatusEventData;
 use App\Services\Messaging\Data\InboundMessageEventData;
 use App\Services\Messaging\Providers\MessagingWebhookParser;
+use App\Models\Messages;
+use Illuminate\Support\Facades\DB;
 
 class InboundMessagePipeline
 {
@@ -30,16 +32,6 @@ class InboundMessagePipeline
 
     protected function handleInbound(InboundMessageEventData $event, MessagingWebhookParser $parser): void
     {
-        if (!app(MessageCarrierCapabilities::class)->supportsGroups($event->provider) && $event->providerReferenceId
-            && $this->messages->inboundReferenceExists($event->provider, $event->providerReferenceId)) {
-            messaging_webhook_debug('Inbound message event already processed', [
-                'provider' => $event->provider,
-                'provider_reference_id' => $event->providerReferenceId,
-            ]);
-
-            return;
-        }
-
         $this->handleResolvedInbound(
             event: $event,
             storeMedia: function ($route) use ($event, $parser): array {
@@ -83,10 +75,15 @@ class InboundMessagePipeline
 
             $route = $this->resolver->resolve($destination);
             $local = app(MessageParticipantService::class)->normalize($route->domainUuid, $route->destination);
-            if ($event->providerReferenceId && \App\Models\Messages::where('domain_uuid', $route->domainUuid)
+            $existingMessage = fn () => $event->providerReferenceId ? Messages::where('domain_uuid', $route->domainUuid)
                 ->where('direction', 'in')->where('destination', $local)
                 ->where('reference_id', $event->providerReferenceId)
-                ->where('delivery_meta->provider->name', $event->provider)->exists()) continue;
+                ->where('delivery_meta->provider->name', $event->provider)->first() : null;
+            if ($existing = $existingMessage()) {
+                // Recover a persisted event if queue dispatch failed previously.
+                if ($existing->isWebhookInbound()) app(MessageWebhookDeliveryService::class)->dispatch($existing);
+                continue;
+            }
             $group = null;
             if ($supportsGroups) {
                 $groups = app(MessageGroupService::class);
@@ -123,20 +120,46 @@ class InboundMessagePipeline
                 'stored_media_count' => count($storedMedia),
             ]);
 
-            $message = $this->messages->storeInbound(
-                domainUuid: $route->domainUuid,
-                extensionUuid: $route->extensionUuid,
-                source: $event->from,
-                destination: $route->destination,
-                text: $event->text,
-                type: $group || $isMms ? 'mms' : 'sms',
-                providerName: $event->provider,
-                providerReferenceId: $event->providerReferenceId,
-                media: $storedMedia,
-                providerEvent: $event->providerEvent,
-                messageGroupUuid: $group?->message_group_uuid,
-                expectedMediaCount: $expectedMediaCount,
-            );
+            [$message, $created] = DB::transaction(function () use ($route, $event, $local, $group, $isMms, $storedMedia, $expectedMediaCount, $existingMessage) {
+                // Serialize duplicate carrier callbacks for this receiving number.
+                // Media downloads stay outside the transaction.
+                if ($route->smsDestinationUuid) {
+                    \App\Models\SmsDestinations::where('domain_uuid', $route->domainUuid)
+                        ->whereKey($route->smsDestinationUuid)->lockForUpdate()->firstOrFail();
+                }
+                if ($existing = $existingMessage()) {
+                    return [$existing, false];
+                }
+
+                return [$this->messages->storeInbound(
+                    domainUuid: $route->domainUuid,
+                    extensionUuid: $route->extensionUuid,
+                    source: $event->from,
+                    destination: $route->destination,
+                    text: $event->text,
+                    type: $group || $isMms ? 'mms' : 'sms',
+                    providerName: $event->provider,
+                    providerReferenceId: $event->providerReferenceId,
+                    media: $storedMedia,
+                    providerEvent: $event->providerEvent,
+                    messageGroupUuid: $group?->message_group_uuid,
+                    expectedMediaCount: $expectedMediaCount,
+                    inboundDelivery: $route->inboundDelivery + [
+                        'recipients' => array_values(array_unique(array_map(
+                            fn ($number) => app(MessageParticipantService::class)->normalize($route->domainUuid, $number),
+                            $event->to,
+                        ))),
+                        'participants' => $group
+                            ? array_values(array_unique(array_merge([$local], $group->recipients))) : [],
+                    ],
+                ), true];
+            });
+
+            if ($message->isWebhookInbound()) {
+                app(MessageWebhookDeliveryService::class)->dispatch($message);
+                continue;
+            }
+            if (! $created) continue;
 
             messaging_webhook_debug('Message saved', [
                 'message_uuid' => $message->message_uuid,

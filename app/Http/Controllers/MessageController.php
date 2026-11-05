@@ -826,6 +826,10 @@ class MessageController extends Controller
             $parts[] = "email: {$email}";
         }
 
+        if ($webhook = data_get($deliveryMeta, 'webhook.status')) {
+            $parts[] = "webhook: {$webhook}";
+        }
+
         return implode(' • ', $parts);
     }
 
