@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Support\BridgeRuntimeDestination;
 use App\Models\{AiAgent, Bridge, BusinessHour, CallCenterQueues, CallFlows, Conferences, Dialplans, Domain, DynamicRoute, Extensions, Faxes, IvrMenus, Recordings, RingGroups, Voicemails};
 use App\Models\ConferenceCenter;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Validation\ValidationException;
 
@@ -87,7 +88,7 @@ class CallRoutingOptionsService
         // Create an instance of the model
         $modelInstance = new $model;
 
-        $query = $model::query(); // Start with a base query
+        $query = $this->targetQuery($model);
 
         if ($model === AiAgent::class) {
             $query->where('enabled', true)->where('provisioning_status', 'synced');
@@ -107,20 +108,11 @@ class CallRoutingOptionsService
                 ->where('dialplan_xml', '~*', '(year|yday|mon|mday|week|mweek|wday|hour|minute|minute-of-day|time-of-day|date-time)=[^>]*');
         }
 
-        // Check if the model is Voicemails and eager load extensions
-        if ($model === Voicemails::class) {
-            $domainUuid = $this->domainUuid;
-            $query->with(['extension' => function ($query) use ($domainUuid) {
-                $query->select('extension_uuid', 'extension', 'effective_caller_id_name')
-                    ->where('domain_uuid', $domainUuid);
-            }]);
-        }
-
         $fields = [$modelInstance->getKeyName(), $extensionField, $nameField];
         if ($model === Bridge::class) {
             $fields[] = 'bridge_destination';
         }
-        $query->select(array_unique($fields))->where('domain_uuid', $this->domainUuid);
+        $query->select(array_unique($fields));
 
         $rows = $query->orderBy($model === Bridge::class ? $nameField : $extensionField)->get();
 
@@ -129,23 +121,10 @@ class CallRoutingOptionsService
         $options = [];
         foreach ($rows as $row) {
 
-            $name = $row->$extensionField . ($nameField ? " - " . $row->$nameField : '');
-            if ($model === Voicemails::class) {
-                $name = $this->voicemailOptionName($row);
-            }
-
-            if ($model === Recordings::class) {
-                $name = $row->$nameField;
-            }
-
-            if ($model === Bridge::class) {
-                $name = $row->bridge_name ?: $row->bridge_destination;
-            }
-
             $option = [
                 'value' => $row->{$modelInstance->getKeyName()},
                 'extension' => $row->$extensionField,
-                'name' => $name,
+                'name' => $this->optionName($row, $extensionField, $nameField),
             ];
             if ($model === Bridge::class) {
                 $option['bridge_uuid'] = $row->bridge_uuid;
@@ -154,6 +133,37 @@ class CallRoutingOptionsService
         }
         // logger($options);
         return $options;
+    }
+
+    private function targetQuery(string $model): Builder
+    {
+        $query = $model::query()->where('domain_uuid', $this->domainUuid);
+
+        if ($model === Voicemails::class) {
+            $query->with(['extension' => function ($query) {
+                $query->select('extension_uuid', 'extension', 'effective_caller_id_name')
+                    ->where('domain_uuid', $this->domainUuid);
+            }]);
+        }
+
+        return $query;
+    }
+
+    private function optionName(Model $target, string $extensionField, string $nameField): ?string
+    {
+        if ($target instanceof Voicemails) {
+            return $this->voicemailOptionName($target);
+        }
+
+        if ($target instanceof Recordings) {
+            return $target->$nameField;
+        }
+
+        if ($target instanceof Bridge) {
+            return $target->bridge_name ?: $target->bridge_destination;
+        }
+
+        return $target->$extensionField . ($nameField ? ' - ' . $target->$nameField : '');
     }
 
     protected function otherOptions(): array
@@ -366,13 +376,7 @@ class CallRoutingOptionsService
 
             // Check if destination is voicemail
             if ((substr($destination, 0, 3) == '*99') !== false) {
-                $voicemail = Voicemails::where('domain_uuid', $domainUuid)
-                    ->where('voicemail_id', substr($destination, 3))
-                    ->with(['extension' => function ($query) use ($domainUuid) {
-                        $query->select('extension_uuid', 'extension', 'effective_caller_id_name')
-                            ->where('domain_uuid', $domainUuid);
-                    }])
-                    ->first();
+                $voicemail = $this->findTarget('voicemails', substr($destination, 3), byDestination: true);
 
 
                 if ($voicemail) {
@@ -438,13 +442,7 @@ class CallRoutingOptionsService
 
         // Check if destination is voicemail
         if ((substr($extension, 0, 3) == '*99') !== false) {
-            $voicemail = Voicemails::where('domain_uuid', $domainUuid)
-                ->where('voicemail_id', substr($extension, 3))
-                ->with(['extension' => function ($query) use ($domainUuid) {
-                    $query->select('extension_uuid', 'extension', 'effective_caller_id_name')
-                        ->where('domain_uuid', $domainUuid);
-                }])
-                ->first();
+            $voicemail = $this->findTarget('voicemails', substr($extension, 3), byDestination: true);
 
             if (!$voicemail) return null;
             return [
@@ -784,8 +782,65 @@ class CallRoutingOptionsService
 
         $model = new $definition['model'];
 
-        return $model->newQuery()->where('domain_uuid', $this->domainUuid)
+        return $this->targetQuery($definition['model'])
             ->where($byDestination ? $definition['field'] : $model->getKeyName(), $value)->first();
+    }
+
+    /** Resolve a saved UUID through the same account-scoped lookup as destination selectors. */
+    public function summarizeTarget(string $action, ?string $targetId): array
+    {
+        $definition = self::destinations()[$action] ?? null;
+        if (! $definition || ! $this->domainUuid) {
+            return $this->summarizeOption(null);
+        }
+
+        if (! isset($definition['model'])) {
+            return $this->summarizeOption(['type' => $action]);
+        }
+
+        $target = $targetId ? $this->findTarget($action, $targetId) : null;
+        if (! $target) {
+            return $this->summarizeOption(null);
+        }
+
+        return $this->summarizeOption([
+            'type' => $action,
+            'extension' => $target->{$definition['field']},
+            'name' => $this->optionName($target, $definition['field'], $definition['name']),
+        ]);
+    }
+
+    /** Plain-language list summary for a stored Phone Numbers action. */
+    public function summarizeAction(array $action): array
+    {
+        $option = $this->reverseEngineerDestinationActions(json_encode([$action]))[0] ?? null;
+
+        return $this->summarizeOption($option);
+    }
+
+    private function summarizeOption(?array $option): array
+    {
+        $type = $option['type'] ?? null;
+        if (! $type) {
+            return ['name' => null, 'type' => null, 'invalid' => true];
+        }
+
+        $name = $option['name'] ?? null;
+        $extension = (string) ($option['extension'] ?? '');
+
+        if (filled($name) && preg_match('/^\*?\d+$/', $extension) && !str_starts_with($name, $extension)) {
+            $name = "{$extension} - {$name}";
+        }
+
+        if (!filled($name) && !in_array($type, ['hangup', 'check_voicemail', 'company_directory'], true)) {
+            $name = $extension !== '' ? $extension : null;
+        }
+
+        return [
+            'name' => $name ?: null,
+            'type' => $this->getFriendlyTypeName($type),
+            'invalid' => false,
+        ];
     }
 
     public function actionForTarget(string $action, ?Model $target, ?string $domainName = null): array

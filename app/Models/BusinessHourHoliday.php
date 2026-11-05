@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Carbon\Carbon;
 use App\Models\Traits\TraitUuid;
+use App\Services\CallRoutingOptionsService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -67,105 +68,16 @@ class BusinessHourHoliday extends Model
     }
 
     /**
-     * A human-friendly description of where calls go.
+     * Use the same destination lookup and summary formatting as Phone Numbers.
      */
-    public function getTargetLabelAttribute(): string
+    public function routingSummary(): array
     {
-        if (! $this->target) {
-            // built-in actions without a target
-            switch ($this->action) {
-                case 'hangup':
-                    return 'Hang Up';
-                case 'company_directory':
-                    return 'Company Directory';
-                case 'check_voicemail':
-                    return 'Check Voicemail';
-                    // add any other action-only cases here…
-                default:
-                    return '—';
-            }
+        $domainUuid = $this->businessHour?->domain_uuid;
+        if (! $domainUuid) {
+            return ['name' => null, 'type' => null, 'invalid' => true];
         }
 
-        switch (class_basename($this->target_type)) {
-            case 'Extensions':
-                // e.g. “Extension: 100 — Alice Johnson”
-                return sprintf(
-                    'Extension: %s - %s',
-                    $this->target->extension,
-                    $this->target->directory_first_name . ' ' . $this->target->directory_last_name
-                );
-
-            case 'Voicemails':
-                // “Voicemail: 100 - Reception”
-                $ext = $this->target->extension;
-                if ($ext) {
-                    $label =  $ext->directory_first_name . ' ' . $ext->directory_last_name;
-                } else {
-                    $label = "Team Voicemail";
-                }
-                return sprintf(
-                    'Voicemail: %s - %s',
-                    $this->target->voicemail_id,
-                    $label
-                );
-
-            case 'RingGroups':
-                // “Ring Group 0600 — Sales Team”
-                return sprintf(
-                    'Ring Group: %s - %s',
-                    $this->target->ring_group_extension,
-                    $this->target->ring_group_name
-                );
-
-            case 'IvrMenus':
-                // “Virtual Receptionist: 5000 - Main Menu”
-                return sprintf(
-                    'Virtual Receptionist: %s - %s',
-                    $this->target->ivr_menu_extension,
-                    $this->target->ivr_menu_name
-                );
-
-            case 'Recordings':
-                // “Recording: promo.mp3”
-                // logger($this->target);
-                return 'Play Greeting: ' . $this->target->recording_name;
-
-            case 'Dialplans':
-                // “Schedule 9300 — Main Business Hours””
-                return sprintf(
-                    'Schedule: %s - %s',
-                    $this->target->dialplan_number,
-                    $this->target->dialplan_name
-                );
-
-            case 'CallCenterQueues':
-                // Contact Center: 9600 — Sales Queue””
-                return sprintf(
-                    'Contact Center: %s - %s',
-                    $this->target->queue_extension,
-                    $this->target->queue_name
-                );
-
-            case 'Faxes':
-                // Fax: 50000 — Main Fax””
-                return sprintf(
-                    'Fax: %s - %s',
-                    $this->target->fax_extension,
-                    $this->target->fax_name
-                );
-
-            case 'CallFlows':
-                // Call Flow: 300 — Night Mode””
-                return sprintf(
-                    'Call Flow: %s - %s',
-                    $this->target->call_flow_extension,
-                    $this->target->call_flow_name
-                );
-
-            default:
-                // fallback 
-                return 'invalid action';
-        }
+        return (new CallRoutingOptionsService($domainUuid))->summarizeTarget($this->action, $this->target_id);
     }
 
     /**

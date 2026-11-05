@@ -141,27 +141,9 @@
                     <TableField v-if="!filterData.showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
                         <div :class="{ 'cursor-pointer': permissions.update }"
                             @click="permissions.update && handleEditRequest(row.destination_uuid)">
-                            <div class="flex items-center gap-2">
-                                <Badge v-if="!row.routing_summary?.length" :text="$t('Not routed')"
-                                    backgroundColor="bg-amber-50" textColor="text-amber-700"
-                                    ringColor="ring-amber-600/20" class="px-2 py-1 text-xs" />
-                                <Badge v-else-if="row.routing_summary[0].invalid" :text="$t('Invalid destination')"
-                                    backgroundColor="bg-rose-50" textColor="text-rose-700"
-                                    ringColor="ring-rose-600/20" class="px-2 py-1 text-xs" />
-                                <span v-else class="text-gray-900"
-                                    :class="{ 'hover:text-indigo-600': permissions.update }">
-                                    {{ row.routing_summary[0].name || row.routing_summary[0].type }}
-                                </span>
-
-                                <span v-if="row.routing_summary?.length > 1"
-                                    class="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600"
-                                    :title="routingSummaryTitle(row.routing_summary)">
-                                    {{ $t('+:count more', { count: row.routing_summary.length - 1 }) }}
-                                </span>
-                            </div>
-                            <div v-if="routingDetails(row)" class="text-xs text-gray-500">
-                                {{ routingDetails(row) }}
-                            </div>
+                            <RoutingSummary :actions="row.routing_summary" :extras="row.routing_extras"
+                                :editable="permissions.update"
+                                :invalid-hint="$t('Edit this number to choose a new one.')" />
                         </div>
                     </TableField>
 
@@ -291,6 +273,7 @@ import Notification from "./components/notifications/Notification.vue";
 import { PencilSquareIcon } from "@heroicons/vue/24/solid/index.js";
 import BulkUpdatePhoneNumberForm from "./components/forms/BulkUpdatePhoneNumberForm.vue";
 import Badge from "@generalComponents/Badge.vue";
+import RoutingSummary from "./components/RoutingSummary.vue";
 import { DocumentArrowUpIcon, DocumentArrowDownIcon } from "@heroicons/vue/24/outline";
 import UploadModal from "./components/modal/UploadModal.vue";
 import ImportPhoneNumbersModal from "./components/modal/ImportPhoneNumbersModal.vue";
@@ -475,30 +458,6 @@ const bulkActions = computed(() => {
 
     return actions;
 });
-
-const routingActionText = (action) => {
-    if (action.invalid) {
-        return trans('Invalid destination');
-    }
-
-    return action.name && action.type ? `${action.name} (${action.type})` : (action.name || action.type);
-};
-
-const routingSummaryTitle = (summary) => summary.map(routingActionText).join('\n');
-
-// Second line under the routing cell: the destination type or a fix hint, plus fax/recording tags.
-const routingDetails = (row) => {
-    const first = row.routing_summary?.[0];
-    let detail = null;
-
-    if (first?.invalid) {
-        detail = trans('Edit this number to choose a new one.');
-    } else if (first?.name) {
-        detail = first.type;
-    }
-
-    return [detail, ...(row.routing_extras ?? [])].filter(Boolean).join(' · ');
-};
 
 const handleEditRequest = (itemUuid) => {
     showUpdateModal.value = true

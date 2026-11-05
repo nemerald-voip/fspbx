@@ -2,8 +2,15 @@
 
 namespace Tests\Unit;
 
+use App\Http\Resources\BusinessHourHolidayResource;
+use App\Http\Controllers\Api\HolidayHoursController;
+use App\Models\BusinessHour;
+use App\Models\BusinessHourHoliday;
+use App\Models\Destinations;
+use App\Models\Voicemails;
 use App\Services\CallRoutingOptionsService;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
@@ -81,6 +88,105 @@ class CallRoutingOptionsServiceTest extends TestCase
 
         $this->assertSame('100 - David Duck', $options[0]['name']);
         $this->assertSame($options[0]['name'], $savedOption['name']);
+    }
+
+    /** @dataProvider holidayVoicemailNames */
+    public function test_holidays_and_phone_numbers_share_tenant_scoped_voicemail_summaries(?string $localName, string $description, string $expectedName): void
+    {
+        $domainUuid = (string) Str::uuid();
+        $foreignDomain = (string) Str::uuid();
+        // Insert the colliding foreign extension first, reproducing the original label bug.
+        DB::table('v_extensions')->insert([
+            'extension_uuid' => (string) Str::uuid(), 'domain_uuid' => $foreignDomain,
+            'extension' => '300', 'effective_caller_id_name' => 'Bar',
+        ]);
+        if ($localName !== null) {
+            DB::table('v_extensions')->insert([
+                'extension_uuid' => (string) Str::uuid(), 'domain_uuid' => $domainUuid,
+                'extension' => '300', 'effective_caller_id_name' => $localName,
+            ]);
+        }
+        $voicemailUuid = $this->insertVoicemail($domainUuid, '300', $description);
+        $this->insertVoicemail($foreignDomain, '300', 'Foreign mailbox');
+        // Record ownership, rather than the current session, determines the label.
+        session(['domain_uuid' => $foreignDomain]);
+
+        $holiday = new BusinessHourHoliday([
+            'holiday_type' => 'recurring_pattern', 'description' => 'Thanksgiving',
+            'action' => 'voicemails', 'target_type' => Voicemails::class, 'target_id' => $voicemailUuid,
+        ]);
+        $holiday->setRelation('businessHour', new BusinessHour(['domain_uuid' => $domainUuid]));
+        $phoneNumber = new Destinations([
+            'domain_uuid' => $domainUuid,
+            'destination_actions' => json_encode([[
+                'destination_app' => 'transfer', 'destination_data' => '*99300 XML account.example.test',
+            ]]),
+        ]);
+
+        $expected = ['name' => $expectedName, 'type' => 'Voicemail', 'invalid' => false];
+        $response = (new BusinessHourHolidayResource($holiday))->resolve();
+        $this->assertSame($expected, $response['routing_summary']);
+        $this->assertSame([$expected], $phoneNumber->routingSummary());
+        // Do not serialize the broad voicemail-to-extension relation into the API response.
+        $this->assertArrayNotHasKey('target', $response);
+
+        request()->merge(['category' => 'voicemails']);
+        $options = (new CallRoutingOptionsService($domainUuid))->getOptions();
+        $this->assertCount(1, $options);
+        $this->assertSame($voicemailUuid, $options[0]['value']);
+        $this->assertSame($expectedName, $options[0]['name']);
+    }
+
+    public static function holidayVoicemailNames(): array
+    {
+        return [
+            'extension mailbox' => ['Administration', '', '300 - Administration'],
+            'unnamed extension' => ['', '', '300'],
+            'team mailbox' => [null, 'Sales', '300 - Team voicemail (Sales)'],
+            'unnamed team mailbox' => [null, '', '300 - Team voicemail'],
+        ];
+    }
+
+    public function test_holiday_summary_rejects_missing_and_foreign_targets(): void
+    {
+        $domainUuid = (string) Str::uuid();
+        $foreignVoicemail = $this->insertVoicemail((string) Str::uuid(), '300', 'Foreign mailbox');
+
+        foreach ([$foreignVoicemail, (string) Str::uuid(), null] as $targetId) {
+            $holiday = new BusinessHourHoliday(['action' => 'voicemails', 'target_id' => $targetId]);
+            $holiday->setRelation('businessHour', new BusinessHour(['domain_uuid' => $domainUuid]));
+            $this->assertSame(['name' => null, 'type' => null, 'invalid' => true], $holiday->routingSummary());
+        }
+    }
+
+    public function test_target_free_holiday_summaries_use_shared_type_labels(): void
+    {
+        $service = new CallRoutingOptionsService((string) Str::uuid());
+        foreach (['hangup' => 'Hang up', 'check_voicemail' => 'Check Voicemail', 'company_directory' => 'Company Directory'] as $action => $label) {
+            $this->assertSame(['name' => null, 'type' => $label, 'invalid' => false], $service->summarizeTarget($action, null));
+        }
+        $this->assertSame(['name' => null, 'type' => null, 'invalid' => true], $service->summarizeTarget('unknown', null));
+        $this->assertSame(
+            $service->summarizeTarget('hangup', null),
+            $service->summarizeAction(['destination_app' => 'hangup', 'destination_data' => ''])
+        );
+    }
+
+    public function test_holiday_list_rejects_another_accounts_business_hours(): void
+    {
+        Schema::create('business_hours', function (Blueprint $table) {
+            $table->uuid('uuid')->primary();
+            $table->uuid('domain_uuid');
+        });
+        $businessHourUuid = (string) Str::uuid();
+        DB::table('business_hours')->insert([
+            'uuid' => $businessHourUuid, 'domain_uuid' => (string) Str::uuid(),
+        ]);
+        session(['domain_uuid' => (string) Str::uuid()]);
+        request()->merge(['uuid' => $businessHourUuid]);
+
+        $this->expectException(ModelNotFoundException::class);
+        (new HolidayHoursController)->index();
     }
 
     public function test_exact_dialplan_number_is_preferred_over_one_prefixed_number(): void

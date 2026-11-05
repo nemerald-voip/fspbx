@@ -27,7 +27,7 @@
                                     </div>
 
                                     <div class="px-6 py-2 text-sm text-gray-500 sm:hidden">
-                                        {{ holiday.target_label }}
+                                        <RoutingSummary :actions="[holiday.routing_summary]" />
                                     </div>
                                 </td>
                                 <!-- <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
@@ -38,7 +38,7 @@
                                     {{ holiday.human_date }}
                                 </td>
                                 <td class="hidden px-6 py-2 text-sm text-gray-500 sm:table-cell">
-                                    {{ holiday.target_label }}
+                                    <RoutingSummary :actions="[holiday.routing_summary]" />
                                 </td>
                                 <td class="whitespace-nowrap px-6 py-2 text-right text-sm font-medium">
                                     <div class="flex items-center whitespace-nowrap justify-end">
@@ -97,6 +97,7 @@
 import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
 import { registerLicense } from '@syncfusion/ej2-base';
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
+import RoutingSummary from './RoutingSummary.vue';
 
 const props = defineProps({
     holidays: Object,
