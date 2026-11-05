@@ -37,6 +37,7 @@ class HomerApiController extends Controller
             'cdr_uuid' => ['required', 'uuid'],
             'download' => ['sometimes', 'boolean'],
             'format' => ['sometimes', 'string', 'in:pcap,txt'],
+            'view' => ['sometimes', 'string', 'in:qos'],
         ]);
         $query = CDR::query()->whereKey($data['cdr_uuid']);
         if (! userCheckPermission('xml_cdr_domain')) {
@@ -45,9 +46,12 @@ class HomerApiController extends Controller
         $cdr = $query->firstOrFail(['xml_cdr_uuid', 'domain_uuid', 'sip_call_id', 'start_epoch', 'end_epoch', 'duration']);
 
         try {
+            $headers = ['Cache-Control' => 'private, no-store', 'X-Content-Type-Options' => 'nosniff'];
+            if (($data['view'] ?? null) === 'qos') {
+                return response()->json($service->qos($cdr), 200, $headers);
+            }
             $format = $data['format'] ?? 'pcap';
             $result = $service->trace($cdr, (bool) ($data['download'] ?? false), $format);
-            $headers = ['Cache-Control' => 'private, no-store', 'X-Content-Type-Options' => 'nosniff'];
             if ($data['download'] ?? false) {
                 return response($result, 200, $headers + [
                     'Content-Type' => $format === 'txt' ? 'text/plain; charset=UTF-8' : 'application/vnd.tcpdump.pcap',
