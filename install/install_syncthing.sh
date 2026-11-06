@@ -105,6 +105,7 @@ SYNC_FOLDERS=(
   "/var/lib/freeswitch/recordings|3600"
   "/var/lib/freeswitch/storage|3600"
   "/var/www/fspbx/public/resources/templates/provision|3600"
+  "/var/www/fspbx/storage/app/billing|3600"
 )
 
 # ========= Helpers =========

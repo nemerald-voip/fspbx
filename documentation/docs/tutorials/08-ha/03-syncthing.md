@@ -22,6 +22,7 @@ This guide uses an **automated script** to install & pair Syncthing between two 
 /var/lib/freeswitch/recordings
 /var/lib/freeswitch/storage
 /var/www/fspbx/public/resources/templates/provision
+/var/www/fspbx/storage/app/billing
 ```
 
 - Works with **external or internal IPs**
