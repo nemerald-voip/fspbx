@@ -3,13 +3,17 @@
 namespace App\Services;
 
 use App\Models\Bridge;
+use App\Models\Gateways;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
 class BridgeService
 {
+    public const IMPORT_MAX_ROWS = 500;
+
     public function save(array $validated, ?Bridge $bridge = null): Bridge
     {
         return DB::transaction(function () use ($validated, $bridge) {
@@ -118,6 +122,176 @@ class BridgeService
 
             return $count;
         });
+    }
+
+    /**
+     * UUIDs of the gateways the current user can pick in the bridge form.
+     */
+    public function selectableGatewayUuids(): array
+    {
+        return Gateways::query()
+            ->where('enabled', 'true')
+            ->when(! userCheckPermission('outbound_route_any_gateway'), function ($query) {
+                $query->where('domain_uuid', session('domain_uuid'));
+            })
+            ->pluck('gateway_uuid')
+            ->map(fn ($uuid) => strtolower((string) $uuid))
+            ->all();
+    }
+
+    /**
+     * Validate CSV rows without touching the database. The heading row is line 1.
+     *
+     * @return array{rows: array<int, array<string, string|null>>, errors: array<int, string>}
+     */
+    public function validateImportRows(iterable $rows, array $allowedGatewayUuids): array
+    {
+        $rows = collect($rows)->map(fn ($row) => collect($row)->all())->values();
+
+        if ($rows->isEmpty()) {
+            return ['rows' => [], 'errors' => [__('The file has no data rows.')]];
+        }
+
+        $missing = collect(['bridge_name', 'bridge_destination'])
+            ->reject(fn ($column) => array_key_exists($column, $rows->first()))
+            ->all();
+
+        if ($missing !== []) {
+            return ['rows' => [], 'errors' => [__('Missing required column(s): :columns', ['columns' => implode(', ', $missing)])]];
+        }
+
+        if ($rows->count() > self::IMPORT_MAX_ROWS) {
+            return ['rows' => [], 'errors' => [__('A file can contain at most :max bridges.', ['max' => self::IMPORT_MAX_ROWS])]];
+        }
+
+        $allowedGateways = array_flip(array_map('strtolower', $allowedGatewayUuids));
+        $clean = [];
+        $errors = [];
+
+        foreach ($rows as $index => $row) {
+            $line = $index + 2;
+            $name = $this->cell($row, 'bridge_name');
+            $destination = $this->cell($row, 'bridge_destination');
+            $description = $this->cell($row, 'bridge_description');
+            $enabled = $this->normalizeEnabled($this->cell($row, 'bridge_enabled'));
+
+            $validator = Validator::make(
+                ['bridge_name' => $name, 'bridge_destination' => $destination, 'bridge_description' => $description],
+                [
+                    'bridge_name' => ['required', 'string', 'max:255'],
+                    'bridge_destination' => ['required', 'string'],
+                    'bridge_description' => ['nullable', 'string', 'max:255'],
+                ]
+            );
+
+            $problems = $validator->errors()->all();
+
+            if ($enabled === null) {
+                $problems[] = __('bridge_enabled must be true or false.');
+            }
+
+            if ($destination !== '' && ($problem = $this->destinationProblem($destination, $allowedGateways)) !== null) {
+                $problems[] = $problem;
+            }
+
+            foreach ($problems as $problem) {
+                $errors[] = __('Row :line: :message', ['line' => $line, 'message' => $problem]);
+            }
+
+            if ($problems === []) {
+                $clean[] = [
+                    'bridge_name' => $name,
+                    'bridge_destination' => $destination,
+                    'bridge_enabled' => $enabled,
+                    'bridge_description' => $description === '' ? null : $description,
+                ];
+            }
+        }
+
+        return ['rows' => $errors === [] ? $clean : [], 'errors' => $errors];
+    }
+
+    /**
+     * Save validated import rows. All rows are saved or none.
+     */
+    public function importRows(array $rows): int
+    {
+        return DB::transaction(function () use ($rows) {
+            foreach ($rows as $row) {
+                $this->save($row);
+            }
+
+            return count($rows);
+        });
+    }
+
+    private function cell(array $row, string $column): string
+    {
+        $value = $row[$column] ?? null;
+
+        if (is_bool($value)) {
+            return $value ? 'true' : 'false';
+        }
+
+        return is_scalar($value) ? trim((string) $value) : '';
+    }
+
+    private function normalizeEnabled(string $value): ?string
+    {
+        $value = strtolower($value);
+
+        return match (true) {
+            $value === '', in_array($value, ['true', '1', 'yes', 'y'], true) => 'true',
+            in_array($value, ['false', '0', 'no', 'n'], true) => 'false',
+            default => null,
+        };
+    }
+
+    /**
+     * An imported destination must be something the bridge form could have produced:
+     * known leg formats, gateways the user may use, and only configured or SIP header variables.
+     */
+    private function destinationProblem(string $destination, array $allowedGateways): ?string
+    {
+        if (preg_match('/[\x00-\x1F\x7F<>"]/', $destination)) {
+            return __('bridge_destination contains characters that are not allowed.');
+        }
+
+        $legs = $destination;
+
+        if (str_starts_with($destination, '{')) {
+            $block = $this->extractLeadingVariableBlock($destination);
+
+            if ($block === null) {
+                return __('bridge_destination has an unclosed variable block.');
+            }
+
+            $allowedVariables = collect(session('bridge.variable', []))
+                ->map(fn ($variable) => explode('=', (string) $variable, 2)[0])
+                ->filter()
+                ->all();
+
+            foreach (array_keys($this->parseDestination($destination)['bridge_variables']) as $name) {
+                if (! $this->isSipHeaderVariable((string) $name) && ! in_array($name, $allowedVariables, true)) {
+                    return __('Variable :name is not allowed in a bridge destination.', ['name' => $name]);
+                }
+            }
+
+            $legs = substr($destination, strlen($block['raw']));
+        }
+
+        foreach (explode(',', $legs) as $leg) {
+            if (! preg_match('#^(sofia/gateway/[^/\s]+/\S+|sofia/[^/\s]+/\S+|user/\S+|loopback/\S+)$#', $leg)) {
+                return __('bridge_destination must use sofia/gateway/<gateway-uuid>/<number>, sofia/<profile>/<number>, user/<number> or loopback/<number>.');
+            }
+
+            if (preg_match('#^sofia/gateway/([^/]+)/#', $leg, $match)
+                && (! Str::isUuid($match[1]) || ! isset($allowedGateways[strtolower($match[1])]))) {
+                return __('Gateway :gateway is not available to you.', ['gateway' => $match[1]]);
+            }
+        }
+
+        return null;
     }
 
     public function bridgeDestination(array $validated): ?string
