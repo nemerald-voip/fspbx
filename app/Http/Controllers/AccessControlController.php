@@ -2,14 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\AccessControlNodesTemplate;
 use App\Http\Requests\StoreAccessControlRequest;
 use App\Http\Requests\UpdateAccessControlRequest;
+use App\Imports\AccessControlNodesImport;
 use App\Models\AccessControl;
 use App\Services\AccessControlService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use Maatwebsite\Excel\Excel as ExcelWriter;
+use Maatwebsite\Excel\Facades\Excel;
 use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\QueryBuilder;
 
@@ -38,6 +42,7 @@ class AccessControlController extends Controller
                 'create' => userCheckPermission('access_control_add'),
                 'update' => userCheckPermission('access_control_edit'),
                 'destroy' => userCheckPermission('access_control_delete'),
+                'import_nodes' => userCheckPermission('access_control_node_add'),
             ],
         ]);
     }
@@ -167,8 +172,59 @@ class AccessControlController extends Controller
             'routes' => [
                 'store_route' => route('access-controls.store'),
                 'update_route' => $itemUuid ? route('access-controls.update', ['access_control' => $item->access_control_uuid]) : null,
+                'nodes_import_route' => route('access-controls.nodes.import'),
+                'nodes_template_route' => route('access-controls.nodes.template.download'),
             ],
         ]);
+    }
+
+    /**
+     * Parse a CSV of IP rules and return them to the form. Nothing is saved here:
+     * the rows are added to the open form and saved with the list.
+     */
+    public function importNodes(Request $request, AccessControlService $service): JsonResponse
+    {
+        if (!userCheckPermission('access_control_node_add')) {
+            return response()->json([
+                'messages' => ['error' => [__('Access denied.')]],
+            ], 403);
+        }
+
+        $request->validate([
+            'file' => ['required', 'file', 'mimes:csv,txt', 'max:2048'],
+        ]);
+
+        $import = new AccessControlNodesImport();
+
+        try {
+            Excel::import($import, $request->file('file'));
+        } catch (\Throwable $e) {
+            logger('AccessControlController@importNodes read error: ' . $e->getMessage());
+
+            return response()->json([
+                'errors' => ['file' => [__('The file could not be read. Upload a CSV file with a header row.')]],
+            ], 422);
+        }
+
+        $result = $service->parseNodeRows($import->rows);
+
+        if ($result['errors'] !== []) {
+            return response()->json([
+                'errors' => collect($result['errors'])->take(20)->map(fn ($message) => [$message])->values()->all(),
+            ], 422);
+        }
+
+        return response()->json([
+            'nodes' => $result['rows'],
+            'messages' => ['success' => [__(':count IP rules added to the form. Review them, then save the list.', ['count' => count($result['rows'])])]],
+        ]);
+    }
+
+    public function downloadNodesTemplate()
+    {
+        abort_unless(userCheckPermission('access_control_node_add'), 403);
+
+        return Excel::download(new AccessControlNodesTemplate(), 'access-control-nodes-template.csv', ExcelWriter::CSV);
     }
 
     public function selectAll(Request $request): JsonResponse
