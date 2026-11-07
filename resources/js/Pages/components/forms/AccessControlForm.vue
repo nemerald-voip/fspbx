@@ -61,6 +61,26 @@
 
                                         <GroupElement name="nodes_container" />
 
+                                        <StaticElement v-if="canImportNodes" name="nodes_import">
+                                            <template #default>
+                                                <div class="flex items-center gap-x-4 text-sm">
+                                                    <input ref="nodesFileInput" type="file" accept=".csv,text/csv"
+                                                        class="hidden" @change="handleNodesFileSelected" />
+                                                    <button type="button" :disabled="importingNodes"
+                                                        class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2.5 py-1.5 font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50"
+                                                        @click.prevent="nodesFileInput.click()">
+                                                        <DocumentArrowUpIcon class="h-5 w-5" aria-hidden="true" />
+                                                        {{ importingNodes ? $t('Processing...') : $t('Import CSV') }}
+                                                    </button>
+                                                    <button type="button"
+                                                        class="font-medium text-blue-600 hover:text-blue-500"
+                                                        @click.prevent="downloadNodesTemplate">
+                                                        {{ $t('Download template.csv') }}
+                                                    </button>
+                                                </div>
+                                            </template>
+                                        </StaticElement>
+
                                         <ListElement name="nodes" :initial="0" :label="$t('IP Rules')"
                                             :controls="{ add: true, remove: true, sort: true }"
                                             :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }">
@@ -99,13 +119,15 @@
 <script setup>
 import { trans } from "@i18n";
 import { computed, ref } from "vue";
+import axios from "axios";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from "@headlessui/vue";
-import { XMarkIcon } from "@heroicons/vue/24/solid";
+import { DocumentArrowUpIcon, XMarkIcon } from "@heroicons/vue/24/solid";
 
 const props = defineProps({
     show: Boolean,
     options: Object,
     loading: Boolean,
+    canImportNodes: Boolean,
     header: {
         type: String,
         default: () => trans("Access Control"),
@@ -118,6 +140,50 @@ const props = defineProps({
 
 const emit = defineEmits(["close", "error", "success", "refresh-data"]);
 const form$ = ref(null);
+const nodesFileInput = ref(null);
+const importingNodes = ref(false);
+
+// The server only parses the file. The rows are added to the open form and
+// saved, like any other rule, when the list is saved.
+const handleNodesFileSelected = (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!file) {
+        return;
+    }
+
+    importingNodes.value = true;
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    axios.post(props.options.routes.nodes_import_route, formData)
+        .then((response) => {
+            const list = form$.value?.el$("nodes");
+            (response.data.nodes ?? []).forEach((node) => list.add(node));
+            emit("success", "success", response.data.messages);
+        })
+        .catch((error) => emit("error", error))
+        .finally(() => {
+            importingNodes.value = false;
+        });
+};
+
+const downloadNodesTemplate = () => {
+    axios.get(props.options.routes.nodes_template_route, { responseType: "blob" })
+        .then((response) => {
+            const fileURL = window.URL.createObjectURL(new Blob([response.data], { type: "text/csv" }));
+            const link = document.createElement("a");
+            link.href = fileURL;
+            link.setAttribute("download", "access-control-nodes-template.csv");
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(fileURL);
+        })
+        .catch((error) => emit("error", error));
+};
 
 const defaultOptions = computed(() => [
     { value: "deny", label: trans("Deny") },
