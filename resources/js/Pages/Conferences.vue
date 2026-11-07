@@ -185,10 +185,6 @@
                                 class="text-indigo-600 hover:text-indigo-900">
                                 {{ $t('View') }}
                             </a>
-                            <a v-if="permissions.cdr_view" :href="toolUrl(routes.cdr, row.conference_uuid)"
-                                class="text-indigo-600 hover:text-indigo-900">
-                                CDR
-                            </a>
                         </div>
                     </TableField>
 

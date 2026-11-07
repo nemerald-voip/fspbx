@@ -37,7 +37,6 @@ class ConferenceController extends Controller
                 'active_conferences' => route('active-conferences.index'),
                 'conference_profiles' => route('conference-profiles.index'),
                 'interactive' => url('/active-conferences/:extension/interactive'),
-                'cdr' => '/app/conference_cdr/conference_cdr.php?id=:uuid',
             ],
             'permissions' => $this->permissions(),
         ]);
@@ -312,7 +311,6 @@ class ConferenceController extends Controller
             'view_active' => userCheckPermission('conference_active_view'),
             'profile_view' => userCheckPermission('conference_profile_view'),
             'interactive_view' => userCheckPermission('conference_interactive_view'),
-            'cdr_view' => userCheckPermission('conference_cdr_view'),
             'email_address' => userCheckPermission('conference_email_address'),
             'account_code' => userCheckPermission('conference_account_code'),
         ];
