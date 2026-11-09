@@ -57,7 +57,9 @@
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
                 <TableColumnHeader :header="$t('Carrier')" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader :header="$t('Allowed extensions')"
+                <TableColumnHeader v-if="webhook_available" :header="$t('Incoming messages')"
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader :header="$t('Members')"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader :header="$t('Assigned Email')"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
@@ -114,6 +116,14 @@
                         </ejs-tooltip>
                     </TableField>
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.carrier" />
+                    <TableField v-if="webhook_available" class="px-2 py-2 text-sm text-gray-500">
+                        <span v-if="!row.delivery || row.delivery.type === 'members'">{{ $t('Members') }}</span>
+                        <div v-else class="flex flex-col items-start gap-1">
+                            <Badge :text="row.delivery.type === 'custom' ? $t('Custom webhook') : $t('Account webhook')"
+                                backgroundColor="bg-indigo-50" textColor="text-indigo-700" ringColor="ring-indigo-600/20" />
+                            <span class="block max-w-[16rem] truncate text-xs" :title="row.delivery.url">{{ row.delivery.url }}</span>
+                        </div>
+                    </TableField>
                     <TableField class="px-2 py-2 text-sm text-gray-500"
                         :text="(row.allowed_extensions || []).map(ext => ext.label).join(', ') || '—'" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.email" />
@@ -173,6 +183,7 @@
         @success="showNotification" :loading="isModalLoading" />
 
     <UpdateMessageSettingsForm :show="showUpdateModal" :options="itemOptions" :loading="isModalLoading"  @refresh-data="handleSearchButtonClick"
+        @error="error => showNotification('error', error.response.data.errors)"
         @success="showNotification" @close="showUpdateModal = false" />
 
 
@@ -208,6 +219,7 @@ import UpdateMessageSettingsForm from "./components/forms/UpdateMessageSettingsF
 import CreateMessageSettingsForm from "./components/forms/CreateMessageSettingsForm.vue";
 import BulkUpdateMessageSettingsForm from "./components/forms/BulkUpdateMessageSettingsForm.vue";
 import Loading from "./components/general/Loading.vue";
+import Badge from "./components/general/Badge.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
 import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
 import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
@@ -252,6 +264,7 @@ const data = ref({
 const props = defineProps({
     routes: Object,
     permissions: { type: Object, default: () => ({}) },
+    webhook_available: { type: Boolean, default: false },
 });
 
 onMounted(() => {

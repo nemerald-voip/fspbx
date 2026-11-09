@@ -44,12 +44,27 @@ local function first_present(...)
     return ""
 end
 
--- SendFaxJob exports this hook and the fax correlation variables to the real
--- gateway channel created by the outbound dialplan. Ignore the temporary
--- loopback routing legs so they cannot submit an early, false failure.
+local outbound_fax_uuid = clean(header("outbound_fax_uuid"))
+
+-- A managed attempt may try several gateways before txfax runs. Report the
+-- gateway that actually ran txfax, or the routing B leg after all routes fail.
+-- Bowout releases the loopback legs when txfax moves to the selected gateway.
 local is_loopback = header("is_loopback")
+local routing_failure = false
 if is_loopback == "true" or is_loopback == "1" then
-    log("NOTICE", "Ignoring temporary loopback channel")
+    routing_failure = outbound_fax_uuid ~= ""
+        and header("loopback_leg") == "B"
+        and header("loopback_hangup_cause") == ""
+        and header("answer_epoch") == "0"
+
+    if not routing_failure then
+        log("NOTICE", "Ignoring temporary loopback channel")
+        return
+    end
+elseif outbound_fax_uuid ~= "" and header("current_application") ~= "txfax"
+    and header("last_app") ~= "txfax" and header("fax_success") == ""
+    and header("originating_leg_uuid") ~= "" then
+    log("NOTICE", "Ignoring intermediate gateway result while the routing leg owns the attempt")
     return
 end
 
@@ -62,7 +77,6 @@ local fax_uuid = clean(header("fax_uuid"))
 local fax_queue_uuid = clean(header("fax_queue_uuid"))
 -- Outbound-only: identify the outbound_faxes row + the specific attempt.
 -- Empty for inbound (the legacy webhook payload remains backward-compatible).
-local outbound_fax_uuid = clean(header("outbound_fax_uuid"))
 local outbound_fax_attempt_uuid = clean(header("outbound_fax_attempt_uuid"))
 local fax_success = clean(header("fax_success"))
 local fax_result_code = clean(header("fax_result_code"))
@@ -98,6 +112,17 @@ end
 local bridge_hangup_cause = clean(header("bridge_hangup_cause"))
 local hangup_cause = clean(header("hangup_cause"))
 local hangup_cause_q850 = clean(header("hangup_cause_q850"))
+
+-- The routing leg can finish with NORMAL_CLEARING after every bridge failed.
+-- Preserve the last gateway's failure instead of reporting a successful hangup.
+if routing_failure then
+    local routing_cause = first_present(bridge_hangup_cause, clean(header("originate_disposition")), hangup_cause)
+    if routing_cause ~= hangup_cause then
+        -- The Q.850 header belongs to this loopback leg, not the failed bridge.
+        hangup_cause_q850 = ""
+    end
+    hangup_cause = routing_cause
+end
 
 local start_epoch = clean(header("start_epoch"))
 local answer_epoch = clean(header("answer_epoch"))

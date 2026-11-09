@@ -351,7 +351,7 @@ class ApidazeWebhookParser implements MessagingWebhookParser
             return null;
         }
 
-        $countryCode = get_domain_setting('country', $domain_uuid = null) ?? 'US';
+        $countryCode = app(\App\Services\PhoneNumberService::class)->countryCodeForDomain();
 
         try {
             return formatPhoneNumber($number, $countryCode, PhoneNumberFormat::E164);

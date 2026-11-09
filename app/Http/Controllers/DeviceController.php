@@ -1238,6 +1238,7 @@ class DeviceController extends Controller
         $permissions['device_template_update'] = userCheckPermission('device_template');
         $permissions['device_template_view_all'] = userCheckPermission('device_template_view_all');
         $permissions['device_template_view_custom_only'] = userCheckPermission('device_template_view_custom_only');
+        $permissions['device_template_view_legacy'] = userCheckPermission('device_template_view_legacy');
         $permissions['device_provisioning_preview'] = userCheckPermission('device_provisioning_preview');
         $permissions['device_domain_update'] = userCheckPermission('device_domain');
         $permissions['manage_device_cloud_provisioning_settings'] = userCheckPermission('manage_device_cloud_provisioning_settings');
@@ -1294,8 +1295,11 @@ class DeviceController extends Controller
             return getVendorTemplateCollection();
         }
 
-        if (userCheckPermission('device_template_view_custom_only')) {
-            return getVendorTemplateCollection(false, true);
+        $includeCustomTemplates = userCheckPermission('device_template_view_custom_only');
+        $includeLegacyTemplates = userCheckPermission('device_template_view_legacy');
+
+        if ($includeCustomTemplates || $includeLegacyTemplates) {
+            return getVendorTemplateCollection(false, $includeCustomTemplates, $includeLegacyTemplates);
         }
 
         return [];

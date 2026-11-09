@@ -21,6 +21,8 @@ class RingotelSyncDispatcher
     /** This boundary must never turn a successful carrier send into a failed/retried send. */
     public function dispatch(Messages $message): bool
     {
+        if ($message->isExternalOnly()) return false;
+
         try {
             if ($message->direction === 'out'
                 && !self::carrierAccepted($message)) {

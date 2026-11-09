@@ -214,7 +214,7 @@ class BulkVSWebhookParser implements MessagingWebhookParser
         try {
             return formatPhoneNumber(
                 $number,
-                get_domain_setting('country') ?? 'US',
+                app(\App\Services\PhoneNumberService::class)->countryCodeForDomain(),
                 PhoneNumberFormat::E164
             );
         } catch (Throwable) {

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Jobs\SendFaxNotificationJob;
+use App\Mail\FaxFailed;
 use App\Mail\FaxSent;
 use App\Models\OutboundFax;
 use Illuminate\Database\Schema\Blueprint;
@@ -137,6 +138,22 @@ class SendFaxNotificationJobTest extends TestCase
         $attributes = $this->buildAttributes($outboundFaxUuid);
 
         $this->assertSame('6:20:00 AM May 28, 2026', $attributes['fax_date']);
+    }
+
+    public function test_result_notifications_use_the_fax_domain_without_a_session_or_attempt_log(): void
+    {
+        session()->put('domain_uuid', (string) Str::uuid());
+
+        foreach (['sent' => FaxSent::class, 'failed' => FaxFailed::class] as $status => $mailClass) {
+            $id = (string) Str::uuid();
+            $domainUuid = (string) Str::uuid();
+            $this->insertOutboundFax($id, ['status' => $status, 'domain_uuid' => $domainUuid]);
+
+            $mail = new $mailClass($this->buildAttributes($id));
+
+            $this->assertSame($domainUuid, $mail->attributes['domain_uuid']);
+            $this->assertNotSame(session('domain_uuid'), $mail->attributes['domain_uuid']);
+        }
     }
 
     private function buildAttributes(string $outboundFaxUuid): array

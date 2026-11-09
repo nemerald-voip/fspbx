@@ -247,6 +247,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
 
     // Inbound Webhooks
     Route::resource('/inbound-webhooks', InboundWebhooksController::class);
+    Route::get('/outbound-webhooks', [\App\Http\Controllers\OutboundWebhookLogsController::class, 'index'])->name('outbound-webhooks.index');
 
     // Hotel rooms
     Route::resource('/hotel-rooms', HotelRoomController::class);
@@ -430,6 +431,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('scheduled-jobs/nodes/discover', [ScheduledJobCoordinationController::class, 'discover'])->name('scheduled-jobs.nodes.discover');
     Route::post('scheduled-jobs/nodes/{node}/approve', [ScheduledJobCoordinationController::class, 'approve'])->name('scheduled-jobs.nodes.approve');
     Route::post('scheduled-jobs/nodes/{node}/retire', [ScheduledJobCoordinationController::class, 'retire'])->name('scheduled-jobs.nodes.retire');
+    Route::delete('scheduled-jobs/nodes/{node}', [ScheduledJobCoordinationController::class, 'remove'])->name('scheduled-jobs.nodes.remove');
     Route::put('scheduled-jobs/active-node', [ScheduledJobCoordinationController::class, 'updateOwner'])->name('scheduled-jobs.active-node.update');
     Route::post('scheduled-jobs/active-node/force', [ScheduledJobCoordinationController::class, 'force'])->name('scheduled-jobs.active-node.force');
     Route::post('scheduled-jobs/handoffs/{handoff}/force', [ScheduledJobCoordinationController::class, 'forceHandoff'])->name('scheduled-jobs.handoffs.force');
@@ -898,6 +900,10 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::put('account-settings/pms-provider', [AccountSettingsController::class, 'updatePmsProvider'])->name('account-settings.pms-provider.update');
     Route::put('account-settings/update', [AccountSettingsController::class, 'update'])->name('account-settings.update');
     Route::put('account-settings/messaging', [AccountSettingsController::class, 'updateMessaging'])->name('account-settings.messaging.update');
+    Route::put('account-settings/message-webhook', [\App\Http\Controllers\MessageWebhookSettingsController::class, 'update'])
+        ->name('account-settings.message-webhook.update');
+    Route::post('account-settings/message-webhook/secret', [\App\Http\Controllers\MessageWebhookSettingsController::class, 'secret'])
+        ->name('account-settings.message-webhook.secret');
     Route::delete('account-settings/messaging', [AccountSettingsController::class, 'destroyMessaging'])->name('account-settings.messaging.destroy');
 
     // Default Settings
@@ -1044,6 +1050,10 @@ Route::post('letsencrypt/receive-certificate', [LetsEncryptController::class, 'r
 // user session; each request and response is authenticated by HMAC.
 Route::post('ha/node/identify', [ScheduledJobPeerController::class, 'identify'])
     ->middleware('throttle:30,1')->name('ha.node.identify');
+Route::post('ha/scheduled-jobs/nodes/approve', [ScheduledJobPeerController::class, 'approveNode'])
+    ->middleware('throttle:30,1')->name('ha.scheduled-jobs.nodes.approve');
+Route::post('ha/scheduled-jobs/nodes/remove', [ScheduledJobPeerController::class, 'removeNode'])
+    ->middleware('throttle:30,1')->name('ha.scheduled-jobs.nodes.remove');
 Route::post('ha/scheduled-jobs/handoffs', [ScheduledJobPeerController::class, 'prepareHandoff'])
     ->middleware('throttle:30,1')->name('ha.scheduled-jobs.handoffs.store');
 Route::get('ha/scheduled-jobs/handoffs/{handoff}', [ScheduledJobPeerController::class, 'handoffStatus'])

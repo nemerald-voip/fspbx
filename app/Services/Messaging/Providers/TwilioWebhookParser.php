@@ -45,6 +45,7 @@ class TwilioWebhookParser implements MessagingWebhookParser
                 'status'        => $this->mapDeliveryStatus($messageStatus),
                 'description'   => $this->extractDeliveryDescription($payload, $messageStatus),
                 'providerEvent' => 'delivery_status',
+                'rawStatus'     => strtolower($messageStatus),
             ]);
 
             messaging_webhook_debug('TwilioWebhookParser delivery event parsed', [
@@ -177,7 +178,7 @@ class TwilioWebhookParser implements MessagingWebhookParser
         try {
             return formatPhoneNumber(
                 $number,
-                get_domain_setting('country') ?? 'US',
+                app(\App\Services\PhoneNumberService::class)->countryCodeForDomain(),
                 PhoneNumberFormat::E164
             );
         } catch (Throwable) {

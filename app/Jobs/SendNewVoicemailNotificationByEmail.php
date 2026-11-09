@@ -13,6 +13,7 @@ use App\Models\VoicemailMessages;
 use App\Models\Extensions;
 use App\Mail\VoicemailNotification;
 use App\Services\VoicemailMessageUrlService;
+use App\Services\EmailDeliveryFailureReporter;
 use App\Support\Localization\LocaleRegistry;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Cache;
@@ -23,6 +24,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 
 class SendNewVoicemailNotificationByEmail implements ShouldQueue
 {
@@ -277,14 +279,21 @@ class SendNewVoicemailNotificationByEmail implements ShouldQueue
 
                     $this->markEmailLogSendFailure($classification);
 
-                    logger()->error('Voicemail email send failed', [
+                    $context = [
+                        'job' => class_basename($this),
                         'uuid' => $uuid,
+                        'log_uuid' => $this->logId,
                         'attempt' => $this->attempts(),
                         'max_tries' => $this->tries,
                         'status' => $classification['status'],
                         'category' => $classification['category'],
-                        'error' => $e->getMessage(),
-                    ]);
+                    ];
+
+                    if ($e instanceof TransportExceptionInterface) {
+                        app(EmailDeliveryFailureReporter::class)->report($e, $context);
+                    } else {
+                        logger()->error('Voicemail email send failed', $context + ['error' => $e->getMessage()]);
+                    }
 
                     if ($classification['stop_retrying']) {
                         $this->fail($e);
@@ -513,8 +522,23 @@ class SendNewVoicemailNotificationByEmail implements ShouldQueue
 
             // Best-effort MWI; never throw
             try {
+                // Count after deletion, using the same unread statuses as vm_blf.lua.
+                $counts = VoicemailMessages::query()
+                    ->where('domain_uuid', $message->domain_uuid)
+                    ->where('voicemail_uuid', $message->voicemail_uuid)
+                    ->selectRaw("count(case when message_status is null or message_status in ('', 'new') then 1 end) as new_messages")
+                    ->selectRaw("count(case when message_status = 'saved' then 1 end) as saved_messages")
+                    ->toBase()
+                    ->first();
+
                 $esl = app(FreeswitchEslService::class);
-                $esl->executeCommand(sprintf("bgapi luarun app/voicemail/resources/scripts/mwi_notify.lua %s %s", $voicemailId, $domainName));
+                $esl->executeCommand(sprintf(
+                    "bgapi luarun app/voicemail/resources/scripts/mwi_notify.lua %s %s %d %d",
+                    $voicemailId,
+                    $domainName,
+                    $counts->new_messages,
+                    $counts->saved_messages,
+                ));
             } catch (\Throwable $e) {
                 logger()->warning('MWI update failed after voicemail delete', ['v' => $voicemailId, 'd' => $domainName, 'e' => $e->getMessage()]);
             }

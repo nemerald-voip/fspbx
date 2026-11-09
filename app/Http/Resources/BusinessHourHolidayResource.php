@@ -2,7 +2,6 @@
 
 namespace App\Http\Resources;
 
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class BusinessHourHolidayResource extends JsonResource
@@ -20,13 +19,7 @@ class BusinessHourHolidayResource extends JsonResource
             'description' => $this->description,
             'human_date'  => $this->human_date,
             'action' => $this->action,
-            'target'      => $this->whenLoaded('target', function () {
-                return [
-                    'uuid'      => $this->target->getKey(),
-                    'extension' => $this->target->extension ?? null,  
-                ];
-            }),
-            'target_label' => $this->target_label,
+            'routing_summary' => $this->resource->routingSummary(),
         ];
     }
 }

@@ -91,6 +91,18 @@ class StoreDeviceRequest extends \App\Http\Requests\StoreDeviceRequest
                 'description' => 'Optional provisioning template UUID.',
                 'example' => 'a6cf59ba-4b2b-4bdd-b870-35cc55bca146',
             ],
+            'device_keys' => [
+                'description' => 'Optional device key assignments.',
+                'example' => [],
+            ],
+            'phonebook_mode' => [
+                'description' => 'Use account-default phonebooks or a custom list.',
+                'example' => 'default',
+            ],
+            'phonebook_uuids' => [
+                'description' => 'Phonebook UUIDs to assign when phonebook_mode is custom.',
+                'example' => [],
+            ],
             'device_description' => [
                 'description' => 'Optional label or description for the device.',
                 'example' => 'Reception desk device',

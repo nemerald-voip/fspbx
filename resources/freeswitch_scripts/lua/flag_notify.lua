@@ -8,6 +8,8 @@ local flag_number = tostring(argv[1] or "")
 local domain      = tostring(argv[2] or "")
 local active      = tostring(argv[3] or "false") == "true"
 
+if not require("lua.flag_feature").check() then return end
+
 if flag_number == "" or domain == "" then
     freeswitch.consoleLog("WARNING", "[flag_notify] Missing flag number or domain\n")
     return

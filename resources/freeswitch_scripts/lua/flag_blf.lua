@@ -9,6 +9,7 @@ require "resources.functions.config"
 
 local Database = require "resources.functions.database"
 local flag_state = require "lua.flag_state"
+local feature = require "lua.flag_feature"
 
 local FLAG_PREFIX = "flag"
 local DEBUG_MODE  = false
@@ -82,6 +83,7 @@ local function handle_probe(event)
 
     local dbh = connect()
     if not dbh then return end
+    if not feature.enabled(dbh) then dbh:release(); return end
 
     local flag = dbh:first_row([[
         SELECT f.uuid, f.domain_uuid, f.type, f.timezone, f.active, f.enabled, f.blf_enabled
@@ -99,6 +101,7 @@ local function handle_probe(event)
     end
     dbh:release()
 
+    if active == nil then return end
     if flag then
         last_published[flag.uuid] = active
     end
@@ -110,6 +113,7 @@ end
 local function refresh_scheduled()
     local dbh = connect()
     if not dbh then return end
+    if not feature.enabled(dbh) then dbh:release(); return end
 
     local flags = {}
     dbh:query([[
@@ -125,7 +129,7 @@ local function refresh_scheduled()
     for _, flag in ipairs(flags) do
         seen[flag.uuid] = true
         local active = flag_state.is_active(dbh, flag)
-        if last_published[flag.uuid] ~= active then
+        if active ~= nil and last_published[flag.uuid] ~= active then
             last_published[flag.uuid] = active
             publish(FLAG_PREFIX .. flag.flag_number, flag.domain_name, active)
         end
@@ -141,12 +145,18 @@ local function refresh_scheduled()
 end
 
 local function main()
+    if not feature.check() then return end
     debug_log("NOTICE", "Starting flag BLF daemon")
 
     local consumer = freeswitch.EventConsumer("PRESENCE_PROBE")
     local last_minute = nil
+    local last_check = os.time()
 
     while true do
+        if os.time() ~= last_check then
+            last_check = os.time()
+            if not feature.check() then return end
+        end
         local did_something = false
 
         -- Handle every probe waiting.

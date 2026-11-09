@@ -146,6 +146,11 @@ class FlagService
 
     public function copyOverrides(string $ownerType, string $fromUuid, string $toUuid, string $domainUuid): void
     {
+        $permission = $ownerType === FlagOverride::OWNER_RING_GROUP ? 'ring_group_edit' : 'ivr_menu_edit';
+        if (! app(FlagFeature::class)->canAssign($permission)) {
+            return;
+        }
+
         $overrides = FlagOverride::query()
             ->where('owner_type', $ownerType)
             ->where('owner_uuid', $fromUuid)
@@ -162,6 +167,11 @@ class FlagService
 
     public function deleteOverrides(string $ownerType, array $ownerUuids, string $domainUuid): void
     {
+        // Cleanup remains safe when the feature is off or its migrations have not run.
+        if (! \Illuminate\Support\Facades\Schema::hasTable('flag_overrides')) {
+            return;
+        }
+
         FlagOverride::query()
             ->where('owner_type', $ownerType)
             ->whereIn('owner_uuid', $ownerUuids)
@@ -268,6 +278,10 @@ class FlagService
      */
     public function notifyBlf(Flag $flag, ?string $domainName = null, ?string $previousNumber = null): void
     {
+        if (! app(FlagFeature::class)->enabled()) {
+            return;
+        }
+
         $domainName ??= DB::table('v_domains')->where('domain_uuid', $flag->domain_uuid)->value('domain_name');
 
         if (!filled($domainName)) {
@@ -287,6 +301,10 @@ class FlagService
 
     public function clearBlf(string $flagNumber, string $domainName): void
     {
+        if (! app(FlagFeature::class)->enabled()) {
+            return;
+        }
+
         (new FreeswitchEslService())->executeCommand($this->notifyCommand($flagNumber, $domainName, false));
     }
 

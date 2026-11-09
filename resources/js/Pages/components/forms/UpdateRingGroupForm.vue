@@ -1,7 +1,7 @@
 <template>
     <div>
         <Vueform ref="form$" :endpoint="submitForm" @success="handleSuccess" @error="handleError"
-            @response="handleResponse" :display-errors="false">
+            @response="handleResponse" :display-errors="false" :validate-on="''" @mounted="form => form.disableValidation()">
             <template #empty>
 
                 <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
@@ -51,7 +51,7 @@
                                 'h4_flag',
                                 'flag_overrides',
                                 'flag_submit',
-                            ]" />
+                            ]" :conditions="[() => !!localOptions.permissions.manage_flags]" />
                             <FormTab name="page2" :label="$t('Advanced')" :elements="[
                                 'h4_3',
                                 'ring_group_caller_id_name',
@@ -713,7 +713,12 @@ const formatTarget = (name, value) => {
 }
 
 const submitForm = async (FormData, form$) => {
-    const requestData = form$.requestData;
+    form$.messageBag.clear();
+    Object.values(form$.elements$).forEach(clearErrorsRecursive);
+    const requestData = { ...form$.requestData };
+    if (!localOptions.permissions.manage_flags) {
+        delete requestData.flag_overrides;
+    }
 
     return await form$.$vueform.services.axios.put(
         localOptions.routes.update_route,

@@ -29,11 +29,16 @@ class SendOutboundSMSMessage implements ShouldQueue
 
     public function __construct(public string $messageUuid) {}
 
+    public function failed(?\Throwable $exception): void
+    {
+        app(\App\Services\Messaging\Outbound\ApiMessageStatus::class)->failSend($this->messageUuid);
+    }
+
     public function middleware(): array
     {
         return [
             new RateLimitedWithRedis('messages'),
-            (new WithoutOverlapping('outbound-message:'.$this->messageUuid))->releaseAfter(5)->expireAfter(180),
+            (new WithoutOverlapping('outbound-message:'.$this->messageUuid))->releaseAfter(30)->expireAfter(180),
         ];
     }
 
@@ -57,6 +62,10 @@ class SendOutboundSMSMessage implements ShouldQueue
             }
 
             // A replay of this job after carrier acceptance may only retry synchronization.
+            if ($message->isApiOutbound()) {
+                app(\App\Services\Messaging\Outbound\ApiMessageStatus::class)->send($this->messageUuid, $factory);
+                return;
+            }
             if (RingotelSyncDispatcher::carrierAccepted($message)) {
                 app(RingotelSyncDispatcher::class)->dispatch($message);
                 return;

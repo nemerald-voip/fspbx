@@ -23,9 +23,24 @@
 
     @yield('css')
 
-    @vite(['resources/scss/tailwind.css'])
+    @php
+        $frontend = app(\App\Services\FrontendAssets::class)->browserConfiguration(
+            collect(\Nwidart\Modules\Facades\Module::allEnabled())->map(fn ($module) => $module->getName())->all()
+        );
+        $browserFrontend = [
+            'modules' => (object) $frontend['modules'],
+            'reverbKey' => config('reverb.apps.apps.0.key'),
+        ];
+    @endphp
+    <script>window.fspbxFrontend = {{ \Illuminate\Support\Js::from($browserFrontend) }};</script>
+    <script type="importmap">{!! json_encode(['imports' => (object) $frontend['imports']], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES) !!}</script>
+    @foreach ($frontend['css'] as $stylesheet)
+        <link rel="stylesheet" href="{{ $stylesheet }}">
+    @endforeach
 
-    @vite(['resources/js/vue.js'])
+    @vite(['resources/scss/tailwind.css'], $frontend['buildDirectory'])
+
+    @vite(['resources/js/vue.js'], $frontend['buildDirectory'])
 
 
     @stack('head.end')

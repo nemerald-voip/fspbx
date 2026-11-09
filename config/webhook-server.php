@@ -1,6 +1,9 @@
 <?php
 
+$brand = trim((string) env('CALL_WEBHOOK_BRAND', 'FS-PBX')) ?: 'FS-PBX';
+
 return [
+    'brand' => $brand,
     'queue' => 'webhooks',
     'connection' => 'redis',
     'http_verb' => 'post',
@@ -10,7 +13,7 @@ return [
     'timestamp_header_name' => 'Timestamp',
     'headers' => [
         'Content-Type' => 'application/json',
-        'User-Agent' => 'FS-PBX-Call-Webhooks/1.0',
+        'User-Agent' => "{$brand}-Call-Webhooks/1.0",
     ],
     'timeout_in_seconds' => 3,
     'tries' => 3,

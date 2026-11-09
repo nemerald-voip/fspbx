@@ -11,7 +11,7 @@ class StoreFlagRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return userCheckPermission('flags_create');
+        return userCheckPermission('flags_create') && app(\App\Services\FlagFeature::class)->enabled();
     }
 
     public function rules(): array

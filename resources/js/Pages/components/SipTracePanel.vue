@@ -24,87 +24,107 @@
                         <span v-if="call.start_date"> · {{ $t('On :date at :time', { date: call.start_date, time: call.start_time }) }}</span>
                     </p>
                 </header>
-                <div class="sip-toolbar">
-                    <div class="text-xs text-gray-500" role="status">
-                        <span v-if="busy">{{ $t('Loading SIP capture…') }}</span>
-                        <span v-else-if="messages.length">{{ $t(':count SIP messages', { count: messages.length }) }} ·
-                            {{ $t(':count call legs', { count: legCount }) }} · {{ $t(':count endpoints', { count: endpoints.length }) }}</span>
-                        <span v-else>{{ $t('SIP signaling') }}</span>
-                    </div>
-                    <div class="flex flex-wrap gap-2">
-                        <button type="button" class="sip-button" :disabled="busy" @click="load('pcap')">
-                            <ArrowDownTrayIcon class="h-4 w-4" aria-hidden="true" />{{ $t('Download PCAP') }}
-                        </button>
-                        <button type="button" class="sip-button" :disabled="busy" @click="load('txt')">
-                            <DocumentTextIcon class="h-4 w-4" aria-hidden="true" />{{ $t('Download TXT') }}
-                        </button>
-                    </div>
-                </div>
-                <div v-if="error" role="alert" class="mx-4 mb-3 flex flex-wrap items-center gap-3 text-sm text-red-700">
-                    <span>{{ error }}</span>
-                    <button v-if="!messages.length" type="button" class="sip-button" :disabled="busy" @click="load()">{{ $t('Retry') }}</button>
-                </div>
-                <template v-if="messages.length">
-                    <label v-if="!compact && detailVisible" class="sip-resize">
-                        {{ $t('Flow width') }}
-                        <input v-model.number="flowPercent" type="range" min="40" max="75" :aria-label="$t('Flow width')" />
-                        <span>{{ flowPercent }}%</span>
-                    </label>
-                    <div class="sip-content" :class="{ 'sip-split': !compact && detailVisible }" :style="{ '--flow-width': flowPercent + '%' }">
-                        <section class="sip-flow-panel" :aria-label="$t('SIP call flow')">
-                            <div class="sip-panel-heading">
-                                <h3 class="text-sm font-semibold">{{ $t('All legs · Combined flow') }}</h3>
-                                <button ref="showButton" type="button" class="sip-button" @click="toggleDetails">
-                                    {{ detailVisible && !compact ? $t('Hide message') : $t('Show message') }}
-                                </button>
-                            </div>
-                            <div ref="flowViewport" class="sip-flow-scroll">
-                                <div class="sip-ladder" :style="{ width: width + 'px' }">
-                                    <div class="sip-endpoints">
-                                        <div v-for="(address, index) in endpoints" :key="address" class="sip-endpoint"
-                                            :style="{ left: laneX(index) + 'px' }">{{ address }}</div>
-                                    </div>
-                                    <div class="sip-lanes" aria-hidden="true">
-                                        <span v-for="(address, index) in endpoints" :key="address" :style="{ left: laneX(index) + 'px' }" />
-                                    </div>
-                                    <button v-for="(message, index) in pageMessages" :key="page * pageSize + index" type="button"
-                                        class="sip-message" :class="{ 'sip-selected': selected === message }"
-                                        :aria-pressed="selected === message" :aria-label="messageLabel(message)" @click="selectMessage(message)">
-                                        <span class="sip-elapsed">{{ elapsed(message) }}</span>
-                                        <span class="sip-arrow" :class="{ 'sip-reverse': sourceX(message) > targetX(message), 'sip-failure': isFailure(message) }"
-                                            :style="{ left: Math.min(sourceX(message), targetX(message)) + 'px', width: Math.abs(targetX(message) - sourceX(message)) + 'px' }">
-                                            <span :title="firstLine(message)">{{ summary(message) }}</span>
-                                        </span>
+                <TabGroup @change="tab => { if (tab === 1) qosVisited = true }">
+                    <TabList class="flex gap-5 border-b border-gray-200 bg-white px-5">
+                        <Tab v-for="(label, index) in [$t('Call flow'), $t('QoS')]" :key="index" v-slot="{ selected: active }" as="template">
+                            <button type="button" class="border-b-2 py-2 text-sm font-medium"
+                                :class="active ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-gray-600'">
+                                {{ label }}
+                                <span v-if="tabCounts[index] != null" class="ml-1 rounded bg-gray-100 px-1.5 text-xs tabular-nums">
+                                    {{ tabCounts[index] }}
+                                </span>
+                            </button>
+                        </Tab>
+                    </TabList>
+                    <TabPanels class="flex min-h-0 flex-1 flex-col">
+                        <TabPanel :unmount="false" class="flex min-h-0 flex-1 flex-col">
+                            <div class="sip-toolbar">
+                                <div class="text-xs text-gray-500" role="status">
+                                    <span v-if="busy">{{ $t('Loading SIP capture…') }}</span>
+                                    <span v-else-if="messages.length">{{ $t(':count SIP messages', { count: messages.length }) }} ·
+                                        {{ $t(':count call legs', { count: legCount }) }} · {{ $t(':count endpoints', { count: endpoints.length }) }}</span>
+                                    <span v-else>{{ $t('SIP signaling') }}</span>
+                                </div>
+                                <div class="flex flex-wrap gap-2">
+                                    <button type="button" class="sip-button" :disabled="busy" @click="load('pcap')">
+                                        <ArrowDownTrayIcon class="h-4 w-4" aria-hidden="true" />{{ $t('Download PCAP') }}
+                                    </button>
+                                    <button type="button" class="sip-button" :disabled="busy" @click="load('txt')">
+                                        <DocumentTextIcon class="h-4 w-4" aria-hidden="true" />{{ $t('Download TXT') }}
                                     </button>
                                 </div>
                             </div>
-                            <div v-if="messages.length > pageSize" class="sip-pagination">
-                                <button type="button" class="sip-button" :disabled="page === 0" @click="page--">{{ $t('Previous') }}</button>
-                                <span>{{ $t('Page :page of :total', { page: page + 1, total: Math.ceil(messages.length / pageSize) }) }}</span>
-                                <button type="button" class="sip-button" :disabled="(page + 1) * pageSize >= messages.length" @click="page++">{{ $t('Next') }}</button>
+                            <div v-if="error" role="alert" class="mx-4 mb-3 flex flex-wrap items-center gap-3 text-sm text-red-700">
+                                <span>{{ error }}</span>
+                                <button v-if="!messages.length" type="button" class="sip-button" :disabled="busy" @click="load()">{{ $t('Retry') }}</button>
                             </div>
-                        </section>
-                        <section v-if="selected && detailVisible && !compact" class="sip-detail-panel" :aria-label="$t('Selected SIP message')">
-                            <div class="sip-panel-heading">
-                                <h3 class="min-w-0 break-words text-sm font-semibold">{{ summary(selected) }}</h3>
-                                <button ref="expandButton" type="button" class="sip-button" @click="overlayOpen = true">
-                                    <ArrowsPointingOutIcon class="h-4 w-4" aria-hidden="true" />{{ $t('Expand') }}
-                                </button>
-                            </div>
-                            <div class="sip-metadata">
-                                <p>{{ selected.timestamp }} UTC</p>
-                                <p>{{ endpoint(selected, 'src') }} → {{ endpoint(selected, 'dst') }}</p>
-                                <p>{{ $t('SIP Call-ID:') }} {{ selected.session_id }}</p>
-                            </div>
-                            <pre class="sip-payload">{{ selected.payload }}</pre>
-                        </section>
-                    </div>
-                    <footer class="sip-footer">
-                        <span>{{ $t('Downloads include all captured legs in this call’s lookup window, across all pages.') }}</span>
-                        <span>{{ $t('SIP only · No RTP audio · UTC') }}</span>
-                    </footer>
-                </template>
-                <div v-else-if="busy" class="p-8 text-center text-sm text-gray-500">{{ $t('Loading SIP capture…') }}</div>
+                            <template v-if="messages.length">
+                                <label v-if="!compact && detailVisible" class="sip-resize">
+                                    {{ $t('Flow width') }}
+                                    <input v-model.number="flowPercent" type="range" min="40" max="75" :aria-label="$t('Flow width')" />
+                                    <span>{{ flowPercent }}%</span>
+                                </label>
+                                <div class="sip-content" :class="{ 'sip-split': !compact && detailVisible }" :style="{ '--flow-width': flowPercent + '%' }">
+                                    <section class="sip-flow-panel" :aria-label="$t('SIP call flow')">
+                                        <div class="sip-panel-heading">
+                                            <h3 class="text-sm font-semibold">{{ $t('All legs · Combined flow') }}</h3>
+                                            <button ref="showButton" type="button" class="sip-button" @click="toggleDetails">
+                                                {{ detailVisible && !compact ? $t('Hide message') : $t('Show message') }}
+                                            </button>
+                                        </div>
+                                        <div ref="flowViewport" class="sip-flow-scroll">
+                                            <div class="sip-ladder" :style="{ width: width + 'px' }">
+                                                <div class="sip-endpoints">
+                                                    <div v-for="(address, index) in endpoints" :key="address" class="sip-endpoint"
+                                                        :style="{ left: laneX(index) + 'px' }">{{ address }}</div>
+                                                </div>
+                                                <div class="sip-lanes" aria-hidden="true">
+                                                    <span v-for="(address, index) in endpoints" :key="address" :style="{ left: laneX(index) + 'px' }" />
+                                                </div>
+                                                <button v-for="(message, index) in pageMessages" :key="page * pageSize + index" type="button"
+                                                    class="sip-message" :class="{ 'sip-selected': selected === message }"
+                                                    :aria-pressed="selected === message" :aria-label="messageLabel(message)" @click="selectMessage(message)">
+                                                    <span class="sip-elapsed">{{ elapsed(message) }}</span>
+                                                    <span class="sip-arrow" :class="{ 'sip-reverse': sourceX(message) > targetX(message), 'sip-failure': isFailure(message) }"
+                                                        :style="{ left: Math.min(sourceX(message), targetX(message)) + 'px', width: Math.abs(targetX(message) - sourceX(message)) + 'px' }">
+                                                        <span :title="firstLine(message)">{{ summary(message) }}</span>
+                                                    </span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div v-if="messages.length > pageSize" class="sip-pagination">
+                                            <button type="button" class="sip-button" :disabled="page === 0" @click="page--">{{ $t('Previous') }}</button>
+                                            <span>{{ $t('Page :page of :total', { page: page + 1, total: Math.ceil(messages.length / pageSize) }) }}</span>
+                                            <button type="button" class="sip-button" :disabled="(page + 1) * pageSize >= messages.length" @click="page++">{{ $t('Next') }}</button>
+                                        </div>
+                                    </section>
+                                    <section v-if="selected && detailVisible && !compact" class="sip-detail-panel" :aria-label="$t('Selected SIP message')">
+                                        <div class="sip-panel-heading">
+                                            <h3 class="min-w-0 break-words text-sm font-semibold">{{ summary(selected) }}</h3>
+                                            <button ref="expandButton" type="button" class="sip-button" @click="overlayOpen = true">
+                                                <ArrowsPointingOutIcon class="h-4 w-4" aria-hidden="true" />{{ $t('Expand') }}
+                                            </button>
+                                        </div>
+                                        <div class="sip-metadata">
+                                            <p>{{ selected.timestamp }} UTC</p>
+                                            <p>{{ endpoint(selected, 'src') }} → {{ endpoint(selected, 'dst') }}</p>
+                                            <p>{{ $t('SIP Call-ID:') }} {{ selected.session_id }}</p>
+                                        </div>
+                                        <pre class="sip-payload">{{ selected.payload }}</pre>
+                                    </section>
+                                </div>
+                                <footer class="sip-footer">
+                                    <span>{{ $t('Downloads include all captured legs in this call’s lookup window, across all pages.') }}</span>
+                                    <span>{{ $t('SIP only · No RTP audio · UTC') }}</span>
+                                </footer>
+                            </template>
+                            <div v-else-if="busy" class="p-8 text-center text-sm text-gray-500">{{ $t('Loading SIP capture…') }}</div>
+                        </TabPanel>
+                        <TabPanel :unmount="false" class="min-h-0 flex-1 overflow-y-auto">
+                            <SipTraceQos v-if="qosVisited" :cdr-uuid="cdrUuid" :route="route" @loaded="qosReports = $event" />
+                        </TabPanel>
+                    </TabPanels>
+                </TabGroup>
             </DialogPanel>
         </div>
         <Dialog :open="overlayOpen && open" :initial-focus="overlayCloseButton" class="relative z-[60]" @close="closeOverlay">
@@ -129,8 +149,8 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
-import { Dialog, DialogPanel, DialogTitle } from '@headlessui/vue';
+import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, ref, watch } from 'vue';
+import { Dialog, DialogPanel, DialogTitle, Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/vue';
 import { ArrowDownTrayIcon, ArrowLeftIcon, ArrowsPointingOutIcon, ChartBarIcon, DocumentTextIcon, XMarkIcon } from '@heroicons/vue/24/outline';
 import axios from 'axios';
 import { trans } from '@i18n';
@@ -139,10 +159,14 @@ const props = defineProps({
     cdrUuid: { type: String, required: true }, route: { type: String, required: true },
     call: { type: Object, default: () => ({}) },
 });
+const SipTraceQos = defineAsyncComponent(() => import('./SipTraceQos.vue'));
 const open = ref(false);
+const qosVisited = ref(false);
 const busy = ref(false);
 const error = ref('');
 const messages = ref([]);
+const qosReports = ref(null);
+const tabCounts = computed(() => [messages.value.length || null, qosReports.value]);
 const selected = ref(null);
 const page = ref(0);
 const detailVisible = ref(true);
@@ -206,6 +230,8 @@ const closeOverlay = async () => {
     (compact.value ? showButton.value : expandButton.value)?.focus();
 };
 const openWorkspace = () => {
+    qosVisited.value = false;
+    qosReports.value = null;
     open.value = true;
     if (!messages.value.length) load();
 };

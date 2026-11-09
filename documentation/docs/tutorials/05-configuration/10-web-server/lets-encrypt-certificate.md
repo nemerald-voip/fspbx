@@ -68,7 +68,7 @@ pbx1.example.com    A  203.0.113.10  # Node 1 direct name
 pbx2.example.com    A  203.0.113.20  # Node 2 direct name
 ```
 
-Use direct, unproxied A/AAAA records. The renewal guard compares the authoritative address for the floating hostname with the direct hostname of each node. A proxied record or a floating CNAME does not provide the address needed for that decision.
+Use direct, unproxied A/AAAA records for each node's hostname. The floating hostname can use a CNAME, including an Azure Traffic Manager profile. The renewal guard follows its authoritative DNS chain and compares the resulting addresses with each node's direct hostname. All authoritative servers must agree; proxied addresses that hide the selected node cannot identify the renewal owner.
 
 Run the installer on the node that the floating hostname currently points to and choose **2**. The command asks for:
 

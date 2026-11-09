@@ -63,6 +63,7 @@ class UserController extends Controller
                 $request->merge(['user_enabled' => $normalized]);
             }
         }
+        // Query parameters
         $params = $request->validate([
             'limit' => ['sometimes', 'integer', 'min:1', 'max:100'],
             'starting_after' => ['sometimes', 'uuid'],

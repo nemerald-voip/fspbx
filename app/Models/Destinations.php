@@ -125,41 +125,9 @@ class Destinations extends Model
 
         return collect($actions)
             ->filter(fn ($action) => is_array($action) && filled($action['destination_app'] ?? null))
-            ->map(fn (array $action) => $this->summarizeRoutingAction($service, $action))
+            ->map(fn (array $action) => $service->summarizeAction($action))
             ->values()
             ->all();
-    }
-
-    protected function summarizeRoutingAction(\App\Services\CallRoutingOptionsService $service, array $action): array
-    {
-        // Resolve one action at a time so results stay aligned with the stored actions.
-        $option = $service->reverseEngineerDestinationActions(json_encode([$action]))[0] ?? null;
-        $type = is_array($option) ? ($option['type'] ?? null) : null;
-
-        if ($type) {
-            $name = $option['name'] ?? null;
-            $extension = (string) ($option['extension'] ?? '');
-
-            if (filled($name) && preg_match('/^\*?\d+$/', $extension) && !str_starts_with($name, $extension)) {
-                $name = "{$extension} - {$name}";
-            }
-
-            if (!filled($name) && !in_array($type, ['hangup', 'check_voicemail', 'company_directory'], true)) {
-                $name = $extension !== '' ? $extension : null;
-            }
-
-            return [
-                'name' => $name ?: null,
-                'type' => $service->getFriendlyTypeName($type),
-                'invalid' => false,
-            ];
-        }
-
-        return [
-            'name' => null,
-            'type' => null,
-            'invalid' => true,
-        ];
     }
 
     public function getLabelAttribute()

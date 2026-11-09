@@ -15,7 +15,9 @@ class UpdateVirtualReceptionistRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return Auth::check();
+        return Auth::check() && userCheckPermission('ivr_menu_edit')
+            && (! $this->exists('flag_overrides')
+                || app(\App\Services\FlagFeature::class)->canAssign('ivr_menu_edit'));
     }
 
     public function rules(): array
@@ -23,7 +25,7 @@ class UpdateVirtualReceptionistRequest extends FormRequest
         $currentUuid = $this->route('virtual_receptionist');
 
         return [
-            'ivr_menu_uuid' => 'present',
+            'ivr_menu_uuid' => ['required', 'uuid', \Illuminate\Validation\Rule::in([$currentUuid])],
             'ivr_menu_name' => 'required|string|max:75',
             'ivr_menu_extension' => [
                 'required',

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Api\V1;
 
+use App\Services\PhoneNumberService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -79,13 +80,10 @@ class StorePhoneNumberRequest extends FormRequest
 
     public function prepareForValidation(): void
     {
-        // normalize destination_number: keep digits only (and optional leading +), then strip +1 if present
-        if ($this->has('destination_number')) {
-            $v = preg_replace('/[^\d+]+/', '', (string) $this->input('destination_number'));
-            $v = ltrim($v);
-            if (str_starts_with($v, '+1')) $v = substr($v, 2);
-            $v = ltrim($v, '+'); // store as digits only, like your example
-            $this->merge(['destination_number' => $v]);
+        if (is_string($this->input('destination_number'))) {
+            $this->merge(app(PhoneNumberService::class)->destinationParts(
+                $this->input('destination_number'), $this->input('destination_prefix'), (string) $this->route('domain_uuid')
+            ));
         }
 
 

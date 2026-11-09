@@ -59,6 +59,8 @@ class VoxutelWebhookParser implements MessagingWebhookParser
                 'status' => $this->mapStatus($payload),
                 'description' => $this->extractStatusDescription($payload),
                 'providerEvent' => $type ?: 'delivery_receipt',
+                'rawStatus' => strtolower((string) (data_get($payload, 'status')
+                    ?? data_get($payload, 'message.status') ?? data_get($payload, 'event.status') ?? $this->mapStatus($payload))),
             ]);
 
             messaging_webhook_debug('Voxutel parser yielding status event', [

@@ -159,6 +159,31 @@ class HomerApiService
         return $body;
     }
 
+    public function qos(CDR $cdr): array
+    {
+        $settings = $this->settings();
+        if (! $settings->enabled) {
+            throw new RuntimeException(__('The HOMER Call History integration is disabled.'));
+        }
+        $request = $this->callRequest($cdr);
+        // Like export, QoS needs the explicit correlated SIP legs. Keep the CDR
+        // Call-ID as well: RTCP can still exist after SIP messages expire.
+        $ids = array_column($this->messages($settings, $request), 'session_id');
+        $ids[] = $request['session_id'];
+        $ids = array_values(array_unique($ids));
+        if (count($ids) > 50) {
+            throw new RuntimeException(__('This call has too many captured legs to load QoS.'));
+        }
+        foreach ($ids as $id) {
+            if ($id === '' || strlen($id) > 1024 || preg_match('/[\x00-\x20\x7f]/', $id)) {
+                throw new RuntimeException(__('This call does not have usable SIP capture lookup details.'));
+            }
+        }
+        $window = $request['timestamp'];
+        $body = $this->request($settings, 'transactions/qos', ['session_ids' => $ids, 'timestamp' => $window]);
+        return (new HomerRtcpReports)->streams($body, $ids, $window) + ['start_ms' => (int) $cdr->start_epoch * 1000];
+    }
+
     private function messages(HomerApiSettings $settings, array $request): array
     {
         $data = json_decode($this->request($settings, 'transactions/messages', $request), true);

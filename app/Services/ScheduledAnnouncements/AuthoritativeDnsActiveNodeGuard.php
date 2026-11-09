@@ -57,8 +57,9 @@ class AuthoritativeDnsActiveNodeGuard
 
         $answersByNameserver = [];
         $lookupFailures = [];
+        $resolvedAliases = [];
         foreach ($nameservers as $nameserver) {
-            $answers = $this->authoritativeAnswers($fqdn, $nameserver, $lookupFailures);
+            $answers = $this->authoritativeAnswers($fqdn, $nameserver, $lookupFailures, [], $resolvedAliases);
 
             if ($answers === null) {
                 continue;
@@ -105,10 +106,18 @@ class AuthoritativeDnsActiveNodeGuard
         }
 
         if (empty($first)) {
+            $reason = 'Authoritative DNS returned no address records.';
+            foreach ($lookupFailures as $name => $failures) {
+                if (isset($failures['CNAME'])) {
+                    $reason = 'Unable to resolve '.$name.': '.$failures['CNAME'];
+                    break;
+                }
+            }
+
             return $this->result(
                 false,
                 'active_unknown',
-                'Authoritative DNS returned no address records.',
+                $reason,
                 $fqdn,
                 $nameservers,
                 $answersByNameserver,
@@ -118,6 +127,19 @@ class AuthoritativeDnsActiveNodeGuard
         }
 
         $matchesNode = ! empty(array_intersect($first ?? [], $nodeIps));
+        if ($matchesNode && ! empty(array_diff($first, $nodeIps))) {
+            return $this->result(
+                false,
+                'active_unknown',
+                'Authoritative DNS includes both this node and other addresses.',
+                $fqdn,
+                $nameservers,
+                $answersByNameserver,
+                $nodeIps,
+                ['lookup_failures' => $lookupFailures]
+            );
+        }
+
         if (! $matchesNode) {
             return $this->result(
                 false,
@@ -168,9 +190,9 @@ class AuthoritativeDnsActiveNodeGuard
         return $host ? strtolower(trim($host, " \t\n\r\0\x0B.")) : null;
     }
 
-    private function authoritativeZone(string $fqdn): ?string
+    private function authoritativeZone(string $fqdn, bool $useConfiguredZone = true): ?string
     {
-        $configuredZone = $this->setting('scheduled_announcements_authoritative_zone');
+        $configuredZone = $useConfiguredZone ? $this->setting('scheduled_announcements_authoritative_zone') : null;
         if (! empty($configuredZone)) {
             return strtolower(trim($configuredZone, " \t\n\r\0\x0B."));
         }
@@ -179,7 +201,7 @@ class AuthoritativeDnsActiveNodeGuard
         for ($i = 0; $i < count($labels) - 1; $i++) {
             $candidate = implode('.', array_slice($labels, $i));
 
-            if (! empty(@dns_get_record($candidate, DNS_NS))) {
+            if (! empty($this->dnsRecords($candidate, DNS_NS))) {
                 return strtolower($candidate);
             }
         }
@@ -189,7 +211,7 @@ class AuthoritativeDnsActiveNodeGuard
 
     private function nameserversForZone(string $zone): array
     {
-        $records = @dns_get_record($zone, DNS_NS) ?: [];
+        $records = $this->dnsRecords($zone, DNS_NS);
         $nameservers = [];
 
         foreach ($records as $record) {
@@ -202,10 +224,29 @@ class AuthoritativeDnsActiveNodeGuard
         return array_values(array_unique($nameservers));
     }
 
-    private function authoritativeAnswers(string $fqdn, string $nameserver, array &$lookupFailures): ?array
+    protected function dnsRecords(string $hostname, int $type): array
     {
+        return @dns_get_record($hostname, $type) ?: [];
+    }
+
+    private function authoritativeAnswers(
+        string $fqdn,
+        string $nameserver,
+        array &$lookupFailures,
+        array $visited,
+        array &$resolvedAliases
+    ): ?array
+    {
+        if (in_array($fqdn, $visited, true) || count($visited) >= 8) {
+            $lookupFailures[$fqdn]['CNAME'] = 'CNAME loop or maximum chain length exceeded.';
+
+            return [];
+        }
+
+        $visited[] = $fqdn;
         $answers = [];
-        $answered = false;
+        $aliases = [];
+        $statuses = [];
         foreach (['A', 'AAAA'] as $type) {
             $timeout = $this->dnsTimeoutSeconds();
 
@@ -213,7 +254,10 @@ class AuthoritativeDnsActiveNodeGuard
                 $result = Process::timeout($timeout + 1)->run([
                     'dig',
                     '-4',
-                    '+short',
+                    '+norecurse',
+                    '+noall',
+                    '+comments',
+                    '+answer',
                     '+tries=1',
                     '+time=' . $timeout,
                     $fqdn,
@@ -223,26 +267,101 @@ class AuthoritativeDnsActiveNodeGuard
             } catch (Throwable $e) {
                 $lookupFailures[$nameserver][$type] = $e->getMessage();
 
-                continue;
+                return null;
             }
 
             if (! $result->successful()) {
                 $lookupFailures[$nameserver][$type] = trim($result->errorOutput() ?: $result->output())
                     ?: 'dig exited with status ' . $result->exitCode();
 
-                continue;
+                return null;
             }
 
-            $answered = true;
-            foreach (explode("\n", trim($result->output())) as $line) {
-                $line = trim($line);
-                if ($line !== '' && filter_var($line, FILTER_VALIDATE_IP)) {
-                    $answers[] = $this->normalizeIp($line);
+            $output = $result->output();
+            if (! preg_match('/status: ([A-Z]+)/', $output, $status)
+                || ! in_array($status[1], ['NOERROR', 'NXDOMAIN'], true)
+                || ! preg_match('/^;; flags: [^;]*\baa\b/m', $output)) {
+                $lookupFailures[$nameserver][$fqdn.' '.$type] = 'No authoritative answer ('.($status[1] ?? 'missing status').').';
+
+                return null;
+            }
+
+            $statuses[] = $status[1];
+            foreach (explode("\n", $output) as $line) {
+                if (! preg_match('/^(\S+)\s+\d+\s+IN\s+(A|AAAA|CNAME)\s+(\S+)\s*$/i', trim($line), $record)
+                    || strtolower(rtrim($record[1], '.')) !== $fqdn) {
+                    continue;
+                }
+
+                if (strtoupper($record[2]) === 'CNAME') {
+                    $aliases[] = strtolower(rtrim($record[3], '.'));
+                } elseif (strtoupper($record[2]) === $type && ($ip = $this->normalizeIp($record[3])) !== null) {
+                    $answers[] = $ip;
                 }
             }
         }
 
-        return $answered ? array_values(array_unique($answers)) : null;
+        $aliases = array_values(array_unique($aliases));
+        if (count(array_unique($statuses)) > 1
+            || count($aliases) > 1
+            || (! empty($aliases) && ! empty($answers))) {
+            $lookupFailures[$nameserver][$fqdn] = 'Conflicting address or CNAME answers.';
+
+            return [];
+        }
+
+        if (! empty($aliases)) {
+            return $this->resolveAlias($aliases[0], $visited, $lookupFailures, $resolvedAliases);
+        }
+
+        return array_values(array_unique($answers));
+    }
+
+    /** Resolve each CNAME hop using that name's own authorities, once per decision. */
+    private function resolveAlias(string $fqdn, array $visited, array &$lookupFailures, array &$resolvedAliases): array
+    {
+        if (in_array($fqdn, $visited, true) || count($visited) >= 8
+            || ! preg_match('/^(?=.{1,253}$)([a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/', $fqdn)) {
+            $lookupFailures[$fqdn]['CNAME'] = 'Invalid CNAME target, loop, or maximum chain length exceeded.';
+
+            return [];
+        }
+
+        if (array_key_exists($fqdn, $resolvedAliases)) {
+            return $resolvedAliases[$fqdn];
+        }
+
+        // The original name's configured zone cannot identify authorities for
+        // an external target such as an Azure Traffic Manager profile.
+        $zone = $this->authoritativeZone($fqdn, false);
+        $nameservers = $zone ? $this->nameserversForZone($zone) : [];
+        if (empty($nameservers)) {
+            $lookupFailures[$fqdn]['CNAME'] = 'Unable to discover CNAME target authorities.';
+
+            return $resolvedAliases[$fqdn] = [];
+        }
+
+        $first = null;
+        foreach ($nameservers as $nameserver) {
+            $answers = $this->authoritativeAnswers($fqdn, $nameserver, $lookupFailures, $visited, $resolvedAliases);
+            if ($answers === null) {
+                continue;
+            }
+
+            sort($answers);
+            if ($first !== null && $first !== $answers) {
+                $lookupFailures[$fqdn]['CNAME'] = 'CNAME target authorities disagreed.';
+
+                return $resolvedAliases[$fqdn] = [];
+            }
+            $first = $answers;
+        }
+
+        if (empty($first)) {
+            $lookupFailures[$fqdn]['CNAME'] ??= 'CNAME target has no authoritative address records.';
+        }
+
+        return $resolvedAliases[$fqdn] = $first ?? [];
     }
 
     private function digIsAvailable(): bool
@@ -263,6 +382,12 @@ class AuthoritativeDnsActiveNodeGuard
             return $this->normalizeIps(preg_split('/[\s,]+/', $configuredIps) ?: []);
         }
 
+        return $this->autoDetectedNodeIps();
+    }
+
+    /** Public addresses detected from this node, independent of replicated settings. */
+    public function autoDetectedNodeIps(): array
+    {
         return Cache::remember('scheduled_announcements_node_ips:auto', 300, function () {
             $ips = [];
 
@@ -342,7 +467,7 @@ class AuthoritativeDnsActiveNodeGuard
         return max(1, (int) ceil($milliseconds / 1000));
     }
 
-    private function setting(string $subcategory): ?string
+    protected function setting(string $subcategory): ?string
     {
         $value = DefaultSettings::where('default_setting_category', 'scheduled_jobs')
             ->where('default_setting_subcategory', $subcategory)

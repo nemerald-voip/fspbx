@@ -36,7 +36,7 @@ class RingotelConversationService
             return null;
         }
 
-        $country = get_domain_setting('country', $message->domain_uuid) ?? 'US';
+        $country = app(\App\Services\PhoneNumberService::class)->countryCodeForDomain($message->domain_uuid);
         $local = $message->direction === 'in' ? $message->destination : $message->source;
         $remote = $message->direction === 'in' ? $message->source : $message->destination;
         $local = $this->normalize($local, $country);

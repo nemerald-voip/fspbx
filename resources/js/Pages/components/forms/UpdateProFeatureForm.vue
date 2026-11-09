@@ -89,13 +89,13 @@
                             <div class="px-4 py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-0">
                                 <dt class="text-sm font-medium leading-6 text-gray-900">{{ $t('Activation Status') }}</dt>
                                 <dd class="mt-1 flex text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">
-                                    <span v-if="props.options.item.license_details?.meta?.code == 'NO_MACHINE'"
+                                    <span v-if="needsActivation"
                                         class="flex-grow text-rose-600">{{ $t('The license key has not been activated on this machine') }}</span>
                                     <span v-if="props.options.item.license_details?.meta?.code == 'VALID'"
                                         class="flex-grow text-green-600">{{ $t('The license key is activated') }}</span>
                                     <span v-else class="flex-grow text-rose-600"></span>
 
-                                    <span v-if="props.options.item.license_details?.meta?.code == 'NO_MACHINE'"
+                                    <span v-if="needsActivation"
                                         class="ml-4 flex-shrink-0">
                                         <button type="button" @click.prevent="submitForm"
                                             class="rounded-md bg-gray-100font-medium text-indigo-600 hover:text-indigo-500">{{ $t('Activate') }}</button>
@@ -256,7 +256,7 @@
 </template>
 
 <script setup>
-import { reactive, ref } from "vue";
+import { computed, reactive, ref } from "vue";
 import { usePage } from '@inertiajs/vue3';
 
 
@@ -279,6 +279,12 @@ const props = defineProps({
 });
 
 const page = usePage();
+
+const needsActivation = computed(() =>
+    ['NO_MACHINE', 'NO_MACHINES', 'FINGERPRINT_SCOPE_MISMATCH'].includes(
+        props.options.item.license_details?.meta?.code
+    )
+);
 
 const form = reactive({
     license: props.options.item.license,

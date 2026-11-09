@@ -535,7 +535,7 @@ class MessageController extends Controller
         $domain = $this->currentDomainUuid();
         $local = app(MessageParticipantService::class)->normalize($domain, $data['source']);
         $this->authorizeNumber($local);
-        $recipients = $groups->recipients($data['recipients'], $local, get_domain_setting('country', $domain) ?? 'US');
+        $recipients = $groups->recipients($data['recipients'], $local, app(\App\Services\PhoneNumberService::class)->countryCodeForDomain($domain));
         if (!$recipients) throw \Illuminate\Validation\ValidationException::withMessages(['recipients' => [__('Enter at least one other phone number.')]]);
         $group = null;
         if (count($recipients) > 1) {
@@ -569,7 +569,7 @@ class MessageController extends Controller
                 ->findOrFail($this->authorizedExtension($data['extension_uuid']));
             $domainUuid = session('domain_uuid');
 
-            $countryCode = get_domain_setting('country', $domainUuid) ?? 'US';
+            $countryCode = app(\App\Services\PhoneNumberService::class)->countryCodeForDomain($domainUuid);
 
             $normalizedSource = formatPhoneNumber($data['source'], $countryCode, PhoneNumberFormat::E164);
             $group = !empty($data['message_group_uuid']) ? MessageGroup::where('domain_uuid', $domainUuid)
@@ -748,6 +748,12 @@ class MessageController extends Controller
             ->allowedSorts(['created_at'])
             ->defaultSort('-created_at');
 
+        if (\Illuminate\Support\Facades\Schema::hasTable('outbound_message_webhook_events')) {
+            $query->with(['outboundWebhookEvents' => fn ($events) => $events->where('domain_uuid', $domainUuid)
+                ->select('outbound_message_webhook_event_uuid', 'domain_uuid', 'message_uuid', 'event_type', 'status', 'attempts', 'http_status', 'attempted_at')
+                ->orderBy('created_at')]);
+        }
+
         if ($params['paginate']) {
             return $query
                 ->paginate($params['paginate'])
@@ -767,10 +773,18 @@ class MessageController extends Controller
         $providerName = data_get($deliveryMeta, 'provider.name')
             ?? data_get($deliveryMeta, 'outbound.provider.name');
 
+        if ($row->isApiOutbound() && $row->relationLoaded('outboundWebhookEvents')) {
+            $deliveryMeta['outbound']['webhooks'] = $row->outboundWebhookEvents
+                ->where('domain_uuid', $row->domain_uuid)->map(fn ($event) => [
+                    'id' => $event->getKey(),
+                    ...$event->only(['event_type', 'status', 'attempts', 'http_status', 'attempted_at']),
+                ])->values()->all();
+        }
         $statusSummary = $this->buildStatusSummary($row, $deliveryMeta);
 
         return [
             ...$row->toArray(),
+            'delivery_meta' => $deliveryMeta,
             'provider_name' => $providerName,
             'message_preview' => $this->buildMessagePreview($row->message, $media),
             'status_summary' => $statusSummary,
@@ -805,8 +819,6 @@ class MessageController extends Controller
 
     protected function buildStatusSummary(Messages $row, array $deliveryMeta): string
     {
-        $parts = [];
-
         $providerName = data_get($deliveryMeta, 'provider.name')
             ?? data_get($deliveryMeta, 'outbound.provider.name');
 
@@ -814,19 +826,9 @@ class MessageController extends Controller
             ?? data_get($deliveryMeta, 'outbound.provider.status')
             ?? $row->status;
 
-        if ($providerStatus) {
-            $parts[] = ($providerName ? "{$providerName}: " : '') . $providerStatus;
-        }
-
-        if ($ringotel = data_get($deliveryMeta, 'ringotel.status')) {
-            $parts[] = "ringotel: {$ringotel}";
-        }
-
-        if ($email = data_get($deliveryMeta, 'email.status')) {
-            $parts[] = "email: {$email}";
-        }
-
-        return implode(' • ', $parts);
+        return $providerStatus
+            ? ($providerName ? "{$providerName}: " : '') . $providerStatus
+            : '';
     }
 
     public function getUserPermissions()

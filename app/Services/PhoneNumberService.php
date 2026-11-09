@@ -6,6 +6,7 @@ use App\Models\Destinations;
 use libphonenumber\NumberParseException;
 use libphonenumber\PhoneNumberFormat;
 use libphonenumber\PhoneNumberUtil;
+use libphonenumber\ValidationResult;
 
 class PhoneNumberService
 {
@@ -30,25 +31,40 @@ class PhoneNumberService
 
         $country = $this->countryCodeForDomain($phoneNumber->domain_uuid);
         if (str_starts_with($number, '+')) {
-            $match = $this->dialplanMatchForCountry($number, $country);
+            return $this->normalizeOriginalDid($number, $country);
         } elseif ($prefix !== '') {
             $callingCode = ltrim($prefix, '+');
             $national = $area . $number;
             // Avoid duplicating a prefix when the stored number is already a
-            // complete, valid international number.
-            $complete = $this->dialplanMatchForCountry('+' . $national, $country);
-            if ($area === '' && str_starts_with($number, $callingCode) && $complete['is_phone_number']) {
-                $match = $complete;
-            } else {
-                // libphonenumber handles national trunk prefixes. Do not strip
-                // leading zeros ourselves: they are significant in Italy.
-                $match = $this->dialplanMatchForCountry('+' . $callingCode . $national, $country);
+            // complete, possible international number.
+            $complete = $this->normalizeOriginalDid('+' . $national, $country);
+            if ($area === '' && str_starts_with($number, $callingCode) && $complete !== null) {
+                return $complete;
             }
-        } else {
-            $match = $this->dialplanMatchForCountry($area . $number, $country);
+
+            // libphonenumber handles national trunk prefixes. Do not strip
+            // leading zeros ourselves: they are significant in Italy.
+            return $this->normalizeOriginalDid('+' . $callingCode . $national, $country);
         }
 
-        return $match['is_phone_number'] ? $match['canonical'] : null;
+        return $this->normalizeOriginalDid($area . $number, $country);
+    }
+
+    private function normalizeOriginalDid(string $value, string $country): ?string
+    {
+        $phoneNumbers = PhoneNumberUtil::getInstance();
+
+        try {
+            $number = $phoneNumbers->parse($value, $country);
+        } catch (NumberParseException) {
+            return null;
+        }
+
+        // A configured DID can belong to a range newer than the bundled metadata.
+        // Check its structure without requiring a recognized allocation.
+        return $phoneNumbers->isPossibleNumberWithReason($number) === ValidationResult::IS_POSSIBLE
+            ? $phoneNumbers->format($number, PhoneNumberFormat::E164)
+            : null;
     }
 
     public function countryCodeForDomain(?string $domainUuid = null): string
@@ -57,8 +73,9 @@ class PhoneNumberService
         $cacheKey = $domainUuid ?: '__default__';
 
         if (!array_key_exists($cacheKey, $this->countryCodes)) {
-            $countryCode = get_domain_setting('country', $domainUuid) ?: 'US';
-            $this->countryCodes[$cacheKey] = strtoupper(trim((string) $countryCode)) ?: 'US';
+            $countryCode = get_domain_setting('country', $domainUuid);
+            // Unknown region still permits explicit international numbers.
+            $this->countryCodes[$cacheKey] = strtoupper(trim((string) $countryCode)) ?: PhoneNumberUtil::UNKNOWN_REGION;
         }
 
         return $this->countryCodes[$cacheKey];
@@ -67,13 +84,54 @@ class PhoneNumberService
     public function formatForDomain(
         ?string $phoneNumber,
         ?string $domainUuid = null,
-        int $format = PhoneNumberFormat::NATIONAL
+        PhoneNumberFormat|int $format = PhoneNumberFormat::NATIONAL
     ): ?string {
         return formatPhoneNumber(
             $phoneNumber,
             $this->countryCodeForDomain($domainUuid),
             $format
         );
+    }
+
+    /** Normalize a literal DID into the existing country-prefix/number fields. */
+    public function destinationParts(string $value, ?string $prefix, ?string $domainUuid): array
+    {
+        // Keep dialplan patterns and internal identifiers unchanged.
+        if (! preg_match('/^\+?[0-9(][0-9\s().-]*$/D', trim($value))) {
+            return ['destination_number' => $value, 'destination_prefix' => $prefix];
+        }
+
+        $did = $this->originalDid(new Destinations([
+            'domain_uuid' => $domainUuid,
+            'destination_number' => preg_replace('/[\s().-]+/', '', trim($value)),
+            'destination_prefix' => $prefix,
+        ]));
+        if ($did === null) {
+            return ['destination_number' => $value, 'destination_prefix' => $prefix];
+        }
+
+        $util = PhoneNumberUtil::getInstance();
+        $number = $util->parse($did);
+
+        return [
+            'destination_number' => $util->getNationalSignificantNumber($number),
+            'destination_prefix' => (string) $number->getCountryCode(),
+        ];
+    }
+
+    public function isValidForDomain(string $value, ?string $domainUuid = null): bool
+    {
+        // Do not interpret dialplan patterns or vanity strings as phone numbers.
+        if (! preg_match('/^\+?[0-9(][0-9\s().-]*$/D', trim($value))) {
+            return false;
+        }
+
+        $util = PhoneNumberUtil::getInstance();
+        try {
+            return $util->isValidNumber($util->parse($value, $this->countryCodeForDomain($domainUuid)));
+        } catch (NumberParseException) {
+            return false;
+        }
     }
 
     /**
@@ -114,7 +172,7 @@ class PhoneNumberService
         try {
             $number = $phoneNumbers->parse(
                 $value,
-                strtoupper(trim($countryCode)) ?: 'US'
+                strtoupper(trim($countryCode)) ?: PhoneNumberUtil::UNKNOWN_REGION
             );
         } catch (NumberParseException) {
             return $exact;

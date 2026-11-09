@@ -1,0 +1,11 @@
+{
+    "api": 1,
+    "shared": {
+        "vue": "resources/js/runtime/vue.mjs",
+        "@inertiajs/vue3": "resources/js/runtime/inertia.mjs",
+        "@inertiajs/core": "resources/js/runtime/inertia-core.mjs",
+        "@vueform/vueform": "resources/js/runtime/vueform.mjs",
+        "laravel-vue-i18n": "resources/js/runtime/laravel-i18n.mjs",
+        "@i18n": "resources/js/i18n.mjs"
+    }
+}

@@ -21,8 +21,9 @@ class MessageRepository
         ?string $providerEvent = null,
         ?string $messageGroupUuid = null,
         ?int $expectedMediaCount = null,
+        array $inboundDelivery = ['method' => 'members'],
     ): Messages {
-        $countryCode = get_domain_setting('country', $domainUuid) ?? 'US';
+        $countryCode = app(\App\Services\PhoneNumberService::class)->countryCodeForDomain($domainUuid);
 
         $normalizedSource = $this->normalizePhoneNumberForStorage($source, $countryCode);
         $normalizedDestination = $this->normalizePhoneNumberForStorage($destination, $countryCode);
@@ -53,6 +54,12 @@ class MessageRepository
             'status'         => 'received',
             'media'          => $media,
             'delivery_meta'  => [
+                'inbound' => $inboundDelivery,
+                ...(($inboundDelivery['method'] ?? null) === 'webhook' ? ['webhook' => [
+                    'event_id' => (string) \Illuminate\Support\Str::uuid(),
+                    'status' => 'pending',
+                    'attempts' => 0,
+                ]] : []),
                 'ringotel_tracking' => 1,
                 'provider' => [
                     'name'         => $providerName,
@@ -104,6 +111,7 @@ class MessageRepository
         ?string $providerEvent = null,
         ?string $recipient = null,
         ?string $occurredAt = null,
+        ?string $rawStatus = null,
     ): void {
         messaging_webhook_debug('applyProviderStatus called', [
             'provider' => $provider,
@@ -112,12 +120,20 @@ class MessageRepository
             'provider_event' => $providerEvent,
         ]);
 
+        if (app(\App\Services\Messaging\Outbound\ApiMessageStatus::class)->receipt(compact(
+            'provider', 'referenceId', 'status', 'description', 'providerEvent', 'recipient', 'occurredAt', 'rawStatus'
+        ))) {
+            return;
+        }
+
         if ($provider === 'bandwidth' && $recipient !== null
             && $this->applyBandwidthGroupRecipientStatus($referenceId, $recipient, $status, $description, $providerEvent, $occurredAt)) {
             return;
         }
 
-        $message = Messages::where('reference_id', $referenceId)->first();
+        $matches = Messages::where('reference_id', $referenceId)->where('direction', 'out')
+            ->where('delivery_meta->outbound->provider->name', $provider)->limit(2)->get();
+        $message = $matches->count() === 1 ? $matches->first() : null;
 
         if (!$message) {
             messaging_webhook_debug('applyProviderStatus message not found', [
@@ -225,7 +241,7 @@ class MessageRepository
             'media_count' => count($media),
         ]);
 
-        $countryCode = get_domain_setting('country', $domainUuid) ?? 'US';
+        $countryCode = app(\App\Services\PhoneNumberService::class)->countryCodeForDomain($domainUuid);
 
         $normalizedSource = $this->normalizePhoneNumberForStorage($source, $countryCode);
         $normalizedDestination = $this->normalizePhoneNumberForStorage($destination, $countryCode);

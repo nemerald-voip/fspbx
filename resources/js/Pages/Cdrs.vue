@@ -222,8 +222,13 @@
                                 :backgroundColor="statusBadgeConfig[row.status]?.backgroundColor || 'bg-blue-50'"
                                 :textColor="statusBadgeConfig[row.status]?.textColor || 'text-blue-700'"
                                 :ringColor="statusBadgeConfig[row.status]?.ringColor || 'ring-blue-600/20'" />
-                            <div v-if="row.voicemail_message === true || row.voicemail_message === 'true'"
-                                class="mt-1 text-xs text-gray-500">{{ $t('Voicemail message left') }}</div>
+                            <!-- Only add what the badge doesn't say: a queue outcome can replace the Voicemail status. -->
+                            <template v-if="row.voicemail_message === true || row.voicemail_message === 'true'">
+                                <div v-if="row.status !== 'voicemail'" class="mt-1 text-xs text-gray-500">
+                                    {{ $t('Voicemail message left') }}</div>
+                            </template>
+                            <div v-else-if="row.status === 'voicemail'" class="mt-1 text-xs text-gray-500">
+                                {{ $t('No message left') }}</div>
                         </TableField>
 
                         <TableField v-if="permissions.cdr_mos_view"
@@ -299,7 +304,8 @@
 
     <CallDetailsModal :show="showDetailsModal" :item="itemOptions?.item" :loading="loadingModal"
         :pcap-route="routes.sip_trace" :can-view-pcap="permissions.cdr_pcap"
-        :customClass="'sm:max-w-4xl'" @close="handleModalClose" 
+        :can-play-recording="permissions.call_recording_play" :routes="routes"
+        :customClass="'sm:max-w-5xl'" @close="handleModalClose"
         @success="showNotification" 
         @error="handleErrorResponse">
     </CallDetailsModal>

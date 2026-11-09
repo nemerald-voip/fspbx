@@ -14,5 +14,7 @@ class MessageRouteData extends Data
         public bool $hasMobileApp = false,
         public ?string $email = null,
         public ?string $orgId = null,
+        public array $inboundDelivery = ['method' => 'members'],
+        public ?string $smsDestinationUuid = null,
     ) {}
 }

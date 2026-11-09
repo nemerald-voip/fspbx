@@ -42,7 +42,7 @@
 
                             <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
                                 @error="handleError" @response="handleResponse" :display-errors="false"
-                                :default="defaultValues">
+                                :default="defaultValues" :validate-on="''" @mounted="form => form.disableValidation()">
                                 <template #empty>
                                     <div class="shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
                                         <FormElements>
@@ -228,6 +228,8 @@ const defaultValues = computed(() => {
 });
 
 const submitForm = async (FormData, form$) => {
+    form$.messageBag.clear();
+    Object.values(form$.elements$).forEach(clearErrorsRecursive);
     const requestData = form$.requestData;
 
     if (props.mode === "create") {

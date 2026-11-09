@@ -9,6 +9,8 @@
 require "resources.functions.config"
 
 local Database = require "resources.functions.database"
+local feature = require "lua.flag_feature"
+local dbh
 
 DEBUG_MODE = false -- Set to true to enable debug logs
 
@@ -30,36 +32,44 @@ local function check()
 
     local flag_state = require "lua.flag_state"
 
-    local dbh = Database.new("system")
+    dbh = Database.new("system")
     if not (dbh and dbh:connected()) then
         debug_log("ERR", "Database unavailable; continuing with normal routing")
         return 0
     end
+
+    -- Disabled means bypass every override, including rows matching an inactive flag.
+    if not feature.enabled(dbh) then return 0 end
 
     local match = 0
     local position = 1
     while argv[position + 1] do
         local flag_uuid, wanted = tostring(argv[position + 1]):match("^([^:]+):?(%a*)$")
         local want_active = wanted ~= "inactive"
-        local flag = flag_uuid and flag_state.load_flag_by_uuid(dbh, flag_uuid, domain_uuid)
+        local flag, err
+        if flag_uuid then flag, err = flag_state.load_flag_by_uuid(dbh, flag_uuid, domain_uuid) end
+        if err then return 0 end
 
         -- A missing or disabled flag never matches, so its row is skipped in either state.
-        if flag and flag_state.truthy(flag.enabled) and flag_state.is_active(dbh, flag) == want_active then
-            match = position
-            break
+        if flag and flag_state.truthy(flag.enabled) then
+            local active = flag_state.is_active(dbh, flag)
+            if active == nil then return 0 end
+            if active == want_active then
+                match = position
+                break
+            end
         end
 
         debug_log("NOTICE", string.format("Flag %d (%s) is not %s", position, tostring(flag_uuid), want_active and "active" or "inactive"))
         position = position + 1
     end
 
-    dbh:release()
-
     debug_log("NOTICE", "First matching flag position: " .. tostring(match))
     return match
 end
 
 local ok, match = pcall(check)
+if dbh then pcall(function() dbh:release() end) end
 if not ok then
     freeswitch.consoleLog("ERR", SCRIPT_NAME .. " " .. tostring(match) .. "\n")
     match = 0

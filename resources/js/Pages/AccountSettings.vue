@@ -66,6 +66,11 @@
 
             <!-- MESSAGING -->
             <section v-show="selectedMenuOption === 'messaging'">
+                <MessageWebhookSettingsForm :settings="messageWebhookSettings" :route="routes.message_webhook_update"
+                    :secret-route="routes.message_webhook_secret"
+                    :can-manage="permissions?.messaging_manage"
+                    @success="messages => showNotification('success', messages)"
+                    @error="messages => showNotification('error', messages)" />
                 <MessagingSettingsForm :settings="messagingSettings" :route="routes.messaging_update"
                     :reset-route="routes.messaging_reset"
                     :can-manage="permissions?.messaging_manage"
@@ -235,6 +240,7 @@ import AssemblyAiForm from "./components/forms/AssemblyAiForm.vue"
 import CallWebhookSettingsForm from "./components/forms/CallWebhookSettingsForm.vue"
 import LdapDirectorySettings from "./components/LdapDirectorySettings.vue"
 import MessagingSettingsForm from "./components/forms/MessagingSettingsForm.vue"
+import MessageWebhookSettingsForm from "./components/forms/MessageWebhookSettingsForm.vue"
 import {
     Cog6ToothIcon,
     MapPinIcon,
@@ -258,6 +264,7 @@ const props = defineProps({
     routes: Object,
     permissions: Object,
     messagingSettings: { type: Object, default: () => ({ enabled: false, available: false }) },
+    messageWebhookSettings: { type: Object, default: () => ({ available: false }) },
     pms_provider_options: {
         type: Array,
         default: () => [],

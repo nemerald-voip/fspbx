@@ -3,12 +3,14 @@
 namespace App\Jobs;
 
 use App\Models\EmailLog;
+use App\Services\EmailDeliveryFailureReporter;
 use Illuminate\Bus\Queueable;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Queue\SerializesModels;
 use Symfony\Component\Mime\Address;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -107,14 +109,23 @@ class RetryLoggedEmail implements ShouldQueue
                 $this->appendDebug($log, 'Details: ' . $classification['details']);
             }
 
-            logger()->warning('RetryLoggedEmail send failure', [
+            $context = [
+                'job' => class_basename($this),
                 'log_uuid' => $log->uuid,
                 'attempt' => $this->attempts(),
+                'max_tries' => $this->tries,
                 'status' => $classification['status'],
                 'category' => $classification['category'],
-                'summary' => $classification['summary'],
-                'details' => $classification['details'],
-            ]);
+            ];
+
+            if ($e instanceof TransportExceptionInterface) {
+                app(EmailDeliveryFailureReporter::class)->report($e, $context);
+            } else {
+                logger()->warning('RetryLoggedEmail send failure', $context + [
+                    'summary' => $classification['summary'],
+                    'details' => $classification['details'],
+                ]);
+            }
 
             // Temporary lockout: delay instead of hammering the SMTP server again immediately
             if ($classification['category'] === 'smtp_lockout') {

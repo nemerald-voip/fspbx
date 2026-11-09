@@ -36,7 +36,7 @@ class MessageReadService
             return Messages::query()->whereRaw('1 = 0');
         }
 
-        return Messages::query()->where('messages.domain_uuid', $domainUuid)
+        return Messages::query()->forInbox()->where('messages.domain_uuid', $domainUuid)
             ->where('messages.direction', 'in')
             // Preserve the shared read state saved before per-user tracking.
             // New reads only write message_user_reads, leaving this field null.
@@ -61,6 +61,8 @@ class MessageReadService
                                 ->whereColumn('replies.destination', 'messages.source'));
                     })
                     ->where('replies.direction', 'out')
+                    ->where(fn ($scope) => $scope->whereNull('replies.delivery_meta->outbound->origin')
+                        ->orWhere('replies.delivery_meta->outbound->origin', '!=', 'api'))
                     ->whereColumn('replies.created_at', '>=', 'messages.created_at')
                     ->whereNotNull('replies.delivery_meta->outbound->provider->accepted_at');
             });
@@ -71,7 +73,7 @@ class MessageReadService
         // Only acknowledge messages actually fetched by this client, never a
         // concurrently arriving message or another tenant's submitted UUID.
         $ids = app(MessageGroupService::class)->conversation(
-            Messages::where('domain_uuid', $domainUuid)->where('direction', 'in'), $local, $remote)
+            Messages::forInbox()->where('domain_uuid', $domainUuid)->where('direction', 'in'), $local, $remote)
             ->whereIn('message_uuid', $messageUuids)->pluck('message_uuid');
         if ($ids->isEmpty()) return 0;
         $inserted = DB::table('message_user_reads')->insertOrIgnore($ids->map(fn ($id) => [

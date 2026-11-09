@@ -8,7 +8,8 @@
             <condition regex="all" break="never">
                 <regex field="{{ $destination_condition_field }}"
                     expression="{{ $phone_number->destination_number_regex }}" />
-                <regex field="{{ $row['condition_field'] }}" expression="^\+?1?{{ $row['condition_expression'] }}" />
+                <regex field="{{ $row['condition_field'] }}"
+                    expression="{{ app(\App\Services\PhoneNumberService::class)->dialplanMatchForDomain($row['condition_expression'], $phone_number->domain_uuid)['expression'] }}" />
                 <action application="export" data="call_direction=inbound" inline="true" />
                 <action application="set" data="domain_uuid={{ $phone_number->domain_uuid }}" inline="true" />
                 <action application="set" data="domain_name={{ $domain_name }}" inline="true" />

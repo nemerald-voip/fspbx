@@ -5,6 +5,7 @@ namespace Tests\Unit;
 use App\Models\FlagOverride;
 use App\Models\IvrMenus;
 use App\Models\RingGroups;
+use App\Services\FlagFeature;
 use Tests\TestCase;
 
 class FlagOverrideDialplanTest extends TestCase
@@ -12,6 +13,12 @@ class FlagOverrideDialplanTest extends TestCase
     private const DOMAIN = '11111111-1111-4111-8111-111111111111';
     private const FLAG_A = '22222222-2222-4222-8222-222222222222';
     private const FLAG_B = '44444444-4444-4444-8444-444444444444';
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->mock(FlagFeature::class)->shouldReceive('enabled')->andReturn(true);
+    }
 
     public function test_ring_group_checks_flags_in_order_before_normal_route(): void
     {
@@ -43,6 +50,27 @@ class FlagOverrideDialplanTest extends TestCase
         }
 
         $this->assertSame('app.lua ring_groups', $xpath->evaluate('string(/extension/condition[4]/action[@application="lua"]/@data)'));
+    }
+
+    public function test_disabled_xml_matches_main_without_reading_override_relations(): void
+    {
+        $this->mock(FlagFeature::class)->shouldReceive('enabled')->andReturn(false);
+        $ring = new RingGroups([
+            'domain_uuid' => self::DOMAIN, 'dialplan_uuid' => self::FLAG_A,
+            'ring_group_name' => 'Sales', 'ring_group_extension' => '9000',
+        ]);
+        $ring->ring_group_uuid = '33333333-3333-4333-8333-333333333333';
+        $ivr = new IvrMenus([
+            'domain_uuid' => self::DOMAIN, 'dialplan_uuid' => self::FLAG_A,
+            'ivr_menu_name' => 'Main', 'ivr_menu_extension' => '9150',
+            'ivr_menu_ringback' => '${us-ring}', 'ivr_menu_exit_app' => 'hangup',
+            'ivr_menu_cid_prefix' => 'Reception',
+        ]);
+        $ivr->ivr_menu_uuid = $ring->ring_group_uuid;
+        // Captured from main bc491890. No Flags tables or loaded relations are available.
+        $renderer = app(\App\Services\FlagDialplanRenderer::class);
+        $this->assertSame(file_get_contents(base_path('tests/fixtures/flags/ring-group-disabled.xml')), $renderer->ringGroup($ring));
+        $this->assertSame(file_get_contents(base_path('tests/fixtures/flags/ivr-disabled.xml')), $renderer->ivr($ivr));
     }
 
     public function test_inactive_overrides_are_passed_with_their_state(): void

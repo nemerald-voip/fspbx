@@ -940,17 +940,31 @@ class ExtensionsController extends Controller
      */
     public function callerId(Request $request)
     {
-        $appUser = MobileAppUsers::where('user_id', $request->user)->first();
+        $request->session()->forget('caller_id_mobile_app_user_uuid');
+        $userId = $request->query('user');
 
-        if (!$appUser) {
+        if (!is_string($userId) || $userId === '') {
             abort(403, __('Unauthorized user. Contact your administrator'));
         }
 
-        $extension = Extensions::find($appUser->extension_uuid);
+        $appUser = MobileAppUsers::where('user_id', $userId)->where('status', 1)->first();
 
-        if (!$extension) {
+        if (!$appUser || !$appUser->domain_uuid) {
+            abort(403, __('Unauthorized user. Contact your administrator'));
+        }
+
+        $extension = Extensions::whereKey($appUser->extension_uuid)
+            ->where('domain_uuid', $appUser->domain_uuid)
+            ->where('enabled', 'true')
+            ->first();
+
+        if (!$extension || $extension->suspended) {
             abort(403, __('Unauthorized extension. Contact your administrator'));
         }
+
+        // Ringotel opens this page without a portal login. Bind subsequent saves to
+        // this mobile user; possession of a valid Ringotel user ID still grants access.
+        $request->session()->put('caller_id_mobile_app_user_uuid', $appUser->mobile_app_user_uuid);
 
         $destinations = Destinations::where('destination_enabled', 'true')
             ->where('domain_uuid', $appUser->domain_uuid)
@@ -964,7 +978,7 @@ class ExtensionsController extends Controller
             ->sortBy('destination_description')
             ->values();
 
-        $countryCode = get_domain_setting('country', $appUser->domain_uuid) ?? 'US';
+        $countryCode = app(\App\Services\PhoneNumberService::class)->countryCodeForDomain($appUser->domain_uuid);
 
         $currentCallerIdE164 = null;
 
@@ -1008,32 +1022,52 @@ class ExtensionsController extends Controller
 
     public function updateCallerID(Request $request, $extension_uuid)
     {
-        $extension = Extensions::find($extension_uuid);
+        // Recheck the page's mobile user on every save, including removal/disablement.
+        // Never accept a different user or extension from the submitted payload.
+        $appUser = MobileAppUsers::whereKey($request->session()->get('caller_id_mobile_app_user_uuid'))
+            ->where('status', 1)
+            ->first();
 
-        if (!$extension) {
+        if (!$appUser || !$appUser->domain_uuid || $appUser->extension_uuid !== $extension_uuid) {
             return response()->json([
-                'status' => 401,
-                'error' => [
-                    'message' => __('Invalid extension. Please, contact administrator')
+                'errors' => [
+                    'user' => [__('Unauthorized user. Contact your administrator')],
                 ]
-            ], 401);
+            ], 403);
         }
 
-        $destination = Destinations::find($request->destination_uuid);
+        $extension = Extensions::whereKey($appUser->extension_uuid)
+            ->where('domain_uuid', $appUser->domain_uuid)
+            ->where('enabled', 'true')
+            ->first();
+
+        if (!$extension || $extension->suspended) {
+            return response()->json([
+                'errors' => [
+                    'extension' => [__('Unauthorized extension. Contact your administrator')],
+                ]
+            ], 403);
+        }
+
+        $request->validate(['destination_uuid' => ['required', 'uuid']]);
+
+        $destination = Destinations::whereKey($request->destination_uuid)
+            ->where('domain_uuid', $appUser->domain_uuid)
+            ->where('destination_enabled', 'true')
+            ->first();
 
         if (!$destination) {
             return response()->json([
-                'status' => 401,
-                'error' => [
-                    'message' => __('Invalid phone number ID submitted. Please, contact your administrator')
+                'errors' => [
+                    'destination_uuid' => [__('Invalid phone number ID submitted. Please, contact your administrator')],
                 ]
-            ], 401);
+            ], 403);
         }
 
         CauserResolver::setCauser($extension);
 
         try {
-            $countryCode = get_domain_setting('country', $extension->domain_uuid) ?? 'US';
+            $countryCode = app(\App\Services\PhoneNumberService::class)->countryCodeForDomain($extension->domain_uuid);
 
             if ($request->set === true || $request->set === 'true') {
                 $extension->outbound_caller_id_number = formatPhoneNumber(

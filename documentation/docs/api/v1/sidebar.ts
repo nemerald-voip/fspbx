@@ -176,6 +176,60 @@ const sidebar: SidebarsConfig = {
     },
     {
       type: "category",
+      label: "Message Settings",
+      items: [
+        {
+          type: "doc",
+          id: "api/v1/list-message-settings",
+          label: "List message settings",
+          className: "api-method get",
+        },
+        {
+          type: "doc",
+          id: "api/v1/create-message-settings",
+          label: "Create message settings",
+          className: "api-method post",
+        },
+        {
+          type: "doc",
+          id: "api/v1/retrieve-message-settings",
+          label: "Retrieve message settings",
+          className: "api-method get",
+        },
+        {
+          type: "doc",
+          id: "api/v1/update-message-settings",
+          label: "Update message settings",
+          className: "api-method patch",
+        },
+        {
+          type: "doc",
+          id: "api/v1/delete-message-settings",
+          label: "Delete message settings",
+          className: "api-method delete",
+        },
+      ],
+    },
+    {
+      type: "category",
+      label: "Messages",
+      items: [
+        {
+          type: "doc",
+          id: "api/v1/send-an-sms-or-mms",
+          label: "Send an SMS or MMS",
+          className: "api-method post",
+        },
+        {
+          type: "doc",
+          id: "api/v1/send-a-group-mms",
+          label: "Send a group MMS",
+          className: "api-method post",
+        },
+      ],
+    },
+    {
+      type: "category",
       label: "Phone Control",
       items: [
         {

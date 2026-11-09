@@ -20,6 +20,7 @@ class FlagsController extends Controller
 {
     public function __construct(private FlagService $flags, private FlagStateService $state)
     {
+        $this->middleware(\App\Http\Middleware\EnsureFlagsEnabled::class);
     }
 
     public function index(Request $request)

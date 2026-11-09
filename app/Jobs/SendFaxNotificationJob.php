@@ -6,6 +6,7 @@ use App\Mail\FaxFailed;
 use App\Mail\FaxSent;
 use App\Models\FaxLogs;
 use App\Models\OutboundFax;
+use App\Services\EmailDeliveryFailureReporter;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -14,6 +15,8 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Str;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Throwable;
 
 /**
@@ -92,7 +95,16 @@ class SendFaxNotificationJob implements ShouldQueue
                     'recipient'         => $fax->email,
                 ]);
             } catch (Throwable $e) {
-                logger('SendFaxNotificationJob: send failed for ' . $fax->outbound_fax_uuid . ': ' . $e->getMessage());
+                if ($e instanceof TransportExceptionInterface) {
+                    app(EmailDeliveryFailureReporter::class)->report($e, [
+                        'job' => class_basename($this),
+                        'outbound_fax_uuid' => $fax->outbound_fax_uuid,
+                        'attempt' => $this->attempts(),
+                        'max_tries' => $this->tries,
+                    ]);
+                } else {
+                    logger('SendFaxNotificationJob: send failed for ' . $fax->outbound_fax_uuid . ': ' . $e->getMessage());
+                }
                 throw $e; // surface to Horizon for retry
             }
         }, function () {
@@ -109,6 +121,8 @@ class SendFaxNotificationJob implements ShouldQueue
         $log = $this->notificationLog($fax);
 
         $attributes = [
+            'logId'                  => $this->job?->uuid() ?: (string) Str::uuid(),
+            'domain_uuid'            => $fax->domain_uuid,
             'fax_destination'        => $fax->destination,
             'fax_source'             => $fax->source,
             'from'                   => $fax->email,

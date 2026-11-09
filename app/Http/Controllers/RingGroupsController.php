@@ -357,8 +357,8 @@ class RingGroupsController extends Controller
                 'greetings' => $greetingsArray,
                 'ring_back_tones' => $ring_back_tones,
                 'default_ring_time' => get_domain_setting('ring_group_ring_time', session('domain_uuid')) ?? '25',
-                'flag_options' => app(FlagService::class)->flagOptions($domain_uuid),
-                'flag_overrides' => $item->exists
+                'flag_options' => $permissions['manage_flags'] ? app(FlagService::class)->flagOptions($domain_uuid) : [],
+                'flag_overrides' => $permissions['manage_flags'] && $item->exists
                     ? app(FlagService::class)->overrideFormRows($item->flagOverrides()->get(), $domain_uuid)
                     : [],
                 // Define options for other fields as needed
@@ -398,6 +398,7 @@ class RingGroupsController extends Controller
         $permissions['manage_missed_call'] = userCheckPermission('ring_group_missed_call');
         $permissions['manage_greeting'] = userCheckPermission('ring_group_prompt');
         $permissions['is_superadmin'] = isSuperAdmin();
+        $permissions['manage_flags'] = app(\App\Services\FlagFeature::class)->canAssign('ring_group_edit');
 
         return $permissions;
     }
@@ -463,6 +464,8 @@ class RingGroupsController extends Controller
 
         $domain_uuid = session('domain_uuid');
         $domain_name = session('domain_name');
+
+        abort_unless($ringGroup->domain_uuid === $domain_uuid, 404);
 
         try {
             DB::transaction(function () use ($validated, $domain_uuid, $domain_name, $ringGroup) {

@@ -220,6 +220,26 @@ class MessageMediaObjectStorageService
         };
     }
 
+    public function deleteObjectForDomain(string $domainUuid, string $bucket, string $objectKey): void
+    {
+        if ($bucket === '' || !str_starts_with($objectKey, 'message-media/') || str_ends_with($objectKey, '/')) {
+            throw new \RuntimeException('Invalid message media object reference.');
+        }
+
+        $settings = $this->getSettingsForDomain($domainUuid);
+        if (!$settings) {
+            throw new \RuntimeException('No s3_storage settings found for domain ' . $domainUuid);
+        }
+
+        // S3 deletion is idempotent, including retries after a database failure.
+        $this->getClientForSettings($settings)->deleteObject([
+            'Bucket' => $bucket,
+            'Key' => $objectKey,
+            '@http' => ['connect_timeout' => 5, 'timeout' => 20],
+            '@retries' => 0,
+        ]);
+    }
+
     public function getObjectForDomain(string $domainUuid, string $bucket, string $objectKey): array
     {
         $settings = $this->getSettingsForDomain($domainUuid);

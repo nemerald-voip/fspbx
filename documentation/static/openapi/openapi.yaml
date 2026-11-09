@@ -1747,14 +1747,13 @@ paths:
                   example: a6cf59ba-4b2b-4bdd-b870-35cc55bca146
                 device_keys:
                   type: array
-                  description: ''
-                  example:
-                    - ad
+                  description: 'Optional device key assignments.'
+                  example: []
                   items:
                     type: integer
                 phonebook_mode:
                   type: string
-                  description: ''
+                  description: 'Use account-default phonebooks or a custom list.'
                   example: default
                   enum:
                     - default
@@ -1763,7 +1762,7 @@ paths:
                   type: array
                   description: 'Must be a valid UUID.'
                   example:
-                    - 6fca1bbb-0318-337e-9a4b-3fe5f2443ac8
+                    - 66529e01-d113-3473-8d6f-9e11e09332ea
                   items:
                     type: string
                 device_description:
@@ -4524,6 +4523,1499 @@ paths:
         name: extension_uuid
         description: 'The extension UUID.'
         example: d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b
+        required: true
+        schema:
+          type: string
+  '/api/v1/domains/{domain_uuid}/message-settings':
+    get:
+      summary: 'List message settings'
+      operationId: listMessageSettings
+      description: "Lists messaging phone numbers in an account, including their provider,\nallowed extensions, email recipient, inbound delivery mode, custom webhook URL,\ndescription, and enabled status. Signing secrets are omitted from all responses.\nSearch by phone number, provider, email, or description.\n\nWhen `has_more` is true, pass the last result's `sms_destination_uuid`\nas `starting_after` to retrieve the next page.\nRequires account access and `message_settings_list_view`."
+      parameters:
+        -
+          in: query
+          name: limit
+          description: 'Results per page (1-100). Defaults to 25.'
+          example: 25
+          required: false
+          schema:
+            type: integer
+            description: 'Results per page (1-100). Defaults to 25.'
+            example: 25
+        -
+          in: query
+          name: starting_after
+          description: 'Return results after this message setting UUID.'
+          example: null
+          required: false
+          schema:
+            type: string
+            description: 'Return results after this message setting UUID.'
+            example: null
+        -
+          in: query
+          name: search
+          description: 'Search phone number, provider, email, or description.'
+          example: support
+          required: false
+          schema:
+            type: string
+            description: 'Search phone number, provider, email, or description.'
+            example: support
+        -
+          in: query
+          name: carrier
+          description: 'Filter by message provider identifier.'
+          example: voipms
+          required: false
+          schema:
+            type: string
+            description: 'Filter by message provider identifier.'
+            example: voipms
+        -
+          in: query
+          name: enabled
+          description: 'Filter by enabled status.'
+          example: true
+          required: false
+          schema:
+            type: boolean
+            description: 'Filter by enabled status.'
+            example: true
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  object: list
+                  url: /api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/message-settings
+                  has_more: false
+                  data:
+                    -
+                      sms_destination_uuid: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5
+                      object: message_setting
+                      domain_uuid: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                      destination: '+12125550123'
+                      carrier: voipms
+                      allowed_extension_uuids:
+                        - d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b
+                      email: messages@example.com
+                      description: 'Customer support'
+                      enabled: true
+                      inbound_delivery: inherit
+                      inbound_webhook_url: null
+                properties:
+                  object:
+                    type: string
+                    example: list
+                  url:
+                    type: string
+                    example: /api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/message-settings
+                  has_more:
+                    type: boolean
+                    example: false
+                  data:
+                    type: array
+                    example:
+                      -
+                        sms_destination_uuid: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5
+                        object: message_setting
+                        domain_uuid: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                        destination: '+12125550123'
+                        carrier: voipms
+                        allowed_extension_uuids:
+                          - d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b
+                        email: messages@example.com
+                        description: 'Customer support'
+                        enabled: true
+                        inbound_delivery: inherit
+                        inbound_webhook_url: null
+                    items:
+                      type: object
+                      properties:
+                        sms_destination_uuid:
+                          type: string
+                          example: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5
+                        object:
+                          type: string
+                          example: message_setting
+                        domain_uuid:
+                          type: string
+                          example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                        destination:
+                          type: string
+                          example: '+12125550123'
+                        carrier:
+                          type: string
+                          example: voipms
+                        allowed_extension_uuids:
+                          type: array
+                          example:
+                            - d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b
+                          items:
+                            type: string
+                        email:
+                          type: string
+                          example: messages@example.com
+                        description:
+                          type: string
+                          example: 'Customer support'
+                        enabled:
+                          type: boolean
+                          example: true
+                        inbound_delivery:
+                          type: string
+                          example: inherit
+                        inbound_webhook_url:
+                          type: string
+                          example: null
+        400:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'The limit must not be greater than 100.'
+                    code: invalid_parameter
+                    param: limit
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'The limit must not be greater than 100.'
+                      code:
+                        type: string
+                        example: invalid_parameter
+                      param:
+                        type: string
+                        example: limit
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        403:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'You do not have access to this domain.'
+                    code: forbidden_domain
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'You do not have access to this domain.'
+                      code:
+                        type: string
+                        example: forbidden_domain
+                      param:
+                        type: string
+                        example: domain_uuid
+        404:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Domain not found.'
+                    code: resource_missing
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Domain not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: domain_uuid
+      tags:
+        - 'Message Settings'
+    post:
+      summary: 'Create message settings'
+      operationId: createMessageSettings
+      description: "Configures a messaging phone number for an account. Supply the phone number,\nits message provider, and any extensions that should share it. National numbers\nare automatically converted to E.164 using the account country or the country\nin Default Settings. If neither is configured, supply an international number with + and its country code. Numbers starting\nwith + use their supplied country code.\nAllowed extensions can send and receive messages using the number and see\neach other's replies. An empty or omitted extension list grants no extension access.\n\nIncoming delivery defaults to `inherit`: use the account webhook when configured,\notherwise use the number's members and email. Choose `members` to use local\nmembers and email regardless of the account webhook, or `webhook` with a public\nHTTPS `inbound_webhook_url` to forward only to that URL. Custom webhook delivery\nclears local members and email, including values supplied in this request.\n\nWebhooks use the account's shared HMAC-SHA256 signing secret, generated if absent.\nThis API does not return or accept changes to the secret. Authorized administrators\ncan retrieve it in Account Settings > Messaging or the number's Message Settings form.\nReceivers verify the Signature header against the raw JSON request body and return\nHTTP 2xx. Webhook-routed SMS/MMS remain in administrative logs and bypass local\nconversations and email. Changes affect newly received messages.\n\nThe number is enabled by default. This endpoint saves the configuration in FS PBX; it does not purchase\na number or configure your provider's account.\nRequires account access and `message_settings_manage`."
+      parameters: []
+      responses:
+        201:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  sms_destination_uuid: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5
+                  object: message_setting
+                  domain_uuid: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                  destination: '+12125550123'
+                  carrier: voipms
+                  allowed_extension_uuids:
+                    - d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b
+                  email: messages@example.com
+                  description: 'Customer support'
+                  enabled: true
+                  inbound_delivery: members
+                  inbound_webhook_url: null
+                properties:
+                  sms_destination_uuid:
+                    type: string
+                    example: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5
+                  object:
+                    type: string
+                    example: message_setting
+                  domain_uuid:
+                    type: string
+                    example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                  destination:
+                    type: string
+                    example: '+12125550123'
+                  carrier:
+                    type: string
+                    example: voipms
+                  allowed_extension_uuids:
+                    type: array
+                    example:
+                      - d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b
+                    items:
+                      type: string
+                  email:
+                    type: string
+                    example: messages@example.com
+                  description:
+                    type: string
+                    example: 'Customer support'
+                  enabled:
+                    type: boolean
+                    example: true
+                  inbound_delivery:
+                    type: string
+                    example: members
+                  inbound_webhook_url:
+                    type: string
+                    example: null
+        400:
+          description: 'Invalid JSON'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Invalid JSON request body. Remove trailing commas and check the JSON syntax.'
+                    code: invalid_json
+                    param: null
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Invalid JSON request body. Remove trailing commas and check the JSON syntax.'
+                      code:
+                        type: string
+                        example: invalid_json
+                      param:
+                        type: string
+                        example: null
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        403:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: false
+                  message: 'Forbidden (missing permission).'
+                  error:
+                    code: forbidden_permission
+                    permission: message_settings_manage
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: 'Forbidden (missing permission).'
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: forbidden_permission
+                      permission:
+                        type: string
+                        example: message_settings_manage
+        404:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Domain not found.'
+                    code: resource_missing
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Domain not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: domain_uuid
+      tags:
+        - 'Message Settings'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                inbound_delivery:
+                  type: string
+                  description: 'Incoming delivery mode: inherit, members, or webhook. Defaults to inherit. Custom webhook delivery clears local members and email.'
+                  example: members
+                inbound_webhook_url:
+                  type: string
+                  description: 'Public HTTPS URL, required only when inbound_delivery is webhook. Uses the account signing secret, which is omitted from API responses.'
+                  example: 'https://example.com/messages'
+                destination:
+                  type: string
+                  description: 'The messaging phone number, automatically converted to E.164 using the account country or the country in Default Settings. If neither is configured, supply an international number with + and its country code. Numbers starting with + use their supplied country code. Required on creation; omit on update to keep the current number. Must match the regex /^\+[1-9][0-9]{1,14}$/D.'
+                  example: '+12125550123'
+                carrier:
+                  type: string
+                  description: 'Message provider identifier. Use thinq for Commio (ThinQ) and voipms for VoIP.MS. May be null. Omit on update to preserve the provider.'
+                  example: voipms
+                  enum:
+                    - apidaze
+                    - bandwidth
+                    - bulkvs
+                    - clicksend
+                    - thinq
+                    - fibernetics
+                    - sinch
+                    - telnyx
+                    - twilio
+                    - voipms
+                    - voxutel
+                allowed_extension_uuids:
+                  type: array
+                  description: 'Optional extension UUIDs from this account. Defaults to []; on update, omit to preserve access. Custom webhook delivery clears all members.'
+                  example:
+                    - d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b
+                  items:
+                    type: string
+                email:
+                  type: string
+                  description: 'Optional email address for incoming messages. Omit on update to preserve it; send null to clear it. Custom webhook delivery clears this address, including one supplied in the request. Must be a valid email address. Must not be greater than 255 characters.'
+                  example: messages@example.com
+                description:
+                  type: string
+                  description: 'Optional description for administrators. Omit on update to preserve it; send null to clear it.'
+                  example: 'Customer support'
+                enabled:
+                  type: boolean
+                  description: 'Whether messaging is enabled for this number. Defaults to true on creation. Omit on update to preserve its status.'
+                  example: false
+              required:
+                - destination
+    parameters:
+      -
+        in: path
+        name: domain_uuid
+        description: 'The account UUID.'
+        example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+        required: true
+        schema:
+          type: string
+  '/api/v1/domains/{domain_uuid}/message-settings/{sms_destination_uuid}':
+    get:
+      summary: 'Retrieve message settings'
+      operationId: retrieveMessageSettings
+      description: "Returns one messaging phone number's configuration. `allowed_extension_uuids`\ncontains the extensions permitted to share this number. Use the Extensions\nAPI to retrieve their names and extension numbers.\n`inbound_delivery` is `inherit`, `members`, or `webhook`. `inbound_webhook_url`\nis the saved custom URL, used only in `webhook` mode; it does not contain\nthe inherited account URL. An unset delivery mode is returned as `inherit`.\nSigning secrets are omitted. Authorized administrators can retrieve the account\nsecret in Account Settings > Messaging or the number's Message Settings form.\nRequires account access and `message_settings_list_view`."
+      parameters: []
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  sms_destination_uuid: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5
+                  object: message_setting
+                  domain_uuid: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                  destination: '+12125550123'
+                  carrier: voipms
+                  allowed_extension_uuids: []
+                  email: null
+                  description: 'Customer support'
+                  enabled: true
+                  inbound_delivery: webhook
+                  inbound_webhook_url: 'https://example.com/messages'
+                properties:
+                  sms_destination_uuid:
+                    type: string
+                    example: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5
+                  object:
+                    type: string
+                    example: message_setting
+                  domain_uuid:
+                    type: string
+                    example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                  destination:
+                    type: string
+                    example: '+12125550123'
+                  carrier:
+                    type: string
+                    example: voipms
+                  allowed_extension_uuids:
+                    type: array
+                    example: []
+                  email:
+                    type: string
+                    example: null
+                  description:
+                    type: string
+                    example: 'Customer support'
+                  enabled:
+                    type: boolean
+                    example: true
+                  inbound_delivery:
+                    type: string
+                    example: webhook
+                  inbound_webhook_url:
+                    type: string
+                    example: 'https://example.com/messages'
+        400:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Invalid message setting UUID.'
+                    code: invalid_request
+                    param: sms_destination_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Invalid message setting UUID.'
+                      code:
+                        type: string
+                        example: invalid_request
+                      param:
+                        type: string
+                        example: sms_destination_uuid
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        403:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'You do not have access to this domain.'
+                    code: forbidden_domain
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'You do not have access to this domain.'
+                      code:
+                        type: string
+                        example: forbidden_domain
+                      param:
+                        type: string
+                        example: domain_uuid
+        404:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Message setting not found.'
+                    code: resource_missing
+                    param: sms_destination_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Message setting not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: sms_destination_uuid
+      tags:
+        - 'Message Settings'
+    patch:
+      summary: 'Update message settings'
+      operationId: updateMessageSettings
+      description: "Changes a messaging phone number's configuration. All fields are optional;\nomitted fields retain their current values except that custom webhook delivery\nclears local members and email. When supplied, `allowed_extension_uuids`\nreplaces the entire access list. Send [] to remove all extension access.\nSend null to clear the email recipient, description, or provider.\n\nTo switch from local members to a webhook, send `inbound_delivery: \"webhook\"`\nand `inbound_webhook_url: \"https://example.com/messages\"`. This removes existing\nmembers and email. To switch back, send `inbound_delivery: \"members\"` and the\ndesired members/email; removed assignments are not restored automatically.\nChoose `inherit` to follow the account webhook, or members/email when none is set.\n\nOmit the URL to keep the saved custom URL, including when reselecting webhook mode.\nA URL-only update keeps the delivery mode. The URL cannot be cleared while the\nresulting mode is `webhook`; select `members` or `inherit` to clear it with null.\nAll supplied URLs must use HTTPS and resolve to public IP addresses.\n\nThe account signing secret is reused, or generated if none exists. It is omitted\nfrom every API response and cannot be changed here. Retrieve it through Account\nSettings > Messaging or the number's Message Settings form with messaging management\npermission. Webhooks sign the raw JSON body with HMAC-SHA256 in the Signature header.\nDelivery changes apply to new messages; previously received messages keep their route.\nRequires account access and `message_settings_manage`."
+      parameters: []
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  sms_destination_uuid: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5
+                  object: message_setting
+                  domain_uuid: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                  destination: '+12125550123'
+                  carrier: voipms
+                  allowed_extension_uuids: []
+                  email: null
+                  description: 'Customer support'
+                  enabled: true
+                  inbound_delivery: webhook
+                  inbound_webhook_url: 'https://example.com/messages'
+                properties:
+                  sms_destination_uuid:
+                    type: string
+                    example: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5
+                  object:
+                    type: string
+                    example: message_setting
+                  domain_uuid:
+                    type: string
+                    example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                  destination:
+                    type: string
+                    example: '+12125550123'
+                  carrier:
+                    type: string
+                    example: voipms
+                  allowed_extension_uuids:
+                    type: array
+                    example: []
+                  email:
+                    type: string
+                    example: null
+                  description:
+                    type: string
+                    example: 'Customer support'
+                  enabled:
+                    type: boolean
+                    example: true
+                  inbound_delivery:
+                    type: string
+                    example: webhook
+                  inbound_webhook_url:
+                    type: string
+                    example: 'https://example.com/messages'
+        400:
+          description: 'Invalid JSON'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Invalid JSON request body. Remove trailing commas and check the JSON syntax.'
+                    code: invalid_json
+                    param: null
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Invalid JSON request body. Remove trailing commas and check the JSON syntax.'
+                      code:
+                        type: string
+                        example: invalid_json
+                      param:
+                        type: string
+                        example: null
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        403:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: false
+                  message: 'Forbidden (missing permission).'
+                  error:
+                    code: forbidden_permission
+                    permission: message_settings_manage
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: 'Forbidden (missing permission).'
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: forbidden_permission
+                      permission:
+                        type: string
+                        example: message_settings_manage
+        404:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Message setting not found.'
+                    code: resource_missing
+                    param: sms_destination_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Message setting not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: sms_destination_uuid
+      tags:
+        - 'Message Settings'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                inbound_delivery:
+                  type: string
+                  description: 'Incoming delivery mode: inherit, members, or webhook. Omit to preserve the mode. Custom webhook delivery clears local members and email.'
+                  example: webhook
+                inbound_webhook_url:
+                  type: string
+                  description: 'Public HTTPS URL for custom webhook delivery. Omit to keep the saved URL. Required for webhook mode if no URL is saved. May be null only when the resulting mode is members or inherit.'
+                  example: 'https://example.com/messages'
+                destination:
+                  type: string
+                  description: 'Optional messaging phone number, automatically converted to E.164 using the account country or the country in Default Settings. If neither is configured, supply an international number with + and its country code. Numbers starting with + use their supplied country code. Omit to preserve the current number; cannot be null or empty.'
+                  example: '+12125550123'
+                carrier:
+                  type: string
+                  description: 'Message provider identifier. Use thinq for Commio (ThinQ) and voipms for VoIP.MS. May be null. Omit on update to preserve the provider.'
+                  example: voipms
+                  enum:
+                    - apidaze
+                    - bandwidth
+                    - bulkvs
+                    - clicksend
+                    - thinq
+                    - fibernetics
+                    - sinch
+                    - telnyx
+                    - twilio
+                    - voipms
+                    - voxutel
+                allowed_extension_uuids:
+                  type: array
+                  description: 'Optional extension UUIDs from this account. Replaces the full access list; omit to preserve access or send [] to remove all extension access. Custom webhook delivery clears all members.'
+                  example: []
+                  items:
+                    type: string
+                email:
+                  type: string
+                  description: 'Optional email address for incoming messages. Omit on update to preserve it; send null to clear it. Custom webhook delivery clears this address, including one supplied in the request. Must be a valid email address. Must not be greater than 255 characters.'
+                  example: messages@example.com
+                description:
+                  type: string
+                  description: 'Optional description for administrators. Omit on update to preserve it; send null to clear it.'
+                  example: 'Customer support'
+                enabled:
+                  type: boolean
+                  description: 'Whether messaging is enabled for this number. Defaults to true on creation. Omit on update to preserve its status.'
+                  example: false
+    delete:
+      summary: 'Delete message settings'
+      operationId: deleteMessageSettings
+      description: "Removes a messaging phone number's configuration and its extension access\nlist from the account. Existing message history is retained. This does not\ncancel the phone number with your provider.\nRequires account access and `message_settings_manage`."
+      parameters: []
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  uuid: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5
+                  object: message_setting
+                  deleted: true
+                properties:
+                  uuid:
+                    type: string
+                    example: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5
+                  object:
+                    type: string
+                    example: message_setting
+                  deleted:
+                    type: boolean
+                    example: true
+        400:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Invalid message setting UUID.'
+                    code: invalid_request
+                    param: sms_destination_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Invalid message setting UUID.'
+                      code:
+                        type: string
+                        example: invalid_request
+                      param:
+                        type: string
+                        example: sms_destination_uuid
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        403:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: false
+                  message: 'Forbidden (missing permission).'
+                  error:
+                    code: forbidden_permission
+                    permission: message_settings_manage
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: 'Forbidden (missing permission).'
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: forbidden_permission
+                      permission:
+                        type: string
+                        example: message_settings_manage
+        404:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Message setting not found.'
+                    code: resource_missing
+                    param: sms_destination_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Message setting not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: sms_destination_uuid
+      tags:
+        - 'Message Settings'
+    parameters:
+      -
+        in: path
+        name: domain_uuid
+        description: 'The account UUID.'
+        example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+        required: true
+        schema:
+          type: string
+      -
+        in: path
+        name: sms_destination_uuid
+        description: 'The message setting UUID.'
+        example: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5
+        required: true
+        schema:
+          type: string
+  '/api/v1/domains/{domain_uuid}/messages':
+    post:
+      summary: 'Send an SMS or MMS'
+      operationId: sendAnSMSOrMMS
+      description: "Send a text message or attachments from an enabled number in Message Settings.\nRequires access to the account and the messages_send permission.\nA 200 response means FS PBX accepted your request; it does not confirm delivery.\nSave data.id to match the message with delivery callbacks and message logs.\nAPI messages appear in Status > Logs > Messages, but not in member conversations.\n\nBoth from and to must use E.164 format: + followed by the country code and\nphone number, such as +12025550100, without spaces or punctuation. National\nnumbers are not accepted. The account's country setting is not used.\nPhone numbers in responses and delivery callbacks use E.164.\n\nTo receive delivery updates, select an account or custom webhook for the\nsending number in Message Settings. Verify callbacks using the Signing secret\nin Account Settings > Messaging. Without a webhook, check results in message logs.\n\nIdempotency-Key is optional. Reuse it with the same request, account, API user,\nand endpoint for up to 24 hours to retry without creating another message.\nDifferent message details with the same key return 409. Use a new key for each\nnew message. A repeated response shows the original acceptance, not current\ndelivery status. On a 503 response, retry with the same key and body.\nValidation errors return 400 with an error object identifying the invalid field."
+      parameters:
+        -
+          in: header
+          name: Idempotency-Key
+          description: ''
+          example: 32dcb5f0-70e1-44ed-a034-493984af48d1
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data:
+                    id: 751ec0cb-4a4e-4462-85ac-f333cbaf77ee
+                    record_type: message
+                    direction: outbound
+                    type: SMS
+                    from:
+                      phone_number: '+12125550123'
+                    to:
+                      -
+                        phone_number: '+12125550124'
+                        status: queued
+                    text: 'Your appointment is confirmed.'
+                    media: []
+                    received_at: '2026-11-05T00:00:00+00:00'
+                    sent_at: null
+                    completed_at: null
+                    errors: []
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        example: 751ec0cb-4a4e-4462-85ac-f333cbaf77ee
+                      record_type:
+                        type: string
+                        example: message
+                      direction:
+                        type: string
+                        example: outbound
+                      type:
+                        type: string
+                        example: SMS
+                      from:
+                        type: object
+                        properties:
+                          phone_number:
+                            type: string
+                            example: '+12125550123'
+                      to:
+                        type: array
+                        example:
+                          -
+                            phone_number: '+12125550124'
+                            status: queued
+                        items:
+                          type: object
+                          properties:
+                            phone_number:
+                              type: string
+                              example: '+12125550124'
+                            status:
+                              type: string
+                              example: queued
+                      text:
+                        type: string
+                        example: 'Your appointment is confirmed.'
+                      media:
+                        type: array
+                        example: []
+                      received_at:
+                        type: string
+                        example: '2026-11-05T00:00:00+00:00'
+                      sent_at:
+                        type: string
+                        example: null
+                      completed_at:
+                        type: string
+                        example: null
+                      errors:
+                        type: array
+                        example: []
+        400:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Provide text or at least one media URL.'
+                    code: invalid_parameter
+                    param: text
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Provide text or at least one media URL.'
+                      code:
+                        type: string
+                        example: invalid_parameter
+                      param:
+                        type: string
+                        example: text
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        403:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    code: forbidden_permission
+                    permission: messages_send
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: forbidden_permission
+                      permission:
+                        type: string
+                        example: messages_send
+        409:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Idempotency-Key was already used with a different request.'
+                    code: idempotency_conflict
+                    param: Idempotency-Key
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Idempotency-Key was already used with a different request.'
+                      code:
+                        type: string
+                        example: idempotency_conflict
+                      param:
+                        type: string
+                        example: Idempotency-Key
+        503:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: api_error
+                    message: 'Unable to queue the message. Retry with the same Idempotency-Key.'
+                    code: queue_unavailable
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: api_error
+                      message:
+                        type: string
+                        example: 'Unable to queue the message. Retry with the same Idempotency-Key.'
+                      code:
+                        type: string
+                        example: queue_unavailable
+      tags:
+        - Messages
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                from:
+                  type: string
+                  description: 'Your enabled sending number in this account''s Message Settings. E.164 format is required: + followed by the country code and phone number, without spaces or punctuation. Member assignments are not required. Must match the regex /^\+[1-9][0-9]{1,14}$/D.'
+                  example: '+12125550123'
+                to:
+                  type: string
+                  description: 'Recipient number, or an array of external recipient numbers for group_mms. Every number must use E.164 format: + followed by the country code and phone number, without spaces or punctuation. Must match the regex /^\+[1-9][0-9]{1,14}$/D.'
+                  example: '+12125550124'
+                text:
+                  type: string
+                  description: 'Up to 1,600 characters. Text or media is required. Must not be greater than 1600 characters.'
+                  example: 'Your appointment is confirmed.'
+                media_urls:
+                  type: array
+                  description: 'Must be a valid URL. Must not be greater than 8192 characters.'
+                  example:
+                    - vmqeopfuudtdsufvyvddq
+                  items:
+                    type: string
+                type:
+                  type: string
+                  description: 'Optional SMS or MMS. Omit to select automatically. Text to one recipient is SMS; attachments and all groups are MMS. If supplied, the type must match the content and recipients.'
+                  example: SMS
+                  enum:
+                    - SMS
+                    - MMS
+              required:
+                - from
+                - to
+                - media_urls
+    parameters:
+      -
+        in: path
+        name: domain_uuid
+        description: 'Account UUID.'
+        example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+        required: true
+        schema:
+          type: string
+  '/api/v1/domains/{domain_uuid}/messages/group_mms':
+    post:
+      summary: 'Send a group MMS'
+      operationId: sendAGroupMMS
+      description: "Send a message to a shared group conversation. Use an array for to, with at\nleast two distinct recipient numbers excluding the sender. Repeated numbers\ncount once. Sinch supports up to 20 recipients; supported Bandwidth local\nnumbers support up to 10. Other providers and Bandwidth toll-free numbers do\nnot support group MMS. Text-only groups are also MMS.\n\nThe from number and every number in to must use E.164 format: + followed by\nthe country code and phone number, without spaces or punctuation. National\nnumbers are not accepted. Responses and delivery callbacks use E.164 phone numbers.\n\nRequires account access and messages_send. Authentication, optional\nIdempotency-Key, and delivery callbacks work as described for Send an SMS or\nMMS. The response also includes group_id and participants. Check each recipient's\nstatus in delivery callbacks, as group members may have different results."
+      parameters:
+        -
+          in: header
+          name: Idempotency-Key
+          description: ''
+          example: 32dcb5f0-70e1-44ed-a034-493984af48d1
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data:
+                    id: 751ec0cb-4a4e-4462-85ac-f333cbaf77ee
+                    record_type: message
+                    direction: outbound
+                    type: MMS
+                    from:
+                      phone_number: '+12125550123'
+                    to:
+                      -
+                        phone_number: '+12125550124'
+                        status: queued
+                      -
+                        phone_number: '+12125550125'
+                        status: queued
+                    text: 'Hello everyone'
+                    media: []
+                    received_at: '2026-11-05T00:00:00+00:00'
+                    sent_at: null
+                    completed_at: null
+                    errors: []
+                    group_id: 3241c8f9-988c-588c-a039-1132d1969876
+                    participants:
+                      - '+12125550123'
+                      - '+12125550124'
+                      - '+12125550125'
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        example: 751ec0cb-4a4e-4462-85ac-f333cbaf77ee
+                      record_type:
+                        type: string
+                        example: message
+                      direction:
+                        type: string
+                        example: outbound
+                      type:
+                        type: string
+                        example: MMS
+                      from:
+                        type: object
+                        properties:
+                          phone_number:
+                            type: string
+                            example: '+12125550123'
+                      to:
+                        type: array
+                        example:
+                          -
+                            phone_number: '+12125550124'
+                            status: queued
+                          -
+                            phone_number: '+12125550125'
+                            status: queued
+                        items:
+                          type: object
+                          properties:
+                            phone_number:
+                              type: string
+                              example: '+12125550124'
+                            status:
+                              type: string
+                              example: queued
+                      text:
+                        type: string
+                        example: 'Hello everyone'
+                      media:
+                        type: array
+                        example: []
+                      received_at:
+                        type: string
+                        example: '2026-11-05T00:00:00+00:00'
+                      sent_at:
+                        type: string
+                        example: null
+                      completed_at:
+                        type: string
+                        example: null
+                      errors:
+                        type: array
+                        example: []
+                      group_id:
+                        type: string
+                        example: 3241c8f9-988c-588c-a039-1132d1969876
+                      participants:
+                        type: array
+                        example:
+                          - '+12125550123'
+                          - '+12125550124'
+                          - '+12125550125'
+                        items:
+                          type: string
+        400:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Group messaging is not available for this sending number.'
+                    code: invalid_parameter
+                    param: to
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Group messaging is not available for this sending number.'
+                      code:
+                        type: string
+                        example: invalid_parameter
+                      param:
+                        type: string
+                        example: to
+      tags:
+        - Messages
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                from:
+                  type: string
+                  description: 'Your enabled sending number in this account''s Message Settings. E.164 format is required: + followed by the country code and phone number, without spaces or punctuation. Member assignments are not required. Must match the regex /^\+[1-9][0-9]{1,14}$/D.'
+                  example: '+12125550123'
+                to:
+                  type: array
+                  description: 'External recipient numbers. Every number must use E.164 format: + followed by the country code and phone number, without spaces or punctuation.'
+                  example:
+                    - '+12125550124'
+                    - '+12125550125'
+                  items:
+                    type: string
+                text:
+                  type: string
+                  description: 'Up to 1,600 characters. Text or media is required. Must not be greater than 1600 characters.'
+                  example: 'Your appointment is confirmed.'
+                media_urls:
+                  type: array
+                  description: 'Must be a valid URL. Must not be greater than 8192 characters.'
+                  example:
+                    - ufvyvddqamniihfqcoynl
+                  items:
+                    type: string
+                type:
+                  type: string
+                  description: 'Optional; must be MMS when supplied.'
+                  example: MMS
+              required:
+                - from
+                - to
+                - media_urls
+    parameters:
+      -
+        in: path
+        name: domain_uuid
+        description: 'Account UUID.'
+        example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
         required: true
         schema:
           type: string
@@ -10228,29 +11720,6 @@ paths:
                         example: domain_uuid
       tags:
         - Users
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                limit:
-                  type: integer
-                  description: 'Must be at least 1. Must not be greater than 100.'
-                  example: 22
-                starting_after:
-                  type: string
-                  description: 'Must be a valid UUID.'
-                  example: 90dbaa5a-e53b-3754-8f24-3acc14e4b3d5
-                search:
-                  type: string
-                  description: 'Must not be greater than 255 characters.'
-                  example: gslusmpcqtgbgytchdm
-                user_enabled:
-                  type: boolean
-                  description: ''
-                  example: true
     post:
       summary: 'Create a user'
       operationId: createAUser
@@ -12101,6 +13570,12 @@ tags:
     description: ''
   -
     name: Extensions
+    description: ''
+  -
+    name: 'Message Settings'
+    description: ''
+  -
+    name: Messages
     description: ''
   -
     name: 'Phone Control'

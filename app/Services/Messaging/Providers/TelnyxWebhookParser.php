@@ -75,6 +75,9 @@ class TelnyxWebhookParser implements MessagingWebhookParser
                 'status' => $this->mapDeliveryStatus($providerStatus),
                 'description' => $this->extractDeliveryDescription($payload, $providerStatus),
                 'providerEvent' => $eventType,
+                'rawStatus' => $providerStatus,
+                'occurredAt' => data_get($root, 'data.occurred_at'),
+                'recipient' => data_get($payload, 'to.0.phone_number'),
             ]);
 
             messaging_webhook_debug('TelnyxWebhookParser delivery event parsed', [
@@ -186,7 +189,7 @@ class TelnyxWebhookParser implements MessagingWebhookParser
         try {
             return formatPhoneNumber(
                 $number,
-                get_domain_setting('country') ?? 'US',
+                app(\App\Services\PhoneNumberService::class)->countryCodeForDomain(),
                 PhoneNumberFormat::E164
             );
         } catch (Throwable) {

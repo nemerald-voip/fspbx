@@ -30,6 +30,8 @@ class MessageSetting extends Model
         'chatplan_detail_data',
         'email',
         'enabled',
+        'inbound_delivery',
+        'inbound_webhook_url',
     ];
 
     protected $appends = [
@@ -38,7 +40,7 @@ class MessageSetting extends Model
 
     public function getDestinationFormattedAttribute()
     {
-        return $this->destination ? formatPhoneNumber($this->destination) : null;
+        return $this->destination ? app(\App\Services\PhoneNumberService::class)->formatForDomain($this->destination, $this->domain_uuid) : null;
     }
 
     /**

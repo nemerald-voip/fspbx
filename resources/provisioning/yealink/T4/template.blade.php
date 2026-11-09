@@ -1,4 +1,4 @@
-{{-- version: 1.0.20 --}}
+{{-- version: 1.0.21 --}}
 
 @switch($flavor)
 
@@ -379,8 +379,8 @@ distinctive_ring_tones.alert_info.{{ $i }}.ringer = {{ $settings["yealink_ring_f
 ##for SIP-T54W/T46G/T46S/T29G: <=1.8 megapixels;SIP-T54S/T52S:<=4.2 megapixels;
 ##Single File Size: <=5MB
 ##2MB of space should bereserved for the phone
-wallpaper_upload.url = {{ $settings['yealink_t46u_wallpaper'] ?? '' }}
-phone_setting.backgrounds = Config:{{ $settings['yealink_t46u_wallpaper_filename'] ?? '' }}
+wallpaper_upload.url = {{ $settings['yealink_t4_wallpaper'] ?? '' }}
+phone_setting.backgrounds = Config:{{ $settings['yealink_t4_wallpaper_filename'] ?? '' }}
 
 
 ################################################################

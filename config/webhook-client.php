@@ -25,24 +25,8 @@ return [
              */
             'name' => 'postmark',
 
-            /*
-             * We expect that every webhook call will be signed using a secret. This secret
-             * is used to verify that the payload has not been tampered with.
-             */
-            'signing_secret' => env('WEBHOOK_CLIENT_SECRET'),
-
-            /*
-             * The name of the header containing the signature.
-             */
-            'signature_header_name' => 'Signature',
-
-            /*
-             *  This class will verify that the content of the signature header is valid.
-             *
-             * It should implement \Spatie\WebhookClient\SignatureValidator\SignatureValidator
-             */
-            //'signature_validator' => \Spatie\WebhookClient\SignatureValidator\DefaultSignatureValidator::class,
-
+            // Postmark uses HTTP Basic Auth, not signed payloads. Credentials
+            // are configured in services.postmark and required for every event.
             'signature_validator' => \App\Http\Webhooks\SignatureValidators\PostmarkSignatureValidator::class,
 
             /*

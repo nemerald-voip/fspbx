@@ -117,6 +117,8 @@ After staging succeeds, turn off **Use staging (test) directory** and click **Is
 For a redundant or clustered installation:
 
 - List the failover or proxy hostname first, followed by each server's direct hostname (see [Choosing the hostnames](#choosing-the-hostnames-sans)).
+- Failover CNAMEs, including Azure Traffic Manager, are supported. Every authoritative DNS server must agree on the resolved destination throughout the CNAME chain. Missing or conflicting records prevent automatic renewal.
+- A server behind NAT discovers its outgoing public IP to identify itself. That address must match its direct hostname; verify this before enabling auto-renew if incoming and outgoing traffic use different public IPs.
 - Open TCP port 80 to every listed server. Let's Encrypt may validate any hostname from outside your network.
 - Set a **Peer push secret** (use **Rotate** to generate and save one). It authorizes certificate replication between servers and is stored in FS PBX settings. If your database is replicated across nodes it applies to every server automatically; otherwise set the same value on each server.
 - Issue from the server the failover record currently points to. It coordinates the HTTP-01 challenge and replicates the resulting certificate to the other servers. If replication to any server fails, issuance fails so the servers never serve mismatched certificates — fix the unreachable server and issue again.

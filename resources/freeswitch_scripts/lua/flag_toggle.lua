@@ -7,6 +7,7 @@ require "resources.functions.config"
 
 local Database = require "resources.functions.database"
 local flag_state = require "lua.flag_state"
+local feature = require "lua.flag_feature"
 
 local api = freeswitch.API()
 
@@ -64,7 +65,10 @@ local function caller_allowed(dbh, flag_uuid, domain_uuid, extension_uuid)
     local allowed_count = tonumber(dbh:first_value(
         "SELECT count(*) FROM flag_extensions WHERE flag_uuid = :flag_uuid",
         { flag_uuid = flag_uuid }
-    ) or 0)
+    ))
+    if not allowed_count then
+        return false, "allowed-extension list unavailable"
+    end
 
     -- An empty list means any extension in the account may toggle.
     if allowed_count == 0 then
@@ -86,6 +90,11 @@ end
 
 local function main()
     if not session:ready() then return end
+
+    if not feature.check() then
+        session:hangup("NORMAL_CLEARING")
+        return
+    end
 
     session:answer()
     session:sleep(500)
@@ -133,17 +142,22 @@ local function main()
         return refuse(dbh, "PIN check failed")
     end
 
-    local new_active = not flag_state.truthy(flag.active)
+    -- A PIN prompt may outlive an administrator disabling the feature.
+    if not feature.enabled(dbh) then
+        return refuse(dbh, "Flags is disabled")
+    end
 
-    local ok = dbh:query([[
-        UPDATE flags SET active = :active, updated_at = now()
-        WHERE uuid = :uuid AND domain_uuid = :domain_uuid
-    ]], { active = new_active and "true" or "false", uuid = flag.uuid, domain_uuid = domain_uuid })
+    local updated = dbh:first_row([[
+        UPDATE flags SET active = NOT active, updated_at = now()
+        WHERE uuid = :uuid AND domain_uuid = :domain_uuid AND enabled = true AND type = 'manual'
+        RETURNING active
+    ]], { uuid = flag.uuid, domain_uuid = domain_uuid })
     dbh:release()
 
-    if ok == false then
+    if not updated then
         return refuse(nil, "update failed")
     end
+    local new_active = flag_state.truthy(updated.active)
 
     debug_log("NOTICE", string.format("Flag %s in %s switched %s", flag_number, domain_name, new_active and "on" or "off"))
 

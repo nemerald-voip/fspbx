@@ -159,15 +159,12 @@ abstract class FaxWebhookProfile implements WebhookProfile
 
     /**
      * Look up the tenant's country code from its domain settings.
-     * Falls back to 'US' if the fax server, domain, or setting is missing.
+     * Inherit the configured default when the account has no override.
      */
     protected function resolveCountryCode(string $faxUuid): string
     {
         $fax = Faxes::select('domain_uuid')->find($faxUuid);
-        if (!$fax) {
-            return 'US';
-        }
-        return get_domain_setting('country', $fax->domain_uuid) ?? 'US';
+        return app(\App\Services\PhoneNumberService::class)->countryCodeForDomain($fax?->domain_uuid);
     }
 
     /**

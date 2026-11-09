@@ -47,7 +47,7 @@
 
                             <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
                                 @error="handleError" @response="handleResponse" :display-errors="false"
-                                :default="defaultFormData" :float-placeholders="false"
+                                :default="defaultFormData" :float-placeholders="false" :validate-on="''" @mounted="form => form.disableValidation()"
                                 @keydown.enter="handleEnterKeySubmit">
 
                                 <template #empty>
@@ -102,7 +102,7 @@
                                                     'flag_title',
                                                     'flag_overrides',
                                                     'submit_flag',
-                                                ]" :conditions="[() => !!options?.item?.ivr_menu_uuid]" />
+                                                ]" :conditions="[() => !!options?.item?.ivr_menu_uuid && !!options?.permissions?.manage_flags]" />
                                             </FormTabs>
                                         </div>
 
@@ -650,7 +650,12 @@ const formatTarget = (name, value) => {
 };
 
 const submitForm = async (FormData, form$) => {
-    const requestData = form$.requestData;
+    form$.messageBag.clear();
+    Object.values(form$.elements$).forEach(clearErrorsRecursive);
+    const requestData = { ...form$.requestData };
+    if (!props.options?.permissions?.manage_flags) {
+        delete requestData.flag_overrides;
+    }
 
     return await form$.$vueform.services.axios.put(
         props.options.routes.update_route,

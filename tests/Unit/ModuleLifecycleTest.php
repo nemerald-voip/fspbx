@@ -3,12 +3,13 @@
 namespace Tests\Unit;
 
 use App\Console\Commands\{ConfigureModule, RefreshModules};
-use App\Services\{KeygenAPIService, ProFeaturesService};
+use App\Models\ProFeatures;
+use App\Services\{GitModuleUpdater, KeygenAPIService, ProFeaturesService};
 use Illuminate\Config\Repository;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Foundation\Application;
 use Illuminate\Process\Factory;
-use Illuminate\Support\Facades\{Facade, Process};
+use Illuminate\Support\Facades\{Cache, Facade, Process};
 use Nwidart\Modules\Facades\Module;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Application as ConsoleApplication;
@@ -26,10 +27,16 @@ class ModuleLifecycleTest extends TestCase
         mkdir($this->directory);
         $this->app = new Application($this->directory);
         $this->app->instance('config', new Repository());
+        $this->app->instance('translator', new \Illuminate\Translation\Translator(new \Illuminate\Translation\ArrayLoader(), 'en-us'));
         $this->app->singleton(Factory::class, fn () => new Factory());
         Facade::clearResolvedInstances(); Facade::setFacadeApplication($this->app);
         Module::swap(\Mockery::mock());
         Process::fake(); Process::preventStrayProcesses();
+        // Real Git transport and asset validation are covered with disposable
+        // repositories in GitModuleUpdaterTest. These tests cover dispatch/hooks.
+        $updater = \Mockery::mock(GitModuleUpdater::class);
+        $updater->shouldReceive('update')->andReturnUsing(fn ($name, $configure) => $configure());
+        $this->app->instance(GitModuleUpdater::class, $updater);
     }
 
     protected function tearDown(): void
@@ -73,6 +80,7 @@ class ModuleLifecycleTest extends TestCase
     {
         mkdir(base_path('Modules/ContactCenter'), 0755, true);
         file_put_contents(base_path('Modules/ContactCenter/module.json'), '{"name":"ContactCenter","version":"1.0.57"}');
+        file_put_contents(base_path('Modules/ContactCenter/previous-source.php'), '<?php // old source');
         $tar = new \PharData($this->directory.'/release.tar');
         $tar->addFromString('module.json', '{"name":"ContactCenter","version":"1.0.58"}');
         $tar->compress(\Phar::GZ);
@@ -86,12 +94,33 @@ class ModuleLifecycleTest extends TestCase
         Process::fake(fn ($process) => in_array('modules:configure', $process->command)
             ? Process::result(exitCode: 1, errorOutput: 'Supervisor failed') : Process::result());
         $this->assertStringContainsString('Supervisor failed', $service->deploy());
+        $this->assertFileExists(base_path('Modules/ContactCenter/previous-source.php'));
         $this->assertSame('1.0.57', json_decode(file_get_contents(base_path('Modules/ContactCenter/module.json')), true)['version']);
         Process::fake();
         // Phar retains archive paths within one PHP process; a real retry boots
         // a new process. Use another fixture filename for this second extraction.
         $this->assertTrue($service->deploy('retry.tar.gz'));
         $this->assertSame('1.0.58', json_decode(file_get_contents(base_path('Modules/ContactCenter/module.json')), true)['version']);
+    }
+
+    public function test_missing_module_assets_are_rejected_before_existing_source_is_replaced(): void
+    {
+        mkdir(base_path('Modules/ContactCenter'), 0755, true);
+        file_put_contents(base_path('Modules/ContactCenter/module.json'), '{"name":"ContactCenter","version":"1.0.57"}');
+        file_put_contents(base_path('Modules/ContactCenter/existing.php'), '<?php // keep');
+        $tar = new \PharData($this->directory.'/missing-assets.tar');
+        $tar->addFromString('module.json', '{"name":"ContactCenter","version":"1.0.58"}');
+        $tar->addFromString('Resources/assets/js/Pages/Dashboard.vue', '<template>Dashboard</template>');
+        $tar->compress(\Phar::GZ);
+        $keygen = \Mockery::mock(KeygenAPIService::class);
+        $keygen->shouldReceive('downloadArtifact')->once()->andReturn(file_get_contents($this->directory.'/missing-assets.tar.gz'));
+        $service = new class($keygen) extends ProFeaturesService {
+            public function deploy(): bool|string { return $this->downloadAndDeployModule('test', 'ContactCenter', '1.0.58', 'module.tar.gz'); }
+        };
+        $this->assertStringContainsString('frontend.json', $service->deploy());
+        $this->assertFileExists(base_path('Modules/ContactCenter/existing.php'));
+        $this->assertSame('1.0.57', json_decode(file_get_contents(base_path('Modules/ContactCenter/module.json')), true)['version']);
+        Process::assertNothingRan();
     }
 
     private function configurationCommand(bool $automatic, array $failures = [], array $hooks = ['install', 'update', 'uninstall']): array
@@ -190,22 +219,22 @@ class ModuleLifecycleTest extends TestCase
         $this->assertStringContainsString('Supervisor failed', $result['errors'][0]);
     }
 
-    public function test_refresh_separates_git_checkouts_from_release_managed_modules(): void
+    public function test_refresh_merges_local_and_release_results(): void
     {
         mkdir(base_path('Modules/ContactCenter/.git'), 0755, true);
         $git = \Mockery::mock()->shouldReceive('getName')->andReturn('ContactCenter')->getMock();
         $release = \Mockery::mock()->shouldReceive('getName')->andReturn('Billing')->getMock();
         Module::shouldReceive('allEnabled')->once()->andReturn([$git, $release]);
         $service = new class(\Mockery::mock(KeygenAPIService::class)) extends ProFeaturesService {
-            public array $releaseModules = [];
+            public array $enabledModules = [];
             protected function syncModules(string $mode, ?\Illuminate\Support\Collection $enabledModules = null, ?string $licenseOverride = null): array
             {
-                $this->releaseModules = [$mode, $enabledModules->all()];
+                $this->enabledModules = [$mode, $enabledModules->all()];
                 return ['updated' => [], 'skipped' => ['Billing: already latest'], 'errors' => ['Release API error']];
             }
         };
         $result = $service->refreshModules();
-        $this->assertSame(['enabled_only', ['Billing']], $service->releaseModules);
+        $this->assertSame(['enabled_only', ['ContactCenter', 'Billing']], $service->enabledModules);
         $this->assertCount(1, $result['updated']);
         $this->assertSame(['Billing: already latest'], $result['skipped']);
         $this->assertSame(['Release API error'], $result['errors']);
@@ -218,6 +247,70 @@ class ModuleLifecycleTest extends TestCase
         Module::shouldReceive('allEnabled')->once()->andReturn([]);
         $this->assertSame(['updated' => [], 'skipped' => [], 'errors' => []], $this->service()->refreshModules());
         Process::assertNothingRan();
+    }
+
+    /** @dataProvider mixedRefreshOutcomes */
+    public function test_mixed_refresh_reports_each_module_once(bool $contactCenterEnabled, int $hookExitCode): void
+    {
+        mkdir(base_path('Modules/Billing/.git'), 0755, true);
+        mkdir(base_path('Modules/ContactCenter/.git'), 0755, true);
+        mkdir(base_path('Modules/StirShaken'), 0755, true);
+        file_put_contents(base_path('Modules/StirShaken/module.json'), '{"name":"StirShaken","version":"1.0.23"}');
+        $enabled = ['Billing', 'StirShaken'];
+        if ($contactCenterEnabled) {
+            $enabled[] = 'ContactCenter';
+        }
+        Module::shouldReceive('allEnabled')->once()->andReturn(array_map(
+            fn ($name) => \Mockery::mock()->shouldReceive('getName')->andReturn($name)->getMock(),
+            $enabled
+        ));
+        Process::fake(fn ($process) => in_array('ContactCenter', $process->command)
+            ? Process::result(exitCode: $hookExitCode, errorOutput: $hookExitCode ? 'Supervisor failed' : '')
+            : Process::result());
+        Cache::shouldReceive('forget')->times(3);
+
+        $keygen = \Mockery::mock(KeygenAPIService::class);
+        $licenseResponse = ['meta' => ['valid' => true]];
+        $keygen->shouldReceive('validateLicenseKey')->once()->with('test-license')->andReturn($licenseResponse);
+        $keygen->shouldReceive('getEntitlementsByLicense')->once()->with($licenseResponse)->andReturn([
+            ['attributes' => ['code' => 'STIR_SHAKEN_MODULE']],
+            ['attributes' => ['code' => 'CONTACT_CENTER_MODULE']],
+            ['attributes' => ['code' => 'BILLING_MODULE']],
+        ]);
+        $keygen->shouldReceive('getReleases')->once()->with('test-license')->andReturn([
+            ['attributes' => ['name' => 'STIR_SHAKEN_MODULE', 'version' => '1.0.23']],
+        ]);
+        $keygen->shouldNotReceive('downloadArtifact');
+        $service = new class($keygen) extends ProFeaturesService {
+            protected function getProRow(): ?ProFeatures
+            {
+                return new ProFeatures(['license' => 'test-license']);
+            }
+        };
+
+        $result = $service->refreshModules();
+
+        $updated = ['Billing: frontend assets checked and update hooks completed; Git source unchanged'];
+        if ($contactCenterEnabled && $hookExitCode === 0) {
+            $updated[] = 'ContactCenter: frontend assets checked and update hooks completed; Git source unchanged';
+        }
+        $skipped = ['StirShaken: already latest (1.0.23)'];
+        if (! $contactCenterEnabled) {
+            $skipped[] = 'ContactCenter: not enabled';
+        }
+        $this->assertSame($updated, $result['updated']);
+        $this->assertSame($skipped, $result['skipped']);
+        $this->assertSame($hookExitCode ? ['ContactCenter: local update failed: modules:configure failed: Supervisor failed'] : [], $result['errors']);
+        Process::assertRanTimes(fn () => true, $contactCenterEnabled ? 2 : 1);
+    }
+
+    public static function mixedRefreshOutcomes(): array
+    {
+        return [
+            'enabled Git module succeeds' => [true, 0],
+            'enabled Git module fails' => [true, 1],
+            'disabled Git module stays skipped' => [false, 0],
+        ];
     }
 
     public function test_hook_failure_makes_configuration_fail(): void

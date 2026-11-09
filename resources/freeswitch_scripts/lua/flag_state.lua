@@ -91,7 +91,7 @@ end
 
 function M.load_rules(dbh, flag_uuid)
     local rules = {}
-    dbh:query([[
+    local ok = dbh:query([[
         SELECT rule_type,
                weekdays,
                to_char(start_time, 'HH24:MI') AS start_time,
@@ -103,7 +103,7 @@ function M.load_rules(dbh, flag_uuid)
     ]], { flag_uuid = flag_uuid }, function(row)
         table.insert(rules, row)
     end)
-    return rules
+    return ok and rules or nil
 end
 
 -- Returns true/false. Returns nil when the clock could not be read.
@@ -135,8 +135,9 @@ function M.is_active(dbh, flag)
         return truthy(flag.active)
     end
 
-    local active = M.rules_active(M.load_rules(dbh, flag.uuid), flag.timezone)
-    return active == true
+    local rules = M.load_rules(dbh, flag.uuid)
+    if not rules then return nil end
+    return M.rules_active(rules, flag.timezone)
 end
 
 return M

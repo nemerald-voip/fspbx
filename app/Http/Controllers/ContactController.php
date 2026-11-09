@@ -480,7 +480,7 @@ class ContactController extends Controller
      */
     private function countryCode(): string
     {
-        return $this->countryCode ??= get_domain_setting('country', null) ?? 'US';
+        return $this->countryCode ??= app(\App\Services\PhoneNumberService::class)->countryCodeForDomain();
     }
 
     /** Store shape: E.164 for the domain's country, falling back to the input. */

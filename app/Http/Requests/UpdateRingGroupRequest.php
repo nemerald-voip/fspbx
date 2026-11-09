@@ -22,7 +22,8 @@ class UpdateRingGroupRequest extends FormRequest
         if (!Auth::check() || !userCheckPermission('ring_group_edit')) {
             return false;
         }
-        return true;
+        return ! $this->exists('flag_overrides')
+            || app(\App\Services\FlagFeature::class)->canAssign('ring_group_edit');
     }
 
     public function rules(): array

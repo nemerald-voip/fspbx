@@ -4,12 +4,12 @@ namespace App\Http\Requests;
 
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
-use libphonenumber\PhoneNumberFormat;
 use Illuminate\Foundation\Http\FormRequest;
 use App\Support\Localization\ValidationMessages;
 
 class CreateMessageSettingRequest extends FormRequest
 {
+    use Concerns\ValidatesMessageWebhookRouting;
     /**
      * Determine if the user is authorized to make this request.
      *
@@ -30,8 +30,10 @@ class CreateMessageSettingRequest extends FormRequest
         // logger('validation');
         // logger(request()->all());
         return [
+            ...$this->webhookRules(),
             'destination' => [
                 'required',
+                'string',
             ],
             'carrier' => [
                 'nullable',
@@ -79,10 +81,6 @@ class CreateMessageSettingRequest extends FormRequest
 
         if (!$this->has('enabled')) {
             $merge['enabled'] = "true";
-        }
-
-        if ($this->has('destination')) {
-            $merge['destination'] = formatPhoneNumber($this->input('destination'),'US', PhoneNumberFormat::E164);
         }
 
         $this->merge($merge);

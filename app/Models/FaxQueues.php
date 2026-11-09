@@ -72,12 +72,12 @@ class FaxQueues extends Model
 
     public function getFaxCallerIdNumberFormattedAttribute()
     {
-        return formatPhoneNumber($this->fax_caller_id_number, 'US', PhoneNumberFormat::NATIONAL);
+        return app(\App\Services\PhoneNumberService::class)->formatForDomain($this->fax_caller_id_number, $this->domain_uuid, PhoneNumberFormat::NATIONAL);
     }
 
     public function getFaxNumberFormattedAttribute()
     {
-        return formatPhoneNumber($this->fax_number, 'US', PhoneNumberFormat::NATIONAL);
+        return app(\App\Services\PhoneNumberService::class)->formatForDomain($this->fax_number, $this->domain_uuid, PhoneNumberFormat::NATIONAL);
     }
 
     /**

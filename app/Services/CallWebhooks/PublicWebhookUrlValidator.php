@@ -3,6 +3,7 @@
 namespace App\Services\CallWebhooks;
 
 use InvalidArgumentException;
+use Symfony\Component\HttpFoundation\IpUtils;
 
 class PublicWebhookUrlValidator
 {
@@ -70,10 +71,21 @@ class PublicWebhookUrlValidator
 
     private function isPublicAddress(string $address): bool
     {
-        return filter_var(
+        if (filter_var(
             $address,
             FILTER_VALIDATE_IP,
             FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
-        ) !== false;
+        ) === false) return false;
+
+        // PHP's filters still allow shared, multicast and documentation space.
+        // IPv6 transition ranges can also route through embedded IPv4 addresses.
+        if (str_contains($address, ':')) {
+            return IpUtils::checkIp($address, '2000::/3')
+                && ! IpUtils::checkIp($address, ['2001::/23', '2001:db8::/32', '2002::/16', '3fff::/20']);
+        }
+        return ! IpUtils::checkIp($address, [
+            '100.64.0.0/10', '192.0.0.0/24', '192.0.2.0/24', '192.88.99.0/24',
+            '198.18.0.0/15', '198.51.100.0/24', '203.0.113.0/24', '224.0.0.0/4', '240.0.0.0/4',
+        ]);
     }
 }

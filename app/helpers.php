@@ -1000,7 +1000,7 @@ if (!function_exists('generate_sip_password')) {
 }
 
 if (!function_exists('formatPhoneNumber')) {
-    function formatPhoneNumber($phoneNumber, $countryCode = 'US', $format = PhoneNumberFormat::NATIONAL)
+    function formatPhoneNumber($phoneNumber, $countryCode = null, $format = PhoneNumberFormat::NATIONAL)
     {
         if ($phoneNumber === null || $phoneNumber === '') {
             return $phoneNumber;
@@ -1011,10 +1011,14 @@ if (!function_exists('formatPhoneNumber')) {
         try {
             $phoneNumberObject = $phoneNumberUtil->parse(
                 (string) $phoneNumber,
-                strtoupper(trim((string) $countryCode)) ?: 'US'
+                strtoupper(trim((string) ($countryCode ?? app(\App\Services\PhoneNumberService::class)->countryCodeForDomain()))) ?: PhoneNumberUtil::UNKNOWN_REGION
             );
 
             if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
+                // Preserve numeric format arguments when using libphonenumber 9 enums.
+                if (is_int($format) && enum_exists(PhoneNumberFormat::class)) {
+                    $format = PhoneNumberFormat::from($format);
+                }
                 return $phoneNumberUtil->format($phoneNumberObject, $format);
             }
         } catch (NumberParseException $e) {
@@ -1046,13 +1050,15 @@ if (!function_exists('debugEloquentSqlWithBindings')) {
  * ]
  */
 if (!function_exists('getVendorTemplateCollection')) {
-    function getVendorTemplateCollection(bool $includeDefaultTemplates = true, bool $includeCustomTemplates = true): array
+    function getVendorTemplateCollection(bool $includeDefaultTemplates = true, bool $includeCustomTemplates = true, ?bool $includeLegacyTemplates = null): array
     {
+        // Preserve existing callers while allowing legacy files independently of Blade defaults.
+        $includeLegacyTemplates ??= $includeDefaultTemplates;
         $vendors = DeviceVendor::where('enabled', 'true')->orderBy('name')->get();
         $templates = [];
 
         // 1) Legacy filesystem 
-        if ($includeDefaultTemplates) {
+        if ($includeLegacyTemplates) {
             $legacyBase = public_path('resources/templates/provision');
             foreach ($vendors as $vendor) {
                 $vname = $vendor->name;
