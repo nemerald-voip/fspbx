@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\DB;
 use Spatie\QueryBuilder\QueryBuilder;
 use Spatie\QueryBuilder\AllowedFilter;
 use App\Services\CallRoutingOptionsService;
+use App\Services\FlagService;
+use App\Models\FlagOverride;
 use App\Http\Requests\StoreVirtualReceptionistRequest;
 use App\Http\Requests\UpdateVirtualReceptionistRequest;
 use App\Http\Requests\CreateVirtualReceptionistKeyRequest;
@@ -156,7 +158,8 @@ class VirtualReceptionistController extends Controller
 
         try {
             // Retrieve the IVR menu by UUID
-            $instance = $this->model::where('ivr_menu_uuid', $inputs['ivr_menu_uuid'])->firstOrFail();
+            $instance = $this->model::where('domain_uuid', session('domain_uuid'))
+                ->where('ivr_menu_uuid', $request->route('virtual_receptionist'))->firstOrFail();
 
             $exit_data = $this->buildExitDestinationAction($inputs);
 
@@ -184,6 +187,16 @@ class VirtualReceptionistController extends Controller
             // Save the updated IVR menu
             $instance->save();
 
+            if (array_key_exists('flag_overrides', $inputs)) {
+                app(FlagService::class)->syncOverrides(
+                    FlagOverride::OWNER_IVR_MENU,
+                    $instance->ivr_menu_uuid,
+                    $instance->domain_uuid,
+                    $inputs['flag_overrides'] ?? [],
+                    session('domain_name')
+                );
+            }
+
             $this->generateDialPlanXML($instance);
 
             // Return a JSON response indicating success
@@ -208,13 +221,16 @@ class VirtualReceptionistController extends Controller
      */
     public function bulkDelete()
     {
+        abort_unless(session('domain_uuid') && userCheckPermission('ivr_menu_delete'), 403);
+
         try {
             // Begin Transaction
             DB::beginTransaction();
 
             // Retrieve all items at once
-            $items = $this->model::whereIn('ivr_menu_uuid', request('items'))
-                ->get(['ivr_menu_uuid', 'dialplan_uuid']);
+            $items = $this->model::where('domain_uuid', session('domain_uuid'))
+                ->whereIn('ivr_menu_uuid', request('items'))
+                ->get(['ivr_menu_uuid', 'dialplan_uuid', 'domain_uuid']);
 
             foreach ($items as $item) {
                 // Delete related IVR menu options (keys)
@@ -225,6 +241,8 @@ class VirtualReceptionistController extends Controller
 
                 // Clear cache
                 $this->clearCache($item);
+
+                app(FlagService::class)->deleteOverrides(FlagOverride::OWNER_IVR_MENU, [$item->ivr_menu_uuid], $item->domain_uuid);
 
                 // Delete the item itself
                 $item->delete();
@@ -257,6 +275,8 @@ class VirtualReceptionistController extends Controller
      */
     public function duplicate(Request $request)
     {
+        abort_unless(session('domain_uuid') && userCheckPermission('ivr_menu_add'), 403);
+
         $request->validate([
             'ivr_menu_uuid' => 'required|uuid|exists:v_ivr_menus,ivr_menu_uuid',
         ]);
@@ -288,6 +308,13 @@ class VirtualReceptionistController extends Controller
                 $newOption->save();
             }
 
+            app(FlagService::class)->copyOverrides(
+                FlagOverride::OWNER_IVR_MENU,
+                $original->ivr_menu_uuid,
+                $newIvr->ivr_menu_uuid,
+                $original->domain_uuid
+            );
+
             $this->generateDialPlanXML($newIvr);
 
             DB::commit();
@@ -312,18 +339,7 @@ class VirtualReceptionistController extends Controller
 
     private function generateDialPlanXML(IvrMenus $ivr): void
     {
-        $data = [
-            'ivr' => $ivr,
-            'dialplan_continue' => 'false',
-        ];
-
-        $xml = trim(view('layouts.xml.ivr-dial-plan-template', $data)->render());
-
-        $dom = new \DOMDocument();
-        $dom->preserveWhiteSpace = false;
-        $dom->loadXML($xml);
-        $dom->formatOutput = true;
-        $xml = $dom->saveXML($dom->documentElement);
+        $xml = app(\App\Services\FlagDialplanRenderer::class)->ivr($ivr);
 
         $dialPlan = Dialplans::where('dialplan_uuid', $ivr->dialplan_uuid)->first();
 
@@ -337,7 +353,7 @@ class VirtualReceptionistController extends Controller
             $dialPlan->dialplan_context = session('domain_name');
             $dialPlan->dialplan_name = $ivr->ivr_menu_name;
             $dialPlan->dialplan_number = $ivr->ivr_menu_extension;
-            $dialPlan->dialplan_continue = $data['dialplan_continue'];
+            $dialPlan->dialplan_continue = 'false';
             $dialPlan->dialplan_xml = $xml;
             $dialPlan->dialplan_order = 101;
             $dialPlan->dialplan_enabled = $ivr->ivr_menu_enabled;
@@ -370,6 +386,9 @@ class VirtualReceptionistController extends Controller
 
     public function getItemOptions(Request $request)
     {
+        abort_unless(session('domain_uuid') && userCheckPermission($request->input('item_uuid') ? 'ivr_menu_edit' : 'ivr_menu_add'), 403);
+        abort_if($request->input('domain_uuid') !== null && $request->input('domain_uuid') !== session('domain_uuid'), 403);
+
         try {
             $domainUuid = $request->input('domain_uuid') ?? session('domain_uuid');
             $itemUuid = $request->input('item_uuid');
@@ -500,6 +519,10 @@ class VirtualReceptionistController extends Controller
                 'prompt_repeat_options' => $promptRepeatOptions,
                 'ring_back_tones' => $ringBackTones,
                 'sounds' => $sounds,
+                'flag_options' => $permissions['manage_flags'] ? app(FlagService::class)->flagOptions($domainUuid) : [],
+                'flag_overrides' => $permissions['manage_flags'] && $itemUuid
+                    ? app(FlagService::class)->overrideFormRows($ivr->flagOverrides()->get(), $domainUuid)
+                    : [],
             ]);
         } catch (\Throwable $e) {
             logger('Error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
@@ -549,6 +572,7 @@ class VirtualReceptionistController extends Controller
         $permissions['virtual_receptionist_update'] = userCheckPermission('ivr_menu_edit');
         $permissions['virtual_receptionist_destroy'] = userCheckPermission('ivr_menu_delete');
         $permissions['is_superadmin'] = isSuperAdmin();
+        $permissions['manage_flags'] = app(\App\Services\FlagFeature::class)->canAssign('ivr_menu_edit');
 
         return $permissions;
     }

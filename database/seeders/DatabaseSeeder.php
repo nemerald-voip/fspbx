@@ -180,6 +180,12 @@ class DatabaseSeeder extends Seeder
             ['application_name' => 'Business Hours', 'permission_name' => 'business_hours_holidays_create'],
             ['application_name' => 'Business Hours', 'permission_name' => 'business_hours_holidays_update'],
             ['application_name' => 'Business Hours', 'permission_name' => 'business_hours_holidays_delete'],
+            ['application_name' => 'Flags', 'permission_name' => 'flags_list_view'],
+            ['application_name' => 'Flags', 'permission_name' => 'flags_create'],
+            ['application_name' => 'Flags', 'permission_name' => 'flags_update'],
+            ['application_name' => 'Flags', 'permission_name' => 'flags_delete'],
+            ['application_name' => 'Flags', 'permission_name' => 'flags_toggle'],
+            ['application_name' => 'Flags', 'permission_name' => 'flags_assign'],
             ['application_name' => 'Paging Groups', 'permission_name' => 'paging_groups_list_view'],
             ['application_name' => 'Paging Groups', 'permission_name' => 'paging_groups_create'],
             ['application_name' => 'Paging Groups', 'permission_name' => 'paging_groups_update'],
@@ -1065,6 +1071,14 @@ class DatabaseSeeder extends Seeder
     private function createDefaultSettings()
     {
         $settings = [
+            [
+                'default_setting_category' => 'flags',
+                'default_setting_subcategory' => 'enabled',
+                'default_setting_name' => 'boolean',
+                'default_setting_value' => 'false',
+                'default_setting_enabled' => true,
+                'default_setting_description' => 'Enable optional Flags routing server-wide. Permissions and BLF startup must be configured separately.',
+            ],
             [
                 'default_setting_category'      => 'dialplan',
                 'default_setting_subcategory'   => 'outbound_route_default_scope',

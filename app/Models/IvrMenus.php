@@ -128,4 +128,15 @@ class IvrMenus extends Model
     {
         return $this->firstAvailableExtensionInRange(9150, 9199);
     }
+
+    /**
+     * Flag overrides, first active flag wins.
+     */
+    public function flagOverrides()
+    {
+        return $this->hasMany(FlagOverride::class, 'owner_uuid', 'ivr_menu_uuid')
+            ->where('owner_type', FlagOverride::OWNER_IVR_MENU)
+            ->where('domain_uuid', $this->domain_uuid)
+            ->orderBy('sort_order');
+    }
 }
