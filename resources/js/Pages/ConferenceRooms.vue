@@ -218,10 +218,6 @@
                                     class="rounded px-2 py-1 text-xs font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-700">
                                     {{ $t('View') }}
                                 </a>
-                                <a v-if="permissions.cdr_view" :href="toolUrl(routes.cdr, row.conference_room_uuid)"
-                                    class="rounded px-2 py-1 text-xs font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-700">
-                                    CDR
-                                </a>
                                 <a v-if="permissions.session_view" :href="toolUrl(routes.sessions, row.conference_room_uuid)"
                                     class="rounded px-2 py-1 text-xs font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-700">
                                     {{ $t('Sessions') }}

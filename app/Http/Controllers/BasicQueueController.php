@@ -47,9 +47,6 @@ class BasicQueueController extends Controller
                 'agent_bulk_delete' => route('basic-queues.agents.bulk.delete'),
                 'agent_status' => route('basic-queues.agents.status'),
                 'queue_status' => route('active-basic-queues.index'),
-                'wallboard' => '/app/call_center_wallboard/call_center_wallboard.php',
-                'queue_import' => '/app/call_center_imports/call_center_imports.php?import_type=call_center_queues',
-                'agent_import' => '/app/call_center_imports/call_center_imports.php?import_type=call_center_agents',
             ],
             'permissions' => [
                 'queues' => [
@@ -57,8 +54,6 @@ class BasicQueueController extends Controller
                     'update' => userCheckPermission('call_center_queue_edit'),
                     'destroy' => userCheckPermission('call_center_queue_delete'),
                     'view_all' => userCheckPermission('call_center_all'),
-                    'imports' => userCheckPermission('call_center_imports'),
-                    'wallboard' => userCheckPermission('call_center_wallboard'),
                     'active' => userCheckPermission('call_center_active_view'),
                 ],
                 'agents' => [
@@ -66,7 +61,6 @@ class BasicQueueController extends Controller
                     'create' => userCheckPermission('call_center_agent_add'),
                     'update' => userCheckPermission('call_center_agent_edit'),
                     'destroy' => userCheckPermission('call_center_agent_delete'),
-                    'imports' => userCheckPermission('call_center_imports'),
                 ],
             ],
         ]);

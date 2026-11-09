@@ -29,16 +29,6 @@
                             :class="tabButtonClass(activeTab === 'agents')">{{ $t("Agents") }}</button>
                     </div>
 
-                    <a v-if="activeTab === 'queues' && permissions.queues.imports" :href="routes.queue_import"
-                        class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                        {{ $t("Import") }}
-                    </a>
-
-                    <a v-if="activeTab === 'queues' && permissions.queues.wallboard" :href="routes.wallboard"
-                        class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                        {{ $t("Wallboard") }}
-                    </a>
-
                     <a v-if="activeTab === 'queues' && permissions.queues.active" :href="routes.queue_status"
                         class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                         {{ $t("Status") }}
@@ -47,11 +37,6 @@
                     <a v-if="activeTab === 'agents'" :href="routes.agent_status"
                         class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                         {{ $t("Status") }}
-                    </a>
-
-                    <a v-if="activeTab === 'agents' && permissions.agents.imports" :href="routes.agent_import"
-                        class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                        {{ $t("Import") }}
                     </a>
 
                     <button v-if="canCreateActiveTab" type="button" @click.prevent="handleCreateButtonClick"
