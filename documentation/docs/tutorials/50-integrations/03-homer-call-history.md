@@ -24,6 +24,7 @@ Open the call using the magnifying glass in **Call History**, then select **SIP 
 
 - The dedicated workspace loads the SIP ladder automatically. Select a message to read its headers and body. Adjust **Flow width** or **Hide message** to give the ladder more room. Endpoint columns stay consistent across pages and scroll horizontally when necessary.
 - **Expand** opens the selected message over the ladder. **Close** or Escape returns to the flow. On narrow screens, selecting a message opens this overlay directly. Capture timestamps are displayed in UTC, with elapsed seconds beside each message.
+- Select **QoS** to see RTCP statistics for this call. Choose a media stream to chart estimated MOS, interval packet loss, jitter, or packet counters. The table shows the minimum, average, and maximum for each available metric. Jitter is shown in RTP timestamp units. A dash means the report did not supply the inputs for that metric. A call can have a SIP trace even when HOMER has no RTCP reports.
 - **Download PCAP** downloads the captured SIP signaling for Wireshark. RTP audio is not included.
 - **Download TXT** downloads every returned message, including timestamps, endpoints, Call-IDs, and raw SIP text. Both exports include all captured correlated legs within the lookup window, regardless of the selected message or page. AI analysis is not available or displayed.
 
