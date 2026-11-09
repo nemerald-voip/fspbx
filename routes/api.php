@@ -246,6 +246,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
 
     // Inbound Webhooks
     Route::resource('/inbound-webhooks', InboundWebhooksController::class);
+    Route::get('/outbound-webhooks', [\App\Http\Controllers\OutboundWebhookLogsController::class, 'index'])->name('outbound-webhooks.index');
 
     // Hotel rooms
     Route::resource('/hotel-rooms', HotelRoomController::class);

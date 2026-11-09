@@ -44,6 +44,13 @@
                     :timezone="timezone" :routes="routes" :permissions="permissions" />
             </section>
 
+            <section v-if="permissions?.outbound_webhooks_view" v-show="selectedMenuOption === 'outbound_webhooks'">
+                <h4 class="text-lg font-semibold text-gray-900">{{ $t('Outbound Webhooks') }}</h4>
+                <OutboundWebhooks :trigger="outboundWebhooksTrigger" :start-period="startPeriod" :end-period="endPeriod"
+                    :timezone="timezone" :routes="routes" :domain-options="domainOptions"
+                    :selected-domain-uuid="selectedDomainUuid" />
+            </section>
+
             <!-- Messages -->
             <section v-show="selectedMenuOption === 'message_logs'">
                 <Vueform>
@@ -172,6 +179,7 @@ import EmailLogs from "./components/EmailLogs.vue";
 import AiAgentLogs from "./components/AiAgentLogs.vue";
 import TigerTmsLogs from "./components/TigerTmsLogs.vue";
 import InboundWebhooks from "./components/InboundWebhooks.vue";
+import OutboundWebhooks from "./components/OutboundWebhooks.vue";
 import MessageLogs from "./components/MessageLogs.vue";
 import FaxLogs from "./components/FaxLogs.vue";
 import FreeSwitchLogs from "./components/FreeSwitchLogs.vue";
@@ -183,6 +191,7 @@ import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
 import {
     EnvelopeIcon,
     InboxArrowDownIcon,
+    ArrowUpTrayIcon,
     BuildingOffice2Icon,
     DocumentTextIcon,
     ChatBubbleLeftRightIcon,
@@ -217,6 +226,7 @@ const emailsTrigger = ref(false)
 const aiAgentLogsTrigger = ref(false)
 const tigerTmsLogsTrigger = ref(false)
 const inboundWebhooksTrigger = ref(false)
+const outboundWebhooksTrigger = ref(false)
 const messageLogsTrigger = ref(false)
 const faxLogsTrigger = ref(false)
 const freeswitchLogsTrigger = ref(false)
@@ -242,6 +252,7 @@ const handleUpdateSelectedMenuOption = (key) => {
     if (key === 'ai_agent_logs') aiAgentLogsTrigger.value = !aiAgentLogsTrigger.value
     if (key === 'tigertms_logs') tigerTmsLogsTrigger.value = !tigerTmsLogsTrigger.value
     if (key === 'inbound_webhooks') inboundWebhooksTrigger.value = !inboundWebhooksTrigger.value
+    if (key === 'outbound_webhooks') outboundWebhooksTrigger.value = !outboundWebhooksTrigger.value
     if (key === 'message_logs') messageLogsTrigger.value = !messageLogsTrigger.value
     if (key === 'fax_logs') faxLogsTrigger.value = !faxLogsTrigger.value
     if (key === 'freeswitch_logs') freeswitchLogsTrigger.value = !freeswitchLogsTrigger.value
@@ -261,6 +272,9 @@ const navigation = computed(() => {
     items.push({ key: 'message_logs', name: trans('Messages'), icon: ChatBubbleLeftRightIcon })
 
     items.push({ key: 'inbound_webhooks', name: trans('Inbound Webhooks'), icon: InboxArrowDownIcon })
+    if (props.permissions?.outbound_webhooks_view) {
+        items.push({ key: 'outbound_webhooks', name: trans('Outbound Webhooks'), icon: ArrowUpTrayIcon })
+    }
 
     if (props.permissions?.fax_log_view) {
         items.push({ key: 'fax_logs', name: trans('Faxes'), icon: PrinterIcon })

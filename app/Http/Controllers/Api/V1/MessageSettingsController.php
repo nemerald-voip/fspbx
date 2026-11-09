@@ -60,6 +60,7 @@ class MessageSettingsController extends Controller
                 $request->merge(['enabled' => $value]);
             }
         }
+        // Query parameters
         $params = $request->validate([
             'limit' => ['sometimes', 'integer', 'min:1', 'max:100'],
             'starting_after' => ['sometimes', 'uuid'],
@@ -146,7 +147,7 @@ class MessageSettingsController extends Controller
      * can retrieve it in Account Settings > Messaging or the number's Message Settings form.
      * Receivers verify the Signature header against the raw JSON request body and return
      * HTTP 2xx. Webhook-routed SMS/MMS remain in administrative logs and bypass local
-     * conversations, Ringotel, and email. Changes affect newly received messages.
+     * conversations and email. Changes affect newly received messages.
      *
      * The number is enabled by default. This endpoint saves the configuration in FS PBX; it does not purchase
      * a number or configure your provider's account.

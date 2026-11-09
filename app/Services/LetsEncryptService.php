@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\DefaultSettings;
+use App\Services\ScheduledAnnouncements\AuthoritativeDnsActiveNodeGuard;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Process;
@@ -871,14 +872,15 @@ class LetsEncryptService
                 return true;
             }
 
-            $ips = @gethostbynamel($name) ?: [];
+            $ips = $this->resolveHostIps($name);
 
             return empty(array_intersect($ips, $localIps));
         }));
     }
 
     /**
-     * IP addresses belonging to this node (interface addresses + own hostname),
+     * IP addresses belonging to this node (interfaces, own hostname, and public
+     * egress when the interfaces are behind NAT),
      * used to recognize and skip the local node within the replicated peer list,
      * and to drive LE's own active-node check (independent of any other feature's
      * settings).
@@ -887,7 +889,7 @@ class LetsEncryptService
      */
     public function localIps(): array
     {
-        return Cache::remember('letsencrypt_local_ips', 300, function () {
+        return Cache::remember('letsencrypt_local_ips:v2', 300, function () {
             $ips = [];
 
             try {
@@ -897,10 +899,28 @@ class LetsEncryptService
                 // Fall through to hostname resolution.
             }
 
-            $self = @gethostbynamel(gethostname() ?: '') ?: [];
+            $self = $this->resolveHostIps(gethostname() ?: '');
+            $ips = array_values(array_unique(array_filter(array_merge($ips, $self))));
 
-            return array_values(array_unique(array_filter(array_merge($ips, $self))));
+            $publicIps = array_filter($ips, fn ($ip) => filter_var(
+                $ip,
+                FILTER_VALIDATE_IP,
+                FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
+            ));
+
+            if (empty($publicIps)) {
+                // Use the same bounded HTTPS discovery as the DNS ownership
+                // guard. Never infer this node's identity from the failover DNS.
+                $ips = array_merge($ips, app(AuthoritativeDnsActiveNodeGuard::class)->autoDetectedNodeIps());
+            }
+
+            return array_values(array_unique($ips));
         });
+    }
+
+    protected function resolveHostIps(string $hostname): array
+    {
+        return @gethostbynamel($hostname) ?: [];
     }
 
     public function isClustered(): bool

@@ -1747,15 +1747,14 @@ paths:
                   example: a6cf59ba-4b2b-4bdd-b870-35cc55bca146
                 device_keys:
                   type: array
-                  description: ''
-                  example:
-                    - ipsum
+                  description: 'Optional device key assignments.'
+                  example: []
                   items:
                     type: integer
                 phonebook_mode:
                   type: string
-                  description: ''
-                  example: custom
+                  description: 'Use account-default phonebooks or a custom list.'
+                  example: default
                   enum:
                     - default
                     - custom
@@ -1763,7 +1762,7 @@ paths:
                   type: array
                   description: 'Must be a valid UUID.'
                   example:
-                    - f5c64b32-4af4-317d-879e-8928547d362d
+                    - 66529e01-d113-3473-8d6f-9e11e09332ea
                   items:
                     type: string
                 device_description:
@@ -4783,37 +4782,10 @@ paths:
                         example: domain_uuid
       tags:
         - 'Message Settings'
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                limit:
-                  type: integer
-                  description: 'Must be at least 1. Must not be greater than 100.'
-                  example: 13
-                starting_after:
-                  type: string
-                  description: 'Must be a valid UUID.'
-                  example: 1270a73a-b5ee-3955-96d4-f44b31d96b7c
-                search:
-                  type: string
-                  description: 'Must not be greater than 255 characters.'
-                  example: yrdivfmlxmiagllrykcx
-                carrier:
-                  type: string
-                  description: ''
-                  example: praesentium
-                enabled:
-                  type: boolean
-                  description: ''
-                  example: true
     post:
       summary: 'Create message settings'
       operationId: createMessageSettings
-      description: "Configures a messaging phone number for an account. Supply the phone number,\nits message provider, and any extensions that should share it. National numbers\nare automatically converted to E.164 using the account country or the country\nin Default Settings. If neither is configured, supply an international number with + and its country code. Numbers starting\nwith + use their supplied country code.\nAllowed extensions can send and receive messages using the number and see\neach other's replies. An empty or omitted extension list grants no extension access.\n\nIncoming delivery defaults to `inherit`: use the account webhook when configured,\notherwise use the number's members and email. Choose `members` to use local\nmembers and email regardless of the account webhook, or `webhook` with a public\nHTTPS `inbound_webhook_url` to forward only to that URL. Custom webhook delivery\nclears local members and email, including values supplied in this request.\n\nWebhooks use the account's shared HMAC-SHA256 signing secret, generated if absent.\nThis API does not return or accept changes to the secret. Authorized administrators\ncan retrieve it in Account Settings > Messaging or the number's Message Settings form.\nReceivers verify the Signature header against the raw JSON request body and return\nHTTP 2xx. Webhook-routed SMS/MMS remain in administrative logs and bypass local\nconversations, Ringotel, and email. Changes affect newly received messages.\n\nThe number is enabled by default. This endpoint saves the configuration in FS PBX; it does not purchase\na number or configure your provider's account.\nRequires account access and `message_settings_manage`."
+      description: "Configures a messaging phone number for an account. Supply the phone number,\nits message provider, and any extensions that should share it. National numbers\nare automatically converted to E.164 using the account country or the country\nin Default Settings. If neither is configured, supply an international number with + and its country code. Numbers starting\nwith + use their supplied country code.\nAllowed extensions can send and receive messages using the number and see\neach other's replies. An empty or omitted extension list grants no extension access.\n\nIncoming delivery defaults to `inherit`: use the account webhook when configured,\notherwise use the number's members and email. Choose `members` to use local\nmembers and email regardless of the account webhook, or `webhook` with a public\nHTTPS `inbound_webhook_url` to forward only to that URL. Custom webhook delivery\nclears local members and email, including values supplied in this request.\n\nWebhooks use the account's shared HMAC-SHA256 signing secret, generated if absent.\nThis API does not return or accept changes to the secret. Authorized administrators\ncan retrieve it in Account Settings > Messaging or the number's Message Settings form.\nReceivers verify the Signature header against the raw JSON request body and return\nHTTP 2xx. Webhook-routed SMS/MMS remain in administrative logs and bypass local\nconversations and email. Changes affect newly received messages.\n\nThe number is enabled by default. This endpoint saves the configuration in FS PBX; it does not purchase\na number or configure your provider's account.\nRequires account access and `message_settings_manage`."
       parameters: []
       responses:
         201:
@@ -5587,6 +5559,463 @@ paths:
         name: sms_destination_uuid
         description: 'The message setting UUID.'
         example: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5
+        required: true
+        schema:
+          type: string
+  '/api/v1/domains/{domain_uuid}/messages':
+    post:
+      summary: 'Send an SMS or MMS'
+      operationId: sendAnSMSOrMMS
+      description: "Send a text message or attachments from an enabled number in Message Settings.\nRequires access to the account and the messages_send permission.\nA 200 response means FS PBX accepted your request; it does not confirm delivery.\nSave data.id to match the message with delivery callbacks and message logs.\nAPI messages appear in Status > Logs > Messages, but not in member conversations.\n\nBoth from and to must use E.164 format: + followed by the country code and\nphone number, such as +12025550100, without spaces or punctuation. National\nnumbers are not accepted. The account's country setting is not used.\nPhone numbers in responses and delivery callbacks use E.164.\n\nTo receive delivery updates, select an account or custom webhook for the\nsending number in Message Settings. Verify callbacks using the Signing secret\nin Account Settings > Messaging. Without a webhook, check results in message logs.\n\nIdempotency-Key is optional. Reuse it with the same request, account, API user,\nand endpoint for up to 24 hours to retry without creating another message.\nDifferent message details with the same key return 409. Use a new key for each\nnew message. A repeated response shows the original acceptance, not current\ndelivery status. On a 503 response, retry with the same key and body.\nValidation errors return 400 with an error object identifying the invalid field."
+      parameters:
+        -
+          in: header
+          name: Idempotency-Key
+          description: ''
+          example: 32dcb5f0-70e1-44ed-a034-493984af48d1
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data:
+                    id: 751ec0cb-4a4e-4462-85ac-f333cbaf77ee
+                    record_type: message
+                    direction: outbound
+                    type: SMS
+                    from:
+                      phone_number: '+12125550123'
+                    to:
+                      -
+                        phone_number: '+12125550124'
+                        status: queued
+                    text: 'Your appointment is confirmed.'
+                    media: []
+                    received_at: '2026-11-05T00:00:00+00:00'
+                    sent_at: null
+                    completed_at: null
+                    errors: []
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        example: 751ec0cb-4a4e-4462-85ac-f333cbaf77ee
+                      record_type:
+                        type: string
+                        example: message
+                      direction:
+                        type: string
+                        example: outbound
+                      type:
+                        type: string
+                        example: SMS
+                      from:
+                        type: object
+                        properties:
+                          phone_number:
+                            type: string
+                            example: '+12125550123'
+                      to:
+                        type: array
+                        example:
+                          -
+                            phone_number: '+12125550124'
+                            status: queued
+                        items:
+                          type: object
+                          properties:
+                            phone_number:
+                              type: string
+                              example: '+12125550124'
+                            status:
+                              type: string
+                              example: queued
+                      text:
+                        type: string
+                        example: 'Your appointment is confirmed.'
+                      media:
+                        type: array
+                        example: []
+                      received_at:
+                        type: string
+                        example: '2026-11-05T00:00:00+00:00'
+                      sent_at:
+                        type: string
+                        example: null
+                      completed_at:
+                        type: string
+                        example: null
+                      errors:
+                        type: array
+                        example: []
+        400:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Provide text or at least one media URL.'
+                    code: invalid_parameter
+                    param: text
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Provide text or at least one media URL.'
+                      code:
+                        type: string
+                        example: invalid_parameter
+                      param:
+                        type: string
+                        example: text
+        401:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        403:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    code: forbidden_permission
+                    permission: messages_send
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: forbidden_permission
+                      permission:
+                        type: string
+                        example: messages_send
+        409:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Idempotency-Key was already used with a different request.'
+                    code: idempotency_conflict
+                    param: Idempotency-Key
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Idempotency-Key was already used with a different request.'
+                      code:
+                        type: string
+                        example: idempotency_conflict
+                      param:
+                        type: string
+                        example: Idempotency-Key
+        503:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: api_error
+                    message: 'Unable to queue the message. Retry with the same Idempotency-Key.'
+                    code: queue_unavailable
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: api_error
+                      message:
+                        type: string
+                        example: 'Unable to queue the message. Retry with the same Idempotency-Key.'
+                      code:
+                        type: string
+                        example: queue_unavailable
+      tags:
+        - Messages
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                from:
+                  type: string
+                  description: 'Your enabled sending number in this account''s Message Settings. E.164 format is required: + followed by the country code and phone number, without spaces or punctuation. Member assignments are not required. Must match the regex /^\+[1-9][0-9]{1,14}$/D.'
+                  example: '+12125550123'
+                to:
+                  type: string
+                  description: 'Recipient number, or an array of external recipient numbers for group_mms. Every number must use E.164 format: + followed by the country code and phone number, without spaces or punctuation. Must match the regex /^\+[1-9][0-9]{1,14}$/D.'
+                  example: '+12125550124'
+                text:
+                  type: string
+                  description: 'Up to 1,600 characters. Text or media is required. Must not be greater than 1600 characters.'
+                  example: 'Your appointment is confirmed.'
+                media_urls:
+                  type: array
+                  description: 'Must be a valid URL. Must not be greater than 8192 characters.'
+                  example:
+                    - vmqeopfuudtdsufvyvddq
+                  items:
+                    type: string
+                type:
+                  type: string
+                  description: 'Optional SMS or MMS. Omit to select automatically. Text to one recipient is SMS; attachments and all groups are MMS. If supplied, the type must match the content and recipients.'
+                  example: SMS
+                  enum:
+                    - SMS
+                    - MMS
+              required:
+                - from
+                - to
+                - media_urls
+    parameters:
+      -
+        in: path
+        name: domain_uuid
+        description: 'Account UUID.'
+        example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+        required: true
+        schema:
+          type: string
+  '/api/v1/domains/{domain_uuid}/messages/group_mms':
+    post:
+      summary: 'Send a group MMS'
+      operationId: sendAGroupMMS
+      description: "Send a message to a shared group conversation. Use an array for to, with at\nleast two distinct recipient numbers excluding the sender. Repeated numbers\ncount once. Sinch supports up to 20 recipients; supported Bandwidth local\nnumbers support up to 10. Other providers and Bandwidth toll-free numbers do\nnot support group MMS. Text-only groups are also MMS.\n\nThe from number and every number in to must use E.164 format: + followed by\nthe country code and phone number, without spaces or punctuation. National\nnumbers are not accepted. Responses and delivery callbacks use E.164 phone numbers.\n\nRequires account access and messages_send. Authentication, optional\nIdempotency-Key, and delivery callbacks work as described for Send an SMS or\nMMS. The response also includes group_id and participants. Check each recipient's\nstatus in delivery callbacks, as group members may have different results."
+      parameters:
+        -
+          in: header
+          name: Idempotency-Key
+          description: ''
+          example: 32dcb5f0-70e1-44ed-a034-493984af48d1
+          schema:
+            type: string
+      responses:
+        200:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  data:
+                    id: 751ec0cb-4a4e-4462-85ac-f333cbaf77ee
+                    record_type: message
+                    direction: outbound
+                    type: MMS
+                    from:
+                      phone_number: '+12125550123'
+                    to:
+                      -
+                        phone_number: '+12125550124'
+                        status: queued
+                      -
+                        phone_number: '+12125550125'
+                        status: queued
+                    text: 'Hello everyone'
+                    media: []
+                    received_at: '2026-11-05T00:00:00+00:00'
+                    sent_at: null
+                    completed_at: null
+                    errors: []
+                    group_id: 3241c8f9-988c-588c-a039-1132d1969876
+                    participants:
+                      - '+12125550123'
+                      - '+12125550124'
+                      - '+12125550125'
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        example: 751ec0cb-4a4e-4462-85ac-f333cbaf77ee
+                      record_type:
+                        type: string
+                        example: message
+                      direction:
+                        type: string
+                        example: outbound
+                      type:
+                        type: string
+                        example: MMS
+                      from:
+                        type: object
+                        properties:
+                          phone_number:
+                            type: string
+                            example: '+12125550123'
+                      to:
+                        type: array
+                        example:
+                          -
+                            phone_number: '+12125550124'
+                            status: queued
+                          -
+                            phone_number: '+12125550125'
+                            status: queued
+                        items:
+                          type: object
+                          properties:
+                            phone_number:
+                              type: string
+                              example: '+12125550124'
+                            status:
+                              type: string
+                              example: queued
+                      text:
+                        type: string
+                        example: 'Hello everyone'
+                      media:
+                        type: array
+                        example: []
+                      received_at:
+                        type: string
+                        example: '2026-11-05T00:00:00+00:00'
+                      sent_at:
+                        type: string
+                        example: null
+                      completed_at:
+                        type: string
+                        example: null
+                      errors:
+                        type: array
+                        example: []
+                      group_id:
+                        type: string
+                        example: 3241c8f9-988c-588c-a039-1132d1969876
+                      participants:
+                        type: array
+                        example:
+                          - '+12125550123'
+                          - '+12125550124'
+                          - '+12125550125'
+                        items:
+                          type: string
+        400:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Group messaging is not available for this sending number.'
+                    code: invalid_parameter
+                    param: to
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Group messaging is not available for this sending number.'
+                      code:
+                        type: string
+                        example: invalid_parameter
+                      param:
+                        type: string
+                        example: to
+      tags:
+        - Messages
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                from:
+                  type: string
+                  description: 'Your enabled sending number in this account''s Message Settings. E.164 format is required: + followed by the country code and phone number, without spaces or punctuation. Member assignments are not required. Must match the regex /^\+[1-9][0-9]{1,14}$/D.'
+                  example: '+12125550123'
+                to:
+                  type: array
+                  description: 'External recipient numbers. Every number must use E.164 format: + followed by the country code and phone number, without spaces or punctuation.'
+                  example:
+                    - '+12125550124'
+                    - '+12125550125'
+                  items:
+                    type: string
+                text:
+                  type: string
+                  description: 'Up to 1,600 characters. Text or media is required. Must not be greater than 1600 characters.'
+                  example: 'Your appointment is confirmed.'
+                media_urls:
+                  type: array
+                  description: 'Must be a valid URL. Must not be greater than 8192 characters.'
+                  example:
+                    - ufvyvddqamniihfqcoynl
+                  items:
+                    type: string
+                type:
+                  type: string
+                  description: 'Optional; must be MMS when supplied.'
+                  example: MMS
+              required:
+                - from
+                - to
+                - media_urls
+    parameters:
+      -
+        in: path
+        name: domain_uuid
+        description: 'Account UUID.'
+        example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
         required: true
         schema:
           type: string
@@ -11291,29 +11720,6 @@ paths:
                         example: domain_uuid
       tags:
         - Users
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                limit:
-                  type: integer
-                  description: 'Must be at least 1. Must not be greater than 100.'
-                  example: 8
-                starting_after:
-                  type: string
-                  description: 'Must be a valid UUID.'
-                  example: 140934f7-9559-3eaf-aa7c-a156f5cb9ed3
-                search:
-                  type: string
-                  description: 'Must not be greater than 255 characters.'
-                  example: hh
-                user_enabled:
-                  type: boolean
-                  description: ''
-                  example: true
     post:
       summary: 'Create a user'
       operationId: createAUser
@@ -13167,6 +13573,9 @@ tags:
     description: ''
   -
     name: 'Message Settings'
+    description: ''
+  -
+    name: Messages
     description: ''
   -
     name: 'Phone Control'

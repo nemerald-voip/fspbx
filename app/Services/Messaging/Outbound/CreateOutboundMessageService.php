@@ -83,7 +83,7 @@ class CreateOutboundMessageService
             source: $data->source,
             destination: $data->destination,
             text: $data->message,
-            type: $data->messageGroupUuid || !empty($storedMedia) ? 'mms' : 'sms',
+            type: $data->type ?? ($data->messageGroupUuid || !empty($storedMedia) ? 'mms' : 'sms'),
             carrier: $data->carrier,
             origin: $data->origin,
             providerReferenceId: $data->providerReferenceId,
@@ -98,7 +98,9 @@ class CreateOutboundMessageService
             'media_count' => count($message->media ?? []),
         ]);
 
-        SendOutboundSMSMessage::dispatch($message->message_uuid)->onQueue('messages');
+        if ($data->dispatch) {
+            SendOutboundSMSMessage::dispatch($message->message_uuid)->onQueue('messages')->afterCommit();
+        }
 
         messaging_webhook_debug('Outbound send queued', [
             'message_uuid' => $message->message_uuid,

@@ -34,6 +34,7 @@ class ClickSendWebhookParser implements MessagingWebhookParser
                 'status' => $this->mapReceiptStatus($payload),
                 'description' => $this->extractReceiptDescription($payload),
                 'providerEvent' => 'delivery_receipt',
+                'rawStatus' => $this->apiReceiptStatus($payload),
             ]);
 
             messaging_webhook_debug('ClickSend parser yielding status event', [
@@ -280,6 +281,19 @@ class ClickSendWebhookParser implements MessagingWebhookParser
         }
 
         return 'delivered';
+    }
+
+    private function apiReceiptStatus(array $payload): string
+    {
+        $status = strtolower((string) ($payload['status'] ?? $payload['status_text']
+            ?? data_get($payload, 'data.status') ?? data_get($payload, 'data.status_text') ?? ''));
+        $code = (string) ($payload['status_code'] ?? data_get($payload, 'data.status_code') ?? '');
+        if ($code === '201' || str_contains($status, 'received on handset')) return 'delivered';
+        if (in_array($status, ['queued', 'sent', 'accepted', 'sending'], true)) return $status;
+        if ($this->mapReceiptStatus($payload) === 'failed') return 'delivery_failed';
+        if (str_contains($status, 'delivered') || str_contains($status, 'completed')) return 'delivered';
+        // Unknown receipt codes must not imply handset delivery for API clients.
+        return in_array($status, ['success', 'successful'], true) ? 'unknown_receipt' : $status;
     }
 
     protected function extractReceiptDescription(array $payload): ?string

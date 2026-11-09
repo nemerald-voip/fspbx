@@ -1,4 +1,4 @@
-{{-- version: 1.0.16 --}}
+{{-- version: 1.0.17 --}}
 
 @switch($flavor)
 
@@ -18,6 +18,9 @@
     account.{{ $n }}.enable = 1
     account.{{ $n }}.label = {{ $line['display_name'] ?? $line['auth_id'] }}
     account.{{ $n }}.display_name = {{ $line['display_name'] ?? $line['auth_id'] }}
+    @if ($n <= 10 && trim($line['display_name'] ?? '') !== '')
+    handset.{{ $n }}.name = {{ trim($line['display_name']) }}
+    @endif
     account.{{ $n }}.auth_name = {{ $line['auth_id'] ?? '' }}
     account.{{ $n }}.user_name = {{ $line['auth_id'] ?? '' }}{{ '@' }}{{ $line['server_address'] ?? '' }}
     account.{{ $n }}.password = {{ $line['password'] ?? '' }}

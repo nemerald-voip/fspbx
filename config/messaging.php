@@ -3,6 +3,11 @@
 return [
     'webhook_debug' => env('MESSAGING_WEBHOOK_DEBUG', false),
 
+    'api' => [
+        'media_max_bytes' => 50 * 1024 * 1024,
+        'media_download_seconds' => 60,
+    ],
+
     'outbound_providers' => [
         'sinch' => \App\Services\Messaging\Outbound\Providers\SinchOutboundProvider::class,
         'voxutel' => \App\Services\Messaging\Outbound\Providers\VoxutelOutboundProvider::class,

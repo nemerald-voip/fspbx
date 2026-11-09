@@ -65,6 +65,7 @@ class LogsController extends Controller
                     'test_email_send' => route('test-email-send.store'),
                     'tigertms_logs' => $this->tigerTmsLogsEnabled() ? route('tigertms-logs.index') : null,
                     'inbound_webhooks' => route('inbound-webhooks.index'),
+                    'outbound_webhooks' => route('outbound-webhooks.index'),
                     'message_logs' => route('messages.logs'),
                     'message_retry' => route('messages.retry'),
                     'fax_logs' => route('fax-logs.data'),
@@ -241,6 +242,7 @@ class LogsController extends Controller
         $permissions['fax_log_delete'] = userCheckPermission('fax_log_delete');
         $permissions['fax_send'] = userCheckPermission('fax_send');
         $permissions['log_view'] = userCheckPermission('log_view');
+        $permissions['outbound_webhooks_view'] = userCheckPermission('logs_list_view');
         $permissions['email_test_send'] = userCheckPermission('email_test_send');
         $permissions['ai_agent_view'] = userCheckPermission('ai_agent_view');
 

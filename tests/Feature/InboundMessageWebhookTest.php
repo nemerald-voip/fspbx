@@ -52,6 +52,7 @@ class InboundMessageWebhookTest extends TestCase
     private SmsDestinations $number;
     private array $media = [];
     private InboundMessagePipeline $pipeline;
+    private ?string $postgresSchema = null;
 
     protected function setUp(): void
     {
@@ -63,7 +64,21 @@ class InboundMessageWebhookTest extends TestCase
             'messaging.webhook_debug' => false,
             'webhook-server' => require base_path('config/webhook-server.php'),
         ]);
+        $lab = getenv('FSPBX_OUTBOUND_MESSAGE_LAB');
+        if ($lab) {
+            if (! str_starts_with(realpath($lab) ?: '', '/tmp/fspbx-message-settings.')) throw new \RuntimeException('Disposable PostgreSQL required.');
+            $this->postgresSchema = 'inbound_'.bin2hex(random_bytes(8));
+            config(['database.connections.message_webhook_test' => [
+                'driver' => 'pgsql', 'host' => $lab, 'port' => 16551, 'database' => 'postgres',
+                'username' => 'postgres', 'password' => '', 'charset' => 'utf8', 'prefix' => '',
+                'search_path' => $this->postgresSchema, 'sslmode' => 'disable',
+            ]]);
+        }
         DB::purge('message_webhook_test');
+        if ($lab) {
+            $this->assertSame($lab.'/data', DB::selectOne('show data_directory')->data_directory);
+            DB::statement('CREATE SCHEMA '.$this->postgresSchema);
+        }
         $this->app->instance('encrypter', new Encrypter(str_repeat('x', 32), 'AES-256-CBC'));
         Bus::fake();
         Log::spy();
@@ -81,7 +96,8 @@ class InboundMessageWebhookTest extends TestCase
         (require base_path('database/migrations/2026_11_04_000001_add_inbound_message_webhooks.php'))->up();
         Schema::create('messages', function (Blueprint $table) {
             $table->uuid('message_uuid')->primary();
-            foreach (['domain_uuid', 'extension_uuid', 'source', 'destination', 'direction', 'message_group_uuid', 'type', 'reference_id', 'status', 'message'] as $column) {
+            foreach (['domain_uuid', 'extension_uuid', 'message_group_uuid'] as $column) $table->uuid($column)->nullable();
+            foreach (['source', 'destination', 'direction', 'type', 'reference_id', 'status', 'message'] as $column) {
                 $table->string($column)->nullable();
             }
             $table->json('media')->nullable();
@@ -98,7 +114,8 @@ class InboundMessageWebhookTest extends TestCase
         });
         foreach (['message_user_reads', 'message_user_hides'] as $name) {
             Schema::create($name, function (Blueprint $table) {
-                foreach (['message_uuid', 'domain_uuid', 'user_uuid'] as $column) $table->uuid($column);
+                foreach (['message_uuid', 'domain_uuid'] as $column) $table->uuid($column);
+                $table->string('user_uuid');
                 $table->boolean('history_deleted')->default(false);
             });
         }
@@ -135,6 +152,7 @@ class InboundMessageWebhookTest extends TestCase
 
     protected function tearDown(): void
     {
+        if ($this->postgresSchema) DB::statement('DROP SCHEMA '.$this->postgresSchema.' CASCADE');
         DB::disconnect('message_webhook_test');
         parent::tearDown();
     }

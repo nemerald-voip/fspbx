@@ -61,6 +61,8 @@ class MessageReadService
                                 ->whereColumn('replies.destination', 'messages.source'));
                     })
                     ->where('replies.direction', 'out')
+                    ->where(fn ($scope) => $scope->whereNull('replies.delivery_meta->outbound->origin')
+                        ->orWhere('replies.delivery_meta->outbound->origin', '!=', 'api'))
                     ->whereColumn('replies.created_at', '>=', 'messages.created_at')
                     ->whereNotNull('replies.delivery_meta->outbound->provider->accepted_at');
             });

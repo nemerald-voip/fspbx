@@ -202,8 +202,8 @@ INTRO,
     'last_updated' => 'Last updated: {date:F j, Y}',
 
     'examples' => [
-        // Set this to any number (eg. 1234) to generate the same example values for parameters on each run,
-        'faker_seed' => null,
+        // Keep inferred example values stable between documentation builds.
+        'faker_seed' => 1234,
 
         // With API resources and transformers, Scribe tries to generate example models to use in your API responses.
         // By default, Scribe will try the model's factory, and if that fails, try fetching the first from the database.

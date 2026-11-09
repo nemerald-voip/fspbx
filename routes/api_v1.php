@@ -29,6 +29,18 @@ Route::middleware(['auth:sanctum', 'api.token.auth', 'throttle:api'])->group(fun
 
     /*
     |--------------------------------------------------------------------------
+    | Messages (domain-scoped)
+    |--------------------------------------------------------------------------
+    */
+
+    Route::post('/domains/{domain_uuid}/messages', [\App\Http\Controllers\Api\V1\MessageController::class, 'store'])
+        ->middleware('user.authorize:messages_send')->name('api.v1.messages.send');
+
+    Route::post('/domains/{domain_uuid}/messages/group_mms', [\App\Http\Controllers\Api\V1\MessageController::class, 'group'])
+        ->middleware('user.authorize:messages_send')->name('api.v1.messages.group');
+
+    /*
+    |--------------------------------------------------------------------------
     | Domains
     |--------------------------------------------------------------------------
     */

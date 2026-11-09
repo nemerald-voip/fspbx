@@ -5,6 +5,8 @@ namespace App\Console;
 use App\Jobs\DeleteOldFaxes;
 use App\Models\DefaultSettings;
 use App\Jobs\DeleteOldEmailLogs;
+use App\Jobs\DeleteOldMessages;
+use App\Jobs\DeleteOldMessagingRecords;
 use App\Jobs\ProcessScheduledAnnouncements;
 use App\Jobs\ProcessWakeupCalls;
 use App\Jobs\RenewTlsCertificate;
@@ -169,6 +171,31 @@ class Kernel extends ConsoleKernel
             )
                 ->daily()
                 ->timezone($scheduledJobsTimezone);
+        }
+
+        foreach (array_keys(DeleteOldMessagingRecords::TABLES) as $table) {
+            if (($jobSettings['delete_old_' . $table] ?? null) !== 'true') continue;
+            $days = filter_var($jobSettings['days_keep_' . $table] ?? 30, FILTER_VALIDATE_INT, [
+                'options' => ['min_range' => 1],
+            ]);
+            if ($days !== false) {
+                $schedule->job(new DeleteOldMessagingRecords($table, $days))
+                    ->daily()
+                    ->timezone($scheduledJobsTimezone);
+            }
+        }
+
+        if (($jobSettings['delete_old_messages'] ?? null) === 'true') {
+            $daysKeepMessages = filter_var($jobSettings['days_keep_messages'] ?? 90, FILTER_VALIDATE_INT, [
+                'options' => ['min_range' => 1],
+            ]);
+
+            // An invalid retention value must never become a zero-day purge.
+            if ($daysKeepMessages !== false) {
+                $schedule->job(new DeleteOldMessages($daysKeepMessages))
+                    ->daily()
+                    ->timezone($scheduledJobsTimezone);
+            }
         }
 
         if (isset($jobSettings['delete_old_transcriptions']) && $jobSettings['delete_old_transcriptions'] === "true") {

@@ -26,7 +26,7 @@ class RingotelSyncService
             $conversationId = RingotelConversationService::uuidForKey($conversationId);
         }
         $message = Messages::find($messageUuid);
-        if (!$message || $message->isWebhookInbound() || !in_array($message->direction, ['in', 'out'], true)) {
+        if (!$message || $message->isExternalOnly() || !in_array($message->direction, ['in', 'out'], true)) {
             return;
         }
         if ($message->direction === 'out'

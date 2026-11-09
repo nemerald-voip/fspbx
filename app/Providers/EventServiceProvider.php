@@ -59,16 +59,22 @@ class EventServiceProvider extends ServiceProvider
         MessageSent::class => [
             \App\Listeners\EmailSentLogger::class,
         ],
+        \Spatie\WebhookServer\Events\DispatchingWebhookCallEvent::class => [
+            \App\Listeners\RecordOutboundWebhookHistory::class,
+        ],
         \Spatie\WebhookServer\Events\WebhookCallSucceededEvent::class => [
+            \App\Listeners\RecordOutboundWebhookHistory::class,
             \App\Listeners\RecordMessageWebhookResult::class,
             \App\Listeners\RecordCallWebhookTestResult::class,
         ],
         \Spatie\WebhookServer\Events\WebhookCallFailedEvent::class => [
+            \App\Listeners\RecordOutboundWebhookHistory::class,
             \App\Listeners\RecordMessageWebhookResult::class,
             \App\Listeners\LogCallWebhookFailure::class,
             \App\Listeners\RecordCallWebhookTestResult::class,
         ],
         \Spatie\WebhookServer\Events\FinalWebhookCallFailedEvent::class => [
+            \App\Listeners\RecordOutboundWebhookHistory::class,
             \App\Listeners\RecordMessageWebhookResult::class,
             \App\Listeners\LogCallWebhookFailure::class,
             \App\Listeners\RecordCallWebhookTestResult::class,

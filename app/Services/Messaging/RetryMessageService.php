@@ -51,6 +51,12 @@ class RetryMessageService
 
     protected function retryOutbound(Messages $message): void
     {
+        if ($message->isApiOutbound()) {
+            // Recover only the saved submission. Never clear terminal outcomes,
+            // resubmit the carrier request, or replace the callback snapshot.
+            \App\Jobs\PrepareApiMessage::dispatch($message->getKey())->onConnection('redis')->onQueue('messages')->afterCommit();
+            return;
+        }
         if (RingotelSyncDispatcher::carrierAccepted($message)) {
             app(RingotelSyncDispatcher::class)->dispatch($message);
             return;

@@ -149,6 +149,8 @@ Not every scheduled job uses the same mechanism yet.
 | Job | How the server is chosen |
 | --- | ------------------------ |
 | Directory synchronization | Generic scheduled-job owner, generation, and execution claim |
+| SMS/MMS retention | Generic scheduled-job owner, generation, and execution claim |
+| Message API records and outbound webhook history cleanup | Generic scheduled-job owner, generation, and execution claim |
 | [Contact Center callbacks](/docs/configuration/contact-center/queue-callbacks/) and callback cleanup | The same generic scheduled-job owner, generation, and execution claims |
 | Scheduled announcements | Failover DNS record, see [Scheduled Announcements](../05-configuration/13-scheduled-announcements/01-overview.md) |
 | TLS and Nginx certificate renewal | Failover DNS record recorded during certificate installation |

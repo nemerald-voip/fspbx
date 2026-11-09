@@ -18,5 +18,5 @@
 	--freeswitch.consoleLog("NOTICE", "saved_messages="..saved_messages.."\n");
 
 --send the message waiting event
-	mwi_notify(voicemail_id..'@'..domain_name, domain_name, new_messages, saved_messages);
+	mwi_notify(voicemail_id..'@'..domain_name, new_messages, saved_messages);
 

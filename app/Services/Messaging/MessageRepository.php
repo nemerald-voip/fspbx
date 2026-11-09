@@ -111,6 +111,7 @@ class MessageRepository
         ?string $providerEvent = null,
         ?string $recipient = null,
         ?string $occurredAt = null,
+        ?string $rawStatus = null,
     ): void {
         messaging_webhook_debug('applyProviderStatus called', [
             'provider' => $provider,
@@ -119,12 +120,20 @@ class MessageRepository
             'provider_event' => $providerEvent,
         ]);
 
+        if (app(\App\Services\Messaging\Outbound\ApiMessageStatus::class)->receipt(compact(
+            'provider', 'referenceId', 'status', 'description', 'providerEvent', 'recipient', 'occurredAt', 'rawStatus'
+        ))) {
+            return;
+        }
+
         if ($provider === 'bandwidth' && $recipient !== null
             && $this->applyBandwidthGroupRecipientStatus($referenceId, $recipient, $status, $description, $providerEvent, $occurredAt)) {
             return;
         }
 
-        $message = Messages::where('reference_id', $referenceId)->first();
+        $matches = Messages::where('reference_id', $referenceId)->where('direction', 'out')
+            ->where('delivery_meta->outbound->provider->name', $provider)->limit(2)->get();
+        $message = $matches->count() === 1 ? $matches->first() : null;
 
         if (!$message) {
             messaging_webhook_debug('applyProviderStatus message not found', [

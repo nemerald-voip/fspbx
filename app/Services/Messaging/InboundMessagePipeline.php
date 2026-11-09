@@ -204,6 +204,7 @@ class InboundMessagePipeline
             providerEvent: $event->providerEvent,
             recipient: $event->recipient,
             occurredAt: $event->occurredAt,
+            rawStatus: $event->rawStatus,
         );
     }
 }

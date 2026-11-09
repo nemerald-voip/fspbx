@@ -17,6 +17,7 @@ use Illuminate\Support\Str;
 use App\Models\PaymentGateway;
 use App\Models\GatewaySetting;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
 use Nwidart\Modules\Facades\Module;
 
 class DatabaseSeeder extends Seeder
@@ -274,6 +275,7 @@ class DatabaseSeeder extends Seeder
             ['application_name' => 'Call Block', 'permission_name' => 'call_block_delete'],
             ['application_name' => 'Call Block', 'permission_name' => 'call_block_voicemail'],
             ['application_name' => 'Messages', 'permission_name' => 'messages_view'],
+            ['application_name' => 'Messages', 'permission_name' => 'messages_send'],
             ['application_name' => 'Messages', 'permission_name' => 'messages_view_as'],
             ['application_name' => 'Messages', 'permission_name' => 'messages_delete'],
             ['application_name' => 'Basic Dialer', 'permission_name' => 'basic_dialer_view'],
@@ -328,6 +330,7 @@ class DatabaseSeeder extends Seeder
     {
         $permissionsByGroup = [
             'superadmin' => [
+                'messages_send',
                 'music_on_hold_view',
                 'music_on_hold_add',
                 'music_on_hold_edit',
@@ -513,6 +516,7 @@ class DatabaseSeeder extends Seeder
                 'dynamic_route_delete',
             ],
             'admin' => [
+                'messages_send',
                 'fax_view',
                 'fax_add',
                 'fax_edit',
@@ -698,6 +702,7 @@ class DatabaseSeeder extends Seeder
 
         if (!empty($toInsert)) {
             GroupPermissions::insert($toInsert); // insert-only, no updates
+            Cache::tags(['permissions'])->flush();
         }
     }
 
@@ -1976,6 +1981,70 @@ class DatabaseSeeder extends Seeder
                 'default_setting_value'         => "90",
                 'default_setting_enabled'       => true,
                 'default_setting_description'   => "Specifies the number of days to retain voicemails before they are automatically deleted.",
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'delete_old_messages',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => 'false',
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => 'Automatically deletes SMS/MMS history and stored attachments older than the message retention period.',
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'days_keep_messages',
+                'default_setting_name'          => 'numeric',
+                'default_setting_value'         => '90',
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => 'Number of days to retain SMS/MMS history and stored attachments. Must be a positive whole number.',
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'delete_old_message_api_requests',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => 'true',
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => 'Automatically deletes expired message API request records older than the configured retention period.',
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'days_keep_message_api_requests',
+                'default_setting_name'          => 'numeric',
+                'default_setting_value'         => '30',
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => 'Number of days to retain expired message API request records. Must be a positive whole number.',
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'delete_old_outbound_message_webhook_events',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => 'true',
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => 'Automatically deletes completed or failed outbound message webhook events older than the configured retention period.',
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'days_keep_outbound_message_webhook_events',
+                'default_setting_name'          => 'numeric',
+                'default_setting_value'         => '30',
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => 'Number of days to retain completed or failed outbound message webhook events. Must be a positive whole number.',
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'delete_old_outbound_webhook_logs',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => 'true',
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => 'Automatically deletes completed or failed outbound webhook logs older than the configured retention period.',
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'days_keep_outbound_webhook_logs',
+                'default_setting_name'          => 'numeric',
+                'default_setting_value'         => '30',
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => 'Number of days to retain completed or failed outbound webhook logs. Must be a positive whole number.',
             ],
             [
                 'default_setting_category'      => 'scheduled_jobs',

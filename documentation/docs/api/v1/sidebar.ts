@@ -212,6 +212,24 @@ const sidebar: SidebarsConfig = {
     },
     {
       type: "category",
+      label: "Messages",
+      items: [
+        {
+          type: "doc",
+          id: "api/v1/send-an-sms-or-mms",
+          label: "Send an SMS or MMS",
+          className: "api-method post",
+        },
+        {
+          type: "doc",
+          id: "api/v1/send-a-group-mms",
+          label: "Send a group MMS",
+          className: "api-method post",
+        },
+      ],
+    },
+    {
+      type: "category",
       label: "Phone Control",
       items: [
         {

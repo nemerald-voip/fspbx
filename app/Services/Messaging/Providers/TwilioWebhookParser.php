@@ -45,6 +45,7 @@ class TwilioWebhookParser implements MessagingWebhookParser
                 'status'        => $this->mapDeliveryStatus($messageStatus),
                 'description'   => $this->extractDeliveryDescription($payload, $messageStatus),
                 'providerEvent' => 'delivery_status',
+                'rawStatus'     => strtolower($messageStatus),
             ]);
 
             messaging_webhook_debug('TwilioWebhookParser delivery event parsed', [
