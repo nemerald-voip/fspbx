@@ -293,7 +293,8 @@ log = require "resources.functions.log".ring_group
 
 --play the greeting
 	if (session:ready()) then
-		if (ring_group_greeting and #ring_group_greeting > 0) then
+		--Older saves may contain the greeting picker's "None" value.
+		if (ring_group_greeting and ring_group_greeting ~= "0" and #ring_group_greeting > 0) then
 			session:answer();
 			session:sleep(1000);
 			play_file(dbh, domain_name, domain_uuid, ring_group_greeting)

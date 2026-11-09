@@ -69,6 +69,7 @@ class FaxInboxController extends Controller
                     'preview' => route('fax-inbox.preview', ':file'),
                 ],
                 'permissions' => [
+                    'download' => userCheckPermission('fax_inbox_download'),
                     'delete' => userCheckPermission('fax_inbox_delete'),
                 ],
 
@@ -226,6 +227,13 @@ class FaxInboxController extends Controller
 
     public function download($file)
     {
+        if (! userCheckPermission('fax_inbox_download')) {
+            return response()->json([
+                'success' => false,
+                'errors' => ['auth' => [__('Access denied.')]],
+            ], 403);
+        }
+
         try {
             $file = FaxFiles::where('fax_file_uuid', $file)
                 ->with(['fax' => function ($query) {

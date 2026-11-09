@@ -61,6 +61,14 @@ class RingGroups extends Model
     ];
 
 
+    protected function ringGroupGreeting(): Attribute
+    {
+        // The shared greeting picker uses '0' for None; persist an empty greeting as NULL.
+        return Attribute::make(
+            set: fn ($value) => in_array($value, ['0', 0, ''], true) ? null : $value,
+        );
+    }
+
     protected function timeoutOptionDetails(): Attribute
     {
         return Attribute::make(

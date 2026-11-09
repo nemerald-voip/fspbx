@@ -69,6 +69,7 @@ class FaxSentController extends Controller
                     'preview' => route('fax-sent.preview', ':file'),
                 ],
                 'permissions' => [
+                    'download' => userCheckPermission('fax_sent_download'),
                     'delete' => userCheckPermission('fax_sent_delete'),
                 ],
 
@@ -223,6 +224,13 @@ class FaxSentController extends Controller
 
     public function download($file)
     {
+        if (! userCheckPermission('fax_sent_download')) {
+            return response()->json([
+                'success' => false,
+                'errors' => ['auth' => [__('Access denied.')]],
+            ], 403);
+        }
+
         try {
             $file = FaxFiles::where('fax_file_uuid', $file)
                 ->with(['fax' => function ($query) {

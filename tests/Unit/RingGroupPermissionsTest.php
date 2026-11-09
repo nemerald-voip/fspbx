@@ -289,6 +289,48 @@ class RingGroupPermissionsTest extends TestCase
         $this->assertSame($before, $this->snapshot());
     }
 
+    public static function greetingSelections(): array
+    {
+        return [
+            'None option' => ['0', null],
+            'numeric None' => [0, null],
+            'empty greeting' => ['', null],
+            'clear button' => [null, null],
+            'recording' => ['welcome.wav', 'welcome.wav'],
+            'recording named zero' => ['0.wav', '0.wav'],
+        ];
+    }
+
+    /** @dataProvider greetingSelections */
+    public function test_greeting_selection_saves_a_filename_or_null($selection, ?string $expected): void
+    {
+        $this->permissions('ring_group_edit');
+        DB::table('v_ring_groups')->update(['ring_group_greeting' => 'previous.wav']);
+        $request = $this->formRequest(UpdateRingGroupRequest::class, [
+            'ring_group_greeting' => $selection,
+        ], self::LOCAL);
+        $request->validateResolved();
+
+        $response = (new RingGroupsController())->update($request, $request->route('ring_group'));
+
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame($expected, DB::table('v_ring_groups')->where('ring_group_uuid', self::LOCAL)->value('ring_group_greeting'));
+        $this->assertSame('previous.wav', DB::table('v_ring_groups')->where('ring_group_uuid', self::FOREIGN)->value('ring_group_greeting'));
+    }
+
+    public function test_omitting_greeting_preserves_the_existing_recording(): void
+    {
+        $this->permissions('ring_group_edit');
+        DB::table('v_ring_groups')->where('ring_group_uuid', self::LOCAL)->update(['ring_group_greeting' => 'previous.wav']);
+        $request = $this->formRequest(UpdateRingGroupRequest::class, ['ring_group_name' => 'Renamed'], self::LOCAL);
+        $request->validateResolved();
+
+        $response = (new RingGroupsController())->update($request, $request->route('ring_group'));
+
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame('previous.wav', DB::table('v_ring_groups')->where('ring_group_uuid', self::LOCAL)->value('ring_group_greeting'));
+    }
+
     public function test_duplication_and_bulk_deletion_retain_permissions_and_account_scope(): void
     {
         $controller = new RingGroupsController();
