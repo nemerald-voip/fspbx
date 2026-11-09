@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateFlagRequest;
 use App\Models\Extensions;
 use App\Models\Flag;
 use App\Models\FlagRule;
+use App\Services\FlagFeature;
 use App\Services\FlagService;
 use App\Services\FlagStateService;
 use Illuminate\Http\JsonResponse;
@@ -20,11 +21,12 @@ class FlagsController extends Controller
 {
     public function __construct(private FlagService $flags, private FlagStateService $state)
     {
-        $this->middleware(\App\Http\Middleware\EnsureFlagsEnabled::class);
     }
 
     public function index(Request $request)
     {
+        abort_unless(app(FlagFeature::class)->enabled(), 404);
+
         if (!userCheckPermission('flags_list_view')) {
             return redirect('/');
         }
@@ -48,6 +50,7 @@ class FlagsController extends Controller
 
     public function getData(Request $request)
     {
+        abort_unless(app(FlagFeature::class)->enabled(), 404);
         abort_unless(userCheckPermission('flags_list_view'), 403);
 
         $items = $this->query()
@@ -77,6 +80,7 @@ class FlagsController extends Controller
 
     public function selectAll(Request $request): JsonResponse
     {
+        abort_unless(app(FlagFeature::class)->enabled(), 404);
         abort_unless(userCheckPermission('flags_list_view'), 403);
 
         return response()->json([
@@ -87,6 +91,8 @@ class FlagsController extends Controller
 
     public function getItemOptions(Request $request): JsonResponse
     {
+        abort_unless(app(FlagFeature::class)->enabled(), 404);
+
         $itemUuid = $request->input('item_uuid');
 
         if (!userCheckPermission($itemUuid ? 'flags_update' : 'flags_create')) {
@@ -177,6 +183,8 @@ class FlagsController extends Controller
 
     public function bulkToggle(Request $request): JsonResponse
     {
+        abort_unless(app(FlagFeature::class)->enabled(), 404);
+
         $validated = $request->validate([
             'field' => ['required', 'in:active,enabled'],
             'items' => ['required', 'array'],
@@ -213,6 +221,8 @@ class FlagsController extends Controller
 
     public function bulkDelete(Request $request): JsonResponse
     {
+        abort_unless(app(FlagFeature::class)->enabled(), 404);
+
         if (!userCheckPermission('flags_delete')) {
             return response()->json(['messages' => ['error' => [__('Access denied.')]]], 403);
         }

@@ -199,6 +199,14 @@ class FlagFeatureIntegrationTest extends TestCase
         $this->assertFalse(app(FlagFeature::class)->enabled());
     }
 
+    public function test_unrelated_requests_do_not_check_flags(): void
+    {
+        $this->mock(FlagFeature::class)->shouldNotReceive('enabled');
+        $this->app['router']->get('/__ordinary', fn () => response('normal response'));
+
+        $this->get('/__ordinary')->assertOk()->assertSeeText('normal response');
+    }
+
     public function test_every_flags_endpoint_requires_the_switch_and_its_permission(): void
     {
         $routes = [

@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\Flag;
+use App\Services\FlagFeature;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -11,7 +12,9 @@ class StoreFlagRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return userCheckPermission('flags_create') && app(\App\Services\FlagFeature::class)->enabled();
+        abort_unless(app(FlagFeature::class)->enabled(), 404);
+
+        return userCheckPermission('flags_create');
     }
 
     public function rules(): array
