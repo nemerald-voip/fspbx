@@ -121,6 +121,51 @@ class ScheduledJobPeerAuthenticatorTest extends TestCase
         ])->all();
     }
 
+    public function test_discovery_addresses_are_included_in_the_signed_identity_response(): void
+    {
+        $auth = new ScheduledJobPeerAuthenticator();
+        $resolver = Mockery::mock(ActiveNodeResolver::class);
+        $resolver->shouldReceive('localNodeId')->once()->andReturn('2002');
+        $resolver->shouldReceive('hostFingerprint')->once()->andReturn(hash('sha256', '2002'));
+        $resolver->shouldReceive('coordinationSnapshot')->once()->andReturn([]);
+        $resolver->shouldReceive('hostname')->once()->andReturn('pbx-b');
+        $resolver->shouldReceive('discoveryEndpoints')->once()->andReturn(['https://10.0.0.1']);
+        $controller = new ScheduledJobPeerController($resolver, $auth);
+        $received = null;
+        $signedResponse = null;
+        Http::fake(function ($outgoing) use ($controller, &$received, &$signedResponse) {
+            $received = Request::create($outgoing->url(), 'POST', $outgoing->data(), [], [],
+                $this->serverHeaders(collect($outgoing->headers())->map(fn ($values) => $values[0])->all()));
+            $signedResponse = $controller->identify($received);
+
+            return Http::response($signedResponse->getData(true), $signedResponse->getStatusCode(), $signedResponse->headers->all());
+        });
+
+        $result = (new ScheduledJobPeerClient($auth))->identify('https://10.0.0.2');
+
+        $this->assertSame('2002', $result['system_identifier']);
+        $this->assertSame(['https://10.0.0.1'], $result['discovery_endpoints']);
+        $tampered = $result;
+        $tampered['discovery_endpoints'] = ['https://different.example.test'];
+        $this->assertFalse($auth->verifyResponse(
+            'api/ha/node/identify', $tampered,
+            $received->header(ScheduledJobPeerAuthenticator::NONCE_HEADER),
+            $received->header(ScheduledJobPeerAuthenticator::IDEMPOTENCY_HEADER),
+            $signedResponse->headers->all()
+        ));
+        $this->assertSame(403, $controller->identify($received)->getStatusCode(), 'A captured request cannot be replayed.');
+    }
+
+    public function test_identity_endpoint_requires_authentication_before_reading_discovery_addresses(): void
+    {
+        $resolver = Mockery::mock(ActiveNodeResolver::class);
+        $resolver->shouldNotReceive('discoveryEndpoints');
+        $controller = new ScheduledJobPeerController($resolver, new ScheduledJobPeerAuthenticator());
+
+        $this->assertSame(426, $controller->identify(Request::create('http://pbx-b.example.test/api/ha/node/identify', 'POST'))->getStatusCode());
+        $this->assertSame(403, $controller->identify(Request::create('https://pbx-b.example.test/api/ha/node/identify', 'POST'))->getStatusCode());
+    }
+
     public function test_forwarded_approval_uses_signed_requests_and_responses_and_preserves_the_actor(): void
     {
         $auth = new ScheduledJobPeerAuthenticator();

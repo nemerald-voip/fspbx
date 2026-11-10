@@ -447,9 +447,6 @@ class VoicemailController extends Controller
                 ->get(['voicemail_uuid', 'voicemail_id', 'domain_uuid']);
 
             foreach ($items as $item) {
-                // Delete related voicemail destinations
-                $item->voicemail_destinations()->delete();
-
                 // Delete related voicemail messages
                 $item->messages()->delete();
 

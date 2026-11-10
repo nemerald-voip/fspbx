@@ -196,37 +196,60 @@ class ActiveNodeResolver
     public function discover(?string $manualEndpoint = null): array
     {
         $registered = $this->nodes()->keyBy('system_identifier');
-        $endpoints = collect($this->subscriptionDiscovery()['endpoints'] ?? [])
-            ->merge($registered->where('status', 'approved')->pluck('endpoint'))
-            ->push($this->localEndpoint());
+        $endpoints = collect($this->discoveryEndpoints())
+            ->merge($registered->where('status', 'approved')->pluck('endpoint'));
         if (filled($manualEndpoint)) {
             $endpoints->push($this->normalizeEndpoint($manualEndpoint));
         }
 
-        $results = [];
-        foreach ($endpoints->filter()->unique()->values() as $endpoint) {
-            $candidate = Cache::remember('scheduled-jobs:peer-identity:'.sha1($endpoint), 15, function () use ($endpoint) {
-                try {
-                    return $this->peerClient->identify($endpoint) + ['endpoint' => $endpoint, 'reachable' => true];
-                } catch (Throwable $exception) {
-                    return ['endpoint' => $endpoint, 'reachable' => false, 'message' => $exception->getMessage()];
-                }
-            });
-            $candidate['registered'] = $registered->get($candidate['system_identifier'] ?? '')?->status;
-            $candidate['registered_endpoint'] = $registered->get($candidate['system_identifier'] ?? '')?->endpoint;
-            // Match identities, not addresses: a replacement may reuse a retired
-            // server's endpoint, but the retired identity must not reappear.
-            if ($candidate['registered'] === 'retired') {
+        $results = $endpoints->filter()->unique()->values()
+            ->map(fn (string $endpoint) => $this->discoverCandidate($endpoint));
+
+        // The peer's subscriptions contain our address. APP_URL may follow
+        // failover DNS, so it cannot supply the local server's identity address.
+        // Follow only one hop, with a bounded number of additional probes.
+        $peerEndpoints = [];
+        foreach ($results as $candidate) {
+            if (! $candidate['reachable']
+                || $registered->get($candidate['system_identifier'] ?? '')?->status === 'retired'
+                || ! is_array($candidate['discovery_endpoints'] ?? null)) {
                 continue;
             }
-            $results[] = $candidate;
+            foreach (array_slice($candidate['discovery_endpoints'], 0, 16) as $endpoint) {
+                if (! is_string($endpoint) || strlen($endpoint) > 2048) {
+                    continue;
+                }
+                try {
+                    $endpoint = $this->normalizeEndpoint($endpoint);
+                } catch (RuntimeException) {
+                    continue;
+                }
+                if (! $endpoints->contains($endpoint)) {
+                    $peerEndpoints[$endpoint] = $endpoint;
+                }
+                if (count($peerEndpoints) >= 16) {
+                    break 2;
+                }
+            }
+        }
+        foreach ($peerEndpoints as $endpoint) {
+            $results->push($this->discoverCandidate($endpoint));
         }
 
-        $duplicates = collect($results)->where('reachable', true)->filter(fn (array $candidate) => filled($candidate['system_identifier'] ?? null))
+        // Match identities, not addresses: a replacement may reuse a retired
+        // server's endpoint, but the retired identity must not reappear.
+        $results = $results->map(function (array $candidate) use ($registered) {
+            $candidate['registered'] = $registered->get($candidate['system_identifier'] ?? '')?->status;
+            $candidate['registered_endpoint'] = $registered->get($candidate['system_identifier'] ?? '')?->endpoint;
+
+            return $candidate;
+        })->reject(fn (array $candidate) => $candidate['registered'] === 'retired')->values();
+
+        $duplicates = $results->where('reachable', true)->filter(fn (array $candidate) => filled($candidate['system_identifier'] ?? null))
             ->groupBy('system_identifier')->filter(fn (Collection $candidates) => $candidates->contains(fn ($candidate) => empty($candidate['host_fingerprint']))
                 || $candidates->pluck('host_fingerprint')->unique()->count() > 1)->keys();
 
-        return collect($results)->map(function (array $candidate) use ($duplicates) {
+        return $results->map(function (array $candidate) use ($duplicates) {
             $candidate['duplicate_identity'] = $duplicates->contains($candidate['system_identifier'] ?? null);
             if ($candidate['duplicate_identity']) {
                 $candidate['message'] = __('This PostgreSQL system identifier answered from more than one endpoint. Approval is blocked.');
@@ -234,6 +257,23 @@ class ActiveNodeResolver
 
             return $candidate;
         })->all();
+    }
+
+    /** Only sanitized addresses are shared with authenticated peers, never connection credentials. */
+    public function discoveryEndpoints(): array
+    {
+        return $this->subscriptionDiscovery()['endpoints'] ?? [];
+    }
+
+    private function discoverCandidate(string $endpoint): array
+    {
+        return Cache::remember('scheduled-jobs:peer-identity:'.sha1($endpoint), 15, function () use ($endpoint) {
+            try {
+                return array_merge($this->peerClient->identify($endpoint), ['endpoint' => $endpoint, 'reachable' => true]);
+            } catch (Throwable $exception) {
+                return ['endpoint' => $endpoint, 'reachable' => false, 'message' => $exception->getMessage()];
+            }
+        });
     }
 
     /** Approval writes stay on the authority, even when requested through another UI node. */
@@ -756,7 +796,7 @@ class ActiveNodeResolver
         if ($decision['this_node'] && ! $nodes->contains('id', $decision['this_node'])) {
             $nodes->push([
                 'id' => $decision['this_node'], 'hostname' => $this->hostname(),
-                'endpoint' => $this->localEndpoint(), 'status' => 'unapproved',
+                'endpoint' => null, 'status' => 'unapproved',
                 'local' => true, 'selected' => false, 'reachable' => true,
             ]);
         }
@@ -1178,14 +1218,6 @@ class ActiveNodeResolver
         $value = is_string($value) ? trim($value) : '';
 
         return $value !== '' ? $value : null;
-    }
-
-    private function localEndpoint(): string
-    {
-        $host = parse_url((string) config('app.url'), PHP_URL_HOST) ?: $this->hostname();
-        $port = parse_url((string) config('app.url'), PHP_URL_PORT);
-
-        return 'https://'.$host.($port ? ':'.$port : '');
     }
 
     private function endpointForHost(string $host): string

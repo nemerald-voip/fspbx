@@ -34,6 +34,7 @@ class ScheduledJobPeerController extends Controller
             'system_identifier' => $this->resolver->localNodeId(),
             'host_fingerprint' => $this->resolver->hostFingerprint(),
             'coordination' => $this->resolver->coordinationSnapshot(),
+            'discovery_endpoints' => $this->resolver->discoveryEndpoints(),
             'hostname' => $this->resolver->hostname(),
             'capabilities' => ['node_approval', 'node_removal'],
             'version' => (string) config('app.version', ''),

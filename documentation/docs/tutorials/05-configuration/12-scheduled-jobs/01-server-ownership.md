@@ -57,7 +57,7 @@ The secret lets the servers verify each other's identity. If it is already confi
 2. Click **Discover servers**.
 3. Review **Discovered servers**. Each result shows its address, hostname when available, verification status, and database identifier.
 
-FS PBX reads host addresses from the existing PostgreSQL replication subscriptions and checks their HTTPS endpoints. It also checks this server and registered addresses. Subscription names do not need to follow a naming convention.
+FS PBX reads host addresses from the existing PostgreSQL replication subscriptions and checks their HTTPS endpoints. Each responding server also shares its replication addresses, allowing discovery to find both servers by their direct addresses. Registered addresses are checked too. Subscription names do not need to follow a naming convention.
 
 Disabled or old subscriptions can still contribute addresses, so an unreachable result may simply be a retired address. Discovery lists candidates; it does not add or approve them automatically.
 
@@ -78,6 +78,8 @@ If a replication host is a database-only address, an obsolete address, or not th
 3. Confirm that the returned hostname and database identifier belong to the intended server.
 
 Use an HTTPS base address without a login path. A manual address is also useful when adding a replacement server. It still has to pass verification and approval.
+
+If a server was previously registered using a shared failover hostname, discover its direct address and click **Use this address** beside the verified result. This replaces its saved address without changing the job owner. Discovery alone does not change saved registrations.
 
 ## 4. Approve the servers
 

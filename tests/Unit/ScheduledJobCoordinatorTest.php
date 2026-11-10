@@ -204,6 +204,138 @@ class ScheduledJobCoordinatorTest extends TestCase
         $this->assertTrue($candidates->every(fn (array $candidate) => $candidate['duplicate_identity']));
     }
 
+    public function test_discovery_finds_both_replication_addresses_without_probing_failover_dns(): void
+    {
+        config()->set('app.url', 'https://shared.example.test');
+        foreach (['1001', '2002'] as $localId) {
+            Cache::flush();
+            $peer = Mockery::mock(ScheduledJobPeerClient::class);
+            $peer->shouldNotReceive('identify')->with('https://shared.example.test');
+            $peer->shouldReceive('identify')->once()->with('https://10.0.0.1')->andReturn([
+                'system_identifier' => '1001', 'host_fingerprint' => hash('sha256', '1001'),
+                'discovery_endpoints' => ['https://10.0.0.2'],
+            ]);
+            $peer->shouldReceive('identify')->once()->with('https://10.0.0.2')->andReturn([
+                'system_identifier' => '2002', 'host_fingerprint' => hash('sha256', '2002'),
+                'discovery_endpoints' => ['https://10.0.0.1'],
+            ]);
+            $resolver = $this->resolver($localId, [$localId === '1001' ? 'https://10.0.0.2' : 'https://10.0.0.1'], [], $peer);
+
+            $candidates = collect($resolver->discover())->keyBy('system_identifier');
+
+            $this->assertCount(2, $candidates);
+            $this->assertSame('https://10.0.0.1', $candidates['1001']['endpoint']);
+            $this->assertSame('https://10.0.0.2', $candidates['2002']['endpoint']);
+            $this->assertTrue($candidates->every(fn ($candidate) => $candidate['reachable'] && ! $candidate['duplicate_identity']));
+            $this->assertDatabaseCount('scheduled_job_nodes', 0);
+            $this->assertNull($resolver->statusContext()['nodes'][0]['endpoint']);
+        }
+    }
+
+    public function test_older_peer_requires_a_manual_local_address_instead_of_falling_back_to_app_url(): void
+    {
+        $peer = $this->peer(); // Older responses contain no discovery addresses.
+        $resolver = $this->resolver('1001', ['https://pbx-b.example.test'], [], $peer);
+
+        $this->assertSame(['2002'], array_column($resolver->discover(), 'system_identifier'));
+        try {
+            $resolver->requestNodeApproval('https://pbx-b.example.test', '2002', null);
+            $this->fail('Initial approval must still require both verified servers.');
+        } catch (RuntimeException $exception) {
+            $this->assertStringContainsString('Discover both nodes', $exception->getMessage());
+        }
+        $this->assertDatabaseCount('scheduled_job_nodes', 0);
+
+        $result = $resolver->requestNodeApproval('https://pbx-a.example.test', '1001', null);
+        $this->assertFalse($result['forwarded']);
+        $this->assertSame('https://pbx-a.example.test', $result['node']['endpoint']);
+    }
+
+    public function test_peer_discovery_hints_are_checked_individually_and_are_not_followed_recursively(): void
+    {
+        $peer = Mockery::mock(ScheduledJobPeerClient::class);
+        $peer->shouldReceive('identify')->once()->with('https://10.0.0.2')->andReturn([
+            'system_identifier' => '2002', 'host_fingerprint' => hash('sha256', '2002'),
+            'discovery_endpoints' => [
+                'http://insecure.example.test', 'https://user:password@credentials.example.test',
+                ['invalid'], str_repeat('x', 2049), 'https://10.0.0.1', 'https://10.0.0.1/',
+                'https://stale.example.test',
+            ],
+        ]);
+        $peer->shouldReceive('identify')->once()->with('https://10.0.0.1')->andReturn([
+            'system_identifier' => '1001', 'host_fingerprint' => hash('sha256', '1001'),
+            'discovery_endpoints' => ['https://third-hop.example.test'],
+        ]);
+        $peer->shouldReceive('identify')->once()->with('https://stale.example.test')
+            ->andThrow(new RuntimeException('The scheduled-job peer returned an invalid signature.'));
+        $resolver = $this->resolver('1001', ['https://10.0.0.2'], [], $peer);
+
+        $candidates = collect($resolver->discover())->keyBy('endpoint');
+
+        $this->assertSame(['https://10.0.0.2', 'https://10.0.0.1', 'https://stale.example.test'], $candidates->keys()->all());
+        $this->assertTrue($candidates['https://10.0.0.1']['reachable']);
+        $this->assertFalse($candidates['https://stale.example.test']['reachable']);
+        $this->assertDatabaseCount('scheduled_job_nodes', 0);
+    }
+
+    public function test_peer_discovery_hints_are_bounded(): void
+    {
+        $peer = Mockery::mock(ScheduledJobPeerClient::class);
+        $peer->shouldReceive('identify')->once()->with('https://10.0.0.2')->andReturn([
+            'system_identifier' => '2002', 'host_fingerprint' => hash('sha256', '2002'),
+            'discovery_endpoints' => array_map(fn ($i) => 'https://hint-'.$i.'.example.test', range(1, 20)),
+        ]);
+        for ($i = 1; $i <= 16; $i++) {
+            $peer->shouldReceive('identify')->once()->with('https://hint-'.$i.'.example.test')
+                ->andThrow(new RuntimeException('Unreachable.'));
+        }
+
+        $this->assertCount(17, $this->resolver('1001', ['https://10.0.0.2'], [], $peer)->discover());
+    }
+
+    public function test_peer_discovered_addresses_still_detect_conflicting_host_identities(): void
+    {
+        $peer = Mockery::mock(ScheduledJobPeerClient::class);
+        $peer->shouldReceive('identify')->with('https://10.0.0.2')->andReturn([
+            'system_identifier' => '1001', 'host_fingerprint' => hash('sha256', 'clone'),
+            'discovery_endpoints' => ['https://10.0.0.1'],
+        ]);
+        $peer->shouldReceive('identify')->with('https://10.0.0.1')->andReturn([
+            'system_identifier' => '1001', 'host_fingerprint' => hash('sha256', '1001'),
+        ]);
+        $resolver = $this->resolver('1001', ['https://10.0.0.2'], [], $peer);
+
+        $this->assertTrue(collect($resolver->discover())->every(fn ($candidate) => $candidate['duplicate_identity']));
+        $this->expectExceptionMessage('more than one endpoint');
+        $resolver->approveNode('https://10.0.0.1', '1001', null);
+    }
+
+    public function test_peer_discovered_address_can_replace_a_failed_over_registered_hostname(): void
+    {
+        $this->node('1001', 'pbx-a', 'https://shared.example.test');
+        $this->setting('active_node', '1001');
+        $this->setting('active_node_generation', '4', 'numeric');
+        $peer = Mockery::mock(ScheduledJobPeerClient::class);
+        $peer->shouldReceive('identify')->andReturnUsing(function ($endpoint) {
+            $id = $endpoint === 'https://10.0.0.1' ? '1001' : '2002';
+
+            return ['system_identifier' => $id, 'host_fingerprint' => hash('sha256', $id),
+                'discovery_endpoints' => [$id === '1001' ? 'https://10.0.0.2' : 'https://10.0.0.1']];
+        });
+        $resolver = $this->resolver('1001', ['https://10.0.0.2'], [], $peer);
+        $candidate = collect($resolver->discover())->firstWhere('system_identifier', '1001');
+        $this->assertSame('https://10.0.0.1', $candidate['endpoint']);
+        $this->assertSame('https://shared.example.test', $candidate['registered_endpoint']);
+        $this->assertSame('https://shared.example.test', ScheduledJobNode::where('system_identifier', '1001')->value('endpoint'));
+
+        $result = $resolver->requestNodeApproval($candidate['endpoint'], '1001', null);
+
+        $this->assertSame('https://10.0.0.1', $result['node']['endpoint']);
+        $this->assertSame('1001', $resolver->configuredNode());
+        $this->assertSame(4, $resolver->generation());
+        $this->assertDatabaseCount('scheduled_job_nodes', 1);
+    }
+
     public function test_only_the_approved_system_identifier_owner_is_active(): void
     {
         $this->node('1001', 'pbx-a', 'https://pbx-a.example.test');
@@ -505,7 +637,7 @@ class ScheduledJobCoordinatorTest extends TestCase
     {
         $peer = Mockery::mock(ScheduledJobPeerClient::class);
         $peer->shouldReceive('identify')->andReturn(['system_identifier' => '1001', 'host_fingerprint' => hash('sha256', '1001')]);
-        $candidates = $this->resolver('1001', ['https://alias.example.test'], [], $peer)->discover();
+        $candidates = $this->resolver('1001', ['https://alias.example.test', 'https://pbx-a.example.test'], [], $peer)->discover();
         $this->assertCount(2, $candidates);
         $this->assertFalse($candidates[0]['duplicate_identity']);
         $this->assertFalse($candidates[1]['duplicate_identity']);
@@ -782,12 +914,10 @@ class ScheduledJobCoordinatorTest extends TestCase
     {
         $this->node('2002', 'old-server', 'https://retired.example.test', 'retired');
         $peer = Mockery::mock(ScheduledJobPeerClient::class);
-        $peer->shouldReceive('identify')->once()->with('https://pbx-a.example.test')->andReturn([
-            'system_identifier' => '1001', 'host_fingerprint' => hash('sha256', '1001'),
-        ]);
+        $peer->shouldNotReceive('identify');
         $resolver = $this->resolver('1001', [], [], $peer);
 
-        $this->assertSame(['1001'], array_column($resolver->discover(), 'system_identifier'));
+        $this->assertSame([], $resolver->discover());
     }
 
     public function test_replacement_can_be_discovered_at_a_removed_servers_address(): void

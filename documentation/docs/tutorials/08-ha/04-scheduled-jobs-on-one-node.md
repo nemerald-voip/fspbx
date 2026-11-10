@@ -36,6 +36,8 @@ FS PBX reads the PostgreSQL cluster system identifier from `pg_control_system()`
 
 Replication subscription names are never used as node identities. FS PBX reads every host in `pg_subscription.subconninfo` only as a possible address to check. Disabled, manually named, and stale subscriptions are expected.
 
+Signed identity responses include only the sanitized replication endpoint addresses, never connection strings or credentials. Discovery checks one additional hop of these addresses (at most 16 additional endpoints), so the peer's subscriptions can supply the local server's direct address. Every address receives its own signed identity check. Update both servers for automatic discovery of both direct addresses; with an older peer, enter the missing direct address manually. An unregistered local server has no assumed endpoint in the status response.
+
 Before an address can become a scheduled-job node, FS PBX sends it a signed identity challenge over HTTPS. The response includes the PostgreSQL system identifier, an application-specific hash of `/etc/machine-id`, hostname, application version, request nonce, endpoint identity, and a secret-free coordination snapshot. The raw machine ID is never returned. A super administrator must approve the verified result.
 
 Discovery never approves a node. An unreachable subscription host remains visible as a stale candidate. Multiple addresses returning the same database and host identity are aliases; one approved canonical endpoint is stored. The same database identity with different host fingerprints blocks approval, and a host that does not match its approved fingerprint cannot claim or commit work.
