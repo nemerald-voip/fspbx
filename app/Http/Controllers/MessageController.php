@@ -374,14 +374,12 @@ class MessageController extends Controller
 
         // 3. Newest page first; `before` pages back from the oldest message the client shows.
         $request->validate(['before' => ['nullable', 'uuid']]);
+        $cursor = null;
         if ($before = $request->input('before')) {
-            $query->whereRaw(
-                '(messages.created_at, messages.message_uuid) < (select created_at, message_uuid from messages where message_uuid = ? and domain_uuid = ?)',
-                [$before, $domainUuid]
-            );
+            $cursor = (clone $query)->whereKey($before)->firstOrFail();
         }
 
-        $rows = $query->orderBy('created_at', 'desc')->orderBy('message_uuid', 'desc')
+        $rows = $query->conversationOrder($cursor)
             ->paginate($request->input('page.size', 50));
 
         $isSharedNumber = app(MessageParticipantService::class)->members($domainUuid, $local)->count() > 1;
@@ -404,8 +402,14 @@ class MessageController extends Controller
                 'text' => $r->message,
                 'role' => $isOutbound ? 'user' : 'ai',
                 'timestamp' => $r->created_at->toIsoString(),
+                'reply_order' => (int) $r->isAutomaticReply(),
                 'send_error' => $isOutbound && $r->status === 'failed'
                     ? data_get($r->delivery_meta, 'outbound.provider.error', __('Message could not be sent.')) : null,
+                'opt_out' => $isOutbound && $r->message_group_uuid && $r->status === 'failed'
+                    && data_get($r->delivery_meta, 'opt_out_blocked_recipients') ? [
+                        'blocked_recipients' => data_get($r->delivery_meta, 'opt_out_blocked_recipients'),
+                        'can_start_conversation' => app(\App\Services\Messaging\MessageOptOutService::class)->remainingGroupRecipients($r) !== [],
+                    ] : null,
                 'media' => collect($r->mediaItems())->map(fn ($media, $index) => array_replace($media, [
                     'access_path' => $media['access_path'] ?? $media['url'] ?? route('messages.media.show', [
                         'message_uuid' => $r->message_uuid, 'index' => $index,
@@ -528,14 +532,36 @@ class MessageController extends Controller
     {
         $data = $request->validate([
             'source' => ['required', 'string'], 'extension_uuid' => ['required', 'uuid'],
-            'recipients' => ['required', 'array', 'min:1', 'max:20'],
+            'recipients' => ['required_without:opt_out_message_uuid', 'array', 'min:1', 'max:20'],
             'recipients.*' => ['required', 'string', 'max:40'],
+            'opt_out_message_uuid' => ['nullable', 'uuid'],
         ]);
         $extensionUuid = $this->authorizedExtension($data['extension_uuid']);
         $domain = $this->currentDomainUuid();
         $local = app(MessageParticipantService::class)->normalize($domain, $data['source']);
         $this->authorizeNumber($local);
-        $recipients = $groups->recipients($data['recipients'], $local, app(\App\Services\PhoneNumberService::class)->countryCodeForDomain($domain));
+        $draft = null;
+        if (!empty($data['opt_out_message_uuid'])) {
+            $query = Messages::where('domain_uuid', $domain)->where('source', $local)
+                ->where('direction', 'out')->where('status', 'failed')->whereNotNull('message_group_uuid');
+            app(\App\Services\Messaging\MessageConversationVisibility::class)->history($query, auth()->id());
+            $original = $query->findOrFail($data['opt_out_message_uuid']);
+            abort_unless(data_get($original->delivery_meta, 'opt_out_blocked_recipients'), 422);
+            $recipients = app(\App\Services\Messaging\MessageOptOutService::class)->remainingGroupRecipients($original);
+            if (!$recipients) throw \Illuminate\Validation\ValidationException::withMessages([
+                'recipients' => [__('All recipients have opted out. No conversation can be started.')],
+            ]);
+            $draft = [
+                'text' => $original->message,
+                'media' => collect($original->mediaItems())->map(fn ($item, $index) => [
+                    'name' => $item['original_name'] ?? $item['stored_name'] ?? ('attachment_'.$index),
+                    'url' => route('messages.media.show', ['message_uuid' => $original->getKey(), 'index' => $index,
+                        'file_name' => $item['stored_name'] ?? ('attachment_'.$index)]),
+                ])->values()->all(),
+            ];
+        } else {
+            $recipients = $groups->recipients($data['recipients'], $local, app(\App\Services\PhoneNumberService::class)->countryCodeForDomain($domain));
+        }
         if (!$recipients) throw \Illuminate\Validation\ValidationException::withMessages(['recipients' => [__('Enter at least one other phone number.')]]);
         $group = null;
         if (count($recipients) > 1) {
@@ -544,7 +570,7 @@ class MessageController extends Controller
             app(MessageCarrierCapabilities::class)->validateGroup($config->carrier, $local, $recipients);
             $group = $groups->findOrCreate($domain, $local, $recipients);
         }
-        return response()->json(['room' => [
+        return response()->json(['draft' => $draft, 'room' => [
             'id' => $local.'_'.($group?->message_group_uuid ?? $recipients[0]),
             'name' => implode(', ', $recipients), 'recipients' => $recipients,
             'message_group_uuid' => $group?->message_group_uuid, 'my_number' => $local,

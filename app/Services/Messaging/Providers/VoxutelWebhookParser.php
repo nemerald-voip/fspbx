@@ -6,6 +6,7 @@ use App\Services\Messaging\Data\DeliveryStatusEventData;
 use App\Services\Messaging\Data\DownloadedMediaData;
 use App\Services\Messaging\Data\InboundMessageEventData;
 use App\Services\Messaging\Providers\Concerns\ExtractsMediaFilename;
+use App\Services\Messaging\Providers\Concerns\ExtractsMmsText;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
 use Spatie\WebhookClient\Models\WebhookCall;
@@ -13,6 +14,7 @@ use Spatie\WebhookClient\Models\WebhookCall;
 class VoxutelWebhookParser implements MessagingWebhookParser
 {
     use ExtractsMediaFilename;
+    use ExtractsMmsText;
 
     /**
      * @return iterable<object>
@@ -30,13 +32,17 @@ class VoxutelWebhookParser implements MessagingWebhookParser
         ]);
 
         if ($this->isInboundMessagePayload($payload)) {
+            $mediaUrls = $this->extractMediaUrls($payload);
+            [$text, $attachments] = $this->extractMmsText((string) $this->extractText($payload), $mediaUrls);
             $data = InboundMessageEventData::from([
                 'provider' => 'voxutel',
                 'providerReferenceId' => $this->extractReferenceId($payload),
                 'from' => (string) $this->extractFrom($payload),
                 'to' => $this->extractTo($payload),
-                'text' => (string) $this->extractText($payload),
-                'mediaUrls' => $this->extractMediaUrls($payload),
+                'text' => $text,
+                'mediaUrls' => $attachments,
+                'isMms' => $mediaUrls !== [] || count($this->extractTo($payload)) > 1
+                    || strtoupper((string) data_get($payload, 'messageType')) === 'MMS',
                 'providerEvent' => $type ?: 'inbound_message',
             ]);
 

@@ -71,6 +71,8 @@ class SendOutboundSMSMessage implements ShouldQueue
                 return;
             }
 
+            if (app(\App\Services\Messaging\MessageOptOutService::class)->block($message)) return;
+
             $carrier = data_get($message->delivery_meta, 'outbound.provider.name');
 
             messaging_webhook_debug('SendOutboundMessage resolved carrier', [

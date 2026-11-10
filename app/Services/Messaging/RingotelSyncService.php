@@ -38,9 +38,21 @@ class RingotelSyncService
             return;
         }
         $targets = (new RingotelSyncDispatcher($this->conversations))->targets($message, $contexts);
+        $parent = $message->isAutomaticReply() && data_get($message->delivery_meta, 'outbound.meta.in_reply_to')
+            ? Messages::where('domain_uuid', $message->domain_uuid)->where('direction', 'in')
+                ->whereKey(data_get($message->delivery_meta, 'outbound.meta.in_reply_to'))->first() : null;
+        $parentContexts = $parent && !$parent->isExternalOnly() ? $this->conversations->contexts($parent) : [];
         foreach ($targets as $target) {
             if ((!$conversationId || $target->ringotel_conversation_uuid === $conversationId)
                 && isset($contexts[$target->ringotel_conversation_uuid])) {
+                // Send the triggering message first even when separate workers pick up the reply job first.
+                if (isset($parentContexts[$target->ringotel_conversation_uuid])) {
+                    $this->sync($parent->getKey(), $target->ringotel_conversation_uuid);
+                    if (!RingotelMessageDelivery::where('message_uuid', $parent->getKey())
+                        ->where('ringotel_conversation_uuid', $target->ringotel_conversation_uuid)->where('status', 'success')->exists()) {
+                        throw new RuntimeException('Waiting for the incoming message to synchronize before its automatic reply.');
+                    }
+                }
                 $this->syncTarget($message, $contexts[$target->ringotel_conversation_uuid]);
             }
         }
@@ -86,7 +98,9 @@ class RingotelSyncService
                     // Live incoming messages must use new-message semantics, not
                     // the timestamped history format used for outgoing copies.
                     if ($message->direction === 'out') {
-                        $params['timestamp'] = (int) $message->created_at->valueOf();
+                        // Incoming messages receive Ringotel's live arrival time. Backdating their
+                        // automatic reply to creation time can place it above its own trigger.
+                        $params['timestamp'] = (int) ($message->isAutomaticReply() ? now() : $message->created_at)->valueOf();
                     }
                     $parts[$key] = [
                         'status' => 'sending', 'session_id' => $conversation->session_id,

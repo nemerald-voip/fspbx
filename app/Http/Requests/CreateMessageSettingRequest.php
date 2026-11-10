@@ -31,6 +31,7 @@ class CreateMessageSettingRequest extends FormRequest
         // logger(request()->all());
         return [
             ...$this->webhookRules(),
+            'opt_out_enabled' => ['sometimes', 'boolean'],
             'destination' => [
                 'required',
                 'string',

@@ -1005,6 +1005,11 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/messages/retry', [MessageController::class, 'retry'])->name('messages.retry');
 
     // Message Settings
+    Route::get('/message-settings/{setting}/auto-replies', [\App\Http\Controllers\MessageAutoReplyController::class, 'index'])->name('messages.auto-replies.index');
+    Route::post('/message-settings/{setting}/auto-replies', [\App\Http\Controllers\MessageAutoReplyController::class, 'update'])->name('messages.auto-replies.update');
+    Route::get('/message-settings/{setting}/opt-outs', [\App\Http\Controllers\MessageOptOutController::class, 'index'])->name('messages.opt-outs.index');
+    Route::post('/message-settings/{setting}/opt-outs', [\App\Http\Controllers\MessageOptOutController::class, 'update'])->name('messages.opt-outs.update');
+    Route::delete('/message-settings/{setting}/opt-outs/{optOut}', [\App\Http\Controllers\MessageOptOutController::class, 'destroy'])->whereUuid('optOut')->name('messages.opt-outs.destroy');
     Route::get('/message-settings/data', [MessageSettingsController::class, 'getData'])->name('messages.settings.data');
     Route::put('/message-settings/{setting}', [MessageSettingsController::class, 'update'])->name('messages.settings.update');
     Route::post('/message-settings', [MessageSettingsController::class, 'store'])->name('messages.settings.store');

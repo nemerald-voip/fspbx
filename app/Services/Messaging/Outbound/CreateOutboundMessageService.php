@@ -98,6 +98,10 @@ class CreateOutboundMessageService
             'media_count' => count($message->media ?? []),
         ]);
 
+        if (app(\App\Services\Messaging\MessageOptOutService::class)->block($message)) {
+            return $message->fresh();
+        }
+
         if ($data->dispatch) {
             SendOutboundSMSMessage::dispatch($message->message_uuid)->onQueue('messages')->afterCommit();
         }

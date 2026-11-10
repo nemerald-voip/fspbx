@@ -46,6 +46,7 @@
                             <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
                                 @error="handleError" @response="handleResponse" :display-errors="false" :default="{
                                     ...messageDeliveryDefaults(null, options.webhook),
+                                    opt_out_enabled: options.opt_out_available && options.opt_out_scope === 'number',
 
                                 }" @mounted="(form) => form.disableValidation()" @submit="clearServerFormErrors">
 
@@ -73,7 +74,13 @@
                                             }" />
 
                                         <MessageDeliveryFields :settings="options.webhook" :extensions="options.extensions" />
+                                        <ToggleElement v-if="options.opt_out_available && options.opt_out_scope === 'number'" name="opt_out_enabled" :text="$t('Enable opt out')"
+                                            :conditions="[form => !options.webhook?.available || form.data.inbound_delivery === 'members']"
+                                            :true-value="true" :false-value="false"
+                                            :description="$t('An SMS matching an opt-out keyword blocks further Messages and Ringotel sends to that recipient. Manage keywords in Account Settings. Customer API sends are excluded.')" />
 
+                                        <StaticElement v-if="options.opt_out_available && options.opt_out_scope === 'account'" name="opt_out_account"
+                                            :content="$t('Account-wide opt-out handling is enabled for every phone number. Individual numbers cannot be excluded.')" />
                                         <TextareaElement :label="$t('Description')" name="description" :rows="2" />
 
                                         <GroupElement name="container_3" />

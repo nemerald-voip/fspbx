@@ -142,6 +142,7 @@ class DatabaseSeeder extends Seeder
             ['application_name' => 'Call Flows', 'permission_name' => 'call_flow_all'],
             ['application_name' => 'Message Settings', 'permission_name' => 'message_settings_list_view'],
             ['application_name' => 'Message Settings', 'permission_name' => 'message_settings_manage'],
+            ['application_name' => 'Message Settings', 'permission_name' => 'message_opt_out_manage'],
             ['application_name' => 'Extensions', 'permission_name' => 'extension_suspended'],
             ['application_name' => 'Mobile Apps', 'permission_name' => 'mobile_apps_password_url_show'],
             ['application_name' => 'Mobile Apps', 'permission_name' => 'g722_enabled'],
@@ -379,6 +380,7 @@ class DatabaseSeeder extends Seeder
                 'number_translation_delete',
                 'message_settings_list_view',
                 'message_settings_manage',
+                'message_opt_out_manage',
                 'extension_suspended',
                 'mobile_apps_password_url_show',
                 'firewall_list_view',
@@ -1062,6 +1064,14 @@ class DatabaseSeeder extends Seeder
     private function createDefaultSettings()
     {
         $settings = [
+            [
+                'default_setting_category' => 'messaging',
+                'default_setting_subcategory' => 'opt_out_scope',
+                'default_setting_name' => 'text',
+                'default_setting_value' => 'disabled',
+                'default_setting_enabled' => true,
+                'default_setting_description' => 'Opt-out list scope: disabled, number or account. Accounts can override this under Account Settings > Messaging.',
+            ],
             [
                 'default_setting_category'      => 'dialplan',
                 'default_setting_subcategory'   => 'outbound_route_default_scope',
