@@ -126,6 +126,10 @@ After a DNS failover, renewal ownership follows the floating hostname automatica
 
 All SAN hostnames must remain publicly reachable during renewal. If a node is offline when renewal is due, restore it or temporarily issue a certificate without that node's direct hostname.
 
+After every renewal check, including when no new certificate is needed, FS PBX connects to each certificate hostname on HTTPS port 443. It checks certificate trust, hostname, validity, and that the certificate being served matches the certificate issued by Let's Encrypt. For a redundant pair this includes the floating hostname and both direct node names. It also checks the floating hostname directly against each node, so the standby is verified before failover. These HTTPS endpoints must be reachable from the server running the check.
+
+Only errors during renewal checks send an email to the address in `.env`'s `MAIL_FROM_ADDRESS`, using the configured application mail service. This includes failures to renew, apply, or verify the certificate, and failures to identify the active node. The alert identifies the server, hostname, and error. Initial certificate installation, successful renewals, and normal standby skips do not send email. If the email address is blank, the command reports that no notification was sent. If email delivery fails, the renewal command still reports the original failure and logs the email error.
+
 ## Verify the certificate
 
 Open every hostname included in the certificate. For a redundant installation:

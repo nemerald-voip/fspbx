@@ -431,7 +431,8 @@ class MusicOnHoldService
         }
 
         return [
-            'success' => ! str_starts_with($message, '-ERR'),
+            // A module reload can report +OK for XML before failing to unload/load.
+            'success' => ! str_contains($message, '-ERR'),
             'message' => $message,
         ];
     }

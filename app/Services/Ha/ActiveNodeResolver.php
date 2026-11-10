@@ -332,6 +332,9 @@ class ActiveNodeResolver
                 continue;
             }
             if (! in_array($capability, $identity['capabilities'] ?? [], true)) {
+                if ($capability === 'initial_owner') {
+                    throw new RuntimeException(__('Update FS PBX on :server to select the first owner from either server.', ['server' => $writerName]), 409);
+                }
                 if ($capability === 'node_removal') {
                     throw new RuntimeException(__('Update FS PBX on :server to support removing retired servers.', ['server' => $writerName]), 409);
                 }
@@ -341,6 +344,9 @@ class ActiveNodeResolver
             break;
         }
         if ($writerEndpoint === null) {
+            if ($capability === 'initial_owner') {
+                throw new RuntimeException(__('Cannot reach the setup server :server at a verified address. Restore access before selecting the first owner.', ['server' => $writerName]), 409);
+            }
             throw new RuntimeException(__('Cannot reach the approval server :server at a verified address. Restore access before approving. An unreachable owner does not authorize takeover.', ['server' => $writerName]), 409);
         }
 
@@ -503,7 +509,15 @@ class ActiveNodeResolver
             if ($this->configuredNode() !== null || $decision['source'] === 'inconsistent') {
                 throw new RuntimeException('The existing owner is invalid. Repair the selection; it cannot be treated as a new installation.', 409);
             }
-            return ['status' => 'completed', 'handoff' => $this->bootstrapOwner($payload)];
+            $payload['initial_owner'] = true;
+            $payload['writer_node_id'] = $this->managementWriter();
+            if ($payload['writer_node_id'] === $this->localNodeId()) {
+                return $this->prepareInitialOwner($payload);
+            }
+
+            $endpoint = $this->managementEndpoint($payload['writer_node_id'], collect($this->discover()), 'initial_owner');
+
+            return $this->forwardHandoff($endpoint, $payload);
         }
         if ($ownerId === $this->localNodeId()) {
             return $this->prepareHandoff($payload);
@@ -514,8 +528,14 @@ class ActiveNodeResolver
             throw new RuntimeException('The selected owner is not an approved node. Fence it before using forced takeover.', 409);
         }
 
+        return $this->forwardHandoff($owner->endpoint, $payload);
+    }
+
+    private function forwardHandoff(string $endpoint, array $payload): array
+    {
+        $idempotency = $payload['idempotency_key'];
         try {
-            return $this->peerClient->prepareHandoff($owner->endpoint, $payload, $idempotency);
+            $result = $this->peerClient->prepareHandoff($endpoint, $payload, $idempotency);
         } catch (RuntimeException $exception) {
             if ($exception->getCode() >= 400 && $exception->getCode() < 500) {
                 throw $exception;
@@ -523,17 +543,54 @@ class ActiveNodeResolver
             // The owner may have committed despite a lost response. The status
             // endpoint also accepts the original idempotency UUID.
             try {
-                $recovered = $this->peerClient->handoffStatus($owner->endpoint, $idempotency);
-                if (($recovered['handoff']['to_node_id'] ?? null) !== $targetNodeId
-                    || ($recovered['handoff']['expected_generation'] ?? null) !== $expectedGeneration) {
+                $result = $this->peerClient->handoffStatus($endpoint, $idempotency);
+                if (($result['handoff']['to_node_id'] ?? null) !== $payload['target_node_id']
+                    || ($result['handoff']['expected_generation'] ?? null) !== $payload['expected_generation']) {
                     throw new RuntimeException('The recovered response belongs to a different handoff.', 409);
                 }
-
-                return $recovered;
             } catch (Throwable) {
                 throw $exception;
             }
         }
+
+        if (($payload['initial_owner'] ?? false)
+            && (($result['status'] ?? null) !== 'completed'
+                || ($result['handoff']['to_node_id'] ?? null) !== $payload['target_node_id']
+                || ($result['handoff']['expected_generation'] ?? null) !== $payload['expected_generation']
+                || ($result['handoff']['from_node_id'] ?? null) !== null)) {
+            throw new RuntimeException(__('The setup server returned an unexpected result. Refresh status before retrying.'), 409);
+        }
+
+        return $result;
+    }
+
+    /** A forwarded setup request executes only on the designated writer; it never forwards again. */
+    public function prepareInitialOwner(array $payload): array
+    {
+        if (($payload['writer_node_id'] ?? null) !== $this->localNodeId()) {
+            throw new RuntimeException(__('The initial owner request reached a different server. Refresh status and try again.'), 409);
+        }
+        $targetNodeId = trim((string) ($payload['target_node_id'] ?? ''));
+        $expectedGeneration = (int) ($payload['expected_generation'] ?? -1);
+        if ($existing = $this->existingHandoff((string) ($payload['idempotency_key'] ?? ''), $targetNodeId, $expectedGeneration)) {
+            return $existing;
+        }
+        $decision = $this->resolve();
+        if ($decision['source'] === 'inconsistent') {
+            throw new RuntimeException($decision['reason'], 409);
+        }
+        if ($this->configuredNode() !== null || $expectedGeneration !== (int) $decision['generation']) {
+            throw new RuntimeException('Scheduled-job ownership changed. Refresh the page and try again.', 409);
+        }
+        $this->assertManagementWriter();
+        $target = ScheduledJobNode::query()->where('system_identifier', $targetNodeId)->where('status', 'approved')->first();
+        if (! $target || $this->normalizeEndpoint((string) ($payload['target_endpoint'] ?? '')) !== $target->endpoint) {
+            throw new RuntimeException('The requested target does not match an approved node.');
+        }
+        $this->assertIdentity($target);
+        $handoff = $this->bootstrapOwner($payload);
+
+        return ['status' => $handoff->status, 'handoff' => $this->handoffArray($handoff)];
     }
 
     /** @return array<string, mixed> */
@@ -1092,6 +1149,11 @@ class ActiveNodeResolver
         }
         return DB::transaction(function () use ($payload, $snapshot) {
             $this->lockOwnershipSettings();
+            if ($existing = ScheduledJobHandoff::query()->where('idempotency_key', $payload['idempotency_key'])->first()) {
+                $this->existingHandoff($payload['idempotency_key'], $payload['target_node_id'], (int) $payload['expected_generation']);
+
+                return $existing;
+            }
             $this->assertManagementWriter();
             if ($snapshot !== $this->coordinationSnapshot()) {
                 throw new RuntimeException('Initial coordination state changed while verifying peers. Try again.', 409);

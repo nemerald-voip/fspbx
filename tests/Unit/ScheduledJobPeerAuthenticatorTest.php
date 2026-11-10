@@ -144,6 +144,7 @@ class ScheduledJobPeerAuthenticatorTest extends TestCase
         $result = (new ScheduledJobPeerClient($auth))->identify('https://10.0.0.2');
 
         $this->assertSame('2002', $result['system_identifier']);
+        $this->assertContains('initial_owner', $result['capabilities']);
         $this->assertSame(['https://10.0.0.1'], $result['discovery_endpoints']);
         $tampered = $result;
         $tampered['discovery_endpoints'] = ['https://different.example.test'];
@@ -195,6 +196,59 @@ class ScheduledJobPeerAuthenticatorTest extends TestCase
 
         $this->assertSame($node->toArray(), $result['node']);
         $this->assertSame(403, $controller->approveNode($received)->getStatusCode(), 'A captured request cannot be replayed.');
+    }
+
+    public function test_initial_owner_selection_uses_the_signed_handoff_endpoint_and_preserves_the_request(): void
+    {
+        $auth = new ScheduledJobPeerAuthenticator();
+        $resolver = Mockery::mock(ActiveNodeResolver::class);
+        $payload = [
+            'target_node_id' => '2002', 'target_endpoint' => 'https://pbx-b.example.test',
+            'expected_generation' => 0, 'requested_by' => (string) Str::uuid(),
+            'idempotency_key' => (string) Str::uuid(), 'initial_owner' => true, 'writer_node_id' => '1001',
+        ];
+        $completed = ['status' => 'completed', 'handoff' => ['to_node_id' => '2002', 'expected_generation' => 0]];
+        $resolver->shouldReceive('prepareInitialOwner')->once()->with($payload)->andReturn($completed);
+        $resolver->shouldNotReceive('prepareHandoff');
+        $controller = new ScheduledJobPeerController($resolver, $auth);
+        $received = null;
+        Http::fake(function ($outgoing) use ($controller, &$received) {
+            $this->assertSame('https://pbx-a.example.test/api/ha/scheduled-jobs/handoffs', $outgoing->url());
+            $received = Request::create($outgoing->url(), 'POST', $outgoing->data(), [], [],
+                $this->serverHeaders(collect($outgoing->headers())->map(fn ($values) => $values[0])->all()));
+            $response = $controller->prepareHandoff($received);
+
+            return Http::response($response->getData(true), $response->getStatusCode(), $response->headers->all());
+        });
+
+        $this->assertSame($completed, (new ScheduledJobPeerClient($auth))->prepareHandoff(
+            'https://pbx-a.example.test', $payload, $payload['idempotency_key']
+        ));
+        $this->assertSame(403, $controller->prepareHandoff($received)->getStatusCode());
+        $this->assertSame(403, $controller->prepareHandoff(Request::create('https://pbx-a.example.test/api/ha/scheduled-jobs/handoffs', 'POST', $payload))->getStatusCode());
+        $this->assertSame(426, $controller->prepareHandoff(Request::create('http://pbx-a.example.test/api/ha/scheduled-jobs/handoffs', 'POST', $payload))->getStatusCode());
+    }
+
+    public function test_initial_owner_selection_requires_the_writer_in_the_signed_payload(): void
+    {
+        $auth = new ScheduledJobPeerAuthenticator();
+        $resolver = Mockery::mock(ActiveNodeResolver::class);
+        $resolver->shouldNotReceive('prepareInitialOwner');
+        $resolver->shouldNotReceive('prepareHandoff');
+        $controller = new ScheduledJobPeerController($resolver, $auth);
+        Http::fake(function ($outgoing) use ($controller) {
+            $request = Request::create($outgoing->url(), 'POST', $outgoing->data(), [], [],
+                $this->serverHeaders(collect($outgoing->headers())->map(fn ($values) => $values[0])->all()));
+            $response = $controller->prepareHandoff($request);
+
+            return Http::response($response->getData(true), $response->getStatusCode(), $response->headers->all());
+        });
+        $key = (string) Str::uuid();
+        $this->expectExceptionCode(422);
+        (new ScheduledJobPeerClient($auth))->prepareHandoff('https://pbx-a.example.test', [
+            'target_node_id' => '2002', 'target_endpoint' => 'https://pbx-b.example.test',
+            'expected_generation' => 0, 'idempotency_key' => $key, 'initial_owner' => true,
+        ], $key);
     }
 
     public function test_approval_endpoint_requires_https_and_a_valid_peer_signature(): void

@@ -223,6 +223,53 @@ SH);
         $this->assertFileDoesNotExist($this->directory.'/nginx/fullchain.pem');
     }
 
+    public function test_nginx_deployer_works_with_crons_minimal_path(): void
+    {
+        if (! is_executable('/usr/sbin/nginx')) {
+            $this->markTestSkipped('This regression requires Nginx installed in /usr/sbin.');
+        }
+
+        $certificate = $this->directory.'/certificate.pem';
+        $key = $this->directory.'/key.pem';
+        $this->createCertificatePair($certificate, $key, 'portal.example.com');
+
+        $certificatePath = $this->directory.'/installed-certificate.pem';
+        $keyPath = $this->directory.'/installed-key.pem';
+        $log = $this->directory.'/deployment.log';
+
+        // Check real executable discovery while intercepting every service call.
+        $runner = <<<'SH'
+nginx() {
+    if ! type -P nginx >/dev/null; then
+        printf '%s\n' 'nginx: command not found' >&2
+        return 127
+    fi
+    printf 'nginx %s\n' "$*" >> "$FSPBX_DEPLOY_TEST_LOG"
+}
+systemctl() {
+    printf 'systemctl %s\n' "$*" >> "$FSPBX_DEPLOY_TEST_LOG"
+}
+export -f nginx systemctl
+exec /bin/bash "$@"
+SH;
+
+        $process = new Process([
+            '/bin/bash', '-c', $runner, 'fspbx-cron-test',
+            $this->projectRoot.'/install/deploy_nginx_certificate.sh', $certificate, $key,
+        ], $this->projectRoot, [
+            'FSPBX_NGINX_CERTIFICATE_PATH' => $certificatePath,
+            'FSPBX_NGINX_PRIVATE_KEY_PATH' => $keyPath,
+            'FSPBX_DEPLOY_TEST_LOG' => $log,
+            'PATH' => '/usr/bin:/bin',
+        ]);
+        $process->run();
+
+        $this->assertTrue($process->isSuccessful(), $process->getErrorOutput());
+        $this->assertSame(file_get_contents($certificate), file_get_contents($certificatePath));
+        $this->assertSame(file_get_contents($key), file_get_contents($keyPath));
+        $this->assertSame("nginx -t\nsystemctl reload nginx\n", file_get_contents($log));
+    }
+
     public function test_nginx_deployer_restores_previous_files_when_validation_fails(): void
     {
         $oldCertificate = $this->directory.'/old-certificate.pem';

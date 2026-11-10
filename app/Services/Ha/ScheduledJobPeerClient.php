@@ -30,7 +30,9 @@ class ScheduledJobPeerClient
 
     public function prepareHandoff(string $endpoint, array $payload, string $idempotencyKey): array
     {
-        return $this->post($endpoint, 'api/ha/scheduled-jobs/handoffs', $payload, $idempotencyKey);
+        // Initial selection verifies the target and both signed snapshots before writing.
+        return $this->post($endpoint, 'api/ha/scheduled-jobs/handoffs', $payload, $idempotencyKey,
+            timeoutSeconds: ($payload['initial_owner'] ?? false) ? 20 : 4);
     }
 
     public function approveNode(string $endpoint, array $payload): array

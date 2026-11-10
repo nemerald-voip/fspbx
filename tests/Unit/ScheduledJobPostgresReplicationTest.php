@@ -74,7 +74,8 @@ class ScheduledJobPostgresReplicationTest extends TestCase
             $current = DB::getDefaultConnection();
             try {
                 DB::setDefaultConnection('lab_'.$node);
-                return ['system_identifier' => $ids[$node], 'host_fingerprint' => $resolver->hostFingerprint(), 'coordination' => $resolver->coordinationSnapshot()];
+                return ['system_identifier' => $ids[$node], 'host_fingerprint' => $resolver->hostFingerprint(),
+                    'coordination' => $resolver->coordinationSnapshot(), 'capabilities' => ['initial_owner']];
             } finally {
                 DB::setDefaultConnection($current);
             }
@@ -100,13 +101,26 @@ class ScheduledJobPostgresReplicationTest extends TestCase
         $this->assertNull(Cache::get('lab-isolation'));
         $this->assertFalse($resolver->isActive());
         try {
-            $resolver->requestHandoff($ids['a'], 0, null);
+            $resolver->prepareInitialOwner([
+                'writer_node_id' => $ids['a'], 'target_node_id' => $ids['a'], 'target_endpoint' => 'https://node-a',
+                'expected_generation' => 0, 'idempotency_key' => (string) Str::uuid(), 'initial_owner' => true,
+            ]);
             $this->fail('The replica initialized ownership independently.');
         } catch (RuntimeException $exception) {
             $this->assertSame(409, $exception->getCode());
         }
-        $switch('a');
+        $peer->shouldReceive('prepareHandoff')->once()->with('https://node-a', Mockery::on(
+            fn ($payload) => $payload['initial_owner'] === true && $payload['writer_node_id'] === $ids['a']
+        ), Mockery::type('string'))->andReturnUsing(function ($endpoint, $payload) use ($resolver, $switch) {
+            $switch('a');
+            try {
+                return $resolver->prepareInitialOwner($payload);
+            } finally {
+                $switch('b');
+            }
+        });
         $this->assertSame('completed', $resolver->requestHandoff($ids['a'], 0, null)['status']);
+        $switch('a');
         $this->await(fn () => DB::connection('lab_b')->table('v_default_settings')->where('default_setting_subcategory', 'active_node')->value('default_setting_value') === $ids['a']);
         foreach (['s3_upload_calls', 's3_upload_calls_aa:bb:cc:dd:ee:ff'] as $key) {
             DB::table('v_default_settings')->insert([
