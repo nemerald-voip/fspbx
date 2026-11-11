@@ -2,7 +2,7 @@
 id: language-settings
 title: Language Settings and Sounds
 slug: /getting-started/language-settings/
-sidebar_position: 9
+sidebar_position: 12
 ---
 
 # Language Settings and Sounds

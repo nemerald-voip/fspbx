@@ -45,6 +45,7 @@ You can update the floating record using:
 ## Prerequisites
 
 - Both servers with FS PBX installed.
+- Both nodes must use the **same `APP_KEY`** to read encrypted settings after failover. The PostgreSQL setup script copies the primary's key to a fresh standby; other `.env` settings remain node-specific. See [Application encryption key](02-postgres-replication.md#application-encryption-key).
 - **SSH key-based auth** configured **both directions** (A⇄B).
 - Open firewall: TCP 22 (SSH), TCP 5432 (Postgres between peers).
 - External or internal IPs are fine; as long as servers are able to communicate.

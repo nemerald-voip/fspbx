@@ -1,4 +1,4 @@
-{{-- version: 1.0.4 --}}
+{{-- version: 1.0.5 --}}
 {{-- Shared S300/S500/S700 hl_provision parameter map. S-series is separate from P-series XML. --}}
 
 @php
@@ -54,6 +54,42 @@
     }
     $defaultLine = (int) ($accounts->keys()->sort()->first() ?? 1);
     $keyTypes = ['line' => 1, 'speed_dial' => 2, 'blf' => 3, 'park' => 8];
+
+    // EXP100: six modules with two pages of 20 keys each (S500/S700).
+    // Sangoma P-code reference: https://sangomakb.atlassian.net/wiki/spaces/Phones/pages/18973324
+    $expansionKeysPerModule = 40;
+    $expansionModuleCount = 6;
+    $expansionSlots = [];
+
+    foreach (collect($expansion_keys ?? [])->values() as $index => $key) {
+        $rawSlot = (int) ($key['id'] ?? ($index + 1));
+        if ($rawSlot <= 0 || $rawSlot > $expansionKeysPerModule * $expansionModuleCount) {
+            continue;
+        }
+
+        $module = intdiv($rawSlot - 1, $expansionKeysPerModule) + 1;
+        $slot = (($rawSlot - 1) % $expansionKeysPerModule) + 1;
+        $type = strtolower(trim((string) ($key['type'] ?? '')));
+        $value = trim((string) ($key['value'] ?? ''));
+        $lineNumber = (int) (($key['line'] ?? 0) ?: $defaultLine);
+        $mode = $keyTypes[$type] ?? 0;
+        if ($lineNumber < 1 || $lineNumber > 6 || !$accounts->has($lineNumber) || ($type !== 'line' && $value === '')) {
+            $mode = 0;
+        }
+
+        $expansionSlots[$module][$slot] = [
+            'type' => $mode,
+            'value' => $mode && $type !== 'line' ? $value : '',
+            'label' => $mode ? (string) (($key['label'] ?? '') ?: $value) : '',
+            'account' => $mode ? $lineNumber - 1 : 0,
+            'pickup_code' => $mode ? (string) ($key['extension'] ?? '') : '',
+        ];
+    }
+
+    // Only usable expansion keys select EXP mode; clearing them restores PC bridging.
+    $hasExpansionKeys = collect($expansionSlots)
+        ->flatMap(fn ($slots) => array_values($slots))
+        ->contains(fn ($key) => $key['type'] !== 0);
 @endphp
 
 @switch($flavor)
@@ -132,6 +168,33 @@
         <P{{ $parameter }} para="LineKey{{ $number }}.{{ $names[$index] }}">{{ $values[$index] }}</P{{ $parameter }}>
         @endforeach
     @endfor
+
+        <!-- EXP100: clear every unused position to remove stale expansion assignments. -->
+    @for ($module = 1; $module <= $expansionModuleCount; $module++)
+        @for ($slot = 1; $slot <= $expansionKeysPerModule; $slot++)
+            @php
+                $key = $expansionSlots[$module][$slot] ?? [
+                    'type' => 0, 'value' => '', 'label' => '', 'account' => 0, 'pickup_code' => '',
+                ];
+                $page = intdiv($slot - 1, 20) + 1;
+                $pageSlot = (($slot - 1) % 20) + 1;
+                $base = 60000 + ($module - 1) * 1000 + ($slot - 1) * 5;
+                $fields = [
+                    'KeyType' => $key['type'],
+                    'Value' => $key['value'],
+                    'Label' => $key['label'],
+                    'Account' => $key['account'],
+                    'PickupCode' => $key['pickup_code'],
+                ];
+            @endphp
+            @foreach ($fields as $name => $fieldValue)
+                @php $parameter = $base + $loop->index; @endphp
+        <P{{ $parameter }} para="Exp{{ $module }}_{{ $page }}_{{ $pageSlot }}_{{ $name }}">{{ $fieldValue }}</P{{ $parameter }}>
+            @endforeach
+        @endfor
+    @endfor
+        <!-- PC port: 1 = bridge, 2 = expansion module. -->
+        <P231 para="PcPort">{{ $hasExpansionKeys ? 2 : 1 }}</P231>
 
         <!-- Common preferences; retain the handset's provisioning URL and firmware settings. -->
         <P30 para="UrlOrIpAddress">{{ $settings['ntp_server_primary'] ?? '0.pool.ntp.org' }}</P30>

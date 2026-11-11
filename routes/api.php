@@ -976,6 +976,9 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::get('system/data', [SystemController::class, 'data'])->name('system.data');
 
     // Switch Variables
+    Route::get('switch-variables/network', [\App\Http\Controllers\SwitchNetworkController::class, 'show'])->name('switch-variables.network');
+    Route::post('switch-variables/network/preview', [\App\Http\Controllers\SwitchNetworkController::class, 'preview'])->name('switch-variables.network.preview');
+    Route::put('switch-variables/network', [\App\Http\Controllers\SwitchNetworkController::class, 'update'])->name('switch-variables.network.update');
     Route::get('switch-variables/data', [SwitchVariableController::class, 'data'])->name('switch-variables.data');
     Route::post('switch-variables/item-options', [SwitchVariableController::class, 'itemOptions'])->name('switch-variables.item.options');
     Route::post('switch-variables', [SwitchVariableController::class, 'store'])->name('switch-variables.store');

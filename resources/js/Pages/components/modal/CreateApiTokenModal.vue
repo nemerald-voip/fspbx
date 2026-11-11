@@ -76,7 +76,7 @@
 
 <script setup>
 import { trans } from '@i18n';
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import {CheckCircleIcon, XMarkIcon } from "@heroicons/vue/24/solid";
 import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
@@ -91,6 +91,10 @@ const props = defineProps({
 
 const form$ = ref(null)
 const token = ref(null)
+
+watch(() => props.show, () => {
+    token.value = null
+})
 
 const copyTokenToClipboard = async () => {
     if (token.value) {

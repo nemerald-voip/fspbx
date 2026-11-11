@@ -2,7 +2,7 @@
 id: phone-numbers
 title: Phone Numbers
 slug: /getting-started/phone-numbers
-sidebar_position: 7
+sidebar_position: 11
 ---
 
 # Phone Numbers (DIDs)

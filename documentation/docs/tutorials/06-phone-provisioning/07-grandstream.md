@@ -34,7 +34,7 @@ Go to **Maintenance > Upgrade and Provisioning**. In the **configuration** secti
 
 Replace `pbx.example.com` with your reachable FS PBX hostname. Use the hostname and path without `https://` for compatibility with older phones; the separate HTTPS selector chooses the protocol. Recent GRP firmware also accepts a scheme in the path. Grandstream documents the fields in its [GXP17xx guide](https://documentation.grandstream.com/knowledge-base/gxp17xx-series-administration-guide/) and [GRP administration guide](https://documentation.grandstream.com/knowledge-base/grp261x-grp262x-grp263x-series-administration-guide/).
 
-Use a current, versioned FS PBX device template with the `/prov/` path shown above. Keep the trailing slash and let the phone choose its own configuration filenames. See the [provisioning URL guide](/docs/phone-provisioning/#provisioning-url) for the common setup.
+Keep the `/prov/` path and trailing slash. See the [provisioning URL guide](/docs/phone-provisioning/#provisioning-url) for the common setup.
 
 Enter FS PBX details in **Config Server** fields. **Firmware Server** fields control software downloads and may have separate credentials. On older models, the configuration credentials may simply be labeled **HTTP/HTTPS User Name** and **HTTP/HTTPS Password**. Leave configuration filename prefixes and postfixes empty for the standard FS PBX setup.
 
@@ -46,7 +46,7 @@ Click **Save and Apply**, then use **Provision** if offered or reboot the phone.
 2. Open **Registrations** and check the assigned extension and expected SIP transport.
 3. Test inbound and outbound calls, then test the configured function keys.
 
-HTTPS provisioning and SIP TLS are separate settings. The phone's SIP transport comes from its FS PBX line configuration. Last Contact confirms a request, not successful registration or application of every setting.
+To use SIP TLS, select it separately in the device's line settings. HTTPS protects configuration downloads.
 
 Make subsequent line and key changes in FS PBX, save, and select **Sync**. If the phone is unregistered, use its provisioning control or reboot it directly. Later provisioning can replace locally entered account and key settings.
 
@@ -57,7 +57,6 @@ Make subsequent line and key changes in FS PBX, save, and select **Sync**. If th
 | Phone returns to a different server | Review DHCP provisioning overrides and any existing Grandstream cloud/provider assignment. |
 | Last Contact does not update | Check HTTPS mode, the Config Server Path, DNS, firewall access, certificate trust, phone time, and source-IP restrictions. |
 | Authentication fails | Check the configuration-server credentials. Firmware-server credentials alone may not authenticate configuration downloads. |
-| Only some file requests succeed | Phones may probe several filenames. Check for a successful device configuration download and registration before treating every missing optional file as a failure. |
 | Configuration downloads but registration fails | Verify the template, assigned extension, account domain, SIP proxy, transport, port, and firewall. |
 
 For shared authentication settings, see the [Phone Provisioning Overview](/docs/phone-provisioning/).

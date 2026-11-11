@@ -2,7 +2,7 @@
 id: create-your-first-extension
 title: Create Your First Extension
 slug: /getting-started/create-your-first-extension/
-sidebar_position: 3
+sidebar_position: 5
 ---
 
 # Create Your First Extension
@@ -17,7 +17,7 @@ This guide walks you through setting up your **first working extension** so you 
 
 Log in to your FS PBX web dashboard using your admin account.
 
-If you've just installed FS PBX, use the credentials that were generated during installation.
+If you've just installed FS PBX, follow [First Login and Your First Account](/docs/getting-started/first-login-and-your-first-account/) to sign in with the generated credentials and create your business account.
 
 Once you’re logged in, **select an existing Domain** (tenant) from the Domain selector, or **create a new Domain** where the extension will be created.
 
@@ -80,3 +80,5 @@ To test:
 3.  Try calling between them --- both should ring and connect instantly
 
 If the call connects, congratulations 🎉 --- your first extension is ready to use!
+
+Next, follow [Voicemail Basics](/docs/getting-started/voicemail-basics/) to enable the mailbox, set its password, record a greeting, and test message delivery.

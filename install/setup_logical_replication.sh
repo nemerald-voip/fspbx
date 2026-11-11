@@ -10,6 +10,8 @@ print_info()    { echo -e "\e[36m$1 \e[0m"; }
 print_warn()    { echo -e "\e[33m$1 \e[0m"; }
 
 set -euo pipefail
+# This script handles database passwords and the shared application encryption key.
+set +x
 
 # === CONFIGURATION ===
 DB_NAME="fusionpbx"
@@ -18,6 +20,7 @@ PUB_NAME_LOCAL="fspbx_publication_a"
 PUB_NAME_REMOTE="fspbx_publication_b"
 SUB_NAME_TO_REMOTE="fspbx_subscription_a_to_b"
 SUB_NAME_TO_LOCAL="fspbx_subscription_b_to_a"
+APP_DIR="/var/www/fspbx"
 
 # Robust SSH defaults (keepalives + connection reuse)
 SSH_OPTS=(
@@ -515,11 +518,52 @@ sql_literal() {
   printf "'%s'" "$value"
 }
 
+application_key_tool() {
+  local ip="$1" mode="$2"
+  if [[ "$ip" == "$LOCAL_IP" ]]; then
+    php "$APP_DIR/artisan" ha:app-key "$mode" --no-ansi --no-interaction
+  else
+    SSH_STDIN root@"$ip" "php '$APP_DIR/artisan' ha:app-key '$mode' --no-ansi --no-interaction"
+  fi
+}
+
+check_application_keys() {
+  local payload
+  print_info "Checking application keys before standby setup..."
+  payload=$(application_key_tool "$LOCAL_IP" export) || return 1
+  printf '%s' "$payload" | application_key_tool "$REMOTE_IP" check || return 1
+  print_success "Application key checks passed."
+}
+
+sync_application_key() {
+  local payload
+  print_info "Synchronizing the primary application key to the standby over SSH..."
+  payload=$(application_key_tool "$LOCAL_IP" export) || return 1
+  printf '%s' "$payload" | application_key_tool "$REMOTE_IP" import || return 1
+  printf '%s' "$payload" | application_key_tool "$REMOTE_IP" verify || return 1
+  print_success "Both nodes use the same application key."
+  restart_remote_supervisor_services || return 1
+}
+
+restart_remote_supervisor_services() {
+  print_info "Restarting all Supervisor services on REMOTE..."
+  if ! SSH root@"$REMOTE_IP" "supervisorctl restart all"; then
+    print_error "The application key is synchronized, but a Supervisor restart failed on REMOTE. Setup stopped before the remote schema reset."
+    print_error "On REMOTE, check: supervisorctl status. Resolve the service error, then rerun setup."
+    return 1
+  fi
+  print_success "Supervisor services restarted on REMOTE with the shared APP_KEY."
+}
+
 drop_and_create_schema_remote() {
   local remote_pass_shell
   print_warn "About to drop and recreate 'public' schema on REMOTE. This will delete ALL data in 'public' schema!"
+  print_warn "The LOCAL APP_KEY will also replace the REMOTE APP_KEY. The remote .env will be backed up; other settings will be preserved."
+  print_warn "All configured Supervisor processes on REMOTE will be restarted, including stopped processes with configured instances."
+  print_warn "Use this only for a new or disposable standby, with no application traffic or queued/running jobs on REMOTE."
   read -p "Proceed? [y/N]: " confirm
   if [[ "$confirm" =~ ^[Yy]$ ]]; then
+    sync_application_key || return 1
     printf -v remote_pass_shell '%q' "$REMOTE_PASS"
     SSH root@"$REMOTE_IP" "export PGPASSWORD=$remote_pass_shell; psql -w -h 127.0.0.1 -p '$REMOTE_PG_PORT' -U '$REPL_USER' -d '$DB_NAME' -X -v ON_ERROR_STOP=1 -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public'"
     print_success "Schema dropped and recreated on REMOTE."
@@ -649,6 +693,7 @@ if [[ "$LOCAL_IP" == "$REMOTE_IP" ]]; then
 fi
 
 discover_postgres_nodes
+check_application_keys
 
 configure_postgres_conf "$LOCAL_IP" "$LOCAL_PG_CONF"
 configure_postgres_conf "$REMOTE_IP" "$REMOTE_PG_CONF"

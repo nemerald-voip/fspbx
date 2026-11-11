@@ -30,7 +30,7 @@ Open **Settings > Auto Provision** and enter:
 | User Name / Username | FS PBX provisioning HTTP username |
 | Password | FS PBX provisioning HTTP password |
 
-Replace the hostname with your reachable FS PBX hostname. Use a current, versioned FS PBX device template, and include `https://`, `/prov/`, and the trailing slash in the URL. The phone adds its own filenames. See the [provisioning URL guide](/docs/phone-provisioning/#provisioning-url) for the common setup.
+Replace the hostname with your FS PBX hostname. Include `https://`, `/prov/`, and the trailing slash. See the [provisioning URL guide](/docs/phone-provisioning/#provisioning-url) for the common setup.
 
 For a manually assigned server, set provisioning **DHCP Active** and **PNP Active** to **Off** when those discovery services would otherwise supply a different destination. These switches control provisioning discovery, not DHCP addressing for the phone. Check any existing RPS assignment if the phone returns to another provider after a reset.
 
@@ -42,7 +42,7 @@ Click **Confirm** to save, then **Auto Provision Now** and accept the prompt. Al
 2. Check **Registrations** for the assigned extension and expected SIP transport.
 3. Test inbound and outbound calls, then verify the provisioned function keys.
 
-An HTTPS Server URL controls configuration downloads. Select SIP TLS separately in the FS PBX device's line settings if required by the deployment. Last Contact alone does not confirm registration or that every setting was applied.
+To use SIP TLS, select it separately in the device's line settings. The HTTPS Server URL protects configuration downloads.
 
 For later changes, save the device or Key Template in FS PBX and select **Sync**. Use **Auto Provision Now** from the phone's web interface if it has no reachable SIP registration. Keep ongoing configuration in FS PBX so a later download does not undo local changes.
 

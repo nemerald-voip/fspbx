@@ -2,7 +2,7 @@
 id: gateways
 title: Gateways
 slug: /getting-started/geteways
-sidebar_position: 6
+sidebar_position: 9
 ---
 
 # Gateways
