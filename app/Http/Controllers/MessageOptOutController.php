@@ -23,7 +23,7 @@ class MessageOptOutController extends Controller
                 $digits = preg_match('/^[+0-9\s().-]+$/D', $search) ? preg_replace('/\D+/', '', $search) : '';
             }
             if ($digits === '') {
-                $query->whereRaw('1 = 0');
+                $query->whereIn('message_opt_out_uuid', []);
             } else {
                 $query->where(function ($query) use ($digits) {
                     $query->where('phone_number', 'like', '%'.$digits.'%')

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Support\Carbon;
 use libphonenumber\PhoneNumberFormat;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Query\Expression;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 
@@ -105,12 +106,12 @@ class Messages extends Model
     public function scopeConversationOrder(\Illuminate\Database\Eloquent\Builder $query, ?self $before = null): \Illuminate\Database\Eloquent\Builder
     {
         $origin = $query->getQuery()->getGrammar()->wrap('messages.delivery_meta->outbound->origin');
-        $rank = "CASE WHEN messages.direction = 'out' AND $origin IN ('auto_reply', 'opt_out_confirmation') THEN 1 ELSE 0 END";
+        $rank = new Expression("CASE WHEN messages.direction = 'out' AND $origin IN ('auto_reply', 'opt_out_confirmation') THEN 1 ELSE 0 END");
         if ($before) {
-            $query->whereRaw("(messages.created_at, $rank, messages.message_uuid) < (?, ?, ?)",
+            $query->whereRowValues(['messages.created_at', $rank, 'messages.message_uuid'], '<',
                 [$before->getRawOriginal('created_at'), (int) $before->isAutomaticReply(), $before->getKey()]);
         }
-        return $query->orderByDesc('messages.created_at')->orderByRaw("$rank DESC")->orderByDesc('messages.message_uuid');
+        return $query->orderByDesc('messages.created_at')->orderByDesc($rank)->orderByDesc('messages.message_uuid');
     }
 
     public function isExternalOnly(): bool
