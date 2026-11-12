@@ -269,6 +269,14 @@ if (!class_exists('cdr_import')) {
 
 		}
 
+		/** A greeting answers for media, but does not connect a ring-group member. */
+		public static function ring_group_missed_call(SimpleXMLElement $variables): bool {
+			return (string) ($variables->ring_group_missed_call ?? '') === 'true'
+				&& (string) ($variables->missed_call ?? '') === 'true'
+				// A different bridge means a later destination answered the call.
+				&& (string) ($variables->bridge_uuid ?? '') === (string) ($variables->ring_group_missed_bridge_uuid ?? '');
+		}
+
 		/**
 		 * Call-leg status is independent of callback confirmation/bridging.
 		 * Loopbacks answer internally, so only an actual SIP answer counts.
@@ -586,7 +594,8 @@ if (!class_exists('cdr_import')) {
 							&& $xml->variables->hangup_cause == 'ORIGINATOR_CANCEL') {
 							$missed_call = 'true';
 						}
-						if (isset($xml->variables->billsec) && $xml->variables->billsec > 0) {
+						if (isset($xml->variables->billsec) && $xml->variables->billsec > 0
+							&& !self::ring_group_missed_call($xml->variables)) {
 							//answered call
 							$missed_call = 'false';
 						}
