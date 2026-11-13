@@ -42,8 +42,7 @@ if [[ "$FRESH_INSTALL" == true ]]; then
     cp -a "$FS_APP_DIR/resources/autoload_configs/." "$CONFIG_SOURCE/autoload_configs/"
 fi
 python3 "$FS_CONFIG_TOOL" select-modules "$BUILD_DIR/freeswitch" "$CONFIG_SOURCE" \
-    "${FREESWITCH_MODULES_FILE:-$FS_INSTALL_DIR/freeswitch-modules.conf}" \
-    "$BUILD_DIR/modules.conf" "$FS_MOD_DIR"
+    "${FREESWITCH_MODULES_FILE:-$FS_INSTALL_DIR/freeswitch-modules.conf}" "$BUILD_DIR/modules.conf"
 if grep -qx 'languages/mod_v8' "$BUILD_DIR/modules.conf"; then
     fs_apt_install libnode-dev
 fi
@@ -62,7 +61,7 @@ ccache --show-stats > "$FS_BACKUP_DIR/compiler-cache-after.txt"
 STAGE="$BUILD_DIR/stage"
 make DESTDIR="$STAGE" install
 python3 "$FS_CONFIG_TOOL" check-modules \
-    "$CONFIG_SOURCE" "$STAGE$FS_MOD_DIR" "$FS_MOD_DIR"
+    "$CONFIG_SOURCE" "$STAGE$FS_MOD_DIR"
 
 export LD_LIBRARY_PATH="$STAGE/usr/lib:$STAGE/usr/lib/$(gcc -dumpmachine):${LD_LIBRARY_PATH:-}"
 if ldd "$STAGE/usr/bin/freeswitch" | grep -q 'not found'; then
