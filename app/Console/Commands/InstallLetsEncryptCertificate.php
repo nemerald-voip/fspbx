@@ -15,8 +15,8 @@ class InstallLetsEncryptCertificate extends Command
 
     protected const DEHYDRATED_DIR = '/etc/dehydrated';
     protected const DEPLOYMENT_CONFIG = '/etc/dehydrated/fspbx-deployment.conf';
-    protected const HOOK_PATH = '/etc/dehydrated/fspbx-hook.sh';
-    protected const DEPLOY_HELPER_PATH = '/usr/local/sbin/fspbx-deploy-nginx-certificate';
+    protected const HOOK_PATH = '/var/www/fspbx/install/dehydrated_fspbx_hook.sh';
+    protected const DEPLOY_HELPER_PATH = '/var/www/fspbx/install/deploy_nginx_certificate.sh';
     protected const WELLKNOWN_DIR = '/var/www/fspbx/public/.well-known/acme-challenge';
     protected const NGINX_CERTIFICATE = '/etc/nginx/ssl/fullchain.pem';
     protected const NGINX_PRIVATE_KEY = '/etc/nginx/ssl/private/privkey.pem';
@@ -50,6 +50,13 @@ class InstallLetsEncryptCertificate extends Command
                 }
             }
 
+            $this->verifyLocalScripts();
+            $this->installLocalPrerequisites($mode);
+            if ($mode === 'redundant') {
+                $this->verifyReciprocalSsh($topology);
+                $this->verifyRemoteScripts($topology);
+            }
+
             $formerPeerChanged = $mode === 'redundant'
                 && ($existing['MODE'] ?? null) === 'redundant'
                 && (($existing['PEER_SSH_TARGET'] ?? '') !== $topology['peer_ssh_target']
@@ -58,9 +65,7 @@ class InstallLetsEncryptCertificate extends Command
                 $this->disableFormerPeer($existing);
             }
 
-            $this->installLocalPrerequisites($mode);
             if ($mode === 'redundant') {
-                $this->verifyReciprocalSsh($topology);
                 $this->installRemotePrerequisites($topology);
             }
 
@@ -286,26 +291,55 @@ class InstallLetsEncryptCertificate extends Command
         ], 20, false);
     }
 
+    protected function verifyLocalScripts(): void
+    {
+        foreach ([self::HOOK_PATH, self::DEPLOY_HELPER_PATH] as $path) {
+            if (! is_file($path) || ! is_readable($path) || ! is_executable($path)) {
+                throw new RuntimeException("Certificate script is missing, unreadable, or not executable: {$path}. Update the FS PBX checkout first.");
+            }
+            $this->runProcess(['/bin/bash', '-n', $path], 10, false);
+        }
+    }
+
+    protected function verifyRemoteScripts(array $topology): void
+    {
+        try {
+            foreach ([self::HOOK_PATH, self::DEPLOY_HELPER_PATH] as $path) {
+                $this->runRemote($topology, ['test', '-r', $path], 20, false);
+                $this->runRemote($topology, ['test', '-x', $path], 20, false);
+                $this->runRemote($topology, ['/bin/bash', '-n', $path], 20, false);
+            }
+        } catch (Throwable $exception) {
+            throw new RuntimeException(
+                'The peer certificate scripts are missing, not executable, or invalid. Update FS PBX on the peer before running certificate setup. '
+                .$exception->getMessage(),
+                previous: $exception
+            );
+        }
+    }
+
     protected function configureLocalNode(string $mode, array $topology): void
     {
         $this->info('Configuring Dehydrated locally...');
-        $this->ensureDirectory(self::DEHYDRATED_DIR, 0755);
-        $this->ensureDirectory(self::WELLKNOWN_DIR, 0755);
-        $this->ensureDirectory(dirname(self::DEPLOY_HELPER_PATH), 0755);
-        @chown(self::WELLKNOWN_DIR, 'www-data');
-        @chgrp(self::WELLKNOWN_DIR, 'www-data');
+        $this->prepareLocalDirectories();
 
         $this->writeFile(self::DEHYDRATED_DIR.'/domains.txt', implode(' ', $topology['domains'])."\n", 0644);
         $this->writeFile(self::DEHYDRATED_DIR.'/config', $this->dehydratedConfigContents(), 0644);
         $this->writeFile(self::DEPLOYMENT_CONFIG, $this->deploymentConfigContents($mode, $topology), 0600);
-        $this->copyFile(base_path('install/dehydrated_fspbx_hook.sh'), self::HOOK_PATH, 0755);
-        $this->copyFile(base_path('install/deploy_nginx_certificate.sh'), self::DEPLOY_HELPER_PATH, 0755);
+    }
+
+    protected function prepareLocalDirectories(): void
+    {
+        $this->ensureDirectory(self::DEHYDRATED_DIR, 0755);
+        $this->ensureDirectory(self::WELLKNOWN_DIR, 0755);
+        @chown(self::WELLKNOWN_DIR, 'www-data');
+        @chgrp(self::WELLKNOWN_DIR, 'www-data');
     }
 
     protected function configureRemoteNode(array $topology): void
     {
         $this->info('Configuring Dehydrated on the peer...');
-        foreach ([self::DEHYDRATED_DIR, self::WELLKNOWN_DIR, dirname(self::DEPLOY_HELPER_PATH)] as $directory) {
+        foreach ([self::DEHYDRATED_DIR, self::WELLKNOWN_DIR] as $directory) {
             $this->runRemote($topology, ['install', '-d', '-m', '0755', $directory], 30, false);
         }
         $this->runRemote($topology, ['chown', 'www-data:www-data', self::WELLKNOWN_DIR], 30, false);
@@ -323,8 +357,6 @@ class InstallLetsEncryptCertificate extends Command
         $this->uploadContents($topology, implode(' ', $topology['domains'])."\n", self::DEHYDRATED_DIR.'/domains.txt', 0644);
         $this->uploadContents($topology, $this->dehydratedConfigContents(), self::DEHYDRATED_DIR.'/config', 0644);
         $this->uploadContents($topology, $this->deploymentConfigContents('redundant', $remoteTopology), self::DEPLOYMENT_CONFIG, 0600);
-        $this->uploadFile($topology, base_path('install/dehydrated_fspbx_hook.sh'), self::HOOK_PATH, 0755);
-        $this->uploadFile($topology, base_path('install/deploy_nginx_certificate.sh'), self::DEPLOY_HELPER_PATH, 0755);
     }
 
     protected function dehydratedConfigContents(): string
@@ -766,14 +798,6 @@ class InstallLetsEncryptCertificate extends Command
             throw new RuntimeException("Unable to write {$path}.");
         }
         @chmod($path, $mode);
-    }
-
-    protected function copyFile(string $source, string $destination, int $mode): void
-    {
-        if (! is_readable($source) || ! copy($source, $destination)) {
-            throw new RuntimeException("Unable to install {$source} at {$destination}.");
-        }
-        @chmod($destination, $mode);
     }
 
     protected function isRoot(): bool

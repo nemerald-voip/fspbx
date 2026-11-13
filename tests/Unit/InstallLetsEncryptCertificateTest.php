@@ -49,6 +49,8 @@ class InstallLetsEncryptCertificateTest extends TestCase
         $tester = new CommandTester($command);
         $this->assertSame(0, $tester->execute([]));
         $this->assertSame([
+            '/bin/bash -n /var/www/fspbx/install/dehydrated_fspbx_hook.sh',
+            '/bin/bash -n /var/www/fspbx/install/deploy_nginx_certificate.sh',
             'local-prerequisites',
             'local-config',
             'preflight',
@@ -154,8 +156,16 @@ class InstallLetsEncryptCertificateTest extends TestCase
         $tester->setInputs(['yes']);
         $this->assertSame(0, $tester->execute([]));
         $this->assertSame([
+            '/bin/bash -n /var/www/fspbx/install/dehydrated_fspbx_hook.sh',
+            '/bin/bash -n /var/www/fspbx/install/deploy_nginx_certificate.sh',
             'local-prerequisites',
             'reciprocal-ssh',
+            'peer:test -r /var/www/fspbx/install/dehydrated_fspbx_hook.sh',
+            'peer:test -x /var/www/fspbx/install/dehydrated_fspbx_hook.sh',
+            'peer:/bin/bash -n /var/www/fspbx/install/dehydrated_fspbx_hook.sh',
+            'peer:test -r /var/www/fspbx/install/deploy_nginx_certificate.sh',
+            'peer:test -x /var/www/fspbx/install/deploy_nginx_certificate.sh',
+            'peer:/bin/bash -n /var/www/fspbx/install/deploy_nginx_certificate.sh',
             'peer-prerequisites',
             'local-config',
             'peer-config',
@@ -355,6 +365,102 @@ NGINX;
             $updated
         );
         $this->assertStringNotContainsString('old.example.com', $updated);
+    }
+
+    public function test_missing_peer_scripts_stop_setup_before_configuration_changes(): void
+    {
+        $command = new class extends InstallLetsEncryptCertificate {
+            public array $changes = [];
+            protected function isRoot(): bool { return true; }
+            protected function promptDeploymentMode(): string { return 'redundant'; }
+            protected function readDeploymentConfig(string $path): array
+            {
+                return ['MODE' => 'redundant', 'PEER_SSH_TARGET' => 'root@old-peer.example.com'];
+            }
+            protected function promptRedundantTopology(): array
+            {
+                return ['peer_ssh_target' => 'root@new-peer.example.com', 'peer_ssh_port' => 22];
+            }
+            protected function displayTopology(array $topology): void {}
+            protected function verifyLocalScripts(): void {}
+            protected function verifyReciprocalSsh(array $topology): void {}
+            protected function runRemote(array $topology, array $command, int $timeout = 60, bool $stream = true): string
+            {
+                throw new \RuntimeException('Peer script is missing.');
+            }
+            protected function disableFormerPeer(array $existing): void { $this->changes[] = 'disable-former-peer'; }
+            protected function installLocalPrerequisites(string $mode): void { $this->changes[] = 'install'; }
+            protected function configureLocalNode(string $mode, array $topology): void { $this->changes[] = 'configure'; }
+        };
+        $command->setLaravel($this->app);
+        $tester = new CommandTester($command);
+        $tester->setInputs(['yes']);
+
+        $this->assertSame(1, $tester->execute([]));
+        $this->assertSame(['install'], $command->changes);
+        $this->assertStringContainsString('Update FS PBX on the peer', $tester->getDisplay());
+    }
+
+    public function test_fresh_configuration_uses_repository_scripts_without_copying_them(): void
+    {
+        $command = new class extends InstallLetsEncryptCertificate {
+            public array $localWrites = [];
+            public array $peerWrites = [];
+            public array $peerCommands = [];
+            public function configureForTest(string $mode): void
+            {
+                $topology = [
+                    'domains' => ['portal.example.com', 'pbx1.example.com', 'pbx2.example.com'],
+                    'floating_host' => 'portal.example.com',
+                    'local_host' => 'pbx1.example.com',
+                    'peer_host' => 'pbx2.example.com',
+                    'peer_ssh_target' => 'root@pbx2.example.com',
+                    'peer_ssh_port' => 22,
+                ];
+                $this->configureLocalNode($mode, $topology);
+                if ($mode === 'redundant') {
+                    $this->configureRemoteNode($topology);
+                }
+            }
+            protected function prepareLocalDirectories(): void {}
+            protected function writeFile(string $path, string $contents, int $mode): void
+            {
+                $this->localWrites[$path] = $contents;
+            }
+            protected function uploadContents(array $topology, string $contents, string $destination, int $mode): void
+            {
+                $this->peerWrites[$destination] = $contents;
+            }
+            protected function uploadFile(array $topology, string $source, string $destination, int $mode): void
+            {
+                throw new \LogicException('Repository scripts must not be uploaded.');
+            }
+            protected function runRemote(array $topology, array $command, int $timeout = 60, bool $stream = true): string
+            {
+                $this->peerCommands[] = $command;
+
+                return '';
+            }
+        };
+        $command->setOutput(new \Illuminate\Console\OutputStyle(
+            new \Symfony\Component\Console\Input\ArrayInput([]),
+            new \Symfony\Component\Console\Output\NullOutput()
+        ));
+
+        $command->configureForTest('single');
+        $this->assertSame([], $command->peerWrites);
+        $this->assertStringContainsString('HOOK=/var/www/fspbx/install/dehydrated_fspbx_hook.sh', $command->localWrites['/etc/dehydrated/config']);
+        $command->configureForTest('redundant');
+        $expectedFiles = ['/etc/dehydrated/domains.txt', '/etc/dehydrated/config', '/etc/dehydrated/fspbx-deployment.conf'];
+        $this->assertSame($expectedFiles, array_keys($command->localWrites));
+        $this->assertSame($expectedFiles, array_keys($command->peerWrites));
+        $this->assertSame($command->localWrites['/etc/dehydrated/config'], $command->peerWrites['/etc/dehydrated/config']);
+        $this->assertStringContainsString("LOCAL_HOST='pbx2.example.com'", $command->peerWrites['/etc/dehydrated/fspbx-deployment.conf']);
+        $this->assertSame([
+            ['install', '-d', '-m', '0755', '/etc/dehydrated'],
+            ['install', '-d', '-m', '0755', '/var/www/fspbx/public/.well-known/acme-challenge'],
+            ['chown', 'www-data:www-data', '/var/www/fspbx/public/.well-known/acme-challenge'],
+        ], $command->peerCommands);
     }
 
     public function test_it_fails_when_the_site_has_no_certificate_directives(): void

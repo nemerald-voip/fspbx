@@ -1,9 +1,12 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 set -euo pipefail
 
+# Cron and non-interactive SSH do not always include the system directories.
+export PATH="${PATH:-/usr/bin:/bin}:/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin"
+
 CONFIG_FILE="${FSPBX_CERT_CONFIG:-/etc/dehydrated/fspbx-deployment.conf}"
-DEPLOY_HELPER="${FSPBX_DEPLOY_HELPER:-/usr/local/sbin/fspbx-deploy-nginx-certificate}"
+DEPLOY_HELPER="${FSPBX_DEPLOY_HELPER:-/var/www/fspbx/install/deploy_nginx_certificate.sh}"
 
 [[ -r "$CONFIG_FILE" ]] || { echo "FS PBX certificate deployment config is missing." >&2; exit 1; }
 # shellcheck source=/dev/null
@@ -43,7 +46,7 @@ clean_challenge() {
 deploy_files() {
     local domain="$1" keyfile="$2" certfile="$3" fullchainfile="$4" chainfile="$5"
 
-    "$DEPLOY_HELPER" "$fullchainfile" "$keyfile"
+    /bin/bash "$DEPLOY_HELPER" "$fullchainfile" "$keyfile"
 
     if [[ "$MODE" != "redundant" ]]; then
         return 0
@@ -56,7 +59,10 @@ deploy_files() {
     ssh_peer install -d -m 0700 "$certdir"
     rsync -a --delete -e "ssh -o BatchMode=yes -o ConnectTimeout=10 -o StrictHostKeyChecking=accept-new -p $PEER_SSH_PORT" \
         "$certdir/" "$PEER_SSH_TARGET:$certdir/"
-    ssh_peer "$DEPLOY_HELPER" "$certdir/fullchain.pem" "$certdir/privkey.pem"
+    # The peer may still have a non-executable checkout or the pre-PATH-fix
+    # helper during a rolling update. Execute its repository script with Bash.
+    ssh_peer /usr/bin/env PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+        /bin/bash "$DEPLOY_HELPER" "$certdir/fullchain.pem" "$certdir/privkey.pem"
 }
 
 deploy_cert() {

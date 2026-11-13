@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
+use Illuminate\Filesystem\Filesystem;
 use Symfony\Component\Process\Process;
 
 class DehydratedFspbxHookTest extends TestCase
@@ -21,17 +22,7 @@ class DehydratedFspbxHookTest extends TestCase
 
     protected function tearDown(): void
     {
-        foreach (glob($this->directory.'/*') ?: [] as $path) {
-            if (is_dir($path)) {
-                foreach (glob($path.'/*') ?: [] as $child) {
-                    @unlink($child);
-                }
-                @rmdir($path);
-            } else {
-                @unlink($path);
-            }
-        }
-        @rmdir($this->directory);
+        (new Filesystem())->deleteDirectory($this->directory);
         parent::tearDown();
     }
 
@@ -223,6 +214,81 @@ SH);
         $this->assertFileDoesNotExist($this->directory.'/nginx/fullchain.pem');
     }
 
+    /** @dataProvider deploymentModes */
+    public function test_executable_repository_hook_deploys_with_cron_and_ssh_paths(string $mode): void
+    {
+        $certificate = $this->directory.'/fullchain.pem';
+        $key = $this->directory.'/privkey.pem';
+        $this->createCertificatePair($certificate, $key, 'portal.example.com');
+        $config = $this->directory.'/deployment.conf';
+        file_put_contents($config, "MODE='{$mode}'\nPEER_SSH_TARGET='root@pbx2.example.test'\nPEER_SSH_PORT='22'\n");
+        $bin = $this->directory.'/bin';
+        mkdir($bin, 0700);
+        $oldPeerHelper = $this->directory.'/old-peer-deploy.sh';
+        file_put_contents($oldPeerHelper, preg_replace(
+            '/^export PATH=.*\R/m', '',
+            file_get_contents($this->projectRoot.'/install/deploy_nginx_certificate.sh')
+        ));
+        chmod($oldPeerHelper, 0644);
+        // Only the actual deployment command is executed on the simulated peer.
+        // Intercept certificate synchronization and all Nginx service actions.
+        file_put_contents($bin.'/ssh', <<<'SH'
+#!/bin/bash
+while [[ "$1" != root@pbx2.example.test ]]; do shift; done
+shift
+if [[ "$1" == /usr/bin/env ]]; then
+    printf 'peer:%s\n' "$*" >> "$FSPBX_DEPLOY_TEST_LOG"
+    export PATH=/usr/bin:/bin
+    arguments=("$@")
+    arguments[3]="$FSPBX_OLD_PEER_HELPER"
+    exec "${arguments[@]}"
+fi
+SH);
+        file_put_contents($bin.'/rsync', "#!/bin/sh\nexit 0\n");
+        chmod($bin.'/ssh', 0755);
+        chmod($bin.'/rsync', 0755);
+        $runner = <<<'SH'
+nginx() {
+    [[ ":$PATH:" == *:/usr/sbin:* ]] || return 127
+    printf 'nginx %s\n' "$*" >> "$FSPBX_DEPLOY_TEST_LOG"
+}
+systemctl() {
+    printf 'systemctl %s\n' "$*" >> "$FSPBX_DEPLOY_TEST_LOG"
+}
+export -f nginx systemctl
+exec "$@"
+SH;
+        $process = new Process([
+            '/bin/bash', '-c', $runner, 'fspbx-hook-test',
+            $this->projectRoot.'/install/dehydrated_fspbx_hook.sh',
+            'unchanged_cert', 'portal.example.com', $key, $certificate, $certificate, $certificate,
+        ], $this->projectRoot, [
+            'PATH' => $bin.':/usr/bin:/bin',
+            'FSPBX_CERT_CONFIG' => $config,
+            'FSPBX_DEPLOY_HELPER' => false,
+            'FSPBX_NGINX_CERTIFICATE_PATH' => $this->directory.'/installed/fullchain.pem',
+            'FSPBX_NGINX_PRIVATE_KEY_PATH' => $this->directory.'/installed/private/privkey.pem',
+            'FSPBX_DEPLOY_TEST_LOG' => $this->directory.'/deployment.log',
+            'FSPBX_OLD_PEER_HELPER' => $oldPeerHelper,
+        ]);
+        $process->run();
+
+        $this->assertTrue($process->isSuccessful(), $process->getErrorOutput());
+        $this->assertSame(file_get_contents($certificate), file_get_contents($this->directory.'/installed/fullchain.pem'));
+        $this->assertSame(file_get_contents($key), file_get_contents($this->directory.'/installed/private/privkey.pem'));
+        $log = file_get_contents($this->directory.'/deployment.log');
+        $this->assertSame($mode === 'redundant' ? 2 : 1, substr_count($log, 'systemctl reload nginx'));
+        $this->assertStringNotContainsString('/usr/local/sbin/fspbx-deploy-nginx-certificate', $log);
+        if ($mode === 'redundant') {
+            $this->assertStringContainsString('/bin/bash /var/www/fspbx/install/deploy_nginx_certificate.sh', $log);
+        }
+    }
+
+    public static function deploymentModes(): array
+    {
+        return [['single'], ['redundant']];
+    }
+
     public function test_nginx_deployer_works_with_crons_minimal_path(): void
     {
         if (! is_executable('/usr/sbin/nginx')) {
@@ -270,7 +336,8 @@ SH;
         $this->assertSame("nginx -t\nsystemctl reload nginx\n", file_get_contents($log));
     }
 
-    public function test_nginx_deployer_restores_previous_files_when_validation_fails(): void
+    /** @dataProvider deploymentFailures */
+    public function test_nginx_deployer_restores_previous_files_when_deployment_fails(string $failure): void
     {
         $oldCertificate = $this->directory.'/old-certificate.pem';
         $oldKey = $this->directory.'/old-key.pem';
@@ -293,14 +360,21 @@ SH;
         $nginxCalls = $this->directory.'/nginx-calls';
         file_put_contents($bin.'/nginx', <<<'SH'
 #!/bin/sh
-if [ ! -f "$FSPBX_NGINX_CALLS" ]; then
+if [ "$FSPBX_TEST_FAILURE" = validation ] && [ ! -f "$FSPBX_NGINX_CALLS" ]; then
     : > "$FSPBX_NGINX_CALLS"
     exit 1
 fi
 exit 0
 SH);
         chmod($bin.'/nginx', 0755);
-        file_put_contents($bin.'/systemctl', "#!/bin/sh\nexit 0\n");
+        file_put_contents($bin.'/systemctl', <<<'SH'
+#!/bin/sh
+if [ "$FSPBX_TEST_FAILURE" = reload ] && [ ! -f "$FSPBX_NGINX_CALLS" ]; then
+    : > "$FSPBX_NGINX_CALLS"
+    exit 1
+fi
+exit 0
+SH);
         chmod($bin.'/systemctl', 0755);
 
         $process = new Process([
@@ -309,6 +383,7 @@ SH);
             'FSPBX_NGINX_CERTIFICATE_PATH' => $certificatePath,
             'FSPBX_NGINX_PRIVATE_KEY_PATH' => $keyPath,
             'FSPBX_NGINX_CALLS' => $nginxCalls,
+            'FSPBX_TEST_FAILURE' => $failure,
             'PATH' => $bin.':'.getenv('PATH'),
         ]);
         $process->run();
@@ -317,6 +392,11 @@ SH);
         $this->assertSame($expectedCertificate, file_get_contents($certificatePath));
         $this->assertSame($expectedKey, file_get_contents($keyPath));
         $this->assertStringContainsString('previous certificate was restored', $process->getErrorOutput());
+    }
+
+    public static function deploymentFailures(): array
+    {
+        return [['validation'], ['reload']];
     }
 
     private function createCertificatePair(string $certificate, string $key, string $commonName): void
@@ -333,7 +413,7 @@ SH);
     private function hookProcess(array $arguments, array $environment): Process
     {
         return new Process(
-            array_merge(['/bin/bash', $this->projectRoot.'/install/dehydrated_fspbx_hook.sh'], $arguments),
+            array_merge([$this->projectRoot.'/install/dehydrated_fspbx_hook.sh'], $arguments),
             $this->projectRoot,
             $environment,
             null,
