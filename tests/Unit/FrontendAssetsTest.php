@@ -155,7 +155,7 @@ class FrontendAssetsTest extends TestCase
     {
         $package = $this->package();
         file_put_contents($this->root.'/resources/js/new-page.vue', '<template>New source</template>');
-        $this->expectExceptionMessage('do not match this checkout');
+        $this->expectExceptionMessage('Locally modified frontend files detected.');
         $this->assets->prepare($package, '1.2.3');
     }
 
@@ -197,7 +197,7 @@ class FrontendAssetsTest extends TestCase
         $this->assertTrue($this->assets->prepareExistingLocal());
         $this->assertSame('local', $this->assets->prepared()['metadata']['origin']);
         file_put_contents($this->root.'/resources/js/vue.js', 'new unbuilt source');
-        $this->expectExceptionMessage('do not match this checkout');
+        $this->expectExceptionMessage('Locally modified frontend files detected.');
         $this->assets->prepareExistingLocal();
     }
 

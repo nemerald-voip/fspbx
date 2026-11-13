@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\FrontendSourceMismatchException;
 use RuntimeException;
 
 /** Immutable asset packages and one atomic activation record, shared with npm. */
@@ -128,7 +129,7 @@ class FrontendAssets
     public function verifyCoreSource(array $meta): void
     {
         if ($meta['sources'] !== $this->sourceFiles()) {
-            throw new RuntimeException('Released frontend assets do not match this checkout. For development or a local patch, run npm run build.');
+            throw new FrontendSourceMismatchException();
         }
     }
 

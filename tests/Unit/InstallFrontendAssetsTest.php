@@ -59,7 +59,7 @@ class InstallFrontendAssetsTest extends TestCase
         $assets->expects($this->never())->method('extract');
         $command = $this->command($assets);
         $this->assertSame(1, $command->execute([]));
-        $this->assertStringContainsString('No npm build was started', $command->getDisplay());
+        $this->assertStringContainsString('Frontend installation failed:', $command->getDisplay());
         Http::assertSentCount(1);
     }
 

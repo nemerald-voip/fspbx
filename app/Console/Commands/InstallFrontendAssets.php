@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Exceptions\FrontendSourceMismatchException;
 use App\Services\FrontendAssets;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
@@ -58,7 +59,14 @@ class InstallFrontendAssets extends Command
             return self::SUCCESS;
         } catch (\Throwable $error) {
             $this->error('Frontend installation failed: '.$error->getMessage());
-            $this->line('No npm build was started. For a development checkout or local patch, use npm run build.');
+            if ($error instanceof FrontendSourceMismatchException) {
+                $this->newLine();
+                $this->line('Run one of these commands, then retry the update:');
+                $this->newLine();
+                $this->line('  <fg=cyan;options=bold>npm run build</>  Keep your local changes.');
+                $this->line('  <fg=cyan;options=bold>git stash</>      Set your local changes aside.');
+                $this->newLine();
+            }
             return self::FAILURE;
         } finally {
             if ($temporary) $assets->removeDirectory($temporary);
