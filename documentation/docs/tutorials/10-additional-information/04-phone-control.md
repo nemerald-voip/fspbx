@@ -7,7 +7,7 @@ sidebar_position: 4
 
 # Remote Phone Control
 
-FS PBX can remotely control a registered desk phone from the command line — put a call on hold, transfer it, start a conference, mute the line, or hang up — without touching the handset. This is useful for supervisors assisting an agent, scripted call handling, or diagnostics.
+FS PBX lets administrators control a registered desk phone from the command line: hold or transfer a call, start a conference, mute, or hang up. Command-line use requires access to the FS PBX server.
 
 Two artisan commands are involved:
 
@@ -18,17 +18,21 @@ This guide covers `phone:control`. In every example, `101` is the extension bein
 
 ### API and Browser Extension Permissions
 
-API keys use the permissions and assigned extension of their user. `phone_control_view` allows phone discovery and active-call lookup; `phone_control_call` allows click-to-dial and call-control actions. By default, both are limited to the extension assigned on the user's profile. A user assigned extension `100` receives HTTP 403 (`forbidden_extension`) if they enter `101` in a browser extension or API request. With this default scope, users without an assigned extension cannot control a phone.
+For API or browser-extension access, assign an extension to the user's profile and grant the permissions they need:
 
-The normal permission seeder grants `phone_control_view` and `phone_control_call` to the `user` group. For access to other extensions, grant `phone_control_view_all_records` alongside the required view or call permission. This expands the extension scope only within accounts the user can already access. The seeder grants this additional scope to `admin` and `superadmin`; custom roles must be granted it explicitly. `force` and `dry_run` do not bypass these access checks.
+| Permission | Allows |
+| --- | --- |
+| `phone_control_view` | View the user's phones and active calls. |
+| `phone_control_call` | Place calls and use call controls. |
+| `phone_control_view_all_records` | Use the granted view or call controls for other extensions in accounts the user can access. |
 
-These user permissions apply to the API endpoints, including the legacy click-to-dial target endpoint. The server-side artisan commands retain their existing behavior.
+Without the last permission, users can only control their assigned extension. The standard user role includes view and call permissions; standard administrator roles also include access to other extensions. Review these permissions when creating custom roles.
 
 * * * * *
 
 ### Supported Phones and Actions
 
-The vendor is detected automatically from the phone's registration — you don't need to specify it. Support is not identical across vendors; some actions only make sense for phones with a particular remote-control mechanism. This table is exactly what's implemented today, not a general claim of "full support" — if you run an action a phone doesn't have, `phone:control` refuses with an error listing what that phone does support, the same way it would for a typo'd action name.
+Available actions depend on the phone. Use the table below to choose a supported command. An unsupported command returns an error listing the available actions.
 
 | Action | Yealink | Snom | Poly | PBX-assisted phones |
 | --- | :---: | :---: | :---: | :---: |
@@ -46,17 +50,11 @@ The vendor is detected automatically from the phone's registration — you don't
 | `dnd-on` / `dnd-off` | ✅ | — | — | — |
 | `dnd-toggle` | — | ✅ | — | — |
 
-A few things this table is telling you:
+:::note Polycom firmware requirement
+**Polycom VVX, Trio, and CCX phones require UCS firmware 6.4.2 or newer** for the controls in the **Poly** column. Older versions use the **PBX-assisted phones** column and do not show remote actions on the phone's screen.
+:::
 
-- **Mute is a toggle on Yealink/Snom, but a specific on/off state on Poly/Grandstream** — use `mute-toggle` on the first two, `mute-on`/`mute-off` on the other two.
-- **DND works the same way** — Yealink gets deterministic `dnd-on`/`dnd-off`, Snom only exposes a `dnd-toggle` (its phones ignore a deterministic DND setting pushed remotely), and Poly/PBX-assisted phones have no DND action at all.
-- **`answer-call`** (remotely answering a ringing call) works on Yealink, Snom, and Poly. PBX-assisted phones have no remote-control mechanism to answer with.
-
-Yealink, Snom, and Poly phones show the change on their own screen, the same as if a button had been pressed on the handset. Grandstream, Ringotel, older Polycom UCS phones, and phones FS PBX doesn't specifically recognize use PBX-assisted control instead. Everything supported in this guide still works the same way on these phones, with one difference worth knowing: **the phone's screen will not update.** No hold icon, no blinking transfer key, no mute indicator. The call state itself is real (the caller really is on hold, muted, etc.) — only the display doesn't reflect it. Use `--list-calls` (below) to check status instead of looking at the phone.
-
-Poly Edge additionally requires the phone's REST API to be enabled in provisioning — see Troubleshooting if commands don't seem to do anything.
-
-**Polycom VVX, Trio, and CCX phones** get the same Poly column above, but only on **UCS firmware 6.4.2 or newer** — that's the release FS PBX currently treats as supporting REST-API delivery over SIP NOTIFY, the mechanism all of this relies on. Older firmware may silently accept the request without acting on it, so those phones are classified as `polycom` and use the same PBX-assisted control as Grandstream (screen won't update, see above). This uses the exact same REST commands already verified against a Poly Edge phone — what's specific to VVX/Trio/CCX is the firmware-version detection that routes them there, which hasn't been confirmed yet against real VVX/Trio/CCX hardware. If you have one of these phones, `--list-uas` will show whether it was picked up as `poly` or `polycom` — worth a quick check the first time.
+Grandstream, Ringotel, and other PBX-assisted phones also may not show remote hold, transfer, or mute changes on their screens. Use `--list-calls` to check the call's status.
 
 * * * * *
 
@@ -74,12 +72,12 @@ Lists the phones registered to extension 101 and which vendor was detected for e
 php artisan phone:control 101 example.com --list-calls
 ```
 
-Lists the extension's current calls and their state (`ACTIVE`, `HELD`, `RINGING`). This is also the best way to confirm an action worked — after sending a command, run `--list-calls` again and the state should reflect the change within a second or two.
+Lists the extension's current calls and their state (`ACTIVE`, `HELD`, `RINGING`). Run it again after a command to check the result.
 
 Add `--dry-run` to any command below to preview what would be sent without actually sending it.
 
 :::tip
-If an extension can have more than one phone registered to it, get in the habit of adding `--agent` (or `--vendor`) to every command, not just when a command fails with an ambiguous-selection error. Without it, FS PBX picks the most recently registered phone, which can quietly target the wrong device if a second phone re-registers later. `--agent` is the most precise option — it matches the phone's exact model string from `--list-uas` — so prefer it first; fall back to `--vendor` when that's specific enough. See "Selecting a Specific Phone or Call" below for the full list of options.
+If an extension has several phones, run `--list-uas` and use `--agent` or `--vendor` to select the intended phone. Without a selector, commands target the most recently registered phone. See "Selecting a Specific Phone or Call" below for examples.
 :::
 
 * * * * *
@@ -235,10 +233,8 @@ Without a selector, FS PBX picks the most recently registered phone and reports 
 
 **Blind transfer does nothing.** The call must be answered first — most phones silently ignore a transfer request while still ringing.
 
-**A Poly phone doesn't respond to any commands.** Poly Edge phones need their REST API enabled in provisioning (used for both `phone:control` and click-to-dial). Check the phone's provisioning template and re-provision if needed.
+**A Poly phone doesn't respond to any commands.** Enable the phone's REST API in its provisioning settings, then sync it. For Polycom VVX, Trio, and CCX, check that the phone runs UCS 6.4.2 or newer.
 
 **A Grandstream (or unrecognized) phone's screen never changes, even though the command succeeds.** This is expected — see the note under Supported Phones above. Check `--list-calls` to confirm the actual state.
 
 **On a Grandstream phone, `attended-transfer` doesn't seem to connect.** The consultation call rings the destination like any other call — if it isn't answered in time, it clears itself the same way an unanswered call would. Check `--list-calls`: you should see two calls, the original one `HELD` and the new one `ACTIVE` once it's picked up. If the second call isn't there, try again or confirm the destination extension is actually registered.
-
-**A call placed with `phone:click-to-dial` doesn't show up when using `phone:control` on a Grandstream or generic phone.** Make sure both extensions are up to date — this was a known gap in earlier versions that's since been fixed.

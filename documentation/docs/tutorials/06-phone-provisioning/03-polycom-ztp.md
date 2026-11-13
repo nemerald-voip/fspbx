@@ -9,8 +9,6 @@ sidebar_position: 3
 
 Polycom ZTP, now called **Poly Zero Touch** by the vendor, is a cloud redirection service for supported Poly phones. It lets a new or factory-reset phone discover your FS PBX provisioning server without requiring someone to enter the provisioning URL at the phone or configure DHCP option 66 at the deployment site.
 
-FS PBX uses the Poly Zero Touch API to manage a profile and associate phone MAC addresses with it.
-
 ## Why use Polycom ZTP?
 
 Polycom ZTP is most useful when:
@@ -21,17 +19,7 @@ Polycom ZTP is most useful when:
 - Phones may be reassigned and need a repeatable factory-reset workflow.
 - You want FS PBX to remain the source of the complete phone configuration.
 
-The normal startup flow is:
-
-1. The phone starts with internet access and contacts Poly Zero Touch.
-2. Poly Zero Touch finds the phone's MAC address and returns the FS PBX provisioning destination.
-3. The phone contacts the FS PBX `/prov/` endpoint using the configured HTTP credentials.
-4. FS PBX matches the MAC address, renders the assigned device template, and returns the phone configuration.
-5. The phone applies the configuration and registers its SIP lines.
-
-:::warning What ZTP does not prove
-Adding a MAC address to Polycom ZTP does not prove that the phone contacted Poly, downloaded its FS PBX configuration, or registered to FreeSWITCH. FS PBX reports these stages separately.
-:::
+After you add the phone to ZTP, connect it to the internet. It can then find FS PBX and download its settings.
 
 ## Before you start
 
@@ -60,7 +48,7 @@ Review Poly's current [device requirements](https://info.ztp.poly.com/docs/begin
 3. Configure `http_auth_username` and `http_auth_password` in the `provision` category under **Default Settings** or as account overrides under **Domain Settings**.
 4. Create the phone under **Devices**:
    - Enter the MAC address.
-   - Select a modern Poly device template.
+   - Select the Poly device template matching the phone.
    - Assign the required extension or lines.
    - Save the device.
 
@@ -77,7 +65,7 @@ Provisioning HTTP credentials are separate from the extension's SIP username and
 5. Enter the API key from Poly Zero Touch.
 6. Click **Save**.
 
-The API key is stored as a global FS PBX cloud-provider credential. Restrict access to administrators who are authorized to manage every account that uses the integration.
+This connection is shared by all FS PBX accounts using Poly ZTP. Limit access to the administrators responsible for those accounts.
 
 ### 2. Create or connect an organization
 
@@ -108,9 +96,9 @@ The Vendor Cloud status progresses through:
 
 | Status | Meaning |
 | --- | --- |
-| Adding to Polycom ZTP | FS PBX queued or is processing the API request. |
+| Adding to Polycom ZTP | The phone is being added. |
 | Listed in Polycom ZTP | Poly accepted the device record. |
-| Could not add to Polycom ZTP | Poly rejected the request or the API call failed. |
+| Could not add to Polycom ZTP | Open the device's Polycom ZTP tab to review the error. |
 | Removing from Polycom ZTP | FS PBX is removing the cloud record. |
 | Not listed in Polycom ZTP | FS PBX has no successful Poly listing for the device. |
 
@@ -118,24 +106,19 @@ If the phone has been used before, factory-reset it after the record is listed. 
 
 ## Confirm the phone actually provisioned
 
-Check these three stages independently:
+After connecting the phone, check:
 
 1. **Vendor Cloud:** The device tooltip says **Listed in Polycom ZTP**.
 2. **FS PBX contact:** **Last Contact** on the Devices page shows a recent request.
 3. **SIP registration:** The phone appears on the **Registrations** page.
 
-If only the first stage succeeds, the cloud record exists but the phone has not completed provisioning.
+Make an incoming and outgoing test call before handing over the phone.
 
 ## Refresh records from Poly
 
 Use **Devices > Vendor Cloud > Polycom > Sync Devices** when records were changed directly in Poly Zero Touch or the local listing status is stale.
 
-Sync Devices:
-
-- Downloads the current Poly device list.
-- Rebuilds the local Vendor Cloud status for matching FS PBX devices.
-- Does not create missing FS PBX device records.
-- Does not make a phone contact Poly or download configuration.
+This refreshes the cloud listing status of phones already added in FS PBX. To apply settings to a registered phone, use **Sync** from that device's action menu.
 
 ## Troubleshooting
 
@@ -145,7 +128,7 @@ Sync Devices:
 - Confirm that the current FS PBX account is connected to the intended Poly profile.
 - Verify the MAC address.
 - Check whether the device is already claimed by another organization.
-- Review the error shown in the Polycom ZTP tab and the Laravel log.
+- Review the error shown in the Polycom ZTP tab.
 
 ### The device is listed but Last Contact is empty
 
@@ -159,14 +142,11 @@ Sync Devices:
 
 - Verify the assigned extension and device lines.
 - Check the SIP username, password, server address, and transport.
-- Open **Registrations** and inspect FreeSWITCH logs.
 - Use the device's three-dot menu and select **Sync** after correcting its configuration.
 
 ### The status remains on Adding
 
-- Confirm that the FS PBX queue worker is running.
-- Review Horizon and the Laravel log for a failed cloud-provider job.
-- Reopen the device and use **Refresh** if the action completed but the UI is stale.
+Reopen the device and use **Refresh**. If the status still does not change, contact your FS PBX support team with the phone's MAC address and the displayed status.
 
 ## Security recommendations
 

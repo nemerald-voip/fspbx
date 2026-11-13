@@ -917,11 +917,6 @@ class VoicemailController extends Controller
 
         try {
             DB::transaction(function () use ($vm, $domain) {
-                // Delete related voicemail destinations
-                if (method_exists($vm, 'voicemail_destinations')) {
-                    $vm->voicemail_destinations()->delete();
-                }
-
                 // Delete related voicemail messages
                 if (method_exists($vm, 'messages')) {
                     $vm->messages()->delete();

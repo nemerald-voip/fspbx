@@ -718,7 +718,7 @@ const handleAdvancedActionRequest = (action, uuid) => {
     }
 
     if (action === 'sync') {
-        handleSync(uuid);
+        handleSync([uuid]);
         return;
     }
 
@@ -874,6 +874,11 @@ const bulkActions = computed(() => {
             icon: 'RestartIcon'
         },
         {
+            id: 'bulk_sync',
+            label: trans('Sync'),
+            icon: 'SyncIcon'
+        },
+        {
             id: 'bulk_update',
             label: trans('Update'),
             icon: 'PencilSquareIcon'
@@ -967,6 +972,9 @@ const handleBulkActionRequest = (action) => {
         confirmationRestartTrigger.value = true;
         confirmRestartAction.value = () => executeBulkRestart();
     }
+    if (action === 'bulk_sync') {
+        handleSync(selectedItems.value);
+    }
 }
 
 const executeBulkRestart = () => {
@@ -1046,9 +1054,9 @@ const handleRestart = (device_uuid) => {
         });
 }
 
-const handleSync = (device_uuid) => {
+const handleSync = (devices) => {
     axios.post(props.routes.sync,
-        { 'devices': [device_uuid] },
+        { devices },
     )
         .then((response) => {
             showNotification('success', response.data.messages);

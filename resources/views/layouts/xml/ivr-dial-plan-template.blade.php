@@ -1,4 +1,11 @@
 <extension name="{{ $ivr->ivr_menu_name }}" continue="{{ $dialplan_continue }}" uuid="{{ $ivr->dialplan_uuid }}">
+@if (app(\App\Services\FlagFeature::class)->enabled())
+@include('layouts.xml.flag-override-conditions', [
+    'extension' => $ivr->ivr_menu_extension,
+    'overrides' => $ivr->relationLoaded('flagOverrides') ? $ivr->flagOverrides : $ivr->flagOverrides()->get(),
+    'domain_uuid' => $ivr->domain_uuid,
+])
+@endif
     <condition field="destination_number" expression="^{{ $ivr->ivr_menu_extension }}$">
         <action application="ring_ready" data="" />
         <action application="answer" data="" />

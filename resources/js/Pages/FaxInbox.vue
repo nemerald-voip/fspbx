@@ -142,7 +142,7 @@
                                         </div>
                                     </ejs-tooltip>
 
-                                    <ejs-tooltip v-if="permissions.delete" :content="$t('Download')" position='TopCenter'
+                                    <ejs-tooltip v-if="permissions.download" :content="$t('Download')" position='TopCenter'
                                         target="#destination_tooltip_target">
                                         <div id="destination_tooltip_target">
                                             <CloudArrowDownIcon @click="handleDownloadButtonClick(row.fax_file_uuid)"

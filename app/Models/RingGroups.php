@@ -61,6 +61,14 @@ class RingGroups extends Model
     ];
 
 
+    protected function ringGroupGreeting(): Attribute
+    {
+        // The shared greeting picker uses '0' for None; persist an empty greeting as NULL.
+        return Attribute::make(
+            set: fn ($value) => in_array($value, ['0', 0, ''], true) ? null : $value,
+        );
+    }
+
     protected function timeoutOptionDetails(): Attribute
     {
         return Attribute::make(
@@ -203,5 +211,16 @@ class RingGroups extends Model
     public function generateUniqueSequenceNumber(): ?string
     {
         return $this->firstAvailableExtensionInRange(9000, 9099);
+    }
+
+    /**
+     * Flag overrides, first active flag wins.
+     */
+    public function flagOverrides()
+    {
+        return $this->hasMany(FlagOverride::class, 'owner_uuid', 'ring_group_uuid')
+            ->where('owner_type', FlagOverride::OWNER_RING_GROUP)
+            ->where('domain_uuid', $this->domain_uuid)
+            ->orderBy('sort_order');
     }
 }

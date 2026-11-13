@@ -7,9 +7,9 @@ sidebar_position: 21
 
 # Sangoma S-Series
 
-Use **sangoma/S-Series** to provision Sangoma S300, S500, and S700 phones. These models share their SIP account and function-key configuration format. Sangoma P-series phones use the separate [sangoma/P-Series template](/docs/phone-provisioning/sangoma-p-series/).
+Connect Sangoma **S300, S500, and S700** phones to FS PBX using **sangoma/S-Series**. You can set the provisioning server directly in the phone's web interface.
 
-S-series phones accept the provisioning URL and HTTP credentials directly in their web interface, so DHCP Option 66 is optional for this setup. The [P-series FS PBX setup](/docs/phone-provisioning/sangoma-p-series/#set-dhcp-option-66) uses DHCP Option 66 instead. Older S-series firmware may need its certificate checks disabled before it can download an HTTPS configuration, as explained below.
+For P-series phones, follow the [Sangoma P-Series guide](/docs/phone-provisioning/sangoma-p-series/).
 
 ## Configure the device in FS PBX
 
@@ -20,17 +20,13 @@ S-series phones accept the provisioning URL and HTTP credentials directly in the
 5. Assign a **Key Template** for a shared layout, or configure individual **Function Keys**.
 6. Save the device.
 
-### SIP transport and TLS limitation
-
-Use **TCP** or **UDP** for the S-series deployment described here. Keep **HTTPS** for provisioning; configuration downloads and SIP registration use separate connections. TCP and UDP do not encrypt SIP signaling.
-
-The S500 tested with firmware **2.0.4.91** offers only an RSA-based cipher for SIP TLS. Registration fails against a PBX serving an **ECDSA certificate**, even when certificate validation is disabled. No cipher-selection setting or firmware workaround has been verified; [Sangoma's firmware downloads](https://sangomakb.atlassian.net/wiki/spaces/DASD/pages/28311785/Driver%2BSoftware%2BDownloads%2B-%2BSangoma%2BS-Series%2BPhone%2BFirmware) list 2.0.4.91 for the S500.
-
-TLS would require a compatible RSA certificate and cipher on the SIP endpoint. TLS compatibility has not been verified on the S300 or S700. The newer [P-series](/docs/phone-provisioning/sangoma-p-series/) uses a different firmware platform; P325 and P370 TLS registration has been verified with an ECDSA PBX certificate.
+:::note SIP transport
+Use **TCP** or **UDP** for this setup unless your administrator has confirmed TLS compatibility. TCP and UDP do not encrypt SIP signaling. **HTTPS** protects the configuration download separately.
+:::
 
 ## Configure the phone's provisioning server
 
-Find the phone's IP address in its network status or the router's DHCP leases. Open that address from a browser with access to the phone's network and sign in as the phone administrator. Go to **Management > Auto Provision**:
+Find the phone's IP address in its network status. Open that address in a browser on the same network, sign in as the phone administrator, and go to **Management > Auto Provision**:
 
 | Field | Value |
 | --- | --- |
@@ -39,61 +35,59 @@ Find the phone's IP address in its network status or the router's DHCP leases. O
 | HTTP/FTP/HTTPS UserName | The account's provisioning HTTP username |
 | HTTP/FTP/HTTPS Password | The account's provisioning HTTP password |
 
-Replace the example hostname with your reachable FS PBX hostname. The credentials come from `http_auth_username` and `http_auth_password` in the `provision` category under **Default Settings** or the account's **Domain Settings**. They are separate from the extension's SIP credentials.
+Replace `pbx.example.com` with your FS PBX hostname. You can find the provisioning credentials as `http_auth_username` and `http_auth_password` under the `provision` category in **Domain Settings**.
 
-If you are entering the server manually, check **To Override Server**. Enabling this allows DHCP provisioning options to replace the entered address. Set it to **No** when DHCP should not control the provisioning destination.
+Set **To Override Server** to **No** to keep the server address you entered. Use **Yes** only when your network supplies the provisioning address through DHCP.
 
-This web setup is also illustrated in [Sangoma's configuration-server guide](https://sangomakb.atlassian.net/wiki/spaces/Phones/pages/17695051).
+### If the phone rejects the HTTPS certificate
 
-### Check HTTPS certificate acceptance before the first download
-
-Older S-series phones can reject the provisioning server's HTTPS certificate even when a current browser accepts it. If this prevents provisioning, open **Management > Trusted CA** and set:
+Some older phones need these settings under **Management > Trusted CA** to download their configuration:
 
 | Field | Value |
 | --- | --- |
 | Only Accept Trusted Certificates | Off |
 | Common Name Validation | Off |
 
-Save these settings, then return to **Management > Auto Provision**. The shared FS PBX template also sets both checks to Off, but the initial change must be made on the phone if certificate validation is blocking the first download. HTTPS still encrypts the connection; these settings turn off the phone's verification of the server's identity. Installing a compatible trusted CA chain is an alternative when using a custom template that keeps validation enabled.
+Save, then return to **Management > Auto Provision**. Turning these checks off disables verification of the server's identity, although the connection remains encrypted.
 
-### Download and verify
+### Apply the configuration
 
-Save the provisioning settings and click **Autoprovision Now**. Confirm a recent **Last Contact** in FS PBX, then check **Registrations** for the assigned extension and expected transport. Test inbound and outbound calls before handing over the phone. When managing the phone remotely, use these PBX checks rather than relying on access to its display.
+Save and click **Autoprovision Now**. In FS PBX, check that the device's **Last Contact** updates and the extension appears in **Registrations**. Make an incoming and outgoing test call.
 
 ## Function keys
 
-The shared template supports these main-key types:
+Open the device's **Function Keys** tab, or assign a **Key Template** for a shared layout. Choose from:
 
 | Type | Configuration |
 | --- | --- |
 | Line | Select a device line. The same line can appear on multiple keys. |
-| N/A | Leave a position unused or clear an inherited key. |
+| N/A | Leave a button unused or remove its assignment. |
 | BLF | Select the extension to monitor and optionally set a label. |
 | Speed Dial | Enter a dialable destination and an optional label. |
 | Park & Retrieve | Select the parking slot and optionally set a label. |
 
-Include at least one **Line** key. With no saved function-key layout, the template supplies line keys for the assigned lines. Per-device keys override matching positions in an assigned Key Template or legacy Device Profile.
+Include at least one **Line** key and choose positions available on your phone. Save and **Sync**, then check the buttons on the phone.
 
-The common S-series configuration provides six account positions and 45 main-key positions. FS PBX uses the same configuration across these models; the handset determines which accounts, keys, and pages it supports. Verify the visible layout and test BLF and parking behavior on each deployed model. Expansion modules and shared phonebook directories are not currently included in this template.
+### EXP100 expansion keys
 
-## Settings and ongoing changes
+The **S500 and S700** support up to six EXP100 modules, with 40 keys per module and a limit of 50 BLFs. Follow [Sangoma's EXP100 setup guide](https://sangomakb.atlassian.net/wiki/spaces/Phones/pages/19661220/Phones%2B-%2BEXP100%2BSetup) for cabling and power requirements.
 
-The template uses `ntp_server_primary` and `ntp_server_secondary` for time synchronization, and `admin_password` for the phone's administrator password when configured. Manage these in the `provision` category under **Default Settings** or **Domain Settings**.
+Open **Expansion Keys** on the device or its assigned Key Template. Positions **1–40** belong to the first module, **41–80** to the second, and so on. Choose **Line**, **Speed Dial**, **BLF**, or **Park & Retrieve**, then save and sync.
 
-The clock defaults to **United States-Pacific Time**, **automatic daylight saving**, a **12-hour clock**, and **Month-Day-Year** dates. DHCP overrides for the time zone and NTP servers are disabled so the phone uses its provisioned settings.
+## Clock and date settings
 
-Change these S-series settings in the `provision` category under **Default Settings**, or override them for an account in **Domain Settings**:
+The clock defaults to **United States-Pacific Time**, **automatic daylight saving**, a **12-hour clock**, and **Month-Day-Year** dates.
+
+To change these for an account, open **Domain Settings** and use the `provision` category. Use **Default Settings** to change the defaults for all accounts.
 
 | Setting | Values |
 | --- | --- |
-| `sangoma_s_time_zone` | Vendor numeric time-zone ID. Default: `6` = United States-Pacific Time. |
+| `sangoma_s_time_zone` | Choose a number from the location table below. Default: `6`. |
 | `sangoma_s_daylight_saving_time` | `0` = Disable, `1` = Enable, `2` = Auto (default). |
 | `sangoma_s_time_format` | `0` = 24 Hour, `1` = 12 Hour (default). |
 | `sangoma_s_date_format` | `0` = Year-Month-Day, `1` = Month-Day-Year (default), `2` = Day-Month-Year. |
 
-S-series phones use numeric time-zone IDs rather than IANA names. The P-series setting `sangoma_p_time_zone` does not apply.
-
-Examples for `sangoma_s_time_zone`:
+Use these values for `sangoma_s_time_zone`:
 
 | Location | Value |
 | --- | --- |
@@ -104,38 +98,20 @@ Examples for `sangoma_s_time_zone`:
 | United States-Eastern Time | `18` |
 | United Kingdom-London | `39` |
 
-To use Pacific time by default, set **Category** to `provision`, **Setting Name** to `sangoma_s_time_zone`, **Type** to `numeric`, **Value** to `6`, and enable the setting in **Default Settings**. Enter the numeric ID, rather than `America/Los_Angeles` or `-8`.
+For example, to use Eastern time for an account, add or edit an enabled setting with **Category** `provision`, **Setting Name** `sangoma_s_time_zone`, **Type** `numeric`, and **Value** `18`. Save and sync the phones.
 
-For an account in Eastern time, create an enabled override with the same category, setting name, and type in that account's **Domain Settings**, using **Value** `18`. Other accounts continue to inherit the global default. Leave `sangoma_s_daylight_saving_time` at `2` for automatic seasonal changes, then save and sync the affected phones. For locations that do not observe daylight saving, use the appropriate zone and set daylight saving to `0`.
+Leave daylight saving at **Auto** for automatic seasonal changes. For locations that do not observe daylight saving, use the appropriate time zone and set daylight saving to **Disable**.
 
-### DST Type, Start Week, and End Week
+## Other preferences
 
-Keep **Daylight Saving Time** set to **Auto** for the normal provisioned setup. Auto uses the selected time zone's built-in seasonal rules. **DST Type**, **Start Week**, and **End Week** are manual-rule controls used with **Enable**. With Auto selected, the January values shown in those fields are not the active DST schedule.
+These settings also use the `provision` category:
 
-If you intentionally choose manual DST, select **Week Type** for a rule that follows a weekday each year. For US locations that observe DST, the rule is:
-
-| Field | Value |
+| Preference | Setting name |
 | --- | --- |
-| DST Type | Week Type |
-| Start Week | March / Second in Month / Sunday / 02:00 |
-| End Week | November / First in Month / Sunday / 02:00 |
+| Primary time server | `ntp_server_primary` |
+| Backup time server | `ntp_server_secondary` |
+| Phone administrator password | `admin_password` |
 
-These are the [current US DST rules](https://www.nist.gov/pml/time-and-frequency-division/popular-links/daylight-saving-time-dst). Other regions can use different rules. The shared template manages the DST mode and time zone, but does not populate custom day/week rules. Prefer Auto; changing those manual fields on the phone is unnecessary for the default Pacific setup.
+## Apply future changes
 
-### Apply changes
-
-Save changes in FS PBX and select **Sync** from the device action menu. **Restart** requests a full reboot. Both actions require a reachable SIP registration; use **Autoprovision Now** or restart the handset directly during initial setup or when it is unregistered.
-
-The template enables **Unregister On Reboot**, so the phone clears its SIP registration during a normal reboot.
-
-## Troubleshooting
-
-| Symptom | Checks |
-| --- | --- |
-| Last Contact does not update | Check the complete `/prov/` URL, HTTPS mode, DNS, certificate acceptance, HTTP credentials, source-IP restrictions, and DHCP overrides. |
-| Last Contact updates but registration fails | Verify extension enablement, SIP credentials, account domain, proxy address, transport, port, and firewall access. |
-| S500 stops registering after selecting TLS | Select TCP or UDP and the corresponding SIP port, then use Autoprovision Now in the phone's web interface. Firmware 2.0.4.91 cannot negotiate SIP TLS with an ECDSA PBX certificate. |
-| Keys are incorrect | Check the Key Template or Device Profile and per-device overrides. Save and sync, then verify which key positions the handset supports. |
-| Sync has no effect | Confirm an active registration and a reachable provisioning server. Try Autoprovision Now to check provisioning independently. |
-
-For authentication settings and additional diagnostics, see the [Phone Provisioning Overview](/docs/phone-provisioning/).
+After saving changes in FS PBX, select **Sync** from the device's action menu. Use **Restart** when you need to reboot the phone. If the phone is not registered, use **Autoprovision Now** in its web interface.

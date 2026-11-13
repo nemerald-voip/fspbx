@@ -2,6 +2,9 @@
 
 set -euo pipefail
 
+# Cron and non-interactive SSH may omit the directories containing nginx.
+export PATH="${PATH:-/usr/bin:/bin}:/usr/local/sbin:/usr/sbin:/sbin"
+
 FULLCHAIN_SOURCE="${1:-}"
 PRIVATE_KEY_SOURCE="${2:-}"
 CERTIFICATE_PATH="${FSPBX_NGINX_CERTIFICATE_PATH:-/etc/nginx/ssl/fullchain.pem}"

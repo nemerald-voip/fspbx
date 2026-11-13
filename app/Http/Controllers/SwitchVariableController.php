@@ -34,11 +34,16 @@ class SwitchVariableController extends Controller
                 'bulk_delete' => route('switch-variables.bulk.delete'),
                 'bulk_toggle' => route('switch-variables.bulk.toggle'),
                 'sync' => route('switch-variables.sync'),
+                'network' => route('switch-variables.network'),
+                'network_preview' => route('switch-variables.network.preview'),
+                'network_update' => route('switch-variables.network.update'),
+                'sip_status' => route('sip-status.index'),
             ],
             'permissions' => [
                 'create' => userCheckPermission('var_add'),
                 'update' => userCheckPermission('var_edit'),
                 'destroy' => userCheckPermission('var_delete'),
+                'network_setup' => userCheckPermission('var_view') && userCheckPermission('var_add') && userCheckPermission('var_edit'),
             ],
             'options' => [
                 'categories' => $this->variables->categories(),

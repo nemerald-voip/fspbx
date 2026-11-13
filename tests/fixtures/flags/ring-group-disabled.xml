@@ -1,0 +1,7 @@
+<extension name="Sales" continue="" uuid="22222222-2222-4222-8222-222222222222">
+	<condition field="destination_number" expression="^9000$">
+		<action application="ring_ready" data=""/>
+	    <action application="set" data="ring_group_uuid=33333333-3333-4333-8333-333333333333"/>
+        <action application="lua" data="app.lua ring_groups"/>
+    </condition>
+</extension>

@@ -28,13 +28,7 @@ class RingGroupObserver
 
     public function generateDialPlanXML($ringGroup): void
     {
-        // Data to pass to the Blade template
-        $data = [
-            'ring_group' => $ringGroup,
-        ];
-
-        // Render the Blade template and get the XML content as a string
-        $xml = view('layouts.xml.ring-group-dial-plan-template', $data)->render();
+        $xml = app(\App\Services\FlagDialplanRenderer::class)->ringGroup($ringGroup);
 
         $dialPlan = Dialplans::where('dialplan_uuid', $ringGroup->dialplan_uuid)->first();
 

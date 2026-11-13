@@ -2,8 +2,10 @@
 
 namespace App\Console\Commands;
 
+use App\Services\NginxCertificateVerifier;
 use App\Services\ScheduledAnnouncements\AuthoritativeDnsActiveNodeGuard;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Mail;
 use RuntimeException;
 use Symfony\Component\Process\Process;
 use Throwable;
@@ -21,7 +23,7 @@ class RenewNginxCertificate extends Command
         parent::__construct();
     }
 
-    public function handle(): int
+    public function handle(NginxCertificateVerifier $verifier): int
     {
         if (! $this->isRoot()) {
             $this->error('Nginx certificate renewal must run as root.');
@@ -29,6 +31,7 @@ class RenewNginxCertificate extends Command
             return self::FAILURE;
         }
 
+        $config = [];
         try {
             $config = $this->readDeploymentConfig();
             $decision = $this->renewalDecision($config);
@@ -36,9 +39,7 @@ class RenewNginxCertificate extends Command
             if (! $decision['run']) {
                 $message = $decision['reason'] ?? 'Renewal skipped.';
                 if (($decision['status'] ?? '') === 'active_unknown') {
-                    $this->error($message);
-
-                    return self::FAILURE;
+                    throw new RuntimeException($message);
                 }
 
                 $this->info($message);
@@ -48,13 +49,52 @@ class RenewNginxCertificate extends Command
 
             $this->info($decision['reason']);
             $this->runDehydrated();
+            $this->info('Verifying the certificate served over HTTPS for each hostname...');
+            $verifier->verify($config);
+            $this->info('The expected certificate is trusted, current, and served by every hostname.');
             $this->info('Nginx certificate renewal check completed.');
 
             return self::SUCCESS;
         } catch (Throwable $exception) {
             $this->error($exception->getMessage());
+            $this->notifyFailure($config, $exception);
 
             return self::FAILURE;
+        }
+    }
+
+    protected function notifyFailure(array $config, Throwable $exception): void
+    {
+        $server = gethostname() ?: php_uname('n');
+        $hostname = $config['FLOATING_HOST'] ?? $config['LOCAL_HOST'] ?? $server;
+        logger()->error('RenewNginxCertificate: '.$exception->getMessage(), [
+            'server' => $server,
+            'hostname' => $hostname,
+        ]);
+
+        try {
+            // Read Laravel configuration so MAIL_FROM_ADDRESS works with config:cache.
+            $to = trim((string) config('mail.from.address'));
+            if ($to === '') {
+                $this->warn('Failure notification was not sent: MAIL_FROM_ADDRESS is not configured.');
+
+                return;
+            }
+
+            $body = "The Nginx HTTPS certificate renewal, deployment, or verification FAILED.\n\n"
+                ."Hostname: {$hostname}\nServer: {$server}\n"
+                .'Peer: '.($config['PEER_HOST'] ?? 'none')."\n\n"
+                ."Error: ".$exception->getMessage()."\n\n"
+                ."A certificate issued successfully may still not be served by Nginx.\n"
+                ."The next scheduled run will retry renewal, deployment, and HTTPS verification.\n"
+                ."Manual retry: cd /var/www/fspbx && sudo php artisan app:renew-nginx-certificate\n";
+
+            Mail::raw($body, function ($message) use ($to, $hostname) {
+                $message->to($to)->subject('Nginx certificate renewal/deployment FAILED: '.$hostname);
+            });
+        } catch (Throwable $mailException) {
+            $this->warn('Unable to send certificate failure notification: '.$mailException->getMessage());
+            logger()->warning('RenewNginxCertificate: unable to send notification email: '.$mailException->getMessage());
         }
     }
 

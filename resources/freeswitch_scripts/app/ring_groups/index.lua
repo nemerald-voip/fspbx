@@ -69,6 +69,45 @@ log = require "resources.functions.log".ring_group
 		return value
 	end
 
+	local greeting_active = false
+
+--check the missed calls (also available while the greeting is playing)
+	function missed()
+		--Remember the bridge at the time of the miss. A later fallback may connect.
+			session:setVariable("missed_call", 'true');
+			session:setVariable("ring_group_missed_call", 'true');
+			session:setVariable("ring_group_missed_bridge_uuid", session:getVariable("bridge_uuid") or '');
+
+		--send missed call email
+		if (missed_call_app ~= nil and missed_call_data ~= nil) then
+			if (missed_call_app == "email") then
+				--schedule the missed call notification through Laravel queues
+					local event_name = "send_ring_group_missed_call_email";
+					local payload = string.format(
+						'{"event":"%s","data":{"domain_uuid":"%s","domain_name":"%s","ring_group_uuid":"%s","ring_group_name":"%s","ring_group_extension":"%s","call_uuid":"%s","caller_id_name":"%s","caller_id_number":"%s","destination_number":"%s","default_language":"%s","default_dialect":"%s"}}',
+						event_name,
+						json_escape(domain_uuid),
+						json_escape(domain_name),
+						json_escape(ring_group_uuid),
+						json_escape(ring_group_name),
+						json_escape(ring_group_extension),
+						json_escape(uuid),
+						json_escape(caller_id_name),
+						json_escape(caller_id_number),
+						json_escape(destination_number),
+						json_escape(default_language),
+						json_escape(default_dialect)
+					);
+					freeswitch.API():executeString(string.format("luarun lua/send_webhook.lua '%s'", payload));
+
+				--send the debug info
+					if (debug["info"]) then
+						freeswitch.consoleLog("notice", "[missed call]: queued Laravel email notification to " .. missed_call_data .. "\n");
+					end
+			end
+		end
+	end
+
 --define the session hangup
 	function session_hangup_hook()
 
@@ -80,7 +119,8 @@ log = require "resources.functions.log".ring_group
 
 		--run the missed called function
 			if (
-				session:getVariable("originate_disposition")  == "ALLOTTED_TIMEOUT"
+				greeting_active
+				or session:getVariable("originate_disposition")  == "ALLOTTED_TIMEOUT"
 				or session:getVariable("originate_disposition") == "NO_ANSWER"
 				or session:getVariable("originate_disposition") == "NO_USER_RESPONSE"
 				or session:getVariable("originate_disposition") == "USER_NOT_REGISTERED"
@@ -92,6 +132,7 @@ log = require "resources.functions.log".ring_group
 				or session:getVariable("originate_disposition") == "ORIGINATOR_CANCEL"
 				or session:getVariable("originate_disposition") == "UNALLOCATED_NUMBER"
 				or session:getVariable("originate_disposition") == "CALL_REJECTED"
+				or session:getVariable("originate_disposition") == "NORMAL_CLEARING"
 			) then
 				--set the status
 					status = 'missed'
@@ -293,11 +334,14 @@ log = require "resources.functions.log".ring_group
 
 --play the greeting
 	if (session:ready()) then
-		if (ring_group_greeting and #ring_group_greeting > 0) then
+		--Older saves may contain the greeting picker's "None" value.
+		if (ring_group_greeting and ring_group_greeting ~= "0" and #ring_group_greeting > 0) then
+			greeting_active = true;
 			session:answer();
 			session:sleep(1000);
 			play_file(dbh, domain_name, domain_uuid, ring_group_greeting)
 			session:sleep(1000);
+			greeting_active = false;
 		end
 	end
 
@@ -317,43 +361,6 @@ log = require "resources.functions.log".ring_group
 		end
 		if (ring_group_cid_number_prefix ~= nil and string.len(ring_group_cid_number_prefix) > 0) then
 			session:execute("export", "effective_caller_id_number="..ring_group_cid_number_prefix..caller_id_number);
-		end
-	end
-
---check the missed calls
-	function missed()
-		--add missed call channel variable
-			if (session) then
-				session:setVariable("missed_call", 'true');
-			end
-
-		--send missed call email
-		if (missed_call_app ~= nil and missed_call_data ~= nil) then
-			if (missed_call_app == "email") then
-				--schedule the missed call notification through Laravel queues
-					local event_name = "send_ring_group_missed_call_email";
-					local payload = string.format(
-						'{"event":"%s","data":{"domain_uuid":"%s","domain_name":"%s","ring_group_uuid":"%s","ring_group_name":"%s","ring_group_extension":"%s","call_uuid":"%s","caller_id_name":"%s","caller_id_number":"%s","destination_number":"%s","default_language":"%s","default_dialect":"%s"}}',
-						event_name,
-						json_escape(domain_uuid),
-						json_escape(domain_name),
-						json_escape(ring_group_uuid),
-						json_escape(ring_group_name),
-						json_escape(ring_group_extension),
-						json_escape(uuid),
-						json_escape(caller_id_name),
-						json_escape(caller_id_number),
-						json_escape(destination_number),
-						json_escape(default_language),
-						json_escape(default_dialect)
-					);
-					freeswitch.API():executeString(string.format("luarun lua/send_webhook.lua '%s'", payload));
-
-				--send the debug info
-					if (debug["info"]) then
-						freeswitch.consoleLog("notice", "[missed call]: queued Laravel email notification to " .. missed_call_data .. "\n");
-					end
-			end
 		end
 	end
 
@@ -1006,6 +1013,7 @@ log = require "resources.functions.log".ring_group
 							or session:getVariable("originate_disposition") == "RECOVERY_ON_TIMER_EXPIRE"
 							or session:getVariable("originate_disposition") == "failure"
 							or session:getVariable("originate_disposition") == "CALL_REJECTED"
+							or session:getVariable("originate_disposition") == "NORMAL_CLEARING"
 						) then
 
 	if ring_group_timeout_app == "hangup" and call_direction == "inbound" then

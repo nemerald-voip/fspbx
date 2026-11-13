@@ -2,7 +2,7 @@
 id: dialplan-manager
 title: Dialplan Manager
 slug: /getting-started/dialplan-manager
-sidebar_position: 7
+sidebar_position: 10
 ---
 
 # Dialplan Manager

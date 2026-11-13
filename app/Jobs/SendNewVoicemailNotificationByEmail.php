@@ -98,12 +98,23 @@ class SendNewVoicemailNotificationByEmail implements ShouldQueue
         Redis::throttle('email')->allow(2)->every(1)->then(function () {
 
             $message = VoicemailMessages::select('voicemail_message_uuid', 'domain_uuid', 'voicemail_uuid', 'created_epoch', 'caller_id_name', 'caller_id_number', 'message_length', 'message_transcription')
-                ->with('voicemail:voicemail_uuid,voicemail_id,voicemail_mail_to,voicemail_transcription_enabled,voicemail_local_after_email,voicemail_description,voicemail_file')
+                ->with('voicemail:voicemail_uuid,domain_uuid,voicemail_id,voicemail_mail_to,voicemail_transcription_enabled,voicemail_local_after_email,voicemail_description,voicemail_file')
                 ->with('domain:domain_uuid,domain_name')
                 ->find($this->params['message_uuid']);
 
             // If already deleted (e.g., prior success cleanup), nothing to do
             if (!$message) return;
+
+            // A deleted or invalid mailbox is terminal. Preserve the message for review.
+            if (! $message->voicemail || $message->voicemail->domain_uuid !== $message->domain_uuid || ! $message->domain) {
+                logger()->warning('Skipping voicemail email: mailbox or account is missing or mismatched', [
+                    'voicemail_message_uuid' => $message->voicemail_message_uuid,
+                    'domain_uuid' => $message->domain_uuid,
+                    'voicemail_uuid' => $message->voicemail_uuid,
+                ]);
+
+                return;
+            }
 
             $domain_uuid = $message->domain_uuid;
 
@@ -234,6 +245,7 @@ class SendNewVoicemailNotificationByEmail implements ShouldQueue
                 ->first();
             $vars['origination_callee_id_name'] = $extension?->name_formatted;
             $vars['new_messages'] = VoicemailMessages::where('voicemail_uuid', $message->voicemail->voicemail_uuid)
+                ->where('domain_uuid', $domain_uuid)
                 ->whereNull('message_status')
                 ->count();
 

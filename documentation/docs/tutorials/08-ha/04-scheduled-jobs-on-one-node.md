@@ -1,221 +1,59 @@
 ---
 id: ha-scheduled-jobs
-title: Running Scheduled Jobs on One Node
+title: Scheduled Jobs on Redundant Servers
 slug: /ha/scheduled-jobs
 sidebar_position: 4
 ---
 
-# Running Scheduled Jobs on One Node
+# Scheduled Jobs on Redundant Servers
 
-Some FS PBX background jobs must have **at most one authorized database writer**, even though both servers in a redundant pair run the scheduler. This is not an exactly-once delivery guarantee: jobs can fail, pause, or retry.
+Manage scheduled-job server selection from **Advanced → System Settings → Scheduled Jobs**. On a redundant installation, the **Job owner** runs shared background jobs while the other server remains on standby.
 
-This guide explains how FS PBX decides which server is allowed to run those jobs, and what you need to configure after setting up a redundant pair.
+This selection applies across all accounts to supported jobs, including directory synchronization, Contact Center callbacks, and recording archiving. Keeping one owner prevents the same work from starting on both servers.
 
-For step-by-step discovery, approval, and owner selection in the interface, start with [Scheduled Job Server Setup](/docs/configuration/scheduled-jobs/server-ownership/).
+## Choose the job owner
 
-## Why this matters
+Open **Advanced → System Settings → Scheduled Jobs** on either server:
 
-In a redundant deployment both nodes run the same code, the same scheduler, and their own local queue. Nothing stops both of them from starting the same job at the same minute.
+1. If prompted, click **Create coordination secret** on one server only. Wait for the warning to clear on the other server after clicking **Refresh status**.
+2. Open **Manage scheduled-job nodes** and click **Discover servers**.
+3. Verify and approve both intended servers. Each should use its own IP address or dedicated hostname.
+4. Use **Refresh status** on both servers until both registrations appear.
+5. Under **Transfer ownership to**, select the server that should run the jobs and click **Transfer ownership**.
+6. Use **Refresh status** on both servers until they show the same **Job owner**.
 
-For a job that only reads data, running twice is wasteful but harmless. For a job that **writes** data, running twice on a bi-directionally replicated database causes two problems:
+The owner shows **Active on this server**; the other server shows **Standby**. You can make the first selection or request a normal transfer from either server's interface.
 
-* the same work is performed twice, for example directory users created, updated, or disabled on both sides
-* both servers write the same rows locally, and those conflicting rows can **stall logical replication** when they reach the other node
+See [Scheduled Job Server Setup](/docs/configuration/scheduled-jobs/server-ownership/) for the complete guide to discovery, approval, and status messages.
 
-A stalled subscription has to be repaired by hand, and it is a much bigger problem than the job simply not running.
+## Planned maintenance
 
-Because of that, FS PBX takes the cautious side of the trade:
+Before taking the current owner out of service, select the other approved server under **Transfer ownership to** and click **Transfer ownership**.
 
-> A job runs only when the server can prove it is the active one. If that cannot be determined, the job is skipped and the reason is recorded.
+The current owner finishes its running jobs before the new owner takes over. Use **Refresh status** to confirm the transfer has completed before starting maintenance. **Running now** shows work currently in progress.
 
-Unclaimed work remains due and can be picked up on the next scheduler pass. Interrupted work may need a retry.
+## DNS failover and scheduled jobs
 
-## How FS PBX identifies each node
+A DNS failover does not move scheduled-job ownership. Use the **Scheduled Jobs** page to change the owner.
 
-FS PBX reads the PostgreSQL cluster system identifier from `pg_control_system()`. That identifier is created with the PostgreSQL cluster and remains stable across hostname, address, and replication subscription changes.
+Saved server addresses must continue to reach their individual servers. If a registration uses a shared failover hostname, discover that server using its direct HTTPS address and click **Use this address** beside the verified result.
 
-Replication subscription names are never used as node identities. FS PBX reads every host in `pg_subscription.subconninfo` only as a possible address to check. Disabled, manually named, and stale subscriptions are expected.
+## If the owner is unavailable
 
-Before an address can become a scheduled-job node, FS PBX sends it a signed identity challenge over HTTPS. The response includes the PostgreSQL system identifier, an application-specific hash of `/etc/machine-id`, hostname, application version, request nonce, endpoint identity, and a secret-free coordination snapshot. The raw machine ID is never returned. A super administrator must approve the verified result.
+An **Unreachable** status does not confirm that the server has stopped running jobs. Use **Forced takeover** only after the previous owner has been confirmed powered off or isolated from the network.
 
-Discovery never approves a node. An unreachable subscription host remains visible as a stale candidate. Multiple addresses returning the same database and host identity are aliases; one approved canonical endpoint is stored. The same database identity with different host fingerprints blocks approval, and a host that does not match its approved fingerprint cannot claim or commit work.
+On the approved server taking over, open **Advanced → System Settings → Scheduled Jobs**, select that server, and expand **Forced takeover**. Enter the previous owner's address, complete the confirmation, and click **Force takeover**.
 
-A full disk clone must receive a new machine ID before starting workers. Software cannot distinguish two hosts whose database identity and machine ID were both copied unchanged.
-
-## Durable ownership
-
-The shared `scheduled_jobs.active_node` setting stores the approved PostgreSQL system identifier of the current owner. `scheduled_jobs.active_node_generation` is incremented whenever ownership changes. Together they let a worker reject stale queued work after a handoff.
-
-These settings remain editable under **Advanced > Default Settings**, using the normal edit, toggle, copy, and delete actions. Use the **Scheduled job server** control for a coordinated ownership transfer: direct setting edits do not drain running jobs or perform the signed handoff. A direct edit on a replica can create split ownership; it is an administrator override outside the handoff safety guarantee. Stop/fence workers first. Duplicate rows, disabled owner settings, and invalid generations fail closed rather than silently choosing a row.
-
-An older hostname or IP value is not active automatically. When it matches exactly one approved node, the control shows a migration hint. Confirm it on that owner after a signed probe. Converting the representation preserves the generation; an actual transfer drains outstanding work, including older-generation claims. An unknown non-empty value is never treated as first-time setup.
-
-The separate `scheduled_jobs.coordination_secret` authenticates peer requests and responses. It is not the certificate deployment secret. Rotate it after replacing or retiring a server.
-
-## Setting it from the interface
-
-The global control is available under **System Settings > Scheduled Jobs**, **Contact Center Settings > Scheduled Jobs** when the module is installed, and **Account Settings > Directory Services**.
-
-1. Open **Account Settings**.
-2. Select the **Directory Services** tab.
-3. Find the **Scheduled job server** panel above the directory list.
-4. If the peer secret is missing, create it on **one server only** and wait for that setting to replicate. Do not create separate secrets on both nodes.
-5. Open **Manage scheduled-job nodes** (labelled **Add a second server** while the installation is still standalone), then click **Discover servers**. You can also enter a direct HTTPS address for a replacement server.
-6. First-time HA approval requires two reachable, verified identities. Approve both nodes from either server. Requests are forwarded to the server with the lexicographically smaller PostgreSQL identifier, which records initial membership. Wait for their registry rows to replicate; a forwarded acknowledgement does not mean the local database has received approval yet.
-7. Select the first owner on that initialization writer. Both signed snapshots must agree on the exact registry and ownership setting rows before initialization succeeds.
-
-After initialization, approvals and normal ownership transfers can be requested from either UI node and are sent to the current owner. Perform retirements, secret rotation and legacy confirmation on the current owner. Both servers must support forwarded approvals; an older receiving server produces an update-required message. Initial membership is a verified pair, not automatic discovery-based cluster membership.
-
-When deploying this change manually, clear the route cache on both servers with `php artisan route:clear` so the signed approval endpoint is registered, and rebuild frontend assets with `npm run build`.
-
-Use direct server addresses for approved endpoints. A shared failover hostname may start answering as the other server and fail the identity check. Discovery can locate a matching direct endpoint; approval forwarding verifies its database and host identity again before using it. To replace a stale saved endpoint, click **Use this address** beside the verified direct address in **Discovered servers**. This updates the existing registration on the membership authority without changing the job owner.
-
-If no verified address reaches the membership authority, approval stops without writing locally. Restore connectivity, or follow the fenced takeover procedure below from an already-approved server. Being unreachable does not authorize automatic takeover or approval on a replacement server. **Not approved** means this server's current database identity has no approved registration; **Identity mismatch** means it has an approved registration but the host fingerprint differs.
-
-The shared control and its API actions require `scheduled_jobs_manage`, assigned to superadmins by default. The panel shows the job owner, this server, the ownership version, a pending transfer, reachability, and where work is actually running.
-
-On a standalone installation the panel collapses to a single line: there is nothing to coordinate, so the ownership detail, the peer secret warning, and the transfer control stay out of the way until a second server exists.
-
-The control is global. It is not repeated for every directory or tenant.
-
-## Normal ownership handoff
-
-FS PBX verifies the selected target and sends an idempotent prepare request directly to the current owner. The current owner enters **Draining**, rejects new execution claims, and waits for running claims to finish or expire. It then updates the owner and increments the generation in one database transaction.
-
-Consumers with external resources can also defer completion through `ScheduledJobsDraining`. These cleanup checks run outside the ownership transaction. Contact Center uses this hook to release waiting callback placeholders and ringing agent offers before transfer, while allowing bounded customer dialing to settle. A verified connected conversation can continue on the old PBX; its durable bridge receipt prevents the new owner from dialing that callback again.
-
-LDAP fetches remote data outside the coordination lock. Every database write batch, including run creation, completion and failure, rechecks node identity, owner, generation, running claim and deadline under the same local PostgreSQL transaction lock used by handoff. Authorization is checked again before commit. An expired claim revokes permission; it does **not** prove the operating-system process stopped. A paused worker that resumes cannot commit after revocation.
-
-The generic `scheduled-jobs:maintain` command checks for expired executions and progresses pending transfers every five minutes. Finishing an execution also attempts completion immediately; maintenance is the fallback when a worker crashes or is killed before it can report completion. It does not choose an owner or initiate a transfer. Maintenance writes only on an actual expiry or transfer transition, never a heartbeat.
-
-The old owner stops immediately. The target starts only after logical replication delivers that ownership transaction. A delayed transaction therefore creates a safe pause rather than overlapping execution.
-
-If the API response is lost, retrying the same browser action preserves its target, generation and idempotency key. The original owner returns completed requests even after it has stopped being owner. A signed status query can recover a lost acknowledgment. An acknowledgment is separate from the ownership transaction arriving on the UI node.
-
-## Forced takeover
-
-If the current owner cannot be reached, normal transfer stops. Before forcing a takeover:
-
-1. Power off the old owner or network-fence it.
-2. Open the approved takeover target's direct address and select that server.
-3. Open **Forced takeover**.
-4. Type the old owner's exact direct HTTPS endpoint.
-5. Confirm that the old owner is fenced, then click **Force takeover**.
-
-Keep the old server fenced until replication is repaired and verified. Do not restart its scheduler or workers before it has received the new owner and generation. Run `php artisan scheduled-jobs:verify-rejoin` on a returning approved node, then verify application-table replication health before restarting workers. Retired identities cannot pass this check and must not be restarted as coordination members.
-
-This check is an operator restart prerequisite, not remote power fencing. FS PBX cannot prevent someone manually starting an isolated machine with a stale database. A forced takeover records a separate administrator audit event and supersedes pending drains without overwriting the original requester.
-
-## Reading the status
-
-The panel distinguishes these conditions:
-
-| Status | Meaning |
-| ------ | ------- |
-| **Active on this server** | This server may create coordinated execution claims |
-| **Standby** | Another approved server owns the work |
-| **Draining** | The owner accepts no new claims while existing work finishes |
-| **Pending transfer** | A handoff has been recorded but has not completed |
-| **Unreachable** | A signed identity check to that approved endpoint failed |
-| **Retired** | The node remains in audit history and cannot be selected |
-| **Running on...** | An actual execution claim is active on the named node and generation |
-
-The page does not poll automatically. Use **Refresh** for directory results and **Refresh status** for coordination status. Results also refresh after actions you initiate. Status reads perform no heartbeat writes. Short-lived reachability results are cached locally and registry rows change only when a node is approved, changed, or retired.
-
-Coordination uses the application's default cache store, selected by `CACHE_DRIVER`, with no separate coordination cache setting. On redundant servers, configure `CACHE_DRIVER=redis` connected to each server's own local Redis instance. It caches peer checks and request nonces used to reject replays. The local node identifier is read from the connected PostgreSQL cluster, so a replacement cannot inherit its predecessor's cached identity. Ownership and execution records remain in PostgreSQL.
-
-## Synchronizing on demand
-
-The **Sync Now** button works from either server.
-
-When you press it on the server that runs synchronization, the job is queued locally.
-
-When you press it on the other server, FS PBX marks the directory as due instead of starting the job. Queues are local to each server, so starting it there would leave the job stranded. After the due update replicates, the selected owner collects it on a scheduler pass, normally within five minutes. The worker claims execution before advancing `next_sync_at`; a stale unclaimed queue item does not advance it.
-
-LDAP jobs use the dedicated `scheduled-jobs` Redis queue connection with a 900-second `retry_after`, a 600-second job deadline, and a matching Horizon supervisor. Other queues keep their existing settings. The CLI `ldap:sync` uses the same guarded service and a 600-second `pcntl` alarm. LDAP network waits are bounded and each search page rechecks authorization. Partial LDAP search results are rejected.
-
-## Seeing where a sync ran
-
-The directory list records the server that produced each run.
-
-* A finished run shows the server name underneath its status.
-* A run still in progress shows **Running on** with the server name.
-* A run whose execution is expired or no longer running shows **Stale on** with the server name. Older runs without an execution link use the fifteen-minute fallback. These are read-only status calculations, not heartbeat updates.
-
-## Which jobs use which method
-
-Not every scheduled job uses the same mechanism yet.
-
-| Job | How the server is chosen |
-| --- | ------------------------ |
-| Directory synchronization | Generic scheduled-job owner, generation, and execution claim |
-| SMS/MMS retention | Generic scheduled-job owner, generation, and execution claim |
-| Message API records and outbound webhook history cleanup | Generic scheduled-job owner, generation, and execution claim |
-| [Contact Center callbacks](/docs/configuration/contact-center/queue-callbacks/) and callback cleanup | The same generic scheduled-job owner, generation, and execution claims |
-| Scheduled announcements | Failover DNS record, see [Scheduled Announcements](../05-configuration/13-scheduled-announcements/01-overview.md) |
-| TLS and Nginx certificate renewal | Failover DNS record recorded during certificate installation |
-| Archive call recordings to S3 | Generic scheduled-job owner and one bounded execution claim per recording |
-
-Enable S3 uploads by enabling the `scheduled_jobs.s3_upload_calls` row with value `true`. A standalone server is selected automatically. On a redundant installation, complete node approval and owner selection before enabling uploads. Keep the setting row enabled and change its value to `false` to stop scheduled uploads. See [Archive Call Recordings to S3 Storage](../05-configuration/12-scheduled-jobs/archive-call-recordings-to-s3-storage.md) for storage and schedule settings.
-
-Scheduled S3 runs pass `--scheduled` and claim one recording at a time, with a 900-second claim and an 840-second CLI deadline. Conversion and network requests have shorter timeouts. A coordinated run stops if it loses authorization. Verified uploads, guarded CDR updates, and local cleanup receipts make retries recoverable. Existing archive filenames and folders are preserved. Failed or expired work keeps its source recording; missing files are deferred for file replication. Include `v_xml_cdr` in the same ordered replication stream as coordination/settings before using coordinated S3 uploads. Keep both servers updated before switching ownership.
-
-The plain `php artisan fs:upload-call-recordings-to-s3-storage` command retains its manual override: it bypasses enablement and owner selection, so it does not participate in draining. Run it outside scheduled uploads and ownership transfers, on only one server. Add `--scheduled` when the operator wants coordinated checks to apply.
-
-Other jobs can adopt the generic coordinator later, but must create an execution claim and place their database mutations inside `ActiveNodeResolver::withExecution()`. Checking only whether a node is active, or obtaining a claim without guarding writes, is insufficient. External effects such as calls, uploads or certificate deployment require their own idempotency/fencing boundary before adopting this mechanism.
+Keep the previous server out of service until your administrator or support provider confirms it is ready to return. See the [failed-owner steps](/docs/configuration/scheduled-jobs/server-ownership/#if-the-current-owner-has-failed) for the full page workflow.
 
 ## Replacing a server
 
-1. Fence the removed server.
-2. If the removed server was owner, force takeover on the already-approved surviving node first.
-3. Retire the removed identity on the current owner. Retired registry rows and their endpoints remain as audit history; the endpoint can now be reused by a new identity.
-4. Establish logical replication with the replacement, under any subscription name. Run migrations independently and refresh both subscriptions.
-5. Discover and approve the replacement from the current owner. A replacement must have its own PostgreSQL identifier and machine ID.
-6. Transfer ownership normally if the replacement should own scheduled jobs.
-7. Rotate the coordination secret and wait for replication.
+If the server being removed is still the owner, transfer ownership first. On the current owner, use **Manage scheduled-job nodes** on the **Scheduled Jobs** page to retire the old server and discover and approve its replacement when ready.
 
-Retired registrations no longer supply discovery addresses, and discovery omits any identity already marked retired. A replacement at the same address can still be discovered using its new database identity.
-
-Use **Remove** beside a retired server to delete its registration on both nodes. Approved servers must be retired first, and a server involved in a pending ownership transfer cannot be removed. Removal requests can be made from either server and are recorded by the membership authority. Past ownership transfers and execution records remain unchanged.
-
-Removal does not change PostgreSQL subscriptions. If the old server still responds through a replication address or manual discovery, it may appear again as an unapproved candidate. It must be explicitly approved and selected as owner before it can run coordinated jobs. Deploy the updated code on both servers for forwarded removal; no database migration is required. Clear the route cache and rebuild frontend assets when deploying manually.
+Click **Rotate coordination secret** on the current owner after replacing a server. Use **Refresh status** on both servers to confirm they are reachable, then select the replacement as owner if needed.
 
 ## Troubleshooting
 
-### Synchronization is not running on either server
+Start with **Refresh status** on both servers. Confirm that both intended servers are approved and show the same **Job owner**.
 
-Open **Account Settings > Directory Services** on either server and read the status line.
-
-The most common cause on a new pair is that no approved owner has been chosen. Configure the peer secret, approve both direct endpoints, and select an owner.
-
-### The chosen server no longer exists
-
-Fence the removed server, approve the replacement's new PostgreSQL identifier, transfer ownership, retire the old identifier, and rotate the coordination secret.
-
-### A discovered host is unreachable
-
-Subscription connection strings are historical hints, not membership. An unreachable candidate may be a disabled or stale subscription. Check the address and HTTPS access; approve only the direct endpoint of the intended live server.
-
-### The same identifier appears at multiple endpoints
-
-Matching host fingerprints indicate aliases. Different fingerprints indicate a clone or invalid topology and block approval. Fence the conflicting host and repair its identity before continuing.
-
-### Rollout prerequisites
-
-Stop coordinated schedulers/workers during the initial rollout. Run the combined `2026_09_04_000001_create_scheduled_job_coordination_tables` migration independently on both databases, then refresh both logical subscriptions. Do not rely on `app:update` to run migrations. If an earlier experimental version of that migration has already run, reconcile its schema first; Laravel will not rerun an already-recorded migration just because the file changed.
-
-The coordination tables, global settings and LDAP application tables must travel together in an ordered logical-replication stream in each direction. Do not split their commits across independently lagging subscriptions. Verify initial table synchronization and replication errors before enabling workers. Schema snapshots are not a substitute for checking application-data replication.
-
-HA seeding retains the generic setting definitions but does not independently insert missing coordination settings on subscribers. The initialization writer creates owner/generation rows. Repair any pre-existing duplicate settings explicitly; no automatic merge or deletion is performed.
-
-Refresh cached Laravel configuration and restart Horizon on both nodes after deploying the new queue connection and supervisor. Keep Redis local. Maintain clock synchronization and install `pcntl` for queue/CLI timeouts.
-
-The opt-in test harness `bash tests/Unit/run-scheduled-job-lab.sh` starts two disposable PostgreSQL 17 clusters and two Redis processes on unused loopback ports. It tests ordered replication, local transaction-lock exclusion, a delayed ownership transaction, idempotent completion recovery and stale-worker rejection. It does not test production networking, fencing hardware or a live Active Directory server.
-
-### Both servers appear to be running the job
-
-Stop the schedulers and workers on the node that is not the selected owner. Confirm both nodes have received the same `active_node` and generation values, then inspect active execution rows before restarting anything.
-
-## Summary
-
-On a single server, coordinated jobs run without registry heartbeat writes. On a redundant pair, approve direct signed identities and select the PostgreSQL system identifier that owns the work. Normal handoff drains through the old owner; forced takeover requires the old owner to be fenced. If ownership or identity is uncertain, the jobs stop rather than risk duplicate writes.
+If no owner is selected, complete **Transfer ownership**. If a change is still in progress, wait and refresh again. For persistent errors, share the displayed message and both servers' status with your support provider.

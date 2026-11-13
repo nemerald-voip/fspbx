@@ -2,12 +2,16 @@
 id: devices
 title: Devices
 slug: /getting-started/devices
-sidebar_position: 4
+sidebar_position: 7
 ---
 
 # Devices
 
 In FS PBX, **Devices** are primarily used for **auto-provisioning**—that is, generating and delivering phone configuration files so supported phones can “plug in and just work.”
+
+:::tip Prefer to watch?
+Watch the [FS PBX phone provisioning tutorial on YouTube](https://youtu.be/SoJlbCvLqYw) for a guided walkthrough of device templates, key templates, and phone setup.
+:::
 
 This section is **not** a live view of what’s currently connected to the PBX.
 

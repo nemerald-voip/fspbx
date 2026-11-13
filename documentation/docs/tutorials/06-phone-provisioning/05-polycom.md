@@ -34,13 +34,13 @@ Open **Settings > Provisioning Server** and enter:
 
 Replace `pbx.example.com` with the reachable FS PBX hostname. HTTPS is selected separately, so the address shown above uses the hostname and path. **Static** applies to provisioning-server discovery; the phone can still obtain its IP address by DHCP. Poly documents the server protocol, address, credentials, and static boot-server behavior in its [UC Software administrator guide](https://kaas.hpcloud.hp.com/pdf-public/pdf_9122088_en-US-1.pdf#page=531).
 
-Use a current, versioned FS PBX device template with the `/prov/` path. Keep the trailing slash and let the phone request its own files. See the [provisioning URL guide](/docs/phone-provisioning/#provisioning-url) for the common setup.
+Keep the `/prov/` path and trailing slash. See the [provisioning URL guide](/docs/phone-provisioning/#provisioning-url) for the common setup.
 
 Click **Save** and accept any restart prompt. If the phone does not restart or download immediately, reboot it after saving. Menu labels can vary with UC Software version.
 
 ## HTTPS certificates and ciphers on older phones
 
-An older Polycom phone may reject the server's HTTPS certificate even when a current browser trusts it. Its CA store can be outdated, and its enabled cipher list may not support the server's certificate type. Some phones need **both a manual CA installation and a cipher change before the first configuration download**.
+Some older phones need an updated trusted certificate or an adjustment to their TLS settings before they can connect. Use the steps below if the phone rejects your server's HTTPS certificate.
 
 ### Install the missing certificate authority
 
@@ -49,7 +49,7 @@ An older Polycom phone may reject the server's HTTPS certificate even when a cur
 3. Install the CA in an available **Platform CA** slot, using the certificate file or download URL supported by that firmware. If a URL is required, the phone must already be able to access that certificate location. Verify the certificate fingerprint before accepting it.
 4. Under **TLS Applications**, check the platform profile selected for **Provisioning**, normally **Platform 1**. In **TLS Profiles**, ensure that profile's CA selection includes the installed certificate, then save.
 
-Platform CA certificates are available during initial provisioning. Poly explains their installation and profile selection in its [certificate guidance](https://kaas.hpcloud.hp.com/pdf-public/pdf_12968044_en-US-1.pdf#page=20). Check that the phone's date and time are correct when validating certificates.
+Check that the phone's date and time are correct. For more help with these fields, see [Poly's certificate guidance](https://kaas.hpcloud.hp.com/pdf-public/pdf_12968044_en-US-1.pdf#page=20).
 
 ### Adjust the provisioning cipher list when needed
 
@@ -62,15 +62,13 @@ Some UC Software releases include `!ECDSA` in their default cipher list. That ex
 
 See [Poly's cipher configuration instructions](https://h30434.www3.hp.com/t5/Desk-and-IP-Conference-Phones/FAQ-Changing-cipher-suites-on-Poly-IP-Phones/td-p/9046307). Changing the list cannot add algorithms that the firmware does not implement; a supported firmware update or a compatible provisioning endpoint may still be needed. A profile can also be shared with SIP TLS, so check its application assignments before editing it.
 
-These initial changes must be made on the phone when HTTPS provisioning is blocked: the phone cannot download a configuration that fixes the connection it needs for that download.
-
 ## Verify and manage the phone
 
 1. Check that **Last Contact** updates on the device in FS PBX.
 2. Open **Registrations** and confirm the assigned extension and expected SIP transport.
 3. Test inbound and outbound calls and any BLF, speed-dial, or parking keys.
 
-HTTPS protects configuration downloads; SIP uses the transport selected under the device's line settings. A recent Last Contact does not prove SIP registration or successful application of every setting.
+To use SIP TLS, select it separately under the device's line settings. HTTPS protects configuration downloads.
 
 Make later line and key changes in FS PBX, save, and use the device's **Sync** action. If it is unregistered, reboot it directly to retry provisioning. Provisioning can replace settings entered locally on the phone.
 

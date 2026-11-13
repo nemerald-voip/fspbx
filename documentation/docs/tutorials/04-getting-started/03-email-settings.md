@@ -2,7 +2,7 @@
 id: email-settings
 title: Configure Email Settings
 slug: /getting-started/email-settings
-sidebar_position: 1
+sidebar_position: 3
 ---
 
 # Configure Email Settings

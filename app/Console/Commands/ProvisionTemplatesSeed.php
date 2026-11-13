@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\ProvisioningTemplate;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
+use Symfony\Component\Console\Output\OutputInterface;
 
 class ProvisionTemplatesSeed extends Command
 {
@@ -68,7 +69,7 @@ class ProvisionTemplatesSeed extends Command
                     ->values();
 
                 if ($files->count() === 0) {
-                    $this->warn("[$vendor/$templateName] no .blade.php found");
+                    $this->warn("[$vendor/$templateName] no .blade.php found", OutputInterface::VERBOSITY_VERBOSE);
                     continue;
                 }
                 if ($files->count() > 1) {
@@ -98,7 +99,7 @@ class ProvisionTemplatesSeed extends Command
                 if ($existingAny) {
                     // If content is identical, skip
                     if ($existingAny->checksum === $checksum) {
-                        $this->line("[skip] {$vendor}/{$templateName} @ {$version}");
+                        $this->line("[skip] {$vendor}/{$templateName} @ {$version}", null, OutputInterface::VERBOSITY_VERBOSE);
                         $skipped++;
                         continue;
                     }

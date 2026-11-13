@@ -62,5 +62,8 @@
 
     <!-- FS PBX: Call Center Agent BLF daemon -->
     <param name="startup-script" value="lua/agent_blf.lua"/>
+
+    <!-- FS PBX: Optional Flag BLF daemon. Enable Flags in Default Settings first. -->
+    <!-- <param name="startup-script" value="lua/flag_blf.lua"/> -->
   </settings>
 </configuration>

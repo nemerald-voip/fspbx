@@ -18,6 +18,8 @@
             </div>
         </header>
 
+        <SwitchNetworkSetup v-if="permissions.network_setup" :routes="routes" @saved="getData" />
+
         <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <StatTile :label="$t('Total variables')" :value="stats.total" tone="gray" />
             <StatTile :label="$t('Host scoped')" :value="stats.hostScoped" tone="amber" />
@@ -158,6 +160,7 @@ import Loading from './components/general/Loading.vue'
 import Notification from './components/notifications/Notification.vue'
 import ConfirmationModal from './components/modal/ConfirmationModal.vue'
 import SwitchVariableEditModal from './components/modal/SwitchVariableEditModal.vue'
+import SwitchNetworkSetup from './components/SwitchNetworkSetup.vue'
 import { ArrowPathIcon, MagnifyingGlassIcon, PlusIcon } from '@heroicons/vue/24/outline'
 
 const StatTile = (props) => {

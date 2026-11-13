@@ -2,7 +2,7 @@
 id: domains-multitenancy-101
 title: Domains (Multi-Tenancy 101)
 slug: /getting-started/domains-multitenancy-101/
-sidebar_position: 2
+sidebar_position: 4
 ---
 
 # Domains (Multi-Tenancy 101)

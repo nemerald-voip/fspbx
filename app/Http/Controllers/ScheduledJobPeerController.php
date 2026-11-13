@@ -34,8 +34,9 @@ class ScheduledJobPeerController extends Controller
             'system_identifier' => $this->resolver->localNodeId(),
             'host_fingerprint' => $this->resolver->hostFingerprint(),
             'coordination' => $this->resolver->coordinationSnapshot(),
+            'discovery_endpoints' => $this->resolver->discoveryEndpoints(),
             'hostname' => $this->resolver->hostname(),
-            'capabilities' => ['node_approval', 'node_removal'],
+            'capabilities' => ['node_approval', 'node_removal', 'initial_owner'],
             'version' => (string) config('app.version', ''),
             'challenge' => $values['challenge'],
             'request_nonce' => (string) $request->header(ScheduledJobPeerAuthenticator::NONCE_HEADER),
@@ -130,13 +131,19 @@ class ScheduledJobPeerController extends Controller
                 'expected_generation' => ['required', 'integer', 'min:0'],
                 'requested_by' => ['nullable', 'uuid'],
                 'idempotency_key' => ['required', 'uuid'],
+                'initial_owner' => ['sometimes', 'boolean'],
+                'writer_node_id' => ['required_if:initial_owner,true', 'nullable', 'string', 'regex:/^\d{1,32}$/'],
             ]);
             if ($values['idempotency_key'] !== $request->header(ScheduledJobPeerAuthenticator::IDEMPOTENCY_HEADER)) {
                 throw new RuntimeException('The signed idempotency header does not match the request.');
             }
-            $result = $this->resolver->prepareHandoff($values);
+            $result = ($values['initial_owner'] ?? false)
+                ? $this->resolver->prepareInitialOwner($values)
+                : $this->resolver->prepareHandoff($values);
 
             return $this->signedResponse($request, $result, ($result['status'] ?? null) === 'draining' ? 202 : 200);
+        } catch (ValidationException $exception) {
+            return $this->signedResponse($request, ['message' => $exception->getMessage(), 'errors' => $exception->errors()], 422);
         } catch (RuntimeException $exception) {
             return $this->signedResponse($request, [
                 'message' => $exception->getMessage(),

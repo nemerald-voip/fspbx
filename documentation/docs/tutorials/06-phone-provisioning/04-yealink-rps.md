@@ -9,8 +9,6 @@ sidebar_position: 4
 
 Yealink RPS is Yealink's **Redirection and Provisioning Service**. It stores a phone MAC address and the provisioning server assigned to that phone. On initial startup or after a factory reset, a supported Yealink phone can contact RPS and be redirected to FS PBX.
 
-FS PBX integrates with the Yealink Management Cloud Service (YMCS) Open API v2 to create RPS servers, connect existing servers, and add or remove device MAC addresses.
-
 ## Why use Yealink RPS?
 
 Yealink RPS is useful when:
@@ -21,19 +19,9 @@ Yealink RPS is useful when:
 - You want to reduce manual URL and credential entry.
 - FS PBX should remain the source of each phone's complete configuration.
 
-The normal startup flow is:
-
-1. The phone starts with internet access and contacts Yealink RPS.
-2. RPS finds the MAC address and redirects the phone to the assigned FS PBX provisioning server.
-3. The phone contacts the FS PBX `/prov/` endpoint using the configured HTTP credentials.
-4. FS PBX matches the MAC address and renders the assigned Yealink device template.
-5. The phone applies the configuration and registers its SIP lines.
+After you add the phone to RPS, connect it to the internet. It can then find FS PBX and download its settings.
 
 Yealink describes RPS as a way to bind a phone MAC address to a provisioning-server URL for initial redirection. See the official [Yealink RPS overview](https://www.yealink.com/en/onepage/yealink-free-remote-provisioning-service).
-
-:::warning What RPS does not prove
-A device can be listed in Yealink RPS without ever contacting RPS or FS PBX. **Listed in Yealink RPS** means the cloud record exists. It does not mean the phone downloaded configuration or registered to FreeSWITCH.
-:::
 
 ## Before you start
 
@@ -52,18 +40,16 @@ The AccessKey credentials are API credentials for FS PBX to manage RPS. They are
 
 ## Prepare FS PBX provisioning
 
-1. Set the public FS PBX application URL correctly. The Yealink RPS form uses:
+1. Confirm that your public FS PBX hostname is correct. The provisioning address should look like:
 
    ```text
    https://pbx.example.com/prov/
    ```
 
-   This is built from the FS PBX application URL plus `/prov/`.
-
 2. Configure `http_auth_username` and `http_auth_password` in the `provision` category under **Default Settings** or as account overrides under **Domain Settings**.
 3. Create the phone under **Devices**:
    - Enter the MAC address.
-   - Select a modern Yealink device template.
+   - Select the Yealink device template matching the phone.
    - Assign the required extension or lines.
    - Save the device.
 
@@ -87,16 +73,16 @@ Provisioning HTTP credentials are separate from the Yealink AccessKey credential
 12. Enable **Require serial number** if you have a regular Yealink account. Leave it off if Yealink has authorized MAC-only registration.
 13. Click **Save**.
 
-**Require serial number** is global and applies to every FS PBX account using these Yealink credentials. It defaults off to preserve existing MAC-only installations. Changing it affects subsequent additions; it does not re-register existing devices.
+**Require serial number** applies to every FS PBX account using these Yealink credentials. Enable it for a regular Yealink account; leave it off only if Yealink has authorized MAC-only registration.
 
-| Require serial number | Registration API | Required device values |
-| --- | --- | --- |
-| Off | `/v2/rps/addDevicesByMac` | MAC address |
-| On | `/v2/rps/addDevices` | MAC address and serial number |
+| Require serial number | Required device values |
+| --- | --- |
+| Off | MAC address |
+| On | MAC address and serial number |
 
 Use only the three values in the top **Authentication Info** section. Do not use the **Event Subscription** token or the username and password under **RPS XML API**. If the portal also shows **Historical authentication > RPS Json**, do not use those credentials either.
 
-The AccessKey credentials and API Domain are stored as global FS PBX cloud-provider settings. Restrict access to administrators who are authorized to manage every account using this RPS integration.
+This connection is shared by all FS PBX accounts using Yealink RPS. Limit access to the administrators responsible for those accounts.
 
 ### 2. Create or connect an RPS server
 
@@ -112,53 +98,48 @@ When creating a server, configure:
 - **Provisioning Username:** The FS PBX HTTP provisioning username.
 - **Provisioning Password:** The FS PBX HTTP provisioning password.
 
-FS PBX prefills the URL from its application URL and prefills the HTTP credentials from the account's provisioning settings. Verify all three values before saving.
+Check the suggested provisioning URL, username, and password before saving.
 
 Each FS PBX account is paired with one Yealink RPS server. The AccessKey credentials can access all servers permitted by the connected YMCS account.
 
 ## Add a phone to Yealink RPS
 
 1. Open **Devices** and edit the Yealink phone.
-   If **Require serial number** is enabled, enter the phone's **Serial Number** and save the device before adding it to RPS. Device records can still be saved without a serial number, but RPS addition is blocked until one is saved.
+   If **Require serial number** is enabled, enter the phone's **Serial Number** and save the device before adding it to RPS.
 2. Open the **Yealink RPS** tab.
 3. Click **Add to Yealink RPS**.
 4. Wait for the action to complete.
 5. Return to the Devices list or reopen the device to refresh its status.
 
-For bulk additions, FS PBX checks the entire selection first. If any selected Yealink phone needs a serial number, the error identifies its MAC address and no devices in that request are queued. Correct and save the missing serial numbers, then submit the selection again.
+Before adding several phones at once, save a serial number for each phone that requires one. If an error lists missing serial numbers, fill them in and retry the selection.
 
 The Vendor Cloud status progresses through:
 
 | Status | Meaning |
 | --- | --- |
-| Adding to Yealink RPS | FS PBX queued or is processing the API request. |
+| Adding to Yealink RPS | The phone is being added. |
 | Listed in Yealink RPS | Yealink accepted the device record. |
-| Could not add to Yealink RPS | Yealink rejected the request or the API call failed. |
+| Could not add to Yealink RPS | Open the device's Yealink RPS tab to review the error. |
 | Removing from Yealink RPS | FS PBX is removing the cloud record. |
 | Not listed in Yealink RPS | FS PBX has no successful Yealink listing for the device. |
 
-If the phone was previously configured, factory-reset it after the record is listed so it performs the vendor bootstrap process again.
+If the phone was previously configured, factory-reset it after the record is listed so it can discover its new settings.
 
 ## Confirm the phone actually provisioned
 
-Check these three stages independently:
+After connecting the phone, check:
 
 1. **Vendor Cloud:** The device tooltip says **Listed in Yealink RPS**.
 2. **FS PBX contact:** **Last Contact** on the Devices page shows a recent request.
 3. **SIP registration:** The phone appears on the **Registrations** page.
 
-If only the first stage succeeds, RPS accepted the record but the phone did not complete provisioning.
+Make an incoming and outgoing test call before handing over the phone.
 
 ## Refresh records from Yealink
 
 Use **Devices > Vendor Cloud > Yealink > Sync Devices** when records were changed directly in RPS or the local listing status is stale.
 
-Sync Devices:
-
-- Downloads the current Yealink RPS device list.
-- Rebuilds the local Vendor Cloud status for matching FS PBX devices.
-- Does not create missing FS PBX device records.
-- Does not make a phone contact RPS or download configuration.
+This refreshes the cloud listing status of phones already added in FS PBX. To apply settings to a registered phone, use **Sync** from that device's action menu.
 
 ## Troubleshooting
 
@@ -167,7 +148,7 @@ Sync Devices:
 - Confirm that the selected API Domain matches the Domain under **Authentication Info** in Yealink API Service.
 - Confirm that you entered the AccessKey ID and AccessKey Secret from the top **Authentication Info** section.
 - Do not use the **Event Subscription** token or the **RPS XML API** username and password.
-- Do not use **Historical authentication > RPS Json** credentials; those belong to the previous API.
+- Use the current **Authentication Info** credentials, not **Historical authentication**.
 - Verify both the AccessKey ID and AccessKey Secret.
 - If Yealink rotated the secret, update it in FS PBX.
 
@@ -177,16 +158,16 @@ Sync Devices:
 - Confirm that the MAC address contains 12 hexadecimal characters.
 - If **Require serial number** is enabled, confirm that the correct serial number is saved on the device.
 - Check whether the MAC is already assigned to another YMCS account or server.
-- Review the error shown in the Yealink RPS tab and the Laravel log.
+- Review the error shown in the Yealink RPS tab.
 
 ### 403 Forbidden when adding a device
 
-Yealink restricts `/v2/rps/addDevicesByMac` to authorized accounts. For a regular account, open **Vendor Cloud > Yealink > API Credentials**, enable **Require serial number**, and save each phone's serial number before retrying. FS PBX does not automatically switch endpoints after an error. If the error persists, review Yealink's original error details and confirm your API permissions with Yealink support.
+For a regular Yealink account, open **Vendor Cloud > Yealink > API Credentials**, enable **Require serial number**, and save each phone's serial number before retrying. If the error persists, contact Yealink support to confirm your account permissions.
 
 ### The device is listed but Last Contact is empty
 
 - Factory-reset a previously used phone.
-- Confirm the phone model and firmware support RPS bootstrap.
+- Confirm the phone model and firmware support RPS.
 - Verify internet, DNS, HTTPS, and firewall access.
 - Confirm that the RPS server points to the public FS PBX `/prov/` URL.
 - Confirm that the phone trusts the FS PBX certificate.
@@ -195,14 +176,11 @@ Yealink restricts `/v2/rps/addDevicesByMac` to authorized accounts. For a regula
 
 - Verify the assigned extension and device lines.
 - Check the SIP username, password, server address, and transport.
-- Open **Registrations** and inspect FreeSWITCH logs.
 - Use the device's three-dot menu and select **Sync** after correcting its configuration.
 
 ### The status remains on Adding
 
-- Confirm that the FS PBX queue worker is running.
-- Review Horizon and the Laravel log for a failed cloud-provider job.
-- Reopen the device and use **Refresh** if the action completed but the UI is stale.
+Reopen the device and use **Refresh**. If the status still does not change, contact your FS PBX support team with the phone's MAC address and the displayed status.
 
 ## Removing devices and servers
 

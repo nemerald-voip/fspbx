@@ -7,6 +7,8 @@ sidebar_position: 1
 
 # Voicemail Email Notifications
 
+For a new mailbox, start with [Voicemail Basics](/docs/getting-started/voicemail-basics/) to enable voicemail, set a password, and record a greeting before configuring email delivery.
+
 FS PBX can automatically send an email notification each time a new voicemail is received.\
 Notifications can include caller details, timestamps, message length, transcription, and optionally the voicemail audio file as an attachment.
 
@@ -27,7 +29,7 @@ If you upgraded from FusionPBX or an older FS PBX version, you may need to **upd
 --------------------------------
 
 Before enabling voicemail notifications, make sure your email settings are correctly configured in your `.env` file.\
-If not, follow the [Email Settings Guide](tutorials/04-getting-started/01-email-settings.md) first.
+If not, follow the [Email Settings Guide](/docs/getting-started/email-settings/) first.
  
 * * * * *
 

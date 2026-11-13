@@ -140,10 +140,11 @@ class SwitchVariableService
         return $count;
     }
 
-    public function syncAndReloadXml(): void
+    public function syncAndReloadXml(?string $expectedHostname = null): void
     {
         try {
-            if (! $this->syncVarsXml()) {
+            $written = $expectedHostname === null ? $this->syncVarsXml() : $this->writeVarsXml(true, $expectedHostname);
+            if (! $written) {
                 throw new \RuntimeException(__('Unable to write vars.xml. Check the switch conf directory setting.'));
             }
 
@@ -186,6 +187,11 @@ class SwitchVariableService
 
     public function syncVarsXml(bool $clearSessionCache = true): bool
     {
+        return $this->writeVarsXml($clearSessionCache);
+    }
+
+    private function writeVarsXml(bool $clearSessionCache, ?string $expectedHostname = null): bool
+    {
         if ($clearSessionCache) {
             session()->forget('user_defined_variables');
         }
@@ -198,6 +204,9 @@ class SwitchVariableService
         File::ensureDirectoryExists($confDir);
 
         $hostname = $this->currentHostname();
+        if ($expectedHostname !== null && $hostname !== $expectedHostname) {
+            throw new \RuntimeException(__('The FreeSWITCH hostname changed. Refresh Network Setup on this server before synchronizing.'));
+        }
         $xml = '';
         $previousCategory = null;
 
