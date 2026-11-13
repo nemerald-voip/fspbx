@@ -136,13 +136,13 @@
                     </TransitionChild>
                 </div>
             </div>
+
+            <ConfirmationModal :show="showRemoveConfirmation" @close="showRemoveConfirmation = false"
+                @confirm="deleteSelectedMembers" :header="$t('Remove Members')"
+                :text="$t('Remove the selected users from this group?')" :confirm-button-label="$t('Remove')"
+                :cancel-button-label="$t('Cancel')" />
         </Dialog>
     </TransitionRoot>
-
-    <ConfirmationModal :show="showRemoveConfirmation" @close="showRemoveConfirmation = false"
-        @confirm="deleteSelectedMembers" :header="$t('Remove Members')"
-        :text="$t('Remove the selected users from this group?')" :confirm-button-label="$t('Remove')"
-        :cancel-button-label="$t('Cancel')" />
 </template>
 
 <script setup>
