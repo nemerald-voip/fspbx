@@ -26,6 +26,9 @@ mod_ssml mod_python mod_yaml mod_raven mod_xml_radius
 # BroadVoice is deliberately omitted from FS PBX installs as well.
 EXCLUDED_MODULES = RETIRED_MODULES | {"mod_bv"}
 
+# Modules installed separately from the FreeSWITCH source tree.
+EXTERNAL_MODULES = {"mod_bcg729"}
+
 def inventory(root):
     root = Path(root)
     result = {}
@@ -146,6 +149,12 @@ def select_modules(source, conf, baseline, output):
     available = {p.parent.name: str(p.parent.relative_to(source / "src/mod"))
                  for p in (source / "src/mod").glob("*/mod_*/Makefile.am")}
     required = loaded_modules(conf) - EXCLUDED_MODULES
+
+    # External modules are installed separately and should not block
+    # FreeSWITCH compilation, whether or not they are currently installed.
+    external = (required & EXTERNAL_MODULES) - available.keys()
+    required -= external
+
     missing = required - available.keys()
     if missing:
         raise ValueError("Enabled modules unavailable in the new source: " + ", ".join(sorted(missing))
@@ -218,9 +227,18 @@ def main():
         elif args.command == "select-modules":
             select_modules(args.source, args.conf, args.baseline, args.output)
         elif args.command == "check-modules":
-            missing = [name for name in sorted(loaded_modules(args.conf) - EXCLUDED_MODULES) if not (Path(args.module_dir) / (name + ".so")).is_file()]
+            required = loaded_modules(args.conf) - EXCLUDED_MODULES - EXTERNAL_MODULES
+
+            missing = [
+                name for name in sorted(required)
+                if not (Path(args.module_dir) / (name + ".so")).is_file()
+            ]
+
             if missing:
-                raise ValueError("Enabled modules missing from the candidate build: " + ", ".join(missing))
+                raise ValueError(
+                    "Enabled modules missing from candidate build: "
+                    + ", ".join(missing)
+                )
         elif args.command == "prune-retired":
             prune_retired(args.conf)
         elif args.command == "retire-binaries":
