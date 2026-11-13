@@ -26,6 +26,9 @@ mod_ssml mod_python mod_yaml mod_raven mod_xml_radius
 # BroadVoice is deliberately omitted from FS PBX installs as well.
 EXCLUDED_MODULES = RETIRED_MODULES | {"mod_bv"}
 
+# Modules installed separately from the FreeSWITCH source tree.
+EXTERNAL_MODULES = {"mod_bcg729"}
+
 def inventory(root):
     root = Path(root)
     result = {}
@@ -141,11 +144,20 @@ def loaded_modules(conf, files=None):
     return names
 
 
-def select_modules(source, conf, baseline, output):
+def select_modules(source, conf, baseline, output, installed_module_dir):
     source = Path(source)
     available = {p.parent.name: str(p.parent.relative_to(source / "src/mod"))
                  for p in (source / "src/mod").glob("*/mod_*/Makefile.am")}
     required = loaded_modules(conf) - EXCLUDED_MODULES
+    external = (required & EXTERNAL_MODULES) - available.keys()
+    missing_external = {
+        name for name in external
+        if not (Path(installed_module_dir) / (name + ".so")).is_file()
+    }
+    if missing_external:
+        raise ValueError("Enabled external modules are not installed: "
+                         + ", ".join(sorted(missing_external)))
+    required -= external
     missing = required - available.keys()
     if missing:
         raise ValueError("Enabled modules unavailable in the new source: " + ", ".join(sorted(missing))
@@ -195,11 +207,12 @@ def main():
         child.add_argument("backup")
         child.add_argument("target")
     child = commands.add_parser("select-modules")
-    for name in ("source", "conf", "baseline", "output"):
+    for name in ("source", "conf", "baseline", "output", "installed_module_dir"):
         child.add_argument(name)
     child = commands.add_parser("check-modules")
     child.add_argument("conf")
     child.add_argument("module_dir")
+    child.add_argument("installed_module_dir")
     child = commands.add_parser("prune-retired")
     child.add_argument("conf")
     child = commands.add_parser("retire-binaries")
@@ -216,11 +229,20 @@ def main():
         if args.command == "restore":
             restore(args.backup, args.target)
         elif args.command == "select-modules":
-            select_modules(args.source, args.conf, args.baseline, args.output)
+            select_modules(args.source, args.conf, args.baseline, args.output, args.installed_module_dir)
         elif args.command == "check-modules":
-            missing = [name for name in sorted(loaded_modules(args.conf) - EXCLUDED_MODULES) if not (Path(args.module_dir) / (name + ".so")).is_file()]
+            required = loaded_modules(args.conf) - EXCLUDED_MODULES
+            missing = [
+                name for name in sorted(required)
+                if not (Path(args.module_dir) / (name + ".so")).is_file()
+                and not (
+                    name in EXTERNAL_MODULES
+                    and (Path(args.installed_module_dir) / (name + ".so")).is_file()
+                )
+            ]
             if missing:
-                raise ValueError("Enabled modules missing from the candidate build: " + ", ".join(missing))
+                raise ValueError("Enabled modules missing from candidate build or installed external modules: "
+                                 + ", ".join(missing))
         elif args.command == "prune-retired":
             prune_retired(args.conf)
         elif args.command == "retire-binaries":
