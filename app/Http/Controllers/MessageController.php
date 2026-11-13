@@ -535,6 +535,8 @@ class MessageController extends Controller
             'recipients' => ['required_without:opt_out_message_uuid', 'array', 'min:1', 'max:20'],
             'recipients.*' => ['required', 'string', 'max:40'],
             'opt_out_message_uuid' => ['nullable', 'uuid'],
+        ], [
+            'recipients.required_without' => __('validation.required', ['attribute' => 'recipients']),
         ]);
         $extensionUuid = $this->authorizedExtension($data['extension_uuid']);
         $domain = $this->currentDomainUuid();
