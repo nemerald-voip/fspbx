@@ -98,8 +98,7 @@ class AccountSettingsController extends Controller
                 ],
                 'pms_provider_options' => app(PmsProviderSettings::class)->options(),
                 'messagingSettings' => [
-                    ...app(PhotoCompressionSettings::class)->settings(session('domain_uuid')),
-                    'available' => app(PhotoCompressionService::class)->available(),
+                    ...app(\App\Services\Messaging\MessagingPageSettings::class)->props(session('domain_uuid')),
                 ],
                 'messageWebhookSettings' => fn () => app(\App\Services\Messaging\MessageWebhookSettings::class)
                     ->props((string) session('domain_uuid'), \App\Services\Messaging\MessageSettingsAccess::canManage()),
@@ -320,7 +319,7 @@ class AccountSettingsController extends Controller
     public function updateMessaging(UpdateMessagingSettingsRequest $request, PhotoCompressionSettings $settings)
     {
         return response()->json([
-            ...$settings->save(session('domain_uuid'), $request->validated()),
+            ...app(\App\Services\Messaging\MessagingPageSettings::class)->save(session('domain_uuid'), $request->validated()),
             'available' => app(PhotoCompressionService::class)->available(),
             'messages' => ['success' => [__('Messaging settings saved.')]],
         ]);

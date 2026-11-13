@@ -91,8 +91,7 @@ class SystemSettingsController extends Controller
                     ? app(\App\Services\HomerApiService::class)->publicSettings() : null,
                 'messagingSettings' => function () {
                     return userCheckPermission('default_setting_view') ? [
-                        ...app(PhotoCompressionSettings::class)->settings(),
-                        'available' => app(PhotoCompressionService::class)->available(),
+                        ...app(\App\Services\Messaging\MessagingPageSettings::class)->props(),
                     ] : null;
                 },
                 'scheduled_jobs' => function () {
@@ -110,7 +109,7 @@ class SystemSettingsController extends Controller
     public function updateMessaging(UpdateMessagingSettingsRequest $request, PhotoCompressionSettings $settings): JsonResponse
     {
         return response()->json([
-            ...$settings->save(null, $request->validated()),
+            ...app(\App\Services\Messaging\MessagingPageSettings::class)->save(null, $request->validated()),
             'available' => app(PhotoCompressionService::class)->available(),
             'messages' => ['success' => [__('Messaging settings saved.')]],
         ]);

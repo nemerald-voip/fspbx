@@ -82,6 +82,8 @@ class InboundMessagePipeline
             if ($existing = $existingMessage()) {
                 // Recover a persisted event if queue dispatch failed previously.
                 if ($existing->isWebhookInbound()) app(MessageWebhookDeliveryService::class)->dispatch($existing);
+                app(MessageOptOutService::class)->dispatchConfirmation($existing);
+                app(MessageAutoReplyService::class)->dispatchReply($existing);
                 continue;
             }
             $group = null;
@@ -131,7 +133,7 @@ class InboundMessagePipeline
                     return [$existing, false];
                 }
 
-                return [$this->messages->storeInbound(
+                $message = $this->messages->storeInbound(
                     domainUuid: $route->domainUuid,
                     extensionUuid: $route->extensionUuid,
                     source: $event->from,
@@ -152,14 +154,21 @@ class InboundMessagePipeline
                         'participants' => $group
                             ? array_values(array_unique(array_merge([$local], $group->recipients))) : [],
                     ],
-                ), true];
+                );
+                app(MessageOptOutService::class)->recordIncoming($message);
+                app(MessageAutoReplyService::class)->recordIncoming($message);
+                return [$message, true];
             });
 
             if ($message->isWebhookInbound()) {
                 app(MessageWebhookDeliveryService::class)->dispatch($message);
                 continue;
             }
-            if (! $created) continue;
+            if (! $created) {
+                app(MessageOptOutService::class)->dispatchConfirmation($message);
+                app(MessageAutoReplyService::class)->dispatchReply($message);
+                continue;
+            }
 
             messaging_webhook_debug('Message saved', [
                 'message_uuid' => $message->message_uuid,
@@ -184,6 +193,8 @@ class InboundMessagePipeline
                     'email' => $route->email,
                 ]);
             }
+            app(MessageOptOutService::class)->dispatchConfirmation($message);
+            app(MessageAutoReplyService::class)->dispatchReply($message);
         }
     }
 

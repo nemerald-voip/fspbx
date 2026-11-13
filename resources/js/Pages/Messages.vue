@@ -149,9 +149,18 @@
                     </button>
                 </div>
 
+                <div v-if="groupOptOutAttempt" class="border-b border-amber-200 bg-amber-50 px-6 py-3 text-sm text-amber-900" role="status">
+                    <p>{{ $t('Message not sent. These recipients have opted out: :numbers', { numbers: groupOptOutAttempt.opt_out.blocked_recipients.join(', ') }) }}</p>
+                    <button v-if="groupOptOutAttempt.opt_out.can_start_conversation" type="button"
+                        class="mt-2 font-semibold text-indigo-700 hover:text-indigo-900 disabled:opacity-50"
+                        :disabled="startingGroupConversation" @click="startWithoutOptedOutRecipients">
+                        {{ $t('Start conversation without opted-out recipients') }}
+                    </button>
+                    <p v-else class="mt-1">{{ $t('All recipients have opted out. No conversation can be started.') }}</p>
+                </div>
                 <deep-chat :key="`${currentExtensionUuid}:${activeRoomId}`" ref="elementRef"
                     :connect="connectConfig" :images="chatImageInput" :onComponentRender="renderChatHistory"
-                    :messageStyles="chatMessageStyles" :textInput="chatTextInput"
+                    :messageStyles="chatMessageStyles" :textInput="chatTextInput" :defaultInput="chatDraftInput"
                     style="width: 100%; height: 100%; border: none; background-color: #f3f4f6;">
                 </deep-chat>
             </main>
@@ -445,7 +454,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, onBeforeUnmount, nextTick, watch } from "vue";
+import { computed, onMounted, ref, shallowRef, onBeforeUnmount, nextTick, watch } from "vue";
 import axios from 'axios';
 import { Head } from '@inertiajs/vue3';
 import 'deep-chat'; // Registers the web component
@@ -476,6 +485,9 @@ const loadingRooms = ref(false);
 const hidingRoom = ref(null);
 const conversationToDelete = ref(null);
 const currentHistory = ref([]); // Messages for the active room
+const groupOptOutAttempt = ref(null);
+const startingGroupConversation = ref(false);
+const chatDraftInput = shallowRef(undefined);
 const showCreateModal = ref(false);
 const currentExtensionUuid = ref(null);
 const notificationType = ref(null);
@@ -513,6 +525,8 @@ let historyGeneration = 0; // bumps when the active room changes
 let keepPlaceOnRender = null; // 'prepend' while adding earlier messages above the reader
 
 watch(() => activeRoomId.value, () => {
+    groupOptOutAttempt.value = null;
+    chatDraftInput.value = undefined;
     historyGeneration++;
     loadedRows.clear();
     hasOlderMessages = false;
@@ -933,6 +947,8 @@ async function fetchMessages(roomId) {
         // reader scrolled to stay in place when a new message arrives.
         if (!loadedRows.size) hasOlderMessages = !!data.has_more;
         rawMessages.forEach(row => loadedRows.set(row.id, row));
+        const latestOutbound = loadedRowsOldestFirst().reverse().find(row => row.role === 'user');
+        groupOptOutAttempt.value = latestOutbound?.opt_out ? latestOutbound : null;
         currentHistory.value = loadedHistory();
         await nextTick();
         if (requestId === historyRequest && activeRoomId.value === roomId
@@ -953,11 +969,13 @@ async function fetchMessages(roomId) {
     }
 }
 
-// Loaded rows oldest -> newest, matching the API's created_at + message_uuid order
+// Match API ordering, keeping automatic replies after incoming messages in the same second.
 function loadedRowsOldestFirst() {
     const compare = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
     return [...loadedRows.values()].sort((a, b) =>
-        compare(String(a.timestamp), String(b.timestamp)) || compare(String(a.id), String(b.id)));
+        compare(String(a.timestamp), String(b.timestamp))
+        || (a.reply_order || 0) - (b.reply_order || 0)
+        || compare(String(a.id), String(b.id)));
 }
 
 function loadedHistory() {
@@ -1003,6 +1021,8 @@ const connectConfig = {
             const messageObj = msgBody.messages[0] || {};
             const text = messageObj.text || '';
             const files = messageObj.files || []; // <--- This prevents the ReferenceError
+            // Consume the restored draft only on an explicit send, never on a history refresh.
+            if (chatDraftInput.value) chatDraftInput.value = undefined;
 
             const currentId = activeRoomId.value;
 
@@ -1177,6 +1197,31 @@ function normalizeMessageForDeepChat(row) {
 }
 
 // --- Action: Handle Form Submit ---
+const startWithoutOptedOutRecipients = async () => {
+    if (startingGroupConversation.value || !groupOptOutAttempt.value) return;
+    startingGroupConversation.value = true;
+    const originalRoom = activeRoomId.value;
+    const extension = currentExtensionUuid.value;
+    try {
+        const { data } = await axios.post(props.routes.prepareConversation, {
+            source: currentRoom.value.my_number, extension_uuid: extension,
+            opt_out_message_uuid: groupOptOutAttempt.value.id,
+        });
+        const files = await Promise.all((data.draft.media || []).map(async media => {
+            const response = await axios.get(media.url, { responseType: 'blob' });
+            return new File([response.data], media.name, { type: response.data.type });
+        }));
+        if (extension !== currentExtensionUuid.value || originalRoom !== activeRoomId.value) return;
+        const room = data.room;
+        if (!rooms.value.some(existing => existing.id === room.id)) rooms.value.unshift(room);
+        await selectRoom(room.id);
+        if (extension !== currentExtensionUuid.value || activeRoomId.value !== room.id) return;
+        chatDraftInput.value = { text: data.draft.text || '', files };
+    } catch (error) {
+        handleErrorResponse(error);
+    } finally { startingGroupConversation.value = false; }
+};
+
 const handleCreateRoom = async (form$) => {
     if (creatingConversation.value) return;
     clearServerFormErrors(form$);
@@ -1263,13 +1308,17 @@ const createRoomSchema = computed(() => {
             type: 'tags',
             label: newConversationRecipientLimit.value > 1 ? trans('Recipients') : trans('Recipient'),
             placeholder: trans('Enter a phone number and press Enter'),
-            description: newConversationRecipientLimit.value > 1
-                ? trans('Add up to :count recipients. Everyone in the group sees replies.', { count: newConversationRecipientLimit.value })
-                : trans('This sending number supports one recipient per conversation.'),
             items: [], create: true, search: true, native: false,
-            max: newConversationRecipientLimit.value,
             closeOnSelect: true, inputType: 'search', autocomplete: 'off',
             floating: false,
+        },
+        recipient_help: {
+            type: 'static',
+            tag: 'p',
+            attrs: { class: newConversationRecipientLimit.value === 1 ? 'text-red-600' : '' },
+            content: newConversationRecipientLimit.value > 1
+                ? trans('Add up to :count recipients. Everyone in the group sees replies.', { count: newConversationRecipientLimit.value })
+                : trans('This sending number supports one recipient per conversation.'),
         },
         submit: {
             type: 'button',

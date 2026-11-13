@@ -47,7 +47,7 @@ class MessageSettingsController extends Controller
         return Inertia::render(
             $this->viewName,
             [
-                'permissions' => ['manage' => MessageSettingsAccess::canManage()],
+                'permissions' => ['manage' => MessageSettingsAccess::canManage(), 'opt_out_manage' => userCheckPermission('message_opt_out_manage')],
                 'webhook_available' => app(MessageWebhookSettings::class)->available(),
                 'routes' => [
                     'current_page' => route('messages.settings'),
@@ -84,6 +84,7 @@ class MessageSettingsController extends Controller
                     ])
                     ->when(app(MessageWebhookSettings::class)->available(),
                         fn ($query) => $query->addSelect(['inbound_delivery', 'inbound_webhook_url']))
+                    ->when(app(\App\Services\Messaging\MessageOptOutService::class)->available(), fn ($query) => $query->addSelect('opt_out_enabled'))
                     ->whereKey($itemUuid)
                     ->whereIn('domain_uuid', MessageSettingsAccess::domains())
                     ->firstOrFail();
@@ -124,6 +125,12 @@ class MessageSettingsController extends Controller
 
             // Construct the itemOptions object
             $itemOptions = [
+                'opt_out_scope' => app(\App\Services\Messaging\MessageOptOutSettings::class)
+                    ->props($item->domain_uuid ?? session('domain_uuid'))['opt_out_effective_scope'],
+                'opt_out_available' => app(\App\Services\Messaging\MessageOptOutService::class)->available()
+                    && app(\App\Services\Messaging\MessageOptOutService::class)->eligible($item ?? new MessageSetting(['domain_uuid' => session('domain_uuid')])),
+                'opt_out_route' => isset($item) && userCheckPermission('message_opt_out_manage')
+                    ? route('messages.opt-outs.index', ['setting' => $item->getKey()]) : null,
                 'webhook' => [
                     ...app(MessageWebhookSettings::class)
                         ->props($webhookDomain = (string) ($item->domain_uuid ?? session('domain_uuid'))),
@@ -183,6 +190,7 @@ class MessageSettingsController extends Controller
             ])
             ->when(app(MessageWebhookSettings::class)->available(),
                 fn ($query) => $query->addSelect(['inbound_delivery', 'inbound_webhook_url']))
+            ->when(app(\App\Services\Messaging\MessageOptOutService::class)->available(), fn ($query) => $query->addSelect('opt_out_enabled'))
             ->with('domain:domain_uuid,domain_name,domain_description')
             ->allowedFilters([
                 AllowedFilter::callback('search', function ($query, $value) {
@@ -223,6 +231,12 @@ class MessageSettingsController extends Controller
         }
 
         foreach ($rows as $destination) {
+            $autoReplies = app(\App\Services\Messaging\MessageAutoReplyService::class);
+            $destination->auto_replies_available = $autoReplies->available() && $autoReplies->eligible($destination);
+            $destination->auto_replies_route = route('messages.auto-replies.index', ['setting' => $destination->getKey()]);
+            $optOuts = app(\App\Services\Messaging\MessageOptOutService::class);
+            $destination->opt_out_available = $optOuts->available() && $optOuts->eligible($destination);
+            $destination->opt_out_route = route('messages.opt-outs.index', ['setting' => $destination->getKey()]);
             $match = $extensions->first(function ($ext) use ($destination) {
                 return $ext->domain_uuid === $destination->domain_uuid
                     && $ext->extension === $destination->chatplan_detail_data;

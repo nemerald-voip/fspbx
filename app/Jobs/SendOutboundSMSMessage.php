@@ -105,6 +105,9 @@ class SendOutboundSMSMessage implements ShouldQueue
                     'provider_class' => get_class($provider),
                 ]);
 
+                // Check the current opt-out list after preparation, immediately before delivery.
+                if (app(\App\Services\Messaging\MessageOptOutService::class)->block($message)) return;
+
                 $result = $provider->send($message);
 
                 messaging_webhook_debug('SendOutboundMessage provider result', [

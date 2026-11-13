@@ -51,6 +51,7 @@
                                     email: options.item.email,
                                     description: options.item.description,
                                     ...messageDeliveryDefaults(options.item, options.webhook),
+                                    opt_out_enabled: !!options.item.opt_out_enabled,
 
                                 }" @mounted="(form) => form.disableValidation()" @submit="clearServerFormErrors">
 
@@ -96,6 +97,16 @@
                                             }" />
 
                                         <MessageDeliveryFields :settings="options.webhook" :extensions="options.extensions" />
+                                        <ToggleElement v-if="options.opt_out_available && options.opt_out_scope === 'number'" name="opt_out_enabled" :text="$t('Enable opt out')"
+                                            :conditions="[form => !options.webhook?.available || form.data.inbound_delivery === 'members']"
+                                            :true-value="true" :false-value="false"
+                                            :description="$t('An SMS matching an opt-out keyword blocks further Messages and Ringotel sends to that recipient. Manage keywords in Account Settings. Customer API sends are excluded.')" />
+                                        <StaticElement v-if="options.opt_out_available && options.opt_out_scope === 'account'" name="opt_out_account"
+                                            :content="$t('Account-wide opt-out handling is enabled for every phone number. Individual numbers cannot be excluded.')" />
+                                        <StaticElement v-if="options.opt_out_available && options.opt_out_route" name="manage_opt_outs">
+                                            <button type="button" class="text-sm font-medium text-indigo-600 hover:text-indigo-500"
+                                                @click="emit('manage-opt-outs', { route: options.opt_out_route, destination: options.item.destination_formatted || options.item.destination })">{{ $t('Manage opt-outs') }}</button>
+                                        </StaticElement>
 
                                         <TextareaElement :label="$t('Description')" name="description" :rows="2" />
 
@@ -129,7 +140,7 @@ import { XMarkIcon } from "@heroicons/vue/24/solid";
 import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
 
 
-const emit = defineEmits(['close', 'error', 'success', 'refresh-data', 'open-edit-form'])
+const emit = defineEmits(['close', 'error', 'success', 'refresh-data', 'open-edit-form', 'manage-opt-outs'])
 
 const props = defineProps({
     show: Boolean,

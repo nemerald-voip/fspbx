@@ -10,12 +10,12 @@ class MessageCarrierCapabilities
 {
     public function supportsGroups(string $carrier): bool
     {
-        return in_array($carrier, ['sinch', 'bandwidth'], true);
+        return in_array($carrier, ['sinch', 'bandwidth', 'voxutel'], true);
     }
 
     public function recipientLimit(string $carrier, string $source): int
     {
-        if ($carrier === 'sinch') {
+        if (in_array($carrier, ['sinch', 'voxutel'], true)) {
             return 20;
         }
 

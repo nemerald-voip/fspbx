@@ -90,6 +90,7 @@ class InboundShortCodeMessageTest extends TestCase
         Model::clearBootedModels();
         $app->instance('db', $this->db->getDatabaseManager());
         $schema = $this->db->getConnection()->getSchemaBuilder();
+        $app->instance('db.schema', $schema);
         $schema->create('messages', function (Blueprint $table) {
             $table->uuid('message_uuid')->primary();
             foreach (['domain_uuid', 'extension_uuid', 'source', 'destination', 'direction', 'message_group_uuid', 'type', 'reference_id', 'status', 'message'] as $column) {

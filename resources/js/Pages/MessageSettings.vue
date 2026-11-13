@@ -131,6 +131,21 @@
                     <TableField class="whitespace-nowrap text-sm text-gray-500">
 
                         <template #action-buttons>
+                            <div class="flex items-center whitespace-nowrap">
+                            <button v-if="permissions.manage && row.auto_replies_available" type="button"
+                                :title="$t('Auto-replies')" :aria-label="$t('Auto-replies')"
+                                class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600"
+                                @click="autoReplyTarget = { route: row.auto_replies_route, destination: row.destination_formatted }">
+                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M20 14a3 3 0 0 1-3 3H9l-5 4V6a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v8Z M10 7l-3 3 3 3 M7 10h6a3 3 0 0 1 3 3" />
+                                </svg>
+                            </button>
+                            <button v-if="permissions.opt_out_manage && row.opt_out_available" type="button"
+                                :title="$t('Manage opt-outs')" :aria-label="$t('Manage opt-outs')"
+                                class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600"
+                                @click="openOptOuts({ route: row.opt_out_route, destination: row.destination_formatted })">
+                                <MinusCircleIcon class="h-5 w-5" />
+                            </button>
 
                             <div v-if="permissions.manage" class="flex items-center whitespace-nowrap">
                                 <ejs-tooltip :content="$t('Edit')" position='TopCenter'
@@ -149,6 +164,7 @@
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
+                            </div>
                             </div>
                         </template>
                     </TableField>
@@ -183,6 +199,7 @@
         @success="showNotification" :loading="isModalLoading" />
 
     <UpdateMessageSettingsForm :show="showUpdateModal" :options="itemOptions" :loading="isModalLoading"  @refresh-data="handleSearchButtonClick"
+        @manage-opt-outs="openOptOuts"
         @error="error => showNotification('error', error.response.data.errors)"
         @success="showNotification" @close="showUpdateModal = false" />
 
@@ -195,6 +212,19 @@
         </template>
     </AddEditItemModal>
 
+    <AddEditItemModal :show="!!optOutTarget" :header="$t('Manage opt-outs')" @close="optOutTarget = null">
+        <template #modal-body>
+            <MessageOptOutsForm v-if="optOutTarget" :key="optOutTarget.route" v-bind="optOutTarget"
+                @success="messages => showNotification('success', messages)" @error="messages => showNotification('error', messages)" />
+        </template>
+    </AddEditItemModal>
+    <AddEditItemModal :show="!!autoReplyTarget" :header="$t('Auto-replies')" @close="autoReplyTarget = null">
+        <template #modal-body>
+            <MessageAutoRepliesForm v-if="autoReplyTarget" :key="autoReplyTarget.route" v-bind="autoReplyTarget"
+                @success="messages => { showNotification('success', messages); autoReplyTarget = null; }"
+                @error="messages => showNotification('error', messages)" />
+        </template>
+    </AddEditItemModal>
     <DeleteConfirmationModal :show="showConfirmationModal" @close="showConfirmationModal = false"
         @confirm="confirmDeleteAction" />
         
@@ -205,6 +235,9 @@
 </template>
 
 <script setup>
+import MessageOptOutsForm from './components/forms/MessageOptOutsForm.vue';
+import MessageAutoRepliesForm from './components/forms/MessageAutoRepliesForm.vue';
+import { MinusCircleIcon } from '@heroicons/vue/24/outline';
 import { trans } from '@i18n';
 import { ref, onMounted, computed } from "vue";
 import axios from 'axios';
@@ -247,6 +280,9 @@ const bulkUpdateFormSubmiting = ref(null);
 const formErrors = ref(null);
 const confirmDeleteAction = ref(null);
 const itemOptions = ref([])
+const optOutTarget = ref(null);
+const autoReplyTarget = ref(null);
+const openOptOuts = target => { optOutTarget.value = target; };
 let tooltipCopyContent = ref(trans('Copy to Clipboard'));
 const data = ref({
     data: [],

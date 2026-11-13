@@ -110,6 +110,21 @@ class MessageSettingsService
             $attributes['enabled'] = $attributes['enabled'] ? 'true' : 'false';
         }
         $setting->fill($attributes);
+        if (!$setting->exists && !array_key_exists('opt_out_enabled', $data)) {
+            $optOuts = app(MessageOptOutService::class);
+            if ($optOuts->available()) {
+                $setting->opt_out_enabled = $optOuts->eligible($setting) && $optOuts->scope($setting) === 'number';
+            }
+        }
+        if (array_key_exists('opt_out_enabled', $data)) {
+            $optOuts = app(MessageOptOutService::class);
+            if (!$optOuts->available() || (!$optOuts->eligible($setting) && $data['opt_out_enabled'])) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'opt_out_enabled' => [__('Opt-out handling is disabled or unavailable for this account.')],
+                ]);
+            }
+            $setting->opt_out_enabled = $data['opt_out_enabled'];
+        }
         if ($setting->inbound_delivery === 'webhook') {
             // A custom webhook replaces extension and email delivery entirely, so the
             // number keeps no recipients that could still send or receive from it.
