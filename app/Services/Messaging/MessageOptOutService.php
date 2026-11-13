@@ -151,7 +151,7 @@ class MessageOptOutService
             $this->blockedRecipients($message->domain_uuid, $message->source, $group->recipients)));
     }
 
-    /** Called before queueing and again immediately before carrier delivery, including retries. */
+    /** Called by the outbound worker immediately before carrier delivery, including retries. */
     public function block(Messages $message): bool
     {
         // Customer API and application notifications never enter opt-out handling.
