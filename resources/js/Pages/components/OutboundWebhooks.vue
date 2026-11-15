@@ -110,6 +110,7 @@
 import { computed, onUnmounted, ref, watch } from 'vue';
 import axios from 'axios';
 import moment from 'moment-timezone';
+import { useDateTimeFormat } from '../../composables/useDateTimeFormat.js';
 import { trans } from '@i18n';
 import Paginator from '@generalComponents/Paginator.vue';
 import DatePicker from '@generalComponents/DatePicker.vue';
@@ -127,7 +128,8 @@ const expandedRow = ref(null);
 let activeRequest;
 const statusLabels = computed(() => ({ pending: trans('Pending'), retrying: trans('Retrying'), delivered: trans('Delivered'), failed: trans('Failed') }));
 const statusColor = (status) => ({ delivered: 'bg-green-50 text-green-700', failed: 'bg-red-50 text-red-700', retrying: 'bg-yellow-50 text-yellow-800' }[status] || 'bg-gray-100 text-gray-700');
-const formatDate = (date) => date ? moment.utc(date).tz(props.timezone || 'UTC').format('MMM D, YYYY h:mm:ss A') : '—';
+const dateTimeFormat = useDateTimeFormat();
+const formatDate = (date) => date ? moment.utc(date).tz(props.timezone || 'UTC').format(dateTimeFormat.dateThenTime()) : '—';
 const accountLabel = (row) => row.domain?.domain_description || row.domain?.domain_name || (row.domain_uuid ? row.domain_uuid : trans('System'));
 
 async function fetchData(page = 1) {

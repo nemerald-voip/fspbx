@@ -103,7 +103,7 @@ class SendTranscriptionEmail implements ShouldQueue
             // 3. Prepare Display Data
             $data = [
                 'id'             => $transcription->uuid,
-                'date'           => $transcription->created_at->format('F j, Y @ g:i A'),
+                'date'           => $transcription->created_at->format(local_date_format(null, true) . ' @ ' . local_time_format(null, false)),
                 'duration'       => gmdate("i:s", $resultPayload['audio_duration'] ?? 0),
                 'sentiment'      => ucfirst($summaryPayload['sentiment_overall'] ?? 'Neutral'),
                 'summary'        => $summaryPayload['summary'] ?? 'No summary available.',

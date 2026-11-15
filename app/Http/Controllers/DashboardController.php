@@ -281,7 +281,7 @@ class DashboardController extends Controller
             'local' => array_sum(array_column($hours, 'local')),
             'hours' => collect($hours)->map(fn (array $counts, int $hour) => [
                 'hour' => $hour,
-                'label' => Carbon::createFromTime($hour)->format('g A'),
+                'label' => Carbon::createFromTime($hour)->format(local_hour_format($domainUuid)),
                 'inbound' => $counts['inbound'],
                 'outbound' => $counts['outbound'],
                 'local' => $counts['local'],

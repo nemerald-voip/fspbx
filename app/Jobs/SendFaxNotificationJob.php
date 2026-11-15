@@ -216,13 +216,13 @@ class SendFaxNotificationJob implements ShouldQueue
         if (!empty($log->fax_epoch)) {
             return Carbon::createFromTimestamp((int) $log->fax_epoch, 'UTC')
                 ->setTimezone($timeZone)
-                ->format('g:i:s A M d, Y');
+                ->format(local_datetime_format($domainUuid));
         }
 
         if (!empty($log->fax_date)) {
             return Carbon::parse($log->fax_date, 'UTC')
                 ->setTimezone($timeZone)
-                ->format('g:i:s A M d, Y');
+                ->format(local_datetime_format($domainUuid));
         }
 
         return null;

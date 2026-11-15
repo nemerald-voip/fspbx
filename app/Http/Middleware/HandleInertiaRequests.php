@@ -61,6 +61,9 @@ class HandleInertiaRequests extends Middleware
 
             'selectedDomainUuid' => Session::get('domain_uuid'),
 
+            // Date/time notation of the selected account (see get_local_date_time_formats()).
+            'dateTimeFormats' => fn () => Session::get('domain_uuid') ? get_local_date_time_formats() : null,
+
             'domains' => Session::get("domains"),
 
             'csrf_token' => csrf_token(),

@@ -257,6 +257,7 @@
 import { computed, ref, watch } from 'vue';
 import axios from 'axios';
 import moment from 'moment-timezone';
+import { useDateTimeFormat } from '../../composables/useDateTimeFormat.js';
 import { trans } from '@i18n';
 import Paginator from '@generalComponents/Paginator.vue';
 import DatePicker from '@generalComponents/DatePicker.vue';
@@ -359,8 +360,9 @@ const toggleExpand = (uuid) => {
     expandedRow.value = expandedRow.value === uuid ? null : uuid;
 };
 
+const dateTimeFormat = useDateTimeFormat();
 const formatDate = (value) => value
-    ? moment.utc(value).tz(props.timezone).format('h:mm:ss A MMM D, YYYY')
+    ? moment.utc(value).tz(props.timezone).format(dateTimeFormat.dateTime())
     : '';
 const displayValue = (value) => value === null || value === undefined || value === '' ? trans('N/A') : value;
 const hasPayload = (row) => row.request_payload && typeof row.request_payload === 'object';

@@ -841,6 +841,10 @@ class SettingsManagementService
             FusionCache::clear('dialplan:mode');
         }
 
+        if ($setting['category'] === 'domain' && in_array($setting['subcategory'], ['date_format', 'time_format'], true)) {
+            $this->clearDateTimeFormatCache($scope === 'domain' ? ($setting['domain_uuid'] ?? null) : null);
+        }
+
         if ($setting['category'] === 'domain' && $setting['subcategory'] === 'time_zone' && $setting['name'] === 'name') {
             $this->clearTimeZoneCache($scope === 'domain' ? ($setting['domain_uuid'] ?? null) : null);
 
@@ -852,6 +856,20 @@ class SettingsManagementService
                 FusionCache::clear('dialplan:public');
             }
         }
+    }
+
+    private function clearDateTimeFormatCache(?string $domainUuid = null): void
+    {
+        if ($domainUuid) {
+            Cache::forget("{$domainUuid}_dateTimeFormats");
+            return;
+        }
+
+        Domain::query()
+            ->pluck('domain_uuid')
+            ->each(fn (string $uuid) => Cache::forget("{$uuid}_dateTimeFormats"));
+
+        Cache::forget('_dateTimeFormats');
     }
 
     private function clearTimeZoneCache(?string $domainUuid = null): void

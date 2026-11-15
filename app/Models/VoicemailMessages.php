@@ -35,7 +35,7 @@ class VoicemailMessages extends Model
 
                 return Carbon::createFromTimestamp($this->created_epoch)
                     ->setTimezone($timeZone)
-                    ->format('g:i:s A M d, Y');
+                    ->format(local_datetime_format($this->domain_uuid));
             }
         );
     }

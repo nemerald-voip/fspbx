@@ -63,7 +63,7 @@ class Devices extends Model
             return null;
         }
         $timeZone = get_local_time_zone($this->domain_uuid);
-        return Carbon::parse($this->device_provisioned_date)->setTimezone($timeZone)->format('g:i:s A M d, Y');
+        return Carbon::parse($this->device_provisioned_date)->setTimezone($timeZone)->format(local_datetime_format($this->domain_uuid));
     }
 
     public function getDeviceAddressFormattedAttribute()

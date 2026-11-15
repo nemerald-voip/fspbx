@@ -25,7 +25,7 @@ class VoicemailEscalationCompletionMail extends BaseMailable
             'message_length_seconds' => $notification->message_length_seconds ?? '—',
             'message_left_at' => optional($notification->message_left_at)?->copy()
                 ->timezone($timezone)
-                ->format('Y-m-d g:i:s A T') ?? '—',
+                ->format('Y-m-d ' . local_time_format($notification->domain_uuid) . ' T') ?? '—',
             'accepted_by_number' => $notification->accepted_by_number ?? '—',
             'current_retry' => $notification->current_retry ?? 0,
             'current_priority' => $notification->current_priority ?? '—',
@@ -38,7 +38,7 @@ class VoicemailEscalationCompletionMail extends BaseMailable
                 $context = is_array($log->context) ? $log->context : [];
 
                 return [
-                    'time' => optional($log->created_at)?->copy()->timezone($timezone)->format('Y-m-d g:i:s A T') ?? '—',
+                    'time' => optional($log->created_at)?->copy()->timezone($timezone)->format('Y-m-d ' . local_time_format($notification->domain_uuid) . ' T') ?? '—',
                     'level' => strtoupper($log->level ?? 'info'),
                     'message' => $log->message,
                     'destination' => $context['destination'] ?? '—',
