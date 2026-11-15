@@ -23,7 +23,7 @@
                         <ToggleElement name="enabled" :text="$t('Enabled')" label="&nbsp;" :default="true"
                             :true-value="true" :false-value="false" :columns="{ sm: { container: 4 } }" />
                         <TagsElement name="keywords" :label="$t('Keywords')" :floating="false" :items="[]"
-                            :search="true" :create="true" :append-new-option="false" :add-option-on="['enter']"
+                            :search="true" :create="true" allow-absent :append-new-option="false" :add-option-on="['enter']"
                             :conditions="[[`rules.${index}.trigger`, 'keyword']]"
                             :description="$t('Type a keyword and press Enter. Matches the whole message, ignoring capitalization.')" />
                         <StaticElement name="first_help" :conditions="[[`rules.${index}.trigger`, 'first']]"
