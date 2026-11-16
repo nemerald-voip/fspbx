@@ -112,6 +112,8 @@ class PaymentGatewayController extends Controller
      */
     public function test(Request $request)
     {
+        abort_unless(userCheckPermission('payment_gateways_view'), 403);
+
         $data = $request->validate([
             'uuid'       => ['nullable', 'uuid', 'exists:payment_gateways,uuid'],
             'mode'       => ['required', 'in:test,live'],
@@ -160,6 +162,8 @@ class PaymentGatewayController extends Controller
 
     public function deactivate()
     {
+        abort_unless(userCheckPermission('payment_gateways_view'), 403);
+
         $validated = request()->validate([
             'uuid' => ['required', 'uuid', 'exists:payment_gateways,uuid'],
         ], \App\Support\Localization\ValidationMessages::common(), ['uuid' => __('Payment Gateway')]);

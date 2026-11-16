@@ -20,6 +20,7 @@ use App\Http\Requests\StoreVirtualReceptionistRequest;
 use App\Http\Requests\UpdateVirtualReceptionistRequest;
 use App\Http\Requests\CreateVirtualReceptionistKeyRequest;
 use App\Http\Requests\UpdateVirtualReceptionistKeyRequest;
+use App\Http\Requests\ApplyVirtualReceptionistGreetingRequest;
 use App\Traits\ChecksLimits;
 
 class VirtualReceptionistController extends Controller
@@ -577,11 +578,14 @@ class VirtualReceptionistController extends Controller
         return $permissions;
     }
 
-    public function applyGreeting()
+    public function applyGreeting(ApplyVirtualReceptionistGreetingRequest $request)
     {
+        $inputs = $request->validated();
+        $ivrMenu = IvrMenus::where('domain_uuid', session('domain_uuid'))
+            ->findOrFail($inputs['ivr']);
+
         try {
-            $ivrMenu = IvrMenus::findOrFail(request('ivr'));
-            $ivrMenu->ivr_menu_greet_long = request('file_name');
+            $ivrMenu->ivr_menu_greet_long = $inputs['file_name'];
             $ivrMenu->save();
 
             return response()->json([

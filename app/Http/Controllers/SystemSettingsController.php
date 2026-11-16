@@ -227,6 +227,8 @@ class SystemSettingsController extends Controller
 
     public function getPaymentGatewayData(Request $request)
     {
+        abort_unless(userCheckPermission('payment_gateways_view'), 403);
+
         try {
             $gateways = PaymentGateway::with('settings')->get()
                 ->map(function ($gw) {

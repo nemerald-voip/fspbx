@@ -68,6 +68,8 @@ class FaxLogController extends Controller
 
     public function getData()
     {
+        abort_unless(session('domain_uuid') && userCheckPermission('fax_log_view'), 403);
+
         $params = request()->all();
         $params['paginate'] = 50;
 
@@ -197,6 +199,8 @@ class FaxLogController extends Controller
 
     public function selectAll()
     {
+        abort_unless(session('domain_uuid') && userCheckPermission('fax_log_view'), 403);
+
         try {
             $params = request()->all();
             $domainUuid = $this->requestedDomainUuid();
