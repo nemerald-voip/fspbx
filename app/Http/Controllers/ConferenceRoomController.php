@@ -49,7 +49,6 @@ class ConferenceRoomController extends Controller
                 'conference_profiles' => route('conference-profiles.index'),
                 'active_conferences' => route('active-conferences.index'),
                 'interactive' => url('/active-conferences/:uuid/interactive'),
-                'cdr' => '/app/conference_cdr/conference_cdr.php?id=:uuid',
                 'sessions' => '/app/conference_centers/conference_sessions.php?id=:uuid',
             ],
             'permissions' => $this->permissions(),
@@ -377,7 +376,6 @@ class ConferenceRoomController extends Controller
             'account_code' => userCheckPermission('conference_room_account_code'),
             'interactive_view' => userCheckPermission('conference_interactive_view'),
             'active_view' => userCheckPermission('conference_active_view'),
-            'cdr_view' => userCheckPermission('conference_cdr_view'),
             'session_view' => userCheckPermission('conference_session_view'),
             'view_all' => userCheckPermission('conference_room_view_all'),
         ];
