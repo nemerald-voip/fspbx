@@ -8,11 +8,13 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use App\Http\Requests\Concerns\NormalizesPhoneNumberConditions;
+use App\Http\Requests\Concerns\ValidatesPhoneNumberRouting;
 use App\Rules\ValidPhoneNumber;
 
 class UpdatePhoneNumberRequest extends FormRequest
 {
     use NormalizesPhoneNumberConditions;
+    use ValidatesPhoneNumberRouting;
 
     /**
      * Determine if the user is authorized to make this request.
@@ -21,12 +23,21 @@ class UpdatePhoneNumberRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return Auth::check();
+        if (! Auth::check() || ! userCheckPermission('destination_edit')) {
+            return false;
+        }
+
+        $number = $this->route('phone_number');
+        abort_unless($number->domain_uuid && ($number->domain_uuid === session('domain_uuid')
+            || userCheckPermission('destination_all')), 404);
+
+        return true;
     }
 
     public function rules(): array
     {
         return [
+            ...$this->phoneNumberRoutingRules(),
             // 'destination_number' => [
             //     'required',
             //     Rule::unique('App\Models\Destinations', 'destination_number')
@@ -88,16 +99,14 @@ class UpdatePhoneNumberRequest extends FormRequest
                 'string',
             ],
             'domain_uuid' => [
+                'bail',
                 'required',
+                'uuid',
                 Rule::exists('v_domains', 'domain_uuid')
             ],
             'destination_context' => [
                 'nullable',
                 'string',
-            ],
-            'routing_options' => [
-                'nullable',
-                'array',
             ],
             'hold_music' => ['nullable', 'string'],
             'destination_type_fax' => 'present',
@@ -145,9 +154,11 @@ class UpdatePhoneNumberRequest extends FormRequest
     public function prepareForValidation(): void
     {
         if (!$this->has('domain_uuid')) {
-            $this->merge(['domain_uuid' => session('domain_uuid')]);
+            $number = $this->route('phone_number');
+            $this->merge(['domain_uuid' => $number instanceof \App\Models\Destinations ? $number->domain_uuid : session('domain_uuid')]);
         }
         $this->normalizePhoneNumberConditions();
+        $this->normalizePhoneNumberRouting();
 
         if ($this->has('destination_type_fax')) {
             $this->merge([

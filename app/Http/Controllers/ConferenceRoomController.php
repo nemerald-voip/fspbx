@@ -49,7 +49,7 @@ class ConferenceRoomController extends Controller
                 'conference_profiles' => route('conference-profiles.index'),
                 'active_conferences' => route('active-conferences.index'),
                 'interactive' => url('/active-conferences/:uuid/interactive'),
-                'sessions' => '/app/conference_centers/conference_sessions.php?id=:uuid',
+                'sessions' => url('/conference-rooms/:uuid/sessions'),
             ],
             'permissions' => $this->permissions(),
         ]);

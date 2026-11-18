@@ -134,6 +134,12 @@ class LdapDirectory extends Model
     {
         $relativeDn = trim((string) $relativeDn, " \t\n\r\0\x0B,");
 
+        // Without a shared base, each search DN is a complete, independent path.
+        // Keep the existing resolution rules whenever a Base DN is configured.
+        if (trim((string) $this->base_dn) === '') {
+            return $relativeDn;
+        }
+
         if ($relativeDn !== '' && str_ends_with(mb_strtolower($relativeDn), mb_strtolower(trim($this->base_dn)))) {
             return $relativeDn;
         }

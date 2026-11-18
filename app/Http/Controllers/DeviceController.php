@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use App\Services\DeviceService;
+use App\Services\DeviceAccessService;
 use App\Services\DeviceActionService;
 use Spatie\QueryBuilder\QueryBuilder;
 use App\Services\FreeswitchEslService;
@@ -21,6 +22,9 @@ use App\Http\Requests\DuplicateDeviceRequest;
 use App\Http\Requests\StoreDeviceRequest;
 use App\Http\Requests\UpdateDeviceRequest;
 use App\Http\Requests\BulkUpdateDeviceRequest;
+use App\Http\Requests\BulkDeleteDeviceRequest;
+use App\Http\Requests\BulkUnassignDeviceRequest;
+use App\Http\Requests\DeviceItemOptionsRequest;
 use App\Http\Requests\SendDeviceActionRequest;
 use Spatie\QueryBuilder\AllowedSort;
 
@@ -39,6 +43,24 @@ class DeviceController extends Controller
     public function __construct()
     {
         $this->model = new Devices();
+
+        $permissions = [
+            'index' => 'device_view', 'getData' => 'device_view', 'selectAll' => 'device_view',
+            'store' => 'device_add', 'duplicate' => 'device_add',
+            'update' => 'device_edit', 'bulkUpdate' => 'device_edit',
+            'restart' => 'device_edit', 'sync' => 'device_edit',
+            'bulkDelete' => 'device_delete', 'destroy' => 'device_delete',
+            'assign' => 'extension_device_assign', 'bulkUnassign' => 'extension_device_unassign',
+        ];
+        $this->middleware(function ($request, $next) use ($permissions) {
+            $access = app(DeviceAccessService::class);
+            $access->currentDomain();
+            if ($permission = $permissions[$request->route()->getActionMethod()] ?? null) {
+                abort_unless(userCheckPermission($permission), 403);
+            }
+
+            return $next($request);
+        });
     }
 
     /**
@@ -105,22 +127,14 @@ class DeviceController extends Controller
     {
         $validated = $request->validated();
 
-        // 1. Permission Check
-        if (!userCheckPermission('device_add')) {
-            return response()->json([
-                'messages' => ['error' => [__('Access denied.')]]
-            ], 403);
-        }
-
         try {
             DB::beginTransaction();
 
-            // 2. Fetch Original
-            $original = $this->model::where('device_uuid', $validated['uuid'])
-                ->with(['lines', 'settings', 'keys'])
-                ->firstOrFail();
+            // Fetch the authorized original and its related records.
+            $original = app(DeviceAccessService::class)->query()
+                ->with(['lines', 'settings', 'keys'])->findOrFail($validated['uuid']);
 
-            // 3. Replicate Parent
+            // Replicate Parent
             $newDevice = $original->replicate();
             $newDevice->device_uuid = Str::uuid();
             $newDevice->device_label = $original->device_label . ' (Copy)';
@@ -128,7 +142,7 @@ class DeviceController extends Controller
 
             $newDevice->save();
 
-            // 4. Replicate Lines
+            // Replicate Lines
             if ($original->lines) {
                 foreach ($original->lines as $line) {
                     $newLine = $line->replicate();
@@ -138,7 +152,7 @@ class DeviceController extends Controller
                 }
             }
 
-            // 5. Replicate Settings
+            // Replicate Settings
             if ($original->settings) {
                 foreach ($original->settings as $setting) {
                     $newSetting = $setting->replicate();
@@ -148,7 +162,7 @@ class DeviceController extends Controller
                 }
             }
 
-            // 6. Replicate Keys
+            // Replicate Keys
             if ($original->keys) {
                 foreach ($original->keys as $key) {
                     $newKey = $key->replicate();
@@ -166,6 +180,7 @@ class DeviceController extends Controller
             ], 201);
         } catch (\Throwable $e) {
             DB::rollBack();
+            $this->rethrowAccessFailure($e);
 
             return response()->json([
                 'success' => false,
@@ -189,7 +204,7 @@ class DeviceController extends Controller
             ]);
         }
 
-        $devices = QueryBuilder::for(Devices::class)
+        $devices = QueryBuilder::for(app(DeviceAccessService::class)->listingQuery(request('filter.showGlobal')))
             ->select([
                 'domain_uuid',
                 'device_uuid',
@@ -212,13 +227,7 @@ class DeviceController extends Controller
                 AllowedFilter::callback('search', function ($query, $value) {
                     $this->applySearchFilter($query, $value);
                 }),
-                AllowedFilter::callback('showGlobal', function ($query, $value) use ($currentDomain) {
-                    // If showGlobal is falsey (0, '0', false, null), restrict to the current domain
-                    if (!$value || $value === '0' || $value === 0 || $value === false) {
-                        $query->where('domain_uuid', $currentDomain);
-                    }
-                    // else, do nothing and show all domains
-                }),
+                AllowedFilter::callback('showGlobal', fn ($query, $value) => $query),
             ])
 
             ->with(['lines' => function ($query) use ($currentDomain) {
@@ -266,7 +275,7 @@ class DeviceController extends Controller
      */
     public function store(StoreDeviceRequest $request)
     {
-        $validated = $request->validated();
+        $validated = app(DeviceAccessService::class)->validateWrite($request->validated());
 
         if ($this->keyTemplateAssignmentDenied($validated)) {
             return response()->json([
@@ -307,8 +316,7 @@ class DeviceController extends Controller
     public function update(UpdateDeviceRequest $request, Devices $device)
     {
         $inputs = $request->validated();
-
-        // logger($inputs);
+        $access = app(DeviceAccessService::class);
 
         if ($this->keyTemplateAssignmentDenied($inputs)) {
             return response()->json([
@@ -316,20 +324,24 @@ class DeviceController extends Controller
             ], 403);
         }
 
-        if (!$device) {
-            return response()->json([
-                'success' => false,
-                'errors' => ['model' => [__('Device not found')]]
-            ], 404);
-        }
-
         try {
-            app(DeviceService::class)->update($device, $inputs);
+            $cleared = DB::transaction(function () use ($device, $inputs, $access) {
+                $inputs = $access->validateWrite($inputs, $device);
+                $moving = $inputs['domain_uuid'] !== $device->domain_uuid;
+                $service = app(DeviceService::class);
+                $previousPhonebooks = $moving
+                    ? DB::table('device_phonebook')->where('device_uuid', $device->device_uuid)->pluck('phonebook_uuid')->all()
+                    : [];
+                $saved = $service->update($device, $inputs);
+
+                return $moving ? $service->clearIncompatibleAssignments($saved, $previousPhonebooks) : [];
+            });
 
             return response()->json([
-                'messages' => ['success' => [__('Device updated succesfully.')]]
+                'messages' => ['success' => array_merge([__('Device updated succesfully.')], $this->transferMessages($cleared))]
             ], 200);
         } catch (\Exception $e) {
+            $this->rethrowAccessFailure($e);
             logger('DeviceController@update error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json([
                 'success' => false,
@@ -351,16 +363,13 @@ class DeviceController extends Controller
         }
 
         // Find the device by address (or address_modified)
-        $device = Devices::where('device_address', $data['device_address_modified'] ?? $data['device_address'])->first();
-
-        if (!$device) {
-            return response()->json([
-                'success' => false,
-                'errors' => ['model' => [__('Device not found')]]
-            ], 404);
-        }
+        $access = app(DeviceAccessService::class);
+        $device = $access->query()->where('device_address', $data['device_address_modified'] ?? $data['device_address'])->firstOrFail();
 
         try {
+            DB::beginTransaction();
+            abort_if(isset($data['domain_uuid']) && $data['domain_uuid'] !== $device->domain_uuid, 403);
+            $data = $access->validateWrite($data, $device);
             // Assign or update device_lines
             if (!empty($data['device_lines']) && is_array($data['device_lines'])) {
                 foreach ($data['device_lines'] as $index => $line) {
@@ -378,19 +387,19 @@ class DeviceController extends Controller
                         $deviceLineData = [
                             'device_uuid' => $device->device_uuid,
                             'line_number' => $line['line_number'],
-                            'server_address' => $line['server_address'] ?? session('domain_name'),
-                            'outbound_proxy_primary' => $line['outbound_proxy_primary'] ?? get_domain_setting('outbound_proxy_primary'),
-                            'outbound_proxy_secondary' => $line['outbound_proxy_secondary'] ?? get_domain_setting('outbound_proxy_secondary'),
-                            'server_address_primary' => $line['server_address_primary'] ?? get_domain_setting('server_address_primary'),
-                            'server_address_secondary' => $line['server_address_secondary'] ?? get_domain_setting('server_address_secondary'),
+                            'server_address' => $line['server_address'] ?? \App\Models\Domain::where('domain_uuid', $device->domain_uuid)->value('domain_name'),
+                            'outbound_proxy_primary' => $line['outbound_proxy_primary'] ?? get_domain_setting('outbound_proxy_primary', $device->domain_uuid),
+                            'outbound_proxy_secondary' => $line['outbound_proxy_secondary'] ?? get_domain_setting('outbound_proxy_secondary', $device->domain_uuid),
+                            'server_address_primary' => $line['server_address_primary'] ?? get_domain_setting('server_address_primary', $device->domain_uuid),
+                            'server_address_secondary' => $line['server_address_secondary'] ?? get_domain_setting('server_address_secondary', $device->domain_uuid),
                             'display_name' => $line['display_name'] ?? null,
                             'user_id' => $extension->extension,
                             'auth_id' => $extension->extension,
                             'label' => $line['display_name'] ?? null,
                             'password' => $extension->password,
-                            'sip_port' => $line['sip_port'] ?? get_domain_setting('line_sip_port'),
-                            'sip_transport' => $line['sip_transport'] ?? get_domain_setting('line_sip_transport'),
-                            'register_expires' => $line['register_expires'] ?? get_domain_setting('line_register_expires'),
+                            'sip_port' => $line['sip_port'] ?? get_domain_setting('line_sip_port', $device->domain_uuid),
+                            'sip_transport' => $line['sip_transport'] ?? get_domain_setting('line_sip_transport', $device->domain_uuid),
+                            'register_expires' => $line['register_expires'] ?? get_domain_setting('line_register_expires', $device->domain_uuid),
                             'shared_line' => $line['shared_line'] ?? null,
                             'enabled' => 'true',
                             'domain_uuid' => $device->domain_uuid,
@@ -414,10 +423,13 @@ class DeviceController extends Controller
                 $device->save();
             }
 
+            DB::commit();
             return response()->json([
                 'messages' => ['success' => [__('Device assigned/updated.')]]
             ], 200);
         } catch (\Exception $e) {
+            DB::rollBack();
+            $this->rethrowAccessFailure($e);
             logger('DeviceController@assign error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
@@ -430,40 +442,27 @@ class DeviceController extends Controller
     /**
      * Remove the specified users from storage.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  BulkUnassignDeviceRequest  $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function bulkUnassign()
+    public function bulkUnassign(BulkUnassignDeviceRequest $request)
     {
-        if (! userCheckPermission('user_delete')) {
-            return response()->json([
-                'messages' => ['error' => [__('Access denied.')]]
-            ], 403);
-        }
+        $uuids = $request->validated('items');
+        $extension_uuid = $request->validated('extension_uuid');
 
         try {
             DB::beginTransaction();
 
-            $uuids = request('items', []); // Device UUIDs
-            $extension_uuid = request('extension_uuid');
-
-            if (empty($uuids) || !$extension_uuid) {
-                return response()->json([
-                    'messages' => ['error' => [__('No devices or extension provided.')]]
-                ], 400);
-            }
-
             // Get the actual extension value (number), not just UUID, if you map by extension string
-            $extension = Extensions::where('extension_uuid', $extension_uuid)->first();
-            if (! $extension) {
-                return response()->json([
-                    'messages' => ['error' => [__('Extension not found.')]]
-                ], 404);
-            }
+            $access = app(DeviceAccessService::class);
+            $devices = $access->selection($uuids);
+            $extension = Extensions::whereIn('domain_uuid', $devices->pluck('domain_uuid'))
+                ->where('extension_uuid', $extension_uuid)->firstOrFail();
+            abort_if($devices->contains(fn ($device) => $device->domain_uuid !== $extension->domain_uuid), 404);
 
             $affected = DeviceLines::whereIn('device_uuid', $uuids)
                 ->where('auth_id', $extension->extension)
-                ->where('domain_uuid', session('domain_uuid'))
+                ->where('domain_uuid', $extension->domain_uuid)
                 ->delete();
 
             DB::commit();
@@ -473,6 +472,7 @@ class DeviceController extends Controller
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
+            $this->rethrowAccessFailure($e);
             logger('DeviceControler@bulkUnassign error: '
                 . $e->getMessage()
                 . " at " . $e->getFile() . ":" . $e->getLine());
@@ -492,45 +492,27 @@ class DeviceController extends Controller
      */
     public function destroy(Devices $device)
     {
+        app(DeviceAccessService::class)->targetDomain(null, (string) $device->domain_uuid);
+
         try {
-            // throw new \Exception;
-
-            // Delete all device lines
-            if ($device->lines()) {
-                $device->lines()->delete();
-            }
-
-            // Delete Device
-            $device->delete();
+            DB::transaction(function () use ($device) {
+                app(DeviceService::class)->delete($device);
+            });
 
             return redirect()->back()->with('message', ['server' => [__('Item deleted')]]);
         } catch (\Exception $e) {
+            $this->rethrowAccessFailure($e);
             // Log the error message
             logger($e->getMessage());
             return redirect()->back()->with('error', ['server' => [__('Server returned an error while deleting this item')]]);
         }
     }
 
-    public function getItemOptions(Request $request)
+    public function getItemOptions(DeviceItemOptionsRequest $request)
     {
-        $itemUuid = $request->input('itemUuid') ?? $request->input('item_uuid');
-        $mode = $request->input('mode') ?: ($itemUuid ? 'update' : 'create');
-
-        if (!in_array($mode, ['create', 'update', 'bulk_update'], true)) {
-            abort(422, __('Invalid item options mode.'));
-        }
-
-        if ($mode === 'update' && !$itemUuid) {
-            abort(422, __('Item UUID is required for update mode.'));
-        }
-
-        if (in_array($mode, ['update', 'bulk_update'], true) && !userCheckPermission('device_edit')) {
-            abort(403);
-        }
-
-        if ($mode === 'create' && !userCheckPermission('device_add')) {
-            abort(403);
-        }
+        $itemUuid = $request->validated('item_uuid');
+        $mode = $request->validated('mode');
+        $access = app(DeviceAccessService::class);
 
         try {
             // Check for limits
@@ -545,9 +527,9 @@ class DeviceController extends Controller
 
             $routes = [];
 
-            // 1) Base payload: either an existing user DTO or a “new user” stub
+            // Base payload: either an existing device DTO or a new device stub.
             if ($itemUuid) {
-                $device = QueryBuilder::for(Devices::class)
+                $device = QueryBuilder::for($access->query())
                     ->select([
                         'domain_uuid',
                         'device_uuid',
@@ -600,14 +582,13 @@ class DeviceController extends Controller
                 );
             }
 
-            // $device = $this->model::find(request('itemUuid'));
-
             // An existing device is edited in the context of ITS account, not whichever
             // account the operator happens to be viewing - otherwise the extension list
             // and the line defaults come from the wrong domain.
-            $domain_uuid = request('domain_uuid')
-                ?? ($deviceDto->domain_uuid ?? null)
-                ?? session('domain_uuid');
+            $domain_uuid = $access->targetDomain(
+                $request->validated('domain_uuid'),
+                $deviceDto->domain_uuid ?: $access->currentDomain()
+            );
 
             // Define the options for the 'extensions' field
             $extensions = Extensions::where('domain_uuid', $domain_uuid)
@@ -642,16 +623,11 @@ class DeviceController extends Controller
                     ->value('device_setting_value')
                 : null) ?? get_domain_setting($subcategory, $domain_uuid);
 
-            $domainOptions = [];
-            // Loop through each domain and create an option
-            if (session('domains')) {
-                foreach (session('domains') as $domain) {
-                    $domainOptions[] = [
-                        'value' => $domain->domain_uuid,
-                        'name' => $domain->domain_description,
-                    ];
-                }
-            }
+            $domainOptions = $access->domainQuery()->get(['domain_uuid', 'domain_description', 'domain_name'])
+                ->map(fn ($domain) => [
+                    'value' => $domain->domain_uuid,
+                    'name' => $domain->domain_description ?: $domain->domain_name,
+                ])->all();
 
             $routes = array_merge($routes, [
                 'store_route' => route('devices.store'),
@@ -666,8 +642,8 @@ class DeviceController extends Controller
 
 
             $lines = [];
-            if ($deviceDto) {
-                $lines = DeviceLines::where('device_uuid', request('itemUuid'))
+            if ($itemUuid) {
+                $lines = $device->lines()
                     ->get([
                         'device_line_uuid',
                         'line_number',
@@ -745,7 +721,7 @@ class DeviceController extends Controller
             // Construct the itemOptions object
             $itemOptions = [
                 'item' => $deviceDto ?? null,
-                'templates' => $this->getDeviceTemplateDropdownOptions(),
+                'templates' => $this->getDeviceTemplateDropdownOptions($domain_uuid),
                 'profiles' => getProfileCollection($domain_uuid),
                 'key_templates' => $this->getDeviceKeyTemplateDropdownOptions($domain_uuid),
                 'park_key_count' => fspbx_park_key_count($domain_uuid),
@@ -770,6 +746,7 @@ class DeviceController extends Controller
 
             return $itemOptions;
         } catch (\Exception $e) {
+            $this->rethrowAccessFailure($e);
             logger('DeviceController@getItemOptions error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
             // Handle any other exception that may occur
             return response()->json([
@@ -823,13 +800,11 @@ class DeviceController extends Controller
      */
     public function bulkUpdate(
         BulkUpdateDeviceRequest $request,
-        DeviceService $deviceService,
-        FreeswitchEslService $eslService,
-        DeviceActionService $deviceActionService
+        DeviceService $deviceService
     ) {
         $data = $request->validated();
 
-        $ids = $data['items'] ?? [];
+        $ids = $data['items'];
 
         // Remove "items" from the update data, only use the rest as updates
         unset($data['items']);
@@ -872,40 +847,33 @@ class DeviceController extends Controller
             $data['device_key_template_uuid'] = null;
         }
 
-        // Only continue if there are actually fields to update
-        if (empty($ids) || (empty($data) && empty($lineAttributes))) {
-            return response()->json([
-                'success' => false,
-                'errors' => ['input' => [__('No devices or fields provided for update.')]]
-            ], 422);
-        }
-
         try {
             DB::beginTransaction();
 
             $domainsCascaded = 0;
+            $clearedAssignments = [];
+            $access = app(DeviceAccessService::class);
+            $devices = $access->selection($ids);
+
+            // Preflight the entire batch before saves can fire observers or queue jobs.
+            $updates = [];
+            foreach ($devices as $device) {
+                $updates[$device->device_uuid] = $access->validateWrite($data, $device);
+            }
 
             if (!empty($data)) {
-                Devices::whereIn('device_uuid', $ids)
-                    ->chunk(10, function ($devices) use ($data, $deviceService, &$domainsCascaded) {
-                        foreach ($devices as $device) {
-                            $device->fill($data);
-
-                            // Must be read before save() clears the dirty state
-                            $domainChanged = $device->isDirty('domain_uuid');
-
-                            if ($device->isDirty()) {
-                                $device->save();
-                            }
-
-                            // A device's lines carry the SIP domain and its connectivity
-                            // settings, so reassigning the account has to re-resolve them.
-                            if ($domainChanged) {
-                                $deviceService->cascadeDomainToLines($device);
-                                $domainsCascaded++;
-                            }
-                        }
-                    });
+                foreach ($devices as $device) {
+                    $device->fill($updates[$device->device_uuid]);
+                    $domainChanged = $device->isDirty('domain_uuid');
+                    if ($device->isDirty()) {
+                        $device->save();
+                    }
+                    if ($domainChanged) {
+                        $clearedAssignments = array_merge($clearedAssignments, $deviceService->clearIncompatibleAssignments($device));
+                        $deviceService->cascadeDomainToLines($device);
+                        $domainsCascaded++;
+                    }
+                }
             }
 
             // Applied after the cascade so an explicit port/transport choice wins over
@@ -918,6 +886,7 @@ class DeviceController extends Controller
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
+            $this->rethrowAccessFailure($e);
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json([
                 'success' => false,
@@ -925,7 +894,7 @@ class DeviceController extends Controller
             ], 500);
         }
 
-        $messages = [];
+        $messages = $this->transferMessages($clearedAssignments);
 
         if (!empty($data)) {
             $messages[] = __('Selected items updated');
@@ -957,8 +926,6 @@ class DeviceController extends Controller
 
             try {
                 $sent = $this->dispatchRegisteredDeviceAction(
-                    $eslService,
-                    $deviceActionService,
                     $resyncTargets,
                     'provision'
                 );
@@ -979,14 +946,10 @@ class DeviceController extends Controller
 
 
     public function restart(
-        SendDeviceActionRequest $request,
-        FreeswitchEslService $eslService,
-        DeviceActionService $deviceActionService
+        SendDeviceActionRequest $request
     )
     {
         return $this->sendRegisteredDeviceAction(
-            $eslService,
-            $deviceActionService,
             $request->validated()['devices'],
             'reboot',
             __('Selected device(s) scheduled for reboot')
@@ -994,14 +957,10 @@ class DeviceController extends Controller
     }
 
     public function sync(
-        SendDeviceActionRequest $request,
-        FreeswitchEslService $eslService,
-        DeviceActionService $deviceActionService
+        SendDeviceActionRequest $request
     )
     {
         return $this->sendRegisteredDeviceAction(
-            $eslService,
-            $deviceActionService,
             $request->validated()['devices'],
             'provision',
             __('Selected device(s) scheduled for synchronization')
@@ -1009,16 +968,12 @@ class DeviceController extends Controller
     }
 
     private function sendRegisteredDeviceAction(
-        FreeswitchEslService $eslService,
-        DeviceActionService $deviceActionService,
         array $deviceUuids,
         string $action,
         string $successMessage
     ): JsonResponse {
         try {
             $this->dispatchRegisteredDeviceAction(
-                $eslService,
-                $deviceActionService,
                 $deviceUuids,
                 $action
             );
@@ -1028,6 +983,7 @@ class DeviceController extends Controller
                 'messages' => ['success' => [$successMessage]]
             ], 201);
         } catch (\Exception $e) {
+            $this->rethrowAccessFailure($e);
             logger($e->getMessage() . PHP_EOL);
             return response()->json([
                 'success' => false,
@@ -1043,8 +999,6 @@ class DeviceController extends Controller
      * @return int  number of registrations the action was sent to
      */
     private function dispatchRegisteredDeviceAction(
-        FreeswitchEslService $eslService,
-        DeviceActionService $deviceActionService,
         array $deviceUuids,
         string $action
     ): int {
@@ -1052,22 +1006,21 @@ class DeviceController extends Controller
             return 0;
         }
 
-        // Get a collection of SIP registrations
-        $regs = $eslService->getAllSipRegistrations();
-
-        //Get device info as a collection
-        $devices = $this->model::whereIn('device_uuid', $deviceUuids)
-            ->with(['lines' => function ($query) {
+        $devices = app(DeviceAccessService::class)->selection($deviceUuids);
+        $devices->load(['domain:domain_uuid,domain_name', 'lines' => function ($query) {
                 $query->select('device_uuid', 'auth_id', 'server_address');
-            }])
-            ->get(['device_uuid']);
+            }]);
+
+        // Opening the ESL connection is itself deferred until the entire selection is authorized.
+        $regs = app(FreeswitchEslService::class)->getAllSipRegistrations();
 
         // we are going to push all lines from devices to this collection
         $linesCollection = collect();
 
         foreach ($devices as $device) {
             $line = $device->lines->first();
-            if ($line) {
+            // A user-editable SIP server must not redirect an action to another account.
+            if ($line && $device->domain && $line->server_address === $device->domain->domain_name) {
                 $linesCollection->push($line);
             }
         }
@@ -1080,7 +1033,7 @@ class DeviceController extends Controller
             });
         })->values();
 
-        return $deviceActionService->scheduleDeviceActions($registrations, $action);
+        return app(DeviceActionService::class)->scheduleDeviceActions($registrations, $action);
     }
 
     /**
@@ -1091,11 +1044,7 @@ class DeviceController extends Controller
     public function selectAll()
     {
         try {
-            $query = $this->model::query();
-
-            if (!request()->boolean('showGlobal')) {
-                $query->where('domain_uuid', session('domain_uuid'));
-            }
+            $query = app(DeviceAccessService::class)->listingQuery(request('showGlobal'));
 
             if (request()->filled('search')) {
                 $this->applySearchFilter($query, request()->input('search'));
@@ -1109,6 +1058,7 @@ class DeviceController extends Controller
                 'items' => $uuids,
             ], 200);
         } catch (\Exception $e) {
+            $this->rethrowAccessFailure($e);
             logger($e->getMessage());
             // Handle any other exception that may occur
             return response()->json([
@@ -1180,25 +1130,19 @@ class DeviceController extends Controller
      * @param  Devices  $device
      *
      */
-    public function BulkDelete(Devices $device)
+    public function bulkDelete(BulkDeleteDeviceRequest $request)
     {
         try {
             // Begin Transaction
             DB::beginTransaction();
 
             // Retrieve all devices at once with their lines
-            $devices = $this->model::whereIn('device_uuid', request('items'))
-                ->with([
+            $devices = app(DeviceAccessService::class)->selection($request->validated('items'));
+            $devices->load([
                     'lines' => function ($query) {
                         $query->select('device_uuid', 'device_line_uuid');
                     },
                     'cloudProvisioning',
-                ])
-                ->get([
-                    'device_uuid',
-                    'domain_uuid',
-                    'device_vendor',
-                    'device_address',
                 ]);
 
             foreach ($devices as $device) {
@@ -1214,7 +1158,7 @@ class DeviceController extends Controller
         } catch (\Exception $e) {
             // Rollback Transaction if any error occurs
             DB::rollBack();
-
+            $this->rethrowAccessFailure($e);
             logger('DeviceControler@bulkDelete error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
@@ -1240,7 +1184,7 @@ class DeviceController extends Controller
         $permissions['device_template_view_custom_only'] = userCheckPermission('device_template_view_custom_only');
         $permissions['device_template_view_legacy'] = userCheckPermission('device_template_view_legacy');
         $permissions['device_provisioning_preview'] = userCheckPermission('device_provisioning_preview');
-        $permissions['device_domain_update'] = userCheckPermission('device_domain');
+        $permissions['device_domain_update'] = userCheckPermission('device_all') && userCheckPermission('device_domain');
         $permissions['manage_device_cloud_provisioning_settings'] = userCheckPermission('manage_device_cloud_provisioning_settings');
         $permissions['device_setting_view'] = userCheckPermission('device_setting_view');
         $permissions['device_setting_add'] = userCheckPermission('device_setting_add');
@@ -1289,19 +1233,43 @@ class DeviceController extends Controller
         ], $templates);
     }
 
-    private function getDeviceTemplateDropdownOptions(): array
+    private function getDeviceTemplateDropdownOptions(?string $domainUuid = null): array
     {
         if (userCheckPermission('device_template_view_all')) {
-            return getVendorTemplateCollection();
+            return getVendorTemplateCollection(domainUuid: $domainUuid);
         }
 
         $includeCustomTemplates = userCheckPermission('device_template_view_custom_only');
         $includeLegacyTemplates = userCheckPermission('device_template_view_legacy');
 
         if ($includeCustomTemplates || $includeLegacyTemplates) {
-            return getVendorTemplateCollection(false, $includeCustomTemplates, $includeLegacyTemplates);
+            return getVendorTemplateCollection(false, $includeCustomTemplates, $includeLegacyTemplates, $domainUuid);
         }
 
         return [];
+    }
+
+    private function rethrowAccessFailure(\Throwable $exception): void
+    {
+        if ($exception instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface
+            || $exception instanceof \Illuminate\Database\Eloquent\ModelNotFoundException
+            || $exception instanceof \Illuminate\Validation\ValidationException) {
+            throw $exception;
+        }
+    }
+
+    private function transferMessages(array $cleared): array
+    {
+        if (! $cleared) {
+            return [];
+        }
+        $messages = [__('Removed assignments from the previous account: :assignments.', [
+            'assignments' => implode(', ', array_unique($cleared)),
+        ])];
+        if (in_array(__('Provisioning Template'), $cleared, true)) {
+            $messages[] = __('Select a provisioning template before provisioning the transferred device.');
+        }
+
+        return $messages;
     }
 }

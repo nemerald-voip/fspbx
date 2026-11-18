@@ -179,7 +179,7 @@ class ProvisioningController extends Controller
             ], 403);
         }
 
-        if (!$this->canAccessDeviceForPreview($device)) {
+        if (! app(\App\Services\DeviceAccessService::class)->canAccessDomain($device->domain_uuid)) {
             return response()->json([
                 'errors' => ['device' => [__('Device not found.')]],
             ], 404);
@@ -192,7 +192,7 @@ class ProvisioningController extends Controller
             ], 404);
         }
 
-        $vars = $this->buildTemplateVars($device);
+        $vars = $this->maskPreviewCredentials($this->buildTemplateVars($device));
         $files = [];
 
         foreach ($this->discoverPreviewFlavors($tpl, $device) as $flavor) {
@@ -244,6 +244,24 @@ class ProvisioningController extends Controller
     }
 
     /* ------------------------- helpers ------------------------- */
+
+    private function maskPreviewCredentials(array $variables, bool $sensitive = false): array
+    {
+        foreach ($variables as $key => $value) {
+            $mask = $sensitive || preg_match('/(?:^|_)(?:password|passphrase|pin|psk|encrypt_key|username)$/i', (string) $key);
+
+            if (is_array($value)) {
+                $variables[$key] = $this->maskPreviewCredentials($value, $mask);
+            } elseif ($mask && $value !== null && $value !== '') {
+                $variables[$key] = '[REDACTED]';
+            } elseif (is_string($value) && str_contains($value, '://')) {
+                // Phonebook and key-file URLs already include their provisioning credentials.
+                $variables[$key] = preg_replace('~(\b[a-z][a-z0-9+.-]*://)[^/@?#\s]+@~i', '$1[REDACTED]@', $value);
+            }
+        }
+
+        return $variables;
+    }
 
     /**
      * Build preview "files" for each directory/phonebook assigned to the device,
@@ -428,27 +446,6 @@ class ProvisioningController extends Controller
         ];
     }
 
-    private function canAccessDeviceForPreview(Devices $device): bool
-    {
-        $deviceDomain = (string) $device->domain_uuid;
-
-        if ($deviceDomain === '' || $deviceDomain === (string) session('domain_uuid')) {
-            return true;
-        }
-
-        if (isSuperAdmin() || userCheckPermission('device_all')) {
-            return true;
-        }
-
-        $domainUuids = collect(session('domains') ?: [])
-            ->map(fn ($domain) => is_object($domain) ? ($domain->domain_uuid ?? null) : ($domain['domain_uuid'] ?? null))
-            ->filter()
-            ->map(fn ($domainUuid) => (string) $domainUuid)
-            ->all();
-
-        return in_array($deviceDomain, $domainUuids, true);
-    }
-
     private function discoverPreviewFlavors(ProvisioningTemplate $tpl, Devices $device): array
     {
         preg_match_all('/@case\s*\(\s*[\'"]([^\'"]+)[\'"]\s*\)/', (string) $tpl->content, $matches);
@@ -537,7 +534,7 @@ class ProvisioningController extends Controller
         ]);
 
         if (!empty($device->device_template_uuid)) {
-            $row = ProvisioningTemplate::where('template_uuid', $device->device_template_uuid)->first();
+            $row = ProvisioningTemplate::visibleToDomain($device->domain_uuid)->find($device->device_template_uuid);
             if ($row) {
                 provisioning_debug('ProvisioningController: resolved provisioning template by UUID', [
                     'device_uuid' => (string) $device->device_uuid,
@@ -562,7 +559,7 @@ class ProvisioningController extends Controller
             $vendor = strtolower(trim($vendor));
             $name = trim($name);
 
-            $row = ProvisioningTemplate::where('vendor', $vendor)
+            $row = ProvisioningTemplate::whereNull('domain_uuid')->where('vendor', $vendor)
                 ->whereRaw('LOWER(name) = ?', [strtolower($name)])
                 ->where('type', 'default')
                 ->orderByDesc('created_at')
@@ -627,11 +624,9 @@ class ProvisioningController extends Controller
                     'domain_uuid',
                 ]);
             },
-            'profile' => function ($q) {
-                $q->select([
-                    'device_profile_uuid',
-                    'device_profile_name',
-                ])->with([
+            'profile' => function ($q) use ($device) {
+                $q->where(fn ($owners) => $owners->where('domain_uuid', $device->domain_uuid)->orWhereNull('domain_uuid'));
+                $q->select(['device_profile_uuid', 'device_profile_name'])->with([
                     'keys' => function ($k) {
                         // Need FK back to profile + correct orderBy column
                         $k->select([
@@ -648,8 +643,8 @@ class ProvisioningController extends Controller
                     },
                 ]);
             },
-            'keyTemplate' => function ($q) {
-                $q->select([
+            'keyTemplate' => function ($q) use ($device) {
+                $q->where('domain_uuid', $device->domain_uuid)->select([
                     'device_key_template_uuid',
                     'name',
                     'enabled',

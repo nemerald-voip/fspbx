@@ -44,21 +44,7 @@ class UpdateVirtualReceptionistRequest extends FormRequest
             'invalid_input_message' => 'present',
             'exit_message' => 'present',
             'exit_action' => ['required', \Illuminate\Validation\Rule::in(\App\Services\CallRoutingOptionsService::destinationTypes())],
-            'exit_target' => [
-                'nullable',
-                function ($attribute, $value, $fail) {
-                    $action = request()->input('exit_action');
-
-                    if (
-                        $action &&
-                        \App\Services\CallRoutingOptionsService::requiresTarget((string) $action) &&
-                        ($value === null || $value === '')
-                    ) {
-                        $fail('The target field is required when action is selected.');
-                    }
-                },
-            ],
-            'exit_target_uuid' => 'nullable',
+            'exit_target' => [new \App\Rules\RoutingTarget('exit_action', byDestination: true)],
             'direct_dial' => 'present',
 
             ...\App\Services\FlagService::overrideRules(),

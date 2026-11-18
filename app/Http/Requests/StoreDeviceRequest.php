@@ -20,7 +20,7 @@ class StoreDeviceRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return Auth::check();
+        return Auth::check() && userCheckPermission('device_add');
     }
 
     public function rules(): array
@@ -52,8 +52,7 @@ class StoreDeviceRequest extends FormRequest
                 'nullable',
                 Rule::when(
                     fn ($input) => ($input['device_key_template_uuid'] ?? null) !== 'NULL',
-                    Rule::exists('device_key_templates', 'device_key_template_uuid')
-                        ->where('domain_uuid', session('domain_uuid')),
+                    Rule::exists('device_key_templates', 'device_key_template_uuid'),
                 ),
             ],
 
@@ -136,7 +135,10 @@ class StoreDeviceRequest extends FormRequest
                 'boolean'
             ],
             'domain_uuid' => [
+                'bail',
                 'required',
+                'uuid',
+                Rule::exists('v_domains', 'domain_uuid'),
             ],
             'device_description' => [
                 'nullable',
@@ -253,8 +255,9 @@ class StoreDeviceRequest extends FormRequest
         // Prefer UUID → look up vendor from DB
         $tplUuid = $this->input('device_template_uuid');  
         if (is_string($tplUuid) && Str::isUuid($tplUuid)) {
-            $v = ProvisioningTemplate::query()
-                ->where('template_uuid', $tplUuid)
+            $owner = $this->input('domain_uuid');
+            $v = ProvisioningTemplate::visibleToDomain(Str::isUuid($owner) ? $owner : null)
+                ->whereKey($tplUuid)
                 ->value('vendor');
             if (is_string($v) && $v !== '') {
                 $vendor = strtolower($v);

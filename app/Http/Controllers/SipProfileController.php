@@ -18,13 +18,16 @@ class SipProfileController extends Controller
 {
     protected int $perPage = 50;
 
-    public function index()
+    public function index(Request $request)
     {
         if (! userCheckPermission('sip_profile_view')) {
             return redirect('/');
         }
 
+        $validated = $request->validate(['edit' => ['nullable', 'uuid']]);
+
         return Inertia::render('SipProfiles', [
+            'edit_uuid' => userCheckPermission('sip_profile_edit') ? ($validated['edit'] ?? null) : null,
             'routes' => [
                 'current_page' => route('sip-profiles.index'),
                 'data_route' => route('sip-profiles.data'),

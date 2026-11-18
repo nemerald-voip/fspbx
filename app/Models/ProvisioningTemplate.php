@@ -32,6 +32,11 @@ class ProvisioningTemplate extends Model
         'updated_at'=> 'datetime',
     ];
 
+    public function scopeVisibleToDomain(\Illuminate\Database\Eloquent\Builder $query, ?string $domainUuid): void
+    {
+        $query->where(fn ($owners) => $owners->where('domain_uuid', $domainUuid)->orWhereNull('domain_uuid'));
+    }
+
     // --- Lifecycle hooks ----------------------------------------------------
 
     protected static function booted()

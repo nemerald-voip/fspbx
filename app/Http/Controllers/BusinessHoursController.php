@@ -13,6 +13,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 use App\Services\CallRoutingOptionsService;
+use App\Http\Requests\BulkDeleteBusinessHoursRequest;
+use App\Http\Requests\DuplicateBusinessHoursRequest;
+use App\Http\Requests\BusinessHoursItemOptionsRequest;
 use App\Http\Requests\StoreBusinessHoursRequest;
 use App\Http\Requests\UpdateBusinessHoursRequest;
 
@@ -32,6 +35,11 @@ class BusinessHoursController extends Controller
     public function __construct()
     {
         $this->model = new BusinessHour();
+        $this->middleware(function ($request, $next) {
+            abort_unless(Str::isUuid(session('domain_uuid')), 403);
+
+            return $next($request);
+        });
     }
 
     /**
@@ -157,28 +165,20 @@ class BusinessHoursController extends Controller
         });
     }
 
-    public function getItemOptions()
+    public function getItemOptions(BusinessHoursItemOptionsRequest $request)
     {
         try {
-            $item_uuid = request('item_uuid'); // Retrieve item_uuid from the request
-
+            $item_uuid = $request->validated('item_uuid');
+            $routingOptionsService = new CallRoutingOptionsService;
 
             // Check if item_uuid exists to find an existing model
             if ($item_uuid) {
                 // Find existing item by item_uuid
-                $item = $this->model::where($this->model->getKeyName(), $item_uuid)
+                $item = BusinessHour::where('domain_uuid', session('domain_uuid'))
                     ->with(['periods' => function ($query) {
                         $query->select('business_hour_uuid', 'day_of_week', 'start_time', 'end_time', 'action', 'target_type', 'target_id');
                     }])
-                    // ->with(['exceptions' => function ($query) {
-                    //     $query->select('business_hour_uuid', 'start_date', 'start_time', 'end_date', 'start_time', 'end_time', 'mon', 'wday', 'mweek', 'mday', 'action', 'target_type', 'target_id');
-                    // }])
-                    ->first();
-
-                // If a model exists, use it; otherwise, create a new one
-                if (!$item) {
-                    throw new \Exception(__("Failed to fetch item details. Item not found"));
-                }
+                    ->findOrFail($item_uuid);
 
                 $item->after_hours_target = [
                     'value'     => $item->after_hours_target_id,
@@ -195,7 +195,7 @@ class BusinessHoursController extends Controller
                             $p->target_id,
                         ]);
                     })
-                    ->map(function ($group) {
+                    ->map(function ($group) use ($routingOptionsService) {
                         /** @var \Illuminate\Support\Collection $group */
                         $first = $group->first();
 
@@ -214,7 +214,7 @@ class BusinessHoursController extends Controller
                             ->format('h:i a');
 
                         // rebuild the target object
-                        $targetModel = $first->target;
+                        $targetModel = $first->action && $first->target_id ? $routingOptionsService->findTarget($first->action, $first->target_id) : null;
                         $target = null;
                         if ($targetModel) {
                             $target = [
@@ -246,8 +246,6 @@ class BusinessHoursController extends Controller
             }
 
             $permissions = $this->getUserPermissions();
-
-            $routingOptionsService = new CallRoutingOptionsService;
             $routingTypes = $routingOptionsService->routingTypes;
 
             $routes = [
@@ -274,6 +272,8 @@ class BusinessHoursController extends Controller
             // logger($itemOptions);
 
             return $itemOptions;
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            throw $e;
         } catch (\Exception $e) {
             // Log the error message
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
@@ -308,12 +308,6 @@ class BusinessHoursController extends Controller
      */
     public function store(StoreBusinessHoursRequest $request)
     {
-        if (!userCheckPermission('business_hours_create')) {
-            return response()->json([
-                'messages' => ['error' => [__('Access denied.')]]
-            ], 403);
-        }
-
         $validated = $request->validated();
         $domainUuid = session('domain_uuid');
 
@@ -401,7 +395,7 @@ class BusinessHoursController extends Controller
     public function generateDialPlanXML(BusinessHour $businessHour): void
     {
         // logger($businessHour);
-        // 1) if we don't yet have a dialplan_uuid, make one and persist it
+        // Keep the existing UUID when recreating a missing dialplan.
         if (! $businessHour->dialplan_uuid) {
             $businessHour->dialplan_uuid = (string) Str::uuid();
             $businessHour->saveQuietly(); // avoid touching update_date again
@@ -431,15 +425,18 @@ class BusinessHoursController extends Controller
         $dom->formatOutput = true;         // Formats XML properly
         $xml = $dom->saveXML($dom->documentElement);
 
-        // logger($businessHour);
-
-        $dialPlan = Dialplans::where('dialplan_uuid', $businessHour->dialplan_uuid)->first();
+        $dialPlan = Dialplans::find($businessHour->dialplan_uuid);
+        if ($dialPlan && $dialPlan->domain_uuid !== $businessHour->domain_uuid) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'dialplan_uuid' => [__('The selected value is invalid.')],
+            ]);
+        }
 
         if (!$dialPlan) {
             $dialPlan = new Dialplans();
             $dialPlan->dialplan_uuid = $businessHour->dialplan_uuid;
             $dialPlan->app_uuid = '4b821450-926b-175a-af93-a03c441818b2';
-            $dialPlan->domain_uuid = session('domain_uuid');
+            $dialPlan->domain_uuid = $businessHour->domain_uuid;
             $dialPlan->dialplan_name = $businessHour->name;
             $dialPlan->dialplan_number = $businessHour->extension;
             if (isset($businessHour->context)) {
@@ -486,14 +483,7 @@ class BusinessHoursController extends Controller
      */
     public function update(UpdateBusinessHoursRequest $request, BusinessHour $businessHour)
     {
-        if (!userCheckPermission('business_hours_update')) {
-            return response()->json([
-                'messages' => ['error' => [__('Access denied.')]]
-            ], 403);
-        }
-
         $validated = $request->validated();
-        $domain_uuid = session('domain_uuid');
 
         // logger($validated);
 
@@ -580,25 +570,18 @@ class BusinessHoursController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function bulkDelete(Request $request)
+    public function bulkDelete(BulkDeleteBusinessHoursRequest $request)
     {
-        // 1) Permission check
-        if (! userCheckPermission('business_hours_delete')) {
-            return response()->json([
-                'messages' => ['error' => [__('Access denied.')]]
-            ], 403);
-        }
-
         try {
             DB::beginTransaction();
 
             $domainUuid = session('domain_uuid');
-            $uuids      = $request->input('items', []);
+            $uuids = $request->validated('items');
 
             // 2) Fetch the BusinessHour models
             $businessHours = BusinessHour::where('domain_uuid', $domainUuid)
-                ->whereIn('uuid', $uuids)
-                ->get();
+                ->whereKey($uuids)->get();
+            abort_unless($businessHours->count() === count($uuids), 404);
 
             foreach ($businessHours as $bh) {
                 // 3) Delete related periods & holidays
@@ -607,7 +590,7 @@ class BusinessHoursController extends Controller
 
                 // 4) Delete its dialplan record
                 if ($bh->dialplan_uuid) {
-                    Dialplans::where('dialplan_uuid', $bh->dialplan_uuid)->delete();
+                    Dialplans::where('domain_uuid', $domainUuid)->whereKey($bh->dialplan_uuid)->delete();
                 }
 
                 // 5) Delete the BusinessHour itself
@@ -632,6 +615,9 @@ class BusinessHoursController extends Controller
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
+            if ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface) {
+                throw $e;
+            }
             logger(
                 'BusinessHours bulkDelete error: '
                     . $e->getMessage()
@@ -687,28 +673,13 @@ class BusinessHoursController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function duplicate(Request $request)
+    public function duplicate(DuplicateBusinessHoursRequest $request)
     {
-        // 1. Validate Input
-        $request->validate([
-            'uuid' => 'required|uuid|exists:business_hours,uuid',
-        ]);
-
-        // 2. Permission Check
-        if (!userCheckPermission('business_hours_create')) {
-            return response()->json([
-                'messages' => ['error' => [__('Access denied.')]]
-            ], 403);
-        }
+        $original = BusinessHour::where('domain_uuid', session('domain_uuid'))
+            ->with(['periods', 'holidays'])->findOrFail($request->validated('uuid'));
 
         try {
             DB::beginTransaction();
-
-            // 4. Fetch Original with relationships
-            $original = $this->model::where('uuid', $request->uuid)
-                ->where('domain_uuid', session('domain_uuid'))
-                ->with(['periods', 'holidays'])
-                ->firstOrFail();
 
             // 5. Replicate Parent
             $newBusinessHour = $original->replicate();

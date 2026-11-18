@@ -31,6 +31,7 @@ use App\Http\Controllers\ConferenceController;
 use App\Http\Controllers\ConferenceControlController;
 use App\Http\Controllers\ConferenceProfileController;
 use App\Http\Controllers\ConferenceRoomController;
+use App\Http\Controllers\ConferenceSessionController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\CustomerNotesController;
 use App\Http\Controllers\DatabaseTransactionController;
@@ -158,11 +159,11 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('tokens/bulk-delete', [TokenController::class, 'bulkDelete'])->name('tokens.bulk.delete');
 
     // Locations
-    Route::resource('/locations', LocationsController::class);
+    Route::resource('/locations', LocationsController::class)->whereUuid('location');
     Route::post('locations/bulk-delete', [LocationsController::class, 'bulkDelete'])->name('locations.bulk.delete');
 
     // Provisioning Templates
-    Route::resource('/provisioning-templates', ProvisioningTemplateController::class);
+    Route::resource('/provisioning-templates', ProvisioningTemplateController::class)->whereUuid('provisioning_template');
     Route::post('provisioning-templates/bulk-delete', [ProvisioningTemplateController::class, 'bulkDelete'])->name('provisioning-templates.bulk.delete');
     Route::post('/provisioning-templates/item-options', [ProvisioningTemplateController::class, 'getItemOptions'])->name('provisioning-templates.item.options');
     Route::post('/provisioning-templates/content', [ProvisioningTemplateController::class, 'getTemplateContent'])->name('provisioning-templates.content');
@@ -250,18 +251,18 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::get('/outbound-webhooks', [\App\Http\Controllers\OutboundWebhookLogsController::class, 'index'])->name('outbound-webhooks.index');
 
     // Hotel rooms
-    Route::resource('/hotel-rooms', HotelRoomController::class);
+    Route::resource('/hotel-rooms', HotelRoomController::class)->only(['index', 'store', 'update'])->whereUuid('hotel_room');
     Route::post('/hotel-rooms/item-options', [HotelRoomController::class, 'getItemOptions'])->name('hotel-rooms.item.options');
     Route::post('hotel-rooms/bulk-delete', [HotelRoomController::class, 'bulkDelete'])->name('hotel-rooms.bulk.delete');
     Route::post('hotel-rooms/bulk-store', [HotelRoomController::class, 'bulkStore'])->name('hotel-rooms.bulk.store');
 
     // Hotel room status
-    Route::resource('/hotel-room-status', HotelRoomStatusController::class);
+    Route::resource('/hotel-room-status', HotelRoomStatusController::class)->only(['index', 'store']);
     Route::post('/hotel-room-status/item-options', [HotelRoomStatusController::class, 'getItemOptions'])->name('hotel-room-status.item.options');
     Route::post('hotel-room-status/bulk-delete', [HotelRoomStatusController::class, 'bulkDelete'])->name('hotel-room-status.bulk.delete');
 
     // Hotel housekeeping
-    Route::resource('/housekeeping', HotelHousekeepingDefinitionController::class);
+    Route::resource('/housekeeping', HotelHousekeepingDefinitionController::class)->only(['store']);
     Route::post('/housekeeping/item-options', [HotelHousekeepingDefinitionController::class, 'getItemOptions'])->name('housekeeping.item.options');
     Route::post('/housekeeping/default-codes', [HotelHousekeepingDefinitionController::class, 'defaultCodes'])->name('housekeeping.default-codes');
 
@@ -359,7 +360,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('paging-groups/bulk-toggle', [PagingGroupsController::class, 'bulkToggle'])->name('paging-groups.bulk.toggle');
 
     // Holiday Hours
-    Route::resource('/holiday-hours', HolidayHoursController::class);
+    Route::resource('/holiday-hours', HolidayHoursController::class)->whereUuid('holiday_hour');
     Route::post('/holiday-hours/item-options', [HolidayHoursController::class, 'getItemOptions'])->name('holiday-hours.item.options');
     Route::post('/holiday-hours/bulk-delete', [HolidayHoursController::class, 'bulkDelete'])->name('holiday-hours.bulk.delete');
 
@@ -535,7 +536,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
 
     // Devices 
     Route::post('devices', [DeviceController::class, 'store'])->name('devices.store');
-    Route::put('devices/{device}', [DeviceController::class, 'update'])->name('devices.update');
+    Route::put('devices/{device}', [DeviceController::class, 'update'])->whereUuid('device')->name('devices.update');
     Route::get('/devices/data', [DeviceController::class, 'getData'])->name('devices.data');
     Route::post('/devices/bulk-update', [DeviceController::class, 'bulkUpdate'])->name('devices.bulk.update');
     Route::post('/devices/bulk-delete', [DeviceController::class, 'bulkDelete'])->name('devices.bulk.delete');
@@ -824,6 +825,15 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/conference-rooms/bulk-delete', [ConferenceRoomController::class, 'bulkDelete'])->name('conference-rooms.bulk.delete');
     Route::post('/conference-rooms/bulk-toggle', [ConferenceRoomController::class, 'bulkToggle'])->name('conference-rooms.bulk.toggle');
 
+    Route::prefix('conference-rooms/{conference_room}/sessions')->whereUuid('conference_room')->group(function () {
+        Route::get('data', [ConferenceSessionController::class, 'data'])->name('conference-sessions.data');
+        Route::post('bulk-delete', [ConferenceSessionController::class, 'bulkDelete'])->name('conference-sessions.bulk-delete');
+        Route::get('{conference_session}/participants', [ConferenceSessionController::class, 'participants'])->whereUuid('conference_session')->name('conference-sessions.participants');
+        Route::get('{conference_session}/participants/{conference_session_detail}/call', [ConferenceSessionController::class, 'callDetails'])->whereUuid(['conference_session', 'conference_session_detail'])->name('conference-sessions.call-details');
+        Route::get('{conference_session}/recording/stream', [ConferenceSessionController::class, 'stream'])->whereUuid('conference_session')->name('conference-sessions.stream');
+        Route::get('{conference_session}/recording/download', [ConferenceSessionController::class, 'download'])->whereUuid('conference_session')->name('conference-sessions.download');
+    });
+
     // Active Conferences
     Route::get('/active-conferences/data', [ActiveConferenceController::class, 'getData'])->name('active-conferences.data');
     Route::get('/active-conferences/{conference}/interactive/data', [ActiveConferenceController::class, 'getInteractiveData'])->name('active-conferences.interactive.data');
@@ -831,12 +841,13 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
 
     // Phone Numbers
     Route::post('phone-numbers', [PhoneNumbersController::class, 'store'])->name('phone-numbers.store');
-    Route::put('phone-numbers/{phone_number}', [PhoneNumbersController::class, 'update'])->name('phone-numbers.update');
+    Route::put('phone-numbers/{phone_number}', [PhoneNumbersController::class, 'update'])->whereUuid('phone_number')->name('phone-numbers.update');
     Route::get('/phone-numbers/data', [PhoneNumbersController::class, 'getData'])->name('phone-numbers.data');
     Route::post('/phone-numbers/select-all', [PhoneNumbersController::class, 'selectAll'])->name('phone-numbers.select.all');
     Route::post('/phone-numbers/bulk-update', [PhoneNumbersController::class, 'bulkUpdate'])->name('phone-numbers.bulk.update');
     Route::post('/phone-numbers/bulk-delete', [PhoneNumbersController::class, 'bulkDelete'])->name('phone-numbers.bulk.delete');
     Route::post('phone-numbers/item-options', [PhoneNumbersController::class, 'getItemOptions'])->name('phone-numbers.item.options');
+    Route::post('phone-numbers/routing-options', [PhoneNumbersController::class, 'routingOptions'])->name('phone-numbers.routing.options');
     Route::get('/phone-numbers/template/download', [PhoneNumbersController::class, 'downloadTemplate'])->name('phone-numbers.template.download');
     //    Route::post('/phone-numbers/import', [PhoneNumbersController::class, 'import'])->name('phone-numbers.import');
 

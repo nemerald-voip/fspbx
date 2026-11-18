@@ -18,7 +18,7 @@ class DuplicateDeviceRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return Auth::check();
+        return Auth::check() && userCheckPermission('device_add');
     }
 
     public function rules(): array
@@ -27,7 +27,6 @@ class DuplicateDeviceRequest extends FormRequest
             'uuid' => [
                 'required',
                 'uuid',
-                Rule::exists('v_devices', 'device_uuid'),
             ],
             'new_mac_address' => [
                 'required',

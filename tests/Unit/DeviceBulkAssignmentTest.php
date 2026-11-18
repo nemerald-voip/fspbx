@@ -5,9 +5,7 @@ namespace Tests\Unit;
 use App\Http\Controllers\DeviceController;
 use App\Http\Requests\BulkUpdateDeviceRequest;
 use App\Models\Devices;
-use App\Services\DeviceActionService;
 use App\Services\DeviceService;
-use App\Services\FreeswitchEslService;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -68,8 +66,8 @@ class DeviceBulkAssignmentTest extends TestCase
         ?string $expectedProfile,
         ?string $expectedTemplate
     ): void {
-        // Cross the controller's ten-device chunk boundary.
-        $ids = array_map(fn ($number) => 'device-'.$number, range(1, 12));
+        // Exercise a batch with more than ten devices.
+        $ids = array_map(fn ($number) => sprintf('00000000-0000-4000-8000-%012d', $number), range(1, 12));
         foreach ([...$ids, 'unselected'] as $id) {
             $this->device($id, $profile, $template);
         }
@@ -116,7 +114,7 @@ class DeviceBulkAssignmentTest extends TestCase
     {
         $this->expectException(\Illuminate\Validation\ValidationException::class);
         $this->request([
-            'items' => ['device-1'],
+            'items' => ['00000000-0000-4000-8000-000000000001'],
             'device_profile_uuid' => self::PROFILE,
             'device_key_template_uuid' => self::TEMPLATE,
         ]);
@@ -125,16 +123,16 @@ class DeviceBulkAssignmentTest extends TestCase
     public function test_key_template_assignment_still_requires_permission(): void
     {
         session(['permissions' => []]);
-        $this->device('device-1', self::PROFILE, null);
+        $this->device('00000000-0000-4000-8000-000000000001', self::PROFILE, null);
 
         $response = $this->save([
-            'items' => ['device-1'],
+            'items' => ['00000000-0000-4000-8000-000000000001'],
             'device_key_template_uuid' => self::TEMPLATE,
         ]);
 
         $this->assertSame(403, $response->getStatusCode());
         $this->assertDatabaseHas('v_devices', [
-            'device_uuid' => 'device-1',
+            'device_uuid' => '00000000-0000-4000-8000-000000000001',
             'device_profile_uuid' => self::PROFILE,
             'device_key_template_uuid' => null,
         ]);
@@ -169,8 +167,6 @@ class DeviceBulkAssignmentTest extends TestCase
         return Devices::withoutEvents(fn () => (new DeviceController())->bulkUpdate(
             $this->request($data),
             Mockery::mock(DeviceService::class),
-            Mockery::mock(FreeswitchEslService::class),
-            Mockery::mock(DeviceActionService::class),
         ));
     }
 }

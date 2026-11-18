@@ -254,7 +254,21 @@ class PhoneNumberDialplanTest extends TestCase
                 $table->string($column)->nullable();
             }
         });
-        session(['domain_name' => 'account.test']);
+        session(['domain_name' => 'account.test', 'domain_uuid' => '7d58342b-2b29-4dcf-92d6-e9a9e002a4e5']);
+        Schema::create('v_voicemails', function (Blueprint $table) {
+            foreach (['voicemail_uuid', 'domain_uuid', 'voicemail_id'] as $column) {
+                $table->string($column);
+            }
+        });
+        DB::table('v_voicemails')->insert([
+            'voicemail_uuid' => '11111111-1111-4111-8111-111111111111',
+            'domain_uuid' => '7d58342b-2b29-4dcf-92d6-e9a9e002a4e5', 'voicemail_id' => '1001',
+        ]);
+        Schema::create('v_extensions', function (Blueprint $table) {
+            foreach (['extension_uuid', 'domain_uuid', 'extension', 'effective_caller_id_name'] as $column) {
+                $table->string($column)->nullable();
+            }
+        });
         $actions = json_encode([['destination_app' => 'transfer', 'destination_data' => '*991001 XML account.test']]);
         $phoneNumber = new Destinations([
             'destination_uuid' => '8c75b703-9419-4ad7-92d8-408d73c34b3e',

@@ -17,7 +17,8 @@
                             class="relative transform  rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl sm:p-6">
 
                             <Vueform ref="form$" :endpoint="submitForm" @success="handleSuccess" @error="handleError"
-                                @response="handleResponse" :display-errors="false" :default="{
+                                @mounted="form => form.disableValidation()"
+                                @response="showServerFormErrors" :display-errors="false" :default="{
                                     holiday_type: options.item.holiday_type,
                                     description: options.item.description,
                                     start_date: options.item.start_date,
@@ -56,7 +57,6 @@
                                         )
                                         ?? null
                                 }">
-                                <HiddenElement name="business_hour_uuid" :meta="true" />
                                 <StaticElement name="h4" tag="h4" :content="$t('Update Holiday')" />
                                 <SelectElement name="holiday_type" :items="[
                                     {
@@ -469,6 +469,7 @@
 </template>
 
 <script setup>
+import { clearServerFormErrors, showServerFormErrors } from "../../../composables/serverFormErrors.js";
 import { ref } from "vue";
 import { trans } from "@i18n";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
@@ -479,12 +480,12 @@ const emits = defineEmits(['close', 'confirm', 'success', 'error', 'refresh-data
 const props = defineProps({
     show: Boolean,
     options: Object,
-    business_hour_uuid: String,
 });
 
 const form$ = ref(null)
 
 const submitForm = async (FormData, form$) => {
+    clearServerFormErrors(form$);
     // Using form$.requestData will EXCLUDE conditional elements and it 
     // will submit the form as Content-Type: application/json . 
     const requestData = form$.data
@@ -494,39 +495,9 @@ const submitForm = async (FormData, form$) => {
     delete requestData.ca_holiday;
     delete requestData.uk_holiday;
 
-    requestData.business_hour_uuid = props.business_hour_uuid
-
     // console.log(requestData);
     return await form$.$vueform.services.axios.put(props.options.routes.update_route, requestData)
 };
-
-function clearErrorsRecursive(el$) {
-    // clear this element’s errors
-    el$.messageBag?.clear()
-
-    // if it has child elements, recurse into each
-    if (el$.children$) {
-        Object.values(el$.children$).forEach(childEl$ => {
-            clearErrorsRecursive(childEl$)
-        })
-    }
-}
-
-const handleResponse = (response, form$) => {
-    // Clear form including nested elements 
-    Object.values(form$.elements$).forEach(el$ => {
-        clearErrorsRecursive(el$)
-    })
-
-    // Display custom errors for elements
-    if (response.data.errors) {
-        Object.keys(response.data.errors).forEach((elName) => {
-            if (form$.el$(elName)) {
-                form$.el$(elName).messageBag.append(response.data.errors[elName][0])
-            }
-        })
-    }
-}
 
 const handleSuccess = (response, form$) => {
     // console.log(response) // axios response

@@ -50,7 +50,8 @@
                             </div>
 
                             <Vueform :key="formKey" ref="form$" class="mt-5" :endpoint="submitForm"
-                                :default="defaultValues" :display-errors="false"
+                                :default="defaultValues" :display-errors="false" :validate-on="''"
+                                @mounted="form => form.disableValidation()"
                                 @success="handleSuccess" @error="handleError" @response="handleResponse">
                                 <template #empty>
                                     <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
@@ -72,7 +73,7 @@
                                                 <SelectElement name="type" :label="$t('Directory Type')" :items="directoryTypes"
                                                     :native="false" :description="fieldDescriptions.type" :floating="false"
                                                     :columns="halfColumns" />
-                                                <TextElement name="name" :label="$t('Directory Name')" rules="required"
+                                                <TextElement name="name" :label="$t('Directory Name')"
                                                     :description="fieldDescriptions.name" :floating="false" :columns="halfColumns" />
                                                 <ToggleElement name="enabled" :text="$t('Enable Directory')"
                                                     :labels="{ on: $t('Yes'), off: $t('No') }" label="&nbsp;"
@@ -85,22 +86,22 @@
                                                 <SelectElement name="secure_connection" :label="$t('Secure Connection Type')"
                                                     :items="secureConnections" :native="false" :description="fieldDescriptions.secure_connection"
                                                     :floating="false" :columns="halfColumns" />
-                                                <TextElement name="port" input-type="number" :label="$t('Port')" rules="required"
+                                                <TextElement name="port" input-type="number" :label="$t('Port')"
                                                     :description="fieldDescriptions.port" :floating="false" :columns="halfColumns" />
                                                 <TextElement name="hosts" :label="$t('Host(s)')"
-                                                    placeholder="dc01.domain.local, dc02.domain.local" rules="required"
+                                                    placeholder="dc01.domain.local, dc02.domain.local"
                                                     :description="fieldDescriptions.hosts" :floating="false" />
                                                 <TextElement name="bind_username" :label="$t('Username')" placeholder="ldap-sync" input-type="search"
-                                                    rules="required" :floating="false" autocomplete="off"
+                                                    :floating="false" autocomplete="off"
                                                     :description="fieldDescriptions.bind_username" :columns="halfColumns" />
                                                 <TextElement name="bind_password" input-type="password" :label="$t('Password')"
                                                     :description="bindPasswordDescription"
-                                                    :rules="directory?.has_bind_password ? [] : ['required']" :floating="false"
+                                                    :floating="false"
                                                     autocomplete="new-password" :columns="halfColumns" />
                                                 <TextElement name="ad_domain" :label="$t('Domain')" placeholder="domain.local"
-                                                    rules="required" :description="fieldDescriptions.ad_domain" :floating="false" :columns="halfColumns" />
+                                                    :description="fieldDescriptions.ad_domain" :floating="false" :columns="halfColumns" />
                                                 <TextElement name="base_dn" :label="$t('Base DN')" placeholder="DC=domain,DC=local"
-                                                    rules="required" :description="fieldDescriptions.base_dn" :floating="false" :columns="halfColumns" />
+                                                    :description="fieldDescriptions.base_dn" :floating="false" :columns="halfColumns" />
                                                 <GroupElement name="directory_buttons" />
                                                 <ButtonElement name="directory_submit" :button-label="$t('Save')" :submits="true"
                                                     align="right" />
@@ -272,13 +273,13 @@ const fieldDescriptions = {
     bind_username: trans('Account used to bind and search the directory. Bare usernames are combined with the configured domain.'),
     bind_password: trans('Password for the bind account. A dedicated read-only directory service account is recommended.'),
     ad_domain: trans('DNS domain used to complete bare bind usernames and identify directory users, usually in the form domain.local.'),
-    base_dn: trans('Root distinguished name for directory searches, for example DC=domain,DC=local.'),
+    base_dn: trans('Shared base for directory searches, for example DC=domain,DC=local. Leave blank to use independent full User DN and Group DN paths.'),
     create_missing_extensions: trans('Creates a default extension when the user extension attribute contains a number that does not exist in this account.'),
     manage_groups_locally: trans('When enabled, imported directory memberships do not add or remove mapped local role memberships.'),
     common_name_attribute: trans('LDAP attribute used as the common name for imported directory objects.'),
     description_attribute: trans('LDAP attribute used as the description for imported users and groups.'),
     unique_identifier_attribute: trans('Immutable single-value identifier used to track objects across renames. Active Directory normally uses objectGUID.'),
-    user_dn: trans('Relative DN added before the Base DN when searching users, for example OU=Users. Leave blank to search from the Base DN.'),
+    user_dn: trans('With a Base DN, enter a relative path such as OU=Users, a full path under that base, or leave blank to search the base. Without a Base DN, enter the full user search path, for example ou=users,dc=cloudron.'),
     user_object_class: trans('LDAP object class added to user searches. Active Directory normally uses user.'),
     user_object_filter: trans('LDAP filter combined with the user object class to select which user objects are synchronized.'),
     user_name_attribute: trans('LDAP attribute used as the local username and directory login name. Active Directory normally uses sAMAccountName.'),
@@ -295,7 +296,7 @@ const fieldDescriptions = {
     user_cell_phone_attribute: trans('LDAP attribute containing the user mobile telephone number.'),
     user_fax_attribute: trans('LDAP attribute containing the user fax number.'),
     user_extension_attribute: trans('LDAP attribute containing the extension number used to link or create a local extension.'),
-    group_dn: trans('Relative DN added before the Base DN when searching groups, for example OU=Groups. Leave blank to search from the Base DN.'),
+    group_dn: trans('With a Base DN, enter a relative path such as OU=Groups, a full path under that base, or leave blank to search the base. Without a Base DN, enter the full group search path, for example ou=groups,dc=cloudron.'),
     group_object_class: trans('LDAP object class added to group searches. Active Directory normally uses group.'),
     group_object_filter: trans('LDAP filter combined with the group object class to select which group objects are synchronized.'),
     group_members_attribute: trans('Multi-value LDAP attribute containing the distinguished names of users and groups that belong to each group.'),
@@ -324,6 +325,8 @@ const formatDate = value => value ? new Date(value).toLocaleString() : '—'
 const statusLabel = value => String(value || 'not tested').replaceAll('_', ' ')
 
 const submitForm = async (FormData, form) => {
+    form.messageBag.clear()
+    Object.values(form.elements$).forEach(element => element.messageBag?.clear())
     const data = { ...form.requestData }
     if (data.bind_password === MASK) data.bind_password = null
     return props.directory
@@ -337,7 +340,12 @@ const handleSuccess = response => {
     emit('refresh')
 }
 const handleResponse = (response, form) => {
-    if (response.data.errors) Object.entries(response.data.errors).forEach(([name, messages]) => form.el$(name)?.messageBag.append(messages[0]))
+    const errors = response.data.errors
+    if (!errors) return
+    Object.entries(errors).forEach(([name, messages]) => form.el$(name)?.messageBag.append(messages[0]))
+    const tab = Object.entries({ directory: directoryElements, operational: operationalElements, users: userElements, groups: groupElements })
+        .find(([, elements]) => elements.some(name => errors[name]))?.[0]
+    if (tab) form.tabs$?.goTo(tab)
 }
 const handleError = error => emit('error', error.response?.data?.errors || messageBag(error.response?.data?.message || error.message))
 

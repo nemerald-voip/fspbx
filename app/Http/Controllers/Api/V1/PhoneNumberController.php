@@ -593,7 +593,7 @@ class PhoneNumberController extends Controller
         try {
             DB::transaction(function () use ($pn) {
 
-                // Delete dialplan (if exists)
+                // The dialplan belongs to the phone number's account and moves with the number on transfer.
                 if (! empty($pn->dialplan_uuid)) {
                     Dialplans::where('dialplan_uuid', $pn->dialplan_uuid)->delete();
                 }

@@ -21,13 +21,16 @@ use Spatie\QueryBuilder\QueryBuilder;
 class GatewayController extends Controller
 {
 
-    public function index()
+    public function index(Request $request)
     {
         if (!userCheckPermission('gateway_view')) {
             return redirect('/');
         }
 
+        $validated = $request->validate(['edit' => ['nullable', 'uuid']]);
+
         return Inertia::render('Gateways', [
+            'edit_uuid' => userCheckPermission('gateway_edit') ? ($validated['edit'] ?? null) : null,
             'pagination' => [
                 'per_page' => fspbx_pagination_per_page(),
                 'per_page_options' => fspbx_pagination_options(),

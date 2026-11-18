@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Services\HotelPortalAccess;
+use Illuminate\Validation\Rule;
 use Illuminate\Foundation\Http\FormRequest;
 use App\Support\Localization\ValidationMessages;
 
@@ -9,16 +11,17 @@ class HotelRoomCheckInRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true; // tighten if you have policies/guards
+        return HotelPortalAccess::allows('hotel_room_status_update');
     }
 
     public function rules(): array
     {
         return [
             // NOTE: payload 'uuid' is the HotelRoom UUID
-            'uuid'               => ['required', 'uuid', 'exists:hotel_rooms,uuid'],
+            'uuid'               => ['required', 'uuid'],
             'occupancy_status'   => ['nullable', 'string', 'max:50'],
-            'housekeeping_status'=> ['nullable', 'uuid'],
+            'housekeeping_status'=> ['nullable', 'uuid', Rule::exists('hotel_housekeeping_definitions', 'uuid')
+                ->where('domain_uuid', session('domain_uuid'))->where('enabled', true)],
             'guest_first_name'   => ['nullable', 'string', 'max:120'],
             'guest_last_name'    => ['nullable', 'string', 'max:120'],
             'extension_name'    => ['nullable', 'string', 'max:120'],

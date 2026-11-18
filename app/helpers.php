@@ -1050,7 +1050,7 @@ if (!function_exists('debugEloquentSqlWithBindings')) {
  * ]
  */
 if (!function_exists('getVendorTemplateCollection')) {
-    function getVendorTemplateCollection(bool $includeDefaultTemplates = true, bool $includeCustomTemplates = true, ?bool $includeLegacyTemplates = null): array
+    function getVendorTemplateCollection(bool $includeDefaultTemplates = true, bool $includeCustomTemplates = true, ?bool $includeLegacyTemplates = null, ?string $domainUuid = null): array
     {
         // Preserve existing callers while allowing legacy files independently of Blade defaults.
         $includeLegacyTemplates ??= $includeDefaultTemplates;
@@ -1077,7 +1077,7 @@ if (!function_exists('getVendorTemplateCollection')) {
             }
         }
 
-        $domainUuid = session('domain_uuid');
+        $domainUuid ??= session('domain_uuid');
 
         $vendorNames = $vendors->pluck('name')->map(fn($n) => strtolower($n))->all();
 

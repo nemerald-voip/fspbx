@@ -2,32 +2,31 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\HotelRoom;
 use Illuminate\Http\Request;
-use App\Models\HotelRoomStatus;
 use App\Services\HotelRoomService;
-use Illuminate\Support\Facades\DB;
+use App\Services\HotelPortalAccess;
 use Spatie\QueryBuilder\QueryBuilder;
 use Spatie\QueryBuilder\AllowedFilter;
 use App\Models\HotelHousekeepingDefinition;
 use App\Http\Requests\HotelRoomCheckInRequest;
+use App\Http\Requests\HotelRoomItemOptionsRequest;
+use App\Http\Requests\HotelRoomSelectionRequest;
 
 class HotelRoomStatusController extends Controller
 {
     public function index(Request $request)
     {
-
+        abort_unless(HotelPortalAccess::allows('hotel_room_status_list_view'), 403);
         $perPage = (int) $request->input('per_page', 50);
 
-        $query = QueryBuilder::for(HotelRoom::query())
+        $query = QueryBuilder::for(HotelPortalAccess::rooms())
             ->select([
                 'uuid',
                 'room_name',
             ])
             ->allowedFilters([
-                AllowedFilter::callback('domain_uuid', function ($q, $value) {
-                    $q->where('domain_uuid', $value);
-                }),
+                // Accepted for compatibility with older portal builds.
+                AllowedFilter::callback('domain_uuid', static fn ($query) => $query),
                 AllowedFilter::callback('search', function ($q, $value) {
                     if ($value === null || $value === '') return;
                     $q->where(function ($qq) use ($value) {
@@ -36,8 +35,11 @@ class HotelRoomStatusController extends Controller
                 }),
             ])
             ->with(['status' => function ($query) {
-                $query->select('uuid', 'hotel_room_uuid', 'occupancy_status', 'housekeeping_status', 'guest_first_name', 'guest_last_name', 'arrival_date', 'departure_date')
-                ->with('housekeepingDefinition:uuid,code,label');
+                $query->where('domain_uuid', session('domain_uuid'))
+                    ->select('uuid', 'domain_uuid', 'hotel_room_uuid', 'occupancy_status', 'housekeeping_status', 'guest_first_name', 'guest_last_name', 'arrival_date', 'departure_date')
+                    ->with(['housekeepingDefinition' => fn ($definition) => $definition
+                        ->where(fn ($owners) => $owners->whereNull('domain_uuid')->orWhere('domain_uuid', session('domain_uuid')))
+                        ->select('uuid', 'code', 'label')]);
             }])
             ->allowedSorts(['room_name'])
             ->defaultSort('room_name');
@@ -53,7 +55,7 @@ class HotelRoomStatusController extends Controller
     {
         $payload = $request->validated();
 
-        $room = HotelRoom::where('uuid', $payload['uuid'])->firstOrFail();
+        $room = HotelPortalAccess::rooms()->findOrFail($payload['uuid']);
     
         try {
             $service->checkIn($room, $payload);
@@ -69,36 +71,15 @@ class HotelRoomStatusController extends Controller
         }
     }
 
-    public function update(Request $request, string $uuid)
+    public function getItemOptions(HotelRoomItemOptionsRequest $request)
     {
-    }
-
-    public function getItemOptions()
-    {
+        $itemUuid = $request->validated('item_uuid');
+        $currentDomain = session('domain_uuid');
+        $item = $itemUuid ? HotelPortalAccess::rooms()
+            ->with(['status' => fn ($query) => $query->where('domain_uuid', $currentDomain)
+                ->select('uuid', 'domain_uuid', 'hotel_room_uuid', 'occupancy_status', 'housekeeping_status', 'guest_first_name', 'guest_last_name', 'arrival_date', 'departure_date')])
+            ->findOrFail($itemUuid, ['uuid', 'room_name']) : null;
         try {
-            $item = null;
-            $itemUuid = request('item_uuid') ?? null;
-            $routes = [];
-
-            if ($itemUuid) {
-                $item =  QueryBuilder::for(HotelRoom::query())
-                    ->select([
-                        'uuid',
-                        'room_name',
-                    ])
-                    ->with(['status' => function ($query) {
-                        $query->select('uuid', 'hotel_room_uuid', 'occupancy_status', 'housekeeping_status', 'guest_first_name', 'guest_last_name', 'arrival_date', 'departure_date');
-                    }])
-                    ->whereKey($itemUuid)
-                    ->firstOrFail();
-
-                $routes = array_merge($routes, [
-                    'update_route' => route('hotel-room-status.update', ['hotel_room_status' => request('item_uuid')]),
-                ]);
-            }
-
-            $currentDomain = (string) session('domain_uuid');
-
             $defaultHousekeepingOptions = QueryBuilder::for(HotelHousekeepingDefinition::query())
                 ->enabled()->forDomain($currentDomain)
                 ->defaultSort('code')
@@ -110,14 +91,10 @@ class HotelRoomStatusController extends Controller
                     ];
                 });
 
-            $routes = array_merge($routes, [
-                'store_route' => route('hotel-room-status.store'),
-            ]);
-
             return response()->json([
                 'item' => $item,
                 'housekeeping_options' => $defaultHousekeepingOptions,
-                'routes' => $routes,
+                'routes' => ['store_route' => route('hotel-room-status.store')],
             ]);
         } catch (\Throwable $e) {
             logger('HotelRoomStatusController@getItemOptions ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
@@ -128,18 +105,10 @@ class HotelRoomStatusController extends Controller
         }
     }
 
-    public function bulkDelete(HotelRoomService $service)
+    public function bulkDelete(HotelRoomSelectionRequest $request, HotelRoomService $service)
     {
+        $rooms = HotelPortalAccess::selectedRooms($request->validated('items'));
         try {
-            $uuids = (array) request('items', []);
-            if (empty($uuids)) {
-                return response()->json([
-                    'messages' => ['error' => [__('No rooms selected.')]]
-                ], 422);
-            }
-    
-            $rooms = HotelRoom::whereIn('uuid', $uuids)->get();
-    
             $checkedOut = 0;
             $alreadyVacant = 0;
     

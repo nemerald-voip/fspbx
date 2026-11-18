@@ -18,14 +18,45 @@ class ActiveDirectoryClient
 
     public function test(): array
     {
-        $connection = $this->connect();
-        $result = @ldap_read($connection, $this->directory->base_dn, '(objectClass=*)', ['distinguishedName']);
-
-        if ($result === false) {
-            throw $this->exception('The directory bind succeeded, but the Base DN could not be read');
+        foreach ([
+            'User DN' => $this->directory->userSearchBase(),
+            'Group DN' => $this->directory->groupSearchBase(),
+        ] as $label => $baseDn) {
+            $this->testSearchBase($label, $baseDn);
         }
 
         return ['host' => $this->connectedHost, 'base_dn' => $this->directory->base_dn];
+    }
+
+    private function testSearchBase(string $label, string $baseDn): void
+    {
+        if (trim($baseDn) === '') {
+            throw new ActiveDirectoryException("{$label} is required when Base DN is blank.");
+        }
+
+        $connection = $this->connect();
+        // Search the same subtree as synchronization. Virtual LDAP directories
+        // need not expose either the common parent or the search base as an entry.
+        // One entry and no attributes are enough to check search access.
+        $result = @ldap_search($connection, $baseDn, '(objectClass=*)', ['1.1'], 0, 1, 5, LDAP_DEREF_NEVER);
+        $message = "The directory bind succeeded, but the {$label} search failed under {$baseDn}";
+
+        if (! $result instanceof Result) {
+            throw $this->exception($message, $connection);
+        }
+
+        try {
+            $errorCode = null;
+            $parsed = @ldap_parse_result($connection, $result, $errorCode);
+            // A size-limit response with an entry is expected for this bounded
+            // probe. Synchronization still requires complete paginated results.
+            $hasLimitedResult = $errorCode === 4 && ldap_count_entries($connection, $result) > 0;
+            if (! $parsed || ($errorCode !== 0 && ! $hasLimitedResult)) {
+                throw $this->exception($message, $connection);
+            }
+        } finally {
+            ldap_free_result($result);
+        }
     }
 
     public function users(): array

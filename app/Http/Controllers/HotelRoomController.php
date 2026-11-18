@@ -12,24 +12,27 @@ use Spatie\QueryBuilder\AllowedFilter;
 use App\Http\Requests\StoreHotelRoomRequest;
 use App\Http\Requests\UpdateHotelRoomRequest;
 use App\Http\Requests\BulkStoreHotelRoomsRequest;
+use App\Http\Requests\HotelRoomItemOptionsRequest;
+use App\Http\Requests\HotelRoomSelectionRequest;
+use App\Services\HotelPortalAccess;
 
 class HotelRoomController extends Controller
 {
 
     public function index(Request $request)
     {
+        abort_unless(HotelPortalAccess::allows('hotel_rooms_list_view'), 403);
         $perPage    = (int) $request->input('per_page', 50);
 
-        $query = QueryBuilder::for(HotelRoom::query())
+        $query = QueryBuilder::for(HotelPortalAccess::rooms())
             ->select([
                 'uuid',
                 'extension_uuid',
                 'room_name',
             ])
             ->allowedFilters([
-                AllowedFilter::callback('domain_uuid', function ($q, $value) {
-                    $q->where('domain_uuid', $value);
-                }),
+                // Older portal builds send this filter. The session already scopes the query.
+                AllowedFilter::callback('domain_uuid', static fn ($query) => $query),
                 AllowedFilter::callback('search', function ($q, $value) {
                     if ($value === null || $value === '') return;
                     $q->where(function ($qq) use ($value) {
@@ -38,7 +41,7 @@ class HotelRoomController extends Controller
                 }),
             ])
             ->with(['extension' => function ($query) {
-                $query->select('extension_uuid', 'extension');
+                $query->where('domain_uuid', session('domain_uuid'))->select('extension_uuid', 'extension');
             }])
             ->allowedSorts(['room_name'])
             ->defaultSort('room_name');
@@ -58,7 +61,7 @@ class HotelRoomController extends Controller
         try {
             DB::beginTransaction();
 
-            $hotelRoom = HotelRoom::create($data);
+            HotelRoom::create($data + ['domain_uuid' => session('domain_uuid')]);
 
             DB::commit();
 
@@ -79,7 +82,7 @@ class HotelRoomController extends Controller
     public function bulkStore(BulkStoreHotelRoomsRequest $request)
     {
         $data = $request->validated();
-        $domainUuid = (string) $data['domain_uuid'];
+        $domainUuid = session('domain_uuid');
         $uuids = $data['extensions'];
 
         try {
@@ -122,16 +125,10 @@ class HotelRoomController extends Controller
     public function update(UpdateHotelRoomRequest $request, $uuid)
     {
         $data = $request->validated();
+        $hotelRoom = HotelPortalAccess::rooms()->findOrFail($uuid);
 
         try {
             DB::beginTransaction();
-
-            $hotelRoom = HotelRoom::find($uuid);
-            if (!$hotelRoom) {
-                return response()->json([
-                    'messages' => ['error' => [__('Hotel room not found.')]]
-                ], 404);
-            }
 
             $hotelRoom->update($data);
 
@@ -183,17 +180,16 @@ class HotelRoomController extends Controller
         return $room->fresh();
     }
 
-    public function getItemOptions()
+    public function getItemOptions(HotelRoomItemOptionsRequest $request)
     {
+        $uuid = $request->validated('item_uuid');
+        $item = $uuid ? HotelPortalAccess::rooms()->findOrFail($uuid) : null;
         try {
-            $item = null;
             $routes = [];
 
-            if (request()->filled('item_uuid')) {
-                $item = HotelRoom::findOrFail(request('item_uuid'));
-
+            if ($item) {
                 $routes = array_merge($routes, [
-                    'update_route' => route('hotel-rooms.update', ['hotel_room' => request('item_uuid')]),
+                    'update_route' => route('hotel-rooms.update', ['hotel_room' => $item->uuid]),
                 ]);
             }
 
@@ -257,23 +253,14 @@ class HotelRoomController extends Controller
         }
     }
 
-    public function bulkDelete()
+    public function bulkDelete(HotelRoomSelectionRequest $request)
     {
+        $items = HotelPortalAccess::selectedRooms($request->validated('items'));
         try {
             DB::beginTransaction();
 
-            $uuids = request('items');
-
-            $items = HotelRoom::whereIn('uuid', $uuids)
-                ->get();
-
             foreach ($items as $item) {
-
-                //delete hotel room status
-                if (method_exists($item, 'status')) {
-                    $item->status()->delete();
-                }
-
+                $item->status()->where('domain_uuid', $item->domain_uuid)->delete();
                 $item->delete();
             }
 

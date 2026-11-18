@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\UpdateHotelPmsProviderRequest;
+use App\Services\HotelPortalAccess;
 use Inertia\Inertia;
 use Inertia\Response;
 use App\Models\Domain;
@@ -286,7 +288,7 @@ class AccountSettingsController extends Controller
 
     public function pmsProvider(PmsProviderSettings $settings): JsonResponse
     {
-        if (!userCheckPermission("account_settings_list_view")) {
+        if (!HotelPortalAccess::allows('account_settings_list_view')) {
             return response()->json(['errors' => ['authorization' => [__('Access denied.')]]], 403);
         }
 
@@ -296,22 +298,13 @@ class AccountSettingsController extends Controller
         ]);
     }
 
-    public function updatePmsProvider(Request $request, PmsProviderSettings $settings): JsonResponse
+    public function updatePmsProvider(UpdateHotelPmsProviderRequest $request, PmsProviderSettings $settings): JsonResponse
     {
-        if (!userCheckPermission("account_settings_list_view")) {
-            return response()->json(['errors' => ['authorization' => [__('Access denied.')]]], 403);
-        }
-
-        $validated = $request->validate([
-            'pms_provider' => ['required', 'string', 'in:charpms,tigertms'],
-        ], \App\Support\Localization\ValidationMessages::common(), [
-            'pms_provider' => __('Provider'),
-        ]);
-
-        $settings->saveProvider((string) session('domain_uuid'), $validated['pms_provider']);
+        $provider = $request->validated('pms_provider');
+        $settings->saveProvider(session('domain_uuid'), $provider);
 
         return response()->json([
-            'provider' => $validated['pms_provider'],
+            'provider' => $provider,
             'messages' => ['server' => [__('PMS provider updated.')]],
         ]);
     }
@@ -346,11 +339,18 @@ class AccountSettingsController extends Controller
         $permissions['ldap_directory_view'] = userCheckPermission('ldap_directory_view');
         $permissions['location_update'] = userCheckPermission('location_update');
         $permissions['location_delete'] = userCheckPermission('location_delete');
+        foreach ([
+            'hotel_rooms_list_view', 'hotel_rooms_create', 'hotel_rooms_update', 'hotel_rooms_delete',
+            'hotel_room_status_list_view', 'hotel_room_status_update', 'hotel_housekeeping_manage', 'hotel_pms_provider_manage',
+        ] as $permission) {
+            $permissions[$permission] = HotelPortalAccess::allows($permission);
+        }
         $permissions['call_webhook_view'] = userCheckPermission('call_webhook_view');
         $permissions['call_webhook_create'] = userCheckPermission('call_webhook_create');
         $permissions['call_webhook_update'] = userCheckPermission('call_webhook_update');
         $permissions['call_webhook_delete'] = userCheckPermission('call_webhook_delete');
         $permissions['call_webhook_test'] = userCheckPermission('call_webhook_test');
+        $permissions += app(\App\Services\ProvisioningTemplateAccessService::class)->permissions();
 
         return $permissions;
     }

@@ -184,6 +184,48 @@ class DeviceService
         });
     }
 
+    /** Called inside the authorized transfer transaction, after the new owner is saved. */
+    public function clearIncompatibleAssignments(Devices $device, array $previousPhonebooks = []): array
+    {
+        $cleared = [];
+        foreach ([
+            'device_profile_uuid' => [\App\Models\DeviceProfile::class, __('Profile'), true],
+            'device_key_template_uuid' => [\App\Models\DeviceKeyTemplate::class, __('Key Template'), false],
+            'device_template_uuid' => [\App\Models\ProvisioningTemplate::class, __('Provisioning Template'), true],
+        ] as $field => [$model, $label, $globalAllowed]) {
+            if (! $device->{$field}) {
+                continue;
+            }
+            $assignment = $model::find($device->{$field});
+            if ($assignment && ($assignment->domain_uuid === $device->domain_uuid
+                || ($globalAllowed && $assignment->domain_uuid === null))) {
+                continue;
+            }
+            $device->{$field} = null;
+            if ($field === 'device_template_uuid') {
+                // Do not fall back to an old-account template identifier after clearing its UUID.
+                $device->device_template = null;
+            }
+            $cleared[] = $label;
+        }
+
+        $removed = DB::table('device_phonebook')->where('device_uuid', $device->device_uuid)
+            ->whereNotIn('phonebook_uuid', \App\Models\Phonebook::query()
+                ->where('domain_uuid', $device->domain_uuid)->select('phonebook_uuid'))
+            ->delete();
+        // A full edit may already have removed these in syncDevicePhonebooks.
+        $previousValid = \App\Models\Phonebook::where('domain_uuid', $device->domain_uuid)
+            ->whereIn('phonebook_uuid', $previousPhonebooks)->count();
+        if ($removed || $previousValid < count($previousPhonebooks)) {
+            $cleared[] = __('Phonebooks');
+        }
+        if ($device->isDirty()) {
+            $device->saveQuietly();
+        }
+
+        return $cleared;
+    }
+
     private function resolveDomainName(string $domainUuid): ?string
     {
         if ($domainUuid === '') {

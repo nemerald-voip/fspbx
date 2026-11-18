@@ -37,14 +37,15 @@ class BulkUpdateDeviceRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return Auth::check();
+        return Auth::check() && userCheckPermission('device_edit');
     }
 
     public function rules(): array
     {
         return [
 
-            'items' => 'required',
+            'items' => ['required', 'array', 'min:1'],
+            'items.*' => ['required', 'uuid', 'distinct'],
             
             'device_profile_uuid' => [
                 'nullable',
@@ -60,8 +61,7 @@ class BulkUpdateDeviceRequest extends FormRequest
                 'nullable',
                 Rule::when(
                     fn ($input) => ($input['device_key_template_uuid'] ?? null) !== 'NULL',
-                    Rule::exists('device_key_templates', 'device_key_template_uuid')
-                        ->where('domain_uuid', session('domain_uuid')),
+                    Rule::exists('device_key_templates', 'device_key_template_uuid'),
                 ),
             ],
             'device_template' => [
@@ -100,7 +100,11 @@ class BulkUpdateDeviceRequest extends FormRequest
             // 'device_keys.*.user_id' => ['nullable'],
             
             'domain_uuid' => [
-                'nullable',
+                'bail',
+                'sometimes',
+                'required',
+                'uuid',
+                Rule::exists('v_domains', 'domain_uuid'),
             ],
             'device_description' => [
                 'nullable',
@@ -238,6 +242,15 @@ class BulkUpdateDeviceRequest extends FormRequest
                     'device_key_template_uuid',
                     'Choose either a key template or a device profile, not both.'
                 );
+            }
+
+            if ($validator->errors()->isEmpty()) {
+                $deviceFields = array_diff_key($validator->validated(), array_flip([
+                    'items', ...array_keys(self::LINE_ATTRIBUTE_MAP), ...self::LINE_CONTROL_FIELDS,
+                ]));
+                if (empty($deviceFields) && empty($this->lineAttributes())) {
+                    $validator->errors()->add('input', __('No devices or fields provided for update.'));
+                }
             }
 
             if (empty($this->lineAttributes())) {

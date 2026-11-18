@@ -18,7 +18,7 @@
                         :strict="false" :placeholder="$t('Choose Vendor')" input-type="search" autocomplete="off"
                         :floating="false" :columns="settingsFieldColumns" :disabled="readOnly" />
 
-                    <ToggleElement name="global" :text="$t('Share across accounts')" label="&nbsp;"
+                    <ToggleElement v-if="options.permissions?.provisioning_templates_manage_global" name="global" :text="$t('Share across accounts')" label="&nbsp;"
                         :columns="settingsFieldColumns" :disabled="readOnly" />
                 </FormElements>
             </template>
@@ -97,7 +97,7 @@ const savedUpdateRoute = ref(null)
 
 const settingsFieldColumns = { sm: { container: 6 }, lg: { container: 3 } }
 
-const readOnly = computed(() => props.mode === 'view')
+const readOnly = computed(() => props.mode === 'view' || props.options?.read_only === true)
 
 const baseTemplateItems = computed(() => props.options?.default_templates ?? [])
 const vendorItems = computed(() => props.options?.vendors ?? [])

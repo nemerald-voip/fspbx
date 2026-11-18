@@ -47,8 +47,8 @@
                             </div>
 
 
-                            <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
-                                @error="handleError" @response="handleResponse" :display-errors="false" :default="{
+                            <Vueform @mounted="form => form.disableValidation()" v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
+                                @error="handleError" @response="showServerFormErrors" :display-errors="false" :default="{
                                     items: items,
                                     // destination_enabled: options.item?.destination_enabled ?? false,
                                     // destination_prefix: options.item?.destination_prefix ?? null,
@@ -237,7 +237,7 @@
                                                                 try {
                                                                     let response = await type.$vueform.services.axios.post(
                                                                         options.routes.get_routing_options,
-                                                                        { category: type.value }
+                                                                        { category: type.value, domain_uuid: input.$parent.el$.form$.el$('domain_uuid')?.value || options.item?.domain_uuid }
                                                                     );
                                                                     // let option = el$.form$.el$('routing_options.' + index + '.option')
 
@@ -404,6 +404,7 @@
 </template>
 
 <script setup>
+import { clearServerFormErrors, showServerFormErrors } from "../../../composables/serverFormErrors.js";
 import { ref } from "vue";
 
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
@@ -436,6 +437,7 @@ const handleTabSelected = (activeTab, previousTab) => {
 
 
 const submitForm = async (FormData, form$) => {
+    clearServerFormErrors(form$);
     // Using form$.requestData will EXCLUDE conditional elements and it 
     // will submit the form as Content-Type: application/json . 
     const requestData = form$.requestData
@@ -458,34 +460,6 @@ const submitForm = async (FormData, form$) => {
     return await form$.$vueform.services.axios.post(props.options.routes.bulk_update_route, filteredRequestData)
 };
 
-
-function clearErrorsRecursive(el$) {
-    // clear this element’s errors
-    el$.messageBag?.clear()
-
-    // if it has child elements, recurse into each
-    if (el$.children$) {
-        Object.values(el$.children$).forEach(childEl$ => {
-            clearErrorsRecursive(childEl$)
-        })
-    }
-}
-
-const handleResponse = (response, form$) => {
-    // Clear form including nested elements 
-    Object.values(form$.elements$).forEach(el$ => {
-        clearErrorsRecursive(el$)
-    })
-
-    // Display custom errors for elements
-    if (response.data.errors) {
-        Object.keys(response.data.errors).forEach((elName) => {
-            if (form$.el$(elName)) {
-                form$.el$(elName).messageBag.append(response.data.errors[elName][0])
-            }
-        })
-    }
-}
 
 const handleSuccess = (response, form$) => {
     // console.log(response) // axios response

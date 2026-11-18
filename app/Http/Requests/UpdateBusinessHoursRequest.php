@@ -19,13 +19,19 @@ class UpdateBusinessHoursRequest extends FormRequest
      */
     public function authorize()
     {
-        return Auth::check();
+        if (! Auth::check() || ! userCheckPermission('business_hours_update')) {
+            return false;
+        }
+
+        abort_unless($this->route('business_hour')->domain_uuid === session('domain_uuid'), 404);
+
+        return true;
     }
 
     public function rules(): array
     {
         //get current UUID from route model binding
-        $currentUuid = $this->input('uuid');
+        $currentUuid = $this->route('business_hour')?->getKey();
 
         return [
             'custom_hours'              => ['present'],

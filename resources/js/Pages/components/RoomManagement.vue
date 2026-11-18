@@ -1,7 +1,7 @@
 <template>
     <div class="mt-4 flex flex-col">
 
-        <div class="flex flex-col sm:flex-row sm:flex-wrap">
+        <div v-if="permissions.hotel_rooms_list_view" class="flex flex-col sm:flex-row sm:flex-wrap">
             <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
                 <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                     <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
@@ -32,7 +32,7 @@
             </div>
         </div>
 
-        <div class="mt-4 space-x-2">
+        <div v-if="permissions.hotel_rooms_create" class="mt-4 space-x-2">
             <button type="button" @click.prevent="handleCreateButtonClick()"
                 class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                 {{ $t('Add Room') }}
@@ -44,7 +44,7 @@
             </button>
         </div>
 
-        <div class="mt-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+        <div v-if="permissions.hotel_rooms_list_view" class="mt-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
             <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
                 <Paginator class="border border-gray-200" :previous="data.prev_page_url" :next="data.next_page_url"
                     :from="data.from" :to="data.to" :total="data.total" :currentPage="data.current_page"
@@ -82,7 +82,7 @@
 
                                 <td class="whitespace-nowrap px-6 py-2 text-right text-sm font-medium">
                                     <div class="flex items-center whitespace-nowrap justify-end">
-                                        <ejs-tooltip :content="$t('Edit')" position='TopCenter'
+                                        <ejs-tooltip v-if="permissions.hotel_rooms_update" :content="$t('Edit')" position='TopCenter'
                                             target="#destination_tooltip_target">
                                             <div id="destination_tooltip_target">
                                                 <PencilSquareIcon @click="handleEditButtonClick(room.uuid)"
@@ -91,7 +91,7 @@
                                             </div>
                                         </ejs-tooltip>
 
-                                        <ejs-tooltip :content="$t('Delete')" position='TopCenter'
+                                        <ejs-tooltip v-if="permissions.hotel_rooms_delete" :content="$t('Delete')" position='TopCenter'
                                             target="#delete_tooltip_target">
                                             <div id="delete_tooltip_target">
                                                 <TrashIcon @click="handleSingleItemDeleteRequest(room.uuid)"
@@ -170,7 +170,6 @@ import Paginator from "@generalComponents/Paginator.vue";
 const selectedItems = ref([]);
 
 const props = defineProps({
-    domain_uuid: String,
     routes: Object,
     permissions: Object,
     trigger: Boolean
@@ -204,12 +203,12 @@ const data = ref({
 
 const filterData = ref({
     search: null,
-    domain_uuid: props.domain_uuid,
 });
 
 // const emits = defineEmits(['edit-item', 'delete-item']);
 
 const fetchRooms = async (page = 1) => {
+    if (!props.permissions.hotel_rooms_list_view) return;
     isRoomsLoading.value = true
     axios.get(props.routes.hotel_rooms, {
         params: {
@@ -255,7 +254,7 @@ const bulkActions = computed(() => {
     ];
 
     // Conditionally add the delete action if permission is granted
-    if (props.permissions.user_destroy) {
+    if (props.permissions.hotel_rooms_delete) {
         actions.push({
             id: 'bulk_delete',
             label: trans('Delete'),

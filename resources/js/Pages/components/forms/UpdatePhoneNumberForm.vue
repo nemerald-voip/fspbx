@@ -48,7 +48,7 @@
 
 
                             <Vueform :locale="formLocale" @mounted="form => form.disableValidation()" v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
-                                @error="handleError" @response="handleResponse" :display-errors="false" :default="{
+                                @error="handleError" @response="showServerFormErrors" :display-errors="false" :default="{
                                     destination_enabled: options.item?.destination_enabled ?? false,
                                     destination_prefix: options.item?.destination_prefix ?? null,
                                     destination_number: options.item?.destination_number ?? null,
@@ -192,7 +192,7 @@
                                                                 try {
                                                                     let response = await type.$vueform.services.axios.post(
                                                                         options.routes.get_routing_options,
-                                                                        { category: type.value }
+                                                                        { category: type.value, domain_uuid: input.$parent.el$.form$.el$('domain_uuid')?.value || options.item?.domain_uuid }
                                                                     );
                                                                     // let option = el$.form$.el$('routing_options.' + index + '.option')
 
@@ -299,7 +299,7 @@
 
 <script setup>
 import { useVueformLocale } from "../../../composables/useVueformLocale.js";
-import { clearServerFormErrors } from "../../../composables/serverFormErrors.js";
+import { clearServerFormErrors, showServerFormErrors } from "../../../composables/serverFormErrors.js";
 import { trans } from "@i18n";
 import { ref } from "vue";
 
@@ -354,34 +354,6 @@ const submitForm = async (FormData, form$) => {
     return await form$.$vueform.services.axios.put(props.options.routes.update_route, requestData)
 };
 
-
-function clearErrorsRecursive(el$) {
-    // clear this element’s errors
-    el$.messageBag?.clear()
-
-    // if it has child elements, recurse into each
-    if (el$.children$) {
-        Object.values(el$.children$).forEach(childEl$ => {
-            clearErrorsRecursive(childEl$)
-        })
-    }
-}
-
-const handleResponse = (response, form$) => {
-    // Clear form including nested elements 
-    Object.values(form$.elements$).forEach(el$ => {
-        clearErrorsRecursive(el$)
-    })
-
-    // Display custom errors for elements
-    if (response.data.errors) {
-        Object.keys(response.data.errors).forEach((elName) => {
-            if (form$.el$(elName)) {
-                form$.el$(elName).messageBag.append(response.data.errors[elName][0])
-            }
-        })
-    }
-}
 
 const handleSuccess = (response, form$) => {
     // console.log(response) // axios response

@@ -350,18 +350,18 @@
         :import-data="importPreviewData" :loading="isCommittingImport" @close="showImportPreviewModal = false"
         @success="handleImportSuccess" @error="handleErrorResponse" />
 
-    <AddEditItemModal :show="showProvisioningPreviewModal" :header="provisioningPreviewHeader"
-        :loading="isProvisioningPreviewLoading" customClass="sm:max-w-6xl h-[85vh] max-h-[85vh] flex flex-col"
+    <AddEditItemModal :show="!!provisioningPreviewDeviceUuid" :header="provisioningPreviewHeader"
+        :loading="!!provisioningPreviewRequest && !provisioningPreviewData" customClass="sm:max-w-6xl h-[85vh] max-h-[85vh] flex flex-col"
         contentClass="flex min-h-0 flex-1 flex-col" bodyClass="min-h-0 flex-1 overflow-hidden"
         @close="closeProvisioningPreview">
         <template #modal-body>
             <div class="flex h-full min-h-0 flex-col">
-                <div v-if="provisioningPreviewError" class="rounded-md bg-red-50 p-4 text-sm text-red-700">
+                <div v-if="provisioningPreviewError" role="alert" class="mb-3 rounded-md bg-red-50 p-4 text-sm text-red-700">
                     {{ provisioningPreviewError }}
                 </div>
 
-                <div v-else class="flex min-h-0 flex-1 flex-col gap-3">
-                    <div class="grid gap-2 text-sm text-gray-600 sm:grid-cols-3">
+                <div class="flex min-h-0 flex-1 flex-col gap-3">
+                    <div v-if="provisioningPreviewData" class="grid gap-2 text-sm text-gray-600 sm:grid-cols-3">
                         <div>
                             <span class="font-semibold text-gray-900">{{ $t('Device:') }}</span>
                             {{ provisioningPreviewData?.device?.device_address_formatted || provisioningPreviewData?.device?.device_address || '—' }}
@@ -376,68 +376,69 @@
                         </div>
                     </div>
 
-                    <div v-if="provisioningPreviewFiles.length === 0"
+                    <div v-if="activeProvisioningPreviewFile" role="tablist" :aria-label="$t('Provisioning files')"
+                        class="flex flex-nowrap items-center gap-2 overflow-x-auto border-b border-gray-200 pb-2">
+                        <button v-for="(file, index) in provisioningPreviewFiles" :key="file.flavor" type="button"
+                            role="tab" :aria-selected="activeProvisioningPreviewFlavor === file.flavor"
+                            :tabindex="activeProvisioningPreviewFlavor === file.flavor ? 0 : -1"
+                            @click="activeProvisioningPreviewFlavor = file.flavor"
+                            @keydown.left.prevent="focusProvisioningPreviewTab(index - 1, $event)"
+                            @keydown.right.prevent="focusProvisioningPreviewTab(index + 1, $event)" :class="[
+                                activeProvisioningPreviewFlavor === file.flavor
+                                    ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
+                                    : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50',
+                                'shrink-0 whitespace-nowrap rounded-md border px-3 py-1.5 text-sm font-medium'
+                            ]">
+                            {{ file.filename }}
+                        </button>
+                    </div>
+
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <div v-if="activeProvisioningPreviewFile" class="min-w-0 text-sm text-gray-600">
+                            <span class="font-semibold text-gray-900">{{ activeProvisioningPreviewFile?.flavor || '—' }}</span>
+                            <span>
+                                · {{ activeProvisioningPreviewFile.mime }} · {{ formatBytes(activeProvisioningPreviewFile.bytes) }}
+                            </span>
+                        </div>
+                        <div class="ml-auto flex flex-wrap items-center gap-2">
+                            <button v-if="activeProvisioningPreviewFile" type="button" @click="provisioningPreviewWrap = !provisioningPreviewWrap"
+                                :aria-pressed="provisioningPreviewWrap" :class="[
+                                    provisioningPreviewWrap
+                                        ? 'bg-indigo-50 text-indigo-700 ring-indigo-300'
+                                        : 'bg-white text-gray-900 ring-gray-300 hover:bg-gray-50',
+                                    'rounded-md px-2.5 py-1.5 text-sm font-semibold shadow-sm ring-1 ring-inset'
+                                ]">
+                                {{ $t('Wrap') }}
+                            </button>
+                            <button type="button" @click="refreshProvisioningPreview" :disabled="!!provisioningPreviewRequest"
+                                class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:cursor-wait disabled:opacity-60">
+                                {{ provisioningPreviewRequest ? $t('Loading...') : $t('Refresh') }}
+                            </button>
+                            <button v-if="activeProvisioningPreviewFile" type="button" @click="copyProvisioningPreview"
+                                class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                                {{ $t('Copy') }}
+                            </button>
+                            <button v-if="activeProvisioningPreviewFile" type="button" @click="downloadProvisioningPreview"
+                                class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                                {{ $t('Download') }}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div v-if="activeProvisioningPreviewFile" class="min-h-0 flex-1 overflow-hidden rounded-md border border-gray-200">
+                        <AceEditor
+                            :key="`${activeProvisioningPreviewFile?.flavor}-${provisioningPreviewWrap}`"
+                            :model-value="activeProvisioningPreviewFile?.content || ''"
+                            :lang="activeProvisioningPreviewLang" theme="one_dark"
+                            :options="{ readOnly: true, wrap: provisioningPreviewWrap, fontSize: 13, tabSize: 2, useWorker: false, highlightActiveLine: false, showGutter: true }"
+                            height="100%" />
+                    </div>
+                    <div v-else-if="provisioningPreviewData"
                         class="flex min-h-0 flex-1 flex-col items-center justify-center rounded-md border border-dashed border-gray-300 bg-gray-50 p-8 text-center">
                         <MagnifyingGlassIcon class="h-10 w-10 text-gray-300" aria-hidden="true" />
                         <p class="mt-2 text-sm font-medium text-gray-900">{{ $t('No provisioning files generated') }}</p>
                         <p class="mt-1 text-sm text-gray-500">{{ $t("This device's template did not produce any files to preview.") }}</p>
                     </div>
-
-                    <template v-else>
-                        <div role="tablist" :aria-label="$t('Provisioning files')"
-                            class="flex flex-nowrap items-center gap-2 overflow-x-auto border-b border-gray-200 pb-2">
-                            <button v-for="(file, index) in provisioningPreviewFiles" :key="file.flavor" type="button"
-                                role="tab" :aria-selected="activeProvisioningPreviewFlavor === file.flavor"
-                                :tabindex="activeProvisioningPreviewFlavor === file.flavor ? 0 : -1"
-                                @click="activeProvisioningPreviewFlavor = file.flavor"
-                                @keydown.left.prevent="focusProvisioningPreviewTab(index - 1, $event)"
-                                @keydown.right.prevent="focusProvisioningPreviewTab(index + 1, $event)" :class="[
-                                    activeProvisioningPreviewFlavor === file.flavor
-                                        ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
-                                        : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50',
-                                    'shrink-0 whitespace-nowrap rounded-md border px-3 py-1.5 text-sm font-medium'
-                                ]">
-                                {{ file.filename }}
-                            </button>
-                        </div>
-
-                        <div class="flex items-center justify-between gap-3">
-                            <div class="min-w-0 text-sm text-gray-600">
-                                <span class="font-semibold text-gray-900">{{ activeProvisioningPreviewFile?.flavor || '—' }}</span>
-                                <span v-if="activeProvisioningPreviewFile">
-                                    · {{ activeProvisioningPreviewFile.mime }} · {{ formatBytes(activeProvisioningPreviewFile.bytes) }}
-                                </span>
-                            </div>
-                            <div class="flex shrink-0 items-center gap-2">
-                                <button type="button" @click="provisioningPreviewWrap = !provisioningPreviewWrap"
-                                    :aria-pressed="provisioningPreviewWrap" :class="[
-                                        provisioningPreviewWrap
-                                            ? 'bg-indigo-50 text-indigo-700 ring-indigo-300'
-                                            : 'bg-white text-gray-900 ring-gray-300 hover:bg-gray-50',
-                                        'rounded-md px-2.5 py-1.5 text-sm font-semibold shadow-sm ring-1 ring-inset'
-                                    ]">
-                                    {{ $t('Wrap') }}
-                                </button>
-                                <button type="button" @click="copyProvisioningPreview"
-                                    class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                                    {{ $t('Copy') }}
-                                </button>
-                                <button type="button" @click="downloadProvisioningPreview"
-                                    class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                                    {{ $t('Download') }}
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="min-h-0 flex-1 overflow-hidden rounded-md border border-gray-200">
-                            <AceEditor
-                                :key="`${activeProvisioningPreviewFile?.flavor}-${provisioningPreviewWrap}`"
-                                :model-value="activeProvisioningPreviewFile?.content || ''"
-                                :lang="activeProvisioningPreviewLang" theme="one_dark"
-                                :options="{ readOnly: true, wrap: provisioningPreviewWrap, fontSize: 13, tabSize: 2, useWorker: false, highlightActiveLine: false, showGutter: true }"
-                                height="100%" />
-                        </div>
-                    </template>
                 </div>
             </div>
         </template>
@@ -479,7 +480,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, shallowRef } from "vue";
 import axios from 'axios';
 import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
@@ -541,14 +542,14 @@ const notificationShow = ref(null);
 const showDuplicateModal = ref(false);
 const itemToDuplicate = ref(null);
 const newMacAddress = ref('');
-const showProvisioningPreviewModal = ref(false);
+const provisioningPreviewDeviceUuid = ref(null);
 const showUploadModal = ref(false);
 const isUploadingFile = ref(false);
 const uploadErrors = ref(null);
 const showImportPreviewModal = ref(false);
 const importPreviewData = ref([]);
 const isCommittingImport = ref(false);
-const isProvisioningPreviewLoading = ref(false);
+const provisioningPreviewRequest = shallowRef(null);
 const provisioningPreviewData = ref(null);
 const provisioningPreviewError = ref(null);
 const activeProvisioningPreviewFlavor = ref(null);
@@ -628,18 +629,18 @@ const sortData = ref({
 const advancedActions = computed(() => [
     {
         category: trans('Device Actions'),
-        actions: [
+        actions: permissions.device_update ? [
             { id: 'restart', label: trans('Restart'), icon: 'RestartIcon' },
             { id: 'sync', label: trans('Sync'), icon: 'SyncIcon' },
-        ],
+        ] : [],
     },
     {
         category: trans('Advanced'),
-        actions: [
+        actions: permissions.device_create ? [
             { id: 'duplicate', label: trans('Duplicate'), icon: 'DocumentDuplicateIcon' },
-        ],
+        ] : [],
     },
-]);
+].filter(group => group.actions.length));
 
 const provisioningPreviewFiles = computed(() => provisioningPreviewData.value?.files ?? []);
 
@@ -730,24 +731,34 @@ const handleAdvancedActionRequest = (action, uuid) => {
     }
 };
 
-const handleProvisioningPreview = async (uuid) => {
-    showProvisioningPreviewModal.value = true;
-    isProvisioningPreviewLoading.value = true;
-    provisioningPreviewData.value = null;
-    provisioningPreviewError.value = null;
-    activeProvisioningPreviewFlavor.value = null;
+const handleProvisioningPreview = (uuid) => {
+    provisioningPreviewDeviceUuid.value = uuid;
+    return refreshProvisioningPreview();
+};
 
+const refreshProvisioningPreview = async () => {
+    if (!provisioningPreviewDeviceUuid.value || provisioningPreviewRequest.value) return;
+
+    const request = new AbortController();
+    provisioningPreviewRequest.value = request;
+    provisioningPreviewError.value = null;
     try {
-        const response = await axios.get(provisioningPreviewRoute(uuid));
+        const response = await axios.get(provisioningPreviewRoute(provisioningPreviewDeviceUuid.value), {
+            signal: request.signal,
+            headers: { 'Cache-Control': 'no-cache' },
+        });
+        if (request.signal.aborted) return;
         provisioningPreviewData.value = response.data;
-        activeProvisioningPreviewFlavor.value = response.data?.files?.[0]?.flavor ?? null;
+        activeProvisioningPreviewFlavor.value = activeProvisioningPreviewFile.value?.flavor ?? null;
     } catch (error) {
+        if (request.signal.aborted) return;
+        provisioningPreviewData.value = null;
         const errors = error.response?.data?.errors;
         provisioningPreviewError.value = errors
             ? Object.values(errors).flat().join(' ')
             : trans('Could not render provisioning preview.');
     } finally {
-        isProvisioningPreviewLoading.value = false;
+        if (!request.signal.aborted) provisioningPreviewRequest.value = null;
     }
 };
 
@@ -809,7 +820,9 @@ const downloadTemplateFile = () => {
 };
 
 const closeProvisioningPreview = () => {
-    showProvisioningPreviewModal.value = false;
+    provisioningPreviewRequest.value?.abort();
+    provisioningPreviewRequest.value = null;
+    provisioningPreviewDeviceUuid.value = null;
     provisioningPreviewData.value = null;
     provisioningPreviewError.value = null;
     activeProvisioningPreviewFlavor.value = null;
@@ -867,7 +880,7 @@ const submitDuplicateRequest = () => {
 
 // Computed property for bulk actions based on permissions
 const bulkActions = computed(() => {
-    const actions = [
+    const actions = permissions.device_update ? [
         {
             id: 'bulk_restart',
             label: trans('Restart'),
@@ -883,7 +896,7 @@ const bulkActions = computed(() => {
             label: trans('Update'),
             icon: 'PencilSquareIcon'
         }
-    ];
+    ] : [];
 
     // Conditionally add the delete action if permission is granted
     if (permissions.device_destroy) {
