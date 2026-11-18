@@ -49,7 +49,7 @@ class CDR extends Model
     {
         if (!$this->created_at || !$this->domain_uuid) return null;
         $timeZone = get_local_time_zone($this->domain_uuid);
-        return Carbon::parse($this->created_at)->setTimezone($timeZone)->format('g:i:s A M d, Y');
+        return Carbon::parse($this->created_at)->setTimezone($timeZone)->format(local_datetime_format($this->domain_uuid));
     }
 
     public function getCallerIdNumberFormattedAttribute()
@@ -104,28 +104,28 @@ class CDR extends Model
     {
         if (!$this->start_epoch || !$this->domain_uuid) return null;
         $timeZone = get_local_time_zone($this->domain_uuid);
-        return Carbon::createFromTimestamp($this->start_epoch, 'UTC')->setTimezone($timeZone)->format('M d, Y');
+        return Carbon::createFromTimestamp($this->start_epoch, 'UTC')->setTimezone($timeZone)->format(local_date_format($this->domain_uuid));
     }
 
     public function getStartTimeAttribute()
     {
         if (!$this->start_epoch || !$this->domain_uuid) return null;
         $timeZone = get_local_time_zone($this->domain_uuid);
-        return Carbon::createFromTimestamp($this->start_epoch, 'UTC')->setTimezone($timeZone)->format('g:i:s A');
+        return Carbon::createFromTimestamp($this->start_epoch, 'UTC')->setTimezone($timeZone)->format(local_time_format($this->domain_uuid));
     }
 
     public function getAnswerTimeAttribute()
     {
         if (!$this->answer_epoch || !$this->domain_uuid) return null;
         $timeZone = get_local_time_zone($this->domain_uuid);
-        return Carbon::createFromTimestamp($this->answer_epoch, 'UTC')->setTimezone($timeZone)->format('g:i:s A');
+        return Carbon::createFromTimestamp($this->answer_epoch, 'UTC')->setTimezone($timeZone)->format(local_time_format($this->domain_uuid));
     }
 
     public function getEndTimeAttribute()
     {
         if (!$this->end_epoch || !$this->domain_uuid) return null;
         $timeZone = get_local_time_zone($this->domain_uuid);
-        return Carbon::createFromTimestamp($this->end_epoch, 'UTC')->setTimezone($timeZone)->format('g:i:s A');
+        return Carbon::createFromTimestamp($this->end_epoch, 'UTC')->setTimezone($timeZone)->format(local_time_format($this->domain_uuid));
     }
 
     public function getDurationFormattedAttribute()

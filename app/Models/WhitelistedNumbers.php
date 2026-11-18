@@ -59,7 +59,7 @@ class WhitelistedNumbers extends Model
             if ($model->created_at) {
                 $model->created_at_formatted = $model->created_at
                     ->timezone($time_zone)
-                    ->format('M d, Y g:i:s A');
+                    ->format(local_datetime_format($model->domain_uuid));
             }
         });
     }
