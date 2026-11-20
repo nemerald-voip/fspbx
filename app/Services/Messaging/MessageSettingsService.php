@@ -30,6 +30,7 @@ class MessageSettingsService
             'telnyx' => 'Telnyx',
             'twilio' => 'Twilio',
             'voipms' => 'VoIP.MS',
+            'voipinnovations' => 'VoIP Innovations',
             'voxutel' => 'Voxutel',
         ];
     }
