@@ -1243,6 +1243,7 @@ public function store(StoreExtensionRequest $request)
             // Update the extension password
             $extension->password = $newPassword;
             $extension->save();
+            $this->dispatchRingotelPasswordUpdate($extension);
 
             DB::commit();
 
@@ -2369,6 +2370,7 @@ public function store(StoreExtensionRequest $request)
 
             $extension->password = $data['password'];
             $extension->save();
+            $this->dispatchRingotelPasswordUpdate($extension);
 
             DB::commit();
 
@@ -2386,6 +2388,29 @@ public function store(StoreExtensionRequest $request)
                 'success' => false,
                 'errors' => ['error' => [$e->getMessage()]],
             ], 500);
+        }
+    }
+
+    private function dispatchRingotelPasswordUpdate(Extensions $extension): void
+    {
+        $mobileApps = MobileAppUsers::query()
+            ->where('domain_uuid', $extension->domain_uuid)
+            ->where('extension_uuid', $extension->extension_uuid)
+            ->whereNotNull('org_id')
+            ->where('org_id', '!=', '')
+            ->whereNotNull('user_id')
+            ->where('user_id', '!=', '')
+            ->get(['org_id', 'user_id'])
+            ->unique(fn ($app) => $app->org_id . ':' . $app->user_id);
+
+        foreach ($mobileApps as $mobileApp) {
+            // A password change must not activate a user or overwrite their profile.
+            UpdateAppSettings::dispatch([
+                'user_id' => $mobileApp->user_id,
+                'org_id' => $mobileApp->org_id,
+                'password' => $extension->password,
+                'no_email' => true,
+            ])->onQueue('default')->afterCommit();
         }
     }
 
