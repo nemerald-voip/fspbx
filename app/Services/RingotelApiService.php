@@ -981,20 +981,28 @@ class RingotelApiService
     // Update mobile app user via Ringotel API call
     function updateUser($params)
     {
+        $userParams = [
+            'id' => $params['user_id'],
+            'orgid' => $params['org_id'],
+            'noemail' => $params['no_email'] ?? true,
+        ];
+
+        // Ringotel accepts partial updates, including SIP-password-only changes.
+        foreach (['name', 'email', 'password', 'status'] as $field) {
+            if (array_key_exists($field, $params)) {
+                $userParams[$field] = $params[$field];
+            }
+        }
+
+        if (array_key_exists('ext', $params)) {
+            $userParams['extension'] = $params['ext'];
+            $userParams['username'] = $params['ext'];
+            $userParams['authname'] = $params['ext'];
+        }
+
         $data = array(
             'method' => 'updateUser',
-            'params' => array(
-                'id' => $params['user_id'],
-                'orgid' => $params['org_id'],
-                'name' => $params['name'],
-                'email' => $params['email'],
-                'extension' => $params['ext'],
-                'username' => $params['ext'],
-                'authname' => $params['ext'],
-                'password' => $params['password'],
-                'status' => $params['status'],
-                'noemail' => $params['no_email'] ?? true
-            )
+            'params' => $userParams,
         );
 
         $response = Http::ringotel()

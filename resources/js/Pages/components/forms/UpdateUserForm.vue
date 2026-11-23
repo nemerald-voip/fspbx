@@ -350,6 +350,7 @@
                                                 <StaticElement name="advanced_title" tag="h4" :content="$t('Advanced')" />
 
                                                 <TagsElement name="locations" :close-on-select="false" :search="true"
+                                                    :conditions="[() => options.permissions.location_view]"
                                                     label-prop="name" value-prop="location_uuid" :items="locations"
                                                     :track-by="['name', 'description']"
                                                     :label="$t('Select one or more locations this user can access.')"
@@ -561,6 +562,7 @@ const handleDeleteTokenButtonClick = (uuid) => {
 };
 
 const getLocations = async () => {
+    if (!props.options.permissions.location_view) return;
     isLocationsLoading.value = true
     axios.get(props.options.routes.locations, {
         params: {

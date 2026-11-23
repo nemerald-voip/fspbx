@@ -8,7 +8,6 @@ use App\Models\Dialplans;
 use App\Models\Recordings;
 use App\Models\FusionCache;
 use Illuminate\Support\Str;
-use Illuminate\Http\Request;
 use App\Models\IvrMenuOptions;
 use Illuminate\Support\Facades\DB;
 use Spatie\QueryBuilder\QueryBuilder;
@@ -19,7 +18,12 @@ use App\Models\FlagOverride;
 use App\Http\Requests\StoreVirtualReceptionistRequest;
 use App\Http\Requests\UpdateVirtualReceptionistRequest;
 use App\Http\Requests\CreateVirtualReceptionistKeyRequest;
+use App\Http\Requests\DeleteVirtualReceptionistKeyRequest;
+use App\Http\Requests\BulkDeleteVirtualReceptionistRequest;
+use App\Http\Requests\DuplicateVirtualReceptionistRequest;
+use App\Http\Requests\VirtualReceptionistItemOptionsRequest;
 use App\Http\Requests\UpdateVirtualReceptionistKeyRequest;
+use App\Http\Requests\ApplyVirtualReceptionistGreetingRequest;
 use App\Traits\ChecksLimits;
 
 class VirtualReceptionistController extends Controller
@@ -32,6 +36,11 @@ class VirtualReceptionistController extends Controller
     public function __construct()
     {
         $this->model = new IvrMenus();
+        $this->middleware(function ($request, $next) {
+            abort_unless(Str::isUuid(session('domain_uuid')), 403);
+
+            return $next($request);
+        });
     }
 
     /**
@@ -72,6 +81,8 @@ class VirtualReceptionistController extends Controller
      */
     public function getData()
     {
+        abort_unless(userCheckPermission('ivr_menu_view'), 403);
+
         $perPage = fspbx_pagination_per_page();
         $currentDomain = session('domain_uuid');
 
@@ -112,6 +123,7 @@ class VirtualReceptionistController extends Controller
         $inputs = $request->validated();
 
         try {
+            DB::beginTransaction();
             $instance = $this->model;
 
             $instance->fill([
@@ -137,12 +149,14 @@ class VirtualReceptionistController extends Controller
             $instance->save();
 
             $this->generateDialPlanXML($instance);
+            DB::commit();
 
             return response()->json([
                 'item_uuid' => $instance->ivr_menu_uuid,
                 'messages' => ['success' => [__('Virtual receptionist created successfully.')]]
             ], 201);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            DB::rollBack();
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
@@ -156,11 +170,11 @@ class VirtualReceptionistController extends Controller
     {
         $inputs = $request->validated();
 
-        try {
-            // Retrieve the IVR menu by UUID
-            $instance = $this->model::where('domain_uuid', session('domain_uuid'))
-                ->where('ivr_menu_uuid', $request->route('virtual_receptionist'))->firstOrFail();
+        $instance = IvrMenus::where('domain_uuid', session('domain_uuid'))
+            ->findOrFail($request->route('virtual_receptionist'));
 
+        try {
+            DB::beginTransaction();
             $exit_data = $this->buildExitDestinationAction($inputs);
 
             // Update basic IVR menu fields
@@ -198,12 +212,14 @@ class VirtualReceptionistController extends Controller
             }
 
             $this->generateDialPlanXML($instance);
+            DB::commit();
 
             // Return a JSON response indicating success
             return response()->json([
                 'messages' => ['success' => [__('Virtual receptionist settings have been updated successfully.')]]
             ], 200);  // 200 OK for successful update
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            DB::rollBack();
             // Log the error message
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
@@ -219,9 +235,9 @@ class VirtualReceptionistController extends Controller
      * Remove the specified resource from storage.
      * @return \Illuminate\Http\JsonResponse
      */
-    public function bulkDelete()
+    public function bulkDelete(BulkDeleteVirtualReceptionistRequest $request)
     {
-        abort_unless(session('domain_uuid') && userCheckPermission('ivr_menu_delete'), 403);
+        $uuids = $request->validated('items');
 
         try {
             // Begin Transaction
@@ -229,15 +245,15 @@ class VirtualReceptionistController extends Controller
 
             // Retrieve all items at once
             $items = $this->model::where('domain_uuid', session('domain_uuid'))
-                ->whereIn('ivr_menu_uuid', request('items'))
-                ->get(['ivr_menu_uuid', 'dialplan_uuid', 'domain_uuid']);
+                ->whereKey($uuids)->get(['ivr_menu_uuid', 'dialplan_uuid', 'domain_uuid']);
+            abort_unless($items->count() === count($uuids), 404);
 
             foreach ($items as $item) {
                 // Delete related IVR menu options (keys)
-                $item->options()->delete();
+                $item->options()->where('domain_uuid', $item->domain_uuid)->delete();
 
                 // Delete related Dialplan entry
-                Dialplans::where('dialplan_uuid', $item->dialplan_uuid)->delete();
+                Dialplans::where('domain_uuid', $item->domain_uuid)->whereKey($item->dialplan_uuid)->delete();
 
                 // Clear cache
                 $this->clearCache($item);
@@ -255,8 +271,10 @@ class VirtualReceptionistController extends Controller
                 'messages' => ['server' => [__('All selected items have been deleted successfully.')]],
             ], 200);
         } catch (\Exception $e) {
-            // Rollback Transaction if any error occurs
             DB::rollBack();
+            if ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface) {
+                throw $e;
+            }
 
             // Log the error message
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
@@ -273,25 +291,19 @@ class VirtualReceptionistController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function duplicate(Request $request)
+    public function duplicate(DuplicateVirtualReceptionistRequest $request)
     {
-        abort_unless(session('domain_uuid') && userCheckPermission('ivr_menu_add'), 403);
-
-        $request->validate([
-            'ivr_menu_uuid' => 'required|uuid|exists:v_ivr_menus,ivr_menu_uuid',
-        ]);
-
         if ($resp = $this->enforceLimit('ivr_menus', \App\Models\IvrMenus::class, 'domain_uuid', 'ivr_limit_error')) {
             return $resp;
         }
 
+        $domainUuid = session('domain_uuid');
+        $original = IvrMenus::where('domain_uuid', $domainUuid)
+            ->with(['options' => fn ($query) => $query->where('domain_uuid', $domainUuid)])
+            ->findOrFail($request->validated('ivr_menu_uuid'));
+
         try {
             DB::beginTransaction();
-
-            $original = $this->model::where('ivr_menu_uuid', $request->ivr_menu_uuid)
-                ->where('domain_uuid', session('domain_uuid'))
-                ->with('options')
-                ->firstOrFail();
 
             $newIvr = $original->replicate();
             $newIvr->ivr_menu_uuid = Str::uuid();
@@ -339,17 +351,17 @@ class VirtualReceptionistController extends Controller
 
     private function generateDialPlanXML(IvrMenus $ivr): void
     {
+        $dialPlan = Dialplans::where('domain_uuid', $ivr->domain_uuid)->find($ivr->dialplan_uuid);
+        if (! $dialPlan) {
+            $ivr->dialplan_uuid = (string) Str::uuid();
+        }
         $xml = app(\App\Services\FlagDialplanRenderer::class)->ivr($ivr);
 
-        $dialPlan = Dialplans::where('dialplan_uuid', $ivr->dialplan_uuid)->first();
-
-        if (!$dialPlan) {
-            $newDialplanUuid = Str::uuid();
-
+        if (! $dialPlan) {
             $dialPlan = new Dialplans();
-            $dialPlan->dialplan_uuid = $newDialplanUuid;
+            $dialPlan->dialplan_uuid = $ivr->dialplan_uuid;
             $dialPlan->app_uuid = 'a5788e9b-58bc-bd1b-df59-fff5d51253ab';
-            $dialPlan->domain_uuid = session('domain_uuid');
+            $dialPlan->domain_uuid = $ivr->domain_uuid;
             $dialPlan->dialplan_context = session('domain_name');
             $dialPlan->dialplan_name = $ivr->ivr_menu_name;
             $dialPlan->dialplan_number = $ivr->ivr_menu_extension;
@@ -361,8 +373,6 @@ class VirtualReceptionistController extends Controller
             $dialPlan->insert_date = date('Y-m-d H:i:s');
             $dialPlan->insert_user = session('user_uuid');
 
-            $ivr->dialplan_uuid = $newDialplanUuid;
-            $ivr->save();
         } else {
             $dialPlan->dialplan_xml = $xml;
             $dialPlan->dialplan_name = $ivr->ivr_menu_name;
@@ -374,6 +384,9 @@ class VirtualReceptionistController extends Controller
         }
 
         $dialPlan->save();
+        if ($ivr->isDirty('dialplan_uuid')) {
+            $ivr->save();
+        }
 
         $this->clearCache($ivr);
     }
@@ -384,14 +397,11 @@ class VirtualReceptionistController extends Controller
         FusionCache::clear("configuration.ivr.conf." . $ivr->ivr_menu_uuid);
     }
 
-    public function getItemOptions(Request $request)
+    public function getItemOptions(VirtualReceptionistItemOptionsRequest $request)
     {
-        abort_unless(session('domain_uuid') && userCheckPermission($request->input('item_uuid') ? 'ivr_menu_edit' : 'ivr_menu_add'), 403);
-        abort_if($request->input('domain_uuid') !== null && $request->input('domain_uuid') !== session('domain_uuid'), 403);
-
         try {
-            $domainUuid = $request->input('domain_uuid') ?? session('domain_uuid');
-            $itemUuid = $request->input('item_uuid');
+            $domainUuid = session('domain_uuid');
+            $itemUuid = $request->validated('item_uuid');
 
             $routes = [
                 'get_routing_options' => route('routing.options'),
@@ -413,8 +423,8 @@ class VirtualReceptionistController extends Controller
 
             if ($itemUuid) {
                 $ivr = $this->model::with([
-                    'options' => function ($query) {
-                        $query->select(
+                    'options' => function ($query) use ($domainUuid) {
+                        $query->where('domain_uuid', $domainUuid)->select(
                             'ivr_menu_option_uuid',
                             'ivr_menu_uuid',
                             'ivr_menu_option_digits',
@@ -524,6 +534,8 @@ class VirtualReceptionistController extends Controller
                     ? app(FlagService::class)->overrideFormRows($ivr->flagOverrides()->get(), $domainUuid)
                     : [],
             ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            throw $e;
         } catch (\Throwable $e) {
             logger('Error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
@@ -541,6 +553,8 @@ class VirtualReceptionistController extends Controller
 
     public function getGreetings()
     {
+        abort_unless(userCheckPermission('ivr_menu_add') || userCheckPermission('ivr_menu_edit') || userCheckPermission('ivr_menu_view'), 403);
+
         try {
             $greetingsArray = Recordings::where('domain_uuid', session('domain_uuid'))
                 ->orderBy('recording_name')
@@ -577,11 +591,14 @@ class VirtualReceptionistController extends Controller
         return $permissions;
     }
 
-    public function applyGreeting()
+    public function applyGreeting(ApplyVirtualReceptionistGreetingRequest $request)
     {
+        $inputs = $request->validated();
+        $ivrMenu = IvrMenus::where('domain_uuid', session('domain_uuid'))
+            ->findOrFail($inputs['ivr']);
+
         try {
-            $ivrMenu = IvrMenus::findOrFail(request('ivr'));
-            $ivrMenu->ivr_menu_greet_long = request('file_name');
+            $ivrMenu->ivr_menu_greet_long = $inputs['file_name'];
             $ivrMenu->save();
 
             return response()->json([
@@ -602,10 +619,11 @@ class VirtualReceptionistController extends Controller
     {
         $inputs = $request->validated();
 
+        $menu = IvrMenus::where('domain_uuid', session('domain_uuid'))->findOrFail($inputs['menu_uuid']);
+
         try {
-            $ivrMenuOption = IvrMenuOptions::create([
-                'ivr_menu_option_uuid' => $inputs['option_uuid'] ?? (string) Str::uuid(),
-                'ivr_menu_uuid' => $inputs['menu_uuid'],
+            $ivrMenuOption = $menu->options()->create([
+                'domain_uuid' => $menu->domain_uuid,
                 'ivr_menu_option_digits' => $inputs['key'],
                 'ivr_menu_option_action' => 'menu-exec-app',
                 'ivr_menu_option_param' => $this->buildKeyDestinationAction($inputs),
@@ -613,7 +631,7 @@ class VirtualReceptionistController extends Controller
                 'ivr_menu_option_enabled' => $inputs['status'],
             ]);
 
-            $this->clearCache($ivrMenuOption->ivrMenu);
+            $this->clearCache($menu);
 
             return response()->json([
                 'messages' => ['success' => [__('Virtual Receptionist Key successfully created')]],
@@ -632,18 +650,9 @@ class VirtualReceptionistController extends Controller
     {
         $inputs = $request->validated();
 
+        $ivrMenuOption = $this->ownedKey($inputs['option_uuid'], $inputs['menu_uuid']);
+
         try {
-            $ivrMenuOption = IvrMenuOptions::where('ivr_menu_option_uuid', $inputs['option_uuid'])
-                ->with('IvrMenu')
-                ->first();
-
-            if (!$ivrMenuOption) {
-                return response()->json([
-                    'success' => false,
-                    'errors' => ['server' => [__('Virtual Receptionist Key not found.')]],
-                ], 404);
-            }
-
             $ivrMenuOption->update([
                 'ivr_menu_option_digits' => $inputs['key'],
                 'ivr_menu_option_action' => 'menu-exec-app',
@@ -666,22 +675,11 @@ class VirtualReceptionistController extends Controller
         }
     }
 
-    public function destroyKey()
+    public function destroyKey(DeleteVirtualReceptionistKeyRequest $request)
     {
-        $inputs = request()->all();
+        $ivrMenuOption = $this->ownedKey($request->validated('ivr_menu_option_uuid'));
 
         try {
-            $ivrMenuOption = IvrMenuOptions::where('ivr_menu_option_uuid', $inputs['ivr_menu_option_uuid'])
-                ->with('ivrMenu')
-                ->first();
-
-            if (!$ivrMenuOption) {
-                return response()->json([
-                    'success' => false,
-                    'errors' => ['server' => [__('Virtual Receptionist Key not found.')]],
-                ], 404);
-            }
-
             $ivrMenuOption->delete();
             $this->clearCache($ivrMenuOption->ivrMenu);
 
@@ -695,6 +693,16 @@ class VirtualReceptionistController extends Controller
                 'errors' => ['server' => [__('Unable to delete Virtual Receptionist Key.')]]
             ], 500);
         }
+    }
+
+    private function ownedKey(string $uuid, ?string $menuUuid = null): IvrMenuOptions
+    {
+        $domain = session('domain_uuid');
+
+        return IvrMenuOptions::where('domain_uuid', $domain)
+            ->withWhereHas('ivrMenu', fn ($menu) => $menu->where('domain_uuid', $domain))
+            ->when($menuUuid, fn ($query) => $query->where('ivr_menu_uuid', $menuUuid))
+            ->findOrFail($uuid);
     }
 
     protected function buildKeyDestinationAction($key)
@@ -724,6 +732,8 @@ class VirtualReceptionistController extends Controller
 
     public function selectAll()
     {
+        abort_unless(userCheckPermission('ivr_menu_view'), 403);
+
         try {
             $uuids = $this->model::where('domain_uuid', session('domain_uuid'))
                 ->get($this->model->getKeyName())->pluck($this->model->getKeyName());

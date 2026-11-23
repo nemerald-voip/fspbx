@@ -794,6 +794,18 @@ class CallRoutingOptionsService
             ->where($byDestination ? $definition['field'] : $model->getKeyName(), $value)->first();
     }
 
+    /** IVR keys submit both a selected UUID and the destination written to the dialplan. */
+    public function targetMatchesDestination(string $action, string $uuid, string $value): bool
+    {
+        $definition = self::destinations()[$action] ?? null;
+        if (! isset($definition['model']) || ! $this->domainUuid) {
+            return false;
+        }
+
+        return $this->targetQuery($definition['model'])->whereKey($uuid)
+            ->where($definition['field'], $value)->exists();
+    }
+
     /** Resolve a saved UUID through the same account-scoped lookup as destination selectors. */
     public function summarizeTarget(string $action, ?string $targetId): array
     {

@@ -13,7 +13,7 @@ class StoreVirtualReceptionistRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return Auth::check();
+        return Auth::check() && userCheckPermission('ivr_menu_add');
     }
 
     public function rules(): array

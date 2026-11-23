@@ -3,11 +3,23 @@
 namespace App\Services;
 
 use App\Models\Domain;
+use App\Models\User;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 
 class SessionDomainService
 {
+    public function findSwitchableDomain(User $user, string $domainUuid): Domain
+    {
+        abort_unless(userCheckPermission('domain_select'), 403);
+
+        $domain = $this->accessibleDomains($user)->firstWhere('domain_uuid', $domainUuid);
+        abort_unless($domain, 404);
+
+        return $domain;
+    }
+
     /**
      * Rebuild domains-related session state for this user.
      *
@@ -46,6 +58,45 @@ class SessionDomainService
         // Multi-domain admin
         Session::put('domain_select', true);
 
+        $domains = $this->accessibleDomains($user);
+
+        // Save in Laravel session
+        Session::put('domains', $domains);
+
+        // Save in Fusion-style $_SESSION
+        $_SESSION['domains'] = [];
+        foreach (json_decode(json_encode($domains), true) as $row) {
+            $_SESSION['domains'][$row['domain_uuid']] = $row;
+        }
+
+        // Determine which domain should be "current"
+        $currentDomainUuid = Session::get('domain_uuid') ?: $user->domain_uuid;
+
+        $selected = $domains->firstWhere('domain_uuid', $currentDomainUuid);
+
+        // If user’s domain isn't in the list, fall back to the first allowed domain
+        if (!$selected && $domains->isNotEmpty()) {
+            $selected = $domains->first();
+        }
+
+        if ($selected) {
+            Session::put('domain_uuid', $selected->domain_uuid);
+            Session::put('domain_name', $selected->domain_name);
+            Session::put(
+                'domain_description',
+                !empty($selected->domain_description) ? $selected->domain_description : $selected->domain_name
+            );
+
+            $_SESSION['domain_name']             = $selected->domain_name;
+            $_SESSION['user']['domain_name']     = $selected->domain_name;
+            $_SESSION['domain_uuid']             = $selected->domain_uuid;
+            $_SESSION['context']                 = $selected->domain_name;
+            $_SESSION['user']['domain_uuid']     = $selected->domain_uuid;
+        }
+    }
+
+    private function accessibleDomains(User $user): Collection
+    {
         // Get groups for this user (needed to detect superadmin)
         $groups = DB::table('v_user_groups')
             ->join('v_groups', 'v_user_groups.group_uuid', '=', 'v_groups.group_uuid')
@@ -58,7 +109,7 @@ class SessionDomainService
         // Build the list of allowed domains
         if (in_array('superadmin', $group_names)) {
             // Superadmin: all enabled domains
-            $domains = DB::table('v_domains')
+            $domains = Domain::query()
                 ->where('domain_enabled', '=', 't')
                 ->orderBy('domain_name', 'asc')
                 ->orderBy('domain_description', 'asc')
@@ -109,38 +160,6 @@ class SessionDomainService
                 ->values();
         }
 
-        // Save in Laravel session
-        Session::put('domains', $domains);
-
-        // Save in Fusion-style $_SESSION
-        $_SESSION['domains'] = [];
-        foreach (json_decode(json_encode($domains), true) as $row) {
-            $_SESSION['domains'][$row['domain_uuid']] = $row;
-        }
-
-        // Determine which domain should be "current"
-        $currentDomainUuid = Session::get('domain_uuid') ?: $user->domain_uuid;
-
-        $selected = $domains->firstWhere('domain_uuid', $currentDomainUuid);
-
-        // If user’s domain isn't in the list, fall back to the first allowed domain
-        if (!$selected && $domains->isNotEmpty()) {
-            $selected = $domains->first();
-        }
-
-        if ($selected) {
-            Session::put('domain_uuid', $selected->domain_uuid);
-            Session::put('domain_name', $selected->domain_name);
-            Session::put(
-                'domain_description',
-                !empty($selected->domain_description) ? $selected->domain_description : $selected->domain_name
-            );
-
-            $_SESSION['domain_name']             = $selected->domain_name;
-            $_SESSION['user']['domain_name']     = $selected->domain_name;
-            $_SESSION['domain_uuid']             = $selected->domain_uuid;
-            $_SESSION['context']                 = $selected->domain_name;
-            $_SESSION['user']['domain_uuid']     = $selected->domain_uuid;
-        }
+        return $domains;
     }
 }

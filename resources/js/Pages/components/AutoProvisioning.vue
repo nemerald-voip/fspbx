@@ -64,7 +64,7 @@
         </div>
 
         <div class="mt-4">
-            <button v-if="activeTab != 'default'" type="button" @click.prevent="handleCreateButtonClick()"
+            <button v-if="activeTab != 'default' && permissions.provisioning_templates_create" type="button" @click.prevent="handleCreateButtonClick()"
                 class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                 {{ $t('Create') }}
             </button>
@@ -129,7 +129,7 @@
                                 <td 
                                     class="whitespace-nowrap px-6 py-2 text-right text-sm font-medium">
                                     <div class="flex items-center whitespace-nowrap justify-end">
-                                        <ejs-tooltip v-if="activeTab != 'default'" :content="$t('Edit')" position='TopCenter'
+                                        <ejs-tooltip v-if="template.can_update" :content="$t('Edit')" position='TopCenter'
                                             target="#destination_tooltip_target">
                                             <div id="destination_tooltip_target">
                                                 <PencilSquareIcon @click="handleEditButtonClick(template.template_uuid)"
@@ -138,7 +138,7 @@
                                             </div>
                                         </ejs-tooltip>
 
-                                        <ejs-tooltip v-if="activeTab != 'default'" :content="$t('Delete')" position='TopCenter'
+                                        <ejs-tooltip v-if="template.can_delete" :content="$t('Delete')" position='TopCenter'
                                             target="#delete_tooltip_target">
                                             <div id="delete_tooltip_target">
                                                 <TrashIcon
@@ -147,7 +147,7 @@
                                             </div>
                                         </ejs-tooltip>
 
-                                        <ejs-tooltip v-if="activeTab == 'default'"
+                                        <ejs-tooltip v-if="!template.can_update"
                                             :content="$t('View details')" position='TopCenter'
                                             target="#view_tooltip_target">
                                             <div id="view_tooltip_target">
@@ -346,7 +346,7 @@ const bulkActions = computed(() => {
     ];
 
     // Conditionally add the delete action if permission is granted
-    if (props.permissions.user_destroy) {
+    if (props.permissions.provisioning_templates_delete) {
         actions.push({
             id: 'bulk_delete',
             label: trans('Delete'),

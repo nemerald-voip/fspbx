@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Services\HotelPortalAccess;
 use Illuminate\Foundation\Http\FormRequest;
 use App\Support\Localization\ValidationMessages;
 use Illuminate\Validation\Rule;
@@ -10,8 +11,7 @@ class BulkStoreHotelRoomsRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        // Gate as needed, mirroring your single create
-        return true;
+        return HotelPortalAccess::allows('hotel_rooms_create');
     }
 
     public function rules(): array
@@ -26,7 +26,6 @@ class BulkStoreHotelRoomsRequest extends FormRequest
                 Rule::exists('v_extensions', 'extension_uuid')
                     ->where(fn ($q) => $q->where('domain_uuid', $domainUuid)),
             ],
-            'domain_uuid' => ['present'], // keep parity with single request
         ];
     }
 
@@ -44,15 +43,7 @@ class BulkStoreHotelRoomsRequest extends FormRequest
         return [
             'extensions' => __('Extensions'),
             'extensions.*' => __('Extension'),
-            'domain_uuid' => __('Account'),
         ];
-    }
-
-    public function prepareForValidation(): void
-    {
-        if (!$this->has('domain_uuid')) {
-            $this->merge(['domain_uuid' => session('domain_uuid')]);
-        }
     }
 
 }

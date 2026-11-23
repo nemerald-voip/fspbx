@@ -70,4 +70,28 @@ class ActiveDirectoryClientTest extends TestCase
         $directory->user_dn = 'OU=People,DC=example,DC=com';
         $this->assertSame('OU=People,DC=example,DC=com', $directory->userSearchBase());
     }
+
+    /** @dataProvider searchBases */
+    public function test_search_base_compatibility(?string $base, ?string $users, ?string $groups, string $expectedUsers, string $expectedGroups): void
+    {
+        $directory = new LdapDirectory(['base_dn' => $base, 'user_dn' => $users, 'group_dn' => $groups]);
+
+        $this->assertSame($expectedUsers, $directory->userSearchBase());
+        $this->assertSame($expectedGroups, $directory->groupSearchBase());
+    }
+
+    public static function searchBases(): array
+    {
+        return [
+            'AD defaults' => ['DC=example,DC=com', null, '', 'DC=example,DC=com', 'DC=example,DC=com'],
+            'AD relative branches' => ['DC=example,DC=com', 'OU=People', 'OU=Groups', 'OU=People,DC=example,DC=com', 'OU=Groups,DC=example,DC=com'],
+            'full paths under existing base' => ['DC=example,DC=com', 'OU=People,dc=EXAMPLE,dc=COM', 'OU=Groups,DC=example,DC=com', 'OU=People,dc=EXAMPLE,dc=COM', 'OU=Groups,DC=example,DC=com'],
+            'generic LDAP relative branches' => ['o=Example,c=US', 'ou=People', 'ou=Groups', 'ou=People,o=Example,c=US', 'ou=Groups,o=Example,c=US'],
+            'escaped and multivalued RDNs' => ['o=Example,c=US', 'ou=Sales\\, West', 'cn=Admins+ou=Groups', 'ou=Sales\\, West,o=Example,c=US', 'cn=Admins+ou=Groups,o=Example,c=US'],
+            'Cloudron shared base' => ['dc=cloudron', 'ou=users', 'ou=groups', 'ou=users,dc=cloudron', 'ou=groups,dc=cloudron'],
+            'Cloudron independent paths' => ['', 'ou=users,dc=cloudron', 'ou=groups,dc=cloudron', 'ou=users,dc=cloudron', 'ou=groups,dc=cloudron'],
+            'unrelated naming contexts' => ['', 'ou=People,o=Example,c=US', 'cn=Roles,dc=other', 'ou=People,o=Example,c=US', 'cn=Roles,dc=other'],
+            'no suffix guessing for existing relative paths' => ['o=Example,c=US', 'dc=branch', 'ou=Groups', 'dc=branch,o=Example,c=US', 'ou=Groups,o=Example,c=US'],
+        ];
+    }
 }

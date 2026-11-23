@@ -14,6 +14,7 @@ use App\Services\SessionDomainService;
 use Spatie\QueryBuilder\AllowedFilter;
 use Illuminate\Support\Facades\Session;
 use App\Http\Requests\StoreDomainRequest;
+use App\Http\Requests\SwitchDomainRequest;
 use App\Http\Requests\UpdateDomainRequest;
 use App\Services\SipRegistrationSummaryService;
 use Throwable;
@@ -212,9 +213,10 @@ class DomainController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function switchDomain(Request $request)
+    public function switchDomain(SwitchDomainRequest $request)
     {
-        $domain = Domain::where('domain_uuid', $request->domain_uuid)->first();
+        $data = $request->validated();
+        $domain = $this->sessionDomainService->findSwitchableDomain($request->user(), $data['domain_uuid']);
 
         // If current domain is not the same as requested domain proceed with the change
         if (Session::get('domain_uuid') != $domain->domain_uuid) {
@@ -232,8 +234,8 @@ class DomainController extends Controller
 
             // This is a workaround to ensure the filters are reset when the domain changes.
             // Given that url()->previous() includes the filter options, it's necessary to pass a refreshed URL.
-            if ($request->redirect_url) {
-                $url = $request->redirect_url;
+            if (!empty($data['redirect_url'])) {
+                $url = $data['redirect_url'];
             } else {
                 $url = getFusionPBXPreviousURL(url()->previous());
                 $url = parse_url($url, PHP_URL_SCHEME) . '://' . parse_url($url, PHP_URL_HOST) . parse_url($url, PHP_URL_PATH);
@@ -257,10 +259,10 @@ class DomainController extends Controller
      */
     public function switchDomainFusionPBX($domain_uuid)
     {
-        $domain = Domain::where('domain_uuid', $domain_uuid)->first();
+        $domain = $this->sessionDomainService->findSwitchableDomain(Auth::user(), $domain_uuid);
 
         // If current domain is not the same as requested domain proceed with the change
-        if (Session::get('domain_uuid') != $domain->uuid) {
+        if (Session::get('domain_uuid') != $domain->domain_uuid) {
             if (session_status() == PHP_SESSION_NONE) {
                 session_start();
             };
@@ -274,10 +276,9 @@ class DomainController extends Controller
             //set the context
             Session::put('context', $_SESSION["domain_name"]);
             $_SESSION["context"] = $_SESSION["domain_name"];
-
-            $url = getFusionPBXPreviousURL(url()->previous());
-            return redirect($url);
         }
+
+        return redirect(getFusionPBXPreviousURL(url()->previous()));
     }
 
     /**

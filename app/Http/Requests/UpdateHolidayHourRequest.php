@@ -12,7 +12,14 @@ class UpdateHolidayHourRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return Auth::check();
+        if (! Auth::check() || ! userCheckPermission('business_hours_holidays_update')) {
+            return false;
+        }
+
+        $holiday = $this->route('holiday_hour');
+        abort_unless($holiday->businessHour()->value('domain_uuid') === session('domain_uuid'), 404);
+
+        return true;
     }
 
     public function rules(): array
@@ -27,7 +34,6 @@ class UpdateHolidayHourRequest extends FormRequest
         ];
 
         return [
-            'business_hour_uuid' => 'present',
             // which kind of holiday
             'holiday_type'     => ['required', Rule::in($types)],
 

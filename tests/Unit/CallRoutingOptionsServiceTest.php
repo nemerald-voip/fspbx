@@ -4,6 +4,7 @@ namespace Tests\Unit;
 
 use App\Http\Resources\BusinessHourHolidayResource;
 use App\Http\Controllers\Api\HolidayHoursController;
+use App\Http\Requests\IndexHolidayHourRequest;
 use App\Models\BusinessHour;
 use App\Models\BusinessHourHoliday;
 use App\Models\Destinations;
@@ -182,11 +183,14 @@ class CallRoutingOptionsServiceTest extends TestCase
         DB::table('business_hours')->insert([
             'uuid' => $businessHourUuid, 'domain_uuid' => (string) Str::uuid(),
         ]);
-        session(['domain_uuid' => (string) Str::uuid()]);
+        session([
+            'domain_uuid' => (string) Str::uuid(),
+            'permissions' => [(object) ['permission_name' => 'business_hours_holidays_list_view']],
+        ]);
         request()->merge(['uuid' => $businessHourUuid]);
 
         $this->expectException(ModelNotFoundException::class);
-        (new HolidayHoursController)->index();
+        (new HolidayHoursController)->index(app(IndexHolidayHourRequest::class));
     }
 
     public function test_exact_dialplan_number_is_preferred_over_one_prefixed_number(): void

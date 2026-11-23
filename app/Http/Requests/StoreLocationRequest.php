@@ -4,12 +4,12 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use App\Support\Localization\ValidationMessages;
+use Illuminate\Validation\Rule;
 
 class StoreLocationRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        // Only allow if user is admin or has permission (customize as needed)
         return userCheckPermission('location_create');
     }
 
@@ -18,7 +18,7 @@ class StoreLocationRequest extends FormRequest
         return [
             'name'    => 'required|string|max:255',
             'description'    => 'nullable|string|max:255',
-            'domain_uuid' => 'present',
+            'domain_uuid' => ['required', 'uuid', Rule::in([session('domain_uuid')])],
         ];
     }
 

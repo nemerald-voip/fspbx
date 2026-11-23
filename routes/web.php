@@ -25,6 +25,7 @@ use App\Http\Controllers\ConferenceController;
 use App\Http\Controllers\ConferenceControlController;
 use App\Http\Controllers\ConferenceProfileController;
 use App\Http\Controllers\ConferenceRoomController;
+use App\Http\Controllers\ConferenceSessionController;
 use App\Http\Controllers\CsrfTokenController;
 use App\Http\Controllers\DatabaseTransactionController;
 use App\Http\Controllers\DashboardController;
@@ -214,7 +215,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('/domains/switch', function () {
         return redirect('/dashboard');
     });
-    Route::get('/domains/switch/{domain}', [DomainController::class, 'switchDomainFusionPBX'])->name('switchDomainFusionPBX');
+    Route::get('/domains/switch/{domain}', [DomainController::class, 'switchDomainFusionPBX'])->whereUuid('domain')->name('switchDomainFusionPBX');
     Route::get('/domains/filter/', [DomainController::class, 'filterDomainsFusionPBX'])->name('filterDomainsFusionPBX');
 
     //Users
@@ -325,6 +326,8 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('conference-controls', [ConferenceControlController::class, 'index'])->name('conference-controls.index');
     Route::get('conference-profiles', [ConferenceProfileController::class, 'index'])->name('conference-profiles.index');
     Route::get('conference-rooms', [ConferenceRoomController::class, 'index'])->name('conference-rooms.index');
+    Route::get('conference-rooms/{conference_room}/sessions', [ConferenceSessionController::class, 'index'])->whereUuid('conference_room')->name('conference-sessions.index');
+    Route::get('conference-rooms/{conference_room}/sessions/{conference_session}', [ConferenceSessionController::class, 'show'])->whereUuid(['conference_room', 'conference_session'])->name('conference-sessions.show');
 
     //Voicemails
     Route::get('voicemails', [VoicemailController::class, 'index'])->name('voicemails.index');

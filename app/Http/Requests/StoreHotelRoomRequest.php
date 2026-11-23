@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Services\HotelPortalAccess;
 use Illuminate\Foundation\Http\FormRequest;
 use App\Support\Localization\ValidationMessages;
 use Illuminate\Validation\Rule;
@@ -11,8 +12,7 @@ class StoreHotelRoomRequest extends FormRequest
 
     public function authorize(): bool
     {
-        // If you gate by permission, swap this with: return $this->user()->can('hotel_rooms_update');
-        return true;
+        return HotelPortalAccess::allows('hotel_rooms_create');
     }
 
 
@@ -31,7 +31,6 @@ class StoreHotelRoomRequest extends FormRequest
                 Rule::exists('v_extensions', 'extension_uuid')
                     ->where(fn ($q) => $q->where('domain_uuid', $domainUuid)),
             ],
-            'domain_uuid' => 'present',
         ];
     }
 
@@ -48,15 +47,7 @@ class StoreHotelRoomRequest extends FormRequest
         return [
             'room_name' => __('Room Name'),
             'extension_uuid' => __('Extension'),
-            'domain_uuid' => __('Account'),
         ];
     }
 
-    public function prepareForValidation(): void
-    {
-        // Default domain
-        if (!$this->has('domain_uuid')) {
-            $this->merge(['domain_uuid' => session('domain_uuid')]);
-        }
-    }
 }

@@ -8,12 +8,14 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use App\Http\Requests\Concerns\NormalizesPhoneNumberConditions;
+use App\Http\Requests\Concerns\ValidatesPhoneNumberRouting;
 use App\Rules\ValidPhoneNumber;
 use App\Services\PhoneNumberService;
 
 class StorePhoneNumberRequest extends FormRequest
 {
     use NormalizesPhoneNumberConditions;
+    use ValidatesPhoneNumberRouting;
 
     /**
      * Determine if the user is authorized to make this request.
@@ -22,12 +24,13 @@ class StorePhoneNumberRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return Auth::check();
+        return Auth::check() && userCheckPermission('destination_add');
     }
 
     public function rules(): array
     {
         return [
+            ...$this->phoneNumberRoutingRules(),
             'destination_number' => [
                 'required',
                 Rule::unique('App\Models\Destinations', 'destination_number')
@@ -89,7 +92,9 @@ class StorePhoneNumberRequest extends FormRequest
                 'string',
             ],
             'domain_uuid' => [
+                'bail',
                 'required',
+                'uuid',
                 Rule::notIn(['NULL']),
                 Rule::exists('v_domains', 'domain_uuid')
             ],
@@ -98,10 +103,6 @@ class StorePhoneNumberRequest extends FormRequest
                 'string',
             ],
             'hold_music' => ['nullable', 'string'],
-            'routing_options' => [
-                'nullable',
-                'array',
-            ],
             'destination_type_fax' => 'present',
         ];
     }
@@ -156,6 +157,7 @@ class StorePhoneNumberRequest extends FormRequest
             ));
         }
         $this->normalizePhoneNumberConditions();
+        $this->normalizePhoneNumberRouting();
 
         if ($this->has('destination_type_fax')) {
             $this->merge([

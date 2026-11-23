@@ -15,5 +15,7 @@ class ConferenceSessionDetail extends Model
 
     protected $primaryKey = 'conference_session_detail_uuid';
 
+    public $incrementing = false;
+
     protected $keyType = 'string';
 }

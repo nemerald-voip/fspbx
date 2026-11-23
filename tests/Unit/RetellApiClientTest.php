@@ -81,6 +81,17 @@ class RetellApiClientTest extends TestCase
         (new RetellApiClient($this->integrationService()))->listAgents($this->integration());
     }
 
+    public function test_api_errors_include_retells_error_message(): void
+    {
+        $message = 'request/body/tools/0/query_params must be object';
+        Http::fake(['api.retellai.com/*' => Http::response(['error_message' => $message], 400)]);
+
+        $this->expectException(RetellApiException::class);
+        $this->expectExceptionMessage($message);
+
+        (new RetellApiClient($this->integrationService()))->listAgents($this->integration());
+    }
+
     public function test_provisioning_uses_uuid_phone_number_tcp_and_latest_published_bindings(): void
     {
         Http::fake(['api.retellai.com/*' => Http::response(['phone_number' => self::UUID])]);
@@ -452,6 +463,108 @@ class RetellApiClientTest extends TestCase
         Http::assertSent(fn (Request $request) => $request->method() === 'POST'
             && $request->url() === 'https://api.retellai.com/publish-agent-version/inbound-agent'
             && $request->data()['version'] === 4);
+    }
+
+    /** @dataProvider toolSyncDraftVersions */
+    public function test_tool_sync_preserves_unmanaged_json_objects_and_arrays(?int $draftVersion): void
+    {
+        $flowJson = <<<'JSON'
+        {
+            "tools": [
+                {
+                    "type": "custom",
+                    "name": "customer_lookup",
+                    "tool_id": "customer-lookup",
+                    "url": "https://example.org/lookup",
+                    "method": "GET",
+                    "query_params": {},
+                    "headers": {},
+                    "response_variables": {},
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "metadata": {"type": "object", "properties": {}, "required": []},
+                            "tags": {"type": "array", "items": {}, "default": []},
+                            "choice": {"anyOf": [{}, {"type": "string"}]}
+                        },
+                        "required": []
+                    }
+                },
+                {
+                    "type": "custom",
+                    "name": "populated_lookup",
+                    "tool_id": "populated-lookup",
+                    "url": "https://example.org/search",
+                    "method": "GET",
+                    "query_params": {"q": "{{customer_name}}"},
+                    "headers": {"X-Example": "value"},
+                    "response_variables": {"0": "$.first", "1": "$.second"}
+                },
+                {
+                    "type": "custom",
+                    "name": "simple_lookup",
+                    "tool_id": "simple-lookup",
+                    "url": "https://example.org/simple",
+                    "method": "GET"
+                }
+            ]
+        }
+        JSON;
+
+        Http::fake([
+            'api.retellai.com/list-agent-versions/inbound-agent*' => Http::response([
+                'items' => [['version' => 3, 'is_published' => true]],
+                'has_more' => false,
+            ]),
+            'api.retellai.com/get-agent/inbound-agent?version=3' => Http::response($this->publishedAgent(3, 7)),
+            'api.retellai.com/get-agent/inbound-agent?version=4' => Http::response($this->draftAgent(4, 8)),
+            'api.retellai.com/create-agent-version/inbound-agent' => Http::response($this->draftAgent(4, 8)),
+            'api.retellai.com/get-conversation-flow/flow-id*' => Http::response($flowJson, 200, ['Content-Type' => 'application/json']),
+            'api.retellai.com/update-conversation-flow/flow-id?version=8' => Http::response([]),
+            'api.retellai.com/publish-agent-version/inbound-agent' => Http::response([]),
+        ]);
+
+        $createdVersions = [];
+        $result = (new RetellApiClient($this->integrationService()))->synchronizeTools(
+            'inbound-agent',
+            app(AiProviderToolCatalog::class)->definitions('retell'),
+            $draftVersion,
+            function (int $version) use (&$createdVersions) {
+                $createdVersions[] = $version;
+            },
+        );
+
+        $this->assertSame($draftVersion === null ? [4] : [], $createdVersions);
+        $this->assertTrue($result['changed']);
+        $this->assertTrue($result['published']);
+
+        Http::assertSent(function (Request $request) use ($flowJson) {
+            if ($request->method() !== 'PATCH') {
+                return false;
+            }
+
+            // Inspect wire JSON without associative decoding, which hides {} versus [].
+            $payload = json_decode($request->body(), false, 512, JSON_THROW_ON_ERROR);
+            $expected = json_decode($flowJson, false, 512, JSON_THROW_ON_ERROR);
+            $this->assertCount(4, $payload->tools);
+            $this->assertSame(json_encode($expected->tools), json_encode(array_slice($payload->tools, 0, 3)));
+            $this->assertSame(AiProviderToolCatalog::SEND_EMAIL_TOOL_NAME, $payload->tools[3]->name);
+            $this->assertIsArray($payload->tools[3]->parameters->required);
+
+            return $request->url() === 'https://api.retellai.com/update-conversation-flow/flow-id?version=8';
+        });
+        Http::assertSent(fn (Request $request) => $request->method() === 'POST'
+            && $request->url() === 'https://api.retellai.com/publish-agent-version/inbound-agent'
+            && $request->data()['version'] === 4);
+
+        if ($draftVersion !== null) {
+            Http::assertNotSent(fn (Request $request) => str_contains($request->url(), '/create-agent-version/'));
+        }
+    }
+
+    public static function toolSyncDraftVersions(): array
+    {
+        return ['new draft' => [null], 'retry existing draft' => [4]];
     }
 
     private const UUID = '40a021c1-6016-4c62-af08-43dcb4c44528';

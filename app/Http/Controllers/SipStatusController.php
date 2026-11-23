@@ -190,8 +190,8 @@ class SipStatusController extends Controller
                     'data' => (string) $row->data,
                     'state' => (string) $row->state,
                     'action' => null,
-                    'edit_url' => $profile && $this->canEditSipProfiles()
-                        ? url('/app/sip_profiles/sip_profile_edit.php?id='.$profile['sip_profile_uuid'])
+                    'edit_url' => $profile && userCheckPermission('sip_profile_view') && userCheckPermission('sip_profile_edit')
+                        ? route('sip-profiles.index', ['edit' => $profile['sip_profile_uuid']])
                         : null,
                 ];
             }
@@ -204,7 +204,7 @@ class SipStatusController extends Controller
                 $gateway = $gateways[$gatewayUuid] ?? null;
                 $gatewayName = $gateway['gateway'] ?? $gatewayUuid;
                 $gatewayDomain = $gateway['domain_name'] ?? null;
-                $sameDomain = filled($gatewayDomain) && $gatewayDomain === session('domain_name');
+                $sameDomain = filled($gateway['domain_uuid'] ?? null) && $gateway['domain_uuid'] === session('domain_uuid');
 
                 $rows[] = [
                     'id' => 'gateway-'.$gatewayUuid,
@@ -218,8 +218,8 @@ class SipStatusController extends Controller
                         'profile' => (string) $row->profile,
                         'gateway' => $gateway['gateway_uuid'] ?? null,
                     ] : null,
-                    'edit_url' => $sameDomain
-                        ? url('/app/gateways/gateway_edit.php?id='.$gatewayUuid)
+                    'edit_url' => $sameDomain && userCheckPermission('gateway_view') && userCheckPermission('gateway_edit')
+                        ? route('gateways.index', ['edit' => $gatewayUuid])
                         : null,
                 ];
             }

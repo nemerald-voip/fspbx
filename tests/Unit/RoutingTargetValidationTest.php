@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateBusinessHoursRequest;
 use App\Http\Requests\StoreHolidayHourRequest;
 use App\Http\Requests\UpdateHolidayHourRequest;
 use App\Http\Requests\UpdateRingGroupRequest;
+use App\Http\Requests\UpdateVirtualReceptionistRequest;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -75,6 +76,7 @@ class RoutingTargetValidationTest extends TestCase
             [UpdateBusinessHoursRequest::class, 'after_hours_action', 'after_hours_target', false],
             [StoreHolidayHourRequest::class, 'action', 'target', false],
             [UpdateHolidayHourRequest::class, 'action', 'target', false],
+            [UpdateVirtualReceptionistRequest::class, 'exit_action', 'exit_target', true],
             [UpdateRingGroupRequest::class, 'timeout_action', 'timeout_target', true],
         ];
     }

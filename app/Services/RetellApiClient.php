@@ -296,10 +296,22 @@ class RetellApiClient implements AiProviderClient
 
     private function getConversationFlow(AiProviderIntegration $integration, array $engine): array
     {
-        return $this->json($this->request($integration)->get(
+        $response = $this->request($integration)->get(
             self::BASE_URL . '/get-conversation-flow/' . rawurlencode($engine['id']),
             ['version' => $engine['version']]
-        ));
+        );
+        $flow = $this->json($response);
+        $tools = $response->object()->tools ?? null;
+
+        if (is_array($tools)) {
+            // Keep nested JSON objects intact when sending existing tools back to Retell.
+            $flow['tools'] = array_map(
+                fn (mixed $tool) => $tool instanceof \stdClass ? (array) $tool : $tool,
+                $tools,
+            );
+        }
+
+        return $flow;
     }
 
     private function updateAndPublishDraft(
@@ -425,6 +437,10 @@ class RetellApiClient implements AiProviderClient
 
     private function project(mixed $actual, mixed $expected): mixed
     {
+        if ($actual instanceof \stdClass) {
+            $actual = (array) $actual;
+        }
+
         if (! is_array($expected) || ! is_array($actual)) {
             return $actual;
         }
@@ -490,7 +506,8 @@ class RetellApiClient implements AiProviderClient
     private function errorMessage(Response $response): string
     {
         $payload = $response->json();
-        $message = data_get($payload, 'message')
+        $message = data_get($payload, 'error_message')
+            ?? data_get($payload, 'message')
             ?? data_get($payload, 'detail')
             ?? data_get($payload, 'error.message')
             ?? data_get($payload, 'error')

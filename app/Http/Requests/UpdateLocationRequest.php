@@ -4,13 +4,19 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use App\Support\Localization\ValidationMessages;
+use Illuminate\Validation\Rule;
 
 class UpdateLocationRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        // Only allow if user is admin or has permission (customize as needed)
-        return userCheckPermission('location_update');
+        if (! userCheckPermission('location_update')) {
+            return false;
+        }
+
+        abort_unless($this->route('location')->domain_uuid === session('domain_uuid'), 404);
+
+        return true;
     }
 
     public function rules(): array
@@ -18,11 +24,8 @@ class UpdateLocationRequest extends FormRequest
         return [
             'name'    => 'required|string|max:255',
             'description'    => 'nullable|string|max:255',
+            'domain_uuid' => ['sometimes', 'required', 'uuid', Rule::in([session('domain_uuid')])],
         ];
-    }
-
-    public function prepareForValidation(): void
-    {
     }
 
     public function messages(): array
@@ -35,6 +38,7 @@ class UpdateLocationRequest extends FormRequest
         return [
             'name' => __('Name'),
             'description' => __('Description'),
+            'domain_uuid' => __('Account'),
         ];
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Models\Domain;
 use App\Models\Faxes;
+use App\Http\Requests\Concerns\ValidatesPhoneNumberRouting;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -12,6 +13,8 @@ use Illuminate\Validation\Rule;
 
 class BulkUpdatePhoneNumberRequest extends FormRequest
 {
+    use ValidatesPhoneNumberRouting;
+
     /**
      * Determine if the user is authorized to make this request.
      *
@@ -19,26 +22,19 @@ class BulkUpdatePhoneNumberRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return Auth::check();
+        return Auth::check() && userCheckPermission('destination_edit');
     }
 
     public function rules(): array
     {
         return [
-            'items' => 'required',
+            ...$this->phoneNumberRoutingRules(),
+            'items' => ['required', 'array', 'min:1'],
+            'items.*' => ['required', 'uuid', 'distinct'],
 
-            'routing_options' => [
-                'nullable',
-                'array',
-            ],
-            
             'destination_accountcode' => [
                 'nullable',
                 'string',
-            ],
-            'destination_actions' => [
-                'nullable',
-                'array',
             ],
             
             'destination_cid_name_prefix' => [
@@ -80,11 +76,27 @@ class BulkUpdatePhoneNumberRequest extends FormRequest
                 'string',
             ],
             'domain_uuid' => [
+                'bail',
                 'sometimes',
                 'required',
+                'uuid',
                 Rule::exists(Domain::class, 'domain_uuid')
             ],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->normalizePhoneNumberRouting();
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            if ($validator->errors()->isEmpty() && count($validator->validated()) === 1) {
+                $validator->errors()->add('input', __('No phone numbers or fields provided for update.'));
+            }
+        });
     }
 
     /**

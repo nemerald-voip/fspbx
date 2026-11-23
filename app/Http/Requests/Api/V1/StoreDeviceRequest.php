@@ -3,9 +3,12 @@
 namespace App\Http\Requests\Api\V1;
 
 use App\Models\Devices;
+use Illuminate\Validation\Rule;
 
 class StoreDeviceRequest extends \App\Http\Requests\StoreDeviceRequest
 {
+    use ValidatesDeviceReferences;
+
     public function authorize(): bool
     {
         return true;
@@ -13,7 +16,17 @@ class StoreDeviceRequest extends \App\Http\Requests\StoreDeviceRequest
 
     public function rules(): array
     {
-        $rules = parent::rules();
+        $rules = array_replace(parent::rules(), $this->deviceReferenceRules());
+
+        // API v1 has route-based account authorization and no SPA session context.
+        $rules['device_key_template_uuid'] = [
+            'nullable',
+            Rule::when(
+                fn ($input) => ($input['device_key_template_uuid'] ?? null) !== 'NULL',
+                Rule::exists('device_key_templates', 'device_key_template_uuid')
+                    ->where('domain_uuid', (string) $this->route('domain_uuid')),
+            ),
+        ];
 
         unset(
             $rules['device_address_modified'],
@@ -42,6 +55,7 @@ class StoreDeviceRequest extends \App\Http\Requests\StoreDeviceRequest
 
     public function withValidator($validator): void
     {
+        parent::withValidator($validator);
         $validator->after(function ($validator) {
             $normalizedMac = (string) $this->input('device_address_modified');
 
@@ -61,8 +75,9 @@ class StoreDeviceRequest extends \App\Http\Requests\StoreDeviceRequest
 
     public function prepareForValidation(): void
     {
-        if (! $this->has('domain_uuid') && $this->route('domain_uuid')) {
-            $this->merge(['domain_uuid' => (string) $this->route('domain_uuid')]);
+        $this->merge(['domain_uuid' => $this->route('domain_uuid')]);
+        if ($this->input('device_profile_uuid') === 'NULL') {
+            $this->merge(['device_profile_uuid' => null]);
         }
 
         parent::prepareForValidation();

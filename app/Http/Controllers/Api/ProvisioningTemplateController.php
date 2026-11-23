@@ -11,14 +11,38 @@ use Spatie\QueryBuilder\QueryBuilder;
 use Spatie\QueryBuilder\AllowedFilter;
 use App\Http\Requests\StoreProvisioningTemplateRequest;
 use App\Http\Requests\UpdateProvisioningTemplateRequest;
+use App\Http\Requests\BulkDeleteProvisioningTemplateRequest;
+use App\Http\Requests\ProvisioningTemplateContentRequest;
+use App\Http\Requests\ProvisioningTemplateItemOptionsRequest;
+use App\Services\ProvisioningTemplateAccessService;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 class ProvisioningTemplateController extends Controller
 {
+    public function __construct(private readonly ProvisioningTemplateAccessService $access)
+    {
+        $this->middleware(function ($request, $next) {
+            $this->access->currentDomain();
+            abort_unless(userCheckPermission('provisioning_templates_view'), 403);
+            $action = match ($request->route()->getActionMethod()) {
+                'store' => 'create',
+                'update' => 'update',
+                'bulkDelete' => 'delete',
+                default => null,
+            };
+            if ($action) {
+                abort_unless(userCheckPermission('provisioning_templates_'.$action), 403);
+            }
+
+            return $next($request);
+        });
+    }
+
     public function index(Request $request)
     {
         $perPage    = (int) $request->input('per_page', 50);
 
-        $query = QueryBuilder::for(ProvisioningTemplate::query())
+        $query = QueryBuilder::for($this->access->visibleQuery())
             ->select([
                 'template_uuid',
                 'vendor',
@@ -54,6 +78,10 @@ class ProvisioningTemplateController extends Controller
 
 
         $templates = $query->paginate($perPage)->appends($request->query());
+        $templates->getCollection()->each(function ($template) {
+            $template->can_update = $this->access->canModify($template, 'update');
+            $template->can_delete = $this->access->canModify($template, 'delete');
+        });
 
         // logger($templates);
 
@@ -62,7 +90,7 @@ class ProvisioningTemplateController extends Controller
 
     public function store(StoreProvisioningTemplateRequest $request)
     {
-        $data = $request->validated();
+        $data = $request->safe()->except('global');
 
         try {
             DB::beginTransaction();
@@ -93,29 +121,17 @@ class ProvisioningTemplateController extends Controller
         }
     }
 
-    public function update(UpdateProvisioningTemplateRequest $request, $ProvisioningTemplate_uuid)
+    public function update(UpdateProvisioningTemplateRequest $request, ProvisioningTemplate $provisioning_template)
     {
-        $data = $request->validated();
+        $data = $request->safe()->except('global');
 
         try {
-            DB::beginTransaction();
-
-            $ProvisioningTemplate = ProvisioningTemplate::find($ProvisioningTemplate_uuid);
-            if (!$ProvisioningTemplate) {
-                return response()->json([
-                    'messages' => ['error' => [__('Provisioning template not found.')]]
-                ], 404);
-            }
-
-            $ProvisioningTemplate->update($data);
-
-            DB::commit();
+            $provisioning_template->update($data);
 
             return response()->json([
                 'messages' => ['success' => [__('Provisioning template updated')]]
             ]);
         } catch (\Throwable $e) {
-            DB::rollBack();
             logger('ProvisioningTemplate update error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
@@ -124,18 +140,19 @@ class ProvisioningTemplateController extends Controller
         }
     }
 
-    public function getItemOptions()
+    public function getItemOptions(ProvisioningTemplateItemOptionsRequest $request)
     {
+        $uuid = $request->validated('item_uuid');
+        $item = $uuid ? $this->access->visibleQuery()->findOrFail($uuid) : null;
+
         try {
-            $item = null;
             $routes = [];
 
-            if (request()->filled('item_uuid')) {
-                $item = ProvisioningTemplate::findOrFail(request('item_uuid'));
+            if ($item && $this->access->canModify($item, 'update')) {
                 $routes['update_route'] = route('provisioning-templates.update', [
                     'provisioning_template' => $item->template_uuid,
                 ]);
-            } else {
+            } elseif (! $item) {
                 $routes['store_route'] = route('provisioning-templates.store');
             }
 
@@ -146,6 +163,7 @@ class ProvisioningTemplateController extends Controller
                     'vendor',
                 ])
                 ->where('type', 'default')
+                ->whereNull('domain_uuid')
                 ->defaultSort('vendor', 'name')   // vendor ASC, then name ASC
                 ->get()
                 ->groupBy('vendor')
@@ -192,6 +210,8 @@ class ProvisioningTemplateController extends Controller
                 'default_templates' => $defaultTemplates,
                 'vendors' => $vendors,
                 'routes' => $routes,
+                'permissions' => $this->access->permissions(),
+                'read_only' => $item ? ! $this->access->canModify($item, 'update') : false,
             ]);
         } catch (\Throwable $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
@@ -203,14 +223,13 @@ class ProvisioningTemplateController extends Controller
         }
     }
 
-    public function getTemplateContent()
+    public function getTemplateContent(ProvisioningTemplateContentRequest $request)
     {
-        try {
-            $uuid = request('template_uuid'); 
-            $item = $uuid ? ProvisioningTemplate::findOrFail($uuid) : null;
+        $item = $this->access->visibleQuery()->findOrFail($request->validated('template_uuid'));
 
+        try {
             return response()->json([
-                'item' => $item ?? null,
+                'item' => $item,
             ]);
         } catch (\Throwable $e) {
             logger('getTemplateContent@ProvisioningTemplateController: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
@@ -223,19 +242,15 @@ class ProvisioningTemplateController extends Controller
     }
 
 
-    public function bulkDelete()
+    public function bulkDelete(BulkDeleteProvisioningTemplateRequest $request)
     {
+        $uuids = $request->validated('items');
+
         try {
             DB::beginTransaction();
 
-            $uuids = request('items');
-
-            $items = ProvisioningTemplate::whereIn('template_uuid', $uuids)
-                ->get();
-
-            foreach ($items as $item) {
-                $item->delete();
-            }
+            $deleted = $this->access->editableQuery()->whereKey($uuids)->delete();
+            abort_unless($deleted === count($uuids), 404);
 
             DB::commit();
 
@@ -244,6 +259,9 @@ class ProvisioningTemplateController extends Controller
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
+            if ($e instanceof HttpExceptionInterface) {
+                throw $e;
+            }
 
             logger('ProvisioningTemplate bulkDelete error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 

@@ -12,7 +12,7 @@ class StoreHolidayHourRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return Auth::check();
+        return Auth::check() && userCheckPermission('business_hours_holidays_create');
     }
 
     public function rules(): array
@@ -27,7 +27,8 @@ class StoreHolidayHourRequest extends FormRequest
         ];
 
         return [
-            'business_hour_uuid' => 'present',
+            'business_hour_uuid' => ['bail', 'required', 'uuid', Rule::exists('business_hours', 'uuid')
+                ->where('domain_uuid', session('domain_uuid'))],
             // which kind of holiday
             'holiday_type'     => ['required', Rule::in($types)],
 

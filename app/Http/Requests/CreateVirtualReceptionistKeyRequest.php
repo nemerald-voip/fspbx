@@ -2,9 +2,9 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use App\Services\CallRoutingOptionsService;
 
 class CreateVirtualReceptionistKeyRequest extends FormRequest
 {
@@ -15,26 +15,27 @@ class CreateVirtualReceptionistKeyRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return Auth::check();
+        return userCheckPermission('ivr_menu_edit');
     }
 
     public function rules(): array
     {
+        $action = $this->input('action');
+        $requiresTarget = is_string($action) && CallRoutingOptionsService::requiresTarget($action);
+
         return [
             'menu_uuid' => 'required|uuid',
-            'domain_uuid' => 'required|uuid',
             'key' => 'required|string|max:11',
             'status' => 'required|boolean',
-            'action' => ['required', 'string', Rule::in(\App\Services\CallRoutingOptionsService::destinationTypes())],
+            'action' => ['required', 'string', Rule::in(CallRoutingOptionsService::destinationTypes())],
             'target' => [
                 'nullable',
-                Rule::requiredIf(fn () => \App\Services\CallRoutingOptionsService::requiresTarget((string) $this->input('action'))),
-                'string',
-                'max:255',
+                'uuid',
+                Rule::requiredIf($requiresTarget),
             ],
             'extension' => [
                 'nullable',
-                Rule::requiredIf(fn () => \App\Services\CallRoutingOptionsService::requiresTarget((string) $this->input('action')) && $this->input('action') !== 'bridges'),
+                Rule::requiredIf($requiresTarget && $action !== 'bridges'),
                 'string',
                 'max:255',
             ],
@@ -42,6 +43,21 @@ class CreateVirtualReceptionistKeyRequest extends FormRequest
         ];
     }
 
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            $action = $this->input('action');
+            if ($validator->errors()->isNotEmpty() || ! CallRoutingOptionsService::requiresTarget($action)) {
+                return;
+            }
+
+            $value = $action === 'bridges' ? $this->input('target') : $this->input('extension');
+            $matches = (new CallRoutingOptionsService)->targetMatchesDestination($action, $this->input('target'), $value);
+            if (! $matches) {
+                $validator->errors()->add('target', __('Select a valid routing target in this account.'));
+            }
+        });
+    }
 
     public function prepareForValidation(): void
     {
@@ -56,7 +72,7 @@ class CreateVirtualReceptionistKeyRequest extends FormRequest
         $this->merge([
             'action' => $this->selectionValue($this->input('action'), ['value']),
             'target' => $normalizedTarget,
-            'extension' => $normalizedExtension,
+            'extension' => is_int($normalizedExtension) ? (string) $normalizedExtension : $normalizedExtension,
             'status' => $this->booleanValue($this->input('status')),
         ]);
 

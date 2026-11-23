@@ -1,7 +1,7 @@
 <template>
     <div class="mt-4 flex flex-col">
 
-        <div class="flex flex-col sm:flex-row sm:flex-wrap">
+        <div v-if="permissions.hotel_room_status_list_view" class="flex flex-col sm:flex-row sm:flex-wrap">
             <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
                 <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                     <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
@@ -32,14 +32,14 @@
             </div>
         </div>
 
-        <div class="mt-4">
+        <div v-if="permissions.hotel_housekeeping_manage" class="mt-4">
             <button type="button" @click.prevent="handleManageCodesButtonClick()"
                 class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                 {{ $t('Housekeeping Codes') }}
             </button>
         </div>
 
-        <div class="mt-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+        <div v-if="permissions.hotel_room_status_list_view" class="mt-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
             <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
                 <Paginator class="border border-gray-200" :previous="data.prev_page_url" :next="data.next_page_url"
                     :from="data.from" :to="data.to" :total="data.total" :currentPage="data.current_page"
@@ -106,7 +106,7 @@
 
                                 <td class="whitespace-nowrap px-6 py-2 text-right text-sm font-medium">
                                     <div class="flex items-center whitespace-nowrap justify-end gap-1">
-                                        <ejs-tooltip v-if="!row.status?.occupancy_status" :content="$t('Check In')"
+                                        <ejs-tooltip v-if="permissions.hotel_room_status_update && !row.status?.occupancy_status" :content="$t('Check In')"
                                             position="TopCenter" target="#rs_edit_tt">
                                             <div id="rs_edit_tt">
                                                 <ArrowRightEndOnRectangleIcon
@@ -115,7 +115,7 @@
                                             </div>
                                         </ejs-tooltip>
 
-                                        <ejs-tooltip v-if="row.status?.occupancy_status" :content="$t('Check Out')"
+                                        <ejs-tooltip v-if="permissions.hotel_room_status_update && row.status?.occupancy_status" :content="$t('Check Out')"
                                             position="TopCenter" target="#rs_edit_tt">
                                             <div id="rs_edit_tt">
                                                 <ArrowRightStartOnRectangleIcon
@@ -192,7 +192,6 @@ const occupancyLabel = (status) => ({ 'Checked in': trans('Checked in'), 'Checke
 const selectedItems = ref([]);
 
 const props = defineProps({
-    domain_uuid: String,
     routes: Object,
     permissions: Object,
     trigger: Boolean
@@ -225,12 +224,12 @@ const data = ref({
 
 const filterData = ref({
     search: null,
-    domain_uuid: props.domain_uuid,
 });
 
 // const emits = defineEmits(['edit-item', 'delete-item']);
 
 const fetchRoomStatuses = async (page = 1) => {
+    if (!props.permissions.hotel_room_status_list_view) return;
     isRoomsLoading.value = true
     axios.get(props.routes.hotel_room_status, {
         params: {
@@ -276,7 +275,7 @@ const bulkActions = computed(() => {
     ];
 
     // Conditionally add the delete action if permission is granted
-    if (props.permissions.user_destroy) {
+    if (props.permissions.hotel_room_status_update) {
         actions.push({
             id: 'bulk_delete',
             label: trans('Delete'),

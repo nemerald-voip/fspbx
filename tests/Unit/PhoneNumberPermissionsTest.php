@@ -23,7 +23,7 @@ class PhoneNumberPermissionsTest extends TestCase
         ]);
         config()->set('database.default', 'phone_number_permissions_test');
         DB::purge('phone_number_permissions_test');
-        session(['domain_uuid' => 'account-a']);
+        session(['domain_uuid' => 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa']);
 
         Schema::create('v_domain_settings', function (Blueprint $table) {
             foreach (['domain_uuid', 'domain_setting_subcategory', 'domain_setting_value', 'domain_setting_enabled'] as $column) {
@@ -50,8 +50,8 @@ class PhoneNumberPermissionsTest extends TestCase
             $table->string('domain_description')->nullable();
         });
         DB::table('v_destinations')->insert([
-            ['destination_uuid' => 'local', 'domain_uuid' => 'account-a', 'destination_number' => '2135550100'],
-            ['destination_uuid' => 'foreign', 'domain_uuid' => 'account-b', 'destination_number' => '2135550101'],
+            ['destination_uuid' => 'local', 'domain_uuid' => 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'destination_number' => '2135550100'],
+            ['destination_uuid' => 'foreign', 'domain_uuid' => 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'destination_number' => '2135550101'],
         ]);
     }
 

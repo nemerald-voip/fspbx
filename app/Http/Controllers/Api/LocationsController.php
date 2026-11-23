@@ -7,12 +7,41 @@ use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreLocationRequest;
 use App\Http\Requests\UpdateLocationRequest;
+use App\Http\Requests\BulkDeleteLocationRequest;
+use Illuminate\Support\Str;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 class LocationsController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(function ($request, $next) {
+            $this->currentDomain();
+            $permission = match ($request->route()->getActionMethod()) {
+                'index' => 'location_view',
+                'store' => 'location_create',
+                'update' => 'location_update',
+                'bulkDelete' => 'location_delete',
+                default => null,
+            };
+            abort_unless($permission && userCheckPermission($permission), 403);
+
+            return $next($request);
+        });
+    }
+
+    private function currentDomain(): string
+    {
+        $domain = session('domain_uuid');
+        abort_unless(is_string($domain) && Str::isUuid($domain), 403);
+
+        return $domain;
+    }
+
     public function index()
     {
-        $domain_uuid = request('domain_uuid');
+        $domain_uuid = $this->currentDomain();
+        abort_if(request()->has('domain_uuid') && request('domain_uuid') !== $domain_uuid, 403);
 
         $locations = Location::where('domain_uuid', $domain_uuid)
             ->orderBy('name')
@@ -24,6 +53,7 @@ class LocationsController extends Controller
     public function store(StoreLocationRequest $request)
     {
         $data = $request->validated();
+        $data['domain_uuid'] = $this->currentDomain();
 
         try {
             DB::beginTransaction();
@@ -46,29 +76,15 @@ class LocationsController extends Controller
         }
     }
 
-    public function update(UpdateLocationRequest $request, $location_uuid)
+    public function update(UpdateLocationRequest $request, Location $location)
     {
-        $data = $request->validated();
-
         try {
-            DB::beginTransaction();
-
-            $location = Location::find($location_uuid);
-            if (!$location) {
-                return response()->json([
-                    'messages' => ['error' => [__('Location not found.')]]
-                ], 404);
-            }
-
-            $location->update($data);
-
-            DB::commit();
+            $location->update($request->safe()->except('domain_uuid'));
 
             return response()->json([
                 'messages' => ['success' => [__('Location updated')]]
             ]);
         } catch (\Throwable $e) {
-            DB::rollBack();
             logger('Location update error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
@@ -124,15 +140,17 @@ class LocationsController extends Controller
     //     }
     // }
 
-    public function bulkDelete()
+    public function bulkDelete(BulkDeleteLocationRequest $request)
     {
+        $uuids = $request->validated('items');
+
         try {
             DB::beginTransaction();
 
-            $uuids = request('items');
-
-            $items = Location::whereIn('location_uuid', $uuids)
+            $items = Location::where('domain_uuid', $this->currentDomain())
+                ->whereKey($uuids)
                 ->get();
+            abort_unless($items->count() === count($uuids), 404);
 
             foreach ($items as $item) {
                 $item->delete();
@@ -145,6 +163,9 @@ class LocationsController extends Controller
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
+            if ($e instanceof HttpExceptionInterface) {
+                throw $e;
+            }
 
             logger('Location bulkDelete error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 

@@ -4,11 +4,12 @@ namespace App\Http\Requests\Api\V1;
 
 use App\Models\Devices;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
 use App\Models\ProvisioningTemplate;
 
 class UpdateDeviceRequest extends \App\Http\Requests\UpdateDeviceRequest
 {
+    use ValidatesDeviceReferences;
+
     public function authorize(): bool
     {
         return true;
@@ -19,23 +20,8 @@ class UpdateDeviceRequest extends \App\Http\Requests\UpdateDeviceRequest
         return [
             'device_address' => ['sometimes', 'filled', 'mac_address'],
             'serial_number' => ['sometimes', 'nullable', 'string'],
-            'device_profile_uuid' => [
-                'sometimes',
-                'nullable',
-                Rule::when(
-                    function ($input) {
-                        return ($input['device_profile_uuid'] ?? null) !== 'NULL';
-                    },
-                    Rule::exists('App\Models\DeviceProfile', 'device_profile_uuid'),
-                ),
-            ],
+            ...$this->deviceReferenceRules(),
             'device_template' => ['sometimes', 'nullable', 'string'],
-            'device_template_uuid' => [
-                'sometimes',
-                'nullable',
-                'uuid',
-                Rule::exists('provisioning_templates', 'template_uuid'),
-            ],
             'device_description' => ['sometimes', 'nullable'],
         ];
     }
@@ -62,6 +48,10 @@ class UpdateDeviceRequest extends \App\Http\Requests\UpdateDeviceRequest
 
     public function prepareForValidation(): void
     {
+        if ($this->input('device_profile_uuid') === 'NULL') {
+            $this->merge(['device_profile_uuid' => null]);
+        }
+
         if ($this->has('device_address')) {
             $macAddress = strtolower(trim(tokenizeMacAddress($this->input('device_address') ?? '')));
             $this->merge([
@@ -94,8 +84,8 @@ class UpdateDeviceRequest extends \App\Http\Requests\UpdateDeviceRequest
 
         $tplUuid = $this->input('device_template_uuid');
         if (is_string($tplUuid) && Str::isUuid($tplUuid)) {
-            $resolvedVendor = ProvisioningTemplate::query()
-                ->where('template_uuid', $tplUuid)
+            $resolvedVendor = ProvisioningTemplate::visibleToDomain((string) $this->route('domain_uuid'))
+                ->whereKey($tplUuid)
                 ->value('vendor');
 
             if (is_string($resolvedVendor) && $resolvedVendor !== '') {

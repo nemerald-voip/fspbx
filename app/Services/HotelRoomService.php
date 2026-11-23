@@ -45,7 +45,7 @@ class HotelRoomService
                 'extension_name',
             ]);
 
-            $room->status()->delete();
+            $room->status()->where('domain_uuid', $room->domain_uuid)->delete();
 
             $this->updateExtension($room, $payload);
 
@@ -74,7 +74,7 @@ class HotelRoomService
     {
         return DB::transaction(function () use ($room) {
             // lock the current status row (if any) to avoid race conditions
-            $current = $room->status()->lockForUpdate()->first();
+            $current = $room->status()->where('domain_uuid', $room->domain_uuid)->lockForUpdate()->first();
 
             if (!$current) {
                 return false; // idempotent: nothing to delete

@@ -7,6 +7,7 @@ use Inertia\Inertia;
 use App\Models\Faxes;
 use Inertia\Response;
 use App\Models\Dialplans;
+use App\Models\Domain;
 use Illuminate\Support\Str;
 use App\Models\Destinations;
 use Illuminate\Http\Request;
@@ -28,7 +29,13 @@ use App\Http\Requests\StorePhoneNumberRequest;
 use App\Http\Requests\UpdatePhoneNumberRequest;
 use Illuminate\Contracts\Foundation\Application;
 use App\Http\Requests\BulkUpdatePhoneNumberRequest;
+use App\Http\Requests\BulkDeletePhoneNumberRequest;
+use App\Http\Requests\PhoneNumberItemOptionsRequest;
+use App\Http\Requests\PhoneNumberRoutingOptionsRequest;
+use App\Http\Requests\ImportPhoneNumbersRequest;
+use App\Http\Requests\ImportPhoneNumbersPreviewRequest;
 use App\Services\DialplanBuilderService;
+use App\Services\PhoneNumberAccessService;
 use App\Traits\ChecksLimits;
 use App\Exports\PhoneNumbersExport;
 
@@ -54,6 +61,20 @@ class PhoneNumbersController extends Controller
     public function __construct()
     {
         $this->model = new Destinations();
+        $permissions = [
+            'index' => 'destination_view', 'getData' => 'destination_view', 'selectAll' => 'destination_view',
+            'store' => 'destination_add', 'update' => 'destination_edit', 'bulkUpdate' => 'destination_edit',
+            'bulkDelete' => 'destination_delete', 'export' => 'destination_export',
+            'import' => 'destination_import', 'importPreview' => 'destination_import',
+            'importCommit' => 'destination_import', 'downloadTemplate' => 'destination_import',
+        ];
+        $this->middleware(function ($request, $next) use ($permissions) {
+            app(PhoneNumberAccessService::class)->currentDomain();
+            if ($permission = $permissions[$request->route()->getActionMethod()] ?? null) {
+                abort_unless(userCheckPermission($permission), 403);
+            }
+            return $next($request);
+        });
     }
 
     /**
@@ -102,26 +123,18 @@ class PhoneNumbersController extends Controller
     }
 
 
-    public function getItemOptions(Request $request)
+    public function getItemOptions(PhoneNumberItemOptionsRequest $request)
     {
-        $item_uuid = $request->input('item_uuid') ?? $request->input('itemUuid'); // Retrieve item_uuid from the request
-        $mode = $request->input('mode') ?: ($item_uuid ? 'update' : 'create');
-
-        if (!in_array($mode, ['create', 'update', 'bulk_update'], true)) {
-            abort(422, 'Invalid item options mode.');
-        }
-
-        if ($mode === 'update' && !$item_uuid) {
-            abort(422, 'Item UUID is required for update mode.');
-        }
-
-        if (in_array($mode, ['update', 'bulk_update'], true) && !userCheckPermission('destination_edit')) {
-            abort(403);
-        }
-
-        if ($mode === 'create' && !userCheckPermission('destination_add')) {
-            abort(403);
-        }
+        $item_uuid = $request->validated('item_uuid');
+        $mode = $request->validated('mode');
+        $access = app(PhoneNumberAccessService::class);
+        $number = $item_uuid ? $access->query()->findOrFail($item_uuid, [
+            'domain_uuid', 'destination_uuid', 'fax_uuid', 'destination_number', 'destination_prefix',
+            'destination_record', 'destination_distinctive_ring', 'destination_cid_name_prefix',
+            'destination_accountcode', 'destination_actions', 'destination_enabled', 'destination_description',
+            'destination_type_fax', 'destination_hold_music',
+        ]) : null;
+        $domainUuid = $access->targetDomain($request->validated('domain_uuid'), $number);
 
         try {
             // Check for limits
@@ -131,12 +144,12 @@ class PhoneNumbersController extends Controller
                 }
             }
 
-            $routingOptionsService = new CallRoutingOptionsService;
+            $routingOptionsService = new CallRoutingOptionsService($domainUuid);
             $routingTypes = $routingOptionsService->routingTypes;
 
             $faxes = [];
             $faxesCollection = Faxes::query();
-            $faxesCollection->where('domain_uuid', Session::get('domain_uuid'));
+            $faxesCollection->where('domain_uuid', $domainUuid);
             $faxesCollection = $faxesCollection->orderBy('fax_name')->get([
                 'fax_extension',
                 'fax_name',
@@ -150,70 +163,33 @@ class PhoneNumbersController extends Controller
             }
 
             $domains = [];
-            $domainsCollection = Session::get("domains");
+            $domainsCollection = Domain::query()->when(!userCheckPermission('destination_all'),
+                fn ($query) => $query->where('domain_uuid', $access->currentDomain()))
+                ->get(['domain_uuid', 'domain_description', 'domain_name']);
             if ($domainsCollection) {
                 foreach ($domainsCollection as $domain) {
                     $domains[] = [
                         'value' => $domain->domain_uuid,
-                        'label' => $domain->domain_description
+                        'label' => $domain->domain_description ?: $domain->domain_name
                     ];
                 }
             }
 
-            // Check if item_uuid exists to find an existing voicemail
-            if ($item_uuid) {
-                // Find existing item by item_uuid
-                // $phoneNumber = $this->model::where($this->model->getKeyName(), $item_uuid)->first();
-
-                $phoneNumber = QueryBuilder::for($this->model)
-                    ->select([
-                        'domain_uuid',
-                        'destination_uuid',
-                        'fax_uuid',
-                        'destination_number',
-                        'destination_prefix',
-                        'destination_record',
-                        'destination_distinctive_ring',
-                        'destination_cid_name_prefix',
-                        'destination_accountcode',
-                        'destination_actions',
-                        'destination_enabled',
-                        'destination_description',
-                        'destination_type_fax',
-                        'destination_hold_music',
-                    ])
-                    ->whereKey($item_uuid)
-                    ->firstOrFail();
-
-                // logger($phoneNumber);
-
-                // If a voicemail exists, use it; otherwise, create a new one
-                if (!$phoneNumber) {
-                    throw new \Exception("Failed to fetch item details. Item not found");
-                }
-
-                // Define the update route
-                $updateRoute = route('phone-numbers.update', ['phone_number' => $item_uuid]);
-            } else {
-                // Create a new voicemail if item_uuid is not provided
-                $phoneNumber = $this->model;
-            }
-
             $permissions = $this->getUserPermissions();
 
-            $music_on_hold_options = getMusicOnHoldCollection(session('domain_uuid'));
+            $music_on_hold_options = getMusicOnHoldCollection($domainUuid);
 
             $routes = [
                 'store_route' => route('phone-numbers.store'),
-                'update_route' => $updateRoute ?? null,
-                'get_routing_options' => route('routing.options'),
+                'update_route' => $number ? route('phone-numbers.update', $number) : null,
+                'get_routing_options' => route('phone-numbers.routing.options', ['item_uuid' => $item_uuid, 'domain_uuid' => $domainUuid]),
                 'bulk_update_route' => route('phone-numbers.bulk.update'),
             ];
 
 
             // Construct the itemOptions object
             $itemOptions = [
-                'item' => $phoneNumber,
+                'item' => $number ?? $this->model,
                 'permissions' => $permissions,
                 'routes' => $routes,
                 'routing_types' => $routingTypes,
@@ -226,6 +202,7 @@ class PhoneNumbersController extends Controller
 
             return $itemOptions;
         } catch (\Exception $e) {
+            $this->rethrowAccessFailure($e);
             // Log the error message
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             // report($e);
@@ -238,6 +215,15 @@ class PhoneNumbersController extends Controller
         }
     }
 
+    public function routingOptions(PhoneNumberRoutingOptionsRequest $request): JsonResponse
+    {
+        $access = app(PhoneNumberAccessService::class);
+        $number = $request->filled('item_uuid') ? $access->query()->findOrFail($request->validated('item_uuid')) : null;
+        $domain = $access->targetDomain($request->validated('domain_uuid'), $number);
+
+        return response()->json(['options' => (new CallRoutingOptionsService($domain))->getOptions()]);
+    }
+
     public function getData()
     {
         abort_unless(userCheckPermission('destination_view'), 403);
@@ -245,7 +231,7 @@ class PhoneNumbersController extends Controller
         $perPage = fspbx_pagination_per_page();
         $currentDomain = session('domain_uuid');
 
-        $data = QueryBuilder::for(Destinations::class)
+        $data = QueryBuilder::for(app(PhoneNumberAccessService::class)->query())
             ->select([
                 'destination_uuid',
                 'destination_number',
@@ -407,14 +393,10 @@ class PhoneNumbersController extends Controller
 /**
      * Parse the file and return data to frontend
      */
-    public function importPreview()
+    public function importPreview(ImportPhoneNumbersPreviewRequest $request)
     {
-        if (!userCheckPermission('destination_import')) {
-            abort(403);
-        }
-
         try {
-            $file = request()->file('file');
+            $file = $request->file('file');
             
             // Import to array instead of collection
             $import = new PhoneNumbersImport;
@@ -466,60 +448,24 @@ class PhoneNumbersController extends Controller
     /**
      * Receive the approved list and save to DB
      */
-public function importCommit(Request $request)
+    public function importCommit(ImportPhoneNumbersRequest $request)
     {
-        if (!userCheckPermission('destination_import')) {
-            abort(403);
-        }
-
-        $items = $request->input('items');
+        $items = $request->validated('items');
         $domain_uuid = session('domain_uuid');
         $domain_name = session('domain_name');
-
-        if (empty($items)) {
-            return response()->json(['success' => false, 'messages' => ['error' => [__('No items to import')]]], 422);
-        }
-
-        // --- DUPLICATE CHECKING ---
-        // 1. Get all incoming numbers
-        $incomingNumbers = collect($items)->pluck('destination_number')->filter()->toArray();
-
-        // 2. Check if the CSV itself contains duplicate rows
-        $duplicatesInFile = collect($incomingNumbers)->duplicates()->unique()->toArray();
-        if (!empty($duplicatesInFile)) {
-            return response()->json([
-                'success' => false,
-                'errors' => ['server' => [__('The import list contains duplicate numbers: :numbers', ['numbers' => implode(', ', $duplicatesInFile)])]]
-            ], 422);
-        }
-
-        // 3. Check if any of these numbers already exist in the database
-        $existingNumbers = Destinations::whereIn('destination_number', $incomingNumbers)
-            ->pluck('destination_number')
-            ->toArray();
-
-        if (!empty($existingNumbers)) {
-            return response()->json([
-                'success' => false,
-                'errors' => ['server' => [__('The following numbers already exist in the system: :numbers', ['numbers' => implode(', ', $existingNumbers)])]]
-            ], 422);
-        }
-        // --------------------------
 
         try {
             DB::beginTransaction();
 
-            foreach ($items as $row) {
-                $destination_actions = null;
-                
-                if (!empty($row['routing_type']) && !empty($row['routing_extension'])) {
-                    $destination_actions = json_encode([
-                        buildDestinationAction([
-                            'type' => $row['routing_type'], 
-                            'extension' => $row['routing_extension']
-                        ])
-                    ]);
-                }
+            $actions = [];
+            foreach ($items as $index => $row) {
+                $options = !empty($row['routing_type'])
+                    ? [['type' => $row['routing_type'], 'extension' => $row['routing_extension'] ?? null]] : [];
+                $actions[$index] = json_encode(app(PhoneNumberAccessService::class)->routingActions($options, $domain_uuid));
+            }
+
+            foreach ($items as $index => $row) {
+                $destination_actions = $actions[$index];
 
                 $phone_number = Destinations::create([
                     'destination_uuid' => Str::uuid(),
@@ -536,7 +482,7 @@ public function importCommit(Request $request)
                     'destination_accountcode' => $domain_name,
                 ]);
 
-                dispatch(new \App\Jobs\BuildDialplanForPhoneNumber($phone_number->destination_uuid, $domain_name));
+                $this->queueDialplan($phone_number);
             }
 
             DB::commit();
@@ -548,6 +494,7 @@ public function importCommit(Request $request)
 
         } catch (\Exception $e) {
             DB::rollBack();
+            $this->rethrowAccessFailure($e);
             logger($e);
             return response()->json([
                 'success' => false,
@@ -590,6 +537,7 @@ public function importCommit(Request $request)
      */
     public function store(StorePhoneNumberRequest $request): JsonResponse
     {
+        $inputs = app(PhoneNumberAccessService::class)->validateWrite($request->validated());
 
         // Enforce limit BEFORE creating new phone number
         if ($resp = $this->enforceLimit('destinations', \App\Models\Destinations::class)) {
@@ -599,18 +547,8 @@ public function importCommit(Request $request)
         try {
             $inputs = array_map(function ($value) {
                 return $value === 'NULL' ? null : $value;
-            }, $request->validated());
-
-            // Process routing_options to form destination_actions
-            $destination_actions = [];
-            if (!empty($inputs['routing_options'])) {
-                foreach ($inputs['routing_options'] as $option) {
-                    $destination_actions[] = buildDestinationAction($option);
-                }
-            }
-
-            // Assign the formatted actions to the destination_actions field
-            $inputs['destination_actions'] = json_encode($destination_actions);
+            }, $inputs);
+            $inputs['destination_actions'] ??= '[]';
 
             $instance = $this->model;
             $instance->fill([
@@ -622,7 +560,7 @@ public function importCommit(Request $request)
                 'destination_prefix' => $inputs['destination_prefix'],
                 'destination_number' => $inputs['destination_number'],
                 'destination_actions' => $inputs['destination_actions'],
-                // 'destination_conditions' => $inputs['destination_conditions'],
+                'destination_conditions' => $inputs['destination_conditions'] ?? null,
                 'destination_hold_music' => $inputs['destination_hold_music'] ?? null,
                 'destination_description' => $inputs['destination_description'] ?? null,
                 'destination_enabled' => $inputs['destination_enabled'] ?? true,
@@ -637,7 +575,7 @@ public function importCommit(Request $request)
 
             // $this->generateDialPlanXML($instance);
             // Generate dialplan
-            dispatch(new \App\Jobs\BuildDialplanForPhoneNumber($instance->destination_uuid, session('domain_name')));
+            $this->queueDialplan($instance);
 
             return response()->json([
                 'messages' => ['success' => [__('New phone number succesfully created')]]
@@ -664,47 +602,22 @@ public function importCommit(Request $request)
     {
         $data = $request->validated();
 
-        // logger($data);
-
-        $ids = $data['items'] ?? [];
+        $ids = $data['items'];
         unset($data['items']);
-
-        if (empty($ids) || empty($data)) {
-            return response()->json([
-                'success' => false,
-                'errors' => ['input' => [__('No phone numbers or fields provided for update.')]]
-            ], 422);
-        }
 
         try {
             DB::beginTransaction();
 
-            // Update each phone number in chunks
-            Destinations::whereIn('destination_uuid', $ids)
-                ->chunk(10, function ($phoneNumbers) use ($data) {
-                    foreach ($phoneNumbers as $phoneNumber) {
-                        $updateData = $data;
-
-                        // Handle routing_options if present (per number)
-                        if (isset($updateData['routing_options'])) {
-                            $destination_actions = [];
-                            foreach ($updateData['routing_options'] as $option) {
-                                $destination_actions[] = buildDestinationAction($option);
-                            }
-                            $updateData['destination_actions'] = json_encode($destination_actions);
-                            unset($updateData['routing_options']);
-                        }
-
-                        $phoneNumber->fill($updateData);
-                        if ($phoneNumber->isDirty()) {
-                            $phoneNumber->save();
-
-                            //regenerate XML
-                            // $this->generateDialPlanXML($phoneNumber);
-                            dispatch(new \App\Jobs\BuildDialplanForPhoneNumber($phoneNumber->destination_uuid, session('domain_name')));
-                        }
-                    }
-                });
+            $access = app(PhoneNumberAccessService::class);
+            $numbers = $access->selection($ids);
+            $updates = [];
+            foreach ($numbers as $number) {
+                $updates[$number->destination_uuid] = $access->validateWrite($data, $number);
+            }
+            // Complete authorization and reference validation before saves or queued builds.
+            foreach ($numbers as $number) {
+                $this->savePhoneNumber($number, $updates[$number->destination_uuid]);
+            }
 
             DB::commit();
 
@@ -713,6 +626,7 @@ public function importCommit(Request $request)
             ], 200);
         } catch (\Exception $e) {
             DB::rollBack();
+            $this->rethrowAccessFailure($e);
             logger('PhoneNumbersController@bulkUpdate error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
             return response()->json([
                 'success' => false,
@@ -731,38 +645,18 @@ public function importCommit(Request $request)
      */
     public function update(UpdatePhoneNumberRequest $request, Destinations $phone_number)
     {
-        if (!$phone_number) {
-            // If the model is not found, return an error response
-            return response()->json([
-                'success' => false,
-                'errors' => ['model' => [__('Model not found')]]
-            ], 404); // 404 Not Found if the model does not exist
-        }
-
         try {
-            $data = $request->validated();
-
-            // Process routing_options to form destination_actions
-            $destination_actions = [];
-            if (!empty($data['routing_options'])) {
-                foreach ($data['routing_options'] as $option) {
-                    $destination_actions[] = buildDestinationAction($option);
-                }
-            }
-
-            // Assign the formatted actions to the destination_actions field
-            $data['destination_actions'] = json_encode($destination_actions);
-
-            $phone_number->update($data);
-
-            // $this->generateDialPlanXML($phone_number);
-            dispatch(new \App\Jobs\BuildDialplanForPhoneNumber($phone_number->destination_uuid, session('domain_name')));
+            DB::transaction(function () use ($request, $phone_number) {
+                $access = app(PhoneNumberAccessService::class);
+                $this->savePhoneNumber($phone_number, $access->validateWrite($request->validated(), $phone_number), forceRebuild: true);
+            });
 
             return response()->json([
                 'messages' => ['success' => [__('Phone number updated successfully')]],
                 'phone_number' => $phone_number,
             ], 200);
         } catch (\Exception $e) {
+            $this->rethrowAccessFailure($e);
             logger('PhoneNumbersController@update error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
             // Handle any other exception that may occur
             return response()->json([
@@ -776,23 +670,28 @@ public function importCommit(Request $request)
      * Remove the specified resource from storage.
      * @return JsonResponse
      */
-    public function bulkDelete(): JsonResponse
+    public function bulkDelete(BulkDeletePhoneNumberRequest $request): JsonResponse
     {
         try {
             // Begin Transaction
             DB::beginTransaction();
 
             // Retrieve all items at once
-            $items = $this->model::whereIn('destination_uuid', request('items'))
-                ->get(['destination_uuid', 'dialplan_uuid', 'destination_prefix', 'destination_number', 'destination_context']);
+            $access = app(PhoneNumberAccessService::class);
+            $items = $access->selection($request->validated('items'));
+            $dialplans = [];
+            foreach ($items as $item) {
+                $dialplans[$item->destination_uuid] = $access->checkDialplan($item);
+            }
 
             $dialplanBuilder = new DialplanBuilderService();
 
             foreach ($items as $item) {
                 //Get dialplan details
-                $dialPlan = Dialplans::where('dialplan_uuid', $item->dialplan_uuid)->first();
+                $dialPlan = $dialplans[$item->destination_uuid];
                 // Delete dialplan
                 if ($dialPlan) {
+                    $dialPlan->dialplan_details()->where('domain_uuid', $item->domain_uuid)->delete();
                     $dialPlan->delete();
                 }
 
@@ -813,6 +712,8 @@ public function importCommit(Request $request)
             // Rollback Transaction if any error occurs
             DB::rollBack();
 
+            $this->rethrowAccessFailure($e);
+
             // Log the error message
             logger('PhoneNumbersController@bulkDelete error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
             return response()->json([
@@ -822,58 +723,12 @@ public function importCommit(Request $request)
         }
     }
 
-    /**
-     * Probably need to move this to somewhere else like helper
-     * @param  array  $inputs
-     * @return array
-     */
-    private function processActionConditionInputs(array $inputs): array
-    {
-        if (!empty($inputs['destination_actions'])) {
-            $actions = [];
-            foreach ($inputs['destination_actions'] as $action) {
-                if (!empty($action['targetValue'])) {
-                    $actions[] = $this->findActionConditionApp($action['targetValue']);
-                }
-            }
-            $inputs['destination_actions'] = json_encode($actions);
-        } else {
-            $inputs['destination_actions'] = null;
-        }
-        if (!empty($inputs['destination_conditions'])) {
-            $conditions = [];
-            foreach ($inputs['destination_conditions'] as $condition) {
-                if (!empty($condition['condition_target']['targetValue'])) {
-                    $data = $this->findActionConditionApp($condition['condition_target']['targetValue'], 'condition');
-                    $data['condition_field'] = $condition['condition_field'];
-                    $data['condition_expression'] = $condition['condition_expression'];
-                    $conditions[] = $data;
-                }
-            }
-            $inputs['destination_conditions'] = json_encode($conditions);
-        } else {
-            $inputs['destination_conditions'] = null;
-        }
-
-        return $inputs;
-    }
-
-    private function findActionConditionApp($action, $prefix = 'destination')
-    {
-        $pattern = '/^(transfer|lua|playback):(.*)$/';
-        if (preg_match($pattern, $action, $matches)) {
-            return [$prefix . '_app' => $matches[1], $prefix . '_data' => trim($matches[2])];
-        } else {
-            throw new \Exception('Unknown action: ' . $action);
-        }
-    }
-
     public function getUserPermissions()
     {
         $permissions = [];
         $permissions['manage_recording_setting'] = userCheckPermission('destination_record');
         $permissions['manage_destination_prefix'] = userCheckPermission('destination_prefix');
-        $permissions['manage_destination_domain'] = userCheckPermission('destination_domain');
+        $permissions['manage_destination_domain'] = userCheckPermission('destination_all') && userCheckPermission('destination_domain');
         $permissions['destination_hold_music'] = userCheckPermission('destination_hold_music');
         $permissions['is_superadmin'] = isSuperAdmin();
 
@@ -892,7 +747,7 @@ public function importCommit(Request $request)
         try {
             $domain_uuid = session('domain_uuid');
 
-            $data = QueryBuilder::for(Destinations::class)
+            $data = QueryBuilder::for(app(PhoneNumberAccessService::class)->query())
                 ->select([
                     'destination_uuid',
                     'domain_uuid',
@@ -946,6 +801,42 @@ public function importCommit(Request $request)
                 'success' => false,
                 'errors' => ['server' => [__('Failed to select all items')]]
             ], 500); // 500 Internal Server Error for any other errors
+        }
+    }
+
+    private function savePhoneNumber(Destinations $number, array $data, bool $forceRebuild = false): void
+    {
+        $source = $number->domain_uuid;
+        $number->fill($data);
+        if (! $number->isDirty()) {
+            if ($forceRebuild) {
+                $this->queueDialplan($number);
+            }
+            return;
+        }
+        $number->save();
+        if ($number->domain_uuid !== $source) {
+            Dialplans::where('domain_uuid', $source)->whereKey($number->dialplan_uuid)
+                ->update(['domain_uuid' => $number->domain_uuid]);
+            \App\Models\DialplanDetails::where('domain_uuid', $source)->where('dialplan_uuid', $number->dialplan_uuid)
+                ->update(['domain_uuid' => $number->domain_uuid]);
+        }
+        $this->queueDialplan($number);
+    }
+
+    private function queueDialplan(Destinations $number): void
+    {
+        $domainName = Domain::whereKey($number->domain_uuid)->value('domain_name');
+        abort_unless($domainName, 404);
+        \App\Jobs\BuildDialplanForPhoneNumber::dispatch($number->destination_uuid, $domainName)->afterCommit();
+    }
+
+    private function rethrowAccessFailure(\Throwable $e): void
+    {
+        if ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface
+            || $e instanceof \Illuminate\Database\Eloquent\ModelNotFoundException
+            || $e instanceof \Illuminate\Validation\ValidationException) {
+            throw $e;
         }
     }
 

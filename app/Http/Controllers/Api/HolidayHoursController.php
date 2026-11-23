@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\BusinessHour;
-use App\Models\EmergencyCall;
 use Illuminate\Support\Facades\DB;
 use App\Models\BusinessHourHoliday;
 use App\Http\Controllers\Controller;
@@ -11,8 +10,14 @@ use Illuminate\Support\Facades\Process;
 use App\Services\CallRoutingOptionsService;
 use App\Http\Requests\StoreHolidayHourRequest;
 use App\Http\Requests\UpdateHolidayHourRequest;
+use App\Http\Requests\IndexHolidayHourRequest;
+use App\Http\Requests\HolidayHourItemOptionsRequest;
+use App\Http\Requests\BulkDeleteHolidayHourRequest;
 use App\Http\Controllers\BusinessHoursController;
 use App\Http\Resources\BusinessHourHolidayResource;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 class HolidayHoursController extends Controller
 {
@@ -21,13 +26,27 @@ class HolidayHoursController extends Controller
     public function __construct()
     {
         $this->model = new BusinessHourHoliday();
+        $this->middleware(function ($request, $next) {
+            $domain = session('domain_uuid');
+            abort_unless(is_string($domain) && Str::isUuid($domain), 403);
+            $action = match ($request->route()->getActionMethod()) {
+                'index' => 'list_view',
+                'store' => 'create',
+                'update' => 'update',
+                'bulkDelete' => 'delete',
+                'getItemOptions' => $request->filled('item_uuid') ? 'update' : 'create',
+                default => null,
+            };
+            abort_unless($action && userCheckPermission('business_hours_holidays_'.$action), 403);
+
+            return $next($request);
+        });
     }
 
-    public function index()
+    public function index(IndexHolidayHourRequest $request)
     {
-
         $businessHour = BusinessHour::where('domain_uuid', session('domain_uuid'))
-            ->findOrFail(request('uuid'));
+            ->findOrFail($request->validated('uuid'));
 
         $holidays = $businessHour->holidays()
             ->orderBy('created_at', 'desc')
@@ -80,7 +99,7 @@ class HolidayHoursController extends Controller
             ], 201);
         } catch (\Throwable $e) {
             DB::rollBack();
-            if ($e instanceof \Illuminate\Validation\ValidationException) {
+            if ($e instanceof ValidationException) {
                 throw $e;
             }
 
@@ -112,7 +131,6 @@ class HolidayHoursController extends Controller
             DB::beginTransaction();
 
             $holiday_hour->update([
-                'business_hour_uuid' => $data['business_hour_uuid'],
                 'holiday_type'       => $data['holiday_type'],
                 'description'        => $data['description'] ?? null,
                 'start_date'         => $data['start_date']   ?? null,
@@ -136,7 +154,7 @@ class HolidayHoursController extends Controller
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
-            if ($e instanceof \Illuminate\Validation\ValidationException) {
+            if ($e instanceof ValidationException) {
                 throw $e;
             }
             logger('Holiday update error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
@@ -147,19 +165,19 @@ class HolidayHoursController extends Controller
         }
     }
 
-    public function getItemOptions()
+    public function getItemOptions(HolidayHourItemOptionsRequest $request)
     {
-        try {
-            $item = null;
-            if (request()->has('item_uuid')) {
-                $item = $this->model::where('uuid', request('item_uuid'))
-                    ->first();
+        $item = $this->model;
+        if ($request->filled('item_uuid')) {
+            $item = BusinessHourHoliday::findOrFail($request->validated('item_uuid'));
+            abort_unless($item->businessHour()->value('domain_uuid') === session('domain_uuid'), 404);
+        }
 
+        try {
+            if ($item->exists) {
                 // Define the update route
                 $updateRoute = route('holiday-hours.update', $item);
             } else {
-                // Create a new model if item_uuid is not provided
-                $item = $this->model;
                 $storeRoute  = route('holiday-hours.store');
             }
 
@@ -189,22 +207,23 @@ class HolidayHoursController extends Controller
         }
     }
 
-    public function bulkDelete()
+    public function bulkDelete(BulkDeleteHolidayHourRequest $request)
     {
+        $uuids = $request->validated('items');
 
         try {
             DB::beginTransaction();
 
-            // 1) grab the first (and only) business_hour_uuid
-            $bhUuid = BusinessHourHoliday::whereIn('uuid', request('items'))
-                ->value('business_hour_uuid');
+            $selection = BusinessHourHoliday::whereHas('businessHour', fn ($query) => $query->where('domain_uuid', session('domain_uuid')))
+                ->whereKey($uuids);
+            $holidays = (clone $selection)->with('businessHour')->get();
+            abort_unless($holidays->count() === count($uuids), 404);
 
-            // Delete all holidays whose 'uuid' is in the provided array
-            BusinessHourHoliday::whereIn('uuid', request('items'))->delete();
+            // Bulk deletion skips observers; rebuild each authorized parent once below.
+            $selection->delete();
 
-            $bh = BusinessHour::find($bhUuid);
-            if ($bh) {
-                app(BusinessHoursController::class)->generateDialPlanXML($bh);
+            foreach ($holidays->pluck('businessHour')->unique('uuid')->sortBy('uuid') as $parent) {
+                app(BusinessHoursController::class)->generateDialPlanXML($parent);
             }
 
             DB::commit();
@@ -214,6 +233,9 @@ class HolidayHoursController extends Controller
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
+            if ($e instanceof ValidationException || $e instanceof HttpExceptionInterface) {
+                throw $e;
+            }
 
             logger('BusinessHourHoliday bulkDelete error: ' . $e->getMessage() .
                 " at " . $e->getFile() . ":" . $e->getLine());

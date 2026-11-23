@@ -302,7 +302,7 @@
         </Vueform>
 
         <UpdateHolidayHourModal :show="showUpdateHolidayModal" :options="holidayItemOptions"
-            :business_hour_uuid="options.item.uuid" @close="showUpdateHolidayModal = false"
+            @close="showUpdateHolidayModal = false"
             @error="emitErrorToParentFromChild" @success="emitSuccessToParentFromChild" @refresh-data="getHolidays" />
 
         <CreateHolidayHourModal :show="showAddHolidayModal" :options="holidayItemOptions"

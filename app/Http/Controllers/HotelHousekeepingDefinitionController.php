@@ -3,40 +3,18 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Support\Str;
-use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
+use App\Http\Requests\StoreHousekeepingCodesRequest;
+use App\Services\HotelPortalAccess;
 use Illuminate\Support\Facades\DB;
 use Spatie\QueryBuilder\QueryBuilder;
 use App\Models\HotelHousekeepingDefinition;
 
 class HotelHousekeepingDefinitionController extends Controller
 {
-    public function store(Request $request)
+    public function store(StoreHousekeepingCodesRequest $request)
     {
-        // logger($request->all());
         $domain = (string) session('domain_uuid');
-
-        // Payload must be present; can be an empty array to "clear all"
-        $validated = $request->validate([
-            'housekeeping_options' => ['present', 'array'],
-            'housekeeping_options.*.code'   => ['required', 'integer', 'between:0,99'],
-            'housekeeping_options.*.label'  => ['required', 'string', 'max:64'],
-            'housekeeping_options.*.enabled' => ['sometimes', 'boolean'],
-        ], \App\Support\Localization\ValidationMessages::common(), [
-            'housekeeping_options' => __('Housekeeping Codes'),
-            'housekeeping_options.*.code' => __('Status code'),
-            'housekeeping_options.*.label' => __('Label'),
-            'housekeeping_options.*.enabled' => __('Enabled'),
-        ]);
-
-        // Block duplicate codes within the same payload
-        $codes = array_map(fn($o) => (int)$o['code'], $validated['housekeeping_options']);
-        $dupCodes = array_values(array_unique(array_diff_assoc($codes, array_unique($codes))));
-        if (!empty($dupCodes)) {
-            return response()->json([
-                'messages' => ['error' => [__('Duplicate housekeeping codes in payload: :codes', ['codes' => implode(', ', $dupCodes)])]],
-            ], 422);
-        }
+        $validated = $request->validated();
 
         try {
             DB::beginTransaction();
@@ -96,6 +74,7 @@ class HotelHousekeepingDefinitionController extends Controller
 
     public function getItemOptions()
     {
+        abort_unless(HotelPortalAccess::allows('hotel_housekeeping_manage'), 403);
         try {
             $routes = [];
 
@@ -140,6 +119,7 @@ class HotelHousekeepingDefinitionController extends Controller
 
     public function defaultCodes()
     {
+        abort_unless(HotelPortalAccess::allows('hotel_housekeeping_manage'), 403);
         try {
             $defaultHousekeepingOptions = QueryBuilder::for(HotelHousekeepingDefinition::query())
             ->enabled()->globalOnly()

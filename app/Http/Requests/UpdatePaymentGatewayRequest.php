@@ -13,8 +13,7 @@ class UpdatePaymentGatewayRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        // Adjust authorization logic as needed
-        return Auth::check();
+        return Auth::check() && userCheckPermission('payment_gateways_view');
     }
 
     /**

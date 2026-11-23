@@ -20,7 +20,18 @@ class UpdateDeviceRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return Auth::check();
+        if ($this->routeIs('devices.assign')) {
+            return Auth::check() && userCheckPermission('extension_device_assign');
+        }
+
+        if (! Auth::check() || ! userCheckPermission('device_edit')) {
+            return false;
+        }
+
+        $device = $this->route('device');
+        abort_unless(app(\App\Services\DeviceAccessService::class)->canAccessDomain($device->domain_uuid), 404);
+
+        return true;
     }
 
     public function rules(): array
@@ -53,8 +64,7 @@ class UpdateDeviceRequest extends FormRequest
                 'nullable',
                 Rule::when(
                     fn ($input) => ($input['device_key_template_uuid'] ?? null) !== 'NULL',
-                    Rule::exists('device_key_templates', 'device_key_template_uuid')
-                        ->where('domain_uuid', session('domain_uuid')),
+                    Rule::exists('device_key_templates', 'device_key_template_uuid'),
                 ),
             ],
 
@@ -91,7 +101,7 @@ class UpdateDeviceRequest extends FormRequest
             'device_lines.*.register_expires' => ['nullable'],
             'device_lines.*.shared_line' => ['nullable'],
             'device_lines.*.domain_uuid' => ['nullable'],
-            'device_lines.*.device_line_uuid' => ['nullable'],
+            'device_lines.*.device_line_uuid' => ['nullable', 'uuid'],
             'device_lines.*.user_id' => ['nullable'],
             'device_lines.*.auth_id' => ['nullable'],
             'device_lines.*.password' => ['nullable'],
@@ -149,7 +159,11 @@ class UpdateDeviceRequest extends FormRequest
                 'boolean'
             ],
             'domain_uuid' => [
+                'bail',
+                'sometimes',
                 'required',
+                'uuid',
+                Rule::exists('v_domains', 'domain_uuid'),
             ],
             'device_description' => [
                 'nullable',
@@ -265,10 +279,7 @@ class UpdateDeviceRequest extends FormRequest
             'device_address_modified' => $macAddress,
         ]);
 
-        // Default domain
-        if (!$this->has('domain_uuid')) {
-            $this->merge(['domain_uuid' => session('domain_uuid')]);
-        }
+        // An omitted account preserves the stored owner, including edits from the global list.
 
         if (!$this->has('device_enabled')) {
             $this->merge(['device_enabled' => 'true']);
@@ -288,7 +299,7 @@ class UpdateDeviceRequest extends FormRequest
                 'device_template_uuid' => $incoming,
                 'device_template'      => null,   // clear legacy path
             ]);
-        } elseif (!$this->has('device_template_uuid')) {
+        } elseif ($this->has('device_template') && !$this->has('device_template_uuid')) {
             $this->merge(['device_template_uuid' => null]);
         }
 

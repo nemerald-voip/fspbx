@@ -19,7 +19,7 @@ class StoreBusinessHoursRequest extends FormRequest
      */
     public function authorize()
     {
-        return Auth::check();
+        return Auth::check() && userCheckPermission('business_hours_create');
     }
 
     public function rules(): array

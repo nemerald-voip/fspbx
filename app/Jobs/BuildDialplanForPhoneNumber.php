@@ -84,8 +84,10 @@ class BuildDialplanForPhoneNumber implements ShouldQueue
         Redis::throttle('dialplan')->allow(2)->every(1)->then(function () use ($builder) {
 
             $dest = Destinations::where('destination_uuid', $this->destinationUuid)->first();
-            if ($dest) {
-                $builder->buildDialplanForPhoneNumber($dest, $this->domainName);
+            $domainName = $dest ? \App\Models\Domain::whereKey($dest->domain_uuid)->value('domain_name') : null;
+            if ($dest && $domainName) {
+                // Ownership may change between enqueue and execution; never use the operator's session.
+                $builder->buildDialplanForPhoneNumber($dest, $domainName);
             }
 
 

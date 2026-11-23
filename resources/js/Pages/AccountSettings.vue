@@ -75,7 +75,7 @@
             </section>
 
             <!-- LOCATIONS -->
-            <section v-show="selectedMenuOption === 'locations'">
+            <section v-if="permissions?.location_view" v-show="selectedMenuOption === 'locations'">
                 <Vueform>
                     <StaticElement name="locations_title" tag="h4" :content="$t('Locations')"
                         :description="$t('Locations help you group your users and resources within your organization. When you assign users to specific locations, they will only be able to see the resources that belong to those locations.')" />
@@ -111,7 +111,7 @@
             </section>
 
             <!-- AUTO PROVISIONING -->
-            <section v-show="selectedMenuOption === 'auto_provisioning'">
+            <section v-if="permissions?.provisioning_templates_view" v-show="selectedMenuOption === 'auto_provisioning'">
                 <Vueform>
                     <StaticElement name="locations_title" tag="h4" :content="$t('Auto Provisioning')"
                         :description="$t('Manage your auto provisioning templates.')" />
@@ -136,35 +136,35 @@
             </section>
 
             <!-- ROOM MANAGEMENT -->
-            <section v-show="selectedMenuOption === 'room_management'">
+            <section v-if="canOpenRoomManagement" v-show="selectedMenuOption === 'room_management'">
                 <Vueform ref="pmsProviderForm$" :endpoint="submitPmsProviderForm" @success="handlePmsProviderSuccess"
                     @error="handleError" @response="handleResponse" :display-errors="false" @mounted="(form) => form.disableValidation()" @submit="clearServerFormErrors">
                     <StaticElement name="pms_provider_title" tag="h4" :content="$t('Hotel PMS Provider')"
                         :description="$t('Select which PMS integration to use.')" />
                     <SelectElement name="pms_provider" :label="$t('Provider')" :items="pmsProviderOptions" :native="false"
+                        :disabled="!permissions.hotel_pms_provider_manage"
                         :search="false" :floating="false" :columns="{
                             sm: {
                                 container: 6,
                             },
                         }" />
-                    <ButtonElement name="pms_provider_submit" :button-label="$t('Save PMS Provider')" :submits="true"
+                    <ButtonElement v-if="permissions.hotel_pms_provider_manage" name="pms_provider_submit" :button-label="$t('Save PMS Provider')" :submits="true"
                         align="right" />
-                    <StaticElement name="room_management_title" tag="h4" :content="$t('Room Management')" description="" />
+                    <StaticElement v-if="permissions.hotel_rooms_list_view || permissions.hotel_rooms_create" name="room_management_title" tag="h4" :content="$t('Room Management')" description="" />
                 </Vueform>
 
-                <RoomManagement :trigger="roomManagementTrigger" :routes="routes" :permissions="permissions"
-                    :domain_uuid="data.domain_uuid" />
+                <RoomManagement v-if="permissions.hotel_rooms_list_view || permissions.hotel_rooms_create"
+                    :trigger="roomManagementTrigger" :routes="routes" :permissions="permissions" />
             </section>
 
             <!-- ROOM STATUS -->
-            <section v-show="selectedMenuOption === 'room_status'">
+            <section v-if="canOpenRoomStatus" v-show="selectedMenuOption === 'room_status'">
                 <Vueform>
                     <StaticElement name="room_management_title" tag="h4" :content="$t('Room Status')" description="" />
                     <GroupElement name="container_1" />
                 </Vueform>
 
-                <RoomStatus :trigger="roomStatusTrigger" :routes="routes" :permissions="permissions"
-                    :domain_uuid="data.domain_uuid" />
+                <RoomStatus :trigger="roomStatusTrigger" :routes="routes" :permissions="permissions" />
             </section>
 
             <!-- EMERGENCY CALLS -->
@@ -344,14 +344,21 @@ const handleUpdateSelectedMenuOption = (key) => {
     if (key === 'call_webhooks') callWebhookTrigger.value = !callWebhookTrigger.value
 }
 
+const canOpenRoomManagement = props.permissions.hotel_rooms_list_view || props.permissions.hotel_rooms_create || props.permissions.hotel_pms_provider_manage
+const canOpenRoomStatus = props.permissions.hotel_room_status_list_view || props.permissions.hotel_housekeeping_manage
+
 const navigation = [
     { key: 'general', name: trans('General'), icon: Cog6ToothIcon },
     { key: 'messaging', name: trans('Messaging'), icon: ChatBubbleLeftRightIcon },
-    { key: 'locations', name: trans('Locations'), icon: MapPinIcon },
+    ...(props.permissions?.location_view
+        ? [{ key: 'locations', name: trans('Locations'), icon: MapPinIcon }]
+        : []),
     ...(props.ldapDirectorySettings && props.permissions?.ldap_directory_view
         ? [{ key: 'active_directory', name: trans('Directory Services'), icon: ServerStackIcon }]
         : []),
-    { key: 'auto_provisioning', name: trans('Auto Provisioning'), icon: WrenchScrewdriverIcon },
+    ...(props.permissions?.provisioning_templates_view
+        ? [{ key: 'auto_provisioning', name: trans('Auto Provisioning'), icon: WrenchScrewdriverIcon }]
+        : []),
     ...(props.permissions?.call_webhook_view
         ? [{ key: 'call_webhooks', name: trans('Call Webhooks'), icon: ArrowPathRoundedSquareIcon }]
         : []),
@@ -370,8 +377,8 @@ const navigation = [
         name: trans('Hotel Management'),
         icon: BuildingOffice2Icon,
         children: [
-            { key: 'room_management', name: trans('Room Management'), icon: KeyIcon },
-            { key: 'room_status', name: trans('Room Status'), icon: ClipboardDocumentCheckIcon },
+            ...(canOpenRoomManagement ? [{ key: 'room_management', name: trans('Room Management'), icon: KeyIcon }] : []),
+            ...(canOpenRoomStatus ? [{ key: 'room_status', name: trans('Room Status'), icon: ClipboardDocumentCheckIcon }] : []),
             { key: 'emergency_calls', name: trans('Emergency Calls'), icon: BellAlertIcon },
 
         ],

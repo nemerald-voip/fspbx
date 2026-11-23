@@ -31,13 +31,13 @@ class StoreLdapDirectoryRequest extends FormRequest
             'bind_username' => ['required', 'string', 'max:255'],
             'bind_password' => [...$passwordRule, 'string', 'max:4096'],
             'ad_domain' => ['required', 'string', 'max:255'],
-            'base_dn' => ['required', 'string', 'max:2000'],
+            'base_dn' => ['nullable', 'string', 'max:2000'],
             'create_missing_extensions' => ['required', Rule::in(['none', 'default'])],
             'manage_groups_locally' => ['required', 'boolean'],
             'common_name_attribute' => ['required', 'string', 'max:128'],
             'description_attribute' => ['required', 'string', 'max:128'],
             'unique_identifier_attribute' => ['required', 'string', 'max:128'],
-            'user_dn' => ['nullable', 'string', 'max:2000'],
+            'user_dn' => ['required_without:base_dn', 'nullable', 'string', 'max:2000'],
             'user_object_class' => ['required', 'string', 'max:128'],
             'user_object_filter' => ['required', 'string', 'max:4000'],
             'user_name_attribute' => ['required', 'string', 'max:128'],
@@ -54,10 +54,18 @@ class StoreLdapDirectoryRequest extends FormRequest
             'user_cell_phone_attribute' => ['nullable', 'string', 'max:128'],
             'user_fax_attribute' => ['nullable', 'string', 'max:128'],
             'user_extension_attribute' => ['nullable', 'string', 'max:128'],
-            'group_dn' => ['nullable', 'string', 'max:2000'],
+            'group_dn' => ['required_without:base_dn', 'nullable', 'string', 'max:2000'],
             'group_object_class' => ['required', 'string', 'max:128'],
             'group_object_filter' => ['required', 'string', 'max:4000'],
             'group_members_attribute' => ['required', 'string', 'max:128'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'user_dn.required_without' => __('Enter the full User DN when Base DN is blank.'),
+            'group_dn.required_without' => __('Enter the full Group DN when Base DN is blank.'),
         ];
     }
 
@@ -66,6 +74,8 @@ class StoreLdapDirectoryRequest extends FormRequest
         $this->merge([
             'enabled' => filter_var($this->input('enabled'), FILTER_VALIDATE_BOOLEAN),
             'manage_groups_locally' => filter_var($this->input('manage_groups_locally'), FILTER_VALIDATE_BOOLEAN),
+            // Preserve the existing non-nullable column without a schema change.
+            'base_dn' => $this->input('base_dn') ?? '',
             // The database column predates optional email imports and is not
             // nullable. An empty string intentionally disables the mapping.
             'user_email_attribute' => trim((string) $this->input('user_email_attribute', '')),

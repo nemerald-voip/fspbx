@@ -7,16 +7,62 @@ sidebar_position: 7
 
 # Grandstream
 
-Use this guide to configure a Grandstream **GXP or GRP desk phone** directly from its web interface. The phone downloads its configuration from FS PBX using the server path and HTTP credentials you enter. Field names vary by model and firmware.
+Use this guide to configure a Grandstream **GXP or GRP desk phone**, or an **HT841 / HT881 gateway**, directly from its web interface. The device downloads its configuration from FS PBX using the server path and HTTP credentials you enter. Field names vary by model and firmware.
 
 ## Prepare FS PBX
 
 1. Select the intended account and create or edit the device under **Devices**.
 2. Enter the phone's **MAC address** and select the **Device Template** for its model or supported family.
 3. Under **Lines**, assign an enabled extension and review its SIP server, proxy, transport, and port.
-4. Assign a **Key Template** or configure individual function keys, then save.
+4. For desk phones, assign a **Key Template** or configure individual function keys. For HT841 / HT881 gateways, follow the port assignments below. Save the device.
 
 Get the provisioning HTTP username and password from `http_auth_username` and `http_auth_password` in the `provision` category under **Default Settings**, with account overrides in **Domain Settings**. These are separate from the phone administrator login and the extension's SIP credentials. If source-IP restrictions are enabled, allow the address FS PBX sees from the phone's network.
+
+## HT841 / HT881 gateways
+
+Select the Grandstream **HT8x1** Device Template. Connect an analog phone or fax machine to **FXS** and telephone lines to **FXO**.
+
+For a complete incoming and outgoing call setup, including a gateway behind a remote router, follow [Grandstream HT841 / HT881 FXO calling](/docs/phone-provisioning/grandstream-ht8x1-fxo/). The walkthrough covers registration, incoming-call forwarding, and dialing outside numbers from local extensions.
+
+| Device line in FS PBX | HT841 port | HT881 port |
+| --- | --- | --- |
+| 1 | FXS | FXS |
+| 2–5 | FXO 1–4 | FXO 1–4 |
+| 6–9 | Not available | FXO 5–8 |
+
+Assign an extension to each port you use. You can leave Line 1 unused when only connecting telephone lines. Keep the line numbers matched to the physical ports; removing a line disables that port and clears its account credentials on the next provisioning.
+
+The gateway identifies its model when it contacts FS PBX. To select the model before its first contact, add `grandstream_ht8x1_model` with value `HT841` or `HT881` under the device's **Advanced** tab. Use **Name** for the setting name, **Value** for its value, and enable the row.
+
+Each FXO port has its own credentials. FXO ports can share up to **two combinations of SIP server, proxy, transport, and registration interval**. Use matching values for ports sharing a connection. The FXS port has its own separate connection.
+
+### Incoming telephone-line calls
+
+For each FXO port, add an enabled setting under **Advanced** named `grandstream_ht8x1_fxo_N_destination`, replacing `N` with the physical FXO port number. Set its value to the number that should receive incoming calls in FS PBX, such as an IVR or ring group.
+
+For example, `grandstream_ht8x1_fxo_1_destination` with value `7000` sends calls arriving on **FXO 1** to **7000**. Choose a destination that exists in the gateway's account. Avoid using the extension assigned to that same FXO port, which can route the call back to the telephone line.
+
+Set a destination for every telephone line that needs automatic incoming-call routing. A blank or removed destination clears that forwarding setting. Incoming telephone-line calls do not ring the attached FXS phone by default.
+
+### Outgoing calls and line settings
+
+The default is **two-stage dialing**: call the extension assigned to an FXO port, wait for its dial tone, then dial the outside number. For direct, one-stage dialing, set `grandstream_ht8x1_fxo_stage_method` to `1` and follow the [Bridge and outbound route setup](/docs/phone-provisioning/grandstream-ht8x1-fxo/#outgoing-calls-from-local-extensions). Selecting the template does not create outbound routes.
+
+These optional settings go under the device's **Advanced** tab and apply to both FXO connections:
+
+| Name | Values / default |
+| --- | --- |
+| `grandstream_ht8x1_fxo_stage_method` | `1` = direct dialing; `2` = second dial tone (default) |
+| `grandstream_ht8x1_fxo_wait_for_dial_tone` | `1` = wait (default); `0` = do not wait |
+| `grandstream_ht8x1_fxo_number_of_rings` | Rings before answering; default `4` |
+| `grandstream_ht8x1_fxo_current_disconnect` | `1` = detect loss of line current (default); `0` = disable |
+| `grandstream_ht8x1_fxo_current_disconnect_threshold` | Disconnect duration in milliseconds; default `100` |
+| `grandstream_ht8x1_fxo_disconnect_tone_detection` | `1` = detect disconnect tone; `0` = disable (default) |
+| `grandstream_ht8x1_fxo_disconnect_tone` | Your telephone provider's tone definition in Grandstream's `fxoch` format |
+| `grandstream_ht8x1_fxo_polarity_reversal` | `1` = detect polarity reversal; `0` = disable (default) |
+| `grandstream_ht8x1_pstn_ring_thru_fxs` | `1` = also ring the FXS phone; `0` = disable (default) |
+
+Use your telephone provider's requirements for disconnect detection. Save and provision the gateway, then test incoming calls, outgoing calls, and hangup detection on each connected telephone line. See Grandstream's [HT841 / HT881 manual](https://documentation.grandstream.com/knowledge-base/ht841-ht881-user-manual/) for its analog-line options.
 
 ## Enter the configuration server
 

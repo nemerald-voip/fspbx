@@ -559,6 +559,7 @@ class UserController extends Controller
         $permissions['user_group_view'] = userCheckPermission('user_group_view');
         $permissions['user_group_edit'] = userCheckPermission('user_group_edit');
         $permissions['user_status'] = userCheckPermission('user_status');
+        $permissions['location_view'] = userCheckPermission('location_view');
         $permissions['user_view_managed_accounts'] = userCheckPermission('user_view_managed_accounts');
         $permissions['user_update_managed_accounts'] = userCheckPermission('user_update_managed_accounts');
         $permissions['user_view_managed_account_groups'] = userCheckPermission('user_view_managed_account_groups');
