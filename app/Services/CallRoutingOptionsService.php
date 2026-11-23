@@ -387,7 +387,7 @@ class CallRoutingOptionsService
                         ->orWhereNull('domain_uuid');
                 })
                 ->where('dialplan_context', '!=', 'public')
-                ->select('dialplan_uuid', 'dialplan_name', 'dialplan_number', 'dialplan_xml', 'dialplan_order')
+                ->select('dialplan_uuid', 'dialplan_name', 'dialplan_number', 'dialplan_xml', 'dialplan_order', 'dialplan_destination', 'dialplan_context')
                 ->first();
 
             // If a Dialplan match is found, reverse-engineer it based on the XML and determine the type
@@ -453,7 +453,7 @@ class CallRoutingOptionsService
                 $query->where('domain_uuid', $domainUuid)
                     ->orWhereNull('domain_uuid');
             })
-            ->select('dialplan_uuid', 'dialplan_name', 'dialplan_number', 'dialplan_xml', 'dialplan_order')
+            ->select('dialplan_uuid', 'dialplan_name', 'dialplan_number', 'dialplan_xml', 'dialplan_order', 'dialplan_destination', 'dialplan_context')
             ->first();
 
         // If a Dialplan match is found, reverse-engineer it based on the XML and determine the type
@@ -633,6 +633,15 @@ class CallRoutingOptionsService
                     'name' => $dialplan->dialplan_name,
                 ];
             }
+        }
+
+        if ($dialplan->dialplan_destination === 'true' && $dialplan->dialplan_context !== 'public') {
+            return [
+                'type' => 'custom_dialplans',
+                'extension' => $extension,
+                'option' => $dialplan->dialplan_uuid,
+                'name' => $dialplan->dialplan_name,
+            ];
         }
 
         // Check if dialplan_order is 300 and assume it's time conditions

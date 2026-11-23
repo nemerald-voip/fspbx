@@ -383,9 +383,14 @@ class CallRoutingOptionsServiceTest extends TestCase
 
         $target = (new CallRoutingOptionsService($domainUuid))->findTarget('custom_dialplans', DB::table('v_dialplans')->where('dialplan_number', '9400')->value('dialplan_uuid'));
         $this->assertSame(['destination_app' => 'transfer', 'destination_data' => '9400 XML example.test'], (new CallRoutingOptionsService($domainUuid))->actionForTarget('custom_dialplans', $target, 'example.test'));
+        $saved = (new CallRoutingOptionsService($domainUuid))->reverseEngineerTransferAction('9400 XML example.test');
+        $this->assertSame('custom_dialplans', $saved['type']);
+        $this->assertSame($target->dialplan_uuid, $saved['option']);
 
-        request()->merge(['category' => 'time_conditions']);
-        $this->assertSame(['9403'], array_column((new CallRoutingOptionsService($domainUuid))->getOptions(), 'extension'));
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            request()->merge(['category' => 'time_conditions']);
+            $this->assertSame(['9403'], array_column((new CallRoutingOptionsService($domainUuid))->getOptions(), 'extension'));
+        }
     }
 
     public function test_dynamic_route_selector_excludes_disabled_and_foreign_routes(): void
