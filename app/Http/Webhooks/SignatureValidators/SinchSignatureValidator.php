@@ -1,30 +1,41 @@
 <?php
+
 namespace App\Http\Webhooks\SignatureValidators;
 
 use Illuminate\Http\Request;
-use Spatie\WebhookClient\WebhookConfig;
+use Illuminate\Support\Facades\Log;
 use Spatie\WebhookClient\SignatureValidator\SignatureValidator;
+use Spatie\WebhookClient\WebhookConfig;
 
 class SinchSignatureValidator implements SignatureValidator
 {
-    public function isValid(Request $request, WebhookConfig $config) : bool {
-        
-        //If there is a way to validate that this request came from Sinch then let's implement the logic here
-        // Otherwise it's defaulted to athenticate all post requests
-        $apiKey = config('sinch.inbound_api_key');  // Retrieve the API key from the config file
-        $messageId = $request->header('messageID');  // Assuming the message ID is in the header
-        $verificationToken = $request->header('verificationToken');  // Assuming the token is in the header
-        $computedHash = hash('sha256', $apiKey . $messageId);  // Compute the SHA256 hash
+    public function isValid(Request $request, WebhookConfig $config): bool
+    {
+        $apiKey = config('sinch.inbound_api_key');
+        $messageId = $request->header('messageID');
+        $verificationToken = $request->header('verificationToken');
+        $computedHash = hash('sha256', $apiKey . $messageId);
+        $valid = $computedHash === $verificationToken;
 
-        // logger('messageId: '. $messageId);
-        // logger('apiKey: '. $apiKey);
-        // logger('verificationToken: '. $verificationToken);
-        // logger('computedHash: '. $computedHash);
+        if (! $valid) {
+            $keyPresent = is_string($apiKey) && $apiKey !== '';
+            $messageIdPresent = is_string($messageId) && $messageId !== '';
+            $tokenPresent = is_string($verificationToken) && $verificationToken !== '';
 
-        if ($computedHash != $verificationToken) logger($request->all());
+            // Log only diagnostic metadata, never credentials, header values, or SMS content.
+            Log::warning('Sinch webhook authentication failed', [
+                'reason' => ! $keyPresent ? 'missing_signing_key'
+                    : ((! $messageIdPresent || ! $tokenPresent) ? 'missing_headers' : 'signature_mismatch'),
+                'signing_key_present' => $keyPresent,
+                'message_id_present' => $messageIdPresent,
+                'verification_token_present' => $tokenPresent,
+                'verification_token_length' => strlen($verificationToken ?? ''),
+                'verification_token_is_sha256_hex' => preg_match('/\A[0-9a-f]{64}\z/i', $verificationToken ?? '') === 1,
+                'voxutel_signature_present' => $request->hasHeader('X-Voxutel-Signature'),
+                'voxutel_timestamp_present' => $request->hasHeader('X-Voxutel-Timestamp'),
+            ]);
+        }
 
-        return $computedHash === $verificationToken;
-
-        // return true;
+        return $valid;
     }
 }

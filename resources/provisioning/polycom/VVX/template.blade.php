@@ -1,4 +1,4 @@
-{{-- version: 1.0.9 --}}
+{{-- version: 1.0.10 --}}
 
 @switch($flavor)
 
@@ -227,7 +227,9 @@
         @if (isset($settings['provision_base_url']))
     	    device.prov.serverName="{{ $settings['provision_base_url'] }}"
         @endif
+        device.prov.user.set="1"
         device.prov.user="{{ $settings['http_auth_username'] ?? '' }}"
+        device.prov.password.set="1"
         device.prov.password="{{ $settings['http_auth_password'] ?? '' }}"
         device.prov.redunAttemptLimit="10"
         device.prov.redunInterAttemptDelay="150"
