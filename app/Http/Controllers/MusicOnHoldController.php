@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateMusicOnHoldRequest;
 use App\Http\Requests\UploadMusicOnHoldFileRequest;
 use App\Models\MusicOnHold;
 use App\Models\Recordings;
+use App\Models\DefaultSettings;
 use App\Services\MusicOnHoldService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -421,17 +422,22 @@ class MusicOnHoldController extends Controller
     {
         $groups = [];
 
-        $recordings = Recordings::query()
+        $recordingPath = DefaultSettings::where('default_setting_category', 'switch')
+            ->where('default_setting_subcategory', 'recordings')
+            ->where('default_setting_enabled', true)
+            ->value('default_setting_value');
+        
+        $recordings = Recordings::with(['domain:domain_uuid,domain_name'])
             ->where('domain_uuid', session('domain_uuid'))
             ->orderBy('recording_name')
-            ->get(['recording_name', 'recording_filename'])
+            ->get()
             ->map(fn (Recordings $recording) => [
                 'label' => $recording->recording_name,
-                'value' => $recording->recording_filename,
+                'value' => "{$recordingPath}/{$recording->domain->domain_name}/{$recording->recording_filename}",
             ])
             ->values()
             ->all();
-
+        
         if (! empty($recordings)) {
             $groups[] = ['label' => 'Recordings', 'items' => $recordings];
         }
