@@ -399,7 +399,7 @@ class CallRoutingOptionsServiceTest extends TestCase
 
         $target = $service->findTarget('custom_dialplans', DB::table('v_dialplans')->where('dialplan_number', '9400')->value('dialplan_uuid'));
         $this->assertSame(['destination_app' => 'transfer', 'destination_data' => '9400 XML example.test'], (new CallRoutingOptionsService($domainUuid))->actionForTarget('custom_dialplans', $target, 'example.test'));
-        $saved = (new CallRoutingOptionsService($domainUuid))->reverseEngineerTransferAction('9400 XML example.test');
+        $saved = (new CallRoutingOptionsService($domainUuid))->reverseEngineerDestinationActions(json_encode([['destination_app' => 'transfer', 'destination_data' => '9400 XML example.test']]))[0];
         $this->assertSame('custom_dialplans', $saved['type']);
         $this->assertSame($target->dialplan_uuid, $saved['option']);
 
