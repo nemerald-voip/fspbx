@@ -4,24 +4,132 @@ namespace Tests\Unit;
 
 use App\Services\EmailTemplateSourceService;
 use App\Services\SafeEmailTemplateRenderer;
+use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Support\Facades\File;
 use Illuminate\View\Compilers\Compiler;
+use Illuminate\View\ViewException;
 use ReflectionProperty;
 use RuntimeException;
 use Tests\TestCase;
 
 class SafeEmailTemplateRendererTest extends TestCase
 {
+    private string $compiledPath;
+
     protected function setUp(): void
     {
         parent::setUp();
 
-        $compiledPath = '/tmp/fspbx-safe-email-template-tests';
-        File::ensureDirectoryExists($compiledPath);
-        config(['view.compiled' => $compiledPath]);
+        $this->compiledPath = sys_get_temp_dir().'/fspbx-safe-email-template-tests-'.bin2hex(random_bytes(8));
+        File::ensureDirectoryExists($this->compiledPath);
+        config(['view.compiled' => $this->compiledPath]);
 
         $cachePath = new ReflectionProperty(Compiler::class, 'cachePath');
-        $cachePath->setValue(app('blade.compiler'), $compiledPath);
+        $cachePath->setValue(app('blade.compiler'), $this->compiledPath);
+    }
+
+    protected function tearDown(): void
+    {
+        try {
+            if (isset($this->compiledPath)) {
+                File::deleteDirectory($this->compiledPath);
+            }
+        } finally {
+            parent::tearDown();
+        }
+    }
+
+    public function test_generated_template_source_is_retained_between_renders(): void
+    {
+        $renderer = app(SafeEmailTemplateRenderer::class);
+        $template = 'Voicemail from {{ $name }}';
+
+        $this->assertSame('Voicemail from First', $renderer->renderSubject($template, ['name' => 'First']));
+        $this->assertCount(1, File::glob($this->compiledPath.'/*.blade.php'));
+        $this->assertSame('Voicemail from Second', $renderer->renderSubject($template, ['name' => 'Second']));
+    }
+
+    /** @dataProvider cachedViewRenderers */
+    public function test_rendering_recovers_after_an_external_view_cache_clear(string $method, string $template): void
+    {
+        $renderer = app(SafeEmailTemplateRenderer::class);
+        $this->assertStringContainsString('Hello First', $renderer->{$method}($template, ['name' => 'First']));
+
+        // A separate view:clear process deletes files without resetting this worker's memory.
+        File::cleanDirectory($this->compiledPath);
+        clearstatcache();
+
+        $rendered = $renderer->{$method}($template, ['name' => 'Second']);
+        $this->assertStringContainsString('Hello Second', $rendered);
+        $this->assertStringNotContainsString('Hello First', $rendered);
+        $this->assertStringContainsString('Hello Third', $renderer->{$method}($template, ['name' => 'Third']));
+    }
+
+    public static function cachedViewRenderers(): array
+    {
+        return [
+            'subject' => ['renderSubject', 'Hello {{ $name }}'],
+            'text' => ['renderText', 'Hello {{ $name }}'],
+            'html with layout' => ['renderHtml', '<p>Hello {{ $name }}</p>'],
+        ];
+    }
+
+    public function test_rendering_recovers_when_the_view_finder_also_forgets_the_deleted_source(): void
+    {
+        $renderer = app(SafeEmailTemplateRenderer::class);
+        $template = 'Voicemail from {{ $name }}';
+        $this->assertSame('Voicemail from First', $renderer->renderSubject($template, ['name' => 'First']));
+
+        File::cleanDirectory($this->compiledPath);
+        app('view')->getFinder()->flush();
+        clearstatcache();
+
+        $this->assertSame('Voicemail from Second', $renderer->renderSubject($template, ['name' => 'Second']));
+    }
+
+    /** @dataProvider unrelatedRenderingFailures */
+    public function test_unrelated_rendering_failures_are_not_retried(string $exceptionClass, string $message): void
+    {
+        $attempts = 0;
+        $failure = new $exceptionClass($message);
+        $callback = function () use (&$attempts, $failure) {
+            $attempts++;
+            throw $failure;
+        };
+
+        try {
+            app(SafeEmailTemplateRenderer::class)->renderSubject('{{ $callback() }}', ['callback' => $callback]);
+            $this->fail('Expected the original rendering failure.');
+        } catch (ViewException $exception) {
+            $this->assertSame($failure, $exception->getPrevious());
+            $this->assertSame(1, $attempts);
+        }
+    }
+
+    public static function unrelatedRenderingFailures(): array
+    {
+        return [
+            'template error' => [RuntimeException::class, 'Invalid template data.'],
+            'unrelated missing file' => [FileNotFoundException::class, 'File does not exist at path /tmp/missing-voicemail.wav.'],
+            'permission error' => [\ErrorException::class, 'file_put_contents(): Failed to open stream: Permission denied'],
+        ];
+    }
+
+    public function test_missing_generated_views_are_only_retried_once(): void
+    {
+        $attempts = 0;
+        app('view')->creator('*', function ($view) use (&$attempts) {
+            $attempts++;
+            File::delete($view->getPath());
+        });
+
+        try {
+            app(SafeEmailTemplateRenderer::class)->renderSubject('Hello {{ $name }}', ['name' => 'First']);
+            $this->fail('Expected a persistent missing source to fail.');
+        } catch (FileNotFoundException $exception) {
+            $this->assertStringContainsString($this->compiledPath, $exception->getMessage());
+            $this->assertSame(2, $attempts);
+        }
     }
 
     public function test_all_notification_template_sources_are_safe_and_discoverable(): void

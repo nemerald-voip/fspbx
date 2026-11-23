@@ -2,9 +2,13 @@
 
 namespace App\Services;
 
+use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\HtmlString;
+use Illuminate\View\Component;
+use InvalidArgumentException;
 use RuntimeException;
+use Throwable;
 
 class SafeEmailTemplateRenderer
 {
@@ -78,7 +82,47 @@ class SafeEmailTemplateRenderer
         $data['attributes'] = $variables;
         $data['data'] = $variables;
 
-        return Blade::render($template, $data, true);
+        try {
+            // Keep the source available for recompilation and other workers.
+            return Blade::render($template, $data);
+        } catch (Throwable $exception) {
+            if (! $this->isMissingGeneratedView($exception, $template)) {
+                throw $exception;
+            }
+
+            // An external view:clear removes files but leaves this worker's
+            // remembered paths intact. Forget them so Blade recreates the source.
+            Component::flushCache();
+            app('view')->getFinder()->flush();
+            app('view.engine.resolver')->resolve('blade')->forgetCompiledOrNotExpired();
+
+            // Retry only rendering, once. A persistent failure must reach the job.
+            return Blade::render($template, $data);
+        }
+    }
+
+    private function isMissingGeneratedView(Throwable $exception, string $template): bool
+    {
+        // Laravel names inline Blade sources by their content hash.
+        $name = hash('xxh128', $template);
+        $sourcePath = rtrim((string) config('view.compiled'), '/').'/'.$name.'.blade.php';
+        $compiledPath = app('blade.compiler')->getCompiledPath($sourcePath);
+
+        do {
+            if ($exception instanceof FileNotFoundException && in_array($exception->getMessage(), [
+                "File does not exist at path {$sourcePath}.",
+                "File does not exist at path {$compiledPath}.",
+            ], true)) {
+                return true;
+            }
+
+            if ($exception instanceof InvalidArgumentException
+                && $exception->getMessage() === "View [{$name}] not found.") {
+                return true;
+            }
+        } while ($exception = $exception->getPrevious());
+
+        return false;
     }
 
     private function renderString(

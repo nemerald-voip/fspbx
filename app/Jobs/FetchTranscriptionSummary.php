@@ -16,28 +16,48 @@ class FetchTranscriptionSummary implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $tries = 60;            // up to 60 minutes of polling (1/min)
-    public $backoff = 60;          // 60s between attempts
+    private const FAST_POLL_SECONDS = 10 * 60;
+    private const POLLING_SECONDS = (10 + 120) * 60;
+    private const POLLING_TIMEOUT = 'OpenAI summary did not finish within 2 hours and 10 minutes.';
+
+    public $tries = 0;             // Elapsed time bounds polling; exceptions remain limited below.
+    public $backoff = 60;
     public $timeout = 60;
     public $maxExceptions = 3;
+
+    public ?int $pollingStartedAt = null;
 
     public function __construct(
         public string $uuid,
         public string $responseId
-    ) {}
+    ) {
+        $this->pollingStartedAt = now()->getTimestamp();
+    }
 
     public function handle(): void
     {
+        $row = CallTranscription::find($this->uuid);
+        if (!$row) return;
+
+        // Ignore polls for replaced requests or an already saved summary.
+        if (!$row->summary_external_id || $row->summary_external_id !== $this->responseId || $row->summary_status === 'completed') {
+            return;
+        }
+
+        // Jobs queued before this change do not contain the serialized start time.
+        $this->pollingStartedAt ??= (int) ($this->job?->payload()['pushedAt']
+            ?? $row->summary_requested_at?->getTimestamp()
+            ?? $row->created_at?->getTimestamp()
+            ?? now()->getTimestamp());
+
+        // Allow the last scheduled check at the deadline, but never resume an expired poll.
+        if (now()->getTimestamp() > $this->pollingStartedAt + self::POLLING_SECONDS) {
+            $this->fail(new \RuntimeException(self::POLLING_TIMEOUT));
+            return;
+        }
+
         // Allow only 2 tasks every 1 second
-        Redis::throttle('summaries')->allow(2)->every(1)->then(function () {
-
-            $row = CallTranscription::find($this->uuid);
-            if (!$row) return;
-
-            // guard against mismatched/cleared ids
-            if (!$row->summary_external_id || $row->summary_external_id !== $this->responseId) {
-                return;
-            }
+        Redis::throttle('summaries')->allow(2)->every(1)->then(function () use ($row) {
 
             $openAiService = app(\App\Services\OpenAIService::class);
             $retrieved  = $openAiService->retrieveResponseById($this->responseId);
@@ -46,8 +66,7 @@ class FetchTranscriptionSummary implements ShouldQueue
             $outputText = (string) ($retrieved['text'] ?? ''); // normalized
 
             if (in_array($status, ['queued', 'in_progress'])) {
-                // not ready yet; try again in ~1 min
-                $this->release(60);
+                $this->releaseForNextPoll();
                 return;
             }
 
@@ -100,16 +119,30 @@ class FetchTranscriptionSummary implements ShouldQueue
                 return;
             }
 
-            // Unknown state => retry a bit later
-            $this->release(60);
+            // Unknown states use the same bounded polling schedule.
+            $this->releaseForNextPoll();
         }, function () {
-            return $this->release(60); // If locked, retry in 60 seconds
+            $this->releaseForNextPoll();
         });
+    }
+
+    private function releaseForNextPoll(): void
+    {
+        $elapsed = now()->getTimestamp() - $this->pollingStartedAt;
+        $remaining = self::POLLING_SECONDS - $elapsed;
+
+        if ($remaining <= 0) {
+            $this->fail(new \RuntimeException(self::POLLING_TIMEOUT));
+            return;
+        }
+
+        $interval = $elapsed < self::FAST_POLL_SECONDS ? 60 : 300;
+        $this->release(min($interval, $remaining));
     }
 
     /**
      * Called by Laravel when the job has failed permanently
-     * (throws and exceeds $tries or hits $maxExceptions).
+     * (polling expires or exceptions reach $maxExceptions).
      */
     public function failed(\Throwable $e): void
     {
@@ -118,6 +151,11 @@ class FetchTranscriptionSummary implements ShouldQueue
             if (!$row) {
                 // Nothing to update; still log for visibility
                 report($e);
+                return;
+            }
+
+            // An expired poll must not mark a newer summary request as failed.
+            if ($row->summary_external_id !== $this->responseId) {
                 return;
             }
 
