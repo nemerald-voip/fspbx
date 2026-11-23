@@ -56,6 +56,15 @@ for _, leg in ipairs({'A', 'B'}) do
 end
 assert(#run({ is_loopback = '1', loopback_leg = 'B', answer_epoch = '123' }) == 0)
 
+-- With early media, the routing leg can bow out before answer_epoch is set
+-- and without a loopback_hangup_cause. The gateway is already running txfax.
+assert(#run({ is_loopback = '1', loopback_leg = 'B', answer_epoch = '0',
+    originate_disposition = 'SUCCESS', hangup_cause = 'NORMAL_UNSPECIFIED' }) == 0)
+
+events = run({ is_loopback = '1', loopback_leg = 'B', answer_epoch = '0',
+    originate_disposition = 'USER_BUSY', hangup_cause = 'USER_BUSY', hangup_cause_q850 = '17' })
+assert(#events == 1 and events[1].data.fax_result_text == 'USER_BUSY (Q.850 17)')
+
 -- The selected gateway reports success or transmission failure.
 events = run({ originating_leg_uuid = 'routing-leg', current_application = 'txfax',
     fax_success = '1', fax_result_code = '0', fax_result_text = 'OK',

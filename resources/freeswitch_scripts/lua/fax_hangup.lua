@@ -56,6 +56,8 @@ if is_loopback == "true" or is_loopback == "1" then
         and header("loopback_leg") == "B"
         and header("loopback_hangup_cause") == ""
         and header("answer_epoch") == "0"
+        -- Early media can hand txfax to the gateway before this leg is answered.
+        and header("originate_disposition") ~= "SUCCESS"
 
     if not routing_failure then
         log("NOTICE", "Ignoring temporary loopback channel")
