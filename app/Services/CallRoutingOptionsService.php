@@ -149,7 +149,8 @@ class CallRoutingOptionsService
             $query->where('dialplan_enabled', 'true')
                 ->where('dialplan_destination', 'true')
                 ->where('dialplan_number', '<>', '')
-                ->where('dialplan_context', '<>', 'public');
+                ->where('dialplan_context', '<>', 'public')
+                ->whereNotIn('dialplan_uuid', DynamicRoute::query()->select('dialplan_uuid'));
         }
 
         if ($model === Voicemails::class) {
@@ -635,7 +636,9 @@ class CallRoutingOptionsService
             }
         }
 
-        if ($dialplan->dialplan_destination === 'true' && $dialplan->dialplan_context !== 'public') {
+        if (in_array($dialplan->dialplan_destination, [true, 'true'], true)
+            && $dialplan->dialplan_context !== 'public'
+            && ! DynamicRoute::query()->where('dialplan_uuid', $dialplan->dialplan_uuid)->exists()) {
             return [
                 'type' => 'custom_dialplans',
                 'extension' => $extension,
@@ -899,7 +902,7 @@ class CallRoutingOptionsService
             if (! $target instanceof $model || ! $this->domainUuid || $target->domain_uuid !== $this->domainUuid) {
                 throw ValidationException::withMessages(['target' => __('Select a valid routing target in this account.')]);
             }
-            if ($action === 'custom_dialplans' && ($target->dialplan_enabled !== true || ! in_array($target->dialplan_destination, [true, 'true'], true) || $target->dialplan_context === 'public')) {
+            if ($action === 'custom_dialplans' && ($target->dialplan_enabled !== true || ! in_array($target->dialplan_destination, [true, 'true'], true) || $target->dialplan_context === 'public' || DynamicRoute::query()->where('dialplan_uuid', $target->dialplan_uuid)->exists())) {
                 throw ValidationException::withMessages(['target' => __('Select a valid routing target in this account.')]);
             }
 

@@ -60,7 +60,7 @@ class StorePhoneNumberRequest extends FormRequest
                         return;
                     }
 
-                    if (in_array(\App\Services\CallRoutingOptionsService::destinationHandler((string) $type), ['bridge', 'recording'], true)) {
+                    if ($type === 'custom_dialplans' || in_array(\App\Services\CallRoutingOptionsService::destinationHandler((string) $type), ['bridge', 'recording'], true)) {
                         return;
                     }
 
@@ -91,7 +91,7 @@ class StorePhoneNumberRequest extends FormRequest
         $routing = $this->input('routing_options', []);
         if (is_array($routing) && count($routing)) {
             foreach ($routing as $i => $r) {
-                if (($r['type'] ?? null) === 'bridges') {
+                if (in_array($r['type'] ?? null, ['bridges', 'custom_dialplans'], true)) {
                     continue;
                 }
 

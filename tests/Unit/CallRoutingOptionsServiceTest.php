@@ -368,9 +368,22 @@ class CallRoutingOptionsServiceTest extends TestCase
             ['name' => 'Schedule', 'number' => '9403', 'context' => 'default', 'enabled' => 'true', 'destination' => 'false', 'xml' => '<action application="set" data="hour=9"/>'],
             ['name' => 'Foreign', 'number' => '9404', 'context' => 'default', 'enabled' => 'true', 'destination' => 'true', 'xml' => '<action application="transfer"/>', 'domain' => RoutingDestinations::TARGET],
         ];
+        $dynamicRouteUuid = (string) Str::uuid();
+        Schema::create('dynamic_routes', function (Blueprint $table) {
+            $table->uuid('dynamic_route_uuid')->primary();
+            $table->uuid('domain_uuid');
+            $table->uuid('dialplan_uuid')->nullable();
+        });
+        DB::table('dynamic_routes')->insert([
+            'dynamic_route_uuid' => (string) Str::uuid(),
+            'domain_uuid' => $domainUuid,
+            'dialplan_uuid' => $dynamicRouteUuid,
+        ]);
+        $rows[] = ['name' => 'Dynamic Route: Generated', 'number' => '9500', 'context' => 'default', 'enabled' => 'true', 'destination' => 'true', 'xml' => '<action application="set" data="dynamic_route_uuid='.$dynamicRouteUuid.'"/>', 'uuid' => $dynamicRouteUuid];
+
         foreach ($rows as $index => $row) {
             DB::table('v_dialplans')->insert([
-                'dialplan_uuid' => (string) Str::uuid(), 'domain_uuid' => $row['domain'] ?? $domainUuid,
+                'dialplan_uuid' => $row['uuid'] ?? (string) Str::uuid(), 'domain_uuid' => $row['domain'] ?? $domainUuid,
                 'dialplan_name' => $row['name'], 'dialplan_number' => $row['number'],
                 'dialplan_context' => $row['context'], 'dialplan_enabled' => $row['enabled'],
                 'dialplan_destination' => $row['destination'], 'dialplan_xml' => $row['xml'],
@@ -381,7 +394,10 @@ class CallRoutingOptionsServiceTest extends TestCase
         $options = (new CallRoutingOptionsService($domainUuid))->getOptions();
         $this->assertSame(['9400'], array_column($options, 'extension'));
 
-        $target = (new CallRoutingOptionsService($domainUuid))->findTarget('custom_dialplans', DB::table('v_dialplans')->where('dialplan_number', '9400')->value('dialplan_uuid'));
+        $service = new CallRoutingOptionsService($domainUuid);
+        $this->assertNull($service->findTarget('custom_dialplans', $dynamicRouteUuid));
+
+        $target = $service->findTarget('custom_dialplans', DB::table('v_dialplans')->where('dialplan_number', '9400')->value('dialplan_uuid'));
         $this->assertSame(['destination_app' => 'transfer', 'destination_data' => '9400 XML example.test'], (new CallRoutingOptionsService($domainUuid))->actionForTarget('custom_dialplans', $target, 'example.test'));
         $saved = (new CallRoutingOptionsService($domainUuid))->reverseEngineerTransferAction('9400 XML example.test');
         $this->assertSame('custom_dialplans', $saved['type']);
